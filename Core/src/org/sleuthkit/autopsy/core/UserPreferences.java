@@ -674,8 +674,7 @@ public final class UserPreferences {
      * @return The absolute path to the application temp directory.
      */
     public static String getAppTempDirectory() {
-        return Paths.get(UserMachinePreferences.getBaseTempDirectory(), getAppName())
-                .toAbsolutePath().toString();
+        return UserMachinePreferences.getTempDirectory();
     }
     
     /**

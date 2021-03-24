@@ -26,6 +26,7 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +36,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -208,6 +211,41 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (!Objects.isNull(views)) {
             tree.expandNode(views);
         }
+        
+        // expand all nodes parents of and including hosts if group by host/person
+        if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+            Node[] rootNodes = rootChildren.getNodes();
+            if (rootNodes != null) {
+                Stream.of(rootNodes)
+                        .flatMap((n) -> getHostNodesAndParents(n).stream())
+                        .filter((n) -> n != null)
+                        .forEach((n) -> tree.expandNode(n));
+            }
+        }
+    }
+    
+    
+    /**
+     * Returns all nodes including provided node that are parents of or are hosts.
+     * @param node The parent or possible host node.
+     * @return The descendant host nodes.
+     */
+    private List<Node> getHostNodesAndParents(Node node) {
+        if (node == null) {
+            return Collections.emptyList();
+        } else if (node.getLookup().lookup(Person.class) != null
+                || PersonGroupingNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+            Children children = node.getChildren();
+            Node[] childNodes = children == null ? null : children.getNodes();
+            if (childNodes != null) {
+                return Stream.of(childNodes)
+                        .flatMap((n) -> Stream.concat(Stream.of(n), getHostNodesAndParents(n).stream()))
+                        .collect(Collectors.toList());
+            }
+        } else if (node.getLookup().lookup(Host.class) != null) {
+            return Arrays.asList(node);
+        }
+        return Collections.emptyList();
     }
 
     /**

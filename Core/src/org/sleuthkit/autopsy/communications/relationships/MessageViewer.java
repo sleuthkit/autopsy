@@ -192,8 +192,8 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         if (isDescendingFrom(newFocusOwner, rootTablePane)) {
             proxyLookup.setNewLookups(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
         } else if (isDescendingFrom(newFocusOwner, this)) {
-            proxyLookup.setNewLookups(createLookup(currentPanel.getExplorerManager(), getActionMap()));
-        }
+            proxyLookup.setNewLookups(createLookup(threadMessagesPanel.getExplorerManager(), getActionMap()));
+        } 
     }
 
     @Override

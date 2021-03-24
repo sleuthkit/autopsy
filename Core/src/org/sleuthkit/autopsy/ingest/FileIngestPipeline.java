@@ -22,7 +22,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -65,8 +68,17 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     }
 
     @Override
+    @NbBundle.Messages({
+        "FileIngestPipeline_SaveResults_Activity=Saving Results"
+    })
     void completeTask(FileIngestTask task) throws IngestTaskPipelineException {
-        ingestManager.setIngestTaskProgress(task, "Saving Files"); //NON-NLS // RJCTODO
+        ingestManager.setIngestTaskProgress(task, Bundle.FileIngestPipeline_SaveResults_Activity());
+        /*
+         * Code in only one file ingest thread at a time will try to access the
+         * file list. The synchronization here is to ensure visibility of the
+         * files in all of the threads that share the list, rather than to
+         * prevent simultaneous access in multiple threads.
+         */
         synchronized (fileBatch) {
             AbstractFile file = null;
             try {
@@ -79,7 +91,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
             if (!ingestJobPipeline.isCancelled()) {
                 fileBatch.add(file);
                 if (fileBatch.size() >= FILE_BATCH_SIZE) {
-                    saveFiles();
+                    updateFiles();
                 }
             }
             ingestManager.setIngestTaskProgressCompleted(task);
@@ -89,22 +101,28 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     @Override
     List<IngestModuleError> shutDown() {
         Date start = new Date();
-        saveFiles();
+        updateFiles();
         Date finish = new Date();
         ingestManager.incrementModuleRunTime("Save Files", finish.getTime() - start.getTime()); // RJCTODO
         return super.shutDown();
     }
 
-    private void saveFiles() {
+    /**
+     * RJCTODO
+     *
+     * @throws TskCoreException
+     */
+    private void updateFiles() throws TskCoreException {
+        Case currentCase = Case.getCurrentCase();
+        SleuthkitCase caseDb = currentCase.getSleuthkitCase();
+        SleuthkitCase.CaseDbTransaction transaction = caseDb.beginTransaction();
+//            transaction.commit();
+
         synchronized (fileBatch) {
             for (AbstractFile file : fileBatch) {
                 try {
                     if (!ingestJobPipeline.isCancelled()) {
-                        /*
-                         * Save any updates from the ingest modules to the case
-                         * database.
-                         */
-                        file.save();
+                        file.save(transaction);
                     }
                 } catch (TskCoreException ex) {
                     // RJCTODO: Log instead?
@@ -115,6 +133,11 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
                     }
                     file.close();
                     //ingestManager.setIngestTaskProgressCompleted(task);
+                }
+            }
+            for (AbstractFile file : fileBatch) {
+                if (!ingestJobPipeline.isCancelled()) {
+                    IngestManager.getInstance().fireFileIngestDone(file);
                 }
             }
             fileBatch.clear();
@@ -153,9 +176,9 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             ingestJobPipeline.setCurrentFileIngestModule(getDisplayName(), file.getName());
             ProcessResult result = module.process(file);
-            if (result == ProcessResult.ERROR) {
-                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (file objId = %d)", getDisplayName(), file.getName(), file.getId())); //NON-NLS
-            }
+//            if (result == ProcessResult.ERROR) {
+//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (file objId = %d)", getDisplayName(), file.getName(), file.getId())); //NON-NLS
+//            }
         }
 
     }

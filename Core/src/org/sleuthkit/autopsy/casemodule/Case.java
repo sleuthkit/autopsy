@@ -87,6 +87,7 @@ import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsRemovedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountRemovedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsRemovedEvent;
@@ -124,6 +125,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -144,6 +146,7 @@ import org.sleuthkit.datamodel.HostManager.HostsDeletionEvent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountManager.OsAccountsCreationEvent;
+import org.sleuthkit.datamodel.OsAccountManager.OsAccountsDeleteEvent;
 import org.sleuthkit.datamodel.OsAccountManager.OsAccountsUpdateEvent;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.PersonManager.PersonsCreationEvent;
@@ -441,6 +444,10 @@ public class Case {
          * Call getOsAccount to get the changed account;
          */
         OS_ACCOUNT_CHANGED,
+        /**
+         * OSAccount associated with the current case has been deleted. 
+         */
+        OS_ACCOUNT_REMOVED,
         
         /**
          * Hosts associated with the current case added.
@@ -518,6 +525,13 @@ public class Case {
                 eventPublisher.publish(new OsAccountChangedEvent(account));
             }
         }
+        
+        @Subscribe 
+        public void publishOsAccountDeletedEvent(OsAccountsDeleteEvent event) {
+            for(OsAccount account: event.getOsAcounts()) {
+                eventPublisher.publish(new OsAccountRemovedEvent(account));
+            }
+        }        
         
         /**
          * Publishes an autopsy event from the sleuthkit HostCreationEvent 
@@ -1477,16 +1491,7 @@ public class Case {
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        // get temp folder scoped to the combination of case name and timestamp 
-        // provided by getName()
-        Path path = Paths.get(UserPreferences.getAppTempDirectory(), CASE_TEMP_DIR, getName());
-        File f = path.toFile();
-        // verify that the folder exists
-        if (!f.exists()) {
-            f.mkdirs();
-        }
-
-        return path.toAbsolutePath().toString();
+        return UserMachinePreferences.getTempDirectory();
     }
 
     /**
@@ -1795,6 +1800,10 @@ public class Case {
 
     public void notifyOsAccountChanged(OsAccount account) {
         eventPublisher.publish(new OsAccountChangedEvent(account));
+    }
+    
+    public void notifyOsAccountRemoved(OsAccount account) {
+        eventPublisher.publish(new OsAccountRemovedEvent(account));
     }
     
     /**
