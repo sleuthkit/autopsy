@@ -81,6 +81,8 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
             sheet.autoSizeColumn(i);
         }
 
+        // freeze header row
+        sheet.createFreezePane(0, 1);
     }
 
     @Override
@@ -119,10 +121,8 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
             cell.setCellValue(columns.get(i).getHeaderTitle());
             cell.setCellStyle(worksheetEnv.getHeaderStyle());
         }
-        // freeze header row
-        sheet.createFreezePane(0, 1);
-        // Create Cell Style for each column (if one is needed)
 
+        // Create Cell Style for each column (if one is needed)
         for (int rowNum = 0; rowNum < safeData.size(); rowNum++) {
             T rowData = safeData.get(rowNum);
             Row row = sheet.createRow(rowNum + rowStart + 1);
