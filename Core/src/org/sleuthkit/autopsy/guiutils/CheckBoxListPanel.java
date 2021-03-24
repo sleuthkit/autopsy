@@ -138,11 +138,6 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
             checkboxList.repaint();
             checkboxList.revalidate();
         }
-        if (!isEmpty()) {
-            for (ListSelectionListener listener : checkboxList.getListSelectionListeners()) {
-                listener.valueChanged(new ListSelectionEvent(checkboxList, 0, model.getSize() - 1, false));
-            }
-        }
     }
 
     /**
@@ -290,7 +285,15 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
 
         @Override
         public void setChecked(boolean checked) {
-            this.checked = checked;
+            if (this.checked != checked) {
+                this.checked = checked;
+                //notify the list that an items checked status changed
+                if (!isEmpty()) {
+                    for (ListSelectionListener listener : checkboxList.getListSelectionListeners()) {
+                        listener.valueChanged(new ListSelectionEvent(checkboxList, 0, model.getSize() - 1, false));
+                    }
+                }
+            }
         }
 
         @Override
