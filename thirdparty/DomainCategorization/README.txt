@@ -1,0 +1,1 @@
+This is a folder containing information for web domain categorization and custom categories.
