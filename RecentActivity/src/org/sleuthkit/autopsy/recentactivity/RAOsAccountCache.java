@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Host;
@@ -71,18 +72,18 @@ final class RAOsAccountCache {
      * @throws TskCoreException
      */
     Optional<OsAccount> getOsAccount(AbstractFile file) throws TskCoreException {
-        Optional<OsAccount> optional = file.getOsAccount();
+        Optional<Long> optional = file.getOsAccountObjectId();
 
         if (!optional.isPresent()) {
             return getAccountForPath(file.getParentPath());
         }
 
-        OsAccount osAccount = optional.get();
+        OsAccount osAccount = Case.getCurrentCase().getSleuthkitCase().getOsAccountManager().getOsAccount(optional.get());
         if (osAccount.getName().equals("S-1-5-32-544")) {
             return getAccountForPath(file.getParentPath());
         }
 
-        return optional;
+        return Optional.ofNullable(osAccount);
     }
 
     /**
