@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,7 +45,7 @@ class ExtractWebAccountType extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractWebAccountType.class.getName());
 
     ExtractWebAccountType() {
-        moduleName = NbBundle.getMessage(ExtractWebAccountType.class, "ExtractWebAccountType.moduleName.text");
+        super(NbBundle.getMessage(ExtractWebAccountType.class, "ExtractWebAccountType.moduleName.text"));
     }
 
     private static final List<BlackboardArtifact.Type> QUERY_ARTIFACTS = Arrays.asList(
