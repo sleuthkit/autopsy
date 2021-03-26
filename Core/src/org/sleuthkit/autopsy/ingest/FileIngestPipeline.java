@@ -22,9 +22,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
@@ -41,6 +43,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
 
     private static final int FILE_BATCH_SIZE = 500;
     private static final String SAVE_RESULTS_ACTIVITY = Bundle.FileIngestPipeline_SaveResults_Activity();
+    private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private final IngestJobPipeline ingestJobPipeline;
     private final List<AbstractFile> fileBatch;
@@ -110,8 +113,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
      *
      * @param file The file.
      *
-     * @throws IngestTaskPipelineException Exception thrown if the case database
-     *                                     update fails.
+     * @throws IngestTaskPipelineException if the case database update fails.
      */
     private void cacheFileForBatchUpdate(AbstractFile file) throws IngestTaskPipelineException {
         /*
@@ -132,8 +134,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
      * Updates the case database with new properties added to the files in the
      * cache by the ingest modules that processed them.
      *
-     * @throws IngestTaskPipelineException Exception thrown if the case database
-     *                                     update fails.
+     * @throws IngestTaskPipelineException if the case database update fails.
      */
     private void clearFileCache() throws IngestTaskPipelineException {
         /*
@@ -161,7 +162,8 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
                 if (transaction != null) {
                     try {
                         transaction.rollback();
-                    } catch (TskCoreException ignored) {
+                    } catch (TskCoreException ex1) {
+                        logger.log(Level.SEVERE, "Error rolling back transaction after failure to save updated properties for cached files from tasks", ex1);
                     }
                 }
                 throw new IngestTaskPipelineException("Failed to save updated properties for cached files from tasks", ex); //NON-NLS                
