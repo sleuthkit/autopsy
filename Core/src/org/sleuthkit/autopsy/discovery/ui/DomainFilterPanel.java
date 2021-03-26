@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryAttributes;
@@ -44,11 +46,14 @@ public class DomainFilterPanel extends AbstractFiltersPanel {
         addFilter(new KnownAccountTypeFilterPanel(), false, null, 1);
         addFilter(new ArtifactTypeFilterPanel(), false, null, 1);
         addFilter(new DateFilterPanel(), false, null, 1);
-        int[] pastOccurrencesIndices = null;
+        List<SearchData.Frequency> defaultFrequencies = null;
         if (CentralRepository.isEnabled()) {
-            pastOccurrencesIndices = new int[]{2, 3, 4};
+            defaultFrequencies = new ArrayList<>();
+            defaultFrequencies.add(SearchData.Frequency.RARE);
+            defaultFrequencies.add(SearchData.Frequency.UNIQUE);
+            defaultFrequencies.add(SearchData.Frequency.COMMON);
         }
-        addFilter(new PastOccurrencesFilterPanel(TYPE), true, pastOccurrencesIndices, 0);
+        addFilter(new PastOccurrencesFilterPanel(TYPE), true, defaultFrequencies, 0);
         addPanelsToScrollPane(domainFiltersSplitPane);
         setLastGroupingAttributeType(DiscoveryAttributes.GroupingAttributeType.LAST_ACTIVITY_DATE);
         setLastSortingMethod(ResultsSorter.SortingMethod.BY_DOMAIN_NAME);

@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
-from typing import Dict, Iterator, Tuple, TypeVar
+from typing import Dict, Iterator, Tuple, TypeVar, List
 from git import Blob
 
 from foundvalue import FoundValue
 from gitutil import get_text
+from propentry import PropEntry
 from propsutil import get_entry_dict
 
 
@@ -34,7 +35,7 @@ def extract_translations(orig_file_iter: Iterator[Tuple[str, Blob]], translated_
 
     # determine original and translated files with common parent folders and find common keys
     to_ret: Dict[str, FoundValue] = dict()
-    for (common_folder, (original_path, original_blob), (translated_path, translated_blob))\
+    for (common_folder, (original_path, original_blob), (translated_path, translated_blob)) \
             in common_entries(original_files, translated_files):
 
         orig_dict = sanitize_prop_dict_keys(get_entry_dict(get_text(original_blob)))
@@ -106,3 +107,42 @@ def common_entries(*dcts: Dict[K, V]) -> Iterator[Tuple[K, Tuple[V, ...]]]:
         return
     for i in set(dcts[0]).intersection(*dcts[1:]):
         yield (i,) + tuple(d[i] for d in dcts)
+
+
+def find_unmatched_translations(orig_file_iter: Iterator[Tuple[str, Blob]],
+                                translated_file_iter: Iterator[Tuple[str, Blob]],
+                                orig_filename: str, translated_filename: str) -> List[PropEntry]:
+    """
+    Finds all unmatched translation (where English is non-empty value and Japanese does not exist or is empty).
+
+    Args:
+        orig_file_iter: An iterator of tuples containing the path and the content of the file for original content.
+        translated_file_iter: An iterator of tuples containing the path and the content of the file for translated
+        content.
+        orig_filename: The original file name (i.e. 'bundle.properties-MERGED').
+        translated_filename: The translated file name (i.e. 'Bundle_ja.properties').
+
+    Returns: A list of found unmatched translations sorted by path and then key.
+
+    """
+
+    # Create a dictionary mapping parent path to the file content for both original and translated files
+    original_files: Dict[str, Tuple[str, Blob]] = _find_file_entries(orig_file_iter, orig_filename)
+    translated_files: Dict[str, Tuple[str, Blob]] = _find_file_entries(translated_file_iter, translated_filename)
+
+    to_ret: List[PropEntry] = []
+    for (common_folder, (original_path, original_blob), (translated_path, translated_blob)) \
+            in common_entries(original_files, translated_files):
+
+        orig_dict = get_entry_dict(get_text(original_blob))
+        translated_dict = get_entry_dict(get_text(translated_blob))
+
+        for key, orig_val in orig_dict.items():
+            if len(orig_val.strip()) > 0 and (key not in translated_dict or len(translated_dict[key].strip()) < 1):
+                to_ret.append(PropEntry(
+                    rel_path=common_folder,
+                    key=key,
+                    value=orig_val))
+
+    to_ret.sort(key=lambda rec: (rec.rel_path, rec.key))
+    return to_ret

@@ -24,7 +24,7 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.event.ListSelectionListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering;
@@ -244,7 +244,7 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    void configurePanel(boolean selected, int[] indicesSelected) {
+    void configurePanel(boolean selected, List<?> selectedItems) {
         parentCheckbox.setSelected(selected);
         if (parentCheckbox.isEnabled() && parentCheckbox.isSelected()) {
             parentScrollPane.setEnabled(true);
@@ -257,9 +257,6 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
             deleteButton.setEnabled(!parentListModel.isEmpty());
             parentList.setEnabled(true);
             parentTextField.setEnabled(true);
-            if (indicesSelected != null) {
-                parentList.setSelectedIndices(indicesSelected);
-            }
         } else {
             parentScrollPane.setEnabled(false);
             parentLabel.setEnabled(false);
@@ -313,16 +310,21 @@ final class ParentFolderFilterPanel extends AbstractDiscoveryFilterPanel {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
-    JList<?> getList() {
-        return parentList;
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    @Override
     AbstractFilter getFilter() {
         if (parentCheckbox.isSelected()) {
             return new SearchFiltering.ParentFilter(getParentPaths());
         }
         return null;
     }
+    
+    @Override
+    void addListSelectionListener(ListSelectionListener listener) {
+        parentList.addListSelectionListener(listener);
+    }
+
+    @Override
+    boolean isFilterSupported() {
+        return true;
+    }
+
 }

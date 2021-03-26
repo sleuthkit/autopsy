@@ -100,7 +100,7 @@ public final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> exten
             @Override
             public void mousePressed(MouseEvent e) {
                 int index = locationToIndex(e.getPoint());
-                if (index != -1) {
+                if (index != -1 && isEnabled()) {
                     CheckBoxJList.CheckboxListItem element = getModel().getElementAt(index);
                     element.setChecked(!element.isChecked());
                     repaint();
