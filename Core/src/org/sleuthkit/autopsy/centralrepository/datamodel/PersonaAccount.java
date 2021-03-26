@@ -26,8 +26,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class represents an association between a Persona and an Account.
@@ -206,10 +208,15 @@ public class PersonaAccount {
                 );
 
                 // create account
-                CentralRepoAccount.CentralRepoAccountType crAccountType = getCRInstance().getAccountTypeByName(rs.getString("type_name"));
+                String accountTypeName = rs.getString("type_name");
+                Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = getCRInstance().getAccountTypeByName(accountTypeName);
+                if (! optCrAccountType.isPresent()) {
+                    // The CR account can not be null, so throw an exception
+                    throw new CentralRepoException("Account type with name '" + accountTypeName + "' not found in Central Repository");
+                }
                 CentralRepoAccount account = new CentralRepoAccount(
                         rs.getInt("account_id"),
-                        crAccountType,
+                        optCrAccountType.get(),
                         rs.getString("account_unique_identifier"));
 
                 // create persona account
@@ -389,10 +396,15 @@ public class PersonaAccount {
             while (rs.next()) {
 
                 // create account
-                CentralRepoAccount.CentralRepoAccountType crAccountType = getCRInstance().getAccountTypeByName(rs.getString("type_name"));
+                String accountTypeName = rs.getString("type_name");
+                Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = getCRInstance().getAccountTypeByName(accountTypeName);
+                if (! optCrAccountType.isPresent()) {
+                    // The CR account can not be null, so throw an exception
+                    throw new CentralRepoException("Account type with name '" + accountTypeName + "' not found in Central Repository");
+                }
                 CentralRepoAccount account = new CentralRepoAccount(
                         rs.getInt("account_id"),
-                        crAccountType,
+                        optCrAccountType.get(),
                         rs.getString("account_unique_identifier"));
 
                 accountsList.add(account);

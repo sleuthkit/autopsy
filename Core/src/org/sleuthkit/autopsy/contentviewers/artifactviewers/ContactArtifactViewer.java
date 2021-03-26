@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -630,9 +631,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
                 // make a list of all unique accounts for this contact
                 if (!account.getAccountType().equals(Account.Type.DEVICE)) {
-                    CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
-                    if (crAccountType != null) {
-                        CentralRepoAccount crAccount = CentralRepository.getInstance().getAccount(crAccountType, account.getTypeSpecificID());
+                    Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
+                    if (optCrAccountType.isPresent()) {
+                        CentralRepoAccount crAccount = CentralRepository.getInstance().getAccount(optCrAccountType.get(), account.getTypeSpecificID());
 
                         if (crAccount != null && uniqueAccountsList.contains(crAccount) == false) {
                             uniqueAccountsList.add(crAccount);

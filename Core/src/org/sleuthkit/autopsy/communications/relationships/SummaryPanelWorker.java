@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications.relationships;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -75,17 +76,10 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
                 personaList.add(pAccount.getPersona());
             }
 
-            CentralRepoAccount.CentralRepoAccountType crAccountType;
-            try {
-                crAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
-            } catch (CentralRepoException ex) {
-                // The error most likely means that there is no corresponding account type in the central repo.
-                crAccountType = null;
-            }
-            
-            if (crAccountType != null) {
+            Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
+            if (optCrAccountType.isPresent()) {
                 try {
-                    crAccount = CentralRepository.getInstance().getAccount(crAccountType, account.getTypeSpecificID());
+                    crAccount = CentralRepository.getInstance().getAccount(optCrAccountType.get(), account.getTypeSpecificID());
                 } catch (InvalidAccountIDException unused) {
                     // This was probably caused to a phone number not making
                     // threw the normalization.

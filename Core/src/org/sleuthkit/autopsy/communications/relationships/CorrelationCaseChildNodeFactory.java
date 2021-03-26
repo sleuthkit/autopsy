@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications.relationships;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
@@ -75,9 +76,9 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
 
         accounts.forEach((account) -> {
             try {
-                CorrelationAttributeInstance.Type correlationType = getCorrelationType(account.getAccountType());
-                if (correlationType != null) {
-                    List<CorrelationAttributeInstance> correlationInstances = dbInstance.getArtifactInstancesByTypeValue(correlationType, account.getTypeSpecificID());
+                Optional<CorrelationAttributeInstance.Type> optCorrelationType = getCorrelationType(account.getAccountType());
+                if (optCorrelationType.isPresent()) {
+                    List<CorrelationAttributeInstance> correlationInstances = dbInstance.getArtifactInstancesByTypeValue(optCorrelationType.get(), account.getTypeSpecificID());
                     correlationInstances.forEach((correlationInstance) -> {
                         CorrelationCase correlationCase = correlationInstance.getCorrelationCase();
                         uniqueCaseMap.put(correlationCase.getCaseUUID(), correlationCase);
@@ -103,24 +104,22 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
      *
      * @param accountType Account type
      *
-     * @return CorrelationAttributeInstance.Type for given account or null if
+     * @return CorrelationAttributeInstance.Type for given account or empty if
      *         there is no match
      *
      * @throws CentralRepoException
      */
-    private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) { 
-        try {
-            String accountTypeStr = accountType.getTypeName();
-            if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
-                CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
-                int corrTypeId = crAccountType.getCorrelationTypeId();
-                return CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
+    private Optional<CorrelationAttributeInstance.Type> getCorrelationType(Account.Type accountType) throws CentralRepoException { 
+
+        String accountTypeStr = accountType.getTypeName();
+        if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
+            Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
+            if (optCrAccountType.isPresent()) {
+                int corrTypeId = optCrAccountType.get().getCorrelationTypeId();
+                return Optional.of(CentralRepository.getInstance().getCorrelationTypeById(corrTypeId));
             }
-        } catch (CentralRepoException ex) {
-            // The excpetion most likely just means we didn't find a matching account
-            // type - no need to log it.
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
