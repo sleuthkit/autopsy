@@ -1141,7 +1141,7 @@ class ExtractRegistry extends Extract {
 
             List<OsAccount> existingAccounts = accountMgr.getAccounts(host);
             for(OsAccount osAccount: existingAccounts) {
-                Optional<String> optional = osAccount.getUniqueIdWithinRealm();
+                Optional<String> optional = osAccount.getAddr();
                 if(!optional.isPresent()) {
                     continue;
                 }
