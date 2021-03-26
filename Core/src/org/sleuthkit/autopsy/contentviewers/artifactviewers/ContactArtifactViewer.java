@@ -631,10 +631,12 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                 // make a list of all unique accounts for this contact
                 if (!account.getAccountType().equals(Account.Type.DEVICE)) {
                     CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
-                    CentralRepoAccount crAccount = CentralRepository.getInstance().getAccount(crAccountType, account.getTypeSpecificID());
+                    if (crAccountType != null) {
+                        CentralRepoAccount crAccount = CentralRepository.getInstance().getAccount(crAccountType, account.getTypeSpecificID());
 
-                    if (crAccount != null && uniqueAccountsList.contains(crAccount) == false) {
-                        uniqueAccountsList.add(crAccount);
+                        if (crAccount != null && uniqueAccountsList.contains(crAccount) == false) {
+                            uniqueAccountsList.add(crAccount);
+                        }
                     }
                 }
                 

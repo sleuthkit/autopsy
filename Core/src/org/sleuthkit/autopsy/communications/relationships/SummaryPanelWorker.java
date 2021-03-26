@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
@@ -74,12 +75,22 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
                 personaList.add(pAccount.getPersona());
             }
 
+            CentralRepoAccount.CentralRepoAccountType crAccountType;
             try {
-                crAccount = CentralRepository.getInstance().getAccount(CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName()), account.getTypeSpecificID());
-            } catch (InvalidAccountIDException unused) {
-                // This was probably caused to a phone number not making
-                // threw the normalization.
-                logger.log(Level.WARNING, String.format("Exception thrown from CR getAccount for account %s (%d)", account.getTypeSpecificID(), account.getAccountID()));
+                crAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
+            } catch (CentralRepoException ex) {
+                // The error most likely means that there is no corresponding account type in the central repo.
+                crAccountType = null;
+            }
+            
+            if (crAccountType != null) {
+                try {
+                    crAccount = CentralRepository.getInstance().getAccount(crAccountType, account.getTypeSpecificID());
+                } catch (InvalidAccountIDException unused) {
+                    // This was probably caused to a phone number not making
+                    // threw the normalization.
+                    logger.log(Level.WARNING, String.format("Exception thrown from CR getAccount for account %s (%d)", account.getTypeSpecificID(), account.getAccountID()));
+                }
             }
         }
 

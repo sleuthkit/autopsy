@@ -108,14 +108,18 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
      *
      * @throws CentralRepoException
      */
-    private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) throws CentralRepoException {        
-        String accountTypeStr = accountType.getTypeName();
-        if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
-            CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
-            int corrTypeId = crAccountType.getCorrelationTypeId();
-            return CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
+    private CorrelationAttributeInstance.Type getCorrelationType(Account.Type accountType) { 
+        try {
+            String accountTypeStr = accountType.getTypeName();
+            if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false) {
+                CentralRepoAccount.CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
+                int corrTypeId = crAccountType.getCorrelationTypeId();
+                return CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
+            }
+        } catch (CentralRepoException ex) {
+            // The excpetion most likely just means we didn't find a matching account
+            // type - no need to log it.
         }
-       
         return null;
     }
 
