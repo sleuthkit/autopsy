@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
@@ -86,17 +85,6 @@ class DomainCategoryRunner extends Extract {
 
     // NOTE: if CustomWebCategorizer ever changes name, this will need to be changed as well.
     private static final String CUSTOM_CATEGORIZER_PATH = "org.sleuthkit.autopsy.url.analytics.domaincategorization.CustomWebCategorizer";
-
-    // the artifact types to be searched for domain categories
-    private static final List<BlackboardArtifact.Type> DOMAIN_CATEGORIZATION_TYPES = Stream.of(
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY,
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY)
-            .map(BlackboardArtifact.Type::new)
-            .collect(Collectors.toList());
 
     /**
      * Get seconds from epoch from the mapping for the attribute type id.
@@ -180,7 +168,7 @@ class DomainCategoryRunner extends Extract {
      * Main constructor.
      */
     DomainCategoryRunner() {
-
+        
     }
 
     /**
@@ -367,7 +355,7 @@ class DomainCategoryRunner extends Extract {
         Set<String> hostSuffixesSeen = new HashSet<>();
         try {
             List<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
-                    DOMAIN_CATEGORIZATION_TYPES,
+                    Arrays.asList(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY)),
                     Arrays.asList(dataSource.getId()));
 
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
@@ -376,8 +364,7 @@ class DomainCategoryRunner extends Extract {
             for (BlackboardArtifact artifact : listArtifacts) {
                 // make sure we haven't cancelled
                 if (context.dataSourceIngestIsCancelled()) {
-                    //User cancelled the process.
-                    break;
+                    break;       //User cancelled the process.
                 }
 
                 // get the pertinent details for this artifact.
