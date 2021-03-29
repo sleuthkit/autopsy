@@ -84,7 +84,7 @@ final class ExtractRecycleBin extends Extract {
         "ExtractRecycleBin_module_name=Recycle Bin"
     })
     ExtractRecycleBin() {
-        this.moduleName = Bundle.ExtractRecycleBin_module_name();
+        super(Bundle.ExtractRecycleBin_module_name());
     }
 
     @Override
@@ -439,11 +439,11 @@ final class ExtractRecycleBin extends Extract {
      * @throws TskCoreException
      */
     private BlackboardArtifact createArtifact(AbstractFile rFile, BlackboardArtifact.Type type, String fileName, String userName, long dateTime) throws TskCoreException {
-        BlackboardArtifact bba = rFile.newArtifact(type.getTypeID());
-        bba.addAttribute(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-        bba.addAttribute(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
-        bba.addAttribute(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
-        return bba;
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+        attributes.add(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
+        attributes.add(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
+        return createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.fromID(type.getTypeID()), rFile, attributes);
     }
 
     /**

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,19 +114,31 @@ class ArtifactMenuMouseAdapter extends java.awt.event.MouseAdapter {
      *
      * @throws TskCoreException
      */
+    @NbBundle.Messages({"ArtifactMenuMouseAdapter.noFile.text=File does not exist."})
     private JMenuItem[] getMenuItems(BlackboardArtifact artifact) throws TskCoreException {
         List<JMenuItem> menuItems = new ArrayList<>();
         BlackboardAttribute pathIdAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
-        long contentId;
+        Long contentId;
         if (pathIdAttr != null) {
             contentId = pathIdAttr.getValueLong();
-        } else {
+        } else if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() && artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
             contentId = artifact.getObjectID();
+        } else {
+            contentId = null;
+            JMenuItem noFile = new JMenuItem();
+            noFile.setText(Bundle.ArtifactMenuMouseAdapter_noFile_text());
+            noFile.setEnabled(false);
+            noFile.setForeground(Color.RED);
+            menuItems.add(noFile);
         }
-        Content content = artifact.getSleuthkitCase().getContentById(contentId);
         menuItems.addAll(getTimelineMenuItems(artifact));
-        menuItems.addAll(getDataModelActionFactoryMenuItems(artifact, content));
-        menuItems.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(Arrays.asList((AbstractFile) content)));
+        if (contentId != null) {
+            Content content = artifact.getSleuthkitCase().getContentById(contentId);
+            menuItems.addAll(getDataModelActionFactoryMenuItems(artifact, content));
+            menuItems.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(Arrays.asList((AbstractFile) content)));
+        } else {
+           menuItems.add(AddBlackboardArtifactTagAction.getInstance().getMenuForContent(Arrays.asList(artifact)));
+        }
         menuItems.add(DeleteFileBlackboardArtifactTagAction.getInstance().getMenuForArtifacts(Arrays.asList(artifact)));
         return menuItems.toArray(new JMenuItem[0]);
     }

@@ -37,11 +37,8 @@ class SolrNotConfiguredDialog extends javax.swing.JDialog {
     SolrNotConfiguredDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(), true);
         // Center the startup window.
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        int width = getSize().width;
-        int height = getSize().height;
-        setLocation((screenDimension.width - width) / 2, (screenDimension.height - height) / 2);
         initComponents();
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/warning16.png", false));
     }
 

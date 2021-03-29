@@ -156,12 +156,11 @@ public class DiscoveryAttributes {
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
                 CentralRepository centralRepoDb) throws DiscoveryException {
             try {
-                Map<String, String> domainsToCategories = getDomainsWithWebCategories(caseDb);
+                Map<String, Set<String>> domainsToCategories = getDomainsWithWebCategories(caseDb);
                 for (Result result : results) {
                     if (result instanceof ResultDomain) {
                         ResultDomain domain = (ResultDomain) result;
-                        String webCategory = domainsToCategories.get(domain.getDomain());
-                        domain.setWebCategory(webCategory);
+                        domain.addWebCategories(domainsToCategories.get(domain.getDomain()));
                     }
                 }
             } catch (TskCoreException | InterruptedException ex) {
@@ -174,24 +173,23 @@ public class DiscoveryAttributes {
          * the category name attribute. Each ResultDomain is then parsed and
          * matched against this map of values.
          */
-        private Map<String, String> getDomainsWithWebCategories(SleuthkitCase caseDb) throws TskCoreException, InterruptedException {
-            Map<String, String> domainToCategory = new HashMap<>();
+        private Map<String, Set<String>> getDomainsWithWebCategories(SleuthkitCase caseDb) throws TskCoreException, InterruptedException {
+            Map<String, Set<String>> domainToCategory = new HashMap<>();
 
             for (BlackboardArtifact artifact : caseDb.getBlackboardArtifacts(TSK_WEB_CATEGORIZATION)) {
                 if (Thread.currentThread().isInterrupted()) {
                     throw new InterruptedException();
                 }
-
                 BlackboardAttribute webCategory = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME));
                 BlackboardAttribute domain = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
-
                 if (webCategory != null && domain != null) {
-                    String webCatDisplayName = webCategory.getValueString();
                     String domainDisplayName = domain.getValueString().trim().toLowerCase();
-                    domainToCategory.put(domainDisplayName, webCatDisplayName);
+                    if (!domainToCategory.containsKey(domainDisplayName)) {
+                        domainToCategory.put(domainDisplayName, new HashSet<>());
+                    }
+                    domainToCategory.get(domainDisplayName).add(webCategory.getValueString());
                 }
             }
-
             return domainToCategory;
         }
     }

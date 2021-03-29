@@ -26,6 +26,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -39,6 +40,9 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Recent activity image ingest module
@@ -51,6 +55,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
     private final StringBuilder subCompleted = new StringBuilder();
+    protected SleuthkitCase tskCase;
+    private RAOsAccountCache accountCache = new RAOsAccountCache();
 
     RAImageIngestModule() {
     }
@@ -58,6 +64,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
+        
+        tskCase = Case.getCurrentCase().getSleuthkitCase();
 
         Extract iexplore;
         Extract edge;
@@ -83,17 +91,17 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract webAccountType = new ExtractWebAccountType();
         Extract messageDomainType = new DomainCategoryRunner();
 
+        extractors.add(recentDocuments);
+        extractors.add(registry); //  needs to run before the DataSourceUsageAnalyzer
+        extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
+        extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
         extractors.add(chrome);
         extractors.add(firefox);
         extractors.add(iexplore);
         extractors.add(edge);
         extractors.add(safari);
-        extractors.add(recentDocuments);
         extractors.add(SEUQA); // this needs to run after the web browser modules
         extractors.add(webAccountType); // this needs to run after the web browser modules
-        extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
-        extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
-        extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
         extractors.add(zoneInfo); // this needs to run after the web browser modules
         extractors.add(recycleBin); // this needs to run after ExtractRegistry and ExtractOS
         extractors.add(sru); 
@@ -132,7 +140,10 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
             progressBar.progress(extracter.getName(), i);
 
             try {
-                extracter.process(dataSource, context, progressBar);
+                extracter.process(dataSource, context, progressBar, accountCache);
+                if(extracter instanceof ExtractRegistry) {
+                    accountCache.initialize(tskCase, ((DataSource)dataSource).getHost());
+                }
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
@@ -220,7 +231,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      *
      * @return Path to directory
      */
-    protected static String getRATempPath(Case a_case, String mod) {
+    static String getRATempPath(Case a_case, String mod) {
         String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
@@ -239,7 +250,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      *
      * @return Path to directory
      */
-    protected static String getRAOutputPath(Case a_case, String mod) {
+    static String getRAOutputPath(Case a_case, String mod) {
         String tmpDir = a_case.getModuleDirectory() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
