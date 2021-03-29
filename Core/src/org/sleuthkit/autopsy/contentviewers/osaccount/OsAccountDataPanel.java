@@ -362,7 +362,7 @@ public class OsAccountDataPanel extends JPanel {
 
                     // Add attribute lists to the hostMap 
                     for (Host host : hosts) {
-                        List<OsAccountAttribute> atList = idMap.get(host.getId());
+                        List<OsAccountAttribute> atList = idMap.get(host.getHostId());
                         if (atList != null) {
                             hostMap.put(host, atList);
                         }
