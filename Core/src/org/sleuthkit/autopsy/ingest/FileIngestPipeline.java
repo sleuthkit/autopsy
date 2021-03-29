@@ -95,7 +95,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         List<IngestModuleError> errors = new ArrayList<>();
         Date start = new Date();
         try {
-            clearFileCache();
+            updateBatchedFiles();
         } catch (IngestTaskPipelineException ex) {
             errors.add(new IngestModuleError(SAVE_RESULTS_ACTIVITY, ex));
         }
@@ -125,7 +125,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         synchronized (fileBatch) {
             fileBatch.add(file);
             if (fileBatch.size() >= FILE_BATCH_SIZE) {
-                clearFileCache();
+                updateBatchedFiles();
             }
         }
     }
@@ -136,7 +136,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
      *
      * @throws IngestTaskPipelineException if the case database update fails.
      */
-    private void clearFileCache() throws IngestTaskPipelineException {
+    private void updateBatchedFiles() throws IngestTaskPipelineException {
         /*
          * Only one file ingest thread at a time will try to access the file
          * cache. The synchronization here is to ensure visibility of the files
