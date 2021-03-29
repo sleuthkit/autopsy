@@ -70,8 +70,6 @@ import java.util.Optional;
 import static java.util.TimeZone.getTimeZone;
 import java.util.stream.Collectors;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -80,7 +78,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
@@ -90,8 +87,6 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DAT
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HOME_DIR;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
@@ -101,6 +96,7 @@ import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountAttribute;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.OsAccountManager;
+import org.sleuthkit.datamodel.OsAccountManager.NotUserSIDException;
 import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.Report;
@@ -184,9 +180,9 @@ class ExtractRegistry extends Extract {
     
     private static final SimpleDateFormat REG_RIPPER_TIME_FORMAT = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
         
-    BlackboardArtifact.Type shellBagArtifactType = null;
-    BlackboardAttribute.Type shellBagKeyAttributeType = null;
-    BlackboardAttribute.Type shellBagLastWriteAttributeType = null;
+    private BlackboardArtifact.Type shellBagArtifactType = null;
+    private BlackboardAttribute.Type shellBagKeyAttributeType = null;
+    private BlackboardAttribute.Type shellBagLastWriteAttributeType = null;
     
     static {
         REG_RIPPER_TIME_FORMAT.setTimeZone(getTimeZone("GMT"));
@@ -850,68 +846,14 @@ class ExtractRegistry extends Extract {
                                         break;
 
                                     case "ProfileList": //NON-NLS
-                                        try {
-                                            String homeDir = value;
-                                            String sid = artnode.getAttribute("sid"); //NON-NLS
-                                            String username = artnode.getAttribute("username"); //NON-NLS
-                                            
-                                            // For now both an OsAccount and the 
-                                            // TSK_OS_ACCOUNT artifact will be created.
-                                            try{
-                                                createOrUpdateOsAccount(regFile, sid, username, homeDir);
-                                                
-                                            } catch (OsAccountManager.NotUserSIDException ex) {
-                                                 logger.log(Level.WARNING, String.format("Cannot create OsAccount for file: %s, sid: %s is not a user SID.", regFile.getId(), sid));
-                                            }
-                                            catch(TskCoreException | TskDataException ex ) {
-                                                logger.log(Level.SEVERE, String.format("Failed to create OsAccount for file: %s, sid: %s", regFile.getId(), sid));
-                                            } 
-                                            
-                                            BlackboardArtifact bbart = null;
-                                            try {
-                                                //check if any of the existing artifacts match this username
-                                                ArrayList<BlackboardArtifact> existingArtifacts = currentCase.getSleuthkitCase().getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                                                for (BlackboardArtifact artifact : existingArtifacts) {
-                                                    if (artifact.getDataSource().getId() == regFile.getDataSourceObjectId()) {
-                                                        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
-                                                        if (attribute != null && attribute.getValueString().equals(sid)) {
-                                                            bbart = artifact;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            } catch (TskCoreException ex) {
-                                                logger.log(Level.SEVERE, "Error getting existing os account artifact", ex);
-                                            }
-                                            if (bbart == null) {
-                                                //create new artifact
-                                                bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                                                        parentModuleName, username));
-                                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
-                                                        parentModuleName, sid));
-                                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                                                        parentModuleName, homeDir));
+                                        String homeDir = value;
+                                        String sid = artnode.getAttribute("sid"); //NON-NLS
+                                        String username = artnode.getAttribute("username"); //NON-NLS
 
-                                                newArtifacts.add(bbart);
-                                            } else {
-                                                //add attributes to existing artifact
-                                                BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
-
-                                                if (bbattr == null) {
-                                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                                                            parentModuleName, username));
-                                                }
-                                                bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH));
-                                                if (bbattr == null) {
-                                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                                                            parentModuleName, homeDir));
-                                                }                                          
-                                            }
-                                            bbart.addAttributes(bbattributes);
-                                       
-                                        } catch (TskCoreException ex) {
-                                            logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex); //NON-NLS
+                                        try{
+                                            createOrUpdateOsAccount(regFile, sid, username, homeDir);
+                                        } catch(TskCoreException | TskDataException | NotUserSIDException ex) {
+                                            logger.log(Level.SEVERE, String.format("Failed to create OsAccount for file: %s, sid: %s", regFile.getId(), sid), ex);
                                         }
                                         break;
 
@@ -1139,7 +1081,7 @@ class ExtractRegistry extends Extract {
             HostManager hostMrg = tskCase.getHostManager();
             Host host = hostMrg.getHost((DataSource)dataSource);
 
-            List<OsAccount> existingAccounts = accountMgr.getAccounts(host);
+            List<OsAccount> existingAccounts = accountMgr.getOsAccounts(host);
             for(OsAccount osAccount: existingAccounts) {
                 Optional<String> optional = osAccount.getAddr();
                 if(!optional.isPresent()) {
@@ -1155,37 +1097,11 @@ class ExtractRegistry extends Extract {
             
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
-                OsAccount osAccount = accountMgr.createWindowsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+                OsAccount osAccount = accountMgr.createWindowsOsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
                 accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
                 updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
             
-            // Existing TSK_OS_ACCOUNT code.
-            
-            //get all existing OS account artifacts
-            List<BlackboardArtifact> existingOsAccounts = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-            for (BlackboardArtifact osAccount : existingOsAccounts) {
-                //if the OS Account artifact was from the same data source check the user id
-                if (osAccount.getDataSource().getId() == regAbstractFile.getDataSourceObjectId()) {
-                    BlackboardAttribute existingUserId = osAccount.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
-                    if (existingUserId != null) {
-                        String userID = existingUserId.getValueString().trim();
-                        Map<String, String> userInfo = userInfoMap.remove(userID);
-                        //if the existing user id matches a user id which we parsed information for check if that information exists and if it doesn't add it
-                        if (userInfo != null) {
-                            osAccount.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userID), true, regAbstractFile));
-                        }
-                    }
-                }
-            }
-
-            //add remaining userinfos as accounts;
-            for (Map<String, String> userInfo : userInfoMap.values()) {
-                BlackboardArtifact bbart = regAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                bbart.addAttributes(getAttributesForAccount(userInfo, groupMap.get(userInfo.get(SID_KEY)), false, regAbstractFile));
-                // index the artifact for keyword search
-                newArtifacts.add(bbart);
-            }
             // Get a mapping of user sids to user names and save globally so it can be used for other areas
             // of the registry, ie: BAM key
             try {
@@ -1201,8 +1117,6 @@ class ExtractRegistry extends Extract {
             logger.log(Level.WARNING, "Error finding the registry file.", ex); //NON-NLS
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error building the document parser: {0}", ex); //NON-NLS
-        } catch (ParseException ex) {
-            logger.log(Level.WARNING, "Error parsing the the date from the registry file", ex); //NON-NLS
         } catch (TskDataException | TskCoreException ex) {
             logger.log(Level.WARNING, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
         } catch  (OsAccountManager.NotUserSIDException ex) {
@@ -1214,163 +1128,6 @@ class ExtractRegistry extends Extract {
             }
         }
         return false;
-    }
-    
-    /**
-     * Creates the attribute list for the given user information and group list.
-     *
-     * @param userInfo     Map of key\value pairs of user information
-     * @param groupList    List of the groups that user belongs
-     * @param existingUser
-     *
-     * @return List
-     *
-     * @throws ParseException
-     */
-    Collection<BlackboardAttribute> getAttributesForAccount(Map<String, String> userInfo, List<String> groupList, boolean existingUser, AbstractFile regAbstractFile) throws ParseException {
-        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-
-        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
-        regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
-
-        if (!existingUser) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
-                    getRAModuleName(), userInfo.get(SID_KEY)));
-
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                    getRAModuleName(), userInfo.get(USERNAME_KEY)));
-        }
-
-        String value = userInfo.get(ACCOUNT_CREATED_KEY);
-        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
-        }
-
-        value = userInfo.get(LAST_LOGIN_KEY);
-        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                    getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
-        }
-
-        value = userInfo.get(LOGIN_COUNT_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
-                    getRAModuleName(), Integer.parseInt(value)));
-        }
-
-        value = userInfo.get(ACCOUNT_TYPE_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(USER_COMMENT_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(NAME_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(INTERNET_NAME_KEY);
-        if (value != null && !value.isEmpty()) {
-            try {
-                // Create an account for this email, if it doesn't already exist.
-                Case.getCurrentCaseThrows()
-                        .getSleuthkitCase()
-                        .getCommunicationsManager()
-                        .createAccountFileInstance(Account.Type.EMAIL,
-                                value, getRAModuleName(), regAbstractFile);
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.SEVERE,
-                        String.format("Error adding email account with value "
-                                + "%s, to the case database for file %s [objId=%d]",
-                                value, regAbstractFile.getName(), regAbstractFile.getId()), ex);
-            }
-
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(FULL_NAME_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DISPLAY_NAME,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(PWD_RESET_KEY);
-        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_RESET,
-                    getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
-        }
-
-        value = userInfo.get(PASSWORD_HINT);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_HINT,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(PWD_FAILE_KEY);
-        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_FAIL,
-                    getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
-        }
-
-        String settingString = "";
-        for (String setting : PASSWORD_SETTINGS_FLAGS) {
-            if (userInfo.containsKey(setting)) {
-                settingString += setting + ", ";
-            }
-        }
-
-        if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_SETTINGS,
-                    getRAModuleName(), settingString));
-        }
-
-        settingString = "";
-        for (String setting : ACCOUNT_SETTINGS_FLAGS) {
-            if (userInfo.containsKey(setting)) {
-                settingString += setting + ", ";
-            }
-        }
-
-        if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_SETTINGS,
-                    getRAModuleName(), settingString));
-        }
-
-        settingString = "";
-        for (String setting : ACCOUNT_TYPE_FLAGS) {
-            if (userInfo.containsKey(setting)) {
-                settingString += setting + ", ";
-            }
-        }
-
-        if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FLAG,
-                    getRAModuleName(), settingString));
-        }
-
-        if (groupList != null && groupList.isEmpty()) {
-            String groups = "";
-            for (String group : groupList) {
-                groups += group + ", ";
-            }
-
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GROUPS,
-                    getRAModuleName(), groups.substring(0, groups.length() - 2)));
-        }
-
-        return bbattributes;
     }
 
     /**
@@ -1957,23 +1714,14 @@ class ExtractRegistry extends Extract {
      * @throws TskCoreException
      */
     private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException {
-        Map<String, String> userNameMap = new HashMap<>();
+        Map<String, String> map = new HashMap<>();
 
-        List<BlackboardArtifact> accounts = blackboard.getArtifacts(TSK_OS_ACCOUNT.getTypeID(), dataSource.getId());
-
-        for (BlackboardArtifact account : accounts) {
-            BlackboardAttribute nameAttribute = getAttributeForArtifact(account, TSK_USER_NAME);
-            BlackboardAttribute idAttribute = getAttributeForArtifact(account, TSK_USER_ID);
-
-            String userName = nameAttribute != null ? nameAttribute.getDisplayString() : "";
-            String userID = idAttribute != null ? idAttribute.getDisplayString() : "";
-
-            if (!userID.isEmpty()) {
-                userNameMap.put(userID, userName);
-            }
+        for(OsAccount account: tskCase.getOsAccountManager().getAccounts(((DataSource)dataSource).getHost())) {
+            Optional<String> userName = account.getLoginName();
+            map.put(account.getName(), userName.isPresent() ? userName.get() : "");
         }
 
-        return userNameMap;
+        return map;
     }
 
     /**
@@ -2216,15 +1964,15 @@ class ExtractRegistry extends Extract {
      * @throws TskDataException
      * @throws OsAccountManager.NotUserSIDException
      */
-    private void createOrUpdateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException, OsAccountManager.NotUserSIDException {
+    private void createOrUpdateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException, NotUserSIDException {
         OsAccountManager accountMgr = tskCase.getOsAccountManager();
         HostManager hostMrg = tskCase.getHostManager();
         Host host = hostMrg.getHost((DataSource)dataSource);
 
-        Optional<OsAccount> optional = accountMgr.getWindowsAccount(sid, null, null, host);
+        Optional<OsAccount> optional = accountMgr.getWindowsOsAccount(sid, null, null, host);
         OsAccount osAccount;
         if (!optional.isPresent()) {
-            osAccount = accountMgr.createWindowsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+            osAccount = accountMgr.createWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
             accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
         } else {
             osAccount = optional.get();
@@ -2241,7 +1989,7 @@ class ExtractRegistry extends Extract {
             osAccount.addAttributes(attributes);
         }
 
-        accountMgr.updateAccount(osAccount);
+        accountMgr.updateOsAccount(osAccount);
     }
 
     /**
@@ -2316,6 +2064,11 @@ class ExtractRegistry extends Extract {
                         parseRegRipTime(value),
                         osAccount, host, regFile));
             }
+        }
+        
+        value = userInfo.get(USERNAME_KEY); 
+        if (value != null && !value.isEmpty()) {
+            osAccount.setLoginName(value);
         }
 
         value = userInfo.get(LOGIN_COUNT_KEY);
@@ -2411,7 +2164,7 @@ class ExtractRegistry extends Extract {
         }
 
         osAccount.addAttributes(attributes);
-        tskCase.getOsAccountManager().updateAccount(osAccount);
+        tskCase.getOsAccountManager().updateOsAccount(osAccount);
     }
     
     /**

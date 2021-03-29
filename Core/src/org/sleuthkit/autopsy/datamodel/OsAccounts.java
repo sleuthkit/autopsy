@@ -144,10 +144,10 @@ public final class OsAccounts implements AutopsyVisitableItem {
             if(skCase != null) {
                 try {
                     if (filteringDSObjId == 0) {
-                        list.addAll(skCase.getOsAccountManager().getAccounts());
+                        list.addAll(skCase.getOsAccountManager().getOsAccounts());
                     } else {
                         Host host = skCase.getHostManager().getHost(skCase.getDataSource(filteringDSObjId));
-                        list.addAll(skCase.getOsAccountManager().getAccounts(host));
+                        list.addAll(skCase.getOsAccountManager().getOsAccounts(host));
                     }
                 } catch (TskCoreException | TskDataException ex) {
                     logger.log(Level.SEVERE, "Unable to retrieve list of OsAccounts for case", ex);
