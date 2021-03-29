@@ -1139,7 +1139,7 @@ class ExtractRegistry extends Extract {
             HostManager hostMrg = tskCase.getHostManager();
             Host host = hostMrg.getHost((DataSource)dataSource);
 
-            List<OsAccount> existingAccounts = accountMgr.getAccounts(host);
+            List<OsAccount> existingAccounts = accountMgr.getOsAccounts(host);
             for(OsAccount osAccount: existingAccounts) {
                 Optional<String> optional = osAccount.getAddr();
                 if(!optional.isPresent()) {
@@ -1155,7 +1155,7 @@ class ExtractRegistry extends Extract {
             
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
-                OsAccount osAccount = accountMgr.createWindowsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+                OsAccount osAccount = accountMgr.createWindowsOsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
                 accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
                 updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
@@ -2221,10 +2221,10 @@ class ExtractRegistry extends Extract {
         HostManager hostMrg = tskCase.getHostManager();
         Host host = hostMrg.getHost((DataSource)dataSource);
 
-        Optional<OsAccount> optional = accountMgr.getWindowsAccount(sid, null, null, host);
+        Optional<OsAccount> optional = accountMgr.getWindowsOsAccount(sid, null, null, host);
         OsAccount osAccount;
         if (!optional.isPresent()) {
-            osAccount = accountMgr.createWindowsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+            osAccount = accountMgr.createWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
             accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
         } else {
             osAccount = optional.get();
@@ -2241,7 +2241,7 @@ class ExtractRegistry extends Extract {
             osAccount.addAttributes(attributes);
         }
 
-        accountMgr.updateAccount(osAccount);
+        accountMgr.updateOsAccount(osAccount);
     }
 
     /**
@@ -2411,7 +2411,7 @@ class ExtractRegistry extends Extract {
         }
 
         osAccount.addAttributes(attributes);
-        tskCase.getOsAccountManager().updateAccount(osAccount);
+        tskCase.getOsAccountManager().updateOsAccount(osAccount);
     }
     
     /**

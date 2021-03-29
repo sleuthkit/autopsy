@@ -113,7 +113,7 @@ final class RAOsAccountCache {
      */
     private void buildAccountMap(SleuthkitCase tskCase, Host host) throws TskCoreException {
         BlackboardAttribute.Type homeDir = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HOME_DIR);
-        List<OsAccount> accounts = tskCase.getOsAccountManager().getAccounts(host);
+        List<OsAccount> accounts = tskCase.getOsAccountManager().getOsAccounts(host);
 
         for (OsAccount account : accounts) {
             List<OsAccountAttribute> attributeList = account.getOsAccountAttributes();
