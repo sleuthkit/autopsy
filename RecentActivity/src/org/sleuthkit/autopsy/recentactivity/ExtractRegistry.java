@@ -1164,8 +1164,7 @@ class ExtractRegistry extends Extract {
             
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
-                OsAccount osAccount;
-                osAccount = accountMgr.createWindowsAccount(userInfo.get(SID_KEY), null, domainName, host, domainName != null ? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
+                OsAccount osAccount = accountMgr.createWindowsAccount(userInfo.get(SID_KEY), null, domainName, host, domainName != null ? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
                 accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
                 updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
