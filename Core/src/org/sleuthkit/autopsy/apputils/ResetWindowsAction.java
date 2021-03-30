@@ -81,19 +81,18 @@ public final class ResetWindowsAction extends CallableSystemAction {
                         }
                     }
                 });
-                if (Case.isCaseOpen()) {
-                    try {
+                try {
+                    if (Case.isCaseOpen()) {
                         Case.closeCurrentCase();
-                        // The method markForRestart can not be undone once it is called.
-                        LifecycleManager.getDefault().markForRestart();
-                        //we need to call exit last 
-                        LifecycleManager.getDefault().exit();
-                    } catch (CaseActionException ex) {
-                        logger.log(Level.WARNING, Bundle.ResetWindowAction_caseCloseFailure_text(), ex);
-                        MessageNotifyUtil.Message.show(Bundle.ResetWindowAction_caseCloseFailure_text(), MessageNotifyUtil.MessageType.ERROR);
                     }
+                    // The method markForRestart can not be undone once it is called.
+                    LifecycleManager.getDefault().markForRestart();
+                    //we need to call exit last 
+                    LifecycleManager.getDefault().exit();
+                } catch (CaseActionException ex) {
+                    logger.log(Level.WARNING, Bundle.ResetWindowAction_caseCloseFailure_text(), ex);
+                    MessageNotifyUtil.Message.show(Bundle.ResetWindowAction_caseCloseFailure_text(), MessageNotifyUtil.MessageType.ERROR);
                 }
-
             }
         });
     }
@@ -104,6 +103,7 @@ public final class ResetWindowsAction extends CallableSystemAction {
      * @param value whether to enable this action or not
      */
     @Override
+
     public void setEnabled(boolean value) {
         super.setEnabled(value);
     }
