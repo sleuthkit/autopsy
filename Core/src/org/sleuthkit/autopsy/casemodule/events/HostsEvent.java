@@ -33,6 +33,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class HostsEvent extends TskDataModelChangeEvent<Host> {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Retrieves a list of ids from a list of hosts.
      *
