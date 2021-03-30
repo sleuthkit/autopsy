@@ -1716,7 +1716,7 @@ class ExtractRegistry extends Extract {
     private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException {
         Map<String, String> map = new HashMap<>();
 
-        for(OsAccount account: tskCase.getOsAccountManager().getAccounts(((DataSource)dataSource).getHost())) {
+        for(OsAccount account: tskCase.getOsAccountManager().getOsAccounts(((DataSource)dataSource).getHost())) {
             Optional<String> userName = account.getLoginName();
             map.put(account.getName(), userName.isPresent() ? userName.get() : "");
         }
