@@ -120,7 +120,7 @@ final class RAOsAccountCache {
 
             for (OsAccountAttribute attribute : attributeList) {
                 if (attribute.getHostId().isPresent()
-                        && attribute.getHostId().get().equals(host.getId())
+                        && attribute.getHostId().get().equals(host.getHostId())
                         && attribute.getAttributeType().equals(homeDir)) {
                     accountCache.put(attribute.getValueString(), account);
                 }

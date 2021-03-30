@@ -51,7 +51,7 @@ public class HostGrouping implements AutopsyVisitableItem, Comparable<HostGroupi
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.host == null ? 0 : this.host.getId());
+        return Objects.hashCode(this.host == null ? 0 : this.host.getHostId());
     }
 
     @Override
@@ -66,8 +66,8 @@ public class HostGrouping implements AutopsyVisitableItem, Comparable<HostGroupi
             return false;
         }
         final HostGrouping other = (HostGrouping) obj;
-        long thisId = (this.getHost() == null) ? 0 : this.getHost().getId();
-        long otherId = (other.getHost() == null) ? 0 : other.getHost().getId();
+        long thisId = (this.getHost() == null) ? 0 : this.getHost().getHostId();
+        long otherId = (other.getHost() == null) ? 0 : other.getHost().getHostId();
         return thisId == otherId;
     }
 
