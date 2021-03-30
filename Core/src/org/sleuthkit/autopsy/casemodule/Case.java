@@ -528,8 +528,8 @@ public class Case {
         
         @Subscribe 
         public void publishOsAccountDeletedEvent(OsAccountsDeleteEvent event) {
-            for(OsAccount account: event.getOsAcounts()) {
-                eventPublisher.publish(new OsAccountRemovedEvent(account));
+            for(Long accountId: event.getOsAcountObjectIds()) {
+                eventPublisher.publish(new OsAccountRemovedEvent(accountId));
             }
         }        
         
@@ -1802,8 +1802,8 @@ public class Case {
         eventPublisher.publish(new OsAccountChangedEvent(account));
     }
     
-    public void notifyOsAccountRemoved(OsAccount account) {
-        eventPublisher.publish(new OsAccountRemovedEvent(account));
+    public void notifyOsAccountRemoved(Long osAccountObjectId) {
+        eventPublisher.publish(new OsAccountRemovedEvent(osAccountObjectId));
     }
     
     /**

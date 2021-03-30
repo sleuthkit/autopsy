@@ -79,7 +79,7 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 41 * hash + Objects.hashCode(this.host == null ? 0 : this.host.getId());
+            hash = 41 * hash + Objects.hashCode(this.host == null ? 0 : this.host.getHostId());
             return hash;
         }
 
@@ -96,8 +96,8 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
             }
             final HostListItem other = (HostListItem) obj;
             if (!Objects.equals(
-                    this.host == null ? 0 : this.host.getId(),
-                    other.host == null ? 0 : other.host.getId())) {
+                    this.host == null ? 0 : this.host.getHostId(),
+                    other.host == null ? 0 : other.host.getHostId())) {
 
                 return false;
             }

@@ -837,7 +837,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @param moduleDisplayName The diplay name of the ingest module.
      * @param duration
      */
-    private void incrementModuleRunTime(String moduleDisplayName, Long duration) {
+    void incrementModuleRunTime(String moduleDisplayName, Long duration) {
         if (moduleDisplayName.equals("IDLE")) { //NON-NLS
             return;
         }

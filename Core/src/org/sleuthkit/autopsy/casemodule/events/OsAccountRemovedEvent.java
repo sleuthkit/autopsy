@@ -19,16 +19,19 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
  *  Event published when an OsAccount is deleted.
+ * 
+ * oldValue will contain the objectId of the account that was removed. newValue
+ * will be null.
  */
-public final class OsAccountRemovedEvent extends OsAccountEvent {
+public final class OsAccountRemovedEvent extends AutopsyEvent {
 
     private static final long serialVersionUID = 1L;
     
-    public OsAccountRemovedEvent(OsAccount account) {
-        super(Case.Events.OS_ACCOUNT_REMOVED.toString(), account);
+    public OsAccountRemovedEvent(Long osAccountObjectId) {
+        super(Case.Events.OS_ACCOUNT_REMOVED.toString(), osAccountObjectId, null);
     }  
 }
