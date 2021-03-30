@@ -541,7 +541,7 @@ final class ChromeCacheExtractor {
         Optional<Long> optional = cacheEntryFile.getOsAccountObjectId();
         OsAccount account = null;
         if(optional.isPresent()) {
-            account = currentCase.getSleuthkitCase().getOsAccountManager().getOsAccount(optional.get());
+            account = currentCase.getSleuthkitCase().getOsAccountManager().getOsAccountByObjectId(optional.get());
         }
         BlackboardArtifact webCacheArtifact = cacheEntryFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_CACHE), webAttr, account);
         artifactsAdded.add(webCacheArtifact);

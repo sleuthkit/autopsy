@@ -78,7 +78,7 @@ final class RAOsAccountCache {
             return getAccountForPath(file.getParentPath());
         }
 
-        OsAccount osAccount = Case.getCurrentCase().getSleuthkitCase().getOsAccountManager().getOsAccount(optional.get());
+        OsAccount osAccount = Case.getCurrentCase().getSleuthkitCase().getOsAccountManager().getOsAccountByObjectId(optional.get());
         if (osAccount.getName().equals("S-1-5-32-544")) {
             return getAccountForPath(file.getParentPath());
         }
