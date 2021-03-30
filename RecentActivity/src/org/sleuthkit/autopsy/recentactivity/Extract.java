@@ -535,7 +535,7 @@ abstract class Extract {
             if(osAccountCache == null) {
                 Optional<Long> accountId = ((AbstractFile)content).getOsAccountObjectId();
                 if(accountId.isPresent()) {
-                    return Optional.ofNullable(tskCase.getOsAccountManager().getOsAccount(accountId.get()));
+                    return Optional.ofNullable(tskCase.getOsAccountManager().getOsAccountByObjectId(accountId.get()));
                 }
                 return Optional.empty();
             } 

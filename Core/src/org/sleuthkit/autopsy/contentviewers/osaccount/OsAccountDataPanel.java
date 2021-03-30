@@ -362,7 +362,7 @@ public class OsAccountDataPanel extends JPanel {
             OsAccountManager osAccountManager = Case.getCurrentCase().getSleuthkitCase().getOsAccountManager();
             
             if(account == null) {
-                account = osAccountManager.getOsAccount(accountId);
+                account = osAccountManager.getOsAccountByObjectId(accountId);
             }
             
             List<Host> hosts = osAccountManager.getHosts(account);
