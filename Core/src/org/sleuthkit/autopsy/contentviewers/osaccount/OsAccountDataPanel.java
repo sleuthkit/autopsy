@@ -82,6 +82,24 @@ public class OsAccountDataPanel extends JPanel {
      * @param account OsAccount to display, if null is passed the panel will
      *                appear blank.
      */
+//    void setOsAccount(OsAccount account) {
+    void setOsAccountId(Long osAccountId) {
+        removeAll();
+        revalidate();
+
+        if (osAccountId != null) {
+            setLayout(new BorderLayout());
+            add(new JLabel("Loading OsAccount Data..."), BorderLayout.NORTH);
+
+            if (dataFetcher != null && !dataFetcher.isDone()) {
+                dataFetcher.cancel(true);
+            }
+
+            dataFetcher = new PanelDataFetcher(osAccountId);
+            dataFetcher.execute();
+        }
+    }
+    
     void setOsAccount(OsAccount account) {
         removeAll();
         revalidate();
@@ -319,15 +337,22 @@ public class OsAccountDataPanel extends JPanel {
      */
     private class PanelDataFetcher extends SwingWorker<WorkerResults, Void> {
 
-        private final OsAccount account;
+        private final Long accountId;
+        private OsAccount account;
 
         /**
          * Construct a new worker for the given account.
          *
          * @param account
          */
+        PanelDataFetcher(Long accountId) {
+            this.accountId = accountId;
+            this.account = null;
+        }
+        
         PanelDataFetcher(OsAccount account) {
             this.account = account;
+            this.accountId = null;
         }
 
         @Override
@@ -335,6 +360,11 @@ public class OsAccountDataPanel extends JPanel {
             Map<Host, List<OsAccountAttribute>> hostMap = new HashMap<>();
             Map<Host, DataSource> instanceMap = new HashMap<>();
             OsAccountManager osAccountManager = Case.getCurrentCase().getSleuthkitCase().getOsAccountManager();
+            
+            if(account == null) {
+                account = osAccountManager.getOsAccountByObjectId(accountId);
+            }
+            
             List<Host> hosts = osAccountManager.getHosts(account);
             List<OsAccountAttribute> attributeList = account.getOsAccountAttributes();
 
@@ -362,7 +392,7 @@ public class OsAccountDataPanel extends JPanel {
 
                     // Add attribute lists to the hostMap 
                     for (Host host : hosts) {
-                        List<OsAccountAttribute> atList = idMap.get(host.getId());
+                        List<OsAccountAttribute> atList = idMap.get(host.getHostId());
                         if (atList != null) {
                             hostMap.put(host, atList);
                         }

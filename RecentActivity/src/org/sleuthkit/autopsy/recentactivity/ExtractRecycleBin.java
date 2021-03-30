@@ -340,7 +340,7 @@ final class ExtractRecycleBin extends Extract {
     private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException {
         Map<String, String> userNameMap = new HashMap<>();
         
-         for(OsAccount account: tskCase.getOsAccountManager().getAccounts(((DataSource)dataSource).getHost())) {
+         for(OsAccount account: tskCase.getOsAccountManager().getOsAccounts(((DataSource)dataSource).getHost())) {
             Optional<String> userName = account.getLoginName();
             userNameMap.put(account.getName(), userName.isPresent() ? userName.get() : "");
         }
