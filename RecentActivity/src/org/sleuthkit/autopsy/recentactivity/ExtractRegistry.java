@@ -106,6 +106,10 @@ import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamExce
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
+import com.williballenthin.rejistry.RegistryHiveFile;
+import com.williballenthin.rejistry.RegistryKey;
+import com.williballenthin.rejistry.RegistryParseException;
+import com.williballenthin.rejistry.RegistryValue;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -178,6 +182,9 @@ class ExtractRegistry extends Extract {
     private IngestJobContext context;
     private Map<String, String> userNameMap;
 
+    private String hostName = null;
+    private String domainName = null;
+    
     private static final String SHELLBAG_ARTIFACT_NAME = "RA_SHELL_BAG"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_LAST_WRITE = "RA_SHELL_BAG_LAST_WRITE"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_KEY = "RA_SHELL_BAG_KEY"; //NON-NLS
@@ -1107,6 +1114,8 @@ class ExtractRegistry extends Extract {
      * @return true if successful, false if parsing failed at some point
      */
     private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile) {
+        parseSystemHostDomain();
+        
         File regfile = new File(regFilePath);
         List<BlackboardArtifact> newArtifacts = new ArrayList<>();
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(regfile))) {
@@ -1155,7 +1164,8 @@ class ExtractRegistry extends Extract {
             
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
-                OsAccount osAccount = accountMgr.createWindowsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+                OsAccount osAccount;
+                osAccount = accountMgr.createWindowsAccount(userInfo.get(SID_KEY), null, domainName, host, domainName != null ? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
                 accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
                 updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
@@ -1214,6 +1224,93 @@ class ExtractRegistry extends Extract {
             }
         }
         return false;
+    }
+    
+    /**
+     *  Finds the Host and Domain information from the registry.
+     */
+    private void parseSystemHostDomain() {
+        List<AbstractFile> systemFiles = new ArrayList<>();
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+
+        // find the system hives', process this first so we can map the user id's and sids for later use
+        try {
+            systemFiles = fileManager.findFiles(dataSource, "system", "/system32/config"); //NON-NLS
+        } catch (TskCoreException ex) {
+		    // Fix this message
+            String msg = NbBundle.getMessage(this.getClass(),
+                    "ExtractRegistry.findRegFiles.errMsg.errReadingFile", "sam");
+            logger.log(Level.WARNING, msg, ex);
+            this.addErrorMessage(this.getName() + ": " + msg);
+        }
+
+        for (AbstractFile systemHive: systemFiles) {
+            if (systemHive.getParentPath().toLowerCase().endsWith("/system32/config/")) {
+                
+                String systemFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + systemHive.getName();
+                File systemFileNameLocalFile = new File(systemFileNameLocal);
+        
+                try {
+                    ContentUtils.writeToFile(systemHive, systemFileNameLocalFile, context::dataSourceIngestIsCancelled);
+                    RegistryHiveFile systemRegFile = new RegistryHiveFile(systemFileNameLocalFile);
+                    RegistryKey currentKey = findRegistryKey(systemRegFile, "ControlSet001/Services/Tcpip/Parameters");
+                    if (currentKey == null) {
+                        return;
+                    }
+                    List<RegistryValue> parameterList = currentKey.getValueList();
+                    for (RegistryValue parameter : parameterList) {
+                        if (parameter.getName().toLowerCase().equals("hostname")) {
+                           hostName = parameter.getValue().getAsString();
+                           continue;
+                        }
+                        if (parameter.getName().toLowerCase().equals("domain")) {
+                           domainName = parameter.getValue().getAsString();
+                           continue;
+                        }
+                    }                    
+                } catch (ReadContentInputStreamException ex) {
+                    logger.log(Level.WARNING, String.format("Error reading registry file '%s' (id=%d).",
+                            systemHive.getName(), systemHive.getId()), ex); //NON-NLS
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                            this.getName(), systemHive.getName()));
+                    continue;
+                } catch (RegistryParseException ex) {
+                   continue; 
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
+                            systemFileNameLocal, systemHive.getName(), systemHive.getId()), ex); //NON-NLS
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                    this.getName(), systemHive.getName()));
+                    continue;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Search's a registry hive for the specified key
+     * 
+     * @param registryHiveFile Hive to parse
+     * @param registryKey registry key to find in hive
+     * @return registry key or null if it cannot be found
+     */
+    private RegistryKey findRegistryKey(RegistryHiveFile registryHiveFile, String registryKey) {
+        
+        RegistryKey currentKey;
+        try {
+            RegistryKey rootKey = registryHiveFile.getRoot();
+            String regKeyList[] = registryKey.split("/");
+            currentKey = rootKey;
+            for (String key : regKeyList) {
+                currentKey = currentKey.getSubkey(key);
+            }
+        } catch (RegistryParseException ex) {
+            return null;
+        }
+        return currentKey;   
+
     }
     
     /**
@@ -2224,7 +2321,7 @@ class ExtractRegistry extends Extract {
         Optional<OsAccount> optional = accountMgr.getWindowsAccount(sid, null, null, host);
         OsAccount osAccount;
         if (!optional.isPresent()) {
-            osAccount = accountMgr.createWindowsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+            osAccount = accountMgr.createWindowsAccount(sid, userName != null && userName.isEmpty() ? null : userName, domainName, host, domainName != null ? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
             accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
         } else {
             osAccount = optional.get();

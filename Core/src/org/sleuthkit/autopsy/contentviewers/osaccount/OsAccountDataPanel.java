@@ -412,11 +412,10 @@ public class OsAccountDataPanel extends JPanel {
                     hostDataMap.forEach((K, V) -> data.add(buildHostData(K, V)));
                 }
 
-                // TODO - load realm on background thread
-                //OsAccountRealm realm = account.getRealm();
-                //if (realm != null) {
-                //    data.add(buildRealmProperties(realm));
-                //}
+                OsAccountRealm realm = account.getRealm();
+                if (realm != null) {
+                    data.add(buildRealmProperties(realm));
+                }
 
                 Map<Host, DataSource> instanceMap = results.getDataSourceMap();
                 if (!instanceMap.isEmpty()) {
