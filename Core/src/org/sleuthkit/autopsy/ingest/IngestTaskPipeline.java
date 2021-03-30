@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  */
 abstract class IngestTaskPipeline<T extends IngestTask> {
 
-    private static final IngestManager ingestManager = IngestManager.getInstance();
     private final IngestJobPipeline ingestJobPipeline;
     private final List<IngestModuleTemplate> moduleTemplates;
     private final List<PipelineModule<T>> modules;

@@ -52,7 +52,7 @@ public class PersonGrouping implements AutopsyVisitableItem, Comparable<PersonGr
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.person == null ? 0 : this.person.getId());
+        return Objects.hashCode(this.person == null ? 0 : this.person.getPersonId());
     }
 
     @Override
@@ -67,8 +67,8 @@ public class PersonGrouping implements AutopsyVisitableItem, Comparable<PersonGr
             return false;
         }
         final PersonGrouping other = (PersonGrouping) obj;
-        long thisId = (this.getPerson() == null) ? 0 : this.getPerson().getId();
-        long otherId = (other.getPerson() == null) ? 0 : other.getPerson().getId();
+        long thisId = (this.getPerson() == null) ? 0 : this.getPerson().getPersonId();
+        long otherId = (other.getPerson() == null) ? 0 : other.getPerson().getPersonId();
         return thisId == otherId;
     }
 

@@ -533,7 +533,11 @@ abstract class Extract {
     Optional<OsAccount> getOsAccount(Content content) throws TskCoreException {
         if(content instanceof AbstractFile) {
             if(osAccountCache == null) {
-                return ((AbstractFile)content).getOsAccount();
+                Optional<Long> accountId = ((AbstractFile)content).getOsAccountObjectId();
+                if(accountId.isPresent()) {
+                    return Optional.ofNullable(tskCase.getOsAccountManager().getOsAccountByObjectId(accountId.get()));
+                }
+                return Optional.empty();
             } 
 
             return osAccountCache.getOsAccount(((AbstractFile)content));
