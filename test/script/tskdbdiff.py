@@ -445,6 +445,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
     os_account_attr_index = line.find('INSERT INTO "tsk_os_account_attributes"') > -1 or line.find('INSERT INTO tsk_os_account_attributes') > -1
     os_account_instances_index = line.find('INSERT INTO "tsk_os_account_instances"') > -1 or line.find('INSERT INTO tsk_os_account_instances') > -1
+    data_artifacts_index = line.find('INSERT INTO "tsk_data_artifacts"') > -1 or line.find('INSERT INTO tsk_data_artifacts') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
     no_space_parens = parens.replace(" ", "")
@@ -669,6 +670,19 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         os_account_id = int(fields_list[1])
         fields_list[1] = accounts_table[os_account_id]
         newLine = ('INSERT INTO "tsk_os_account_instances" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
+        return newLine
+    elif data_artifacts_index:
+        art_obj_id = int(fields_list[0])
+        if art_obj_id in files_table.keys():
+            fields_list[0] = files_table[art_obj_id]
+        else:
+            fields_list[0] = 'Artifact Object ID Omitted'
+        account_obj_id = int(fields_list[1])
+        if account_obj_id in files_table.keys():
+            fields_list[1] = files_table[account_obj_id]
+        else:
+            fields_list[1] = 'Account Object ID Omitted'
+        newLine = ('INSERT INTO "tsk_data_artifacts" VALUES(' + ','.join(fields_list[:]) + ');') # remove ids
         return newLine
     else:
         return line
