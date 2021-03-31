@@ -70,7 +70,7 @@ public final class IconsUtil {
         } else if (typeID == ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY.getTypeID()) {
             imageFile = "speeddialentry.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()) {
-            imageFile = "bluetooth.png"; //NON-NLS
+            imageFile = "Bluetooth.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()) {
             imageFile = "gpsfav.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()) {

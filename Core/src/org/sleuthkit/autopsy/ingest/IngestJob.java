@@ -63,7 +63,7 @@ public final class IngestJob {
             return displayName;
         }
     }
-    
+
     /**
      * Ingest job mode.
      */
@@ -71,7 +71,7 @@ public final class IngestJob {
         BATCH,
         STREAMING
     }
-    
+
     private static final Logger logger = Logger.getLogger(IngestJob.class.getName());
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
@@ -113,12 +113,12 @@ public final class IngestJob {
         this(Arrays.asList(dataSource), settings);
         this.files.addAll(files);
     }
-    
+
     /**
-     * Constructs an ingest job that analyzes one data source, possibly using
-     * an ingest stream.
+     * Constructs an ingest job that analyzes one data source, possibly using an
+     * ingest stream.
      *
-     * @param settings   The ingest job settings.
+     * @param settings The ingest job settings.
      */
     IngestJob(DataSource dataSource, Mode ingestMode, IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
@@ -149,10 +149,10 @@ public final class IngestJob {
     boolean hasIngestPipeline() {
         return (!settings.getEnabledIngestModuleTemplates().isEmpty());
     }
-    
+
     /**
      * Add a set of files (by object ID) to be ingested.
-     * 
+     *
      * @param fileObjIds the list of file IDs
      */
     void addStreamingIngestFiles(List<Long> fileObjIds) {
@@ -164,7 +164,7 @@ public final class IngestJob {
         IngestJobPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
         streamingIngestPipeline.addStreamingIngestFiles(fileObjIds);
     }
-    
+
     /**
      * Start data source processing for streaming ingest.
      */
@@ -185,7 +185,7 @@ public final class IngestJob {
      * @return A collection of ingest module start up errors, empty on success.
      */
     List<IngestModuleError> start() {
-	
+
         /*
          * Set up the pipeline(s)
          */
@@ -199,11 +199,11 @@ public final class IngestJob {
             this.ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
         }
         incompleteJobsCount.set(ingestJobPipelines.size());
-	
+
         /*
          * Try to start each data source ingest job. Note that there is an
-         * assumption here that if there is going to be a module
-         * startup failure, it will be for the first ingest job pipeline.
+         * assumption here that if there is going to be a module startup
+         * failure, it will be for the first ingest job pipeline.
          *
          * TODO (RC): Consider separating module start up from pipeline startup
          * so that no processing is done if this assumption is false.
@@ -229,14 +229,14 @@ public final class IngestJob {
 
         return errors;
     }
-    
+
     /**
      * Get the ingest mode for this job (batch or streaming).
-     * 
+     *
      * @return the ingest mode.
      */
     Mode getIngestMode() {
-	return ingestMode;
+        return ingestMode;
     }
 
     /**
@@ -251,8 +251,8 @@ public final class IngestJob {
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
-     * @param getIngestTasksSnapshot 
-     * 
+     * @param getIngestTasksSnapshot
+     *
      * @return The snapshot.
      */
     public ProgressSnapshot getSnapshot(boolean getIngestTasksSnapshot) {
@@ -508,8 +508,9 @@ public final class IngestJob {
          * used to get basic information about the module and to request
          * cancellation of the module.
          *
-         * @param ingestJobPipeline    The ingestJobPipeline that owns the data source level ingest module.
-         * @param module The data source level ingest module.
+         * @param ingestJobPipeline The ingestJobPipeline that owns the data
+         *                          source level ingest module.
+         * @param module            The data source level ingest module.
          */
         private DataSourceIngestModuleHandle(IngestJobPipeline ingestJobPipeline, DataSourceIngestPipeline.DataSourcePipelineModule module) {
             this.ingestJobPipeline = ingestJobPipeline;
