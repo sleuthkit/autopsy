@@ -96,6 +96,7 @@ import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountAttribute;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.OsAccountManager;
+import org.sleuthkit.datamodel.OsAccountManager.AccountUpdateStatus;
 import org.sleuthkit.datamodel.OsAccountManager.NotUserSIDException;
 import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
@@ -1977,7 +1978,8 @@ class ExtractRegistry extends Extract {
         } else {
             osAccount = optional.get();
             if (userName != null && !userName.isEmpty()) {
-                osAccount.setLoginName(userName);
+                AccountUpdateStatus updateStatus = accountMgr.updateOsAccount(osAccount, null, userName, null, null, null, null);
+                osAccount = updateStatus.getUpdatedAccount().orElse(osAccount);
             }
         }
 
@@ -1986,10 +1988,10 @@ class ExtractRegistry extends Extract {
             String dir = homeDir.replaceFirst("^(%\\w*%)", "");
             dir = dir.replace("\\", "/");
             attributes.add(createOsAccountAttribute(TSK_HOME_DIR, dir, osAccount, host, file));
-            osAccount.addAttributes(attributes);
+            
+            accountMgr.addOsAccountAttributes(osAccount, attributes);
         }
 
-        accountMgr.updateOsAccount(osAccount);
     }
 
     /**
@@ -2048,12 +2050,11 @@ class ExtractRegistry extends Extract {
 
         List<OsAccountAttribute> attributes = new ArrayList<>();
 
+        Long creationTime = null;
+        
         String value = userInfo.get(ACCOUNT_CREATED_KEY);
         if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            Long time = parseRegRipTime(value);
-            if (time != null) {
-                osAccount.setCreationTime(time);
-            }
+            creationTime = parseRegRipTime(value);
         }
 
         value = userInfo.get(LAST_LOGIN_KEY);
@@ -2066,9 +2067,10 @@ class ExtractRegistry extends Extract {
             }
         }
         
+        String loginName = null;
         value = userInfo.get(USERNAME_KEY); 
         if (value != null && !value.isEmpty()) {
-            osAccount.setLoginName(value);
+            loginName = value;
         }
 
         value = userInfo.get(LOGIN_COUNT_KEY);
@@ -2102,13 +2104,14 @@ class ExtractRegistry extends Extract {
         }
 
         // FULL_NAME_KEY and NAME_KEY appear to be the same value.
+        String fullName = null;
         value = userInfo.get(FULL_NAME_KEY);
         if (value != null && !value.isEmpty()) {
-            osAccount.setFullName(value);
+            fullName = value;
         } else {
             value = userInfo.get(NAME_KEY);
             if (value != null && !value.isEmpty()) {
-                osAccount.setFullName(value);
+                fullName = value;
             }
         }
 
@@ -2163,8 +2166,11 @@ class ExtractRegistry extends Extract {
                     groups, osAccount, host, regFile));
         }
 
-        osAccount.addAttributes(attributes);
-        tskCase.getOsAccountManager().updateOsAccount(osAccount);
+        // add the attributes to account.
+        tskCase.getOsAccountManager().addOsAccountAttributes(osAccount, attributes);
+        
+        // update the loginname, fullname, creationdate
+        tskCase.getOsAccountManager().updateOsAccount(osAccount, null, loginName, fullName, null, null, creationTime);
     }
     
     /**
