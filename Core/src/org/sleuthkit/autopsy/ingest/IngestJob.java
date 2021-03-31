@@ -302,7 +302,7 @@ public final class IngestJob {
          * possible because this method can be called in a thread that acquires
          * the ingest manager's ingest jobs list lock and then tries to acquire
          * the ingest pipeline stage transition lock, while an ingest thread
-         * that has acquired the stage transition lock then tries to acquire the
+         * that has acquired the stage transition lock is trying to acquire the
          * ingest manager's ingest jobs list lock.
          */
         new Thread(() -> {
