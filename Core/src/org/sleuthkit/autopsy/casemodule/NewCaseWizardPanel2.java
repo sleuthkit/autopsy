@@ -56,7 +56,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
         if (component == null) {
             component = new NewCaseVisualPanel2();
         } else {
-            component.refreshCaseDetailsFields();
+//            component.refreshCaseDetailsFields();
         }
 
         return component;
@@ -137,6 +137,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
     @Override
     public void readSettings(WizardDescriptor settings) {
         NewCaseVisualPanel2 panel = getComponent();
+        panel.refreshCaseDetailsFields();
         try {
             String lastExaminerName = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_NAME);
             String lastExaminerPhone = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_PHONE);
