@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.OsAccountManager;
 import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel for displaying the properties of an OsAccount.
@@ -385,11 +386,12 @@ public class OsAccountDataPanel extends JPanel {
             Map<Host, DataSource> instanceMap = new HashMap<>();
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             OsAccountManager osAccountManager = skCase.getOsAccountManager();
-            OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmById(account.getRealmId());
             
             if(account == null) {
                 account = osAccountManager.getOsAccountByObjectId(accountId);
             }
+            
+            OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmById(account.getRealmId());
             
             List<Host> hosts = osAccountManager.getHosts(account);
             List<OsAccountAttribute> attributeList = account.getOsAccountAttributes();
