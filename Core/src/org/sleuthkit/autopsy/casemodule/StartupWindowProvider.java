@@ -18,12 +18,16 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
-import org.netbeans.spi.sendopts.OptionProcessor;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.apputils.ResetWindowsAction;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineIngestManager;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineOpenCaseManager;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
@@ -65,11 +69,11 @@ public class StartupWindowProvider implements StartupWindowInterface {
         if (startupWindowToUse == null) {
             // first check whether we are running from command line
             if (isRunningFromCommandLine()) {
-                
+
                 String defaultArg = getDefaultArgument();
-                if(defaultArg != null) {
-                   new CommandLineOpenCaseManager(defaultArg).start(); 
-                   return;
+                if (defaultArg != null) {
+                    new CommandLineOpenCaseManager(defaultArg).start();
+                    return;
                 } else {
                     // Autopsy is running from command line
                     logger.log(Level.INFO, "Running from command line"); //NON-NLS
@@ -84,35 +88,61 @@ public class StartupWindowProvider implements StartupWindowInterface {
                 checkSolr();
             }
 
+            File openPreviousCaseFile = new File(ResetWindowsAction.getCaseToReopenFilePath());
+            String caseFilePath = "";
+            if (openPreviousCaseFile.exists()) {
+                try {
+                    Charset encoding = null;
+                    caseFilePath = FileUtils.readFileToString(openPreviousCaseFile, encoding);
+                    if (new File(caseFilePath).exists()) {
+                        Case.openAsCurrentCase(caseFilePath);
+                        FileUtils.forceDelete(openPreviousCaseFile);
+                        //the case is now open we do not want to display the start up windows
+                        return;
+                    } else {
+                        logger.log(Level.WARNING, "Unable to open previously open case because metadata file not found at: {0}", caseFilePath);
+                    }
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Unable to open file containing path " + ResetWindowsAction.getCaseToReopenFilePath() + " to previously open case, will not open previous case.", ex);
+                } catch (CaseActionException ex) {
+                    logger.log(Level.WARNING, "Unable to open previously open case with metadata file: " + caseFilePath, ex);
+                }
+            }
             //discover the registered windows
             Collection<? extends StartupWindowInterface> startupWindows
                     = Lookup.getDefault().lookupAll(StartupWindowInterface.class);
 
             int windowsCount = startupWindows.size();
-            if (windowsCount == 1) {
-                startupWindowToUse = startupWindows.iterator().next();
-                logger.log(Level.INFO, "Will use the default startup window: " + startupWindowToUse.toString()); //NON-NLS
-            } else if (windowsCount == 2) {
-                //pick the non default one
-                Iterator<? extends StartupWindowInterface> it = startupWindows.iterator();
-                while (it.hasNext()) {
-                    StartupWindowInterface window = it.next();
-                    if (!org.sleuthkit.autopsy.casemodule.StartupWindow.class.isInstance(window)) {
-                        startupWindowToUse = window;
-                        logger.log(Level.INFO, "Will use the custom startup window: " + startupWindowToUse.toString()); //NON-NLS
-                        break;
+            switch (windowsCount) {
+                case 1:
+                    startupWindowToUse = startupWindows.iterator().next();
+                    logger.log(Level.INFO, "Will use the default startup window: {0}", startupWindowToUse.toString()); //NON-NLS
+                    break;
+                case 2: {
+                    //pick the non default one
+                    Iterator<? extends StartupWindowInterface> it = startupWindows.iterator();
+                    while (it.hasNext()) {
+                        StartupWindowInterface window = it.next();
+                        if (!org.sleuthkit.autopsy.casemodule.StartupWindow.class.isInstance(window)) {
+                            startupWindowToUse = window;
+                            logger.log(Level.INFO, "Will use the custom startup window: {0}", startupWindowToUse.toString()); //NON-NLS
+                            break;
+                        }
                     }
+                    break;
                 }
-            } else {
-                // select first non-Autopsy start up window
-                Iterator<? extends StartupWindowInterface> it = startupWindows.iterator();
-                while (it.hasNext()) {
-                    StartupWindowInterface window = it.next();
-                    if (!window.getClass().getCanonicalName().startsWith("org.sleuthkit.autopsy")) {
-                        startupWindowToUse = window;
-                        logger.log(Level.INFO, "Will use the custom startup window: " + startupWindowToUse.toString()); //NON-NLS
-                        break;
+                default: {
+                    // select first non-Autopsy start up window
+                    Iterator<? extends StartupWindowInterface> it = startupWindows.iterator();
+                    while (it.hasNext()) {
+                        StartupWindowInterface window = it.next();
+                        if (!window.getClass().getCanonicalName().startsWith("org.sleuthkit.autopsy")) {
+                            startupWindowToUse = window;
+                            logger.log(Level.INFO, "Will use the custom startup window: {0}", startupWindowToUse.toString()); //NON-NLS
+                            break;
+                        }
                     }
+                    break;
                 }
             }
 
@@ -147,9 +177,9 @@ public class StartupWindowProvider implements StartupWindowInterface {
      * @return True if running from command line, false otherwise
      */
     private boolean isRunningFromCommandLine() {
-        
+
         CommandLineOptionProcessor processor = Lookup.getDefault().lookup(CommandLineOptionProcessor.class);
-         if(processor != null) {
+        if (processor != null) {
             return processor.isRunFromCommandLine();
         }
         return false;
@@ -157,12 +187,12 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
     /**
      * Get the default argument from the CommandLineOptionProcessor.
-     * 
-     * @return If set, the default argument otherwise null. 
+     *
+     * @return If set, the default argument otherwise null.
      */
-    private String getDefaultArgument() {  
+    private String getDefaultArgument() {
         CommandLineOptionProcessor processor = Lookup.getDefault().lookup(CommandLineOptionProcessor.class);
-        if(processor != null) {
+        if (processor != null) {
             return processor.getDefaultArgument();
         }
         return null;

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.apputils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +52,8 @@ public final class ResetWindowsAction extends CallableSystemAction {
     private static final String DISPLAY_NAME = Bundle.CTL_ResetWindowsAction();
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(ResetWindowsAction.class.getName());
+    private final static String WINDOWS2LOCAL = "Windows2Local";
+    private final static String CASE_TO_REOPEN_FILE = "caseToOpen.txt"; 
 
     @Override
     public boolean isEnabled() {
@@ -61,7 +64,9 @@ public final class ResetWindowsAction extends CallableSystemAction {
         + "If a case is currently open it will be closed. If ingest or a search is currently running it will be terminated. "
         + "Are you sure you want to restart the software to reset all window locations?",
         "ResetWindowAction.caseCloseFailure.text=Unable to close the current case, "
-        + "the software will restart and the windows locations will reset the next time the software is closed."})
+        + "the software will restart and the windows locations will reset the next time the software is closed.",
+        "ResetWindowAction.caseSaveMetadata.text=Unable to save current case path, "
+        + "the software will restart and the windows locations will reset but the current case will not be opened upon restart."})
 
     @Override
     public void performAction() {
@@ -73,7 +78,7 @@ public final class ResetWindowsAction extends CallableSystemAction {
                     @Override
                     public void run() {
                         try {
-                            FileUtils.deleteDirectory(new File(PlatformUtil.getUserConfigDirectory() + File.separator + "Windows2Local"));
+                            FileUtils.deleteDirectory(new File(PlatformUtil.getUserConfigDirectory() + File.separator + WINDOWS2LOCAL));
                         } catch (IOException ex) {
                             //While we would like the user to be aware of this in the unlikely event that the directory can not be deleted
                             //Because our deletion is being attempted in a shutdown hook I don't know that we can pop up UI elements during the shutdown proces
@@ -83,6 +88,10 @@ public final class ResetWindowsAction extends CallableSystemAction {
                 });
                 try {
                     if (Case.isCaseOpen()) {
+                        String caseMetadataFilePath = Case.getCurrentCase().getMetadata().getFilePath().toString();
+                        File caseToOpenFile = new File(ResetWindowsAction.getCaseToReopenFilePath());
+                        Charset encoding = null;
+                        FileUtils.writeStringToFile(caseToOpenFile, caseMetadataFilePath, encoding);
                         Case.closeCurrentCase();
                     }
                     // The method markForRestart can not be undone once it is called.
@@ -92,9 +101,16 @@ public final class ResetWindowsAction extends CallableSystemAction {
                 } catch (CaseActionException ex) {
                     logger.log(Level.WARNING, Bundle.ResetWindowAction_caseCloseFailure_text(), ex);
                     MessageNotifyUtil.Message.show(Bundle.ResetWindowAction_caseCloseFailure_text(), MessageNotifyUtil.MessageType.ERROR);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, Bundle.ResetWindowAction_caseSaveMetadata_text(), ex);
+                    MessageNotifyUtil.Message.show(Bundle.ResetWindowAction_caseSaveMetadata_text(), MessageNotifyUtil.MessageType.ERROR);
                 }
             }
         });
+    }
+    
+    public static String getCaseToReopenFilePath(){
+        return PlatformUtil.getUserConfigDirectory() + File.separator + CASE_TO_REOPEN_FILE;
     }
 
     /**
