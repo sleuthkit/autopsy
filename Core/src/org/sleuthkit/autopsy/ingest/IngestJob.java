@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -295,10 +295,21 @@ public final class IngestJob {
      * @param reason The reason for cancellation.
      */
     public void cancel(CancellationReason reason) {
-        this.cancellationReason = reason;
-        this.ingestJobPipelines.values().stream().forEach((job) -> {
-            job.cancel(reason);
-        });
+        cancellationReason = reason;
+        /*
+         * Cancel the ingest pipelines for each data source. This is done in a
+         * separate thread to avoid a potential deadlock. The deadlock is
+         * possible because this method can be called in a thread that acquires
+         * the ingest manager's ingest jobs list lock and then tries to acquire
+         * the ingest pipeline stage transition lock, while an ingest thread
+         * that has acquired the stage transition lock is trying to acquire the
+         * ingest manager's ingest jobs list lock.
+         */
+        new Thread(() -> {
+            this.ingestJobPipelines.values().stream().forEach((job) -> {
+                job.cancel(reason);
+            });
+        }).start();
     }
 
     /**
