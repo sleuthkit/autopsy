@@ -55,10 +55,8 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
     public NewCaseVisualPanel2 getComponent() {
         if (component == null) {
             component = new NewCaseVisualPanel2();
-        } else {
-//            component.refreshCaseDetailsFields();
         }
-
+        
         return component;
     }
 
