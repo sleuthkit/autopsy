@@ -95,15 +95,15 @@ public class StartupWindowProvider implements StartupWindowInterface {
                     Charset encoding = null;
                     caseFilePath = FileUtils.readFileToString(openPreviousCaseFile, encoding);
                     if (new File(caseFilePath).exists()) {
-                        Case.openAsCurrentCase(caseFilePath);
                         FileUtils.forceDelete(openPreviousCaseFile);
+                        Case.openAsCurrentCase(caseFilePath);
                         //the case is now open we do not want to display the start up windows
                         return;
                     } else {
                         logger.log(Level.WARNING, "Unable to open previously open case because metadata file not found at: {0}", caseFilePath);
                     }
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Unable to open file containing path " + ResetWindowsAction.getCaseToReopenFilePath() + " to previously open case, will not open previous case.", ex);
+                    logger.log(Level.WARNING, "Unable to open or delete file containing path " + ResetWindowsAction.getCaseToReopenFilePath() + " to previously open case, will not open previous case.", ex);
                 } catch (CaseActionException ex) {
                     logger.log(Level.WARNING, "Unable to open previously open case with metadata file: " + caseFilePath, ex);
                 }
