@@ -54,7 +54,7 @@ public final class PathUtil {
      * each is treated as a relative path using the working directory.
      *
      * @param workingDirectory The working directory.
-     * @param relPath The paths.
+     * @param relPaths The paths.
      * @return The list of paths with the workingDirectory prepended if a path
      * is a relative path.
      */
