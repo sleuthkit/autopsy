@@ -1978,7 +1978,7 @@ class ExtractRegistry extends Extract {
         } else {
             osAccount = optional.get();
             if (userName != null && !userName.isEmpty()) {
-                AccountUpdateStatus updateStatus = accountMgr.updateOsAccount(osAccount, null, userName, null, null, null, null);
+                AccountUpdateStatus updateStatus = accountMgr.updateWindowsOsAccountCore(osAccount, null, userName, null, host);
                 osAccount = updateStatus.getUpdatedAccount().orElse(osAccount);
             }
         }
@@ -2042,7 +2042,7 @@ class ExtractRegistry extends Extract {
      * @throws TskDataException
      * @throws TskCoreException
      */
-    private void updateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException {
+    private void updateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException, NotUserSIDException {
         Host host = ((DataSource)dataSource).getHost();        
 
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
@@ -2168,9 +2168,14 @@ class ExtractRegistry extends Extract {
 
         // add the attributes to account.
         tskCase.getOsAccountManager().addOsAccountAttributes(osAccount, attributes);
+         
+        // update the loginname
+        tskCase.getOsAccountManager().updateWindowsOsAccountCore(osAccount, null, loginName, null, host);
         
-        // update the loginname, fullname, creationdate
-        tskCase.getOsAccountManager().updateOsAccount(osAccount, null, loginName, fullName, null, null, creationTime);
+        // update other properties  -  fullname, creationdate
+        tskCase.getOsAccountManager().updateOsAccountProperties(osAccount, fullName, null, null, creationTime);
+        
+        
     }
     
     /**
