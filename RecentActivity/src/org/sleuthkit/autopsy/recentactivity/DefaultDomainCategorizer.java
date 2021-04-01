@@ -53,8 +53,7 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategory;
  * https://bugs.openjdk.java.net/browse/JDK-8155591,
  * https://bugs.eclipse.org/bugs/show_bug.cgi?id=350279.
  */
-@SuppressWarnings("try")
-public class DefaultDomainCategorizer implements DomainCategorizer {
+class DefaultDomainCategorizer implements DomainCategorizer {
 
     private static final String CSV_DELIMITER = ",";
     private static final String DOMAIN_TYPE_CSV = "default_domain_categories.csv"; //NON-NLS
@@ -162,7 +161,7 @@ public class DefaultDomainCategorizer implements DomainCategorizer {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         // clear out the mapping to release resources
         mapping = null;
     }
