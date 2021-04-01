@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.StringJoiner;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -83,6 +82,7 @@ import org.sleuthkit.autopsy.report.ReportBranding;
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final String DEFAULT_HEAP_DUMP_FILE_FIELD = "";
     private final JFileChooser logoFileChooser;
     private final JFileChooser tempDirChooser;
     private static final String ETC_FOLDER_NAME = "etc";
@@ -115,12 +115,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         heapFileChooser = new JFileChooser();
         heapFileChooser.setMultiSelectionEnabled(false);
 
-        if (!PlatformUtil.is64BitJVM() || Version.getBuildType() == Version.Type.DEVELOPMENT) {
+        if (!isJVMHeapSettingsCapable()) {
             //32 bit JVM has a max heap size of 1.4 gb to 4 gb depending on OS
             //So disabling the setting of heap size when the JVM is not 64 bit 
             //Is the safest course of action
             //And the file won't exist in the install folder when running through netbeans
             memField.setEnabled(false);
+            heapDumpFileField.setEnabled(false);
+            heapDumpBrowseButton.setEnabled(false);
             solrMaxHeapSpinner.setEnabled(false);
         }
         systemMemoryTotal.setText(Long.toString(getSystemMemoryInGB()));
@@ -135,6 +137,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         
         reportBranding = new ReportBranding();
+    }
+    
+    /**
+     * Returns whether or not the jvm runtime heap settings can effectively be changed.
+     * @return Whether or not the jvm runtime heap settings can effectively be changed.
+     */
+    private static boolean isJVMHeapSettingsCapable() {
+        return PlatformUtil.is64BitJVM() && Version.getBuildType() != Version.Type.DEVELOPMENT;
     }
 
     /**
@@ -329,7 +339,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         for (String confLine: confLines) {
             Matcher match = JVM_SETTINGS_REGEX.matcher(confLine);
             if (match != null) {
-                String unescaped = StringEscapeUtils.unescapeJava(match.group(1));
+                String unescaped = StringEscapeUtils.unescapeJava(match.group(JVM_SETTINGS_REGEX_PARAM));
                 String[] args = Commandline.translateCommandline(unescaped);
                 
                 for (String arg : args) {
@@ -359,15 +369,27 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      * @return True if the heap path is valid.
      */
     @Messages({
-        "AutopsyOptionsPanel_validateHeapField_fileAlreadyExists=A file already exists at this location.",
-        "AutopsyOptionsPanel_validateHeapField_directoryDoesNotExist=Selected directory does not exist."
+        "AutopsyOptionsPanel_isHeapPathValid_fileAlreadyExists=A file already exists at this location.",
+        "AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist=Selected directory does not exist.",
+        "AutopsyOptionsPanel_isHeapPathValid_developerMode=Cannot change heap dump path while in developer mode.",
+        "AutopsyOptionsPanel_isHeapPathValid_not64BitMachine=Changing heap dump path settings only enabled for 64 bit version."
     })
     private boolean isHeapPathValid() {
+        if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+            heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_developerMode());
+            return true;
+        } 
+        
+        if (!PlatformUtil.is64BitJVM()) {
+            heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_not64BitMachine());
+            return true;
+        }
+        
         File curHeapFile = new File(heapDumpFileField.getText());
         boolean isDirectory = curHeapFile.isDirectory();
         boolean exists = curHeapFile.exists();
         if (exists && !isDirectory) {
-            heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_validateHeapField_fileAlreadyExists());
+            heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_fileAlreadyExists());
             return false;
         } 
         
@@ -375,7 +397,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         if (!exists) {
             File parentDir = curHeapFile.getParentFile();
             if (parentDir == null || !parentDir.exists()) {
-                heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_validateHeapField_directoryDoesNotExist());
+                heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist());
                 return false;
             }
         }
@@ -471,7 +493,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex);
         }
-        if (memField.isEnabled()) {
+        if (isJVMHeapSettingsCapable()) {
             try {
                 ConfValues confValues = getEtcConfValues();
                 heapDumpFileField.setText(confValues.getHeapDumpPath());
@@ -479,8 +501,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Can't read current Jvm max memory setting from file", ex);
                 memField.setEnabled(false);
+                heapDumpFileField.setText(DEFAULT_HEAP_DUMP_FILE_FIELD);
+                heapDumpBrowseButton.setEnabled(false);
+                heapDumpFileField.setEnabled(false);
             }
             memField.setText(initialMemValue);
+            heapDumpFileField.setText(DEFAULT_HEAP_DUMP_FILE_FIELD);
         }
         setTempDirEnabled();
         valid(); //ensure the error messages are up to date
@@ -585,7 +611,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             reportBranding.setAgencyLogoPath("");
         }
         UserPreferences.setMaxSolrVMSize((int) solrMaxHeapSpinner.getValue());
-        if (memField.isEnabled()) {  //if the field could of been changed we need to try and save it
+        if (isJVMHeapSettingsCapable()) {  //if the field could of been changed we need to try and save it
             try {
                 writeEtcConfFile();
             } catch (IOException ex) {
@@ -600,10 +626,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      * @return True if valid; false otherwise.
      */
     boolean valid() {
-        return isAgencyLogoPathValid() && 
-                isMemFieldValid() && 
-                isLogNumFieldValid() && 
-                isHeapPathValid();
+        boolean agencyValid = isAgencyLogoPathValid();
+        boolean memFieldValid = isMemFieldValid();
+        boolean logNumValid = isLogNumFieldValid();
+        boolean heapPathValid = isHeapPathValid();
+        
+        return agencyValid && memFieldValid && logNumValid && heapPathValid;
     }
 
     /**

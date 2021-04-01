@@ -12,6 +12,12 @@ AutopsyOptionsPanel.memFieldValidationLabel.noValueEntered.text=No value entered
 AutopsyOptionsPanel.memFieldValidationLabel.overMaxMemory.text=Value must be less than the total system memory of {0}GB
 # {0} - minimumMemory
 AutopsyOptionsPanel.memFieldValidationLabel.underMinMemory.text=Value must be at least {0}GB
+AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsMessage=File already exists.  Please select a new location.
+AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsTitle=File Already Exists
+AutopsyOptionsPanel_isHeapPathValid_developerMode=Cannot change heap dump path while in developer mode.
+AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist=Selected directory does not exist.
+AutopsyOptionsPanel_isHeapPathValid_fileAlreadyExists=A file already exists at this location.
+AutopsyOptionsPanel_isHeapPathValid_not64BitMachine=Changing heap dump path settings only enabled for 64 bit version.
 AutopsyOptionsPanel_storeTempDir_onChoiceError_description=There was an error updating temporary directory choice selection.
 AutopsyOptionsPanel_storeTempDir_onChoiceError_title=Error Saving Temporary Directory Choice
 # {0} - path
@@ -311,3 +317,7 @@ AutopsyOptionsPanel.tempCaseRadio.text=Temp folder in case directory
 AutopsyOptionsPanel.tempCustomRadio.text=Custom
 AutopsyOptionsPanel.tempCustomField.text=
 AutopsyOptionsPanel.tempOnCustomNoPath.text=Please select a path for the custom root temp directory.
+AutopsyOptionsPanel.heapDumpFileField.text=
+AutopsyOptionsPanel.heapDumpBrowseButton.text=Browse
+AutopsyOptionsPanel.heapFileLabel.text=Heap Dump Location:
+AutopsyOptionsPanel.heapFieldValidationLabel.text=
