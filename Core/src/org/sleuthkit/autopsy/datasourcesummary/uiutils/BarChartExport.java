@@ -66,7 +66,7 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
      * @param categories The categories with their data.
      * @param keyColumnHeader The header column name for the table descriptions
      * (i.e. types: file types / artifact types).
-     * @param valueFormatString The excel format string to use for values.
+     * @param chartTitle The title for the chart.
      * @return An excel table export to be used as the data source for the chart
      * in the excel document.
      */
