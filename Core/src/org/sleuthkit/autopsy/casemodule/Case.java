@@ -875,12 +875,12 @@ public class Case {
                 eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), closedCase, null));
                 logger.log(Level.INFO, "Closing current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
                 closedCase.doCloseCaseAction();
-                currentCase = null;
                 logger.log(Level.INFO, "Closed current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
             } catch (CaseActionException ex) {
                 logger.log(Level.SEVERE, String.format("Error closing current case %s (%s) in %s", closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()), ex); //NON-NLS                
                 throw ex;
             } finally {
+                currentCase = null;
                 if (RuntimeProperties.runningWithGUI()) {
                     updateGUIForCaseClosed();
                 }
