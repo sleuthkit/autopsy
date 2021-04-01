@@ -65,7 +65,7 @@ public class AssociatePersonAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().setPerson(host, person);
+            Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().setPerson(host, person);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             String hostName = this.host == null || this.host.getName() == null ? "" : this.host.getName();
             String personName = this.person == null || this.person.getName() == null ? "" : this.person.getName();
