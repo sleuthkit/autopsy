@@ -29,10 +29,11 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil.TimedProcessTerminator;
  * @see org.openide.util.Lookup
  */
 public class ImageConfig {
-    
+
     private static final int OCR_TIMEOUT_SECONDS = 30 * 60;
 
     private Boolean OCREnabled;
+    private Boolean limitedOCREnabled;
     private List<String> ocrLanguages;
     private final TimedProcessTerminator ocrTimedTerminator = new TimedProcessTerminator(OCR_TIMEOUT_SECONDS);
 
@@ -47,6 +48,16 @@ public class ImageConfig {
     }
 
     /**
+     * Enables the limiting OCR to be run on larger images and images which were
+     * extracted from documents.
+     *
+     * @param enabled Flag indicating if OCR is enabled.
+     */
+    public void setLimitedOCREnabled(boolean enabled) {
+        this.limitedOCREnabled = enabled;
+    }
+
+    /**
      * Gets the OCR flag that has been set. By default this flag is turned off.
      *
      * @return Flag indicating if OCR is enabled.
@@ -57,9 +68,9 @@ public class ImageConfig {
 
     /**
      * Sets languages for OCR.
-     * 
+     *
      * See PlatformUtil for list of installed language packs.
-     * 
+     *
      * @param languages List of languages to use
      */
     public void setOCRLanguages(List<String> languages) {
@@ -68,19 +79,30 @@ public class ImageConfig {
 
     /**
      * Gets the list of languages OCR should perform.
-     * 
+     *
      * @return Collection of OCR languages
      */
     public List<String> getOCRLanguages() {
         return this.ocrLanguages;
     }
-    
+
     /**
      * Returns a ProcessTerminator for timing out the OCR process.
-     * 
+     *
      * @return ProcessTerminator instance.
      */
     public ProcessTerminator getOCRTimeoutTerminator() {
         return ocrTimedTerminator;
+    }
+
+    /**
+     * Gets the limited OCR flag to indicate if OCR should be limited to larger
+     * images and images which were extracted from documents.
+     *
+     * @return Flag indicating if limited OCR is enabled. True if OCR should be
+     *         limited, false otherwise..
+     */
+    public boolean getLimitedOCREnabled() {
+        return limitedOCREnabled;
     }
 }

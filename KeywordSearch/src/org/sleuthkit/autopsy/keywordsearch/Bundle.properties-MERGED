@@ -23,6 +23,7 @@ ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try aga
 ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress
 ExtractAllTermsReport.startExport=Starting Unique Word Extraction
 ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>
+# {0} - Content name
 ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}
 GlobalEditListPanel.editKeyword.title=Edit Keyword
 GlobalEditListPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
@@ -30,7 +31,11 @@ GlobalEditListPanel.warning.title=Warning
 IndexedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error retrieving indexed text.</span>
 IndexedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>
 IndexedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No indexed text for this file.</span>
+KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsLimitedOCR=Limited OCR (Beta) (Requires Windows 64-bit)
 KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)
+KeywordSearchGlobalSearchSettingsPanel.jCheckBox1.text=Limited OCR (Beta)
+KeywordSearchGlobalSearchSettingsPanel.jCheckBox1.toolTipText=Only process images which are over 100KB in size or extracted from a document.
+KeywordSearchGlobalSearchSettingsPanel.limitedOcrCheckbox.toolTipText=Only process images which are over 100KB in size or extracted from a document.
 KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings
 KeywordSearchIngestModule.init.badInitMsg=Keyword search server was not properly initialized, cannot run keyword search ingest.
 # {0} - Reason for not connecting to Solr
@@ -400,6 +405,7 @@ ExtractedContentPanel.pageOfLabel.text=of
 ExtractedContentPanel.pageCurLabel.text=-
 ExtractedContentPanel.pagesLabel.text=Page:
 KeywordSearchGlobalSearchSettingsPanel.ocrCheckBox.text=Enable Optical Character Recognition (OCR)
+KeywordSearchGlobalSearchSettingsPanel.limitedOcrCheckbox.text=Limited OCR (Beta)
 TextZoomPanel.zoomInButton.text=
 TextZoomPanel.zoomOutButton.text=
 TextZoomPanel.zoomResetButton.text=Reset

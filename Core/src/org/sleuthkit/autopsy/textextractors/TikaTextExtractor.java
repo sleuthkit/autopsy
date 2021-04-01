@@ -70,12 +70,13 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import com.google.common.collect.ImmutableMap; 
+import com.google.common.collect.ImmutableMap;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import org.apache.tika.parser.pdf.PDFParserConfig.OCR_STRATEGY;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.HybridTerminator;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
@@ -133,7 +134,7 @@ final class TikaTextExtractor implements TextExtractor {
     // Used to log to the tika file that is why it uses the java.util.logging.logger class instead of the Autopsy one
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
-
+    private static final int LIMITED_OCR_SIZE_MIN = 1000 * 1024 * 1024;
     private final ThreadFactory tikaThreadFactory
             = new ThreadFactoryBuilder().setNameFormat("tika-reader-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(tikaThreadFactory);
@@ -143,6 +144,7 @@ final class TikaTextExtractor implements TextExtractor {
     private final Content content;
 
     private boolean tesseractOCREnabled;
+    private boolean limitedOCREnabled;
     private static final String TESSERACT_DIR_NAME = "Tesseract-OCR"; //NON-NLS
     private static final String TESSERACT_EXECUTABLE = "tesseract.exe"; //NON-NLS
     private static final File TESSERACT_PATH = locateTesseractExecutable();
@@ -158,7 +160,7 @@ final class TikaTextExtractor implements TextExtractor {
                     .map(mt -> mt.getType() + "/" + mt.getSubtype())
                     .collect(Collectors.toList());
 
-    public TikaTextExtractor(Content content) {
+    TikaTextExtractor(Content content) {
         this.content = content;
     }
 
@@ -198,7 +200,7 @@ final class TikaTextExtractor implements TextExtractor {
 
         // Handle images seperately so the OCR task can be cancelled.
         // See JIRA-4519 for the need to have cancellation in the UI and ingest.
-        if (ocrEnabled() && mimeType.toLowerCase().startsWith("image/")) {
+        if (ocrEnabled() && mimeType.toLowerCase().startsWith("image/") && useOcrOnFile(file)) {
             InputStream imageOcrStream = performOCR(file);
             return new InputStreamReader(imageOcrStream, Charset.forName("UTF-8"));
         }
@@ -219,7 +221,7 @@ final class TikaTextExtractor implements TextExtractor {
         officeParserConfig.setUseSAXDocxExtractor(true);
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
 
-        if (ocrEnabled()) {
+        if (ocrEnabled() && useOcrOnFile(file)) {
             // Configure OCR for Tika if it chooses to run OCR
             // during extraction
             TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
@@ -256,7 +258,7 @@ final class TikaTextExtractor implements TextExtractor {
                         + "Tika returned empty reader for " + content);
             }
             pushbackReader.unread(read);
-            
+
             //Save the metadata if it has not been fetched already.
             if (metadataMap == null) {
                 metadataMap = new HashMap<>();
@@ -264,7 +266,7 @@ final class TikaTextExtractor implements TextExtractor {
                     metadataMap.put(mtdtKey, metadata.get(mtdtKey));
                 }
             }
-            
+
             return new ReaderCharSource(pushbackReader).openStream();
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(),
@@ -346,6 +348,22 @@ final class TikaTextExtractor implements TextExtractor {
     }
 
     /**
+     * Method to indicate if OCR should be performed on this image file. Checks
+     * to see if the limited OCR setting is enabled. If it is it will also check
+     * that one of the limiting factors is true.
+     *
+     * @param file    The AbstractFile which OCR might be performed on.
+     * @param boolean The configuration setting which indicates if limited OCR
+     *                is enabled in Keyword Search.
+     *
+     * @return True if limited OCR is not enabled or the image is greater than
+     *         100KB in size or the image is a derived file.
+     */
+    private boolean useOcrOnFile(AbstractFile file) {
+        return !limitedOCREnabled || (file.getSize() > LIMITED_OCR_SIZE_MIN || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED);
+    }
+
+    /**
      * Wraps the creation of a TikaReader into a Future so that it can be
      * cancelled.
      */
@@ -356,7 +374,7 @@ final class TikaTextExtractor implements TextExtractor {
         private final Metadata metadata;
         private final ParseContext parseContext;
 
-        public GetTikaReader(AutoDetectParser parser, InputStream stream,
+        GetTikaReader(AutoDetectParser parser, InputStream stream,
                 Metadata metadata, ParseContext parseContext) {
             this.parser = parser;
             this.stream = stream;
@@ -386,7 +404,7 @@ final class TikaTextExtractor implements TextExtractor {
          *
          * @throws FileNotFoundException
          */
-        public CleanUpStream(File file) throws FileNotFoundException {
+        CleanUpStream(File file) throws FileNotFoundException {
             super(file);
             this.file = file;
         }
@@ -442,7 +460,7 @@ final class TikaTextExtractor implements TextExtractor {
         if (metadataMap != null) {
             return ImmutableMap.copyOf(metadataMap);
         }
-        
+
         try {
             metadataMap = new HashMap<>();
             InputStream stream = new ReadContentInputStream(content);
@@ -528,7 +546,7 @@ final class TikaTextExtractor implements TextExtractor {
      * @param context Instance containing config classes
      */
     @Override
-    public void setExtractionSettings(Lookup context) {    
+    public void setExtractionSettings(Lookup context) {
         if (context != null) {
             List<ProcessTerminator> terminators = new ArrayList<>();
             ImageConfig configInstance = context.lookup(ImageConfig.class);
@@ -536,11 +554,14 @@ final class TikaTextExtractor implements TextExtractor {
                 if (Objects.nonNull(configInstance.getOCREnabled())) {
                     this.tesseractOCREnabled = configInstance.getOCREnabled();
                 }
+                if (Objects.nonNull(configInstance.getLimitedOCREnabled())) {
+                    this.limitedOCREnabled = configInstance.getLimitedOCREnabled();
+                }
 
                 if (Objects.nonNull(configInstance.getOCRLanguages())) {
                     this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
                 }
-                
+
                 terminators.add(configInstance.getOCRTimeoutTerminator());
             }
 
@@ -548,8 +569,8 @@ final class TikaTextExtractor implements TextExtractor {
             if (terminatorInstance != null) {
                 terminators.add(terminatorInstance);
             }
-            
-            if(!terminators.isEmpty()) {
+
+            if (!terminators.isEmpty()) {
                 this.processTerminator = new HybridTerminator(terminators);
             }
         }
