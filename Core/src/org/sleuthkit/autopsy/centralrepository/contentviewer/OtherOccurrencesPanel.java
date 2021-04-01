@@ -511,8 +511,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      * from the current case with matching MD5 hashes.
      *
      * @param corAttr        CorrelationAttribute to query for
-     * @param dataSourceName Data source to filter results
-     * @param deviceId       Device Id to filter results
      *
      * @return A collection of correlated artifact instances
      */
@@ -618,6 +616,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      *
      * @param corAttr  The CorrelationAttribute containing the MD5 to search for
      * @param openCase The current case
+     * @param file     The current file.
      *
      * @return List of matching AbstractFile objects
      *
