@@ -31,7 +31,7 @@ GlobalEditListPanel.warning.title=Warning
 IndexedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error retrieving indexed text.</span>
 IndexedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>
 IndexedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No indexed text for this file.</span>
-KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsLimitedOCR=Limited OCR (Beta) (Requires Windows 64-bit)
+KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsLimitedOCR=Only process images which are over 100KB in size or extracted from a document. (Beta) (Requires Windows 64-bit)
 KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)
 KeywordSearchGlobalSearchSettingsPanel.jCheckBox1.text=Limited OCR (Beta)
 KeywordSearchGlobalSearchSettingsPanel.jCheckBox1.toolTipText=Only process images which are over 100KB in size or extracted from a document.

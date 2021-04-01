@@ -394,7 +394,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
     }
     
     @NbBundle.Messages({"KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)",
-        "KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsLimitedOCR=Limited OCR (Beta) (Requires Windows 64-bit)"})
+        "KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsLimitedOCR=Only process images which are over 100KB in size or extracted from a document. (Beta) (Requires Windows 64-bit)"})
     private void customizeComponents() {
         
         timeGroup.add(timeRadioButton1);

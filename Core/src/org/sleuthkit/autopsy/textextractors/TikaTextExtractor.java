@@ -134,7 +134,7 @@ final class TikaTextExtractor implements TextExtractor {
     // Used to log to the tika file that is why it uses the java.util.logging.logger class instead of the Autopsy one
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
-    private static final int LIMITED_OCR_SIZE_MIN = 1000 * 1024 * 1024;
+    private static final int LIMITED_OCR_SIZE_MIN = 100 * 1024;
     private final ThreadFactory tikaThreadFactory
             = new ThreadFactoryBuilder().setNameFormat("tika-reader-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(tikaThreadFactory);
@@ -360,7 +360,7 @@ final class TikaTextExtractor implements TextExtractor {
      *         100KB in size or the image is a derived file.
      */
     private boolean useOcrOnFile(AbstractFile file) {
-        return !limitedOCREnabled || (file.getSize() > LIMITED_OCR_SIZE_MIN || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED);
+        return !limitedOCREnabled || file.getSize() > LIMITED_OCR_SIZE_MIN || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED;
     }
 
     /**
@@ -556,6 +556,9 @@ final class TikaTextExtractor implements TextExtractor {
                 }
                 if (Objects.nonNull(configInstance.getLimitedOCREnabled())) {
                     this.limitedOCREnabled = configInstance.getLimitedOCREnabled();
+                }
+                else {
+                    System.out.println("NULL SETTING");
                 }
 
                 if (Objects.nonNull(configInstance.getOCRLanguages())) {
