@@ -107,6 +107,11 @@ class PstParser  implements AutoCloseable{
                 logger.log(Level.INFO, "Found encrypted PST file."); //NON-NLS
                 return ParseResult.ENCRYPT;
             }
+            if (ex.getMessage().toLowerCase().startsWith("unable to")) {
+                logger.log(Level.WARNING, ex.getMessage());
+                logger.log(Level.WARNING, String.format("Error in parsing PST file %s, file may be empty or corrupt", file.getName()));
+                return ParseResult.ERROR;
+            }
             String msg = file.getName() + ": Failed to create internal java-libpst PST file to parse:\n" + ex.getMessage(); //NON-NLS
             logger.log(Level.WARNING, msg, ex);
             return ParseResult.ERROR;
