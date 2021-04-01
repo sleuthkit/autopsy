@@ -16,6 +16,7 @@ DataSourceUsage_FlashDrive=Flash Drive
 # {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
+DefaultPriorityDomainCategorizer_searchEngineCategory=Search Engine
 DomainCategoryRunner_moduleName_text=DomainCategoryRunner
 DomainCategoryRunner_parentModuleName=Recent Activity
 DomainCategoryRunner_Progress_Message_Domain_Types=Finding Domain Types
