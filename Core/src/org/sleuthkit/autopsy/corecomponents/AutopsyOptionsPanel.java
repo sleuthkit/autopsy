@@ -235,7 +235,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final String XMX_REGEX_STR = "^\\s*\\-J\\-Xmx(?<" + XMX_REGEX_PARAM + ">.+?)\\s*$";
     private static final Pattern XMX_REGEX = Pattern.compile(XMX_REGEX_STR);
     private static final String HEAP_DUMP_REGEX_PARAM = "path";
-    private static final String HEAP_DUMP_REGEX_STR = "^\\s*\\-J\\-XX:HeapDumpPath=\\s*'?(?<" + HEAP_DUMP_REGEX_PARAM + ">.+?)'?\\s*$";
+    private static final String HEAP_DUMP_REGEX_STR = "^\\s*\\-J\\-XX:HeapDumpPath=\\s*(?<" + HEAP_DUMP_REGEX_PARAM + ">.+?)\\s*$";
     private static final Pattern HEAP_DUMP_REGEX = Pattern.compile(HEAP_DUMP_REGEX_STR);
     
     /**
@@ -259,7 +259,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             
             // only add in heap path argument if a heap path is specified
             String heapString = StringUtils.isNotBlank(heapText) ? 
-                    String.format("-J-XX:HeapDumpPath='%s'", heapText) :
+                    String.format("-J-XX:HeapDumpPath=%s", heapText) :
                     null;
             
             Stream<String> argsNoMemHeap = Stream.of(parsedArgs)
@@ -369,7 +369,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         "AutopsyOptionsPanel_isHeapPathValid_fileAlreadyExists=A file already exists at this location.",
         "AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist=Selected directory does not exist.",
         "AutopsyOptionsPanel_isHeapPathValid_developerMode=Cannot change heap dump path while in developer mode.",
-        "AutopsyOptionsPanel_isHeapPathValid_not64BitMachine=Changing heap dump path settings only enabled for 64 bit version."
+        "AutopsyOptionsPanel_isHeapPathValid_not64BitMachine=Changing heap dump path settings only enabled for 64 bit version.",
+        "AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters=Please select a path with no spaces or quotes."
     })
     private boolean isHeapPathValid() {
         if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
@@ -385,8 +386,15 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
         
         //allow blank field as the default will be used
-        if (StringUtils.isNotBlank(heapDumpFileField.getText())) {        
-            File curHeapFile = new File(heapDumpFileField.getText());
+        if (StringUtils.isNotBlank(heapDumpFileField.getText())) { 
+            String heapText = heapDumpFileField.getText().trim();
+            if (heapText.contains(" ") || heapText.contains("\"") || heapText.contains("'")) {
+                heapFieldValidationLabel.setVisible(true);
+                heapFieldValidationLabel.setText(Bundle.AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters());
+                return false;
+            }
+            
+            File curHeapFile = new File(heapText);
             boolean isDirectory = curHeapFile.isDirectory();
             boolean exists = curHeapFile.exists();
             if (exists && !isDirectory) {
