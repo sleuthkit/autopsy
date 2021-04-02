@@ -355,15 +355,6 @@
         </ArtifactName>
     </FileName>
 
-    <!--    <FileName filename="partner settings.tsv" description="Partner Settings">
-        <ArtifactName artifactname="TSK_" comment="null">
-            <AttributeName attributename="null" columnName="Name" required="no" />
-            <AttributeName attributename="null" columnName="Value ) # Dont remove the comma" required="no" />
-            <AttributeName attributename="null" columnName=" that is required to make this a tuple as there is only 1 eleme" required="no" />
-        </ArtifactName>
-    </FileName>
--->
-
     <FileName filename="sms messages.tsv" description="SMS messages">
         <ArtifactName artifactname="TSK_MESSAGE" comment="SMS messages">
             <AttributeName attributename="null" columnName="Date" required="no"/>
@@ -379,8 +370,9 @@
             <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
         </ArtifactName>
     </FileName>
-    
-    <FileName filename="Viber - Messages.tsv" description="Viber">
+
+<!-- Commented out as they are part of the android analyzer python module and may duplicate outcomes if run with it -->
+<!--     <FileName filename="Viber - Messages.tsv" description="Viber">
         <ArtifactName artifactname="TSK_MESSAGE" comment="Viber Message">
             <AttributeName attributename="TSK_DATETIME" columnName="Message Date" required="yes" />
             <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="From Phone Number" required="yes"/>
@@ -750,5 +742,5 @@
             <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
         </ArtifactName>
     </FileName>
-
+ -->
 </aLeap_Files_To_Process>
