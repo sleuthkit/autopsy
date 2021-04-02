@@ -42,7 +42,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 import org.netbeans.spi.options.OptionsPanelController;
@@ -221,7 +220,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      */
     private static File getUserFolderConfFile() {
         String confFileName = UserPreferences.getAppName() + CONFIG_FILE_EXTENSION;
-        File userFolder = PlatformUtil.getUserDirectory();
+        File userFolder = new File("C:\\Users\\gregd\\AppData\\Roaming\\autopsy"); // PlatformUtil.getUserDirectory();
         File userEtcFolder = new File(userFolder, ETC_FOLDER_NAME);
         if (!userEtcFolder.exists()) {
             userEtcFolder.mkdir();
@@ -230,12 +229,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     }
     
     private static final String JVM_SETTINGS_REGEX_PARAM = "options";
-    private static final Pattern JVM_SETTINGS_REGEX = Pattern.compile("^\\s*default_options\\s*=\\s*\"?(?<" + JVM_SETTINGS_REGEX_PARAM + ">.+?)\"?\\s*$");
+    private static final String JVM_SETTINGS_REGEX_STR = "^\\s*default_options\\s*=\\s*\"?(?<" + JVM_SETTINGS_REGEX_PARAM + ">.+?)\"?\\s*$";
+    private static final Pattern JVM_SETTINGS_REGEX = Pattern.compile(JVM_SETTINGS_REGEX_STR);
     private static final String XMX_REGEX_PARAM = "mem";
     private static final String XMX_REGEX_STR = "^\\s*\\-J\\-Xmx(?<" + XMX_REGEX_PARAM + ">.+?)\\s*$";
     private static final Pattern XMX_REGEX = Pattern.compile(XMX_REGEX_STR);
     private static final String HEAP_DUMP_REGEX_PARAM = "path";
-    private static final String HEAP_DUMP_REGEX_STR = "^\\s*\\-J\\-XX:HeapDumpPath=\\s*(\\\")?(?<" + HEAP_DUMP_REGEX_PARAM + ">.+?)(\\\")?\\s*$";
+    private static final String HEAP_DUMP_REGEX_STR = "^\\s*\\-J\\-XX:HeapDumpPath=\\s*'?(?<" + HEAP_DUMP_REGEX_PARAM + ">.+?)'?\\s*$";
     private static final Pattern HEAP_DUMP_REGEX = Pattern.compile(HEAP_DUMP_REGEX_STR);
     
     /**
@@ -251,20 +251,26 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      */
     private static String updateConfLine(String line, String memText, String heapText) {
         Matcher match = JVM_SETTINGS_REGEX.matcher(line);
-        if (match != null) {
+        if (match.find()) {
             // split on command line arguments
-            String unescaped = StringEscapeUtils.unescapeJava(match.group(JVM_SETTINGS_REGEX_PARAM));
-            String[] parsedArgs = Commandline.translateCommandline(unescaped);
+            String[] parsedArgs = Commandline.translateCommandline(match.group(JVM_SETTINGS_REGEX_PARAM));
             
-            String newArgs = Stream.concat(Stream.of(parsedArgs)
+            String memString = "-J-Xmx" + memText.replaceAll("[^\\d]", "") + "g";
+            
+            // only add in heap path argument if a heap path is specified
+            String heapString = StringUtils.isNotBlank(heapText) ? 
+                    String.format("-J-XX:HeapDumpPath='%s'", heapText) :
+                    null;
+            
+            Stream<String> argsNoMemHeap = Stream.of(parsedArgs)
                     // remove saved version of memory and heap dump path
-                    .filter(s -> !s.matches(XMX_REGEX_STR) && !s.matches(HEAP_DUMP_REGEX_STR)),
-                    Stream.of(
-                            "-J-Xmx" + memText.replaceAll("[^\\d]", "") + "g", 
-                            String.format("-J-XX:HeapDumpPath=\"%s\"", heapText == null ? "" : StringEscapeUtils.escapeJava(heapText))))
+                    .filter(s -> !s.matches(XMX_REGEX_STR) && !s.matches(HEAP_DUMP_REGEX_STR));
+                    
+            String newArgs = Stream.concat(argsNoMemHeap, Stream.of(memString, heapString))
+                    .filter(s -> s != null)
                     .collect(Collectors.joining(" "));
             
-            return String.format("default_options=\"%s\"", StringEscapeUtils.escapeJava(newArgs));
+            return String.format("default_options=\"%s\"", newArgs);
         };
             
         return line;
@@ -329,33 +335,24 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      */
     private ConfValues getEtcConfValues() throws IOException {
         File userConfFile = getUserFolderConfFile();
-        String[] confLines = userConfFile.exists() ? 
+        String[] args = userConfFile.exists() ? 
                 getDefaultsFromFileContents(readConfFile(userConfFile)) : 
                 getDefaultsFromFileContents(readConfFile(getInstallFolderConfFile()));
         
         String heapFile = "";
         String memSize = "";
-        
-        for (String confLine: confLines) {
-            Matcher match = JVM_SETTINGS_REGEX.matcher(confLine);
-            if (match != null) {
-                String unescaped = StringEscapeUtils.unescapeJava(match.group(JVM_SETTINGS_REGEX_PARAM));
-                String[] args = Commandline.translateCommandline(unescaped);
-                
-                for (String arg : args) {
-                    Matcher memMatch = XMX_REGEX.matcher(arg);
-                    if (memMatch != null) {
-                        memSize = memMatch.group(XMX_REGEX_PARAM);
-                        continue;
-                    }
-                    
-                    Matcher heapFileMatch = HEAP_DUMP_REGEX.matcher(arg);
-                    if (heapFileMatch != null) {
-                        heapFile = StringEscapeUtils.unescapeJava(heapFileMatch.group(HEAP_DUMP_REGEX_PARAM));
-                        continue;
-                    }
-                }
-                break;
+
+        for (String arg : args) {
+            Matcher memMatch = XMX_REGEX.matcher(arg);
+            if (memMatch.find()) {
+                memSize = memMatch.group(XMX_REGEX_PARAM);
+                continue;
+            }
+
+            Matcher heapFileMatch = HEAP_DUMP_REGEX.matcher(arg);
+            if (heapFileMatch.find()) {
+                heapFile = heapFileMatch.group(HEAP_DUMP_REGEX_PARAM);
+                continue;
             }
         }
         
@@ -376,32 +373,40 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     })
     private boolean isHeapPathValid() {
         if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+            heapFieldValidationLabel.setVisible(true);
             heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_developerMode());
             return true;
         } 
         
         if (!PlatformUtil.is64BitJVM()) {
+            heapFieldValidationLabel.setVisible(true);
             heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_not64BitMachine());
             return true;
         }
         
-        File curHeapFile = new File(heapDumpFileField.getText());
-        boolean isDirectory = curHeapFile.isDirectory();
-        boolean exists = curHeapFile.exists();
-        if (exists && !isDirectory) {
-            heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_fileAlreadyExists());
-            return false;
-        } 
-        
-        
-        if (!exists) {
-            File parentDir = curHeapFile.getParentFile();
-            if (parentDir == null || !parentDir.exists()) {
-                heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist());
+        //allow blank field as the default will be used
+        if (StringUtils.isNotBlank(heapDumpFileField.getText())) {        
+            File curHeapFile = new File(heapDumpFileField.getText());
+            boolean isDirectory = curHeapFile.isDirectory();
+            boolean exists = curHeapFile.exists();
+            if (exists && !isDirectory) {
+                heapFieldValidationLabel.setVisible(true);
+                heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_fileAlreadyExists());
                 return false;
+            } 
+
+
+            if (!exists) {
+                File parentDir = curHeapFile.getParentFile();
+                if (parentDir == null || !parentDir.exists()) {
+                    heapFieldValidationLabel.setVisible(true);
+                    heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist());
+                    return false;
+                }
             }
         }
             
+        heapFieldValidationLabel.setVisible(false);
         heapFieldValidationLabel.setText("");
         return true;
     }
@@ -441,11 +446,17 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      *         options is not present.
      */
     private static String[] getDefaultsFromFileContents(List<String> list) {
-        Optional<String> defaultSettings = list.stream().filter(line -> line.startsWith("default_options=")).findFirst();
+        Optional<String> defaultSettings = list.stream()
+                .filter(line -> line.matches(JVM_SETTINGS_REGEX_STR))
+                .findFirst();
 
         if (defaultSettings.isPresent()) {
-            return defaultSettings.get().replace("default_options=", "").replaceAll("\"", "").split(" ");
+            Matcher match = JVM_SETTINGS_REGEX.matcher(defaultSettings.get());
+            if (match.find()) {
+                return Commandline.translateCommandline(match.group(JVM_SETTINGS_REGEX_PARAM));
+            }
         }
+        
         return new String[]{};
     }
     
@@ -493,21 +504,25 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex);
         }
+        
+        boolean confLoaded = false;
         if (isJVMHeapSettingsCapable()) {
             try {
                 ConfValues confValues = getEtcConfValues();
                 heapDumpFileField.setText(confValues.getHeapDumpPath());
                 initialMemValue = Long.toString(getCurrentJvmMaxMemoryInGB(confValues.getXmxVal()));
+                confLoaded = true;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Can't read current Jvm max memory setting from file", ex);
                 memField.setEnabled(false);
                 heapDumpFileField.setText(DEFAULT_HEAP_DUMP_FILE_FIELD);
-                heapDumpBrowseButton.setEnabled(false);
-                heapDumpFileField.setEnabled(false);
             }
             memField.setText(initialMemValue);
-            heapDumpFileField.setText(DEFAULT_HEAP_DUMP_FILE_FIELD);
         }
+        
+        heapDumpBrowseButton.setEnabled(confLoaded);
+        heapDumpFileField.setEnabled(confLoaded);
+        
         setTempDirEnabled();
         valid(); //ensure the error messages are up to date
     }
