@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
 import java.awt.EventQueue;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -33,6 +35,8 @@ import org.sleuthkit.autopsy.healthmonitor.HealthMonitorDashboard;
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
+
+    private static final long serialVersionUID = 1L;
 
     private final AutoIngestMonitor autoIngestMonitor;
     private final AinStatusPanel nodesPanel;
@@ -50,9 +54,17 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
         scheduledRefreshThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(AIN_REFRESH_THREAD_NAME).build());
         autoIngestMonitor = monitor;
         nodesPanel = new AinStatusPanel();
-        nodesPanel.setSize(nodesPanel.getSize());
-        nodeStatusScrollPane.add(nodesPanel);
-        nodeStatusScrollPane.setViewportView(nodesPanel);
+        GridBagConstraints gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1;
+        gridBagConstraints.weighty = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new Insets(0, 10, 0, 10);
+        mainPanel.add(nodesPanel, gridBagConstraints);
+
+
         refreshTables();
     }
 
@@ -79,20 +91,45 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
+        javax.swing.JScrollPane mainScrollPane = new javax.swing.JScrollPane();
+        mainPanel = new javax.swing.JPanel();
+        nodeStatusTableTitle = new javax.swing.JLabel();
+        buttonPanel = new javax.swing.JPanel();
         refreshButton = new javax.swing.JButton();
         clusterMetricsButton = new javax.swing.JButton();
-        nodeStatusScrollPane = new javax.swing.JScrollPane();
-        nodeStatusTableTitle = new javax.swing.JLabel();
         healthMonitorButton = new javax.swing.JButton();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+
+        setLayout(new java.awt.BorderLayout());
+
+        mainPanel.setLayout(new java.awt.GridBagLayout());
+
+        nodeStatusTableTitle.setFont(nodeStatusTableTitle.getFont().deriveFont(nodeStatusTableTitle.getFont().getSize()+3f));
+        org.openide.awt.Mnemonics.setLocalizedText(nodeStatusTableTitle, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.nodeStatusTableTitle.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 5, 10);
+        mainPanel.add(nodeStatusTableTitle, gridBagConstraints);
+
+        buttonPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.refreshButton.text")); // NOI18N
         refreshButton.setToolTipText(org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.refreshButton.toolTipText")); // NOI18N
+        refreshButton.setPreferredSize(new java.awt.Dimension(133, 23));
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        buttonPanel.add(refreshButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(clusterMetricsButton, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.clusterMetricsButton.text")); // NOI18N
         clusterMetricsButton.addActionListener(new java.awt.event.ActionListener() {
@@ -100,56 +137,42 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
                 clusterMetricsButtonActionPerformed(evt);
             }
         });
-
-        nodeStatusTableTitle.setFont(nodeStatusTableTitle.getFont().deriveFont(nodeStatusTableTitle.getFont().getSize()+3f));
-        org.openide.awt.Mnemonics.setLocalizedText(nodeStatusTableTitle, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.nodeStatusTableTitle.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        buttonPanel.add(clusterMetricsButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(healthMonitorButton, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.healthMonitorButton.text")); // NOI18N
-        healthMonitorButton.setMaximumSize(new java.awt.Dimension(133, 23));
-        healthMonitorButton.setMinimumSize(new java.awt.Dimension(133, 23));
         healthMonitorButton.setPreferredSize(new java.awt.Dimension(133, 23));
         healthMonitorButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 healthMonitorButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        buttonPanel.add(healthMonitorButton, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        buttonPanel.add(filler1, gridBagConstraints);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(nodeStatusScrollPane)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(nodeStatusTableTitle)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 576, Short.MAX_VALUE)
-                        .addComponent(healthMonitorButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(clusterMetricsButton)))
-                .addContainerGap())
-        );
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
+        mainPanel.add(buttonPanel, gridBagConstraints);
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {clusterMetricsButton, refreshButton});
+        mainScrollPane.setViewportView(mainPanel);
 
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(40, 40, 40)
-                .addComponent(nodeStatusTableTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(nodeStatusScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(382, 382, 382)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(refreshButton)
-                    .addComponent(clusterMetricsButton)
-                    .addComponent(healthMonitorButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
-        );
+        add(mainScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
@@ -172,9 +195,11 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel buttonPanel;
     private javax.swing.JButton clusterMetricsButton;
+    private javax.swing.Box.Filler filler1;
     private javax.swing.JButton healthMonitorButton;
-    private javax.swing.JScrollPane nodeStatusScrollPane;
+    private javax.swing.JPanel mainPanel;
     private javax.swing.JLabel nodeStatusTableTitle;
     private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables

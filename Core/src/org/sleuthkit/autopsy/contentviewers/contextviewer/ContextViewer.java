@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * usage, if known.
  *
  */
-@ServiceProvider(service = DataContentViewer.class, position = 7)
+@ServiceProvider(service = DataContentViewer.class, position = 8)
 public final class ContextViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = 1L;

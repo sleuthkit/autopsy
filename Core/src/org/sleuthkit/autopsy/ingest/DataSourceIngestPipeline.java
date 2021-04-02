@@ -95,9 +95,10 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
             if (!ingestJobPipeline.isCancelled() && ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
                 ingestJobPipeline.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
             }
-            if (result == ProcessResult.ERROR) {
-                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (data source objId = %d)", getDisplayName(), dataSource.getName(), dataSource.getId())); //NON-NLS
-            }            
+            // See JIRA-7449            
+//            if (result == ProcessResult.ERROR) {
+//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (data source objId = %d)", getDisplayName(), dataSource.getName(), dataSource.getId())); //NON-NLS
+//            }            
         }
 
     }

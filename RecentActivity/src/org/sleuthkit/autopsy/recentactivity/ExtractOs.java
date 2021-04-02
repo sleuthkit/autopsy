@@ -64,7 +64,7 @@ class ExtractOs extends Extract {
     private static final String LINUX_UBUNTU_PATH = "/etc/lsb-release";
 
     private Content dataSource;
-
+    
     @Override
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;

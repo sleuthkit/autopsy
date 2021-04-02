@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2019 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule.multiusercasesbrowser;
 
+import java.awt.BorderLayout;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,8 +69,7 @@ public final class MultiUserCasesBrowserPanel extends javax.swing.JPanel impleme
         outlineView = new org.openide.explorer.view.OutlineView();
         outline = this.outlineView.getOutline();
         configureOutlineView();
-        caseTableScrollPane.add(outlineView);
-        caseTableScrollPane.setViewportView(outlineView);
+        add(outlineView, BorderLayout.CENTER);
         this.setVisible(true);
     }
 
@@ -146,20 +146,11 @@ public final class MultiUserCasesBrowserPanel extends javax.swing.JPanel impleme
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        caseTableScrollPane = new javax.swing.JScrollPane();
-
         setMinimumSize(new java.awt.Dimension(0, 5));
         setPreferredSize(new java.awt.Dimension(5, 5));
         setLayout(new java.awt.BorderLayout());
-
-        caseTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        caseTableScrollPane.setMinimumSize(new java.awt.Dimension(0, 5));
-        caseTableScrollPane.setOpaque(false);
-        caseTableScrollPane.setPreferredSize(new java.awt.Dimension(500, 500));
-        add(caseTableScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane caseTableScrollPane;
     // End of variables declaration//GEN-END:variables
 
 }

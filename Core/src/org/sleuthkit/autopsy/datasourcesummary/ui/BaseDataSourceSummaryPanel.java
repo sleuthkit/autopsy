@@ -47,7 +47,7 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport.ExcelCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.DefaultMenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;

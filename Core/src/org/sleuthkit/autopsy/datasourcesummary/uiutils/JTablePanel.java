@@ -351,6 +351,20 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         this.keyFunction = keyFunction;
         return this;
     }
+    
+    /**
+     * Returns the selected items or null if no item is selected.
+     * @return The selected items or null if no item is selected.
+     */
+    public List<T> getSelectedItems() {
+        int selectedRow = this.table.getSelectedRow();
+        int count = this.table.getSelectedRowCount();
+        if (selectedRow < 0 || this.tableModel == null || selectedRow + count > this.tableModel.getDataRows().size()) {
+            return null;
+        } else {
+            return this.tableModel.getDataRows().subList(selectedRow, selectedRow + count);
+        }
+    }
 
     @Override
     protected synchronized void setResults(List<T> data) {

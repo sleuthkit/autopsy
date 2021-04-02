@@ -445,6 +445,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
     os_account_attr_index = line.find('INSERT INTO "tsk_os_account_attributes"') > -1 or line.find('INSERT INTO tsk_os_account_attributes') > -1
     os_account_instances_index = line.find('INSERT INTO "tsk_os_account_instances"') > -1 or line.find('INSERT INTO tsk_os_account_instances') > -1
+    data_artifacts_index = line.find('INSERT INTO "tsk_data_artifacts"') > -1 or line.find('INSERT INTO tsk_data_artifacts') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
     no_space_parens = parens.replace(" ", "")
@@ -670,6 +671,19 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         fields_list[1] = accounts_table[os_account_id]
         newLine = ('INSERT INTO "tsk_os_account_instances" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
         return newLine
+    elif data_artifacts_index:
+        art_obj_id = int(fields_list[0])
+        if art_obj_id in files_table.keys():
+            fields_list[0] = files_table[art_obj_id]
+        else:
+            fields_list[0] = 'Artifact Object ID Omitted'
+        account_obj_id = int(fields_list[1])
+        if account_obj_id in files_table.keys():
+            fields_list[1] = files_table[account_obj_id]
+        else:
+            fields_list[1] = 'Account Object ID Omitted'
+        newLine = ('INSERT INTO "tsk_data_artifacts" VALUES(' + ','.join(fields_list[:]) + ');') # remove ids
+        return newLine
     else:
         return line
         
@@ -798,7 +812,7 @@ def build_id_accounts_table(db_cursor, isPostgreSQL):
     """
     # for each row in the db, take the object id and account SID then creates a tuple in the dictionary
     # with the object id as the key and the OS Account's SID as the value
-    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT os_account_obj_id, unique_id FROM tsk_os_accounts")])
+    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT os_account_obj_id, addr  FROM tsk_os_accounts")])
     return mapping
 
 def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports_table, images_table, accounts_table):
@@ -810,7 +824,7 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
         artifacts_table: obj_id, artifact_type_name
         reports_table: obj_id, path
         images_table: obj_id, name
-        accounts_table: obj_id, unique_id 
+        accounts_table: obj_id, addr  
     """
     # make a copy of files_table and update it with new data from artifacts_table and reports_table
     mapping = files_table.copy()
@@ -830,7 +844,7 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
                 elif par_obj_id in images_table.keys():
                     path = images_table[par_obj_id]
                 mapping[k] = path + "/" + artifacts_table[k]
-            elif k in accounts_table.keys(): # For an OS Account object ID we use its unique_id field which is the account SID
+            elif k in accounts_table.keys(): # For an OS Account object ID we use its addr  field which is the account SID
                 mapping[k] = accounts_table[k]
         elif v[0] not in mapping.keys():
             if v[0] in artifacts_table.keys():

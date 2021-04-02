@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  */
 abstract class IngestTaskPipeline<T extends IngestTask> {
 
-    private static final IngestManager ingestManager = IngestManager.getInstance();
     private final IngestJobPipeline ingestJobPipeline;
     private final List<IngestModuleTemplate> moduleTemplates;
     private final List<PipelineModule<T>> modules;
@@ -145,10 +144,11 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      *         not been started yet.
      */
     Date getStartTime() {
-        if (startTime == null) {
-            throw new IllegalStateException("startUp() was not called"); //NON-NLS
+        Date reportedStartTime = null;
+        if (startTime != null) {
+            reportedStartTime = new Date(startTime.getTime());
         }
-        return new Date(startTime.getTime());
+        return reportedStartTime;
     }
 
     /**
@@ -323,11 +323,11 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
          *                               performing the task.
          */
         abstract void performTask(IngestJobPipeline ingestJobPipeline, T task) throws IngestModuleException;
-        
+
         @Override
         public void shutDown() {
             module.shutDown();
-        }        
+        }
 
     }
 

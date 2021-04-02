@@ -147,7 +147,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
             String eventType = evt.getPropertyName();
             if (personId != null && eventType.equals(Case.Events.PERSONS_CHANGED.toString()) && evt instanceof PersonsChangedEvent) {
                 ((PersonsChangedEvent) evt).getNewValue().stream()
-                        .filter(p -> p != null && p.getId() == personId)
+                        .filter(p -> p != null && p.getPersonId() == personId)
                         .findFirst()
                         .ifPresent((newPerson) -> {
                             setName(newPerson.getName());
@@ -191,7 +191,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
         super.setDisplayName(displayName);
         this.setIconBaseWithExtension(ICON_PATH);
         this.person = person;
-        this.personId = person == null ? null : person.getId();
+        this.personId = person == null ? null : person.getPersonId();
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_CHANGED),
                 WeakListeners.propertyChange(personChangePcl, this));
     }

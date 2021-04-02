@@ -89,7 +89,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         @Override
         public int hashCode() {
             int hash = 5;
-            hash = 89 * hash + Objects.hashCode(this.host == null ? 0 : this.host.getId());
+            hash = 89 * hash + Objects.hashCode(this.host == null ? 0 : this.host.getHostId());
             return hash;
         }
 
@@ -109,7 +109,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 return this.host == null && other.getHost() == null;
             }
 
-            return this.host.getId() == other.getHost().getId();
+            return this.host.getHostId() == other.getHost().getHostId();
         }
 
     }
@@ -167,7 +167,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
             Long selectedId = null;
             try {
                 Host newHost = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().createHost(newHostName);
-                selectedId = newHost == null ? null : newHost.getId();
+                selectedId = newHost == null ? null : newHost.getHostId();
             } catch (NoCurrentCaseException | TskCoreException e) {
                 logger.log(Level.WARNING, String.format("Unable to add new host '%s' at this time.", newHostName), e);
             }
@@ -215,7 +215,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 continue;
             }
 
-            if (host.getId() == selectedId) {
+            if (host.getHostId() == selectedId) {
                 hostList.setSelectedIndex(i);
                 return;
             }
@@ -238,11 +238,11 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 try {
                     Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHost(selectedHost);
                 } catch (NoCurrentCaseException | TskCoreException e) {
-                    logger.log(Level.WARNING, String.format("Unable to update host '%s' with id: %d at this time.", selectedHost.getName(), selectedHost.getId()), e);
+                    logger.log(Level.WARNING, String.format("Unable to update host '%s' with id: %d at this time.", selectedHost.getName(), selectedHost.getHostId()), e);
                 }
 
                 HostListItem selectedItem = hostList.getSelectedValue();
-                Long selectedId = selectedItem == null || selectedItem.getHost() == null ? null : selectedItem.getHost().getId();
+                Long selectedId = selectedItem == null || selectedItem.getHost() == null ? null : selectedItem.getHost().getHostId();
 
                 refresh();
 

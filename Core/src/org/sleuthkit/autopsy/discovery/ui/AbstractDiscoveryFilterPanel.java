@@ -20,9 +20,9 @@ package org.sleuthkit.autopsy.discovery.ui;
 
 import org.sleuthkit.autopsy.discovery.search.AbstractFilter;
 import java.awt.event.ActionListener;
+import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
@@ -43,7 +43,7 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
      *                        unchanged or that there are no items to select.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    abstract void configurePanel(boolean selected, int[] indicesSelected);
+    abstract void configurePanel(boolean selected, List<?> selectedItems);
 
     /**
      * Get the checkbox which enables and disables this filter.
@@ -54,14 +54,12 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
     abstract JCheckBox getCheckbox();
 
     /**
-     * Get the list of values associated with this filter if one exists. If one
-     * does not exist this should return null.
+     * Add a list selection listener to the filter list in this panel
      *
-     * @return The JList which contains the values available for selection for
-     *         this filter.
+     * @param listener The list selection listener to add.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    abstract JList<?> getList();
+    abstract void addListSelectionListener(ListSelectionListener listener);
 
     /**
      * Get any additional text that should be displayed under the checkbox. If
@@ -93,8 +91,8 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
         if (getCheckbox() != null) {
             getCheckbox().addActionListener(actionListener);
         }
-        if (getList() != null) {
-            getList().addListSelectionListener(listListener);
+        if (hasPanel() == true) {
+            addListSelectionListener(listListener);
         }
     }
 
@@ -108,21 +106,9 @@ abstract class AbstractDiscoveryFilterPanel extends javax.swing.JPanel {
     abstract AbstractFilter getFilter();
 
     /**
-     * Remove listeners from the checkbox and the list if they exist.
+     * Get whether or not the filter has sufficient options to be used.
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    void removeListeners() {
-        if (getCheckbox() != null) {
-            for (ActionListener listener : getCheckbox().getActionListeners()) {
-                getCheckbox().removeActionListener(listener);
-            }
-        }
-        if (getList() != null) {
-            for (ListSelectionListener listener : getList().getListSelectionListeners()) {
-                getList().removeListSelectionListener(listener);
-            }
-        }
-    }
+    abstract boolean isFilterSupported();
 
     /**
      * Return whether or not this filter has a panel.
