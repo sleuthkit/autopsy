@@ -220,7 +220,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      */
     private static File getUserFolderConfFile() {
         String confFileName = UserPreferences.getAppName() + CONFIG_FILE_EXTENSION;
-        File userFolder = new File("C:\\Users\\gregd\\AppData\\Roaming\\autopsy"); // PlatformUtil.getUserDirectory();
+        File userFolder = PlatformUtil.getUserDirectory();
         File userEtcFolder = new File(userFolder, ETC_FOLDER_NAME);
         if (!userEtcFolder.exists()) {
             userEtcFolder.mkdir();
