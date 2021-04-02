@@ -1751,7 +1751,6 @@ class ExtractRegistry extends Extract {
         try {
             for (ShellBag bag : shellbags) {
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                BlackboardArtifact artifact = regFile.newArtifact(getShellBagArtifact().getTypeID());
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), bag.getResource()));
                 attributes.add(new BlackboardAttribute(getKeyAttribute(), getName(), bag.getKey()));
 
@@ -1776,9 +1775,7 @@ class ExtractRegistry extends Extract {
                     attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
                 }
 
-                artifact.addAttributes(attributes);
-
-                artifacts.add(artifact);
+                artifacts.add(createArtifactWithAttributes(getShellBagArtifact(), regFile, attributes));
             }
         } finally {
             if(!context.dataSourceIngestIsCancelled()) {
