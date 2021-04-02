@@ -51,10 +51,10 @@ final class SectionData implements Iterable<SectionData.RowData<String, String>>
     }
 
     /**
-     * Add a new property name\property value pair.
+     * Add a new property name/property value pair.
      *
-     * @param key   The property display name.
-     * @param value The property value.
+     * @param properytName   The property display name.
+     * @param propertyValue  The property value.
      */
     void addData(String properytName, String propertyValue) {
         data.add(new RowData<>(properytName, propertyValue));

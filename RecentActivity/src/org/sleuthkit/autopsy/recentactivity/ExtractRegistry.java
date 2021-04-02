@@ -1988,7 +1988,6 @@ class ExtractRegistry extends Extract {
             String dir = homeDir.replaceFirst("^(%\\w*%)", "");
             dir = dir.replace("\\", "/");
             attributes.add(createOsAccountAttribute(TSK_HOME_DIR, dir, osAccount, host, file));
-            
             accountMgr.addOsAccountAttributes(osAccount, attributes);
         }
 
@@ -2167,13 +2166,14 @@ class ExtractRegistry extends Extract {
         }
 
         // add the attributes to account.
-        tskCase.getOsAccountManager().addOsAccountAttributes(osAccount, attributes);
+        OsAccountManager accountMgr = tskCase.getOsAccountManager();
+        accountMgr.addOsAccountAttributes(osAccount, attributes);
          
         // update the loginname
-        tskCase.getOsAccountManager().updateWindowsOsAccountCore(osAccount, null, loginName, null, host);
+        accountMgr.updateWindowsOsAccountCore(osAccount, null, loginName, null, host);
         
         // update other properties  -  fullname, creationdate
-        tskCase.getOsAccountManager().updateOsAccountProperties(osAccount, fullName, null, null, creationTime);
+        accountMgr.updateOsAccountProperties(osAccount, fullName, null, null, creationTime);
         
         
     }
