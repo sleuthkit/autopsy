@@ -96,6 +96,7 @@ import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountAttribute;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.OsAccountManager;
+import org.sleuthkit.datamodel.OsAccountManager.AccountUpdateResult;
 import org.sleuthkit.datamodel.OsAccountManager.AccountUpdateStatus;
 import org.sleuthkit.datamodel.OsAccountManager.NotUserSIDException;
 import org.sleuthkit.datamodel.OsAccountRealm;
@@ -1978,8 +1979,8 @@ class ExtractRegistry extends Extract {
         } else {
             osAccount = optional.get();
             if (userName != null && !userName.isEmpty()) {
-                AccountUpdateStatus updateStatus = accountMgr.updateWindowsOsAccountCore(osAccount, null, userName, null, host);
-                osAccount = updateStatus.getUpdatedAccount().orElse(osAccount);
+                AccountUpdateResult updateResult= accountMgr.updateWindowsOsAccountCore(osAccount, null, userName, null, host);
+                osAccount = updateResult.getUpdatedAccount().orElse(osAccount);
             }
         }
 
