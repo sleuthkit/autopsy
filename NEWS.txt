@@ -5,15 +5,15 @@ Data Source Management:
 - The main tree viewer can be configured to group by person and host. 
 
 OS Accounts:
-- Operating System (OS) accounts and realms are their own data type and not generic artifacts. 
+- Operating System (OS) accounts and realms are their own data types and not generic artifacts. 
 - OS Accounts are created for Windows accounts found in the registry. Domain-scoped realms are not fully detected yet. 
 - NTFS files are associated with OS Accounts by SID. 
-- The Recent Activity module associates artifacts with OS Accounts based on SID or path of database.  Other modules need to be still updated. 
+- The Recent Activity module associates artifacts with OS Accounts based on SID or path of database.  Other modules still need to be updated. 
 - OS accounts appear in a dedicated sub-tree of the main tree view and their properties can be viewed in the results view.
 - A new content viewer in the lower right area of the main window was built to display OS account data for the item selected in the result view.
 
 Discovery UI:
-- Domain categorization and account type are displayed in Domain Discovery results.
+- Domain categorization and account types are displayed in Domain Discovery results.
 - The Domain Discovery results view more explicitly shows when a downloaded file no longer exists. 
 - Check boxes are now used to select search options instead of shift-based multi-select.
 
