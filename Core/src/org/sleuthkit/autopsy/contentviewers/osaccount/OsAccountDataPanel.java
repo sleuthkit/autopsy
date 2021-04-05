@@ -385,11 +385,12 @@ public class OsAccountDataPanel extends JPanel {
             Map<Host, DataSource> instanceMap = new HashMap<>();
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             OsAccountManager osAccountManager = skCase.getOsAccountManager();
-            OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmById(account.getRealmId());
             
             if(account == null) {
                 account = osAccountManager.getOsAccountByObjectId(accountId);
             }
+            
+            OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmById(account.getRealmId());
             
             List<Host> hosts = osAccountManager.getHosts(account);
             List<OsAccountAttribute> attributeList = account.getOsAccountAttributes();
