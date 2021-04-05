@@ -1,3 +1,38 @@
+---------------- VERSION 4.19.0  --------------
+Data Source Management:
+- To make managing big cases easier, all data sources are now associated with a host that can be specified in the “Add Data Source” wizard. 
+- Hosts can be grouped by “person”, which is simply a name of the owner.
+- The main tree viewer can be configured to group by person and host. 
+
+OS Accounts:
+- Operating System (OS) accounts and realms are their own data type and not generic artifacts. 
+- OS Accounts are created for Windows accounts found in the registry. Domain-scoped realms are not fully detected yet. 
+- NTFS files are associated with OS Accounts by SID. 
+- The Recent Activity module associates artifacts with OS Accounts based on SID or path of database.  Other modules need to be still updated. 
+- OS accounts appear in a dedicated sub-tree of the main tree view and their properties can be viewed in the results view.
+- A new content viewer in the lower right area of the main window was built to display OS account data for the item selected in the result view.
+
+Discovery UI:
+- Domain categorization and account type are displayed in Domain Discovery results.
+- The Domain Discovery results view more explicitly shows when a downloaded file no longer exists. 
+- Check boxes are now used to select search options instead of shift-based multi-select.
+
+Ingest Modules: 
+- File metadata updates are batched up before being saved to the case database for better performance. 
+- Parsing of iLEAPP and aLEAPP output was expanded to create communication relationships which can be displayed in the Communications UI. 
+- EML email parsing handles EML messages that are attachments (and have their own attachments). 
+- Domain categorization within Recent Activity can be customized by user-defined rules that can be imported and exported.
+
+Miscellaneous:
+- A “Reset Windows” feature was created to help redock windows. 
+- A case-insensitive wordlist of all words in the keyword search index can be exported as a text document.
+- Information from the Data Source Summary panels can be exported as an Excel spreadsheet.
+- More artifacts are added to the timeline and artifacts with multiple time-based attributes are mapped to multiple timeline events.
+- The Auto Ingest Dashboard is resizable.
+- Added option to only perform optical character recognition on certain file types.
+- Heap dumps can be saved to a custom location.
+- Assorted bug fixes are included.
+
 ---------------- VERSION 4.18.0  --------------
 Keyword Search:
 - A major upgrade from Solr 4 to Solr 8.6.3.  Single user cases continue to use the embedded server.  
