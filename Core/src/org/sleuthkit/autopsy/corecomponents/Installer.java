@@ -80,11 +80,11 @@ public class Installer extends ModuleInstall {
         ImageIcon questionIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/question_32.png"));
         ImageIcon warningIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/warning_32.png"));
         ImageIcon informationIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/information_32.png"));
-        ImageIcon stopIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/stop_32.png"));
-        UIManager.put("OptionPane.errorIcon", stopIcon);
-        UIManager.put("OptionPane.warningIcon", informationIcon);
+        ImageIcon errorIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error_32.png"));
+        UIManager.put("OptionPane.errorIcon", errorIcon);
+        UIManager.put("OptionPane.warningIcon", warningIcon);
         UIManager.put("OptionPane.questionIcon", questionIcon);
-        UIManager.put("OptionPane.informationIcon", warningIcon);
+        UIManager.put("OptionPane.informationIcon", informationIcon);
         
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
             setUnixLookAndFeel();
