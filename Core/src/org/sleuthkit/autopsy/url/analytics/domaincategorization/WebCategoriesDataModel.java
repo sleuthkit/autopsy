@@ -45,7 +45,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.modules.InstalledFileLocator;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 
 /**
@@ -396,7 +395,7 @@ class WebCategoriesDataModel implements AutoCloseable {
      * @return The list of domain suffixes and their categories.
      * @throws SQLException
      */
-    List<DomainCategory> getRecords() throws SQLException {
+    synchronized List<DomainCategory> getRecords() throws SQLException {
         if (!isInitialized()) {
             initialize();
         }
@@ -428,7 +427,7 @@ class WebCategoriesDataModel implements AutoCloseable {
      * @return The found entry or null.
      * @throws SQLException
      */
-    DomainCategory getRecordBySuffix(String domainSuffix) throws SQLException {
+    synchronized DomainCategory getRecordBySuffix(String domainSuffix) throws SQLException {
         if (!isInitialized()) {
             initialize();
         }
@@ -529,7 +528,9 @@ class WebCategoriesDataModel implements AutoCloseable {
 
     @Override
     public synchronized void close() throws SQLException {
-        dbConn.close();
-        dbConn = null;
+        if (dbConn != null) {
+            dbConn.close();
+            dbConn = null;   
+        }
     }
 }
