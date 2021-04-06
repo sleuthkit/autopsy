@@ -1116,6 +1116,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * DataSourcesByType looking for the Results Node.
      *
      * @param node The node.
+     * @param dataSourceId The data source id.
      * @return The child nodes that are at the data source level.
      */
     private Node getResultsNodeSearch(Node node, long dataSourceId) {

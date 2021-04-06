@@ -373,7 +373,7 @@ public class WebCategoriesOptionsPanel extends IngestModuleGlobalSettingsPanel i
         gridBagConstraints.weightx = 1.0;
         add(bottomStrut, gridBagConstraints);
 
-        ingestRunningWarning.setForeground(java.awt.Color.RED);
+        ingestRunningWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/warning16.png"))); // NOI18N
         ingestRunningWarning.setText(org.openide.util.NbBundle.getMessage(WebCategoriesOptionsPanel.class, "WebCategoriesOptionsPanel.ingestRunningWarning.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;

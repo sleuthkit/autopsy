@@ -2241,7 +2241,7 @@ class ExtractRegistry extends Extract {
             String dir = homeDir.replaceFirst("^(%\\w*%)", "");
             dir = dir.replace("\\", "/");
             attributes.add(createOsAccountAttribute(TSK_HOME_DIR, dir, osAccount, host, file));
-            osAccount.addAttributes(attributes);
+            accountMgr.addOsAccountAttributes(osAccount, attributes);
         }
 
         accountMgr.updateOsAccount(osAccount);
@@ -2418,8 +2418,9 @@ class ExtractRegistry extends Extract {
                     groups, osAccount, host, regFile));
         }
 
-        osAccount.addAttributes(attributes);
-        tskCase.getOsAccountManager().updateOsAccount(osAccount);
+        OsAccountManager accountMgr = tskCase.getOsAccountManager();
+        accountMgr.addOsAccountAttributes(osAccount, attributes);
+        accountMgr.updateOsAccount(osAccount);
     }
     
     /**

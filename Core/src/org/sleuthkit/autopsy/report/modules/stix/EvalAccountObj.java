@@ -37,14 +37,14 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
  */
 class EvalAccountObj extends EvaluatableObject {
 
-    private AccountObjectType obj;
+    private final AccountObjectType obj;
 
-    public EvalAccountObj(AccountObjectType a_obj, String a_id, String a_spacing) {
+    EvalAccountObj(AccountObjectType a_obj, String a_id, String a_spacing) {
         obj = a_obj;
         id = a_id;
         spacing = a_spacing;
     }
-
+    @SuppressWarnings( "deprecation" )
     @Override
     public synchronized ObservableResult evaluate() {
 
@@ -103,7 +103,7 @@ class EvalAccountObj extends EvaluatableObject {
         // The assumption here is that there aren't going to be too many network shares, so we
         // can cycle through all of them.
         try {
-            List<BlackboardArtifact> finalHits = new ArrayList<BlackboardArtifact>();
+            List<BlackboardArtifact> finalHits = new ArrayList<>();
 
             Case case1 = Case.getCurrentCaseThrows();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
