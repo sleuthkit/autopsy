@@ -390,7 +390,7 @@ public class OsAccountDataPanel extends JPanel {
                 account = osAccountManager.getOsAccountByObjectId(accountId);
             }
             
-            OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmById(account.getRealmId());
+            OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmByRealmId(account.getRealmId());
             
             List<Host> hosts = osAccountManager.getHosts(account);
             List<OsAccountAttribute> attributeList = account.getExtendedOsAccountAttributes();
