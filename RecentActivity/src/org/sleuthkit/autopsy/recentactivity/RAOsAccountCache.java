@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.OsAccountAttribute;
+import org.sleuthkit.datamodel.OsAccount.OsAccountAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -117,7 +117,7 @@ final class RAOsAccountCache {
         List<OsAccount> accounts = tskCase.getOsAccountManager().getOsAccounts(host);
 
         for (OsAccount account : accounts) {
-            List<OsAccountAttribute> attributeList = account.getOsAccountAttributes();
+            List<OsAccountAttribute> attributeList = account.getExtendedOsAccountAttributes();
 
             for (OsAccountAttribute attribute : attributeList) {
                 if (attribute.getHostId().isPresent()
