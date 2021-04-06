@@ -395,7 +395,7 @@ class WebCategoriesDataModel implements AutoCloseable {
      * @return The list of domain suffixes and their categories.
      * @throws SQLException
      */
-    List<DomainCategory> getRecords() throws SQLException {
+    synchronized List<DomainCategory> getRecords() throws SQLException {
         if (!isInitialized()) {
             initialize();
         }
@@ -427,7 +427,7 @@ class WebCategoriesDataModel implements AutoCloseable {
      * @return The found entry or null.
      * @throws SQLException
      */
-    DomainCategory getRecordBySuffix(String domainSuffix) throws SQLException {
+    synchronized DomainCategory getRecordBySuffix(String domainSuffix) throws SQLException {
         if (!isInitialized()) {
             initialize();
         }
