@@ -67,7 +67,7 @@ public class MergeHostMenuAction extends AbstractAction implements Presenter.Pop
         // Get a list of all other hosts
         List<Host> otherHosts = Collections.emptyList();
         try {
-            otherHosts = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts();
+            otherHosts = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getAllHosts();
             otherHosts.remove(sourceHost);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "Error getting hosts for case.", ex);

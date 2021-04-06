@@ -36,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.texttranslation.TextTranslator;
 import org.sleuthkit.autopsy.texttranslation.TranslationConfigException;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
@@ -50,7 +51,7 @@ public final class GoogleTranslator implements TextTranslator {
     private static final Logger logger = Logger.getLogger(GoogleTranslator.class.getName());
     //See translate method for justification of this limit.
     private static final int MAX_PAYLOAD_SIZE = 5000;
-    private final GoogleTranslatorSettingsPanel settingsPanel;
+    private GoogleTranslatorSettingsPanel settingsPanel;
     private final GoogleTranslatorSettings settings = new GoogleTranslatorSettings();
     private Translate googleTranslate;
 
@@ -59,7 +60,6 @@ public final class GoogleTranslator implements TextTranslator {
      */
     public GoogleTranslator() {
         // Instantiates a client
-        settingsPanel = new GoogleTranslatorSettingsPanel(settings.getCredentialPath(), settings.getTargetLanguageCode());
         loadTranslator();
     }
 
@@ -134,7 +134,11 @@ public final class GoogleTranslator implements TextTranslator {
     }
 
     @Override
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public JPanel getSettingsPanel() {
+        if(settingsPanel == null) {
+            settingsPanel = new GoogleTranslatorSettingsPanel(settings.getCredentialPath(), settings.getTargetLanguageCode());
+        }
         return settingsPanel;
     }
 
