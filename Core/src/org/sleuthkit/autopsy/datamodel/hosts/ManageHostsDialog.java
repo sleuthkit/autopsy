@@ -234,9 +234,8 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         if (selectedHost != null) {
             String newHostName = getAddEditDialogName(selectedHost);
             if (newHostName != null) {
-                selectedHost.setName(newHostName);
                 try {
-                    Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHost(selectedHost);
+                    Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHostName(selectedHost, newHostName);
                 } catch (NoCurrentCaseException | TskCoreException e) {
                     logger.log(Level.WARNING, String.format("Unable to update host '%s' with id: %d at this time.", selectedHost.getName(), selectedHost.getHostId()), e);
                 }
