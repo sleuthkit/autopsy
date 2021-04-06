@@ -102,10 +102,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamExce
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
-import com.williballenthin.rejistry.RegistryHiveFile;
-import com.williballenthin.rejistry.RegistryKey;
-import com.williballenthin.rejistry.RegistryParseException;
-import com.williballenthin.rejistry.RegistryValue;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -1144,247 +1140,47 @@ class ExtractRegistry extends Extract {
      *  Finds the Host and Domain information from the registry.
      */
     private void parseSystemHostDomain() {
-        List<AbstractFile> systemFiles = new ArrayList<>();
-        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> regFiles = findRegistryFiles();
 
-        // find the system hives', process this first so we can map the user id's and sids for later use
-        try {
-            systemFiles = fileManager.findFiles(dataSource, "system", "/system32/config"); //NON-NLS
-        } catch (TskCoreException ex) {
-		    // Fix this message
-            String msg = NbBundle.getMessage(this.getClass(),
-                    "ExtractRegistry.findRegFiles.errMsg.errReadingFile", "sam");
-            logger.log(Level.WARNING, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
-        }
-
-        for (AbstractFile systemHive: systemFiles) {
-            if (systemHive.getParentPath().toLowerCase().endsWith("/system32/config/")) {
+        for (AbstractFile systemHive: regFiles) {
+            if (systemHive.getName().toLowerCase().equals("system")) {
                 
                 String systemFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + systemHive.getName();
                 File systemFileNameLocalFile = new File(systemFileNameLocal);
         
-                try {
-                    ContentUtils.writeToFile(systemHive, systemFileNameLocalFile, context::dataSourceIngestIsCancelled);
-                    RegistryHiveFile systemRegFile = new RegistryHiveFile(systemFileNameLocalFile);
-                    RegistryKey currentKey = findRegistryKey(systemRegFile, "ControlSet001/Services/Tcpip/Parameters");
-                    if (currentKey == null) {
-                        return;
-                    }
-                    List<RegistryValue> parameterList = currentKey.getValueList();
-                    for (RegistryValue parameter : parameterList) {
-                        if (parameter.getName().toLowerCase().equals("hostname")) {
-                           hostName = parameter.getValue().getAsString();
-                           continue;
-                        }
-                        if (parameter.getName().toLowerCase().equals("domain")) {
-                           domainName = parameter.getValue().getAsString();
-                           continue;
-                        }
-                    }                    
-                } catch (ReadContentInputStreamException ex) {
-                    logger.log(Level.WARNING, String.format("Error reading registry file '%s' (id=%d).",
-                            systemHive.getName(), systemHive.getId()), ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
-                            this.getName(), systemHive.getName()));
-                    continue;
-                } catch (RegistryParseException ex) {
-                   continue; 
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
-                            systemFileNameLocal, systemHive.getName(), systemHive.getId()), ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
-                                    this.getName(), systemHive.getName()));
-                    continue;
+                if (!systemFileNameLocalFile.exists()) {
+                    try {
+                        ContentUtils.writeToFile(systemHive, systemFileNameLocalFile, context::dataSourceIngestIsCancelled);
+                    } catch (ReadContentInputStreamException ex) {
+                        logger.log(Level.WARNING, String.format("Error reading registry file '%s' (id=%d).",
+                                systemHive.getName(), systemHive.getId()), ex); //NON-NLS
+                        this.addErrorMessage(
+                                NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                this.getName(), systemHive.getName()));
+                        continue;
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
+                                systemFileNameLocal, systemHive.getName(), systemHive.getId()), ex); //NON-NLS
+                        this.addErrorMessage(
+                                NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                        this.getName(), systemHive.getName()));
+                        continue;
+                    }                
                 }
+					
+                try {
+                    ParseRegistryHive systemRegFile = new ParseRegistryHive(systemFileNameLocalFile);
+                    hostName = systemRegFile.getRegistryKeyValue("ControlSet001/Services/Tcpip/Parameters", "hostname");
+                    domainName = systemRegFile.getRegistryKeyValue("ControlSet001/Services/Tcpip/Parameters", "domain");
+                } catch (IOException ex) {
+		    logger.log(Level.SEVERE, String.format("Error reading registry file '%s' for registry file '%s' (id=%d).",
+                            systemFileNameLocal, systemHive.getName(), systemHive.getId()), ex); //NON-NLS
+                    this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                    this.getName(), systemHive.getName()));                }
             }
         }
     }
     
-    /**
-     * Search's a registry hive for the specified key
-     * 
-     * @param registryHiveFile Hive to parse
-     * @param registryKey registry key to find in hive
-     * @return registry key or null if it cannot be found
-     */
-    private RegistryKey findRegistryKey(RegistryHiveFile registryHiveFile, String registryKey) {
-        
-        RegistryKey currentKey;
-        try {
-            RegistryKey rootKey = registryHiveFile.getRoot();
-            String regKeyList[] = registryKey.split("/");
-            currentKey = rootKey;
-            for (String key : regKeyList) {
-                currentKey = currentKey.getSubkey(key);
-            }
-        } catch (RegistryParseException ex) {
-            return null;
-        }
-        return currentKey;   
-
-    }
-    
-    /**
-     * Creates the attribute list for the given user information and group list.
-     *
-     * @param userInfo     Map of key\value pairs of user information
-     * @param groupList    List of the groups that user belongs
-     * @param existingUser
-     *
-     * @return List
-     *
-     * @throws ParseException
-     */
-    Collection<BlackboardAttribute> getAttributesForAccount(Map<String, String> userInfo, List<String> groupList, boolean existingUser, AbstractFile regAbstractFile) throws ParseException {
-        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-
-        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
-        regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
-
-        if (!existingUser) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
-                    getRAModuleName(), userInfo.get(SID_KEY)));
-
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                    getRAModuleName(), userInfo.get(USERNAME_KEY)));
-        }
-
-        String value = userInfo.get(ACCOUNT_CREATED_KEY);
-        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
-        }
-
-        value = userInfo.get(LAST_LOGIN_KEY);
-        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                    getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
-        }
-
-        value = userInfo.get(LOGIN_COUNT_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
-                    getRAModuleName(), Integer.parseInt(value)));
-        }
-
-        value = userInfo.get(ACCOUNT_TYPE_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(USER_COMMENT_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(NAME_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(INTERNET_NAME_KEY);
-        if (value != null && !value.isEmpty()) {
-            try {
-                // Create an account for this email, if it doesn't already exist.
-                Case.getCurrentCaseThrows()
-                        .getSleuthkitCase()
-                        .getCommunicationsManager()
-                        .createAccountFileInstance(Account.Type.EMAIL,
-                                value, getRAModuleName(), regAbstractFile);
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.SEVERE,
-                        String.format("Error adding email account with value "
-                                + "%s, to the case database for file %s [objId=%d]",
-                                value, regAbstractFile.getName(), regAbstractFile.getId()), ex);
-            }
-
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(FULL_NAME_KEY);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DISPLAY_NAME,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(PWD_RESET_KEY);
-        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_RESET,
-                    getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
-        }
-
-        value = userInfo.get(PASSWORD_HINT);
-        if (value != null && !value.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_HINT,
-                    getRAModuleName(), value));
-        }
-
-        value = userInfo.get(PWD_FAILE_KEY);
-        if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_PASSWORD_FAIL,
-                    getRAModuleName(), regRipperTimeFormat.parse(value).getTime() / MS_IN_SEC));
-        }
-
-        String settingString = "";
-        for (String setting : PASSWORD_SETTINGS_FLAGS) {
-            if (userInfo.containsKey(setting)) {
-                settingString += setting + ", ";
-            }
-        }
-
-        if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_SETTINGS,
-                    getRAModuleName(), settingString));
-        }
-
-        settingString = "";
-        for (String setting : ACCOUNT_SETTINGS_FLAGS) {
-            if (userInfo.containsKey(setting)) {
-                settingString += setting + ", ";
-            }
-        }
-
-        if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_SETTINGS,
-                    getRAModuleName(), settingString));
-        }
-
-        settingString = "";
-        for (String setting : ACCOUNT_TYPE_FLAGS) {
-            if (userInfo.containsKey(setting)) {
-                settingString += setting + ", ";
-            }
-        }
-
-        if (!settingString.isEmpty()) {
-            settingString = settingString.substring(0, settingString.length() - 2);
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FLAG,
-                    getRAModuleName(), settingString));
-        }
-
-        if (groupList != null && groupList.isEmpty()) {
-            String groups = "";
-            for (String group : groupList) {
-                groups += group + ", ";
-            }
-
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GROUPS,
-                    getRAModuleName(), groups.substring(0, groups.length() - 2)));
-        }
-
-        return bbattributes;
-    }
-
-
     /**
      * Read the User Information section of the SAM regripper plugin's output
      * and collect user account information from the file.
