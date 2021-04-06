@@ -114,7 +114,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if(eventType.equals(Case.Events.OS_ACCOUNT_ADDED.toString())) {
+                if(eventType.equals(Case.Events.OS_ACCOUNT_ADDED.toString())
+                        || eventType.equals(Case.Events.OS_ACCOUNT_REMOVED.toString())) {
                      refresh(true);
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
@@ -128,7 +129,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
         
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), listener);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNT_ADDED, Case.Events.OS_ACCOUNT_REMOVED), listener);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
         
@@ -143,10 +144,10 @@ public final class OsAccounts implements AutopsyVisitableItem {
             if(skCase != null) {
                 try {
                     if (filteringDSObjId == 0) {
-                        list.addAll(skCase.getOsAccountManager().getAccounts());
+                        list.addAll(skCase.getOsAccountManager().getOsAccounts());
                     } else {
                         Host host = skCase.getHostManager().getHost(skCase.getDataSource(filteringDSObjId));
-                        list.addAll(skCase.getOsAccountManager().getAccounts(host));
+                        list.addAll(skCase.getOsAccountManager().getOsAccounts(host));
                     }
                 } catch (TskCoreException | TskDataException ex) {
                     logger.log(Level.SEVERE, "Unable to retrieve list of OsAccounts for case", ex);
@@ -255,12 +256,14 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     Bundle.OsAccounts_loginNameProperty_desc(),
                     optional.isPresent() ? optional.get() : ""));
 
-            optional = account.getRealm().getRealmName();
+            // TODO - load realm on background thread
+            String realmName = "";
+            //String realmName = account.getRealm().getRealmNames().isEmpty() ? "" :  account.getRealm().getRealmNames().get(0);
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_accountRealmNameProperty_name(),
                     Bundle.OsAccounts_accountRealmNameProperty_displayName(),
                     Bundle.OsAccounts_accountRealmNameProperty_desc(),
-                    optional.isPresent() ? optional.get() : ""));
+                    realmName));
 
             Optional<Long> creationTimeValue = account.getCreationTime();
             String timeDisplayStr

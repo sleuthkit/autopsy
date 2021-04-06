@@ -42,7 +42,7 @@ public class HostsEvent extends TskDataModelChangeEvent<Host> {
     private static List<Long> getIds(List<Host> hosts) {
         return getSafeList(hosts).stream()
                 .filter(h -> h != null)
-                .map(h -> h.getId()).collect(Collectors.toList());
+                .map(h -> h.getHostId()).collect(Collectors.toList());
     }
 
     /**

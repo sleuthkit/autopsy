@@ -186,6 +186,9 @@ public final class LeappFileProcessor {
             .put("call logs.tsv", "calllog")
             .put("oruxmaps tracks.tsv", "trackpoint")
             .put("google map locations.tsv", "route")
+            .put("Contacts.tsv", "contact")
+            .put("sms - imessage.tsv", "message")
+            .put("call history.tsv", "calllog")
             .build();
 
     Blackboard blkBoard;
@@ -634,12 +637,10 @@ public final class LeappFileProcessor {
             AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
             if (absFile == null) {
                 absFile = (AbstractFile) dataSource;
-            }
-            Account.Type accountType = getAccountType(fileName);
-            if (accountType != null) {
-                CommunicationArtifactsHelper accountArtifact;
-                if (alternateId == null) {
-                    accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+            }            
+			Account.Type accountType = getAccountType(fileName);
+            if ((absFile != null) || (accountType != null)) {
+                CommunicationArtifactsHelper accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                                                                moduleName, absFile, accountType);
                 } else {
                     accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
@@ -872,8 +873,10 @@ public final class LeappFileProcessor {
                 return Account.Type.PHONE;
             case "call logs.tsv":
                 return Account.Type.PHONE;
+            case "sms - imessage.tsv":
+                return Account.Type.PHONE;
             default:
-                return null;
+                return Account.Type.PHONE;
         }
     }
     

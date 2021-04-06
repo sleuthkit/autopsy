@@ -61,8 +61,10 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
         CentralRepoAccount crAccount = null;
         List<String> stringList = new ArrayList<>();
         List<AccountFileInstance> accountFileInstanceList = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getAccountFileInstances(account);
-        for (AccountFileInstance instance : accountFileInstanceList) {
-            stringList.add(instance.getFile().getUniquePath());
+        if (accountFileInstanceList != null) {
+            for (AccountFileInstance instance : accountFileInstanceList) {
+                stringList.add(instance.getFile().getUniquePath());
+            }
         }
 
         List<Persona> personaList = new ArrayList<>();

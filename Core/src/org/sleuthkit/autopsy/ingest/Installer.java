@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 import org.openide.modules.ModuleInstall;
-import org.openide.windows.WindowManager;
 
 /**
  * Initializes ingest manager when the module is loaded
@@ -41,15 +40,8 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        final IngestManager manager = IngestManager.getInstance();
-        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
-            @Override
-            public void run() {
-                //at this point UI top component is present for sure, ensure manager has it
-                manager.initIngestMessageInbox();
-            }
-        });
-
+        // initialize ingest manager
+        IngestManager.getInstance();
     }
 
     @Override

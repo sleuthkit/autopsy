@@ -213,6 +213,7 @@ public class HTMLReport implements TableReportModule {
      * Copies a suitable icon for the given data type in the output directory
      * and returns the icon file name to use for the given data type.
      */
+    @SuppressWarnings( "deprecation" )
     private String useDataTypeIcon(String dataType) {
         String iconFilePath;
         String iconFileName;

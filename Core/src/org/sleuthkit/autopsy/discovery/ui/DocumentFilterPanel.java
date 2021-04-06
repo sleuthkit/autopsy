@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
@@ -38,16 +41,21 @@ final class DocumentFilterPanel extends AbstractFiltersPanel {
         super();
         initComponents();
         SizeFilterPanel sizeFilterPanel = new SizeFilterPanel(TYPE);
-        int[] sizeIndicesSelected = {3, 4, 5};
-        addFilter(sizeFilterPanel, true, sizeIndicesSelected, 0);
+        List<SearchData.FileSize> defaultSizes = new ArrayList<>();
+        defaultSizes.add(SearchData.FileSize.LARGE_IMAGE);
+        defaultSizes.add(SearchData.FileSize.XLARGE_IMAGE);
+        defaultSizes.add(SearchData.FileSize.XXLARGE_IMAGE);
+        addFilter(sizeFilterPanel, true, defaultSizes, 0);
         addFilter(new DataSourceFilterPanel(), false, null, 0);
-        int[] pastOccurrencesIndices;
+        List<SearchData.Frequency> defaultFrequencies = new ArrayList<>();
         if (!CentralRepository.isEnabled()) {
-            pastOccurrencesIndices = new int[]{0};
+            defaultFrequencies.add(SearchData.Frequency.UNKNOWN);
         } else {
-            pastOccurrencesIndices = new int[]{2, 3, 4};
+            defaultFrequencies.add(SearchData.Frequency.RARE);
+            defaultFrequencies.add(SearchData.Frequency.UNIQUE);
+            defaultFrequencies.add(SearchData.Frequency.COMMON);
         }
-        addFilter(new PastOccurrencesFilterPanel(TYPE), true, pastOccurrencesIndices, 0);
+        addFilter(new PastOccurrencesFilterPanel(TYPE), true, defaultFrequencies, 0);
         addFilter(new HashSetFilterPanel(), false, null, 1);
         addFilter(new InterestingItemsFilterPanel(), false, null, 1);
         addFilter(new ParentFolderFilterPanel(), false, null, 1);

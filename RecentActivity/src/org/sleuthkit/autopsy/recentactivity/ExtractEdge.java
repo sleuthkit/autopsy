@@ -24,7 +24,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
@@ -53,6 +52,9 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -124,6 +126,7 @@ final class ExtractEdge extends Extract {
     * Extract the bookmarks, cookies, downloads and history from Microsoft Edge
     */
     ExtractEdge() throws NoCurrentCaseException {
+        super(Bundle.ExtractEdge_Module_Name());
         moduleTempResultPath = Paths.get(RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), EDGE), EDGE_RESULT_FOLDER_NAME);
     }
 
@@ -628,14 +631,10 @@ final class ExtractEdge extends Extract {
         String accessTime = rowSplit[index].trim();
         Long ftime = parseTimestamp(accessTime);
 
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
-
-        bbart.addAttributes(createHistoryAttribute(url, ftime,
+        return createArtifactWithAttributes(TSK_WEB_HISTORY, origFile, createHistoryAttribute(url, ftime,
                 null, null,
                 this.getName(),
                 NetworkUtils.extractDomain(url), user));
-
-        return bbart;
     }
 
     /**
@@ -658,9 +657,7 @@ final class ExtractEdge extends Extract {
         String value = hexToChar(lineSplit[headers.indexOf(EDGE_HEAD_VALUE)].trim());
         String url = flipDomain(domain);
 
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
-        bbart.addAttributes(createCookieAttributes(url, null, ftime, null, name, value, this.getName(), NetworkUtils.extractDomain(url)));
-        return bbart;
+        return createArtifactWithAttributes(TSK_WEB_COOKIE, origFile, createCookieAttributes(url, null, ftime, null, name, value, this.getName(), NetworkUtils.extractDomain(url)));
     }
 
     /**
@@ -707,11 +704,9 @@ final class ExtractEdge extends Extract {
         if (url.isEmpty()) {
             return null;
         }
-
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-        bbart.addAttributes(createBookmarkAttributes(url, title, null,
+        
+        return createArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile, createBookmarkAttributes(url, title, null,
                 this.getName(), NetworkUtils.extractDomain(url)));
-        return bbart;
     }
     
 

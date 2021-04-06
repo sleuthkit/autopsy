@@ -18,19 +18,35 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A pipeline of file ingest modules for performing file ingest tasks for an
  * ingest job.
  */
+@NbBundle.Messages({
+    "FileIngestPipeline_SaveResults_Activity=Saving Results"
+})
 final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
 
+    private static final int FILE_BATCH_SIZE = 500;
+    private static final String SAVE_RESULTS_ACTIVITY = Bundle.FileIngestPipeline_SaveResults_Activity();
+    private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private final IngestJobPipeline ingestJobPipeline;
+    private final List<AbstractFile> fileBatch;
 
     /**
      * Constructs a pipeline of file ingest modules for performing file ingest
@@ -43,6 +59,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     FileIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
         this.ingestJobPipeline = ingestJobPipeline;
+        fileBatch = new ArrayList<>();
     }
 
     @Override
@@ -61,28 +78,98 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
 
     @Override
     void completeTask(FileIngestTask task) throws IngestTaskPipelineException {
-        AbstractFile file = null;
         try {
-            file = task.getFile();
+            ingestManager.setIngestTaskProgress(task, SAVE_RESULTS_ACTIVITY);
+            AbstractFile file = task.getFile();
+            file.close();
+            cacheFileForBatchUpdate(file);
         } catch (TskCoreException ex) {
             throw new IngestTaskPipelineException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
-        }
-        try {
-            if (!ingestJobPipeline.isCancelled()) {
-                /*
-                 * Save any updates from the ingest modules to the case
-                 * database.
-                 */
-                file.save();
-            }
-        } catch (TskCoreException ex) {
-            throw new IngestTaskPipelineException(String.format("Failed to save updated data for file (file objId = %d)", task.getFileId()), ex); //NON-NLS
         } finally {
-            if (!ingestJobPipeline.isCancelled()) {
-                IngestManager.getInstance().fireFileIngestDone(file);
-            }
-            file.close();
             ingestManager.setIngestTaskProgressCompleted(task);
+        }
+    }
+
+    @Override
+    List<IngestModuleError> shutDown() {
+        List<IngestModuleError> errors = new ArrayList<>();
+        Date start = new Date();
+        try {
+            updateBatchedFiles();
+        } catch (IngestTaskPipelineException ex) {
+            errors.add(new IngestModuleError(SAVE_RESULTS_ACTIVITY, ex));
+        }
+        Date finish = new Date();
+        ingestManager.incrementModuleRunTime(SAVE_RESULTS_ACTIVITY, finish.getTime() - start.getTime());
+        errors.addAll(super.shutDown());
+        return errors;
+    }
+
+    /**
+     * Adds a file to a file cache used to update the case database with new
+     * properties added to the files in the cache by the ingest modules that
+     * processed them. If adding the file to the cache fills the cache, a batch
+     * update is done immediately.
+     *
+     * @param file The file.
+     *
+     * @throws IngestTaskPipelineException if the case database update fails.
+     */
+    private void cacheFileForBatchUpdate(AbstractFile file) throws IngestTaskPipelineException {
+        /*
+         * Only one file ingest thread at a time will try to access the file
+         * cache. The synchronization here is to ensure visibility of the files
+         * in all of the threads that share the cache, rather than to prevent
+         * simultaneous access in multiple threads.
+         */
+        synchronized (fileBatch) {
+            fileBatch.add(file);
+            if (fileBatch.size() >= FILE_BATCH_SIZE) {
+                updateBatchedFiles();
+            }
+        }
+    }
+
+    /**
+     * Updates the case database with new properties added to the files in the
+     * cache by the ingest modules that processed them.
+     *
+     * @throws IngestTaskPipelineException if the case database update fails.
+     */
+    private void updateBatchedFiles() throws IngestTaskPipelineException {
+        /*
+         * Only one file ingest thread at a time will try to access the file
+         * cache. The synchronization here is to ensure visibility of the files
+         * in all of the threads that share the cache, rather than to prevent
+         * simultaneous access in multiple threads.
+         */
+        synchronized (fileBatch) {
+            CaseDbTransaction transaction = null;
+            try {
+                if (!ingestJobPipeline.isCancelled()) {
+                    Case currentCase = Case.getCurrentCaseThrows();
+                    SleuthkitCase caseDb = currentCase.getSleuthkitCase();
+                    transaction = caseDb.beginTransaction();
+                    for (AbstractFile file : fileBatch) {
+                        file.save(transaction);
+                    }
+                    transaction.commit();
+                    for (AbstractFile file : fileBatch) {
+                        IngestManager.getInstance().fireFileIngestDone(file);
+                    }
+                }
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                if (transaction != null) {
+                    try {
+                        transaction.rollback();
+                    } catch (TskCoreException ex1) {
+                        logger.log(Level.SEVERE, "Error rolling back transaction after failure to save updated properties for cached files from tasks", ex1);
+                    }
+                }
+                throw new IngestTaskPipelineException("Failed to save updated properties for cached files from tasks", ex); //NON-NLS                
+            } finally {
+                fileBatch.clear();
+            }
         }
     }
 
@@ -118,9 +205,10 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             ingestJobPipeline.setCurrentFileIngestModule(getDisplayName(), file.getName());
             ProcessResult result = module.process(file);
-            if (result == ProcessResult.ERROR) {
-                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (file objId = %d)", getDisplayName(), file.getName(), file.getId())); //NON-NLS
-            }
+            // See JIRA-7449
+//            if (result == ProcessResult.ERROR) {
+//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (file objId = %d)", getDisplayName(), file.getName(), file.getId())); //NON-NLS
+//            }
         }
 
     }

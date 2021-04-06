@@ -55,9 +55,11 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -521,33 +523,36 @@ final class ChromeCacheExtractor {
     private void addArtifacts(CacheEntry cacheEntry, AbstractFile cacheEntryFile, AbstractFile cachedItemFile, Collection<BlackboardArtifact> artifactsAdded) throws TskCoreException {
   
         // Create a TSK_WEB_CACHE entry with the parent as data_X file that had the cache entry
-        BlackboardArtifact webCacheArtifact = cacheEntryFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
-        if (webCacheArtifact != null) {
-            Collection<BlackboardAttribute> webAttr = new ArrayList<>();
-            String url = cacheEntry.getKey() != null ? cacheEntry.getKey() : "";
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                    moduleName, url));
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
-                    moduleName, NetworkUtils.extractDomain(url)));
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    moduleName, cacheEntry.getCreationTime()));
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS,
-                    moduleName, cacheEntry.getHTTPHeaders()));  
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
-                    moduleName, cachedItemFile.getUniquePath()));
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
-                    moduleName, cachedItemFile.getId()));
-            webCacheArtifact.addAttributes(webAttr);
-            artifactsAdded.add(webCacheArtifact);
+        Collection<BlackboardAttribute> webAttr = new ArrayList<>();
+        String url = cacheEntry.getKey() != null ? cacheEntry.getKey() : "";
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                moduleName, url));
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                moduleName, NetworkUtils.extractDomain(url)));
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                moduleName, cacheEntry.getCreationTime()));
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS,
+                moduleName, cacheEntry.getHTTPHeaders()));  
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
+                moduleName, cachedItemFile.getUniquePath()));
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                moduleName, cachedItemFile.getId()));
 
-            // Create a TSK_ASSOCIATED_OBJECT on the f_XXX or derived file file back to the CACHE entry
-            BlackboardArtifact associatedObjectArtifact = cachedItemFile.newArtifact(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
-            if (associatedObjectArtifact != null) {
-                associatedObjectArtifact.addAttribute(
-                            new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
-                                    moduleName, webCacheArtifact.getArtifactID()));
-                artifactsAdded.add(associatedObjectArtifact);
-            }
+        Optional<Long> optional = cacheEntryFile.getOsAccountObjectId();
+        OsAccount account = null;
+        if(optional.isPresent()) {
+            account = currentCase.getSleuthkitCase().getOsAccountManager().getOsAccountByObjectId(optional.get());
+        }
+        BlackboardArtifact webCacheArtifact = cacheEntryFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_CACHE), webAttr, account);
+        artifactsAdded.add(webCacheArtifact);
+
+        // Create a TSK_ASSOCIATED_OBJECT on the f_XXX or derived file file back to the CACHE entry
+        BlackboardArtifact associatedObjectArtifact = cachedItemFile.newArtifact(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+        if (associatedObjectArtifact != null) {
+            associatedObjectArtifact.addAttribute(
+                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
+                                moduleName, webCacheArtifact.getArtifactID()));
+            artifactsAdded.add(associatedObjectArtifact);
         }
     }
     
