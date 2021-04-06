@@ -578,6 +578,7 @@ public final class LeappFileProcessor {
         String sourceFile = null;
         MessageAttachments messageAttachments = null;
 
+        /******* DISABLE TEMPORARILY*************
         try {
             for (BlackboardAttribute bba : bbattributes) {
                 switch (bba.getAttributeType().getTypeName()) {
@@ -656,7 +657,7 @@ public final class LeappFileProcessor {
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
-        }
+        }*/
 
     }
 
