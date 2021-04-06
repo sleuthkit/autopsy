@@ -45,7 +45,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.modules.InstalledFileLocator;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 
 /**
@@ -529,7 +528,9 @@ class WebCategoriesDataModel implements AutoCloseable {
 
     @Override
     public synchronized void close() throws SQLException {
-        dbConn.close();
-        dbConn = null;
+        if (dbConn != null) {
+            dbConn.close();
+            dbConn = null;   
+        }
     }
 }
