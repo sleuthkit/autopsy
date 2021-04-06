@@ -31,6 +31,15 @@
     </target>
 
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
+        <!--Copy netbeans localization jars: 
+            This contains jars provided in Netbeans 8 RCP that provide localization bundles.  
+            They do not appear to be included in Netbeans >= 9.  
+            See VIK-7434 for more information.
+        -->
+        <copy todir="${ext.dir}" >
+            <fileset dir="${thirdparty.dir}/NetbeansLocalization"/>
+        </copy>
+
         <!--Copy photorec to release-->
         <copy todir="${basedir}/release/photorec_exec" >
             <fileset dir="${thirdparty.dir}/photorec_exec"/>
