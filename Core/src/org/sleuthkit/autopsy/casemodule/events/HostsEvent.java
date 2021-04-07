@@ -76,7 +76,7 @@ public class HostsEvent extends TskDataModelChangeEvent<Host> {
                     continue;
                 }
 
-                Optional<Host> thisHostOpt = hostManager.getHost(id);
+                Optional<Host> thisHostOpt = hostManager.getHostById(id);
                 thisHostOpt.ifPresent((h) -> toRet.add(h));
             }
         }

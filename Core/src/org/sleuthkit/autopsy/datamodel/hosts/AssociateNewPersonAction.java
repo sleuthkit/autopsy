@@ -65,7 +65,7 @@ public class AssociateNewPersonAction extends AbstractAction {
         try {
             newPersonName = getAddDialogName();
             if (StringUtils.isNotBlank(newPersonName)) {
-                Person person = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().createPerson(newPersonName);
+                Person person = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().newPerson(newPersonName);
                 Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().setPerson(host, person);
             }
         } catch (NoCurrentCaseException | TskCoreException ex) {
