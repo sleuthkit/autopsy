@@ -557,10 +557,6 @@ final class TikaTextExtractor implements TextExtractor {
                 if (Objects.nonNull(configInstance.getLimitedOCREnabled())) {
                     this.limitedOCREnabled = configInstance.getLimitedOCREnabled();
                 }
-                else {
-                    System.out.println("NULL SETTING");
-                }
-
                 if (Objects.nonNull(configInstance.getOCRLanguages())) {
                     this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
                 }
