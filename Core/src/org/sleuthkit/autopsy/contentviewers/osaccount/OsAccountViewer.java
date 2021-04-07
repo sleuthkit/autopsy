@@ -18,7 +18,10 @@
  */
 package org.sleuthkit.autopsy.contentviewers.osaccount;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
@@ -53,26 +56,29 @@ public class OsAccountViewer extends javax.swing.JPanel implements DataContentVi
 
     @Override
     public void setNode(Node node) {
-        OsAccount osAccount = null;
+        Long osAccountId = null;
         try {
-            osAccount = node.getLookup().lookup(OsAccount.class);
-            if (osAccount == null) {
-                Optional<OsAccount> optional;
-                AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-                if (file != null) {
-                    optional = file.getOsAccount();
-                    if (optional.isPresent()) {
-                        osAccount = optional.get();
-                    }
+            OsAccount osAccount = node.getLookup().lookup(OsAccount.class);
+            if (osAccount != null) {
+                dataPanel.setOsAccount(osAccount);
+                return;
+            }
+            
+            Optional<Long> optional;
+            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+            if (file != null) {
+                optional = file.getOsAccountObjectId();
+                if (optional.isPresent()) {
+                    osAccountId = optional.get();
                 }
             }
 
-            if (osAccount == null) {
+            if (osAccountId == null) {
                 DataArtifact dataArtifact = node.getLookup().lookup(DataArtifact.class);
                 if (dataArtifact != null) {
-                    Optional<OsAccount> optional = dataArtifact.getOsAccount();
+                    optional = dataArtifact.getOsAccountObjectId();
                     if (optional.isPresent()) {
-                        osAccount = optional.get();
+                        osAccountId = optional.get();
                     }
                 }
 
@@ -81,8 +87,8 @@ public class OsAccountViewer extends javax.swing.JPanel implements DataContentVi
             logger.log(Level.SEVERE, String.format("Failed to get OsAccount for node %s", node.getDisplayName()), ex);
         }
 
-        if (osAccount != null) {
-            dataPanel.setOsAccount(osAccount);
+        if (osAccountId != null) {
+            dataPanel.setOsAccountId(osAccountId);
         }
     }
 
@@ -125,8 +131,8 @@ public class OsAccountViewer extends javax.swing.JPanel implements DataContentVi
 
         try {
             return osAccount != null
-                    || (file != null && file.getOsAccount().isPresent())
-                    || (dataArtifact != null && dataArtifact.getOsAccount().isPresent());
+                    || (file != null && file.getOsAccountObjectId().isPresent())
+                    || (dataArtifact != null && dataArtifact.getOsAccountObjectId().isPresent());
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Failed to determine if node %s is Supported for OsAccountViewer", node.getDisplayName()), ex);
             return false;
@@ -150,8 +156,14 @@ public class OsAccountViewer extends javax.swing.JPanel implements DataContentVi
 
         mainScrollPane = new javax.swing.JScrollPane();
 
-        setLayout(new java.awt.BorderLayout());
-        add(mainScrollPane, java.awt.BorderLayout.CENTER);
+        setLayout(new java.awt.GridBagLayout());
+
+        mainScrollPane.setPreferredSize(new java.awt.Dimension(200, 0));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        add(mainScrollPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 

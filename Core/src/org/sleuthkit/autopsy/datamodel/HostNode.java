@@ -176,7 +176,7 @@ public class HostNode extends DisplayableItemNode {
             String eventType = evt.getPropertyName();
             if (hostId != null && eventType.equals(Case.Events.HOSTS_CHANGED.toString()) && evt instanceof HostsChangedEvent) {
                 ((HostsChangedEvent) evt).getNewValue().stream()
-                        .filter(h -> h != null && h.getId() == hostId)
+                        .filter(h -> h != null && h.getHostId() == hostId)
                         .findFirst()
                         .ifPresent((newHost) -> {
                             setName(newHost.getName());
@@ -242,7 +242,7 @@ public class HostNode extends DisplayableItemNode {
         super(children,
                 host == null ? Lookups.fixed(displayName) : Lookups.fixed(host, displayName));
                 
-        hostId = host == null ? null : host.getId();
+        hostId = host == null ? null : host.getHostId();
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED),
                 WeakListeners.propertyChange(hostChangePcl, this));
         super.setName(displayName);
@@ -297,7 +297,7 @@ public class HostNode extends DisplayableItemNode {
             // Add the appropriate Person action
             Optional<Person> parent;
             try {
-                parent = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getPerson(this.host);
+                parent = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPerson(this.host);
             } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.WARNING, String.format("Error fetching parent person of host: %s", this.host.getName() == null ? "<null>" : this.host.getName()), ex);
                 return new Action[0];

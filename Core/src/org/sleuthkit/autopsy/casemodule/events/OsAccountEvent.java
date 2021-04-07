@@ -56,7 +56,7 @@ class OsAccountEvent extends TskDataModelChangeEvent<OsAccount> {
     @Override
     protected List<OsAccount> getDataModelObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
         Long id = ids.get(0);
-        OsAccount account = caseDb.getOsAccountManager().getOsAccount(id);
+        OsAccount account = caseDb.getOsAccountManager().getOsAccountByObjectId(id);
         List<OsAccount> accounts = new ArrayList<>();
         accounts.add(account);
         return accounts;

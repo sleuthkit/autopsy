@@ -48,11 +48,9 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_DELETED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
@@ -340,7 +338,7 @@ final class ExtractRecycleBin extends Extract {
     private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException {
         Map<String, String> userNameMap = new HashMap<>();
         
-         for(OsAccount account: tskCase.getOsAccountManager().getAccounts(((DataSource)dataSource).getHost())) {
+         for(OsAccount account: tskCase.getOsAccountManager().getOsAccounts(((DataSource)dataSource).getHost())) {
             Optional<String> userName = account.getLoginName();
             userNameMap.put(account.getName(), userName.isPresent() ? userName.get() : "");
         }
@@ -443,7 +441,7 @@ final class ExtractRecycleBin extends Extract {
         attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
         attributes.add(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
         attributes.add(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
-        return createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.fromID(type.getTypeID()), rFile, attributes);
+        return createArtifactWithAttributes(type, rFile, attributes);
     }
 
     /**
