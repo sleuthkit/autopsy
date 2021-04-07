@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -163,7 +163,7 @@ public class TaskRetryUtil {
      * each attempt and an optional timeout for each attempt. If an attempt
      * times out, that particular attempt task will be cancelled.
      *
-     * @tparam T         The return type of the task.
+     * @tparam T The return type of the task.
      * @param task       The task.
      * @param attempts   The defining details for each attempt of the task.
      * @param executor   The scheduled task executor to be used to attempt the
@@ -181,6 +181,9 @@ public class TaskRetryUtil {
      * @throws InterruptedException
      */
     public static <T> T attemptTask(Callable<T> task, List<TaskAttempt> attempts, ScheduledThreadPoolExecutor executor, Terminator terminator, Logger logger, String taskDesc) throws InterruptedException {
+        /*
+         * Attempt the task.
+         */
         T result = null;
         String taskDescForLog = taskDesc != null ? taskDesc : "Task";
         int attemptCounter = 0;
@@ -195,9 +198,6 @@ public class TaskRetryUtil {
                 break;
             }
             TaskAttempt attempt = attempts.get(attemptCounter);
-            if (logger != null) {
-                logger.log(Level.INFO, String.format("SCHEDULING '%s' (attempt = %d, delay = %d %s, timeout = %d %s)", taskDescForLog, attemptCounter + 1, attempt.getDelay(), attempt.getTimeUnit(), attempt.getTimeout(), attempt.getTimeUnit()));
-            }
             if (attemptCounter > 0) {
                 totalTaskRetries.incrementAndGet();
             }
@@ -222,11 +222,27 @@ public class TaskRetryUtil {
             }
             ++attemptCounter;
         }
+
+        /*
+         * If the task required more than one attempt, log it.
+         */
+        if (logger != null && attemptCounter > 1) {
+            if (result != null) {
+                logger.log(Level.WARNING, String.format("'%s' succeeded after %d attempts", taskDescForLog, attemptCounter));
+            } else {
+                logger.log(Level.SEVERE, String.format("'%s' failed after %d attempts", taskDescForLog, attemptCounter));
+            }
+        }
+
+        /*
+         * If the task failed, count it as a failed task.
+         */
         if (result == null) {
             if (terminator == null || !terminator.stopTaskAttempts()) {
                 totalFailedTasks.incrementAndGet();
             }
         }
+
         return result;
     }
 

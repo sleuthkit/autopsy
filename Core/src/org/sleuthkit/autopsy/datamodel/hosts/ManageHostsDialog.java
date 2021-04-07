@@ -166,7 +166,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         if (newHostName != null) {
             Long selectedId = null;
             try {
-                Host newHost = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().createHost(newHostName);
+                Host newHost = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().newHost(newHostName);
                 selectedId = newHost == null ? null : newHost.getHostId();
             } catch (NoCurrentCaseException | TskCoreException e) {
                 logger.log(Level.WARNING, String.format("Unable to add new host '%s' at this time.", newHostName), e);
@@ -234,9 +234,8 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         if (selectedHost != null) {
             String newHostName = getAddEditDialogName(selectedHost);
             if (newHostName != null) {
-                selectedHost.setName(newHostName);
                 try {
-                    Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHost(selectedHost);
+                    Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHostName(selectedHost, newHostName);
                 } catch (NoCurrentCaseException | TskCoreException e) {
                     logger.log(Level.WARNING, String.format("Unable to update host '%s' with id: %d at this time.", selectedHost.getName(), selectedHost.getHostId()), e);
                 }
@@ -322,7 +321,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         Map<Host, List<DataSource>> hostMapping = new HashMap<>();
         try {
             SleuthkitCase curCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            List<Host> hosts = curCase.getHostManager().getHosts();
+            List<Host> hosts = curCase.getHostManager().getAllHosts();
             List<DataSource> dataSources = curCase.getDataSources();
 
             if (dataSources != null) {

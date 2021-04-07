@@ -115,7 +115,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                     return true;
                 } else {
                     // otherwise, just show host level
-                    tskCase.getHostManager().getHosts().stream()
+                    tskCase.getHostManager().getAllHosts().stream()
                             .map(HostGrouping::new)
                             .sorted()
                             .forEach(list::add);

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -75,6 +76,16 @@ public class Installer extends ModuleInstall {
     }
     
     private void setLookAndFeel() {
+        
+        ImageIcon questionIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/question_32.png"));
+        ImageIcon warningIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/warning_32.png"));
+        ImageIcon informationIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/information_32.png"));
+        ImageIcon errorIcon = new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error_32.png"));
+        UIManager.put("OptionPane.errorIcon", errorIcon);
+        UIManager.put("OptionPane.warningIcon", warningIcon);
+        UIManager.put("OptionPane.questionIcon", questionIcon);
+        UIManager.put("OptionPane.informationIcon", informationIcon);
+        
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
             setUnixLookAndFeel();
             setModuleSettings("false");

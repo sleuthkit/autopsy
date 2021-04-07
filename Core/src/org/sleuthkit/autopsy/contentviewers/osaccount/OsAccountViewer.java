@@ -18,7 +18,10 @@
  */
 package org.sleuthkit.autopsy.contentviewers.osaccount;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
@@ -153,8 +156,14 @@ public class OsAccountViewer extends javax.swing.JPanel implements DataContentVi
 
         mainScrollPane = new javax.swing.JScrollPane();
 
-        setLayout(new java.awt.BorderLayout());
-        add(mainScrollPane, java.awt.BorderLayout.CENTER);
+        setLayout(new java.awt.GridBagLayout());
+
+        mainScrollPane.setPreferredSize(new java.awt.Dimension(200, 0));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        add(mainScrollPane, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 

@@ -146,7 +146,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     if (filteringDSObjId == 0) {
                         list.addAll(skCase.getOsAccountManager().getOsAccounts());
                     } else {
-                        Host host = skCase.getHostManager().getHost(skCase.getDataSource(filteringDSObjId));
+                        Host host = skCase.getHostManager().getHostByDataSource(skCase.getDataSource(filteringDSObjId));
                         list.addAll(skCase.getOsAccountManager().getOsAccounts(host));
                     }
                 } catch (TskCoreException | TskDataException ex) {
