@@ -803,7 +803,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, value));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, itemMtime));
-                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_DELETED_PROG);
                                             bbart.addAttributes(bbattributes);
 
                                             newArtifacts.add(bbart);
