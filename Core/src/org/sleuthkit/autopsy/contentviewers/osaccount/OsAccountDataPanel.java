@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.OsAccountAttribute;
+import org.sleuthkit.datamodel.OsAccount.OsAccountAttribute;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.OsAccountManager;
 import org.sleuthkit.datamodel.OsAccountRealm;
@@ -392,10 +392,10 @@ public class OsAccountDataPanel extends JPanel {
                 account = osAccountManager.getOsAccountByObjectId(accountId);
             }
             
-            OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmById(account.getRealmId());
+            OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmByRealmId(account.getRealmId());
             
             List<Host> hosts = osAccountManager.getHosts(account);
-            List<OsAccountAttribute> attributeList = account.getOsAccountAttributes();
+            List<OsAccountAttribute> attributeList = account.getExtendedOsAccountAttributes();
 
             if (attributeList != null) {
                 if (hosts != null) {

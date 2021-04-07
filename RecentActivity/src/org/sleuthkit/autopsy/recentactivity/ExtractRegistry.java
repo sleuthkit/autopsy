@@ -93,11 +93,11 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.OsAccountAttribute;
+import org.sleuthkit.datamodel.OsAccount.OsAccountAttribute;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.OsAccountManager;
-import org.sleuthkit.datamodel.OsAccountManager.AccountUpdateStatus;
 import org.sleuthkit.datamodel.OsAccountManager.NotUserSIDException;
+import org.sleuthkit.datamodel.OsAccountManager.OsAccountUpdateResult;
 import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.Report;
@@ -1080,7 +1080,7 @@ class ExtractRegistry extends Extract {
             // New OsAccount Code 
             OsAccountManager accountMgr = tskCase.getOsAccountManager();
             HostManager hostMrg = tskCase.getHostManager();
-            Host host = hostMrg.getHost((DataSource)dataSource);
+            Host host = hostMrg.getHostByDataSource((DataSource)dataSource);
 
             List<OsAccount> existingAccounts = accountMgr.getOsAccounts(host);
             for(OsAccount osAccount: existingAccounts) {
@@ -1098,8 +1098,8 @@ class ExtractRegistry extends Extract {
             
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
-                OsAccount osAccount = accountMgr.createWindowsOsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
-                accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
+                OsAccount osAccount = accountMgr.newWindowsOsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+                accountMgr.newOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
                 updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
             
@@ -1752,7 +1752,6 @@ class ExtractRegistry extends Extract {
         try {
             for (ShellBag bag : shellbags) {
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                BlackboardArtifact artifact = regFile.newArtifact(getShellBagArtifact().getTypeID());
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), bag.getResource()));
                 attributes.add(new BlackboardAttribute(getKeyAttribute(), getName(), bag.getKey()));
 
@@ -1777,9 +1776,7 @@ class ExtractRegistry extends Extract {
                     attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
                 }
 
-                artifact.addAttributes(attributes);
-
-                artifacts.add(artifact);
+                artifacts.add(createArtifactWithAttributes(getShellBagArtifact(), regFile, attributes));
             }
         } finally {
             if(!context.dataSourceIngestIsCancelled()) {
@@ -1968,18 +1965,18 @@ class ExtractRegistry extends Extract {
     private void createOrUpdateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException, NotUserSIDException {
         OsAccountManager accountMgr = tskCase.getOsAccountManager();
         HostManager hostMrg = tskCase.getHostManager();
-        Host host = hostMrg.getHost((DataSource)dataSource);
+        Host host = hostMrg.getHostByDataSource((DataSource)dataSource);
 
         Optional<OsAccount> optional = accountMgr.getWindowsOsAccount(sid, null, null, host);
         OsAccount osAccount;
         if (!optional.isPresent()) {
-            osAccount = accountMgr.createWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
-            accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
+            osAccount = accountMgr.newWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
+            accountMgr.newOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
         } else {
             osAccount = optional.get();
             if (userName != null && !userName.isEmpty()) {
-                AccountUpdateStatus updateStatus = accountMgr.updateWindowsOsAccountCore(osAccount, null, userName, null, host);
-                osAccount = updateStatus.getUpdatedAccount().orElse(osAccount);
+                OsAccountUpdateResult updateResult= accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, userName, null, host);
+                osAccount = updateResult.getUpdatedAccount().orElse(osAccount);
             }
         }
 
@@ -1988,7 +1985,7 @@ class ExtractRegistry extends Extract {
             String dir = homeDir.replaceFirst("^(%\\w*%)", "");
             dir = dir.replace("\\", "/");
             attributes.add(createOsAccountAttribute(TSK_HOME_DIR, dir, osAccount, host, file));
-            accountMgr.addOsAccountAttributes(osAccount, attributes);
+            accountMgr.addExtendedOsAccountAttributes(osAccount, attributes);
         }
 
     }
@@ -2167,13 +2164,13 @@ class ExtractRegistry extends Extract {
 
         // add the attributes to account.
         OsAccountManager accountMgr = tskCase.getOsAccountManager();
-        accountMgr.addOsAccountAttributes(osAccount, attributes);
+        accountMgr.addExtendedOsAccountAttributes(osAccount, attributes);
          
         // update the loginname
-        accountMgr.updateWindowsOsAccountCore(osAccount, null, loginName, null, host);
+        accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, loginName, null, host);
         
-        // update other properties  -  fullname, creationdate
-        accountMgr.updateOsAccountProperties(osAccount, fullName, null, null, creationTime);
+        // update other standard attributes  -  fullname, creationdate
+        accountMgr.updateStandardOsAccountAttributes(osAccount, fullName, null, null, creationTime);
         
         
     }
@@ -2215,7 +2212,7 @@ class ExtractRegistry extends Extract {
      * @return Newly created OsACcountAttribute
      */
     private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, String value, OsAccount osAccount, Host host, AbstractFile file) {
-        return new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
+        return osAccount.new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
     }
 
     /**
@@ -2230,7 +2227,7 @@ class ExtractRegistry extends Extract {
      * @return Newly created OsACcountAttribute
      */
     private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, Long value, OsAccount osAccount, Host host, AbstractFile file) {
-        return new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
+        return osAccount.new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
     }
 
     /**
@@ -2245,6 +2242,6 @@ class ExtractRegistry extends Extract {
      * @return Newly created OsACcountAttribute
      */
     private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, Integer value, OsAccount osAccount, Host host, AbstractFile file) {
-        return new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
+        return osAccount.new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
     }
 }

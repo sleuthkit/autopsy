@@ -973,7 +973,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * job to be shut down in an orderly fashion.
      */
     void cancelCurrentJob() {
-        if (State.RUNNING != state) {
+        if ((State.RUNNING != state) && (State.SHUTTING_DOWN != state)) {
             return;
         }
         synchronized (jobsLock) {
@@ -2564,6 +2564,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 synchronized (ingestLock) {
                     // Try each DSP in decreasing order of confidence
                     for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
+                        currentJob.setDataSourceProcessor(selectedProcessor);
                         UUID taskId = UUID.randomUUID();
                         caseForJob.notifyAddingDataSource(taskId);
                         DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
