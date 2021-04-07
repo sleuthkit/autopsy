@@ -166,7 +166,7 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
         if (specifyNewHostRadio.isSelected() && StringUtils.isNotEmpty(specifyNewHostTextField.getText())) {
             String newHostName = specifyNewHostTextField.getText();
             try {
-                return Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().createHost(newHostName);
+                return Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().newHost(newHostName);
             } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.WARNING, String.format("Unable to create host '%s'.", newHostName), ex);
                 return null;
@@ -186,7 +186,7 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
      */
     private void loadHostData() {
         try {
-            Collection<Host> hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts();
+            Collection<Host> hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getAllHosts();
             sanitizedHostSet = HostNameValidator.getSanitizedHostNames(hosts);
             
             Vector<HostListItem> hostListItems = hosts.stream()

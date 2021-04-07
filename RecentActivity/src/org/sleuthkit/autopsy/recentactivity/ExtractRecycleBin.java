@@ -441,7 +441,7 @@ final class ExtractRecycleBin extends Extract {
         attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
         attributes.add(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
         attributes.add(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
-        return createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.fromID(type.getTypeID()), rFile, attributes);
+        return createArtifactWithAttributes(type, rFile, attributes);
     }
 
     /**
