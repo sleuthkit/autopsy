@@ -112,6 +112,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         tempDirChooser.setMultiSelectionEnabled(false);
         
         heapFileChooser = new JFileChooser();
+        heapFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         heapFileChooser.setMultiSelectionEnabled(false);
 
         if (!isJVMHeapSettingsCapable()) {
@@ -235,7 +236,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final String XMX_REGEX_STR = "^\\s*\\-J\\-Xmx(?<" + XMX_REGEX_PARAM + ">.+?)\\s*$";
     private static final Pattern XMX_REGEX = Pattern.compile(XMX_REGEX_STR);
     private static final String HEAP_DUMP_REGEX_PARAM = "path";
-    private static final String HEAP_DUMP_REGEX_STR = "^\\s*\\-J\\-XX:HeapDumpPath=\\s*(?<" + HEAP_DUMP_REGEX_PARAM + ">.+?)\\s*$";
+    private static final String HEAP_DUMP_REGEX_STR = "^\\s*\\-J\\-XX:HeapDumpPath=(\\\")?\\s*(?<" + HEAP_DUMP_REGEX_PARAM + ">.+?)\\s*(\\\")?$";
     private static final Pattern HEAP_DUMP_REGEX = Pattern.compile(HEAP_DUMP_REGEX_STR);
     
     /**
@@ -258,9 +259,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             String memString = "-J-Xmx" + memText.replaceAll("[^\\d]", "") + "g";
             
             // only add in heap path argument if a heap path is specified
-            String heapString = StringUtils.isNotBlank(heapText) ? 
-                    String.format("-J-XX:HeapDumpPath=%s", heapText) :
-                    null;
+            String heapString = null;
+            if (StringUtils.isNotBlank(heapText)) {
+                while (heapText.endsWith("\\") && heapText.length() > 0) {
+                    heapText = heapText.substring(0, heapText.length() - 1);
+                }
+                
+                heapString = String.format("-J-XX:HeapDumpPath=\"%s\"", heapText);
+            }
             
             Stream<String> argsNoMemHeap = Stream.of(parsedArgs)
                     // remove saved version of memory and heap dump path
@@ -370,7 +376,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         "AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist=Selected directory does not exist.",
         "AutopsyOptionsPanel_isHeapPathValid_developerMode=Cannot change heap dump path while in developer mode.",
         "AutopsyOptionsPanel_isHeapPathValid_not64BitMachine=Changing heap dump path settings only enabled for 64 bit version.",
-        "AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters=Please select a path with no spaces or quotes."
+        "AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters=Please select a path with no quotes."
     })
     private boolean isHeapPathValid() {
         if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
@@ -388,7 +394,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         //allow blank field as the default will be used
         if (StringUtils.isNotBlank(heapDumpFileField.getText())) { 
             String heapText = heapDumpFileField.getText().trim();
-            if (heapText.contains(" ") || heapText.contains("\"") || heapText.contains("'")) {
+            if (heapText.contains("\"") || heapText.contains("'")) {
                 heapFieldValidationLabel.setVisible(true);
                 heapFieldValidationLabel.setText(Bundle.AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters());
                 return false;
@@ -1372,20 +1378,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             heapFileChooser.setCurrentDirectory(new File(oldHeapPath));
         }
         
-        int returnState = heapFileChooser.showSaveDialog(this);
+        int returnState = heapFileChooser.showOpenDialog(this);
         if (returnState == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = heapFileChooser.getSelectedFile();
-            // heap dump path can be file or directory: https://www.oracle.com/java/technologies/javase/vmoptions-jsp.html
-            if (selectedFile.exists() && !selectedFile.isDirectory()) {
-                JOptionPane.showMessageDialog(this,
-                        Bundle.AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsMessage(),
-                        Bundle.AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsTitle(),
-                    JOptionPane.ERROR_MESSAGE);
-                
-            } else {
-                heapDumpFileField.setText(selectedFile.getAbsolutePath());
-                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            }
+            File selectedDirectory = heapFileChooser.getSelectedFile();
+            heapDumpFileField.setText(selectedDirectory.getAbsolutePath());
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_heapDumpBrowseButtonActionPerformed
 
