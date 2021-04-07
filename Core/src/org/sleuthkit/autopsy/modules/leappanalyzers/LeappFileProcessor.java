@@ -640,7 +640,7 @@ public final class LeappFileProcessor {
             }            
             CommunicationArtifactsHelper accountArtifact;
 	    Account.Type accountType = getAccountType(fileName);
-            if ((absFile != null) || (accountType != null)) {
+            if (alternateId == null) {
                 accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                                                                moduleName, absFile, accountType);
             } else {
