@@ -578,7 +578,6 @@ public final class LeappFileProcessor {
         String sourceFile = null;
         MessageAttachments messageAttachments = null;
 
-        /******* DISABLE TEMPORARILY*************
         try {
             for (BlackboardAttribute bba : bbattributes) {
                 switch (bba.getAttributeType().getTypeName()) {
@@ -639,25 +638,25 @@ public final class LeappFileProcessor {
             if (absFile == null) {
                 absFile = (AbstractFile) dataSource;
             }            
-			Account.Type accountType = getAccountType(fileName);
-            if ((absFile != null) || (accountType != null)) {
-                CommunicationArtifactsHelper accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+            CommunicationArtifactsHelper accountArtifact;
+	    Account.Type accountType = getAccountType(fileName);
+            if (alternateId == null) {
+                accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                                                                moduleName, absFile, accountType);
-                } else {
-                    accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
+            } else {
+                accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
                                                                moduleName, absFile, accountType, accountType, alternateId);                    
-                }
-                    BlackboardArtifact messageArtifact = accountArtifact.addMessage(messageType, communicationDirection, senderId,
-                                                                                receipentId, dateTime, messageStatus, subject,
-                                                                                messageText, threadId, otherAttributes);
-                if (!fileAttachments.isEmpty()) {
-                    messageAttachments = new MessageAttachments(fileAttachments, new ArrayList<>());
-                    accountArtifact.addAttachments(messageArtifact, messageAttachments);
-                }
+            }
+            BlackboardArtifact messageArtifact = accountArtifact.addMessage(messageType, communicationDirection, senderId,
+                                                                            receipentId, dateTime, messageStatus, subject,
+                                                                            messageText, threadId, otherAttributes);
+            if (!fileAttachments.isEmpty()) {
+                messageAttachments = new MessageAttachments(fileAttachments, new ArrayList<>());
+                accountArtifact.addAttachments(messageArtifact, messageAttachments);
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
-        }*/
+        }
 
     }
 
