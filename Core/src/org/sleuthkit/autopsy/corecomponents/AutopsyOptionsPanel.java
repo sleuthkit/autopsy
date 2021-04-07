@@ -86,6 +86,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private final JFileChooser tempDirChooser;
     private static final String ETC_FOLDER_NAME = "etc";
     private static final String CONFIG_FILE_EXTENSION = ".conf";
+    private static final String HEAP_DUMP_FILE_EXTENSION = "hprof";
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
     private static final int MEGA_IN_GIGA = 1024; //used to convert memory settings saved as megabytes to gigabytes
     private static final int JVM_MEMORY_STEP_SIZE_MB = 512;
@@ -376,7 +377,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         "AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist=Selected directory does not exist.",
         "AutopsyOptionsPanel_isHeapPathValid_developerMode=Cannot change heap dump path while in developer mode.",
         "AutopsyOptionsPanel_isHeapPathValid_not64BitMachine=Changing heap dump path settings only enabled for 64 bit version.",
-        "AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters=Please select a path with no quotes."
+        "AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters=Please select a path with no quotes.",
+        "# {0} - heapDumpExtension",
+        "AutopsyOptionsPanel_isHeapPathValid_invalidExtension=Please make sure your file ends with a {0} extension."
     })
     private boolean isHeapPathValid() {
         if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
@@ -415,6 +418,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 if (parentDir == null || !parentDir.exists()) {
                     heapFieldValidationLabel.setVisible(true);
                     heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist());
+                    return false;
+                } else if (!curHeapFile.getAbsolutePath().trim().toLowerCase().endsWith("." + HEAP_DUMP_FILE_EXTENSION)) {
+                    heapFieldValidationLabel.setVisible(true);
+                    heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_invalidExtension(HEAP_DUMP_FILE_EXTENSION));
                     return false;
                 }
             }
