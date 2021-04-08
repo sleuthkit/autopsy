@@ -145,10 +145,8 @@ class WebCategoriesDataModel implements AutoCloseable {
 
         Path subDirPath = Paths.get(configDir, ROOT_FOLDER);
         File subDir = subDirPath.toFile();
-        if (!subDir.exists()) {
-            if (subDir.mkdirs()) {
+        if (!subDir.exists() && !subDir.mkdirs()) {
                 logger.log(Level.WARNING, "There was an issue creating custom domain config at: {0}", subDirPath.toString());
-            }
         }
 
         return Paths.get(configDir, ROOT_FOLDER, FILE_REL_PATH).toFile();
