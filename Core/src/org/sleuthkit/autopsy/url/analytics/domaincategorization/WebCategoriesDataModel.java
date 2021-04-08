@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -44,7 +45,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openide.modules.InstalledFileLocator;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 
 /**
@@ -136,13 +137,19 @@ class WebCategoriesDataModel implements AutoCloseable {
      * @return The path or null if the path cannot be reconciled.
      */
     private static File getDefaultPath() {
-        File dir = InstalledFileLocator.getDefault().locate(ROOT_FOLDER, WebCategoriesDataModel.class.getPackage().getName(), false);
-        if (dir == null || !dir.exists()) {
-            logger.log(Level.WARNING, String.format("Unable to find file %s with InstalledFileLocator", ROOT_FOLDER));
+        String configDir = PlatformUtil.getUserConfigDirectory();
+        if (configDir == null || !new File(configDir).exists()) {
+            logger.log(Level.WARNING, "Unable to find UserConfigDirectory");
             return null;
         }
 
-        return Paths.get(dir.getAbsolutePath(), FILE_REL_PATH).toFile();
+        Path subDirPath = Paths.get(configDir, ROOT_FOLDER);
+        File subDir = subDirPath.toFile();
+        if (!subDir.exists() && !subDir.mkdirs()) {
+                logger.log(Level.WARNING, "There was an issue creating custom domain config at: {0}", subDirPath.toString());
+        }
+
+        return Paths.get(configDir, ROOT_FOLDER, FILE_REL_PATH).toFile();
     }
 
     /**
@@ -530,7 +537,7 @@ class WebCategoriesDataModel implements AutoCloseable {
     public synchronized void close() throws SQLException {
         if (dbConn != null) {
             dbConn.close();
-            dbConn = null;   
+            dbConn = null;
         }
     }
 }
