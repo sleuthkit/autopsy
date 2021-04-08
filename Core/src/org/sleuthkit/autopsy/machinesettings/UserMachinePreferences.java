@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.machinesettings;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -30,12 +31,15 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
  * Provides case-specific settings like the user-specified temp folder.
  */
 public final class UserMachinePreferences {
 
+    private static final Logger logger = Logger.getLogger(UserMachinePreferences.class.getName());
     private static final Preferences preferences = NbPreferences.forModule(UserMachinePreferences.class);
 
     /**
@@ -82,6 +86,17 @@ public final class UserMachinePreferences {
     private static final TempDirChoice DEFAULT_CHOICE = TempDirChoice.SYSTEM;
 
     /**
+     * Returns the name of this computer's host name to be used as a directory
+     * in some instances.
+     *
+     * @return The name of this computer's host name to be used as a directory
+     * in some instances.
+     */
+    private static String getHostName() {
+        return NetworkUtils.getLocalHostName();
+    }
+
+    /**
      * @return A subdirectory of java.io.tmpdir.
      */
     private static File getSystemTempDirFile() {
@@ -94,8 +109,16 @@ public final class UserMachinePreferences {
      */
     private static File getCaseTempDirFile() {
         try {
-            String caseDirStr = Case.getCurrentCaseThrows().getCaseDirectory();
-            return Paths.get(caseDirStr, CASE_SUBDIR).toFile();
+            Case autCase = Case.getCurrentCaseThrows();
+            String caseDirStr = autCase.getCaseDirectory();
+            switch (autCase.getCaseType()) {
+                case MULTI_USER_CASE: return Paths.get(caseDirStr, getHostName(), CASE_SUBDIR).toFile();
+                case SINGLE_USER_CASE: return Paths.get(caseDirStr, CASE_SUBDIR).toFile();
+                default: 
+                    logger.log(Level.SEVERE, "Unknown case type: " + autCase.getCaseType());
+                    return getSystemTempDirFile();
+            }
+            
         } catch (NoCurrentCaseException ex) {
             return getSystemTempDirFile();
         }
@@ -111,7 +134,7 @@ public final class UserMachinePreferences {
     private static File getCustomTempDirFile() {
         String customDirectory = getCustomTempDirectory();
         return (StringUtils.isBlank(customDirectory))
-                ? getSystemTempDirFile() : Paths.get(customDirectory, AUTOPSY_SUBDIR).toFile();
+                ? getSystemTempDirFile() : Paths.get(customDirectory, AUTOPSY_SUBDIR, getHostName()).toFile();
     }
 
     /**
@@ -214,8 +237,9 @@ public final class UserMachinePreferences {
 
     /**
      * Sets the temp directory choice (i.e. system, case, custom).
+     *
      * @param tempDirChoice The choice (must be non-null).
-     * @throws UserMachinePreferencesException 
+     * @throws UserMachinePreferencesException
      */
     public static void setTempDirChoice(TempDirChoice tempDirChoice) throws UserMachinePreferencesException {
         if (tempDirChoice == null) {
