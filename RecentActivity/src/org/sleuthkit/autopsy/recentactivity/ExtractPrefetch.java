@@ -316,7 +316,7 @@ final class ExtractPrefetch extends Extract {
                             }
                         } catch (TskCoreException ex) {
                             logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
-                        }    
+                        }
                     }
                 } else {
                     logger.log(Level.WARNING, "File has a null value " + prefetchFileName);//NON-NLS
