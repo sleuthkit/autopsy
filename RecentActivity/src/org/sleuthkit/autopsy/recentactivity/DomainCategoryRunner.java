@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.recentactivity;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -453,33 +454,45 @@ class DomainCategoryRunner extends Extract {
     @Override
     void configExtractor() throws IngestModule.IngestModuleException {
         // lookup all providers, filter null providers, and sort providers
-        Collection<? extends DomainCategorizer> lookupList = Lookup.getDefault().lookupAll(DomainCategorizer.class);
-        if (lookupList == null) {
-            lookupList = Collections.emptyList();
-        }
-
-        List<DomainCategorizer> foundProviders = lookupList.stream()
-                .filter(provider -> provider != null)
-                .sorted((a, b) -> {
-                    boolean aIsCustom = a.getClass().getName().contains(CUSTOM_CATEGORIZER_PATH);
-                    boolean bIsCustom = b.getClass().getName().contains(CUSTOM_CATEGORIZER_PATH);
-                    if (aIsCustom != bIsCustom) {
-                        // push custom categorizer to top
-                        return -Boolean.compare(aIsCustom, bIsCustom);
-                    }
-
-                    return a.getClass().getName().compareToIgnoreCase(b.getClass().getName());
+        Collection<? extends DomainCategorizer> lookupCollection = Lookup.getDefault().lookupAll(DomainCategorizer.class);
+        Collection<? extends DomainCategorizer> lookupList = (lookupCollection == null) ? 
+                Collections.emptyList() :
+                lookupCollection;
+        
+        // this will be the class instance of the foundProviders
+        List<DomainCategorizer> foundProviders = new ArrayList<>();
+        
+        // find the custom domain categories provider if present and add it first to the list
+        lookupList.stream()
+                .filter(categorizer -> categorizer.getClass().getName().contains(CUSTOM_CATEGORIZER_PATH))
+                .findFirst()
+                .ifPresent((provider) -> foundProviders.add(provider));
+                
+        // add the default priority categorizer
+        foundProviders.add(new DefaultPriorityDomainCategorizer());
+        
+        // add all others except for the custom web domain categorizer, the default priority 
+        // categorizer and the default categorizer
+        lookupList.stream()
+                .filter(categorizer -> categorizer != null)
+                .filter(categorizer -> {
+                    String className = categorizer.getClass().getName();
+                    return !className.contains(CUSTOM_CATEGORIZER_PATH) &&
+                            !className.equals(DefaultPriorityDomainCategorizer.class.getName()) &&
+                            !className.equals(DefaultDomainCategorizer.class.getName());
                 })
-                .collect(Collectors.toList());
-
-        // add the default categorizer last as a last resort
+                .sorted((a, b) -> a.getClass().getName().compareToIgnoreCase(b.getClass().getName()))
+                .forEach(foundProviders::add);
+        
+        // add the default categorizer last
         foundProviders.add(new DefaultDomainCategorizer());
-
+        
         for (DomainCategorizer provider : foundProviders) {
             try {
                 provider.initialize();
             } catch (DomainCategorizerException ex) {
-                throw new IngestModule.IngestModuleException("There was an error instantiating the provider: " + provider.getClass().getSimpleName(), ex);
+                throw new IngestModule.IngestModuleException("There was an error instantiating the provider: " + 
+                        provider.getClass().getSimpleName(), ex);
             }
         }
 
