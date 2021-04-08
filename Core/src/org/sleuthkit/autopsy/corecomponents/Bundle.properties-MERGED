@@ -15,12 +15,9 @@ AutopsyOptionsPanel.memFieldValidationLabel.underMinMemory.text=Value must be at
 AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsMessage=File already exists.  Please select a new location.
 AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsTitle=File Already Exists
 AutopsyOptionsPanel_isHeapPathValid_developerMode=Cannot change heap dump path while in developer mode.
-AutopsyOptionsPanel_isHeapPathValid_directoryDoesNotExist=Selected directory does not exist.
-AutopsyOptionsPanel_isHeapPathValid_fileAlreadyExists=A file already exists at this location.
 AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters=Please select a path with no quotes.
-# {0} - heapDumpExtension
-AutopsyOptionsPanel_isHeapPathValid_invalidExtension=Please make sure your file ends with a {0} extension.
 AutopsyOptionsPanel_isHeapPathValid_not64BitMachine=Changing heap dump path settings only enabled for 64 bit version.
+AutopsyOptionsPanel_isHeapPathValid_selectValidDirectory=Please select an existing directory.
 AutopsyOptionsPanel_storeTempDir_onChoiceError_description=There was an error updating temporary directory choice selection.
 AutopsyOptionsPanel_storeTempDir_onChoiceError_title=Error Saving Temporary Directory Choice
 # {0} - path
