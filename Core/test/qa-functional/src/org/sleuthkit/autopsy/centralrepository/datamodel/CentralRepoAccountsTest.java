@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import junit.framework.Test;
@@ -104,10 +105,11 @@ public class CentralRepoAccountsTest extends TestCase {
             if(expectedAccountType == Account.Type.DEVICE) continue;
             
             try {
-                CentralRepoAccountType crAccountType = CentralRepository.getInstance()
+                Optional<CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance()
                         .getAccountTypeByName(expectedAccountType.getTypeName());
+                Assert.assertTrue(optCrAccountType.isPresent());
                 
-                Account.Type actualAccountType = crAccountType.getAcctType();
+                Account.Type actualAccountType = optCrAccountType.get().getAcctType();
                 Assert.assertEquals(expectedAccountType, actualAccountType);
             } catch (CentralRepoException ex) {
                 Assert.fail("Didn't expect an exception here. Exception: " + ex);
@@ -141,12 +143,13 @@ public class CentralRepoAccountsTest extends TestCase {
     public void testCreatingAccount() {
         try {
             Account.Type facebookAccountType = Account.Type.FACEBOOK;
-            CentralRepoAccountType expectedAccountType = CentralRepository.getInstance()
+            Optional<CentralRepoAccountType> optExpectedAccountType = CentralRepository.getInstance()
                     .getAccountTypeByName(facebookAccountType.getTypeName());
+            assertTrue(optExpectedAccountType.isPresent());
             
             // Create the account
             CentralRepository.getInstance()
-                    .getOrCreateAccount(expectedAccountType, "+1 401-231-2552");
+                    .getOrCreateAccount(optExpectedAccountType.get(), "+1 401-231-2552");
         } catch (InvalidAccountIDException | CentralRepoException ex) {
              Assert.fail("Didn't expect an exception here. Exception: " + ex);
         }
@@ -155,19 +158,20 @@ public class CentralRepoAccountsTest extends TestCase {
     public void testRetreivingAnAccount() {
         try {
             Account.Type facebookAccountType = Account.Type.FACEBOOK;
-            CentralRepoAccountType expectedAccountType = CentralRepository
+            Optional<CentralRepoAccountType> optExpectedAccountType = CentralRepository
                     .getInstance()
                     .getAccountTypeByName(facebookAccountType.getTypeName());
+            assertTrue(optExpectedAccountType.isPresent());
             
             // Create the account
             CentralRepository.getInstance()
-                    .getOrCreateAccount(expectedAccountType, "+1 441-231-2552");
+                    .getOrCreateAccount(optExpectedAccountType.get(), "+1 441-231-2552");
             
             // Retrieve the account
             CentralRepoAccount actualAccount = CentralRepository.getInstance()
-                    .getOrCreateAccount(expectedAccountType, "+1 441-231-2552");
+                    .getOrCreateAccount(optExpectedAccountType.get(), "+1 441-231-2552");
             
-            Assert.assertEquals(expectedAccountType, actualAccount.getAccountType());
+            Assert.assertEquals(optExpectedAccountType.get(), actualAccount.getAccountType());
             Assert.assertEquals("+1 441-231-2552", actualAccount.getIdentifier());
         } catch (InvalidAccountIDException | CentralRepoException ex) {
              Assert.fail("Didn't expect an exception here. Exception: " + ex);
