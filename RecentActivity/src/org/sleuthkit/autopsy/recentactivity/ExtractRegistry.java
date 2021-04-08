@@ -1173,6 +1173,7 @@ class ExtractRegistry extends Extract {
                     ParseRegistryHive systemRegFile = new ParseRegistryHive(systemFileNameLocalFile);
                     hostName = systemRegFile.getRegistryKeyValue("ControlSet001/Services/Tcpip/Parameters", "hostname");
                     domainName = systemRegFile.getRegistryKeyValue("ControlSet001/Services/Tcpip/Parameters", "domain");
+                    break;
                 } catch (IOException ex) {
 		    logger.log(Level.SEVERE, String.format("Error reading registry file '%s' for registry file '%s' (id=%d).",
                             systemFileNameLocal, systemHive.getName(), systemHive.getId()), ex); //NON-NLS
