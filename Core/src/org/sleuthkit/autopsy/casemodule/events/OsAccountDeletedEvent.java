@@ -18,22 +18,20 @@
  */
 package org.sleuthkit.autopsy.casemodule.events;
 
-import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
- * Event fired when persons are removed.
+ *  Event published when an OsAccount is deleted.
+ * 
+ * oldValue will contain the objectId of the account that was removed. newValue
+ * will be null.
  */
-public class PersonsRemovedEvent extends PersonsEvent {
-    
+public final class OsAccountDeletedEvent extends AutopsyEvent {
+
     private static final long serialVersionUID = 1L;
     
-    /**
-     * Main constructor.
-     * @param dataModelObjects The list of persons that have been deleted.
-     */
-    public PersonsRemovedEvent(List<Person> dataModelObjects) {
-        super(Case.Events.PERSONS_DELETED.name(), dataModelObjects);
-    }
+    public OsAccountDeletedEvent(Long osAccountObjectId) {
+        super(Case.Events.OS_ACCOUNT_REMOVED.toString(), osAccountObjectId, null);
+    }  
 }
