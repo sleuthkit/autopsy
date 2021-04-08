@@ -66,8 +66,6 @@ final class ExtractPrefetch extends Extract {
 
     private IngestJobContext context;
 
-    private static final String MODULE_NAME = "extractPREFETCH"; //NON-NLS
-
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
     private static final String PREFETCH_FILE_LOCATION = "/windows/prefetch";
     private static final String PREFETCH_TOOL_FOLDER = "markmckinnon"; //NON-NLS
@@ -151,13 +149,13 @@ final class ExtractPrefetch extends Extract {
                 return;
             }
 
-            String origFileName = pFile.getName();
-            String ext = FilenameUtils.getExtension(origFileName);
-            String baseName = FilenameUtils.getBaseName(origFileName);
-            String fileName = String.format("%s_%d.%s", baseName, pFile.getId(), ext);
-            String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME);
-            String prefetchFile =  Paths.get(baseRaTempPath, fileName).toString();
             if (pFile.getParentPath().toLowerCase().contains(PREFETCH_FILE_LOCATION.toLowerCase()) && pFile.getSize() > 0) {
+                String origFileName = pFile.getName();
+                String ext = FilenameUtils.getExtension(origFileName);
+                String baseName = FilenameUtils.getBaseName(origFileName);
+                String fileName = String.format("%s_%d.%s", baseName, pFile.getId(), ext);
+                String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME);
+                String prefetchFile =  Paths.get(baseRaTempPath, fileName).toString();
                 try {
                     ContentUtils.writeToFile(pFile, new File(prefetchFile));
                 } catch (IOException ex) {
@@ -308,7 +306,7 @@ final class ExtractPrefetch extends Extract {
                         try {
                             BlackboardArtifact blkBrdArt = createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN, pfAbstractFile, blkBrdAttributes);
                             blkBrdArtList.add(blkBrdArt);
-                            BlackboardArtifact associatedBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, blkBrdArt, dataSource);
+                            BlackboardArtifact associatedBbArtifact = createAssociatedArtifact(pfAbstractFile, blkBrdArt);
                             if (associatedBbArtifact != null) {
                                 blkBrdArtList.add(associatedBbArtifact);
                             }
@@ -348,58 +346,4 @@ final class ExtractPrefetch extends Extract {
         }
         return prefetchExecutionTimes;
     }
-
-    /**
-     * Create associated artifacts using file path name and the artifact it
-     * associates with
-     *
-     * @param fileName     the filename to search for
-     * @param filePathName file and path of object being associated with
-     * @param bba          blackboard artifact to associate with
-     * @param dataSource   - The datasource to search in
-     *
-     * @returnv BlackboardArtifact or a null value
-     */
-    private BlackboardArtifact createAssociatedArtifact(String fileName, String filePathName, BlackboardArtifact bba, Content dataSource) throws TskCoreException {
-        AbstractFile sourceFile = getAbstractFile(fileName, filePathName, dataSource);
-        if (sourceFile != null) {
-            return  createAssociatedArtifact(sourceFile, bba);         
-        }
-        return null;
-    }
-
-    /**
-     * Get the abstract file for the prefetch file.
-     *
-     * @param fileName   - File name of the prefetch file to find.
-     * @param filePath   - Path where the prefetch file is located.
-     * @param dataSource - The datasource to search in
-     *
-     * @return Abstract file of the prefetch file.
-     *
-     */
-    AbstractFile getAbstractFile(String fileName, String filePath, Content dataSource) {
-        List<AbstractFile> files;
-
-        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
-
-        try {
-            files = fileManager.findFiles(dataSource, fileName); //NON-NLS
-
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to find prefetch files.", ex); //NON-NLS
-            return null;  // No need to continue
-        }
-
-        for (AbstractFile pFile : files) {
-
-            if (pFile.getParentPath().toLowerCase().endsWith(filePath.toLowerCase() + '/')) {
-                return pFile;
-            }
-        }
-
-        return null;
-
-    }
-
 }
