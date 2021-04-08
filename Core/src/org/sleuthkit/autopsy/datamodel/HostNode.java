@@ -78,13 +78,14 @@ public class HostNode extends DisplayableItemNode {
         }
 
         /**
-         * Listener for handling DATA_SOURCE_ADDED events.
+         * Listener for handling DATA_SOURCE_ADDED / HOST_DELETED events.
          */
         private final PropertyChangeListener dataSourceAddedPcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
+                        || eventType.equals(Case.Events.HOSTS_DELETED.toString())) {
                     refresh(true);
                 }
             }
@@ -92,12 +93,12 @@ public class HostNode extends DisplayableItemNode {
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), dataSourceAddedPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
         }
 
         @Override
         protected void removeNotify() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), dataSourceAddedPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
         }
 
         @Override
