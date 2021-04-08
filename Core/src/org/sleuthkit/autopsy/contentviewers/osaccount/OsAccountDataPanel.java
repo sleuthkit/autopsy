@@ -476,14 +476,16 @@ public class OsAccountDataPanel extends JPanel {
                     data.add(buildRealmProperties(realm));
                 }
 
-                Map<Host, DataSource> instanceMap = results.getDataSourceMap();
-                if (!instanceMap.isEmpty()) {
-                    SectionData instanceSection = new SectionData("Instances");
-                    instanceMap.forEach((K, V) -> instanceSection.addData(K.getName(), V.getName()));
-
-                    data.add(instanceSection);
-                }
-
+//                Removing the instance section for now.  Leaving code here for 
+//                future use.                 
+//                Map<Host, DataSource> instanceMap = results.getDataSourceMap();
+//                if (!instanceMap.isEmpty()) {
+//                    SectionData instanceSection = new SectionData("Instances");
+//                    instanceMap.forEach((K, V) -> instanceSection.addData(K.getName(), V.getName()));
+//
+//                    data.add(instanceSection);
+//                }
+                
                 addDataComponents(data);
 
                 revalidate();
