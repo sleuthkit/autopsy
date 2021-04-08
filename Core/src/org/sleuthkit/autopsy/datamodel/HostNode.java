@@ -79,6 +79,8 @@ public class HostNode extends DisplayableItemNode {
 
         /**
          * Listener for handling DATA_SOURCE_ADDED / HOST_DELETED events.
+         * A host may have been deleted as part of a merge, which means its data sources could
+         * have moved to a different host requiring a refresh.
          */
         private final PropertyChangeListener dataSourceAddedPcl = new PropertyChangeListener() {
             @Override
