@@ -38,6 +38,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -62,6 +63,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -126,6 +128,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences.TempDirChoice;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -1468,7 +1471,10 @@ public class Case {
         }
         return hostPath.toString();
     }
-
+    
+    private static final String APP_NAME = UserPreferences.getAppName();
+    private static final String TEMP_NAME = "Temp";
+    
     /**
      * Gets the full path to the temp directory for this case, creating it if it
      * does not exist.
@@ -1476,7 +1482,43 @@ public class Case {
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        return UserMachinePreferences.getTempDirectory();
+        Stream<String> baseTempDirParts;
+        switch (UserMachinePreferences.getTempDirChoice()) {
+            case CASE: 
+                baseTempDirParts = Stream.of(getCaseDirectory());
+                break;
+            case CUSTOM: 
+                String customDirectory = UserMachinePreferences.getCustomTempDirectoryProperty();
+                baseTempDirParts = StringUtils.isBlank(customDirectory) 
+                        ? Stream.of(System.getProperty("java.io.tmpdir"), APP_NAME, getName()) 
+                        : Stream.of(customDirectory, APP_NAME, getName());
+                break;
+            case SYSTEM:
+            default:
+                baseTempDirParts = Stream.of(System.getProperty("java.io.tmpdir"), APP_NAME, getName());
+                break;
+        }
+                
+        Stream<String> caseTypeParts;
+        switch (getCaseType()) {
+            case MULTI_USER_CASE:
+                caseTypeParts = Stream.of(NetworkUtils.getLocalHostName(), TEMP_NAME);
+                break;
+            case SINGLE_USER_CASE:
+            default:
+                caseTypeParts = Stream.of(TEMP_NAME);
+                break;
+        }
+        
+        String joinedPath = Stream.concat(baseTempDirParts, caseTypeParts)
+                .collect(Collectors.joining(File.separator));
+        
+        File dirFile = new File(joinedPath);
+        if (!dirFile.exists()) {
+            dirFile.mkdirs();
+        }
+        
+        return dirFile.getAbsolutePath();
     }
 
     /**
