@@ -23,15 +23,16 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -41,7 +42,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -49,6 +49,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public final class RAImageIngestModule implements DataSourceIngestModule {
 
+    private static final String RECENT_ACTIVITY_FOLDER = "RecentActivity";
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private final List<Extract> extractors = new ArrayList<>();
     private final List<Extract> browserExtractors = new ArrayList<>();
@@ -64,7 +65,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
-        
+
         tskCase = Case.getCurrentCase().getSleuthkitCase();
 
         Extract iexplore;
@@ -104,10 +105,10 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(webAccountType); // this needs to run after the web browser modules
         extractors.add(zoneInfo); // this needs to run after the web browser modules
         extractors.add(recycleBin); // this needs to run after ExtractRegistry and ExtractOS
-        extractors.add(sru); 
+        extractors.add(sru);
         extractors.add(prefetch);
         extractors.add(messageDomainType);
-        
+
         browserExtractors.add(chrome);
         browserExtractors.add(firefox);
         browserExtractors.add(iexplore);
@@ -141,8 +142,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
             try {
                 extracter.process(dataSource, context, progressBar, accountCache);
-                if(extracter instanceof ExtractRegistry) {
-                    accountCache.initialize(tskCase, ((DataSource)dataSource).getHost());
+                if (extracter instanceof ExtractRegistry) {
+                    accountCache.initialize(tskCase, ((DataSource) dataSource).getHost());
                 }
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
@@ -222,22 +223,37 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     }
 
     /**
+     * Makes a path of the format
+     * [basePath]/[RECENT_ACTIVITY_FOLDER]/[module]_[timestamp] if it does not
+     * already exist and returns the created folder.
+     *
+     * @param basePath The base path (a case-related folder like temp or
+     * output).
+     * @param module The module name to include in the folder name.
+     * @return The path to the folder.
+     */
+    private static String getAndMakeRAPath(String basePath, String module) {
+        String moduleFolder = String.format("%s_%s", module, TimeStampUtils.createTimeStamp());
+        Path tmpPath = Paths.get(basePath, RECENT_ACTIVITY_FOLDER, moduleFolder);
+        File dir = tmpPath.toFile();
+        if (dir.exists() == false) {
+            dir.mkdirs();
+        }
+        return tmpPath.toString();
+    }
+
+    /**
      * Get the temp path for a specific sub-module in recent activity. Will
      * create the dir if it doesn't exist.
      *
      * @param a_case Case that directory is for
-     * @param mod    Module name that will be used for a sub folder in the temp
-     *               folder to prevent name collisions
+     * @param mod Module name that will be used for a sub folder in the temp
+     * folder to prevent name collisions
      *
      * @return Path to directory
      */
     static String getRATempPath(Case a_case, String mod) {
-        String tmpDir = a_case.getTempDirectory() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
-        File dir = new File(tmpDir);
-        if (dir.exists() == false) {
-            dir.mkdirs();
-        }
-        return tmpDir;
+        return getAndMakeRAPath(a_case.getTempDirectory(), mod);
     }
 
     /**
@@ -245,28 +261,24 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      * create the dir if it doesn't exist.
      *
      * @param a_case Case that directory is for
-     * @param mod    Module name that will be used for a sub folder in the temp
-     *               folder to prevent name collisions
+     * @param mod Module name that will be used for a sub folder in the temp
+     * folder to prevent name collisions
      *
      * @return Path to directory
      */
     static String getRAOutputPath(Case a_case, String mod) {
-        String tmpDir = a_case.getModuleDirectory() + File.separator + "RecentActivity" + File.separator + mod; //NON-NLS
-        File dir = new File(tmpDir);
-        if (dir.exists() == false) {
-            dir.mkdirs();
-        }
-        return tmpDir;
+        return getAndMakeRAPath(a_case.getModuleDirectory(), mod);
     }
-    
+
     /**
      * Get relative path for module output folder.
      *
      * @throws NoCurrentCaseException if there is no open case.
      * @return the relative path of the module output folder
      */
-    static String getRelModuleOutputPath() throws NoCurrentCaseException {
-        return Paths.get(Case.getCurrentCaseThrows().getModuleOutputDirectoryRelativePath(), 
-                            "RecentActivity").normalize().toString() ;  //NON-NLS
+    static String getRelModuleOutputPath(Case autCase, String mod) {
+        return Paths.get(getAndMakeRAPath(autCase.getModuleOutputDirectoryRelativePath(), mod))
+                .normalize()
+                .toString();
     }
 }

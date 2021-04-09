@@ -176,7 +176,7 @@ final class ChromeCacheExtractor {
              
             // Create an output folder to save any derived files
             absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName);
-            relOutputFolderName = Paths.get( RAImageIngestModule.getRelModuleOutputPath(), moduleName).normalize().toString();
+            relOutputFolderName = RAImageIngestModule.getRelModuleOutputPath(currentCase, moduleName);
             
             File dir = new File(absOutputFolderName);
             if (dir.exists() == false) {
