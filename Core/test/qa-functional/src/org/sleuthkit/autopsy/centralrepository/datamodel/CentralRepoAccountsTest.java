@@ -120,23 +120,21 @@ public class CentralRepoAccountsTest extends TestCase {
     public void testRejectionOfDeviceAccountType() {
         try {
             Account.Type deviceAccount = Account.Type.DEVICE;
-            CentralRepository.getInstance()
+            Optional<CentralRepoAccountType> optType = CentralRepository.getInstance()
                     .getAccountTypeByName(deviceAccount.getTypeName());
-            Assert.fail("Expected an exception from getAccountTypeByName() when"
-                    + " querying the device account type");
+            Assert.assertFalse(optType.isPresent());
         } catch (CentralRepoException ex) {
-            // Pass
+            Assert.fail("Didn't expect an exception here. Exception: " + ex);
         }
     }
 
     public void testNonExistentAccountType() {
         try {
-            CentralRepository.getInstance()
+            Optional<CentralRepoAccountType> optType = CentralRepository.getInstance()
                     .getAccountTypeByName("NotARealAccountType");
-            Assert.fail("Expected an exception from getAccountTypeByName()"
-                    + " when querying a non-existent account type");
+            Assert.assertFalse(optType.isPresent());
         } catch (CentralRepoException ex) {
-            // Pass
+            Assert.fail("Didn't expect an exception here. Exception: " + ex);
         }
     }
     
