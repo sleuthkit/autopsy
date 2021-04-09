@@ -29,8 +29,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.StringJoiner;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
@@ -38,7 +41,9 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tools.ant.types.Commandline;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -76,6 +81,7 @@ import org.sleuthkit.autopsy.report.ReportBranding;
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final String DEFAULT_HEAP_DUMP_FILE_FIELD = "";
     private final JFileChooser logoFileChooser;
     private final JFileChooser tempDirChooser;
     private static final String ETC_FOLDER_NAME = "etc";
@@ -88,6 +94,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
     
     private final ReportBranding reportBranding;
+    private final JFileChooser heapFileChooser;
 
     /**
      * Instantiate the Autopsy options panel.
@@ -103,13 +110,19 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         tempDirChooser = new JFileChooser();
         tempDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         tempDirChooser.setMultiSelectionEnabled(false);
+        
+        heapFileChooser = new JFileChooser();
+        heapFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        heapFileChooser.setMultiSelectionEnabled(false);
 
-        if (!PlatformUtil.is64BitJVM() || Version.getBuildType() == Version.Type.DEVELOPMENT) {
+        if (!isJVMHeapSettingsCapable()) {
             //32 bit JVM has a max heap size of 1.4 gb to 4 gb depending on OS
             //So disabling the setting of heap size when the JVM is not 64 bit 
             //Is the safest course of action
             //And the file won't exist in the install folder when running through netbeans
             memField.setEnabled(false);
+            heapDumpFileField.setEnabled(false);
+            heapDumpBrowseButton.setEnabled(false);
             solrMaxHeapSpinner.setEnabled(false);
         }
         systemMemoryTotal.setText(Long.toString(getSystemMemoryInGB()));
@@ -118,12 +131,20 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         solrMaxHeapSpinner.setModel(new javax.swing.SpinnerNumberModel(UserPreferences.getMaxSolrVMSize(),
                 JVM_MEMORY_STEP_SIZE_MB, ((int) getSystemMemoryInGB()) * MEGA_IN_GIGA, JVM_MEMORY_STEP_SIZE_MB));
 
-        TextFieldListener textFieldListener = new TextFieldListener();
-        agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
-        tempCustomField.getDocument().addDocumentListener(new TempCustomTextListener());
+        agencyLogoPathField.getDocument().addDocumentListener(new TextFieldListener(null));
+        heapDumpFileField.getDocument().addDocumentListener(new TextFieldListener(this::isHeapPathValid));
+        tempCustomField.getDocument().addDocumentListener(new TextFieldListener(this::evaluateTempDirState));
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         
         reportBranding = new ReportBranding();
+    }
+    
+    /**
+     * Returns whether or not the jvm runtime heap settings can effectively be changed.
+     * @return Whether or not the jvm runtime heap settings can effectively be changed.
+     */
+    private static boolean isJVMHeapSettingsCapable() {
+        return PlatformUtil.is64BitJVM() && Version.getBuildType() != Version.Type.DEVELOPMENT;
     }
 
     /**
@@ -140,18 +161,23 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     /**
      * Gets the currently saved max java heap space in gigabytes.
+     * @param The conf file memory value (i.e. 4G).
      *
-     * @return @throws IOException when unable to get a valid setting
+     * @return The value in gigabytes.
+     * @throws IOException when unable to get a valid setting
      */
-    private long getCurrentJvmMaxMemoryInGB() throws IOException {
-        String currentXmx = getCurrentXmxValue();
+    private long getCurrentJvmMaxMemoryInGB(String confFileMemValue) throws IOException {
         char units = '-';
         Long value = 0L;
-        if (currentXmx.length() > 1) {
-            units = currentXmx.charAt(currentXmx.length() - 1);
-            value = Long.parseLong(currentXmx.substring(0, currentXmx.length() - 1));
+        if (confFileMemValue.length() > 1) {
+            units = confFileMemValue.charAt(confFileMemValue.length() - 1);
+            try {
+                value = Long.parseLong(confFileMemValue.substring(0, confFileMemValue.length() - 1));
+            } catch (NumberFormatException ex) {
+                throw new IOException("Unable to properly parse memory number.", ex);
+            }
         } else {
-            throw new IOException("No memory setting found in String: " + currentXmx);
+            throw new IOException("No memory setting found in String: " + confFileMemValue);
         }
         //some older .conf files might have the units as megabytes instead of gigabytes
         switch (units) {
@@ -166,33 +192,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }
 
-    /*
-     * The value currently saved in the conf file as the max java heap space
-     * available to this application. Form will be an integer followed by a
-     * character indicating units. Helper method for
-     * getCurrentJvmMaxMemoryInGB()
-     *
-     * @return the saved value for the max java heap space
-     *
-     * @throws IOException if the conf file does not exist in either the user
-     * directory or the install directory
-     */
-    private String getCurrentXmxValue() throws IOException {
-        String[] settings;
-        String currentSetting = "";
-        File userConfFile = getUserFolderConfFile();
-        if (!userConfFile.exists()) {
-            settings = getDefaultsFromFileContents(readConfFile(getInstallFolderConfFile()));
-        } else {
-            settings = getDefaultsFromFileContents(readConfFile(userConfFile));
-        }
-        for (String option : settings) {
-            if (option.startsWith("-J-Xmx")) {
-                currentSetting = option.replace("-J-Xmx", "").trim();
-            }
-        }
-        return currentSetting;
-    }
 
     /**
      * Get the conf file from the install directory which stores the default
@@ -229,7 +228,61 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
         return new File(userEtcFolder, confFileName);
     }
-
+    
+    private static final String JVM_SETTINGS_REGEX_PARAM = "options";
+    private static final String JVM_SETTINGS_REGEX_STR = "^\\s*default_options\\s*=\\s*\"?(?<" + JVM_SETTINGS_REGEX_PARAM + ">.+?)\"?\\s*$";
+    private static final Pattern JVM_SETTINGS_REGEX = Pattern.compile(JVM_SETTINGS_REGEX_STR);
+    private static final String XMX_REGEX_PARAM = "mem";
+    private static final String XMX_REGEX_STR = "^\\s*\\-J\\-Xmx(?<" + XMX_REGEX_PARAM + ">.+?)\\s*$";
+    private static final Pattern XMX_REGEX = Pattern.compile(XMX_REGEX_STR);
+    private static final String HEAP_DUMP_REGEX_PARAM = "path";
+    private static final String HEAP_DUMP_REGEX_STR = "^\\s*\\-J\\-XX:HeapDumpPath=(\\\")?\\s*(?<" + HEAP_DUMP_REGEX_PARAM + ">.+?)\\s*(\\\")?$";
+    private static final Pattern HEAP_DUMP_REGEX = Pattern.compile(HEAP_DUMP_REGEX_STR);
+    
+    /**
+     * Parse the autopsy conf file line.  If the line is the default_options line, 
+     * then replaces with current memory and heap path value.  Otherwise, returns 
+     * the line provided as parameter.
+     * 
+     * @param line The line.
+     * @param memText The text to add as an argument to be used as memory with -J-Xmx.
+     * @param heapText The text to add as an argument to be used as the heap dump path with
+     * -J-XX:HeapDumpPath.
+     * @return The line modified to contain memory and heap arguments.
+     */
+    private static String updateConfLine(String line, String memText, String heapText) {
+        Matcher match = JVM_SETTINGS_REGEX.matcher(line);
+        if (match.find()) {
+            // split on command line arguments
+            String[] parsedArgs = Commandline.translateCommandline(match.group(JVM_SETTINGS_REGEX_PARAM));
+            
+            String memString = "-J-Xmx" + memText.replaceAll("[^\\d]", "") + "g";
+            
+            // only add in heap path argument if a heap path is specified
+            String heapString = null;
+            if (StringUtils.isNotBlank(heapText)) {
+                while (heapText.endsWith("\\") && heapText.length() > 0) {
+                    heapText = heapText.substring(0, heapText.length() - 1);
+                }
+                
+                heapString = String.format("-J-XX:HeapDumpPath=\"%s\"", heapText);
+            }
+            
+            Stream<String> argsNoMemHeap = Stream.of(parsedArgs)
+                    // remove saved version of memory and heap dump path
+                    .filter(s -> !s.matches(XMX_REGEX_STR) && !s.matches(HEAP_DUMP_REGEX_STR));
+                    
+            String newArgs = Stream.concat(argsNoMemHeap, Stream.of(memString, heapString))
+                    .filter(s -> s != null)
+                    .collect(Collectors.joining(" "));
+            
+            return String.format("default_options=\"%s\"", newArgs);
+        };
+            
+        return line;
+    }
+    
+    
     /**
      * Take the conf file in the install directory and save a copy of it to the
      * user directory. The copy will be modified to include the current memory
@@ -239,25 +292,124 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      *                     install folders conf file
      */
     private void writeEtcConfFile() throws IOException {
-        StringBuilder content = new StringBuilder();
-        List<String> confFile = readConfFile(getInstallFolderConfFile());
-        for (String line : confFile) {
-            if (line.contains("-J-Xmx")) {
-                String[] splitLine = line.split(" ");
-                StringJoiner modifiedLine = new StringJoiner(" ");
-                for (String piece : splitLine) {
-                    if (piece.contains("-J-Xmx")) {
-                        piece = "-J-Xmx" + memField.getText() + "g";
-                    }
-                    modifiedLine.add(piece);
-                }
-                content.append(modifiedLine.toString());
-            } else {
-                content.append(line);
-            }
-            content.append("\n");
+        String fileText = readConfFile(getInstallFolderConfFile()).stream()
+                .map((line) -> updateConfLine(line, memField.getText(), heapDumpFileField.getText()))
+                .collect(Collectors.joining("\n"));
+        
+        FileUtils.writeStringToFile(getUserFolderConfFile(), fileText, "UTF-8");
+    }
+    
+    
+    /**
+     * Values for configuration located in the /etc/*.conf file.
+     */
+    private static class ConfValues {
+        private final String XmxVal;
+        private final String heapDumpPath;
+
+        /**
+         * Main constructor.
+         * @param XmxVal The heap memory size.
+         * @param heapDumpPath The heap dump path.
+         */
+        ConfValues(String XmxVal, String heapDumpPath) {
+            this.XmxVal = XmxVal;
+            this.heapDumpPath = heapDumpPath;
         }
-        Files.write(getUserFolderConfFile().toPath(), content.toString().getBytes());
+
+        /**
+         * Returns the heap memory value specified in the conf file.
+         * @return The heap memory value specified in the conf file.
+         */
+        String getXmxVal() {
+            return XmxVal;
+        }
+
+        /**
+         * Returns path to the heap dump specified in the conf file.
+         * @return Path to the heap dump specified in the conf file.
+         */
+        String getHeapDumpPath() {
+            return heapDumpPath;
+        }
+    }
+    
+    /**
+     * Retrieve the /etc/*.conf file values pertinent to settings.
+     * @return The conf file values.
+     * @throws IOException 
+     */
+    private ConfValues getEtcConfValues() throws IOException {
+        File userConfFile = getUserFolderConfFile();
+        String[] args = userConfFile.exists() ? 
+                getDefaultsFromFileContents(readConfFile(userConfFile)) : 
+                getDefaultsFromFileContents(readConfFile(getInstallFolderConfFile()));
+        
+        String heapFile = "";
+        String memSize = "";
+
+        for (String arg : args) {
+            Matcher memMatch = XMX_REGEX.matcher(arg);
+            if (memMatch.find()) {
+                memSize = memMatch.group(XMX_REGEX_PARAM);
+                continue;
+            }
+
+            Matcher heapFileMatch = HEAP_DUMP_REGEX.matcher(arg);
+            if (heapFileMatch.find()) {
+                heapFile = heapFileMatch.group(HEAP_DUMP_REGEX_PARAM);
+                continue;
+            }
+        }
+        
+        return new ConfValues(memSize, heapFile);
+    }
+    
+    
+    
+    /**
+     * Checks current heap path value to see if it is valid, and displays an error message if invalid.
+     * @return True if the heap path is valid.
+     */
+    @Messages({
+        "AutopsyOptionsPanel_isHeapPathValid_selectValidDirectory=Please select an existing directory.",
+        "AutopsyOptionsPanel_isHeapPathValid_developerMode=Cannot change heap dump path while in developer mode.",
+        "AutopsyOptionsPanel_isHeapPathValid_not64BitMachine=Changing heap dump path settings only enabled for 64 bit version.",
+        "AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters=Please select a path with no quotes."
+    })
+    private boolean isHeapPathValid() {
+        if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+            heapFieldValidationLabel.setVisible(true);
+            heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_developerMode());
+            return true;
+        } 
+        
+        if (!PlatformUtil.is64BitJVM()) {
+            heapFieldValidationLabel.setVisible(true);
+            heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_not64BitMachine());
+            return true;
+        }
+        
+        //allow blank field as the default will be used
+        if (StringUtils.isNotBlank(heapDumpFileField.getText())) { 
+            String heapText = heapDumpFileField.getText().trim();
+            if (heapText.contains("\"") || heapText.contains("'")) {
+                heapFieldValidationLabel.setVisible(true);
+                heapFieldValidationLabel.setText(Bundle.AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters());
+                return false;
+            }
+            
+            File curHeapFile = new File(heapText);
+            if (!curHeapFile.exists() || !curHeapFile.isDirectory()) {
+                heapFieldValidationLabel.setVisible(true);
+                heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_selectValidDirectory());
+                return false;
+            }
+        }
+            
+        heapFieldValidationLabel.setVisible(false);
+        heapFieldValidationLabel.setText("");
+        return true;
     }
 
     /**
@@ -295,11 +447,17 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      *         options is not present.
      */
     private static String[] getDefaultsFromFileContents(List<String> list) {
-        Optional<String> defaultSettings = list.stream().filter(line -> line.startsWith("default_options=")).findFirst();
+        Optional<String> defaultSettings = list.stream()
+                .filter(line -> line.matches(JVM_SETTINGS_REGEX_STR))
+                .findFirst();
 
         if (defaultSettings.isPresent()) {
-            return defaultSettings.get().replace("default_options=", "").replaceAll("\"", "").split(" ");
+            Matcher match = JVM_SETTINGS_REGEX.matcher(defaultSettings.get());
+            if (match.find()) {
+                return Commandline.translateCommandline(match.group(JVM_SETTINGS_REGEX_PARAM));
+            }
         }
+        
         return new String[]{};
     }
     
@@ -347,15 +505,25 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex);
         }
-        if (memField.isEnabled()) {
+        
+        boolean confLoaded = false;
+        if (isJVMHeapSettingsCapable()) {
             try {
-                initialMemValue = Long.toString(getCurrentJvmMaxMemoryInGB());
+                ConfValues confValues = getEtcConfValues();
+                heapDumpFileField.setText(confValues.getHeapDumpPath());
+                initialMemValue = Long.toString(getCurrentJvmMaxMemoryInGB(confValues.getXmxVal()));
+                confLoaded = true;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Can't read current Jvm max memory setting from file", ex);
                 memField.setEnabled(false);
+                heapDumpFileField.setText(DEFAULT_HEAP_DUMP_FILE_FIELD);
             }
             memField.setText(initialMemValue);
         }
+        
+        heapDumpBrowseButton.setEnabled(confLoaded);
+        heapDumpFileField.setEnabled(confLoaded);
+        
         setTempDirEnabled();
         valid(); //ensure the error messages are up to date
     }
@@ -459,7 +627,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             reportBranding.setAgencyLogoPath("");
         }
         UserPreferences.setMaxSolrVMSize((int) solrMaxHeapSpinner.getValue());
-        if (memField.isEnabled()) {  //if the field could of been changed we need to try and save it
+        if (isJVMHeapSettingsCapable()) {  //if the field could of been changed we need to try and save it
             try {
                 writeEtcConfFile();
             } catch (IOException ex) {
@@ -474,18 +642,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      * @return True if valid; false otherwise.
      */
     boolean valid() {
-        boolean valid = true;
-        if (!isAgencyLogoPathValid()) {
-            valid = false;
-        }
-        if (!isMemFieldValid()) {
-            valid = false;
-        }
-        if (!isLogNumFieldValid()) {
-            valid = false;
-        }
-
-        return valid;
+        boolean agencyValid = isAgencyLogoPathValid();
+        boolean memFieldValid = isMemFieldValid();
+        boolean logNumValid = isLogNumFieldValid();
+        boolean heapPathValid = isHeapPathValid();
+        
+        return agencyValid && memFieldValid && logNumValid && heapPathValid;
     }
 
     /**
@@ -589,47 +751,41 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     /**
      * Listens for registered text fields that have changed and fires a
-     * PropertyChangeEvent accordingly.
+     * PropertyChangeEvent accordingly as well as firing an optional additional listener.
      */
     private class TextFieldListener implements DocumentListener {
+        private final Runnable onChange;
 
-        @Override
-        public void insertUpdate(DocumentEvent e) {
+        
+        /**
+         * Main constructor.
+         * @param onChange Additional listener for change events.
+         */
+        TextFieldListener(Runnable onChange) {
+            this.onChange = onChange;
+        }
+        
+        private void baseOnChange() {
+            if (onChange != null) {
+                onChange.run();    
+            }
+            
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+        
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            baseOnChange();
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-    }
-    
-    /**
-     * Listens for changes in the temp directory custom directory text field.
-     */
-    private class TempCustomTextListener extends TextFieldListener {
-
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-            evaluateTempDirState();
-            super.changedUpdate(e);
-        }
-
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-            evaluateTempDirState();
-            super.changedUpdate(e);
+            baseOnChange();
         }
 
         @Override
         public void insertUpdate(DocumentEvent e) {
-            evaluateTempDirState();
-            super.changedUpdate(e);
+            baseOnChange();
         }
         
         
@@ -673,6 +829,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         maxMemoryUnitsLabel2 = new javax.swing.JLabel();
         solrMaxHeapSpinner = new javax.swing.JSpinner();
         solrJVMHeapWarning = new javax.swing.JLabel();
+        heapFileLabel = new javax.swing.JLabel();
+        heapDumpFileField = new javax.swing.JTextField();
+        heapDumpBrowseButton = new javax.swing.JButton();
+        heapFieldValidationLabel = new javax.swing.JLabel();
         tempDirectoryPanel = new javax.swing.JPanel();
         tempCustomField = new javax.swing.JTextField();
         tempDirectoryBrowseButton = new javax.swing.JButton();
@@ -823,6 +983,20 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(solrJVMHeapWarning, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.solrJVMHeapWarning.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(heapFileLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.heapFileLabel.text")); // NOI18N
+
+        heapDumpFileField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.heapDumpFileField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(heapDumpBrowseButton, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.heapDumpBrowseButton.text")); // NOI18N
+        heapDumpBrowseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                heapDumpBrowseButtonActionPerformed(evt);
+            }
+        });
+
+        heapFieldValidationLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(heapFieldValidationLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.heapFieldValidationLabel.text")); // NOI18N
+
         javax.swing.GroupLayout runtimePanelLayout = new javax.swing.GroupLayout(runtimePanel);
         runtimePanel.setLayout(runtimePanelLayout);
         runtimePanelLayout.setHorizontalGroup(
@@ -851,14 +1025,26 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addGap(23, 23, 23)
                                 .addComponent(memFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 478, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap(12, Short.MAX_VALUE))
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addGap(18, 18, 18)
                                 .addComponent(solrJVMHeapWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 331, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(44, 44, 44)
                                 .addComponent(logNumAlert)
                                 .addContainerGap())))
-                    .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(runtimePanelLayout.createSequentialGroup()
+                        .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(runtimePanelLayout.createSequentialGroup()
+                                .addComponent(heapFileLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(heapFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 478, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(runtimePanelLayout.createSequentialGroup()
+                                        .addComponent(heapDumpFileField, javax.swing.GroupLayout.PREFERRED_SIZE, 415, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(heapDumpBrowseButton)))))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
 
         runtimePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {maxLogFileCount, maxMemoryLabel, totalMemoryLabel});
@@ -892,7 +1078,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(maxLogFileCount)
                     .addComponent(logFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(heapFileLabel)
+                    .addComponent(heapDumpFileField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(heapDumpBrowseButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(heapFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(restartNecessaryWarning)
                 .addContainerGap())
         );
@@ -965,7 +1158,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                                 .addComponent(tempCustomField, javax.swing.GroupLayout.PREFERRED_SIZE, 459, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(tempDirectoryBrowseButton)))))
-                .addContainerGap(158, Short.MAX_VALUE))
+                .addContainerGap(164, Short.MAX_VALUE))
         );
         tempDirectoryPanelLayout.setVerticalGroup(
             tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1162,6 +1355,24 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         evaluateTempDirState();
     }//GEN-LAST:event_tempCustomRadioActionPerformed
 
+    @Messages({
+        "AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsTitle=File Already Exists",
+        "AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsMessage=File already exists.  Please select a new location."
+    })
+    private void heapDumpBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_heapDumpBrowseButtonActionPerformed
+        String oldHeapPath = heapDumpFileField.getText();
+        if (!StringUtils.isBlank(oldHeapPath)) {
+            heapFileChooser.setCurrentDirectory(new File(oldHeapPath));
+        }
+        
+        int returnState = heapFileChooser.showOpenDialog(this);
+        if (returnState == JFileChooser.APPROVE_OPTION) {
+            File selectedDirectory = heapFileChooser.getSelectedFile();
+            heapDumpFileField.setText(selectedDirectory.getAbsolutePath());
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_heapDumpBrowseButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField agencyLogoPathField;
     private javax.swing.JLabel agencyLogoPathFieldValidationLabel;
@@ -1170,6 +1381,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton defaultLogoRB;
     private javax.swing.ButtonGroup displayTimesButtonGroup;
     private javax.swing.ButtonGroup fileSelectionButtonGroup;
+    private javax.swing.JButton heapDumpBrowseButton;
+    private javax.swing.JTextField heapDumpFileField;
+    private javax.swing.JLabel heapFieldValidationLabel;
+    private javax.swing.JLabel heapFileLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField logFileCount;
     private javax.swing.JTextField logNumAlert;
