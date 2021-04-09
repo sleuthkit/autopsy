@@ -279,7 +279,7 @@ final class ExtractPrefetch extends Extract {
                 /**
                  * A prefetch file is created when a program is run and the superfetch service collected data about the first 10 
                  * seconds of the run, the trace data is then written to a new prefetch file or merged with an existing prefetch file.  
-                 * If the prefetch file gets deleted for some reason then a new one will be created.  See VIK-7500 for more 
+                 * If the prefetch file gets deleted for some reason then a new one will be created.  See 7500 in JIRA for more 
                  * information.
                  */
                 AbstractFile pfAbstractFile = null;
