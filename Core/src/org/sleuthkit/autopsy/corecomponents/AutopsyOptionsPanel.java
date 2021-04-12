@@ -301,7 +301,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     
     
     /**
-     * Values for configuration located in the /etc/*.conf file.
+     * Values for configuration located in the /etc/\*.conf file.
      */
     private static class ConfValues {
         private final String XmxVal;
@@ -335,7 +335,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     }
     
     /**
-     * Retrieve the /etc/*.conf file values pertinent to settings.
+     * Retrieve the /etc/\*.conf file values pertinent to settings.
      * @return The conf file values.
      * @throws IOException 
      */
