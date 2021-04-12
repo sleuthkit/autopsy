@@ -68,15 +68,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
         tskCase = Case.getCurrentCase().getSleuthkitCase();
 
-        Extract iexplore;
-        Extract edge;
-        try {
-            iexplore = new ExtractIE();
-            edge = new ExtractEdge();
-        } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException(ex.getMessage(), ex);
-        }
-
+        Extract iexplore = new ExtractIE();
+        Extract edge = new ExtractEdge();
         Extract registry = new ExtractRegistry();
         Extract recentDocuments = new RecentDocumentsByLnk();
         Extract chrome = new Chromium();

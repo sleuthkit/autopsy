@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -43,7 +44,6 @@ import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -67,7 +67,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ExtractIE extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private final String moduleTempResultsDir;
+    //private String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private final String JAVA_PATH;
     private static final String RESOURCE_URL_PREFIX = "res://";
@@ -84,14 +84,16 @@ class ExtractIE extends Extract {
         "Progress_Message_IE_AutoFill=IE Auto Fill",
         "Progress_Message_IE_Logins=IE Logins",})
 
-    ExtractIE() throws NoCurrentCaseException {
+    ExtractIE() {
         super(NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text"));
-        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), "IE") + File.separator + "results"; //NON-NLS
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
 
     @Override
     public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+        String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), "IE", context.getJobId());
+        String moduleTempResultsDir = Paths.get(moduleTempDir, "results").toString();
+                
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
@@ -111,7 +113,7 @@ class ExtractIE extends Extract {
         }
 
         progressBar.progress(Bundle.Progress_Message_IE_History());
-        this.getHistory();
+        this.getHistory(moduleTempDir, moduleTempResultsDir);
     }
 
     /**
@@ -297,8 +299,10 @@ class ExtractIE extends Extract {
 
     /**
      * Locates index.dat files, runs Pasco on them, and creates artifacts.
+     * @param moduleTempDir The path to the module temp directory.
+     * @param moduleTempResultsDir The path to the module temp results directory.
      */
-    private void getHistory() {
+    private void getHistory(String moduleTempDir, String moduleTempResultsDir) {
         logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
         boolean foundHistory = false;
 
@@ -350,7 +354,7 @@ class ExtractIE extends Extract {
             //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
             indexFileName = "index" + Integer.toString((int) indexFile.getId()) + ".dat"; //NON-NLS
             //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
-            temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName; //NON-NLS
+            temps = moduleTempDir + File.separator + indexFileName; //NON-NLS
             File datFile = new File(temps);
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -366,7 +370,7 @@ class ExtractIE extends Extract {
             }
 
             String filename = "pasco2Result." + indexFile.getId() + ".txt"; //NON-NLS
-            boolean bPascProcSuccess = executePasco(temps, filename);
+            boolean bPascProcSuccess = executePasco(temps, filename, moduleTempResultsDir);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
@@ -375,7 +379,7 @@ class ExtractIE extends Extract {
             //Now fetch the results, parse them and the delete the files.
             if (bPascProcSuccess) {
                 // Don't add TSK_OS_ACCOUNT artifacts to the ModuleDataEvent
-                bbartifacts.addAll(parsePascoOutput(indexFile, filename).stream()
+                bbartifacts.addAll(parsePascoOutput(indexFile, filename, moduleTempResultsDir).stream()
                         .filter(bbart -> bbart.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID())
                         .collect(Collectors.toList()));
                 if (context.dataSourceIngestIsCancelled()) {
@@ -402,6 +406,7 @@ class ExtractIE extends Extract {
      *
      * @param indexFilePath  Path to local index.dat file to analyze
      * @param outputFileName Name of file to save output to
+     * @param moduleTempResultsDir the path to the module temp directory.
      *
      * @return false on error
      */
@@ -409,7 +414,7 @@ class ExtractIE extends Extract {
         "# {0} - sub module name", 
         "ExtractIE_executePasco_errMsg_errorRunningPasco={0}: Error analyzing Internet Explorer web history",
     })
-    private boolean executePasco(String indexFilePath, String outputFileName) {
+    private boolean executePasco(String indexFilePath, String outputFileName, String moduleTempResultsDir) {
         boolean success = true;
         try {
             final String outputFileFullPath = moduleTempResultsDir + File.separator + outputFileName;
@@ -451,10 +456,11 @@ class ExtractIE extends Extract {
      * @param origFile            Original index.dat file that was analyzed to
      *                            get this output
      * @param pascoOutputFileName name of pasco output file
+     * @param moduleTempResultsDir the path to the module temp directory.
      *
      * @return A collection of created artifacts
      */
-    private Collection<BlackboardArtifact> parsePascoOutput(AbstractFile origFile, String pascoOutputFileName) {
+    private Collection<BlackboardArtifact> parsePascoOutput(AbstractFile origFile, String pascoOutputFileName, String moduleTempResultsDir) {
 
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String fnAbs = moduleTempResultsDir + File.separator + pascoOutputFileName;
