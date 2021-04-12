@@ -91,6 +91,7 @@ final class ExtractPrefetch extends Extract {
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
 
         this.context = context;
+        long ingestJobId = context.getJobId();
 
         String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + PREFETCH_DIR_NAME;
         File dir = new File(modOutPath);
@@ -102,7 +103,7 @@ final class ExtractPrefetch extends Extract {
             }
         }
 
-        extractPrefetchFiles(dataSource);
+        extractPrefetchFiles(dataSource, ingestJobId);
 
         final String prefetchDumper = getPathForPrefetchDumper();
         if (prefetchDumper == null) {
@@ -116,7 +117,7 @@ final class ExtractPrefetch extends Extract {
 
         String modOutFile = modOutPath + File.separator + dataSource.getName() + "-" + PREFETCH_PARSER_DB_FILE;
         try {
-            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME);
+            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME, ingestJobId);
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
             createAppExecArtifacts(modOutFile, dataSource);
         } catch (IOException ex) {
@@ -131,7 +132,7 @@ final class ExtractPrefetch extends Extract {
      *
      * @param dataSource - datasource to search for prefetch files
      */
-    void extractPrefetchFiles(Content dataSource) {
+    void extractPrefetchFiles(Content dataSource, long ingestJobId) {
         List<AbstractFile> pFiles;
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
@@ -154,7 +155,7 @@ final class ExtractPrefetch extends Extract {
                 String ext = FilenameUtils.getExtension(origFileName);
                 String baseName = FilenameUtils.getBaseName(origFileName);
                 String fileName = String.format("%s_%d.%s", baseName, pFile.getId(), ext);
-                String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME);
+                String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME, ingestJobId);
                 String prefetchFile =  Paths.get(baseRaTempPath, fileName).toString();
                 try {
                     ContentUtils.writeToFile(pFile, new File(prefetchFile));

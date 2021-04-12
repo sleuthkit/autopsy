@@ -136,7 +136,7 @@ final class ExtractRecycleBin extends Extract {
             return;  // No need to continue
         }
 
-        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin"); //NON-NLS
+        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin", context.getJobId()); //NON-NLS
 
         // cycle through the $I files and process each. 
         for (AbstractFile iFile : iFiles) {
