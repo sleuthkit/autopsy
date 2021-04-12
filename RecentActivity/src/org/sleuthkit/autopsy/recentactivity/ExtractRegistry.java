@@ -93,10 +93,11 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.OsAccountAttribute;
+import org.sleuthkit.datamodel.OsAccount.OsAccountAttribute;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.OsAccountManager;
 import org.sleuthkit.datamodel.OsAccountManager.NotUserSIDException;
+import org.sleuthkit.datamodel.OsAccountManager.OsAccountUpdateResult;
 import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.Report;
@@ -174,6 +175,9 @@ class ExtractRegistry extends Extract {
     private IngestJobContext context;
     private Map<String, String> userNameMap;
 
+    private String hostName = null;
+    private String domainName = null;
+    
     private static final String SHELLBAG_ARTIFACT_NAME = "RA_SHELL_BAG"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_LAST_WRITE = "RA_SHELL_BAG_LAST_WRITE"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_KEY = "RA_SHELL_BAG_KEY"; //NON-NLS
@@ -290,14 +294,15 @@ class ExtractRegistry extends Extract {
     /**
      * Identifies registry files in the database by mtimeItem, runs regripper on
      * them, and parses the output.
+     * @param ingestJobId The ingest job id.
      */
-    private void analyzeRegistryFiles() {
+    private void analyzeRegistryFiles(long ingestJobId) {
         List<AbstractFile> allRegistryFiles = findRegistryFiles();
 
         // open the log file
         FileWriter logFile = null;
         try {
-            logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + "regripper-info.txt"); //NON-NLS
+            logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg", ingestJobId) + File.separator + "regripper-info.txt"); //NON-NLS
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
@@ -309,8 +314,8 @@ class ExtractRegistry extends Extract {
             
             String regFileName = regFile.getName();
             long regFileId = regFile.getId();
-            String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + regFileName;
-            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Long.toString(regFileId); //NON-NLS
+            String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg", ingestJobId) + File.separator + regFileName;
+            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg", ingestJobId) + File.separator + regFileName + "-regripper-" + Long.toString(regFileId); //NON-NLS
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
@@ -362,7 +367,7 @@ class ExtractRegistry extends Extract {
             // create a report for the full output
             if (!regOutputFiles.fullPlugins.isEmpty()) {
                 //parse the full regripper output from SAM hive files
-                if (regFileNameLocal.toLowerCase().contains("sam") && parseSamPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
+                if (regFileNameLocal.toLowerCase().contains("sam") && parseSamPluginOutput(regOutputFiles.fullPlugins, regFile, ingestJobId) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
                                     this.getName(), regFileName));     
@@ -1045,10 +1050,13 @@ class ExtractRegistry extends Extract {
      *
      * @param regFilePath     the path to the registry file being parsed
      * @param regAbstractFile the file to associate newly created artifacts with
+     * @param ingestJobId     The ingest job id.
      *
      * @return true if successful, false if parsing failed at some point
      */
-    private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile) {
+    private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile, long ingestJobId) {
+        parseSystemHostDomain(ingestJobId);
+        
         File regfile = new File(regFilePath);
         List<BlackboardArtifact> newArtifacts = new ArrayList<>();
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(regfile))) {
@@ -1079,7 +1087,7 @@ class ExtractRegistry extends Extract {
             // New OsAccount Code 
             OsAccountManager accountMgr = tskCase.getOsAccountManager();
             HostManager hostMrg = tskCase.getHostManager();
-            Host host = hostMrg.getHost((DataSource)dataSource);
+            Host host = hostMrg.getHostByDataSource((DataSource)dataSource);
 
             List<OsAccount> existingAccounts = accountMgr.getOsAccounts(host);
             for(OsAccount osAccount: existingAccounts) {
@@ -1097,8 +1105,8 @@ class ExtractRegistry extends Extract {
             
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
-                OsAccount osAccount = accountMgr.createWindowsOsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.UNKNOWN);
-                accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
+                OsAccount osAccount = accountMgr.newWindowsOsAccount(userInfo.get(SID_KEY), null, domainName, host, domainName != null || !domainName.isEmpty() ? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
+                accountMgr.newOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
                 updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
             
@@ -1130,6 +1138,54 @@ class ExtractRegistry extends Extract {
         return false;
     }
 
+    
+    /**
+     *  Finds the Host and Domain information from the registry.
+     * @param ingestJobId The ingest job id.
+     */
+    private void parseSystemHostDomain(long ingestJobId) {
+        List<AbstractFile> regFiles = findRegistryFiles();
+
+        for (AbstractFile systemHive: regFiles) {
+            if (systemHive.getName().toLowerCase().equals("system")) {
+                
+                String systemFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg", ingestJobId) + File.separator + systemHive.getName();
+                File systemFileNameLocalFile = new File(systemFileNameLocal);
+        
+                if (!systemFileNameLocalFile.exists()) {
+                    try {
+                        ContentUtils.writeToFile(systemHive, systemFileNameLocalFile, context::dataSourceIngestIsCancelled);
+                    } catch (ReadContentInputStreamException ex) {
+                        logger.log(Level.WARNING, String.format("Error reading registry file '%s' (id=%d).",
+                                systemHive.getName(), systemHive.getId()), ex); //NON-NLS
+                        this.addErrorMessage(
+                                NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                this.getName(), systemHive.getName()));
+                        continue;
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
+                                systemFileNameLocal, systemHive.getName(), systemHive.getId()), ex); //NON-NLS
+                        this.addErrorMessage(
+                                NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                        this.getName(), systemHive.getName()));
+                        continue;
+                    }                
+                }
+					
+                try {
+                    ParseRegistryHive systemRegFile = new ParseRegistryHive(systemFileNameLocalFile);
+                    hostName = systemRegFile.getRegistryKeyValue("ControlSet001/Services/Tcpip/Parameters", "hostname");
+                    domainName = systemRegFile.getRegistryKeyValue("ControlSet001/Services/Tcpip/Parameters", "domain");
+                    break;
+                } catch (IOException ex) {
+		    logger.log(Level.SEVERE, String.format("Error reading registry file '%s' for registry file '%s' (id=%d).",
+                            systemFileNameLocal, systemHive.getName(), systemHive.getId()), ex); //NON-NLS
+                    this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                    this.getName(), systemHive.getName()));                }
+            }
+        }
+    }
+    
     /**
      * Read the User Information section of the SAM regripper plugin's output
      * and collect user account information from the file.
@@ -1751,7 +1807,6 @@ class ExtractRegistry extends Extract {
         try {
             for (ShellBag bag : shellbags) {
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                BlackboardArtifact artifact = regFile.newArtifact(getShellBagArtifact().getTypeID());
                 attributes.add(new BlackboardAttribute(TSK_PATH, getName(), bag.getResource()));
                 attributes.add(new BlackboardAttribute(getKeyAttribute(), getName(), bag.getKey()));
 
@@ -1776,9 +1831,7 @@ class ExtractRegistry extends Extract {
                     attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
                 }
 
-                artifact.addAttributes(attributes);
-
-                artifacts.add(artifact);
+                artifacts.add(createArtifactWithAttributes(getShellBagArtifact(), regFile, attributes));
             }
         } finally {
             if(!context.dataSourceIngestIsCancelled()) {
@@ -1939,7 +1992,7 @@ class ExtractRegistry extends Extract {
         this.context = context;
 
         progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
-        analyzeRegistryFiles();
+        analyzeRegistryFiles(context.getJobId());
 
     }
 
@@ -1967,17 +2020,18 @@ class ExtractRegistry extends Extract {
     private void createOrUpdateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException, NotUserSIDException {
         OsAccountManager accountMgr = tskCase.getOsAccountManager();
         HostManager hostMrg = tskCase.getHostManager();
-        Host host = hostMrg.getHost((DataSource)dataSource);
+        Host host = hostMrg.getHostByDataSource((DataSource)dataSource);
 
         Optional<OsAccount> optional = accountMgr.getWindowsOsAccount(sid, null, null, host);
         OsAccount osAccount;
         if (!optional.isPresent()) {
-            osAccount = accountMgr.createWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, null, host, OsAccountRealm.RealmScope.UNKNOWN);
-            accountMgr.createOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
+            osAccount = accountMgr.newWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, domainName, host, domainName != null || !domainName.isEmpty()? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
+            accountMgr.newOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
         } else {
             osAccount = optional.get();
             if (userName != null && !userName.isEmpty()) {
-                osAccount.setLoginName(userName);
+                OsAccountUpdateResult updateResult= accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, userName, null, host);
+                osAccount = updateResult.getUpdatedAccount().orElse(osAccount);
             }
         }
 
@@ -1986,10 +2040,9 @@ class ExtractRegistry extends Extract {
             String dir = homeDir.replaceFirst("^(%\\w*%)", "");
             dir = dir.replace("\\", "/");
             attributes.add(createOsAccountAttribute(TSK_HOME_DIR, dir, osAccount, host, file));
-            osAccount.addAttributes(attributes);
+            accountMgr.addExtendedOsAccountAttributes(osAccount, attributes);
         }
 
-        accountMgr.updateOsAccount(osAccount);
     }
 
     /**
@@ -2040,7 +2093,7 @@ class ExtractRegistry extends Extract {
      * @throws TskDataException
      * @throws TskCoreException
      */
-    private void updateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException {
+    private void updateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException, NotUserSIDException {
         Host host = ((DataSource)dataSource).getHost();        
 
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
@@ -2048,12 +2101,11 @@ class ExtractRegistry extends Extract {
 
         List<OsAccountAttribute> attributes = new ArrayList<>();
 
+        Long creationTime = null;
+        
         String value = userInfo.get(ACCOUNT_CREATED_KEY);
         if (value != null && !value.isEmpty() && !value.equals(NEVER_DATE)) {
-            Long time = parseRegRipTime(value);
-            if (time != null) {
-                osAccount.setCreationTime(time);
-            }
+            creationTime = parseRegRipTime(value);
         }
 
         value = userInfo.get(LAST_LOGIN_KEY);
@@ -2066,9 +2118,10 @@ class ExtractRegistry extends Extract {
             }
         }
         
+        String loginName = null;
         value = userInfo.get(USERNAME_KEY); 
         if (value != null && !value.isEmpty()) {
-            osAccount.setLoginName(value);
+            loginName = value;
         }
 
         value = userInfo.get(LOGIN_COUNT_KEY);
@@ -2102,13 +2155,14 @@ class ExtractRegistry extends Extract {
         }
 
         // FULL_NAME_KEY and NAME_KEY appear to be the same value.
+        String fullName = null;
         value = userInfo.get(FULL_NAME_KEY);
         if (value != null && !value.isEmpty()) {
-            osAccount.setFullName(value);
+            fullName = value;
         } else {
             value = userInfo.get(NAME_KEY);
             if (value != null && !value.isEmpty()) {
-                osAccount.setFullName(value);
+                fullName = value;
             }
         }
 
@@ -2163,8 +2217,17 @@ class ExtractRegistry extends Extract {
                     groups, osAccount, host, regFile));
         }
 
-        osAccount.addAttributes(attributes);
-        tskCase.getOsAccountManager().updateOsAccount(osAccount);
+        // add the attributes to account.
+        OsAccountManager accountMgr = tskCase.getOsAccountManager();
+        accountMgr.addExtendedOsAccountAttributes(osAccount, attributes);
+         
+        // update the loginname
+        accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, loginName, null, host);
+        
+        // update other standard attributes  -  fullname, creationdate
+        accountMgr.updateStandardOsAccountAttributes(osAccount, fullName, null, null, creationTime);
+        
+        
     }
     
     /**
@@ -2204,7 +2267,7 @@ class ExtractRegistry extends Extract {
      * @return Newly created OsACcountAttribute
      */
     private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, String value, OsAccount osAccount, Host host, AbstractFile file) {
-        return new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
+        return osAccount.new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
     }
 
     /**
@@ -2219,7 +2282,7 @@ class ExtractRegistry extends Extract {
      * @return Newly created OsACcountAttribute
      */
     private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, Long value, OsAccount osAccount, Host host, AbstractFile file) {
-        return new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
+        return osAccount.new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
     }
 
     /**
@@ -2234,6 +2297,6 @@ class ExtractRegistry extends Extract {
      * @return Newly created OsACcountAttribute
      */
     private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, Integer value, OsAccount osAccount, Host host, AbstractFile file) {
-        return new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
+        return osAccount.new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
     }
 }

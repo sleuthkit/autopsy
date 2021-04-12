@@ -513,6 +513,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         private boolean extractTextAndIndex(AbstractFile aFile, Map<String, String> extractedMetadata) throws IngesterException {
             ImageConfig imageConfig = new ImageConfig();
             imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
+            imageConfig.setLimitedOCREnabled(KeywordSearchSettings.getLimitedOcrOption());
             ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
             Lookup extractionContext = Lookups.fixed(imageConfig, terminator);
 

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.OsAccounts.OsAccountNode;
+
 /**
  * Visitor Pattern interface that goes over Content nodes in the data source
  * area of the tree.
@@ -49,6 +51,8 @@ interface ContentNodeVisitor<T> {
     T visit(SlackFileNode sfn);
     
     T visit(BlackboardArtifactNode bban);
+    
+    T visit(OsAccountNode bban);
     
 
     /**
@@ -120,6 +124,11 @@ interface ContentNodeVisitor<T> {
         
         @Override
         public T visit(BlackboardArtifactNode bban) {
+            return defaultVisit(bban);
+        }
+        
+        @Override
+        public T visit(OsAccountNode bban) {
             return defaultVisit(bban);
         }
     }

@@ -143,11 +143,27 @@ abstract class Extract {
      * @return The newly created artifact.
      */
     BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
-        Optional<OsAccount> optional = getOsAccount(content);        
-        if (optional.isPresent() && type.getCategory() == BlackboardArtifact.Category.DATA_ARTIFACT)  {
-            return content.newDataArtifact(new BlackboardArtifact.Type(type), attributes, optional.get());
+       return createArtifactWithAttributes(new BlackboardArtifact.Type(type), content, attributes);
+    }
+    
+    /**
+     * Generic method for creating artifacts.
+     *
+     * @param type       The type of artifact.
+     * @param content    The file the artifact originated from.
+     * @param attributes A list of the attributes to associate with the
+     *                   artifact.
+     *
+     * @return The newly created artifact.
+     *
+     * @throws TskCoreException
+     */
+    BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
+        Optional<OsAccount> optional = getOsAccount(content);
+        if (optional.isPresent() && type.getCategory() == BlackboardArtifact.Category.DATA_ARTIFACT) {
+            return content.newDataArtifact(type, attributes, optional.get());
         } else {
-            BlackboardArtifact bbart = content.newArtifact(type);
+            BlackboardArtifact bbart = content.newArtifact(type.getTypeID());
             bbart.addAttributes(attributes);
             return bbart;
         }
@@ -504,12 +520,13 @@ abstract class Extract {
      * 
      * @param context
      * @param file
+     * @param IngestJobId The ingest job id.
      * @return Newly created copy of the AbstractFile
      * @throws IOException 
      */
-    protected File createTemporaryFile(IngestJobContext context, AbstractFile file) throws IOException{
+    protected File createTemporaryFile(IngestJobContext context, AbstractFile file, long ingestJobId) throws IOException{
         Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(
-                getCurrentCase(), getName()), file.getName() + file.getId() + file.getNameExtension());
+                getCurrentCase(), getName(), ingestJobId), file.getName() + file.getId() + file.getNameExtension());
         java.io.File tempFile = tempFilePath.toFile();
         
         try {
