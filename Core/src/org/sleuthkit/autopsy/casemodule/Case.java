@@ -64,7 +64,6 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.cxf.common.util.CollectionUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -1552,7 +1551,7 @@ public class Case {
             .collect(Collectors.toList());
         
         File dirFile;
-        if (CollectionUtils.isEmpty(pathPieces)) {
+        if (pathPieces.isEmpty()) {
             // in the event of a severe failure that should never happen
             // because both prefix and suffix calls should be non-empty, 
             // fallback to a subdirectory of java tmpdir
