@@ -224,16 +224,17 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
     /**
      * Makes a path of the format
-     * [basePath]/[RECENT_ACTIVITY_FOLDER]/[module]_[timestamp] if it does not
+     * [basePath]/[RECENT_ACTIVITY_FOLDER]/[module]_[ingest job id] if it does not
      * already exist and returns the created folder.
      *
      * @param basePath The base path (a case-related folder like temp or
      * output).
      * @param module The module name to include in the folder name.
+     * @param ingestJobId The id of the ingest job.
      * @return The path to the folder.
      */
-    private static String getAndMakeRAPath(String basePath, String module) {
-        String moduleFolder = String.format("%s_%s", module, TimeStampUtils.createTimeStamp());
+    private static String getAndMakeRAPath(String basePath, String module, long ingestJobId) {
+        String moduleFolder = String.format("%s_%d", module, ingestJobId);
         Path tmpPath = Paths.get(basePath, RECENT_ACTIVITY_FOLDER, moduleFolder);
         File dir = tmpPath.toFile();
         if (dir.exists() == false) {
@@ -252,8 +253,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      *
      * @return Path to directory
      */
-    static String getRATempPath(Case a_case, String mod) {
-        return getAndMakeRAPath(a_case.getTempDirectory(), mod);
+    static String getRATempPath(Case a_case, String mod, long ingestJobId) {
+        return getAndMakeRAPath(a_case.getTempDirectory(), mod, ingestJobId);
     }
 
     /**
@@ -266,8 +267,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      *
      * @return Path to directory
      */
-    static String getRAOutputPath(Case a_case, String mod) {
-        return getAndMakeRAPath(a_case.getModuleDirectory(), mod);
+    static String getRAOutputPath(Case a_case, String mod, long ingestJobId) {
+        return getAndMakeRAPath(a_case.getModuleDirectory(), mod, ingestJobId);
     }
 
     /**
@@ -276,8 +277,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      * @throws NoCurrentCaseException if there is no open case.
      * @return the relative path of the module output folder
      */
-    static String getRelModuleOutputPath(Case autCase, String mod) {
-        return Paths.get(getAndMakeRAPath(autCase.getModuleOutputDirectoryRelativePath(), mod))
+    static String getRelModuleOutputPath(Case autCase, String mod, long ingestJobId) {
+        return Paths.get(getAndMakeRAPath(autCase.getModuleOutputDirectoryRelativePath(), mod, ingestJobId))
                 .normalize()
                 .toString();
     }

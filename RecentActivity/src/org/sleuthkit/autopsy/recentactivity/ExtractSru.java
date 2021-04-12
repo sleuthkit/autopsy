@@ -100,7 +100,7 @@ final class ExtractSru extends Extract {
             dir.mkdirs();
         }
 
-        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru"); //NON-NLS
+        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru", context.getJobId()); //NON-NLS
         String softwareHiveFileName = getSoftwareHiveFile(dataSource, tempDirPath);
 
         if (softwareHiveFileName == null) {

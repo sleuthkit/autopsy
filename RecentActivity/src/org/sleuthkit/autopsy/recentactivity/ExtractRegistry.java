@@ -294,14 +294,15 @@ class ExtractRegistry extends Extract {
     /**
      * Identifies registry files in the database by mtimeItem, runs regripper on
      * them, and parses the output.
+     * @param ingestJobId The ingest job id.
      */
-    private void analyzeRegistryFiles() {
+    private void analyzeRegistryFiles(long ingestJobId) {
         List<AbstractFile> allRegistryFiles = findRegistryFiles();
 
         // open the log file
         FileWriter logFile = null;
         try {
-            logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + "regripper-info.txt"); //NON-NLS
+            logFile = new FileWriter(RAImageIngestModule.getRAOutputPath(currentCase, "reg", ingestJobId) + File.separator + "regripper-info.txt"); //NON-NLS
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
@@ -313,8 +314,8 @@ class ExtractRegistry extends Extract {
             
             String regFileName = regFile.getName();
             long regFileId = regFile.getId();
-            String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + regFileName;
-            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Long.toString(regFileId); //NON-NLS
+            String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg", ingestJobId) + File.separator + regFileName;
+            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg", ingestJobId) + File.separator + regFileName + "-regripper-" + Long.toString(regFileId); //NON-NLS
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
@@ -366,7 +367,7 @@ class ExtractRegistry extends Extract {
             // create a report for the full output
             if (!regOutputFiles.fullPlugins.isEmpty()) {
                 //parse the full regripper output from SAM hive files
-                if (regFileNameLocal.toLowerCase().contains("sam") && parseSamPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
+                if (regFileNameLocal.toLowerCase().contains("sam") && parseSamPluginOutput(regOutputFiles.fullPlugins, regFile, ingestJobId) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
                                     this.getName(), regFileName));     
@@ -1049,11 +1050,12 @@ class ExtractRegistry extends Extract {
      *
      * @param regFilePath     the path to the registry file being parsed
      * @param regAbstractFile the file to associate newly created artifacts with
+     * @param ingestJobId     The ingest job id.
      *
      * @return true if successful, false if parsing failed at some point
      */
-    private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile) {
-        parseSystemHostDomain();
+    private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile, long ingestJobId) {
+        parseSystemHostDomain(ingestJobId);
         
         File regfile = new File(regFilePath);
         List<BlackboardArtifact> newArtifacts = new ArrayList<>();
@@ -1139,14 +1141,15 @@ class ExtractRegistry extends Extract {
     
     /**
      *  Finds the Host and Domain information from the registry.
+     * @param ingestJobId The ingest job id.
      */
-    private void parseSystemHostDomain() {
+    private void parseSystemHostDomain(long ingestJobId) {
         List<AbstractFile> regFiles = findRegistryFiles();
 
         for (AbstractFile systemHive: regFiles) {
             if (systemHive.getName().toLowerCase().equals("system")) {
                 
-                String systemFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + systemHive.getName();
+                String systemFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg", ingestJobId) + File.separator + systemHive.getName();
                 File systemFileNameLocalFile = new File(systemFileNameLocal);
         
                 if (!systemFileNameLocalFile.exists()) {
@@ -1989,7 +1992,7 @@ class ExtractRegistry extends Extract {
         this.context = context;
 
         progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
-        analyzeRegistryFiles();
+        analyzeRegistryFiles(context.getJobId());
 
     }
 
