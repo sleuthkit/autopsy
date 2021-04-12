@@ -132,7 +132,7 @@ The previously notable filter is for domain searches only and is used to restric
 
 \subsubsection file_disc_known_account_filter Known Account Type Filter
 
-The previously notable filter is for domain searches only and is used to restrict results to only those domains that have a known account type.
+The known account type filter is for domain searches only and is used to restrict results to only those domains that have a known account type.
 
 \image html FileDiscovery/fd_knownAccountFilter.png
 
