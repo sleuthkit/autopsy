@@ -60,7 +60,7 @@ final class ObjectDetectedFilterPanel extends AbstractDiscoveryFilterPanel {
             objectsList.clearList();
             List<String> setNames = DiscoveryUiUtils.getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION);
             for (String name : setNames) {
-                objectsList.addElement(name, null, null);
+                objectsList.addElement(name, null, name);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error loading object detected set names", ex);
