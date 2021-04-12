@@ -21,21 +21,20 @@ package org.sleuthkit.autopsy.machinesettings;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
  * Provides case-specific settings like the user-specified temp folder.
+ *
+ * NOTE: The Case class also handles providing a temp directory. When altering
+ * code in this class, also look at the Case class as well.
  */
 public final class UserMachinePreferences {
 
@@ -109,6 +108,10 @@ public final class UserMachinePreferences {
      * Returns the temp directory to use based on settings. This method also
      * ensures the temp directory has been created.
      *
+     * NOTE: The Case class also handles providing a temp directory. When
+     * altering code in this class, also look at the Case class as well.
+     * See JIRA-7505 for more information.
+     *
      * @return The base user-specified temporary directory.
      */
     public static String getTempDirectory() {
@@ -120,6 +123,8 @@ public final class UserMachinePreferences {
                 break;
             case SYSTEM:
             default:
+                // at this level, if the case directory is specified for a temp
+                // directory, return the system temp directory instead.
                 dir = getSystemTempDirFile();
                 break;
         }

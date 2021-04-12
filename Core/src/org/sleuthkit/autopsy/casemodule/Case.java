@@ -64,6 +64,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.cxf.common.util.CollectionUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -159,10 +160,10 @@ import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
  * An Autopsy case. Currently, only one case at a time may be open.
  */
 public class Case {
-
-    private static final String CASE_TEMP_DIR = Case.class.getSimpleName();
     private static final int CASE_LOCK_TIMEOUT_MINS = 1;
     private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
+    private static final String APP_NAME = UserPreferences.getAppName();
+    private static final String TEMP_NAME = "Temp";
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static final String CACHE_FOLDER = "Cache"; //NON-NLS
@@ -1472,48 +1473,98 @@ public class Case {
         return hostPath.toString();
     }
     
-    private static final String APP_NAME = UserPreferences.getAppName();
-    private static final String TEMP_NAME = "Temp";
+    
+
+    /**
+     * The path pieces to be used as the initial part of the temp directory if 
+     * java.io.tmpdir is used.  See JIRA-7505 for more information.
+     * @return The initial pieces of the path to be used.  Equivalent to 
+     * [system temp directory]/[app name]/[unique case name]
+     */
+    private String[] getSystemTempDirPrefix() {
+        return new String[]{ System.getProperty("java.io.tmpdir"), APP_NAME, getName() };
+    }
+    
+    /**
+     * The pieces of the path to be used in the initial part of the temp 
+     * directory.  See JIRA-7505 for more information.
+     * @return The initial pieces of the path to be used.  
+     * Guaranteed to be non-empty.
+     */
+    private String[] getTempDirChoicePrefix() {
+        TempDirChoice tempDirChoice = UserMachinePreferences.getTempDirChoice();
+        // if no choice defined, use the system directory.
+        if (tempDirChoice == null) {
+            return getSystemTempDirPrefix();
+        }
+        
+        switch (tempDirChoice) {
+            case CASE: 
+                return new String[] { getCaseDirectory() };
+            case CUSTOM: 
+                String customDirectory = UserMachinePreferences.getCustomTempDirectoryProperty();
+                // if no custom directory defined, use the system directory.
+                if (StringUtils.isBlank(customDirectory)) {
+                    return getSystemTempDirPrefix();
+                } else {
+                    // equivalent to [custom temp directory]/[app name]
+                    return new String[] { customDirectory, APP_NAME, getName() };
+                }
+            case SYSTEM:
+            default:
+                // default to the system directory.
+                return getSystemTempDirPrefix();
+        }
+    }
+    
+    /** 
+     * The sub folders of the temp directory to be used based on the case type.
+     * See JIRA-7505 for more information.
+     * @return The sub folders to be used in the temp directory based on the 
+     * case type.  Guaranteed to be non-null.
+     */
+    private String[] getTempDirCaseTypeSuffix() {
+        return (CaseType.MULTI_USER_CASE.equals(getCaseType())) 
+                // equivalent to [host]/Temp
+                ? new String[]{ NetworkUtils.getLocalHostName(), TEMP_NAME } 
+                // equivalent to Temp
+                : new String[]{ TEMP_NAME };
+    }
+    
+    
+
     
     /**
      * Gets the full path to the temp directory for this case, creating it if it
-     * does not exist.
+     * does not exist.  
+     * 
+     * NOTE: UserMachinePreferences may also be affected by changes in 
+     * this method.  See JIRA-7505 for more information.
      *
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        Stream<String> baseTempDirParts;
-        switch (UserMachinePreferences.getTempDirChoice()) {
-            case CASE: 
-                baseTempDirParts = Stream.of(getCaseDirectory());
-                break;
-            case CUSTOM: 
-                String customDirectory = UserMachinePreferences.getCustomTempDirectoryProperty();
-                baseTempDirParts = StringUtils.isBlank(customDirectory) 
-                        ? Stream.of(System.getProperty("java.io.tmpdir"), APP_NAME, getName()) 
-                        : Stream.of(customDirectory, APP_NAME, getName());
-                break;
-            case SYSTEM:
-            default:
-                baseTempDirParts = Stream.of(System.getProperty("java.io.tmpdir"), APP_NAME, getName());
-                break;
-        }
-                
-        Stream<String> caseTypeParts;
-        switch (getCaseType()) {
-            case MULTI_USER_CASE:
-                caseTypeParts = Stream.of(NetworkUtils.getLocalHostName(), TEMP_NAME);
-                break;
-            case SINGLE_USER_CASE:
-            default:
-                caseTypeParts = Stream.of(TEMP_NAME);
-                break;
+        Stream<String> choicePrefix = Stream.of(getTempDirChoicePrefix());
+        Stream<String> caseTypeSuffix = Stream.of(getTempDirCaseTypeSuffix());
+        
+        // combine prefix based on temp directory choice and suffix based on case type.
+        List<String> pathPieces = Stream.concat(choicePrefix, caseTypeSuffix)
+            .collect(Collectors.toList());
+        
+        File dirFile;
+        if (CollectionUtils.isEmpty(pathPieces)) {
+            // in the event of a severe failure that should never happen
+            // because both prefix and suffix calls should be non-empty, 
+            // fallback to a subdirectory of java tmpdir
+            logger.log(Level.SEVERE, "No path pieces provided for temp directory.  Falling back to java.io.tmpdir.");
+            dirFile = Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME).toFile();
+        } else {
+            String first = pathPieces.get(0);
+            List<String> remainingList = pathPieces.subList(1, pathPieces.size());
+            dirFile = Paths.get(first, remainingList.toArray(new String[remainingList.size()])).toFile();
         }
         
-        String joinedPath = Stream.concat(baseTempDirParts, caseTypeParts)
-                .collect(Collectors.joining(File.separator));
-        
-        File dirFile = new File(joinedPath);
+        // ensure directory exists
         if (!dirFile.exists()) {
             dirFile.mkdirs();
         }
