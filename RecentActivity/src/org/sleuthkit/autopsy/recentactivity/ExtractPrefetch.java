@@ -33,9 +33,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -61,8 +65,6 @@ final class ExtractPrefetch extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractPrefetch.class.getName());
 
     private IngestJobContext context;
-
-    private static final String MODULE_NAME = "extractPREFETCH"; //NON-NLS
 
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
     private static final String PREFETCH_FILE_LOCATION = "/windows/prefetch";
@@ -147,8 +149,13 @@ final class ExtractPrefetch extends Extract {
                 return;
             }
 
-            String prefetchFile = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME) + File.separator + pFile.getName();
-            if (pFile.getParentPath().toLowerCase().contains(PREFETCH_FILE_LOCATION.toLowerCase())) {
+            if (pFile.getParentPath().toLowerCase().contains(PREFETCH_FILE_LOCATION.toLowerCase()) && pFile.getSize() > 0) {
+                String origFileName = pFile.getName();
+                String ext = FilenameUtils.getExtension(origFileName);
+                String baseName = FilenameUtils.getBaseName(origFileName);
+                String fileName = String.format("%s_%d.%s", baseName, pFile.getId(), ext);
+                String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME);
+                String prefetchFile =  Paths.get(baseRaTempPath, fileName).toString();
                 try {
                     ContentUtils.writeToFile(pFile, new File(prefetchFile));
                 } catch (IOException ex) {
@@ -259,10 +266,32 @@ final class ExtractPrefetch extends Extract {
                 String timesProgramRun = resultSet.getString("Number_time_file_run");
                 String filePath = resultSet.getString("file_path");
 
-                AbstractFile pfAbstractFile = getAbstractFile(prefetchFileName, PREFETCH_FILE_LOCATION, dataSource);
-
                 Set<Long> prefetchExecutionTimes = findNonZeroExecutionTimes(executionTimes);
 
+                String baseName = FilenameUtils.getBaseName(prefetchFileName);
+                Matcher match = Pattern.compile("_(?<objId>\\d*)\\s*$").matcher(baseName);
+                if (!match.find()) {
+                    logger.log(Level.WARNING, "Invalid format for PF file: " + prefetchFileName);//NON-NLS
+                    continue;
+                }
+                
+                
+                /**
+                 * A prefetch file is created when a program is run and the superfetch service collected data about the first 10 
+                 * seconds of the run, the trace data is then written to a new prefetch file or merged with an existing prefetch file.  
+                 * If the prefetch file gets deleted for some reason then a new one will be created.  See 7500 in JIRA for more 
+                 * information.
+                 */
+                AbstractFile pfAbstractFile = null;
+                try {
+                    Content c = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(Long.parseLong(match.group("objId")));
+                    if (c instanceof AbstractFile) {
+                        pfAbstractFile = (AbstractFile) c;
+                    }
+                } catch (NoCurrentCaseException | TskCoreException | NumberFormatException ex ) {
+                    logger.log(Level.SEVERE, "Unable to find content for: " + prefetchFileName, ex);
+                }
+                        
                 if (pfAbstractFile != null) {
                     for (Long executionTime : prefetchExecutionTimes) {
 
@@ -305,26 +334,7 @@ final class ExtractPrefetch extends Extract {
             postArtifacts(blkBrdArtList);
         }
     }
-
-    /**
-     * Cycle thru the execution times list and only return a new list of times
-     * that are greater than zero.
-     *
-     * @param executionTimes - list of prefetch execution times 8 possible
-     *                       timestamps
-     *
-     * @return List of timestamps that are greater than zero
-     */
-    private Set<Long> findNonZeroExecutionTimes(List<Long> executionTimes) {
-        Set<Long> prefetchExecutionTimes = new HashSet<>();
-        for (Long executionTime : executionTimes) {                        // only add prefetch file entries that have an actual date associated with them
-            if (executionTime > 0) {
-                prefetchExecutionTimes.add(executionTime);
-            }
-        }
-        return prefetchExecutionTimes;
-    }
-
+    
     /**
      * Create associated artifacts using file path name and the artifact it
      * associates with
@@ -339,7 +349,7 @@ final class ExtractPrefetch extends Extract {
     private BlackboardArtifact createAssociatedArtifact(String fileName, String filePathName, BlackboardArtifact bba, Content dataSource) throws TskCoreException {
         AbstractFile sourceFile = getAbstractFile(fileName, filePathName, dataSource);
         if (sourceFile != null) {
-            return  createAssociatedArtifact(sourceFile, bba);         
+            return createAssociatedArtifact(sourceFile, bba);         
         }
         return null;
     }
@@ -368,7 +378,6 @@ final class ExtractPrefetch extends Extract {
         }
 
         for (AbstractFile pFile : files) {
-
             if (pFile.getParentPath().toLowerCase().endsWith(filePath.toLowerCase() + '/')) {
                 return pFile;
             }
@@ -376,6 +385,24 @@ final class ExtractPrefetch extends Extract {
 
         return null;
 
-    }
+    }    
 
+    /**
+     * Cycle thru the execution times list and only return a new list of times
+     * that are greater than zero.
+     *
+     * @param executionTimes - list of prefetch execution times 8 possible
+     *                       timestamps
+     *
+     * @return List of timestamps that are greater than zero
+     */
+    private Set<Long> findNonZeroExecutionTimes(List<Long> executionTimes) {
+        Set<Long> prefetchExecutionTimes = new HashSet<>();
+        for (Long executionTime : executionTimes) {                        // only add prefetch file entries that have an actual date associated with them
+            if (executionTime > 0) {
+                prefetchExecutionTimes.add(executionTime);
+            }
+        }
+        return prefetchExecutionTimes;
+    }
 }
