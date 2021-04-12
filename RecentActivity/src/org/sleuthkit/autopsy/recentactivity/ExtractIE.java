@@ -67,7 +67,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ExtractIE extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    //private String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private final String JAVA_PATH;
     private static final String RESOURCE_URL_PREFIX = "res://";
