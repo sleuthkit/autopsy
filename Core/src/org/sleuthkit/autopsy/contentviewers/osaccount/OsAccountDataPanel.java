@@ -485,7 +485,7 @@ public class OsAccountDataPanel extends JPanel {
 //
 //                    data.add(instanceSection);
 //                }
-
+                
                 addDataComponents(data);
 
                 revalidate();

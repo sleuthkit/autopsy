@@ -15,6 +15,7 @@ DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card
 DataSourceUsage_FlashDrive=Flash Drive
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
+DefaultPriorityDomainCategorizer_searchEngineCategory=Search Engine
 DomainCategoryRunner_moduleName_text=DomainCategoryRunner
 DomainCategoryRunner_parentModuleName=Recent Activity
 DomainCategoryRunner_Progress_Message_Domain_Types=Finding Domain Types
