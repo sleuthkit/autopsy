@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.apputils.ResetWindowsAction;
@@ -65,6 +66,13 @@ public class StartupWindowProvider implements StartupWindowInterface {
         return instance;
     }
 
+    @NbBundle.Messages({
+        "# {0} - autFilePath",
+        "StartupWindowProvider.openCase.noFile=Unable to open previously open case because metadata file not found at: {0}",
+        "# {0} - reOpenFilePath",
+        "StartupWindowProvider.openCase.deleteOpenFailure=Unable to open or delete file containing path {0} to previously open case. The previous case will not be opened.",
+        "# {0} - autFilePath",
+        "StartupWindowProvider.openCase.cantOpen=Unable to open previously open case with metadata file: {0}"})
     private void init() {
         if (startupWindowToUse == null) {
             // first check whether we are running from command line
@@ -90,7 +98,9 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
             File openPreviousCaseFile = new File(ResetWindowsAction.getCaseToReopenFilePath());
             String caseFilePath = "";
+
             if (openPreviousCaseFile.exists()) {
+                String unableToOpenMessage = null;
                 try {
                     Charset encoding = null;
                     caseFilePath = FileUtils.readFileToString(openPreviousCaseFile, encoding);
@@ -100,12 +110,18 @@ public class StartupWindowProvider implements StartupWindowInterface {
                         //the case is now open we do not want to display the start up windows
                         return;
                     } else {
-                        logger.log(Level.WARNING, "Unable to open previously open case because metadata file not found at: {0}", caseFilePath);
+                        unableToOpenMessage = Bundle.StartupWindowProvider_openCase_noFile(caseFilePath);
+                        logger.log(Level.WARNING, unableToOpenMessage);
                     }
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Unable to open or delete file containing path " + ResetWindowsAction.getCaseToReopenFilePath() + " to previously open case, will not open previous case.", ex);
+                    unableToOpenMessage = Bundle.StartupWindowProvider_openCase_deleteOpenFailure(ResetWindowsAction.getCaseToReopenFilePath());
+                    logger.log(Level.WARNING, unableToOpenMessage, ex);
                 } catch (CaseActionException ex) {
-                    logger.log(Level.WARNING, "Unable to open previously open case with metadata file: " + caseFilePath, ex);
+                    unableToOpenMessage = Bundle.StartupWindowProvider_openCase_cantOpen(caseFilePath);
+                    logger.log(Level.WARNING, unableToOpenMessage, ex);
+                }
+                if (RuntimeProperties.runningWithGUI() && !StringUtils.isBlank(unableToOpenMessage)) {
+                    MessageNotifyUtil.Message.warn(unableToOpenMessage);
                 }
             }
             //discover the registered windows

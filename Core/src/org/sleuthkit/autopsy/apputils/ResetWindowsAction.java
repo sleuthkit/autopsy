@@ -61,7 +61,7 @@ public final class ResetWindowsAction extends CallableSystemAction {
     }
 
     @NbBundle.Messages({"ResetWindowAction.confirm.text=In order to perform the resetting of window locations the software will close and restart. "
-        + "If a case is currently open it will be closed. If ingest or a search is currently running it will be terminated. "
+        + "If a case is currently open, it will be closed. If ingest or a search is currently running, it will be terminated. "
         + "Are you sure you want to restart the software to reset all window locations?",
         "ResetWindowAction.caseCloseFailure.text=Unable to close the current case, "
         + "the software will restart and the windows locations will reset the next time the software is closed.",
@@ -90,7 +90,7 @@ public final class ResetWindowsAction extends CallableSystemAction {
                     if (Case.isCaseOpen()) {
                         String caseMetadataFilePath = Case.getCurrentCase().getMetadata().getFilePath().toString();
                         File caseToOpenFile = new File(ResetWindowsAction.getCaseToReopenFilePath());
-                        Charset encoding = null;
+                        Charset encoding = null;  //prevents writeStringToFile from having ambiguous arguments
                         FileUtils.writeStringToFile(caseToOpenFile, caseMetadataFilePath, encoding);
                         Case.closeCurrentCase();
                     }
