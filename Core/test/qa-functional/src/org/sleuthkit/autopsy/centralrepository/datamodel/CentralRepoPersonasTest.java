@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Optional;
 import junit.framework.Assert;
 import static junit.framework.Assert.assertTrue;
 import junit.framework.TestCase;
@@ -222,27 +223,39 @@ public class CentralRepoPersonasTest  extends TestCase {
             org2 = CentralRepository.getInstance().newOrganization(org2);
 
             // get some correltion types for different account types, for later use
-            phoneAccountType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.PHONE.getTypeName());
+            Optional<CentralRepoAccount.CentralRepoAccountType> optType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.PHONE.getTypeName());
+            assertTrue(optType.isPresent());
+            phoneAccountType = optType.get();
             phoneInstanceType = CentralRepository.getInstance().getCorrelationTypeById(phoneAccountType.getCorrelationTypeId());
             assertTrue("getCorrelationTypeById(PHONE) returned null", phoneInstanceType != null);
             
-            emailAccountType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.EMAIL.getTypeName());
+            optType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.EMAIL.getTypeName());
+            assertTrue(optType.isPresent());
+            emailAccountType = optType.get();
             emailInstanceType = CentralRepository.getInstance().getCorrelationTypeById(emailAccountType.getCorrelationTypeId());
             assertTrue("getCorrelationTypeById(EMAIL) returned null", emailInstanceType != null);
             
-            facebookAccountType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.FACEBOOK.getTypeName());
+            optType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.FACEBOOK.getTypeName());
+            assertTrue(optType.isPresent());
+            facebookAccountType = optType.get();
             facebookInstanceType = CentralRepository.getInstance().getCorrelationTypeById(facebookAccountType.getCorrelationTypeId());
             assertTrue("getCorrelationTypeById(FACEBOOK) returned null", facebookInstanceType != null);
             
-            textnowAccountType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.TEXTNOW.getTypeName());
+            optType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.TEXTNOW.getTypeName());
+            assertTrue(optType.isPresent());
+            textnowAccountType = optType.get();
             textnowInstanceType = CentralRepository.getInstance().getCorrelationTypeById(textnowAccountType.getCorrelationTypeId());
             assertTrue("getCorrelationTypeById(TEXTNOW) returned null", textnowInstanceType != null);
             
-            whatsAppAccountType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.WHATSAPP.getTypeName());
+            optType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.WHATSAPP.getTypeName());
+            assertTrue(optType.isPresent());
+            whatsAppAccountType = optType.get();
             whatsAppInstanceType = CentralRepository.getInstance().getCorrelationTypeById(whatsAppAccountType.getCorrelationTypeId());
             assertTrue("getCorrelationTypeById(WHATSAPP) returned null", whatsAppInstanceType != null);
             
-            skypeAccountType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.SKYPE.getTypeName());
+            optType = CentralRepository.getInstance().getAccountTypeByName( Account.Type.SKYPE.getTypeName());
+            assertTrue(optType.isPresent());
+            skypeAccountType = optType.get();
             skypeInstanceType = CentralRepository.getInstance().getCorrelationTypeById(skypeAccountType.getCorrelationTypeId());
             assertTrue("getCorrelationTypeById(SKYPE) returned null", skypeInstanceType != null);
             

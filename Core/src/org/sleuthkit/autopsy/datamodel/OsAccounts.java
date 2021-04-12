@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -29,8 +28,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.tuple.Pair;
@@ -294,7 +291,6 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     Bundle.OsAccounts_loginNameProperty_displayName(),
                     Bundle.OsAccounts_loginNameProperty_desc(),
                     optional.isPresent() ? optional.get() : ""));
-
             // Fill with empty string, fetch on background task.
             String realmName = "";
             propertiesSet.put(new NodeProperty<>(
