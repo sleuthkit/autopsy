@@ -2030,7 +2030,7 @@ public class Server {
         private final Object bufferLock;
         
         /* (JIRA-7521) Sometimes we get into a situation where Solr server is no longer able to index new data. 
-        * Typically main reason for this is Solr unning out of memory. In this case we will stop trying to send new 
+        * Typically main reason for this is Solr running out of memory. In this case we will stop trying to send new 
         * data to Solr (for this collection) after certain number of consecutive batches have failed. */
         private static final int MAX_NUM_CONSECUTIVE_FAILURES = 5;
         private int numConsecutiveFailures = 0;
@@ -2334,7 +2334,7 @@ public class Server {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
             } finally {
-                if (numConsecutiveFailures > MAX_NUM_CONSECUTIVE_FAILURES) {
+                if (numConsecutiveFailures >= MAX_NUM_CONSECUTIVE_FAILURES) {
                     // skip all future indexing
                     skipIndexing = true;
 
