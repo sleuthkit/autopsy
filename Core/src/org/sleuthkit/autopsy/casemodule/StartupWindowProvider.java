@@ -144,9 +144,12 @@ public class StartupWindowProvider implements StartupWindowInterface {
         if (openPreviousCaseFile.exists()) {
             //do actual opening on another thread
             new Thread(() -> {
+                //close the startup window as we attempt to open the case
+                close();
                 String caseFilePath = "";
                 String unableToOpenMessage = null;
                 try {
+                    //avoid readFileToString having ambiguous arguments 
                     Charset encoding = null;
                     caseFilePath = FileUtils.readFileToString(openPreviousCaseFile, encoding);
                     if (new File(caseFilePath).exists()) {
@@ -168,11 +171,10 @@ public class StartupWindowProvider implements StartupWindowInterface {
                     final String message = unableToOpenMessage;
                     SwingUtilities.invokeLater(() -> {
                          MessageNotifyUtil.Message.warn(message);
+                         //the case was not opened restore the startup window
+                         open();
                     });          
-                } else {
-                    close();
-                }
-
+                } 
             }).start();
         }
     }
