@@ -202,6 +202,11 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(HostNode node);
 
     T visit(DataSourcesByTypeNode node);
+    
+    /*
+     * Unsupported node
+     */
+    T visit(UnsupportedContentNode ucn);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -572,6 +577,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(PersonGroupingNode node) {
+            return defaultVisit(node);
+        }
+        
+        @Override
+        public T visit(UnsupportedContentNode node) {
             return defaultVisit(node);
         }
     }

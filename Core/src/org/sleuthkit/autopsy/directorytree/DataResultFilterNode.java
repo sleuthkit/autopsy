@@ -304,7 +304,6 @@ public class DataResultFilterNode extends FilterNode {
                             NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), c));
                 }
                 // action to go to the source file of the artifact
-                // action to go to the source file of the artifact
                 Content fileContent = ban.getLookup().lookup(AbstractFile.class);
                 if (fileContent == null) {
                     Content content = ban.getLookup().lookup(Content.class);
