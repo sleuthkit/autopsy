@@ -69,7 +69,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 @Messages({"CTL_OpenAction=Images/Videos",
     "OpenAction.stale.confDlg.msg=The image / video database may be out of date. "
     + "Do you want to update and listen for further ingest results?\n"
-    + "Choosing 'yes' will update the database and enable listening to future ingests.",
+    + "Choosing 'yes' will update the database and enable listening to future ingests.\n\n"
+            + "Database update status will appear in the lower right corner of the application window.",
     "OpenAction.notAnalyzedDlg.msg=No image/video files available to display yet.\n"
     + "Please run FileType and EXIF ingest modules.",
     "OpenAction.stale.confDlg.title=Image Gallery"})
