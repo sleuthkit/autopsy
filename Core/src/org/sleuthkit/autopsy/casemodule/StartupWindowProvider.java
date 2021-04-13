@@ -24,6 +24,7 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
@@ -95,35 +96,6 @@ public class StartupWindowProvider implements StartupWindowInterface {
             if (RuntimeProperties.runningWithGUI()) {
                 checkSolr();
             }
-
-            File openPreviousCaseFile = new File(ResetWindowsAction.getCaseToReopenFilePath());
-            String caseFilePath = "";
-
-            if (openPreviousCaseFile.exists()) {
-                String unableToOpenMessage = null;
-                try {
-                    Charset encoding = null;
-                    caseFilePath = FileUtils.readFileToString(openPreviousCaseFile, encoding);
-                    if (new File(caseFilePath).exists()) {
-                        FileUtils.forceDelete(openPreviousCaseFile);
-                        Case.openAsCurrentCase(caseFilePath);
-                        //the case is now open we do not want to display the start up windows
-                        return;
-                    } else {
-                        unableToOpenMessage = Bundle.StartupWindowProvider_openCase_noFile(caseFilePath);
-                        logger.log(Level.WARNING, unableToOpenMessage);
-                    }
-                } catch (IOException ex) {
-                    unableToOpenMessage = Bundle.StartupWindowProvider_openCase_deleteOpenFailure(ResetWindowsAction.getCaseToReopenFilePath());
-                    logger.log(Level.WARNING, unableToOpenMessage, ex);
-                } catch (CaseActionException ex) {
-                    unableToOpenMessage = Bundle.StartupWindowProvider_openCase_cantOpen(caseFilePath);
-                    logger.log(Level.WARNING, unableToOpenMessage, ex);
-                }
-                if (RuntimeProperties.runningWithGUI() && !StringUtils.isBlank(unableToOpenMessage)) {
-                    MessageNotifyUtil.Message.warn(unableToOpenMessage);
-                }
-            }
             //discover the registered windows
             Collection<? extends StartupWindowInterface> startupWindows
                     = Lookup.getDefault().lookupAll(StartupWindowInterface.class);
@@ -166,6 +138,42 @@ public class StartupWindowProvider implements StartupWindowInterface {
                 logger.log(Level.SEVERE, "Unexpected error, no startup window chosen, using the default"); //NON-NLS
                 startupWindowToUse = new org.sleuthkit.autopsy.casemodule.StartupWindow();
             }
+        }
+        File openPreviousCaseFile = new File(ResetWindowsAction.getCaseToReopenFilePath());
+
+        if (openPreviousCaseFile.exists()) {
+            //do actual opening on another thread
+            new Thread(() -> {
+                String caseFilePath = "";
+                String unableToOpenMessage = null;
+                try {
+                    Charset encoding = null;
+                    caseFilePath = FileUtils.readFileToString(openPreviousCaseFile, encoding);
+                    if (new File(caseFilePath).exists()) {
+                        FileUtils.forceDelete(openPreviousCaseFile);
+                        Case.openAsCurrentCase(caseFilePath);
+                    } else {
+                        unableToOpenMessage = Bundle.StartupWindowProvider_openCase_noFile(caseFilePath);
+                        logger.log(Level.WARNING, unableToOpenMessage);
+                    }
+                } catch (IOException ex) {
+                    unableToOpenMessage = Bundle.StartupWindowProvider_openCase_deleteOpenFailure(ResetWindowsAction.getCaseToReopenFilePath());
+                    logger.log(Level.WARNING, unableToOpenMessage, ex);
+                } catch (CaseActionException ex) {
+                    unableToOpenMessage = Bundle.StartupWindowProvider_openCase_cantOpen(caseFilePath);
+                    logger.log(Level.WARNING, unableToOpenMessage, ex);
+                }
+                
+                if (RuntimeProperties.runningWithGUI() && !StringUtils.isBlank(unableToOpenMessage)) {
+                    final String message = unableToOpenMessage;
+                    SwingUtilities.invokeLater(() -> {
+                         MessageNotifyUtil.Message.warn(message);
+                    });          
+                } else {
+                    close();
+                }
+
+            }).start();
         }
     }
 
