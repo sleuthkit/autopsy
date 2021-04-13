@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.apputils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.openide.LifecycleManager;
@@ -32,9 +32,10 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -51,38 +52,65 @@ public final class ResetWindowsAction extends CallableSystemAction {
     private static final String DISPLAY_NAME = Bundle.CTL_ResetWindowsAction();
     private static final long serialVersionUID = 1L;
     private final static Logger logger = Logger.getLogger(ResetWindowsAction.class.getName());
+    private final static String WINDOWS2LOCAL = "Windows2Local";
+    private final static String CASE_TO_REOPEN_FILE = "caseToOpen.txt"; 
 
     @Override
     public boolean isEnabled() {
-        return !Case.isCaseOpen();
+        return true;
     }
 
-    @NbBundle.Messages({"ResetWindowAction.confirm.title=Reset Windows",
-        "ResetWindowAction.confirm.text=The program will close and restart to perform the resetting of window locations.\n\nAre you sure you want to reset all window locations?"})
+    @NbBundle.Messages({"ResetWindowAction.confirm.text=In order to perform the resetting of window locations the software will close and restart. "
+        + "If a case is currently open, it will be closed. If ingest or a search is currently running, it will be terminated. "
+        + "Are you sure you want to restart the software to reset all window locations?",
+        "ResetWindowAction.caseCloseFailure.text=Unable to close the current case, "
+        + "the software will restart and the windows locations will reset the next time the software is closed.",
+        "ResetWindowAction.caseSaveMetadata.text=Unable to save current case path, "
+        + "the software will restart and the windows locations will reset but the current case will not be opened upon restart."})
 
     @Override
     public void performAction() {
         SwingUtilities.invokeLater(() -> {
-            int response = JOptionPane.showConfirmDialog(
-                    WindowManager.getDefault().getMainWindow(),
-                    Bundle.ResetWindowAction_confirm_text(),
-                    Bundle.ResetWindowAction_confirm_title(),
-                    JOptionPane.YES_NO_OPTION,  JOptionPane.PLAIN_MESSAGE);
-            if (response == JOptionPane.YES_OPTION) {
+            boolean response = MessageNotifyUtil.Message.confirm(Bundle.ResetWindowAction_confirm_text());
+            if (response) {
+                //adding the shutdown hook, closing the current case, and marking for restart can be re-ordered if slightly different behavior is desired
                 Runtime.getRuntime().addShutdownHook(new Thread() {
                     @Override
                     public void run() {
                         try {
-                            FileUtils.deleteDirectory(new File(PlatformUtil.getUserConfigDirectory() + File.separator + "Windows2Local"));
+                            FileUtils.deleteDirectory(new File(PlatformUtil.getUserConfigDirectory() + File.separator + WINDOWS2LOCAL));
                         } catch (IOException ex) {
-                            logger.log(Level.WARNING, "Unable to delete config directory, window locations will not be reset.", ex);
+                            //While we would like the user to be aware of this in the unlikely event that the directory can not be deleted
+                            //Because our deletion is being attempted in a shutdown hook I don't know that we can pop up UI elements during the shutdown proces
+                            logger.log(Level.SEVERE, "Unable to delete config directory, window locations will not be reset. To manually reset the windows please delete the following directory while the software is closed. " + PlatformUtil.getUserConfigDirectory() + File.separator + "Windows2Local", ex);
                         }
                     }
                 });
-                LifecycleManager.getDefault().markForRestart();
-                LifecycleManager.getDefault().exit();
+                try {
+                    if (Case.isCaseOpen()) {
+                        String caseMetadataFilePath = Case.getCurrentCase().getMetadata().getFilePath().toString();
+                        File caseToOpenFile = new File(ResetWindowsAction.getCaseToReopenFilePath());
+                        Charset encoding = null;  //prevents writeStringToFile from having ambiguous arguments
+                        FileUtils.writeStringToFile(caseToOpenFile, caseMetadataFilePath, encoding);
+                        Case.closeCurrentCase();
+                    }
+                    // The method markForRestart can not be undone once it is called.
+                    LifecycleManager.getDefault().markForRestart();
+                    //we need to call exit last 
+                    LifecycleManager.getDefault().exit();
+                } catch (CaseActionException ex) {
+                    logger.log(Level.WARNING, Bundle.ResetWindowAction_caseCloseFailure_text(), ex);
+                    MessageNotifyUtil.Message.show(Bundle.ResetWindowAction_caseCloseFailure_text(), MessageNotifyUtil.MessageType.ERROR);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, Bundle.ResetWindowAction_caseSaveMetadata_text(), ex);
+                    MessageNotifyUtil.Message.show(Bundle.ResetWindowAction_caseSaveMetadata_text(), MessageNotifyUtil.MessageType.ERROR);
+                }
             }
         });
+    }
+    
+    public static String getCaseToReopenFilePath(){
+        return PlatformUtil.getUserConfigDirectory() + File.separator + CASE_TO_REOPEN_FILE;
     }
 
     /**
@@ -91,6 +119,7 @@ public final class ResetWindowsAction extends CallableSystemAction {
      * @param value whether to enable this action or not
      */
     @Override
+
     public void setEnabled(boolean value) {
         super.setEnabled(value);
     }

@@ -346,6 +346,12 @@ RecentCases.getName.text=Clear Recent Cases
 RecentItems.openRecentCase.msgDlg.text=Case {0} no longer exists.
 SelectDataSourceProcessorPanel.name.text=Select Data Source Type
 StartupWindow.title.text=Welcome
+# {0} - autFilePath
+StartupWindowProvider.openCase.cantOpen=Unable to open previously open case with metadata file: {0}
+# {0} - reOpenFilePath
+StartupWindowProvider.openCase.deleteOpenFailure=Unable to open or delete file containing path {0} to previously open case. The previous case will not be opened.
+# {0} - autFilePath
+StartupWindowProvider.openCase.noFile=Unable to open previously open case because metadata file not found at: {0}
 UnpackagePortableCaseDialog.title.text=Unpackage Portable Case
 UnpackagePortableCaseDialog.UnpackagePortableCaseDialog.extensions=Portable case package (.zip, .zip.001)
 UnpackagePortableCaseDialog.validatePaths.badExtension=File extension must be .zip or .zip.001
