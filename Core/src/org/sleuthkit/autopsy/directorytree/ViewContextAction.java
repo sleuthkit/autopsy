@@ -63,6 +63,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
+import org.sleuthkit.datamodel.UnsupportedContent;
 import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
@@ -161,7 +162,8 @@ public class ViewContextAction extends AbstractAction {
     @Messages({
         "ViewContextAction.errorMessage.cannotFindDirectory=Failed to locate directory.",
         "ViewContextAction.errorMessage.cannotSelectDirectory=Failed to select directory in tree.",
-        "ViewContextAction.errorMessage.cannotFindNode=Failed to locate data source node in tree."
+        "ViewContextAction.errorMessage.cannotFindNode=Failed to locate data source node in tree.",
+        "ViewContextAction.errorMessage.unsupportedParent=Unable to navigate to content not supported in this release."
     })
     public void actionPerformed(ActionEvent event) {
         EventQueue.invokeLater(() -> {
@@ -179,6 +181,13 @@ public class ViewContextAction extends AbstractAction {
             } catch (TskCoreException ex) {
                 MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindDirectory());
                 logger.log(Level.SEVERE, String.format("Could not get parent of Content object: %s", content), ex); //NON-NLS
+                return;
+            }
+            
+            if ((parentContent != null) 
+                    && (parentContent instanceof UnsupportedContent)) {
+                MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_unsupportedParent());
+                logger.log(Level.WARNING, String.format("Could not navigate to unsupported content with id: %d", parentContent.getId())); //NON-NLS
                 return;
             }
 

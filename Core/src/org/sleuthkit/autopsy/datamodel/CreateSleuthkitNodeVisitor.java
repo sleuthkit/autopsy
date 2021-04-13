@@ -32,6 +32,7 @@ import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
+import org.sleuthkit.datamodel.UnsupportedContent;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
@@ -98,6 +99,11 @@ public class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<Abs
     @Override
     public AbstractContentNode<? extends Content> visit(BlackboardArtifact art) {
         return new BlackboardArtifactNode(art);
+    }
+    
+    @Override
+    public AbstractContentNode<? extends Content> visit(UnsupportedContent uc) {
+        return new UnsupportedContentNode(uc);
     }
 
     @Override

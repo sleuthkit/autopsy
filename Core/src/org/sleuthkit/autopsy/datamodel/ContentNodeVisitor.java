@@ -50,6 +50,8 @@ interface ContentNodeVisitor<T> {
     
     T visit(BlackboardArtifactNode bban);
     
+    T visit(UnsupportedContentNode ucn);
+    
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -121,6 +123,11 @@ interface ContentNodeVisitor<T> {
         @Override
         public T visit(BlackboardArtifactNode bban) {
             return defaultVisit(bban);
+        }
+                
+        @Override
+        public T visit(UnsupportedContentNode ucn) {
+            return defaultVisit(ucn);
         }
     }
 }
