@@ -44,7 +44,7 @@ import org.openide.util.actions.CallableSystemAction;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.logicalimager.configuration.CreateLogicalImagerAction")
 @ActionRegistration(displayName = "#CTL_CreateLogicalImagerAction", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 2000, separatorBefore = 1999)
-@Messages("CTL_CreateLogicalImagerAction=Create Logical Imager2")
+@Messages("CTL_CreateLogicalImagerAction=Create Logical Imager")
 public final class CreateLogicalImagerAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
@@ -62,7 +62,7 @@ public final class CreateLogicalImagerAction extends CallableSystemAction {
     }
 
     @NbBundle.Messages({
-        "CreateLogicalImagerAction.title=Create Logical Imager2"
+        "CreateLogicalImagerAction.title=Create Logical Imager"
     })
     @Override
     public void performAction() {

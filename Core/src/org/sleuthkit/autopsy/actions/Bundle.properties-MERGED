@@ -96,4 +96,4 @@ OpenPythonModulesFolderAction.actionName.text=Python Plugins
 OpenPythonModulesFolderAction.errorMsg.folderNotFound=Python plugins folder not found: {0}
 CTL_OpenPythonModulesFolderAction=Python Plugins
 GetTagNameAndCommentDialog.tagCombo.toolTipText=Select tag to use
-CTL_ExitAction=Exit2
+CTL_ExitAction=Exit

@@ -9,7 +9,7 @@ DataResultFilterNode.viewSourceArtifact.text=View Source Result
 DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contains {0} data sources. Would you like to group by data source for faster loading?
 DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?
 DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.
-DirectoryTreeTopComponent.resultsView.title=Listing2
+DirectoryTreeTopComponent.resultsView.title=Listing
 ExportCSV.saveNodesToCSV.empty=No data to export
 # {0} - Output file
 ExportCSV.saveNodesToCSV.fileExists=File {0} already exists

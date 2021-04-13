@@ -31,9 +31,9 @@ import org.openide.util.NbBundle;
  * Action to open custom implementation of the "About" window from the Help
  * menu.
  */
+@ActionID(id = "org.sleuthkit.autopsy.corecomponents.AboutWindowAction", category = "Help")
 @ActionRegistration(displayName = "#CTL_CustomAboutAction", iconInMenu = true, lazy = false)
 @ActionReference(path = "Menu/Help", position = 3000, separatorBefore = 2999)
-@ActionID(id = "org.sleuthkit.autopsy.corecomponents.AboutWindowAction", category = "Help")
 public class AboutWindowAction extends AboutAction {
 
     @Override

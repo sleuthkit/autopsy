@@ -160,7 +160,7 @@ ConfirmationDialog.ConfirmExitHeader=Confirm Exit
 CTL_AinStatusDashboardAction=Auto Ingest Nodes
 CTL_AinStatusDashboardTopComponent=Auto Ingest Nodes
 CTL_AutoIngestDashboardAction=Auto Ingest Jobs
-CTL_AutoIngestDashboardOpenAction=Auto Ingest Dashboard2
+CTL_AutoIngestDashboardOpenAction=Auto Ingest Dashboard
 CTL_AutoIngestDashboardTopComponent=Auto Ingest Jobs
 CTL_CasesDashboardAction=Multi-User Cases Dashboard
 CTL_CasesDashboardTopComponent=Cases
@@ -205,7 +205,9 @@ DeleteCaseTask.progress.parsingManifest=Parsing manifest file {0}...
 DeleteCaseTask.progress.releasingManifestLock=Releasing lock on the manifest file {0}...
 DeleteCaseTask.progress.startMessage=Starting deletion...
 DeleteOrphanCaseNodesAction.progressDisplayName=Cleanup Case Znodes
+# {0} - item count
 DeleteOrphanCaseNodesDialog.additionalInit.lblNodeCount.text=Znodes found: {0}
+# {0} - item count
 DeleteOrphanCaseNodesDialog.additionalInit.znodesTextArea.countMessage=ZNODES FOUND: {0}
 DeleteOrphanCaseNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service
 # {0} - node path
