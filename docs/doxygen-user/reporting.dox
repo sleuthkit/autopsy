@@ -58,7 +58,7 @@ Generating an Excel report is very similar to an \ref report_html. You select wh
 
 \image html reports_excel.png
 
-\subsection report_tagged_hashes Add Tagged Hashes
+\subsection report_tagged_hashes Save Tagged Hashes
 
 This is one of the report modules that doesn't generate an actual report. The purpose of this module is to easily add the hashes
 of some/all tagged files to an Autopsy hash set that can be used by the \ref hash_db_page. You can use the "Configure Hash Sets" button to create a new
@@ -68,6 +68,10 @@ hash set to write to, or use an existing hash set.
 
 After running this module, if you use the same hash set on future cases then everything that was tagged with one of the selected tags in this case will
 show up as Hashset Hits.
+
+\subsection reports_unique_words Extract Unique Words
+
+This report module allows you to export all unique "words" found in a case. These words come from the Solr index that was created by the \ref keyword_search_page.
 
 \subsection report_case_uco CASE-UCO
 
