@@ -144,8 +144,6 @@ public class StartupWindowProvider implements StartupWindowInterface {
         if (openPreviousCaseFile.exists()) {
             //do actual opening on another thread
             new Thread(() -> {
-                //close the startup window as we attempt to open the case
-                close();
                 String caseFilePath = "";
                 String unableToOpenMessage = null;
                 try {
@@ -154,7 +152,10 @@ public class StartupWindowProvider implements StartupWindowInterface {
                     caseFilePath = FileUtils.readFileToString(openPreviousCaseFile, encoding);
                     if (new File(caseFilePath).exists()) {
                         FileUtils.forceDelete(openPreviousCaseFile);
+                        //close the startup window as we attempt to open the case
+                        close();
                         Case.openAsCurrentCase(caseFilePath);
+
                     } else {
                         unableToOpenMessage = Bundle.StartupWindowProvider_openCase_noFile(caseFilePath);
                         logger.log(Level.WARNING, unableToOpenMessage);
@@ -166,15 +167,15 @@ public class StartupWindowProvider implements StartupWindowInterface {
                     unableToOpenMessage = Bundle.StartupWindowProvider_openCase_cantOpen(caseFilePath);
                     logger.log(Level.WARNING, unableToOpenMessage, ex);
                 }
-                
+
                 if (RuntimeProperties.runningWithGUI() && !StringUtils.isBlank(unableToOpenMessage)) {
                     final String message = unableToOpenMessage;
                     SwingUtilities.invokeLater(() -> {
-                         MessageNotifyUtil.Message.warn(message);
-                         //the case was not opened restore the startup window
-                         open();
-                    });          
-                } 
+                        MessageNotifyUtil.Message.warn(message);
+                        //the case was not opened restore the startup window
+                        open();
+                    });
+                }
             }).start();
         }
     }
