@@ -180,7 +180,9 @@ public class OsAccountDataPanel extends JPanel {
         data.addData(Bundle.OsAccountDataPanel_basic_address(),
                 account.getName() == null || account.getName().isEmpty() ? "" : account.getName());
 
-        data.addData(Bundle.OsAccountDataPanel_basic_type(), account.getOsAccountType().getName());
+        
+        data.addData(Bundle.OsAccountDataPanel_basic_type(), 
+            account.getOsAccountType().isPresent() ? account.getOsAccountType().get().getName() : "");
 
         Optional<Long> crTime = account.getCreationTime();
         if (crTime.isPresent()) {
@@ -483,7 +485,7 @@ public class OsAccountDataPanel extends JPanel {
 //
 //                    data.add(instanceSection);
 //                }
-
+                
                 addDataComponents(data);
 
                 revalidate();

@@ -289,7 +289,7 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        File tempHistoryFile = createTemporaryFile(context, historyFile);
+        File tempHistoryFile = createTemporaryFile(context, historyFile, context.getJobId());
 
         try {
             ContentUtils.writeToFile(historyFile, tempHistoryFile, context::dataSourceIngestIsCancelled);
@@ -324,7 +324,7 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        File tempFile = createTemporaryFile(context, file);
+        File tempFile = createTemporaryFile(context, file, context.getJobId());
 
         try {
             if(!context.dataSourceIngestIsCancelled()) {
@@ -354,7 +354,7 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        File tempFile = createTemporaryFile(context, file);
+        File tempFile = createTemporaryFile(context, file, context.getJobId());
 
         try {
             if(!context.dataSourceIngestIsCancelled()) {
@@ -385,7 +385,7 @@ final class ExtractSafari extends Extract {
         File tempFile = null;
 
         try {
-            tempFile = createTemporaryFile(context, file);
+            tempFile = createTemporaryFile(context, file, context.getJobId());
 
             if(!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(getCookieArtifacts(file, tempFile, context));

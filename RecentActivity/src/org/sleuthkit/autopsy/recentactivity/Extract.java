@@ -520,12 +520,13 @@ abstract class Extract {
      * 
      * @param context
      * @param file
+     * @param IngestJobId The ingest job id.
      * @return Newly created copy of the AbstractFile
      * @throws IOException 
      */
-    protected File createTemporaryFile(IngestJobContext context, AbstractFile file) throws IOException{
+    protected File createTemporaryFile(IngestJobContext context, AbstractFile file, long ingestJobId) throws IOException{
         Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(
-                getCurrentCase(), getName()), file.getName() + file.getId() + file.getNameExtension());
+                getCurrentCase(), getName(), ingestJobId), file.getName() + file.getId() + file.getNameExtension());
         java.io.File tempFile = tempFilePath.toFile();
         
         try {
