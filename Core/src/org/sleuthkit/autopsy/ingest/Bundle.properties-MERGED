@@ -1,8 +1,4 @@
 CTL_RunIngestAction=Run Ingest
-CustomGPSIngestModule_Description=Just makes a few custom artifacts with GPS data
-CustomGPSIngestModule_Name=Custom GPS Module
-# {0} - AbstractFileName
-CustomGPSIngestModule_process_start=Started {0}
 FileIngestPipeline_SaveResults_Activity=Saving Results
 IngestJobSettingsPanel.IngestModulesTableRenderer.info.message=A previous version of this ingest module has been run before on this data source.
 IngestJobSettingsPanel.IngestModulesTableRenderer.warning.message=This ingest module has been run before on this data source.
@@ -146,7 +142,7 @@ IngestJob.cancelReason.outOfDiskSpace.text=Out of disk space
 IngestJob.cancelReason.servicesDown.text=Services Down
 IngestJob.cancelReason.caseClosed.text=Case closed
 IngestJobSettingsPanel.globalSettingsButton.text=Global Settings
-gest=
+gest
 IngestJobSettingsPanel.globalSettingsButton.actionCommand=Advanced
 IngestJobSettingsPanel.globalSettingsButton.text=Global Settings
 IngestJobSettingsPanel.pastJobsButton.text=History
