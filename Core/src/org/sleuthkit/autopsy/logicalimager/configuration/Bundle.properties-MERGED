@@ -62,8 +62,8 @@ ConfigVisualPanel3.failedToSaveExeMsg=Failed to save tsk_logical_imager.exe file
 # {0} - reason
 ConfigVisualPanel3.reason=\nReason: {0}
 ConfigVisualPanel3.saveConfigurationFile=Save imager
-CreateLogicalImagerAction.title=Create Logical Imager
-CTL_CreateLogicalImagerAction=Create Logical Imager
+CreateLogicalImagerAction.title=Create Logical Imager2
+CTL_CreateLogicalImagerAction=Create Logical Imager2
 EditFullPathsRulePanel.example=Example: 
 EditFullPathsRulePanel.fullPaths=Full paths
 EditNonFullPathsRulePanel.emptyExtensionException=Extensions cannot have an empty entry

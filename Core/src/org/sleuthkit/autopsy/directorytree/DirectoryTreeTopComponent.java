@@ -103,7 +103,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 // Registered as a service provider for DataExplorer in layer.xml
 @Messages({
-    "DirectoryTreeTopComponent.resultsView.title=Listing"
+    "DirectoryTreeTopComponent.resultsView.title=Listing2"
 })
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider {
