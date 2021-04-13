@@ -255,8 +255,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     Bundle.OsAccounts_loginNameProperty_displayName(),
                     Bundle.OsAccounts_loginNameProperty_desc(),
                     optional.isPresent() ? optional.get() : ""));
-
-            // TODO - load realm on background thread
+           // TODO - load realm on background thread
             String realmName = "";
             //String realmName = account.getRealm().getRealmNames().isEmpty() ? "" :  account.getRealm().getRealmNames().get(0);
             propertiesSet.put(new NodeProperty<>(

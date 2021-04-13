@@ -600,7 +600,6 @@ class Firefox extends Extract {
             }
             j++;
             dbFile.delete();
-            break;
         }
 
         if(!context.dataSourceIngestIsCancelled()) {
@@ -733,7 +732,6 @@ class Firefox extends Extract {
             }
             j++;
             dbFile.delete();
-            break;
         }
 
         if(!context.dataSourceIngestIsCancelled()) {
