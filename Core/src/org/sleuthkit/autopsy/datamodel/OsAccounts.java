@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,18 +30,26 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import javax.swing.Action;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.lookup.Lookups;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
@@ -52,6 +61,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
     private static final Logger logger = Logger.getLogger(OsAccounts.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/os-account.png";
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+    private static final String REALM_DATA_AVAILABLE_EVENT = "REALM_DATA_AVAILABLE_EVENT";
 
     private SleuthkitCase skCase;
     private final long filteringDSObjId;
@@ -114,9 +124,9 @@ public final class OsAccounts implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if(eventType.equals(Case.Events.OS_ACCOUNT_ADDED.toString())
+                if (eventType.equals(Case.Events.OS_ACCOUNT_ADDED.toString())
                         || eventType.equals(Case.Events.OS_ACCOUNT_REMOVED.toString())) {
-                     refresh(true);
+                    refresh(true);
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
                     if (evt.getNewValue() == null) {
@@ -126,27 +136,27 @@ public final class OsAccounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         @Override
         protected void addNotify() {
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNT_ADDED, Case.Events.OS_ACCOUNT_REMOVED), listener);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
-        
+
         @Override
         protected void removeNotify() {
             Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), listener);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
-        
+
         @Override
         protected boolean createKeys(List<OsAccount> list) {
-            if(skCase != null) {
+            if (skCase != null) {
                 try {
                     if (filteringDSObjId == 0) {
                         list.addAll(skCase.getOsAccountManager().getOsAccounts());
                     } else {
-                        Host host = skCase.getHostManager().getHost(skCase.getDataSource(filteringDSObjId));
+                        Host host = skCase.getHostManager().getHostByDataSource(skCase.getDataSource(filteringDSObjId));
                         list.addAll(skCase.getOsAccountManager().getOsAccounts(host));
                     }
                 } catch (TskCoreException | TskDataException ex) {
@@ -166,20 +176,37 @@ public final class OsAccounts implements AutopsyVisitableItem {
     /**
      * An OsAccount leaf Node.
      */
-    public static final class OsAccountNode extends DisplayableItemNode {
+    public static final class OsAccountNode extends AbstractContentNode<OsAccount> {
 
         private OsAccount account;
-        
+
         private final PropertyChangeListener listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(((OsAccountChangedEvent)evt).getOsAccount().getId() == account.getId()) {
-                    // Update the account node to the new one
-                    account = ((OsAccountChangedEvent)evt).getOsAccount();
-                    updateSheet();
+                if (evt.getPropertyName().equals(Case.Events.OS_ACCOUNT_CHANGED.name())) {
+                    if (((OsAccountChangedEvent) evt).getOsAccount().getId() == account.getId()) {
+                        // Update the account node to the new one
+                        account = ((OsAccountChangedEvent) evt).getOsAccount();
+                        updateSheet();
+                    }
+                } else if (evt.getPropertyName().equals(REALM_DATA_AVAILABLE_EVENT)) {
+                    OsAccountRealm realm = (OsAccountRealm) evt.getNewValue();
+
+                    // Currently only 0 or 1 names are supported, this will need
+                    // to be modified if that changes.
+                    List<String> realmNames = realm.getRealmNames();
+                    if (!realmNames.isEmpty()) {
+                        updateSheet(new NodeProperty<>(
+                                Bundle.OsAccounts_accountRealmNameProperty_name(),
+                                Bundle.OsAccounts_accountRealmNameProperty_displayName(),
+                                Bundle.OsAccounts_accountRealmNameProperty_desc(),
+                                ""));
+                    }
                 }
             }
         };
+
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange(listener, null);
 
         /**
          * Constructs a new OsAccountNode.
@@ -187,14 +214,14 @@ public final class OsAccounts implements AutopsyVisitableItem {
          * @param account Node object.
          */
         OsAccountNode(OsAccount account) {
-            super(Children.LEAF, Lookups.fixed(account));
+            super(account);
             this.account = account;
 
             setName(account.getName());
             setDisplayName(account.getName());
             setIconBaseWithExtension(ICON_PATH);
-            
-            Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_CHANGED), listener);
+
+            Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_CHANGED), weakListener);
         }
 
         @Override
@@ -211,7 +238,16 @@ public final class OsAccounts implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
-        
+
+        /**
+         * Returns the OsAccount associated with this node.
+         *
+         * @return
+         */
+        OsAccount getOsAccount() {
+            return account;
+        }
+
         @Messages({
             "OsAccounts_accountNameProperty_name=Name",
             "OsAccounts_accountNameProperty_displayName=Name",
@@ -226,13 +262,13 @@ public final class OsAccounts implements AutopsyVisitableItem {
             "OsAccounts_loginNameProperty_displayName=Login Name",
             "OsAccounts_loginNameProperty_desc=Os Account login name"
         })
-        
+
         /**
-        * Refreshes this node's property sheet.
-        */
-       void updateSheet() {
-           this.setSheet(createSheet());
-       }
+         * Refreshes this node's property sheet.
+         */
+        void updateSheet() {
+            this.setSheet(createSheet());
+        }
 
         @Override
         protected Sheet createSheet() {
@@ -255,10 +291,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     Bundle.OsAccounts_loginNameProperty_displayName(),
                     Bundle.OsAccounts_loginNameProperty_desc(),
                     optional.isPresent() ? optional.get() : ""));
-
-            // TODO - load realm on background thread
+            // Fill with empty string, fetch on background task.
             String realmName = "";
-            //String realmName = account.getRealm().getRealmNames().isEmpty() ? "" :  account.getRealm().getRealmNames().get(0);
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_accountRealmNameProperty_name(),
                     Bundle.OsAccounts_accountRealmNameProperty_displayName(),
@@ -275,16 +309,91 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     Bundle.OsAccounts_createdTimeProperty_desc(),
                     timeDisplayStr));
 
+            backgroundTasksPool.submit(new GetOsAccountRealmTask(new WeakReference<>(this), weakListener));
+
             return sheet;
         }
-        
+
         @Override
         public Action[] getActions(boolean popup) {
             List<Action> actionsList = new ArrayList<>();
             actionsList.addAll(Arrays.asList(super.getActions(popup)));
             actionsList.addAll(DataModelActionsFactory.getActions(account));
-            
+
             return actionsList.toArray(new Action[actionsList.size()]);
+        }
+
+        @Override
+        protected List<Tag> getAllTagsFromDatabase() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
+            return null;
+        }
+
+        @Override
+        protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
+            return null;
+        }
+
+        @Override
+        protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
+            return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
+        }
+
+        @Override
+        protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
+            return null;
+        }
+
+        @Override
+        public <T> T accept(ContentNodeVisitor<T> visitor) {
+            return visitor.visit(this);
+        }
+
+        /**
+         * Task for grabbing the osAccount realm.
+         */
+        static class GetOsAccountRealmTask implements Runnable {
+
+            private final WeakReference<OsAccountNode> weakNodeRef;
+            private final PropertyChangeListener listener;
+
+            /**
+             * Construct a new task.
+             *
+             * @param weakContentRef
+             * @param listener
+             */
+            GetOsAccountRealmTask(WeakReference<OsAccountNode> weakContentRef, PropertyChangeListener listener) {
+                this.weakNodeRef = weakContentRef;
+                this.listener = listener;
+            }
+
+            @Override
+            public void run() {
+                OsAccountNode node = weakNodeRef.get();
+                if (node == null) {
+                    return;
+                }
+
+                try {
+                    long realmId = node.getOsAccount().getRealmId();
+                    OsAccountRealm realm = Case.getCurrentCase().getSleuthkitCase().getOsAccountRealmManager().getRealmByRealmId(realmId);
+
+                    if (listener != null && realm != null) {
+                        listener.propertyChange(new PropertyChangeEvent(
+                                AutopsyEvent.SourceType.LOCAL.toString(),
+                                REALM_DATA_AVAILABLE_EVENT,
+                                null, realm));
+                    }
+
+                } catch (TskCoreException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
         }
     }
 }
