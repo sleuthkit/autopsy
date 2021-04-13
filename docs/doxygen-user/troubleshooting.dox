@@ -19,9 +19,9 @@ If you are experiencing an error, we encourage you to post on the forum (https:/
 
 \section troubleshooting_specific_issues Specific Issues
 
-\subsection troubleshooting_fond_size Font Size Too Small in Windows
+\subsection troubleshooting_fond_size Font Size Too Small
 
-Make the following changes if the application is hard to navigate in High DPI systems:
+In Windows, you can make the following changes if the application is hard to navigate in High DPI systems:
 
 <ol>
 <li>Right-click on the application icon on your Desktop, Start Menu, etc.
@@ -32,6 +32,8 @@ Make the following changes if the application is hard to navigate in High DPI sy
 <li>Change the "Scaling performed by:" drop down box to "System".
 <li>Restart Autopsy.
 </ol>
+
+In Linux, you can supply the font size with "--fontsize XX" command line argument, but not all of the dialogs are correctly responsive and some of the text will get cut off.
 
 \section troubleshooting_general General Troubleshooting
 
