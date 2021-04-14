@@ -1475,7 +1475,7 @@ public class Case {
     public String getTempDirectory() {
         Path baseTempPath = TempDirChoice.CASE.equals(UserMachinePreferences.getTempDirChoice()) ?
                 Paths.get(getCaseDirectory()) :
-                UserMachinePreferences.getBaseTempPath();
+                UserMachinePreferences.getBaseTempPath().resolve(getName());
         
         Path caseRelPath = (CaseType.MULTI_USER_CASE.equals(getCaseType())) ?
                 Paths.get(NetworkUtils.getLocalHostName(), TEMP_FOLDER) :
