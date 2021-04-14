@@ -120,7 +120,10 @@ final class ExtractPrefetch extends Extract {
         try {
             String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME, ingestJobId);
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
-            createAppExecArtifacts(modOutFile, dataSource);
+            File prefetchDatabase = new File(modOutFile);
+            if (prefetchDatabase.exists()) {
+                createAppExecArtifacts(modOutFile, dataSource);
+            }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error parsing prefetch files", ex); //NON-NLS 
             addErrorMessage(Bundle.ExtractPrefetch_errMsg_prefetchParsingFailed(Bundle.ExtractPrefetch_module_name()));
