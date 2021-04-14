@@ -26,7 +26,7 @@ The data source must remain accessible for the duration of the analysis because 
 Regardless of the type of data source, there are some common steps in the process:
 <ol>
 
-<li> You will choose the host for the data source you are going to add.
+<li> You will choose the host for the data source you are going to add. See the \ref host_page "hosts page" for more information about hosts.
 
 \image html data_source_host_select.png
 
