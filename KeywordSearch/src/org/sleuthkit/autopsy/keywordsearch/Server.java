@@ -85,6 +85,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -2312,11 +2313,12 @@ public class Server {
                         }                        
                     }
                     if (success) {
-                        numConsecutiveFailures = 0;
+                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg")); //NON-NLS
+                        /*numConsecutiveFailures = 0;
                         if (reTryAttempt > 0) {
                             logger.log(Level.INFO, "Batch update suceeded after {0} re-try", reTryAttempt); //NON-NLS
                         }
-                        return;
+                        return;*/
                     }
                 }
                 // if we are here, it means all re-try attempts failed
@@ -2337,12 +2339,15 @@ public class Server {
                 if (numConsecutiveFailures >= MAX_NUM_CONSECUTIVE_FAILURES) {
                     // skip all future indexing
                     skipIndexing = true;
+                    logger.log(Level.SEVERE, "Unable to add data to text index. All future text indexing for the current case will be skipped!"); //NON-NLS
 
                     // display message to user that no more data will be added to the index
                     MessageNotifyUtil.Notify.error(
                             NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"),
                             Bundle.Collection_unableToIndexData_error());
-                    MessageNotifyUtil.Message.error(Bundle.Collection_unableToIndexData_error());
+                    if (RuntimeProperties.runningWithGUI()) {
+                        MessageNotifyUtil.Message.error(Bundle.Collection_unableToIndexData_error());
+                    }
                 }
                 docBuffer.clear();
             }
