@@ -1934,7 +1934,7 @@ public class Case {
      *
      * @return A CaseMetaData object.
      */
-    CaseMetadata getMetadata() {
+    public CaseMetadata getMetadata() {
         return metadata;
     }
 

@@ -130,42 +130,43 @@ class Chromium extends Extract {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+        long ingestJobId = context.getJobId();
 
         for (Map.Entry<String, String> browser : BROWSERS_MAP.entrySet()) {
             String browserName = browser.getKey();
             String browserLocation = browser.getValue();
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_History", browserName));
-            this.getHistory(browser.getKey(), browser.getValue());
+            this.getHistory(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Bookmarks", browserName));
-            this.getBookmark(browser.getKey(), browser.getValue());
+            this.getBookmark(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Cookies", browserName));
-            this.getCookie(browser.getKey(), browser.getValue());
+            this.getCookie(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Logins", browserName));
-            this.getLogins(browser.getKey(), browser.getValue());
+            this.getLogins(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_AutoFill", browserName));
-            this.getAutofill(browser.getKey(), browser.getValue());
+            this.getAutofill(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Downloads", browserName));
-            this.getDownload(browser.getKey(), browser.getValue());
+            this.getDownload(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
@@ -179,8 +180,11 @@ class Chromium extends Extract {
 
     /**
      * Query for history databases and add artifacts
+     * @param browser 
+     * @param browserLocation 
+     * @param ingestJobId The ingest job id.
      */
-    private void getHistory(String browser, String browserLocation) {
+    private void getHistory(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> historyFiles;
         String historyFileName = HISTORY_FILE_NAME;
@@ -215,7 +219,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < allocatedHistoryFiles.size()) {
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
             final AbstractFile historyFile = allocatedHistoryFiles.get(j++);
             if ((historyFile.getSize() == 0) || (historyFile.getName().toLowerCase().contains("-slack"))
                     || (historyFile.getName().toLowerCase().contains("cache")) || (historyFile.getName().toLowerCase().contains("media"))
@@ -281,8 +285,11 @@ class Chromium extends Extract {
 
     /**
      * Search for bookmark files and make artifacts.
+     * @param browser
+     * @param browserLocation 
+     * @param ingestJobId The ingest job id.
      */
-    private void getBookmark(String browser, String browserLocation) {
+    private void getBookmark(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles;
         String bookmarkFileName = BOOKMARK_FILE_NAME;
@@ -315,7 +322,7 @@ class Chromium extends Extract {
                     || (bookmarkFile.getName().toLowerCase().contains("bak")) || (bookmarkFile.getParentPath().toLowerCase().contains("backup"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -423,8 +430,11 @@ class Chromium extends Extract {
 
     /**
      * Queries for cookie files and adds artifacts
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId The ingest job id.
      */
-    private void getCookie(String browser, String browserLocation) {
+    private void getCookie(String browser, String browserLocation, long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
@@ -456,7 +466,7 @@ class Chromium extends Extract {
             if ((cookiesFile.getSize() == 0) || (cookiesFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -519,8 +529,11 @@ class Chromium extends Extract {
 
     /**
      * Queries for download files and adds artifacts
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId The ingest job id.
      */
-    private void getDownload(String browser, String browserLocation) {
+    private void getDownload(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadFiles;
         String historyFileName = HISTORY_FILE_NAME;
@@ -551,7 +564,7 @@ class Chromium extends Extract {
                 continue;
             }
 
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(downloadFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -633,8 +646,11 @@ class Chromium extends Extract {
 
     /**
      * Gets user logins from Login Data sqlite database
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId The ingest job id.
      */
-    private void getLogins(String browser, String browserLocation) {
+    private void getLogins(String browser, String browserLocation, long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> loginDataFiles;
@@ -665,7 +681,7 @@ class Chromium extends Extract {
             if ((loginDataFile.getSize() == 0) || (loginDataFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + loginDataFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + loginDataFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(loginDataFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -736,8 +752,11 @@ class Chromium extends Extract {
     /**
      * Gets and parses Autofill data from 'Web Data' database, and creates
      * TSK_WEB_FORM_AUTOFILL, TSK_WEB_FORM_ADDRESS artifacts
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId The ingest job id.
      */
-    private void getAutofill(String browser, String browserLocation) {
+    private void getAutofill(String browser, String browserLocation, long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> webDataFiles;
@@ -768,7 +787,7 @@ class Chromium extends Extract {
             if ((webDataFile.getSize() == 0) || (webDataFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + webDataFile.getName() + j + ".db"; //NON-NLS
+            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + webDataFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(webDataFile, new File(tempFilePath), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {

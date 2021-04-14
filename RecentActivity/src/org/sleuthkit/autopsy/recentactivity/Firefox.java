@@ -108,47 +108,52 @@ class Firefox extends Extract {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+        long ingestJobId = context.getJobId();
         
         progressBar.progress(Bundle.Progress_Message_Firefox_History());
-        this.getHistory();
+        this.getHistory(context.getJobId());
         
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
         
         progressBar.progress(Bundle.Progress_Message_Firefox_Bookmarks());
-        this.getBookmark();
+        this.getBookmark(ingestJobId);
         
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
         
         progressBar.progress(Bundle.Progress_Message_Firefox_Downloads());
-        this.getDownload();
+        this.getDownload(ingestJobId);
         
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
         
         progressBar.progress(Bundle.Progress_Message_Firefox_Cookies());
-        this.getCookie();
+        this.getCookie(ingestJobId);
         
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
         
         progressBar.progress(Bundle.Progress_Message_Firefox_FormHistory());
-        this.getFormsHistory();
+        this.getFormsHistory(ingestJobId);
         
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
         
         progressBar.progress(Bundle.Progress_Message_Firefox_AutoFill());
-        this.getAutofillProfiles();
+        this.getAutofillProfiles(ingestJobId);
     }
 
-    private void getHistory() {
+    /**
+     * Get Firefox history.
+     * @param ingestJobId The ingest job id.
+     */
+    private void getHistory(long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> historyFiles;
         try {
@@ -180,7 +185,7 @@ class Firefox extends Extract {
             }
 
             String fileName = historyFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(historyFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -254,8 +259,9 @@ class Firefox extends Extract {
 
     /**
      * Queries for bookmark files and adds artifacts
+     * @param ingestJobId The ingest job id.
      */
-    private void getBookmark() {
+    private void getBookmark(long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles;
@@ -281,7 +287,7 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = bookmarkFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -351,8 +357,9 @@ class Firefox extends Extract {
 
     /**
      * Queries for cookies file and adds artifacts
+     * @param ingestJobId The ingest job id.
      */
-    private void getCookie() {
+    private void getCookie(long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
         try {
@@ -381,7 +388,7 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = cookiesFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -468,18 +475,20 @@ class Firefox extends Extract {
 
     /**
      * Queries for downloads files and adds artifacts
+     * @param ingestJobId The ingest job id.
      */
-    private void getDownload() {
-        getDownloadPreVersion24();
-        getDownloadVersion24();
+    private void getDownload(long ingestJobId) {
+        getDownloadPreVersion24(ingestJobId);
+        getDownloadVersion24(ingestJobId);
     }
 
     /**
      * Finds downloads artifacts from Firefox data from versions before 24.0.
      *
      * Downloads were stored in a separate downloads database.
+     * @param ingestJobId The ingest job id.
      */
-    private void getDownloadPreVersion24() {
+    private void getDownloadPreVersion24(long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadsFiles;
@@ -505,7 +514,7 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = downloadsFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
@@ -611,8 +620,9 @@ class Firefox extends Extract {
      * Gets download artifacts from Firefox data from version 24.
      *
      * Downloads are stored in the places database.
+     * @param ingestJobId The ingest job id.
      */
-    private void getDownloadVersion24() {
+    private void getDownloadVersion24(long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadsFiles;
         try {
@@ -637,7 +647,7 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = downloadsFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + "-downloads" + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + "-downloads" + j + ".db"; //NON-NLS
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
@@ -742,8 +752,9 @@ class Firefox extends Extract {
     /**
      * Gets data from formshistory.sqlite database.
      * Parses and creates artifacts.
+     * @param ingestJobId The ingest job id.
      */
-    private void getFormsHistory() {
+    private void getFormsHistory(long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> formHistoryFiles;
        
@@ -777,7 +788,7 @@ class Firefox extends Extract {
             }
 
             String fileName = formHistoryFile.getName();
-            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
+            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(formHistoryFile, new File(tempFilePath), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -864,9 +875,9 @@ class Firefox extends Extract {
     /**
      * Gets data from autofill-profiles.json file. 
      * Parses file and makes artifacts.
-     * 
+     * @param ingestJobId The ingest job id.
      */
-    private void getAutofillProfiles() {
+    private void getAutofillProfiles(long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> autofillProfilesFiles;
         try {
@@ -891,7 +902,7 @@ class Firefox extends Extract {
             if (profileFile.getSize() == 0) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "Firefox") + File.separator + profileFile.getName() + j + ".json"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "Firefox", ingestJobId) + File.separator + profileFile.getName() + j + ".json"; //NON-NLS
             try {
                 ContentUtils.writeToFile(profileFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {

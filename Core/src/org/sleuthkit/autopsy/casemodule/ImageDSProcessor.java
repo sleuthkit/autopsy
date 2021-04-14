@@ -284,10 +284,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             ingestStream = IngestManager.getInstance().openIngestStream(image, settings);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error starting ingest modules", ex);
-            final List<String> errors = new ArrayList<>();
-            errors.add(ex.getMessage());
-            callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-            return;
+            // There was an error with ingest, but the data source has already been added
+            // so proceed with the defaultIngestStream. Code in openIngestStream
+            // should have caused a dialog to popup with the errors.
+            ingestStream = new DefaultIngestStream();
         }
 
         doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
