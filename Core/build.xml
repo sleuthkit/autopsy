@@ -37,7 +37,8 @@
             They do not appear to be included in Netbeans >= 9.  
             See VIK-7434 for more information.
         -->
-        <copy todir="${ext.dir}" >
+        <mkdir dir="${modules.dir}/locale"/>
+        <copy todir="${modules.dir}/locale" >
             <fileset dir="${thirdparty.dir}/NetbeansLocalization"/>
         </copy>
 
