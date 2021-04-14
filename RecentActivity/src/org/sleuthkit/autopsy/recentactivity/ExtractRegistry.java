@@ -1147,7 +1147,7 @@ class ExtractRegistry extends Extract {
         List<AbstractFile> regFiles = findRegistryFiles();
 
         for (AbstractFile systemHive: regFiles) {
-            if (systemHive.getName().toLowerCase().equals("system")) {
+            if (systemHive.getName().toLowerCase().equals("system")  && systemHive.getSize() > 0) {
                 
                 String systemFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg", ingestJobId) + File.separator + systemHive.getName();
                 File systemFileNameLocalFile = new File(systemFileNameLocal);
