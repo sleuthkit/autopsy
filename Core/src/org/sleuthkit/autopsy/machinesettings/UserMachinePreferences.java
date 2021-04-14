@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.machinesettings;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.prefs.Preferences;
@@ -80,15 +81,13 @@ public final class UserMachinePreferences {
     private static final String TEMP_DIR_CHOICE_KEY = "TempDirChoice";
 
     private static final String APP_NAME = UserPreferences.getAppName();
-    private static final String TEMP_FOLDER_NAME = "Temp";
-
     private static final TempDirChoice DEFAULT_CHOICE = TempDirChoice.SYSTEM;
 
     /**
      * @return A subdirectory of java.io.tmpdir.
      */
     private static File getSystemTempDirFile() {
-        return Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME, TEMP_FOLDER_NAME).toFile();
+        return Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME).toFile();
     }
 
     /**
@@ -99,22 +98,22 @@ public final class UserMachinePreferences {
      * specified, returns null.
      */
     private static File getCustomTempDirFile() {
-        String customDirectory = getCustomTempDirectoryProperty();
+        String customDirectory = getCustomTempDirectory();
         return (StringUtils.isBlank(customDirectory))
-                ? null : Paths.get(customDirectory, APP_NAME, TEMP_FOLDER_NAME).toFile();
+                ? null : Paths.get(customDirectory, APP_NAME).toFile();
     }
 
     /**
-     * Returns the temp directory to use based on settings. This method also
-     * ensures the temp directory has been created.
+     * Returns the base temp directory to use based on settings. This method
+     * also ensures the base temp directory has been created.
      *
      * NOTE: The Case class also handles providing a temp directory. When
-     * altering code in this class, also look at the Case class as well.
-     * See JIRA-7505 for more information.
+     * altering code in this class, also look at the Case class as well. See
+     * JIRA-7505 for more information.
      *
      * @return The base user-specified temporary directory.
      */
-    public static String getTempDirectory() {
+    public static Path getBaseTempPath() {
         File dir = null;
         TempDirChoice choice = getTempDirChoice();
         switch (choice) {
@@ -135,13 +134,13 @@ public final class UserMachinePreferences {
             dir.mkdirs();
         }
 
-        return dir.getAbsolutePath();
+        return dir.toPath();
     }
 
     /**
      * @return The user-specified custom temp directory path or empty string.
      */
-    public static String getCustomTempDirectoryProperty() {
+    public static String getCustomTempDirectory() {
         return preferences.get(CUSTOM_TEMP_DIR_KEY, "");
     }
 

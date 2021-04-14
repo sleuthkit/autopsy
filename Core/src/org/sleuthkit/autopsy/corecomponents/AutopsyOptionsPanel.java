@@ -482,7 +482,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
         
-        tempCustomField.setText(UserMachinePreferences.getCustomTempDirectoryProperty());
+        tempCustomField.setText(UserMachinePreferences.getCustomTempDirectory());
         switch (UserMachinePreferences.getTempDirChoice()) {
             case CASE: 
                 tempCaseRadio.setSelected(true);
@@ -573,7 +573,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         "AutopsyOptionsPanel_storeTempDir_onChoiceError_description=There was an error updating temporary directory choice selection.",})
     private void storeTempDir() {
         String tempDirectoryPath = tempCustomField.getText();
-        if (!UserMachinePreferences.getCustomTempDirectoryProperty().equals(tempDirectoryPath)) {
+        if (!UserMachinePreferences.getCustomTempDirectory().equals(tempDirectoryPath)) {
             try {
                 UserMachinePreferences.setCustomTempDirectoryProperty(tempDirectoryPath);
             } catch (UserMachinePreferencesException ex) {

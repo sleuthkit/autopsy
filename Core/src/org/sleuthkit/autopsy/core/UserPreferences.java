@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import java.io.File;
 import java.nio.file.Paths;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import java.util.prefs.BackingStoreException;
@@ -93,7 +94,8 @@ public final class UserPreferences {
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
     private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
     private static final String HEALTH_MONITOR_REPORT_PATH = "HealthMonitorReportPath";
-    
+    private static final String TEMP_FOLDER = "Temp";
+
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -309,7 +311,7 @@ public final class UserPreferences {
      * Persists case database connection info.
      *
      * @param connectionInfo An object encapsulating the database connection
-     *                       info.
+     * info.
      *
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
@@ -348,27 +350,27 @@ public final class UserPreferences {
     public static void setIndexingServerPort(int port) {
         preferences.putInt(SOLR8_SERVER_PORT, port);
     }
-    
+
     public static String getSolr4ServerHost() {
         return preferences.get(SOLR4_SERVER_HOST, "");
     }
 
     public static void setSolr4ServerHost(String hostName) {
         preferences.put(SOLR4_SERVER_HOST, hostName);
-    }    
-    
+    }
+
     public static String getSolr4ServerPort() {
         return preferences.get(SOLR4_SERVER_PORT, "");
     }
 
     public static void setSolr4ServerPort(String port) {
         preferences.put(SOLR4_SERVER_PORT, port);
-    }    
-    
+    }
+
     public static String getZkServerHost() {
         return preferences.get(ZK_SERVER_HOST, "");
     }
-    
+
     public static void setZkServerHost(String hostName) {
         preferences.put(ZK_SERVER_HOST, hostName);
     }
@@ -380,7 +382,7 @@ public final class UserPreferences {
     public static void setZkServerPort(String port) {
         preferences.put(ZK_SERVER_PORT, port);
     }
-    
+
     public static void setTextTranslatorName(String textTranslatorName) {
         preferences.put(TEXT_TRANSLATOR_NAME, textTranslatorName);
     }
@@ -388,14 +390,14 @@ public final class UserPreferences {
     public static String getTextTranslatorName() {
         return preferences.get(TEXT_TRANSLATOR_NAME, null);
     }
-    
+
     public static void setUseOcrInTranslation(boolean enableOcr) {
         preferences.putBoolean(OCR_TRANSLATION_ENABLED, enableOcr);
     }
 
     public static boolean getUseOcrInTranslation() {
         return preferences.getBoolean(OCR_TRANSLATION_ENABLED, true);
-    }    
+    }
 
     /**
      * Persists message service connection info.
@@ -472,7 +474,7 @@ public final class UserPreferences {
      * enabled.
      *
      * @return boolean True if process time out is functionality enabled, false
-     *         otherwise.
+     * otherwise.
      */
     public static boolean getIsTimeOutEnabled() {
         boolean enabled = preferences.getBoolean(PROCESS_TIME_OUT_ENABLED, false);
@@ -484,7 +486,7 @@ public final class UserPreferences {
      * enabled.
      *
      * @param enabled Persisted setting of whether process time out
-     *                functionality is enabled.
+     * functionality is enabled.
      */
     public static void setIsTimeOutEnabled(boolean enabled) {
         preferences.putBoolean(PROCESS_TIME_OUT_ENABLED, enabled);
@@ -536,10 +538,11 @@ public final class UserPreferences {
     }
 
     /**
-     * Get the maximum JVM heap size (in MB) for the embedded Solr server. The returned value
-     * depends on the platform (64bit vs 32bit).
+     * Get the maximum JVM heap size (in MB) for the embedded Solr server. The
+     * returned value depends on the platform (64bit vs 32bit).
      *
-     * @return Saved value or default (2 GB for 64bit platforms, 512MB for 32bit)
+     * @return Saved value or default (2 GB for 64bit platforms, 512MB for
+     * 32bit)
      */
     public static int getMaxSolrVMSize() {
         if (PlatformUtil.is64BitJVM()) {
@@ -594,20 +597,21 @@ public final class UserPreferences {
     public static String getExternalHexEditorPath() {
         return preferences.get(EXTERNAL_HEX_EDITOR_PATH, Paths.get("C:", "Program Files", "HxD", "HxD.exe").toString());
     }
-    
+
     /**
      * Set the geolocation tile server option.
-     * 
-     * @param option 
+     *
+     * @param option
      */
     public static void setGeolocationTileOption(int option) {
         preferences.putInt(GEO_TILE_OPTION, option);
     }
 
     /**
-     * Retrieves the Geolocation tile option.  If not found, the value will
+     * Retrieves the Geolocation tile option. If not found, the value will
      * default to 0.
-     * @return 
+     *
+     * @return
      */
     public static int getGeolocationtTileOption() {
         return preferences.getInt(GEO_TILE_OPTION, 0);
@@ -615,8 +619,8 @@ public final class UserPreferences {
 
     /**
      * Sets the path to the OSM tile zip file.
-     * 
-     * @param absolutePath 
+     *
+     * @param absolutePath
      */
     public static void setGeolocationOsmZipPath(String absolutePath) {
         preferences.put(GEO_OSM_TILE_ZIP_PATH, absolutePath);
@@ -625,7 +629,7 @@ public final class UserPreferences {
     /**
      * Retrieves the path for the OSM tile zip file or returns empty string if
      * none was found.
-     * 
+     *
      * @return Path to zip file
      */
     public static String getGeolocationOsmZipPath() {
@@ -633,9 +637,10 @@ public final class UserPreferences {
     }
 
     /**
-     * Sets the address of geolocation window user defined OSM server data source.
-     * 
-     * @param address 
+     * Sets the address of geolocation window user defined OSM server data
+     * source.
+     *
+     * @param address
      */
     public static void setGeolocationOsmServerAddress(String address) {
         preferences.put(GEO_OSM_SERVER_ADDRESS, address);
@@ -643,40 +648,50 @@ public final class UserPreferences {
 
     /**
      * Retrieves the address to the OSM server or null if one was not found.
-     * 
+     *
      * @return Address of OSM server
      */
     public static String getGeolocationOsmServerAddress() {
         return preferences.get(GEO_OSM_SERVER_ADDRESS, "");
     }
-    
+
     /**
      * Sets the path for Geolocation MBTiles data source file.
-     * 
-     * @param absolutePath 
+     *
+     * @param absolutePath
      */
     public static void setGeolocationMBTilesFilePath(String absolutePath) {
         preferences.put(GEO_MBTILES_FILE_PATH, absolutePath);
     }
-    
+
     /**
      * Retrieves the path for the Geolocation MBTiles data source file.
-     * 
-     * @return Absolute path to  MBTiles file or empty string if none was found.
+     *
+     * @return Absolute path to MBTiles file or empty string if none was found.
      */
     public static String getGeolocationMBTilesFilePath() {
         return preferences.get(GEO_MBTILES_FILE_PATH, "");
     }
-    
+
     /**
-     * Retrieves the root application temp directory.
-     * 
+     * Retrieves the root application temp directory and ensures the directory
+     * exists.
+     *
      * @return The absolute path to the application temp directory.
      */
     public static String getAppTempDirectory() {
-        return UserMachinePreferences.getTempDirectory();
+        File appTempDir = UserMachinePreferences.getBaseTempPath()
+                .resolve(TEMP_FOLDER)
+                .toAbsolutePath()
+                .toFile();
+
+        if (!appTempDir.exists()) {
+            appTempDir.mkdirs();
+        }
+
+        return appTempDir.getAbsolutePath();
     }
-    
+
     /**
      * Set the last used health monitor report path.
      *
@@ -689,7 +704,8 @@ public final class UserPreferences {
     /**
      * Gets the last used health monitor report path.
      *
-     * @return Last used health monitor report path. Empty string if no value has been recorded.
+     * @return Last used health monitor report path. Empty string if no value
+     * has been recorded.
      */
     public static String getHealthMonitorReportPath() {
         return preferences.get(HEALTH_MONITOR_REPORT_PATH, "");
