@@ -21,10 +21,12 @@ package org.sleuthkit.autopsy.communications.relationships;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
@@ -61,8 +63,10 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
         CentralRepoAccount crAccount = null;
         List<String> stringList = new ArrayList<>();
         List<AccountFileInstance> accountFileInstanceList = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getAccountFileInstances(account);
-        for (AccountFileInstance instance : accountFileInstanceList) {
-            stringList.add(instance.getFile().getUniquePath());
+        if (accountFileInstanceList != null) {
+            for (AccountFileInstance instance : accountFileInstanceList) {
+                stringList.add(instance.getFile().getUniquePath());
+            }
         }
 
         List<Persona> personaList = new ArrayList<>();
@@ -74,12 +78,15 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
                 personaList.add(pAccount.getPersona());
             }
 
-            try {
-                crAccount = CentralRepository.getInstance().getAccount(CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName()), account.getTypeSpecificID());
-            } catch (InvalidAccountIDException unused) {
-                // This was probably caused to a phone number not making
-                // threw the normalization.
-                logger.log(Level.WARNING, String.format("Exception thrown from CR getAccount for account %s (%d)", account.getTypeSpecificID(), account.getAccountID()));
+            Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
+            if (optCrAccountType.isPresent()) {
+                try {
+                    crAccount = CentralRepository.getInstance().getAccount(optCrAccountType.get(), account.getTypeSpecificID());
+                } catch (InvalidAccountIDException unused) {
+                    // This was probably caused to a phone number not making
+                    // threw the normalization.
+                    logger.log(Level.WARNING, String.format("Exception thrown from CR getAccount for account %s (%d)", account.getTypeSpecificID(), account.getAccountID()));
+                }
             }
         }
 

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -308,8 +309,12 @@ public class CorrelationAttributeUtil {
         if (Account.Type.DEVICE.getTypeName().equalsIgnoreCase(accountTypeStr) == false && predefinedAccountType != null) {
 
             // Get the corresponding CentralRepoAccountType from the database.
-            CentralRepoAccountType crAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
-
+            Optional<CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance().getAccountTypeByName(accountTypeStr);
+            if (!optCrAccountType.isPresent()) {
+                return;
+            }
+            CentralRepoAccountType crAccountType = optCrAccountType.get();
+            
             int corrTypeId = crAccountType.getCorrelationTypeId();
             CorrelationAttributeInstance.Type corrType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
 

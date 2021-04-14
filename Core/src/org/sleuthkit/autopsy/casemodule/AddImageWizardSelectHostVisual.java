@@ -79,7 +79,7 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 41 * hash + Objects.hashCode(this.host == null ? 0 : this.host.getId());
+            hash = 41 * hash + Objects.hashCode(this.host == null ? 0 : this.host.getHostId());
             return hash;
         }
 
@@ -96,8 +96,8 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
             }
             final HostListItem other = (HostListItem) obj;
             if (!Objects.equals(
-                    this.host == null ? 0 : this.host.getId(),
-                    other.host == null ? 0 : other.host.getId())) {
+                    this.host == null ? 0 : this.host.getHostId(),
+                    other.host == null ? 0 : other.host.getHostId())) {
 
                 return false;
             }
@@ -166,7 +166,7 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
         if (specifyNewHostRadio.isSelected() && StringUtils.isNotEmpty(specifyNewHostTextField.getText())) {
             String newHostName = specifyNewHostTextField.getText();
             try {
-                return Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().createHost(newHostName);
+                return Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().newHost(newHostName);
             } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.WARNING, String.format("Unable to create host '%s'.", newHostName), ex);
                 return null;
@@ -186,7 +186,7 @@ class AddImageWizardSelectHostVisual extends javax.swing.JPanel {
      */
     private void loadHostData() {
         try {
-            Collection<Host> hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHosts();
+            Collection<Host> hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getAllHosts();
             sanitizedHostSet = HostNameValidator.getSanitizedHostNames(hosts);
             
             Vector<HostListItem> hostListItems = hosts.stream()

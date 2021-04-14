@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -148,10 +148,7 @@ class DataSourceUsageAnalyzer extends Extract {
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                 Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                 dataSourceUsageDescription)); //NON-NLS
-        BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
-        if (bba != null) {
-            postArtifact(bba);
-        }
+        postArtifact(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes));
     }
 
     /**

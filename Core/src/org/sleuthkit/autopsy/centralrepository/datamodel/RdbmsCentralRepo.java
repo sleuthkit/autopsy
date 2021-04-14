@@ -37,6 +37,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +79,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     private static final int CASE_CACHE_TIMEOUT = 5;
     private static final int DATA_SOURCE_CACHE_TIMEOUT = 5;
     private static final int ACCOUNTS_CACHE_TIMEOUT = 5;
-    private static final Cache<String, CentralRepoAccountType> accountTypesCache = CacheBuilder.newBuilder().build();
+    private static final Cache<String, Optional<CentralRepoAccountType>> accountTypesCache = CacheBuilder.newBuilder().build();
     private static final Cache<Pair<CentralRepoAccountType, String>, CentralRepoAccount> accountsCache = CacheBuilder.newBuilder()
             .expireAfterWrite(ACCOUNTS_CACHE_TIMEOUT, TimeUnit.MINUTES).
             build();
@@ -1115,7 +1116,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     @Override
-    public CentralRepoAccountType getAccountTypeByName(String accountTypeName) throws CentralRepoException {
+    public Optional<CentralRepoAccountType> getAccountTypeByName(String accountTypeName) throws CentralRepoException {
         try {
             return accountTypesCache.get(accountTypeName, () -> getCRAccountTypeFromDb(accountTypeName));
         } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
@@ -1155,7 +1156,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      *
      * @throws CentralRepoException
      */
-    private CentralRepoAccountType getCRAccountTypeFromDb(String accountTypeName) throws CentralRepoException {
+    private Optional<CentralRepoAccountType> getCRAccountTypeFromDb(String accountTypeName) throws CentralRepoException {
 
         String sql = "SELECT * FROM account_types WHERE type_name = ?";
         try (Connection conn = connect();
@@ -1166,10 +1167,11 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 if (resultSet.next()) {
                     Account.Type acctType = new Account.Type(accountTypeName, resultSet.getString("display_name"));
                     CentralRepoAccountType crAccountType = new CentralRepoAccountType(resultSet.getInt("id"), acctType, resultSet.getInt("correlation_type_id"));
-                    accountTypesCache.put(accountTypeName, crAccountType);
-                    return crAccountType;
+                    accountTypesCache.put(accountTypeName, Optional.of(crAccountType));
+                    return Optional.of(crAccountType);
                 } else {
-                    throw new CentralRepoException("Failed to find entry for account type = " + accountTypeName);
+                    accountTypesCache.put(accountTypeName, Optional.empty());
+                    return Optional.empty();
                 }
             }
         } catch (SQLException ex) {

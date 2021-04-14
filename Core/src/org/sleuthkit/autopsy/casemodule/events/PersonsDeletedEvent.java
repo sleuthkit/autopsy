@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.Person;
 /**
  * Event fired when persons are removed.
  */
-public class PersonsRemovedEvent extends PersonsEvent {
+public class PersonsDeletedEvent extends PersonsEvent {
     
     private static final long serialVersionUID = 1L;
     
@@ -33,7 +33,7 @@ public class PersonsRemovedEvent extends PersonsEvent {
      * Main constructor.
      * @param dataModelObjects The list of persons that have been deleted.
      */
-    public PersonsRemovedEvent(List<Person> dataModelObjects) {
+    public PersonsDeletedEvent(List<Person> dataModelObjects) {
         super(Case.Events.PERSONS_DELETED.name(), dataModelObjects);
     }
 }

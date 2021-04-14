@@ -27,6 +27,8 @@ import java.util.Objects;
 import java.util.Set;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  * A panel for showing any object in a check box list.
@@ -54,7 +56,7 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      *
      * @param displayName display name for the checkbox
      * @param icon
-     * @param obj Object that the checkbox represents
+     * @param obj         Object that the checkbox represents
      */
     public void addElement(String displayName, Icon icon, T obj) {
         ObjectCheckBox<T> newCheckBox = new ObjectCheckBox<>(displayName, icon, true, obj);
@@ -106,8 +108,8 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      * Sets the selected items within the checkbox list panel.
      *
      * @param selected The items that should be selected. If the checkbox data
-     * is present in this list, it will be selected, otherwise it will be
-     * deselected.
+     *                 is present in this list, it will be selected, otherwise
+     *                 it will be deselected.
      */
     public void setSelectedElements(List<T> selected) {
         Set<T> toSelect = selected == null ? Collections.emptySet() : new HashSet<>(selected);
@@ -119,7 +121,6 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
                 model.set(i, item);
             }
         }
-
         checkboxList.repaint();
         checkboxList.revalidate();
     }
@@ -136,7 +137,6 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
             element.setChecked(selected);
             checkboxList.repaint();
             checkboxList.revalidate();
-
         }
     }
 
@@ -156,6 +156,16 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
      */
     public void setPanelTitleIcon(Icon icon) {
         titleLabel.setIcon(icon);
+    }
+
+    /**
+     * Add a list selection listener to the checkbox list contained in this
+     * panel.
+     *
+     * @param listener The list selection listener to add.
+     */
+    public void addListSelectionListener(ListSelectionListener listener) {
+        checkboxList.addListSelectionListener(listener);
     }
 
     /**
@@ -252,10 +262,10 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
         /**
          * Constructs a new ObjectCheckBox
          *
-         * @param displayName String to show as the check box label
-         * @param icon Icon to show before the check box (may be null)
+         * @param displayName  String to show as the check box label
+         * @param icon         Icon to show before the check box (may be null)
          * @param initialState Sets the initial state of the check box
-         * @param object Object that the check box represents.
+         * @param object       Object that the check box represents.
          */
         ObjectCheckBox(String displayName, Icon icon, boolean initialState, T object) {
             this.displayName = displayName;
@@ -275,7 +285,15 @@ public final class CheckBoxListPanel<T> extends javax.swing.JPanel {
 
         @Override
         public void setChecked(boolean checked) {
-            this.checked = checked;
+            if (this.checked != checked) {
+                this.checked = checked;
+                //notify the list that an items checked status changed
+                if (!isEmpty()) {
+                    for (ListSelectionListener listener : checkboxList.getListSelectionListeners()) {
+                        listener.valueChanged(new ListSelectionEvent(checkboxList, 0, model.getSize() - 1, false));
+                    }
+                }
+            }
         }
 
         @Override

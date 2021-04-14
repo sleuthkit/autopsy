@@ -58,7 +58,6 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         lbPointOfContactPhoneText.setVisible(false);
         lbPointOfContactEmailLabel.setVisible(false);
         lbPointOfContactEmailText.setVisible(false);
-        setUpCaseDetailsFields();
     }
 
     OptionalCasePropertiesPanel(boolean editCurrentCase) {

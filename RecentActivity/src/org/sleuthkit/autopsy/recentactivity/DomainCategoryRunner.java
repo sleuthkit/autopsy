@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.recentactivity;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
@@ -82,6 +84,20 @@ class DomainCategoryRunner extends Extract {
     private static int URL_TYPEID = ATTRIBUTE_TYPE.TSK_URL.getTypeID();
 
     private static final Logger logger = Logger.getLogger(DomainCategoryRunner.class.getName());
+
+    // NOTE: if CustomWebCategorizer ever changes name, this will need to be changed as well.
+    private static final String CUSTOM_CATEGORIZER_PATH = "org.sleuthkit.autopsy.url.analytics.domaincategorization.CustomWebCategorizer";
+
+    // the artifact types to be searched for domain categories
+    private static final List<BlackboardArtifact.Type> DOMAIN_CATEGORIZATION_TYPES = Stream.of(
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY,
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY)
+            .map(BlackboardArtifact.Type::new)
+            .collect(Collectors.toList());
 
     /**
      * Get seconds from epoch from the mapping for the attribute type id.
@@ -165,7 +181,7 @@ class DomainCategoryRunner extends Extract {
      * Main constructor.
      */
     DomainCategoryRunner() {
-        moduleName = null;
+
     }
 
     /**
@@ -352,7 +368,7 @@ class DomainCategoryRunner extends Extract {
         Set<String> hostSuffixesSeen = new HashSet<>();
         try {
             List<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
-                    Arrays.asList(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_HISTORY)),
+                    DOMAIN_CATEGORIZATION_TYPES,
                     Arrays.asList(dataSource.getId()));
 
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
@@ -361,7 +377,8 @@ class DomainCategoryRunner extends Extract {
             for (BlackboardArtifact artifact : listArtifacts) {
                 // make sure we haven't cancelled
                 if (context.dataSourceIngestIsCancelled()) {
-                    break;       //User cancelled the process.
+                    //User cancelled the process.
+                    break;
                 }
 
                 // get the pertinent details for this artifact.
@@ -415,7 +432,7 @@ class DomainCategoryRunner extends Extract {
      * parent file).
      * @param domainCategory The category for this host/domain.
      */
-    private void addCategoryArtifact(ArtifactHost artHost, String domainCategory) {
+    private void addCategoryArtifact(ArtifactHost artHost, String domainCategory) throws TskCoreException {
         String moduleName = Bundle.DomainCategoryRunner_parentModuleName();
         Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, moduleName, artHost.getDomain()),
@@ -437,24 +454,45 @@ class DomainCategoryRunner extends Extract {
     @Override
     void configExtractor() throws IngestModule.IngestModuleException {
         // lookup all providers, filter null providers, and sort providers
-        Collection<? extends DomainCategorizer> lookupList = Lookup.getDefault().lookupAll(DomainCategorizer.class);
-        if (lookupList == null) {
-            lookupList = Collections.emptyList();
-        }
-
-        List<DomainCategorizer> foundProviders = lookupList.stream()
-                .filter(provider -> provider != null)
+        Collection<? extends DomainCategorizer> lookupCollection = Lookup.getDefault().lookupAll(DomainCategorizer.class);
+        Collection<? extends DomainCategorizer> lookupList = (lookupCollection == null) ? 
+                Collections.emptyList() :
+                lookupCollection;
+        
+        // this will be the class instance of the foundProviders
+        List<DomainCategorizer> foundProviders = new ArrayList<>();
+        
+        // find the custom domain categories provider if present and add it first to the list
+        lookupList.stream()
+                .filter(categorizer -> categorizer.getClass().getName().contains(CUSTOM_CATEGORIZER_PATH))
+                .findFirst()
+                .ifPresent((provider) -> foundProviders.add(provider));
+                
+        // add the default priority categorizer
+        foundProviders.add(new DefaultPriorityDomainCategorizer());
+        
+        // add all others except for the custom web domain categorizer, the default priority 
+        // categorizer and the default categorizer
+        lookupList.stream()
+                .filter(categorizer -> categorizer != null)
+                .filter(categorizer -> {
+                    String className = categorizer.getClass().getName();
+                    return !className.contains(CUSTOM_CATEGORIZER_PATH) &&
+                            !className.equals(DefaultPriorityDomainCategorizer.class.getName()) &&
+                            !className.equals(DefaultDomainCategorizer.class.getName());
+                })
                 .sorted((a, b) -> a.getClass().getName().compareToIgnoreCase(b.getClass().getName()))
-                .collect(Collectors.toList());
-
-        // add the default categorizer last as a last resort
+                .forEach(foundProviders::add);
+        
+        // add the default categorizer last
         foundProviders.add(new DefaultDomainCategorizer());
-
+        
         for (DomainCategorizer provider : foundProviders) {
             try {
                 provider.initialize();
             } catch (DomainCategorizerException ex) {
-                throw new IngestModule.IngestModuleException("There was an error instantiating the provider: " + provider.getClass().getSimpleName(), ex);
+                throw new IngestModule.IngestModuleException("There was an error instantiating the provider: " + 
+                        provider.getClass().getSimpleName(), ex);
             }
         }
 

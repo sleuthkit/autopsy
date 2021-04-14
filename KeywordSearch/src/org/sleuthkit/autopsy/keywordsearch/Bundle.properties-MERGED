@@ -23,6 +23,7 @@ ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try aga
 ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress
 ExtractAllTermsReport.startExport=Starting Unique Word Extraction
 ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>
+# {0} - Content name
 ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}
 GlobalEditListPanel.editKeyword.title=Edit Keyword
 GlobalEditListPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
@@ -30,6 +31,7 @@ GlobalEditListPanel.warning.title=Warning
 IndexedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error retrieving indexed text.</span>
 IndexedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>
 IndexedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No indexed text for this file.</span>
+KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsLimitedOCR=Only process images which are over 100KB in size or extracted from a document. (Beta) (Requires Windows 64-bit)
 KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)
 KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings
 KeywordSearchIngestModule.init.badInitMsg=Keyword search server was not properly initialized, cannot run keyword search ingest.
@@ -49,7 +51,7 @@ KeywordSearchResultFactory.createNodeForKey.noResultsFound.text=No results found
 KeywordSearchResultFactory.query.exception.msg=Could not perform the query 
 OpenIDE-Module-Display-Category=Ingest Module
 
-OpenIDE-Module-Long-Description=Keyword Search ingest module.\n\nThe module indexes files found in the disk image at ingest time.\nIt then periodically runs the search on the indexed files using one or more keyword lists (containing pure words and/or regular expressions) and posts results.\n\nThe module also contains additional tools integrated in the main GUI, such as keyword list configuration, keyword search bar in the top-right corner, extracted text viewer and search results viewer showing highlighted keywords found.
+OpenIDE-Module-Long-Description=Keyword Search ingest module.\n\nThe module indexes files found in the disk image at ingest time.\nIt then periodically runs the search on the indexed files using one or more keyword lists (containing pure words and/or regular expressions) and posts results.\n\n\The module also contains additional tools integrated in the main GUI, such as keyword list configuration, keyword search bar in the top-right corner, extracted text viewer and search results viewer showing highlighted keywords found.
 OpenIDE-Module-Name=KeywordSearch
 OptionsCategory_Name_KeywordSearchOptions=Keyword Search
 OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search
@@ -400,6 +402,7 @@ ExtractedContentPanel.pageOfLabel.text=of
 ExtractedContentPanel.pageCurLabel.text=-
 ExtractedContentPanel.pagesLabel.text=Page:
 KeywordSearchGlobalSearchSettingsPanel.ocrCheckBox.text=Enable Optical Character Recognition (OCR)
+KeywordSearchGlobalSearchSettingsPanel.limitedOcrCheckbox.text=Only process images which are over 100KB in size or extracted from a document (Beta)
 TextZoomPanel.zoomInButton.text=
 TextZoomPanel.zoomOutButton.text=
 TextZoomPanel.zoomResetButton.text=Reset

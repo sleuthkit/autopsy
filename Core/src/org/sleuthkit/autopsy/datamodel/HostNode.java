@@ -78,13 +78,16 @@ public class HostNode extends DisplayableItemNode {
         }
 
         /**
-         * Listener for handling DATA_SOURCE_ADDED events.
+         * Listener for handling DATA_SOURCE_ADDED / HOST_DELETED events.
+         * A host may have been deleted as part of a merge, which means its data sources could
+         * have moved to a different host requiring a refresh.
          */
         private final PropertyChangeListener dataSourceAddedPcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
+                        || eventType.equals(Case.Events.HOSTS_DELETED.toString())) {
                     refresh(true);
                 }
             }
@@ -92,12 +95,12 @@ public class HostNode extends DisplayableItemNode {
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), dataSourceAddedPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
         }
 
         @Override
         protected void removeNotify() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), dataSourceAddedPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
         }
 
         @Override
@@ -176,7 +179,7 @@ public class HostNode extends DisplayableItemNode {
             String eventType = evt.getPropertyName();
             if (hostId != null && eventType.equals(Case.Events.HOSTS_CHANGED.toString()) && evt instanceof HostsChangedEvent) {
                 ((HostsChangedEvent) evt).getNewValue().stream()
-                        .filter(h -> h != null && h.getId() == hostId)
+                        .filter(h -> h != null && h.getHostId() == hostId)
                         .findFirst()
                         .ifPresent((newHost) -> {
                             setName(newHost.getName());
@@ -242,7 +245,7 @@ public class HostNode extends DisplayableItemNode {
         super(children,
                 host == null ? Lookups.fixed(displayName) : Lookups.fixed(host, displayName));
                 
-        hostId = host == null ? null : host.getId();
+        hostId = host == null ? null : host.getHostId();
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED),
                 WeakListeners.propertyChange(hostChangePcl, this));
         super.setName(displayName);
@@ -297,7 +300,7 @@ public class HostNode extends DisplayableItemNode {
             // Add the appropriate Person action
             Optional<Person> parent;
             try {
-                parent = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getPerson(this.host);
+                parent = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPerson(this.host);
             } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.WARNING, String.format("Error fetching parent person of host: %s", this.host.getName() == null ? "<null>" : this.host.getName()), ex);
                 return new Action[0];

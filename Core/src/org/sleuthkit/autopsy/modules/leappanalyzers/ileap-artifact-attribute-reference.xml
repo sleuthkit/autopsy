@@ -50,9 +50,9 @@
         <FileName filename="App Snapshots.tsv" description="App Snapshots (screenshots)">
             <ArtifactName artifactname="TSK_SCREEN_SHOTS" comment="null">
                 <AttributeName attributename="TSK_PROG_NAME" columnName="App Name" required="yes" />
-                <AttributeName attributename="TSK_PATH" columnName="SOurce Path" required="yes" />
+                <AttributeName attributename="TSK_PATH" columnName="Source Path" required="yes" />
                 <AttributeName attributename="TSK_DATETIME" columnName="Date Modified" required="yes" />
-                <AttributeName attributename="null" columnName="Source File Located" required="no" />
+                <AttributeName attributename="null" columnName="Png Path" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -101,6 +101,7 @@
                 <AttributeName attributename="null" columnName="ISO County Code" required="no" />
                 <AttributeName attributename="null" columnName="Location" required="no" />
                 <AttributeName attributename="null" columnName="Service Provider" required="no" />
+                <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
             </ArtifactName>
         </FileName>
 
@@ -743,16 +744,14 @@
             </ArtifactName>
         </FileName>
 
-<!-- This section is commented out as the iLeapp program needs to be changed in order to properly process the mail.  It appears that the 
-     TSK_TEXT can contain carriage/line returns and this messes reading the tsv file line by line
         <FileName filename="SMS - iMessage.tsv" description="SMS - iMessage">
-            <ArtifactName artifactname="TSK_MESSAGE" comment="null">
+            <ArtifactName artifactname="TSK_MESSAGE" comment="SMS - iMessage">
                 <AttributeName attributename="TSK_DATETIME" columnName="Message Date" required="yes" />
-                <AttributeName attributename="TSK_DATETIME_RCVD" columnName="Date Delivered" required="yes" />
-                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Date Read" required="yes" />
+                <AttributeName attributename="null" columnName="Date Delivered" required="no" />
+                <AttributeName attributename="null" columnName="Date Read" required="no" />
                 <AttributeName attributename="TSK_TEXT" columnName="Message" required="yes" />
                 <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="Contact ID" required="yes" />
-                <AttributeName attributename="TSK_MESSAGE_TYPE" columnName="Service" required="yes" />
+                <AttributeName attributename="null" columnName="Service" required="no" />
                 <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="Account" required="yes" />
                 <AttributeName attributename="null" columnName="Is Delivered" required="no" />
                 <AttributeName attributename="null" columnName="Is from Me" required="no" />
@@ -760,9 +759,9 @@
                 <AttributeName attributename="null" columnName="MIME Type" required="no" />
                 <AttributeName attributename="null" columnName="Transfer Type" required="no" />
                 <AttributeName attributename="null" columnName="Total Bytes" required="no" />
+                <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>            
             </ArtifactName>
         </FileName>
--->
 
         <FileName filename="Wifi.tsv" description="Wifi">
             <ArtifactName artifactname="TSK_WIFI_NETWORK" comment="Wifi">

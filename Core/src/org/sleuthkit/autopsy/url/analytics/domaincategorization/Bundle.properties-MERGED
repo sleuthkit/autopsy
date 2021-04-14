@@ -1,0 +1,37 @@
+AddEditCategoryDialog_Add=Add Entry
+AddEditCategoryDialog_Edit=Edit Entry
+# {0} - maxCategoryLen
+AddEditCategoryDialog_onValueUpdate_badCategory=Please provide a category that is no more than {0} characters.
+# {0} - maxSuffixLen
+AddEditCategoryDialog_onValueUpdate_badSuffix=Please provide a domain suffix that is no more than {0} characters that includes at least one period.
+AddEditCategoryDialog_onValueUpdate_sameCategory=Please provide a new category for this domain suffix.
+AddEditCategoryDialog_onValueUpdate_suffixRepeat=Please provide a unique domain suffix.
+WebCategoriesOptionsPanel_categoryTable_categoryColumnName=Category
+WebCategoriesOptionsPanel_categoryTable_suffixColumnName=Domain Suffix
+WebCategoriesOptionsPanel_exportSetButtonActionPerformed_defaultFileName=Custom Categories Export
+WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateMessage=A file already exists at the selected path.  The categories will not be exported.
+WebCategoriesOptionsPanel_exportSetButtonActionPerformed_duplicateTitle=File Already Exists
+WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorMessage=There was an error exporting.
+WebCategoriesOptionsPanel_exportSetButtonActionPerformed_errorTitle=Export Error
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorMessage=There was an error importing this json file.
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_errorTitle=Import Error
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictCancel=Cancel
+# {0} - domainSuffix
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictMessage=Domain suffix {0} already exists. What would you like to do?
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictOverwrite=Overwrite
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictSkip=Skip
+WebCategoriesOptionsPanel_importSetButtonActionPerformed_onConflictTitle=Domain Suffix Already Exists
+WebCategoryOptionsController_title=Custom Web Categories
+WebCategoryOptionsController_keywords=Custom Web Categories
+AddEditCategoryDialog.categoryLabel.text=Category:
+AddEditCategoryDialog.domainSuffixLabel.text=Domain Suffix:
+AddEditCategoryDialog.saveButton.text=Save
+AddEditCategoryDialog.cancelButton.text=Cancel
+WebCategoriesOptionsPanel.panelDescription.text=<html>This feature allows the Recent Activity ingest module to perform custom categorization of web sites based on domain suffixes.</html>
+WebCategoriesOptionsPanel.categoriesTitle.text=Categories:
+WebCategoriesOptionsPanel.newEntryButton.text=New Entry
+WebCategoriesOptionsPanel.editEntryButton.text=Edit Entry
+WebCategoriesOptionsPanel.deleteEntryButton.text=Delete Entry
+WebCategoriesOptionsPanel.importSetButton.text=Import Set
+WebCategoriesOptionsPanel.exportSetButton.text=Export Set
+WebCategoriesOptionsPanel.ingestRunningWarning.text=Ingest is currently running.  No editing can take place at this time.

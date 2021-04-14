@@ -24,7 +24,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
@@ -53,6 +52,9 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -62,7 +64,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class ExtractEdge extends Extract {
 
     private static final Logger LOG = Logger.getLogger(ExtractEdge.class.getName());
-    private final Path moduleTempResultPath;
     private Content dataSource;
     private IngestJobContext context;
     private HashMap<String, ArrayList<String>> containersTable;
@@ -123,8 +124,8 @@ final class ExtractEdge extends Extract {
     /**
     * Extract the bookmarks, cookies, downloads and history from Microsoft Edge
     */
-    ExtractEdge() throws NoCurrentCaseException {
-        moduleTempResultPath = Paths.get(RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), EDGE), EDGE_RESULT_FOLDER_NAME);
+    ExtractEdge() {
+        super(Bundle.ExtractEdge_Module_Name());
     }
 
     @Override
@@ -134,6 +135,9 @@ final class ExtractEdge extends Extract {
 
     @Override
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+        String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), EDGE, context.getJobId());
+        String moduleTempResultDir = Paths.get(moduleTempDir, EDGE_RESULT_FOLDER_NAME).toString();
+        
         this.dataSource = dataSource;
         this.context = context;
         this.setFoundData(false);
@@ -183,7 +187,7 @@ final class ExtractEdge extends Extract {
         }
 
         try {
-            this.processWebCacheDbFile(esedumper, webCacheFiles, progressBar);
+            this.processWebCacheDbFile(esedumper, webCacheFiles, progressBar, moduleTempDir, moduleTempResultDir);
         } catch (IOException | TskCoreException ex) {
             LOG.log(Level.SEVERE, "Error processing 'WebCacheV01.dat' files for Microsoft Edge", ex); // NON-NLS
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_webcacheFail());
@@ -191,7 +195,7 @@ final class ExtractEdge extends Extract {
 
         progressBar.progress(Bundle.Progress_Message_Edge_Bookmarks());
         try {
-            this.processSpartanDbFile(esedumper, spartanFiles);
+            this.processSpartanDbFile(esedumper, spartanFiles, moduleTempDir, moduleTempResultDir);
         } catch (IOException | TskCoreException ex) {
             LOG.log(Level.SEVERE, "Error processing 'spartan.edb' files for Microsoft Edge", ex); // NON-NLS
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_spartanFail());
@@ -204,10 +208,13 @@ final class ExtractEdge extends Extract {
      *
      * @param eseDumperPath Path to ESEDatabaseView.exe
      * @param webCacheFiles List of case WebCacheV01.dat files
+     * @param moduleTempDir The temp directory for this module.
+     * @param moduleTempResultDir The temp results directory for this module.
      * @throws IOException
      * @throws TskCoreException
      */
-    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles, DataSourceIngestModuleProgress progressBar) throws IOException, TskCoreException {
+    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles, DataSourceIngestModuleProgress progressBar, 
+            String moduleTempDir, String moduleTempResultDir) throws IOException, TskCoreException {
 
         for (AbstractFile webCacheFile : webCacheFiles) {
 
@@ -220,7 +227,7 @@ final class ExtractEdge extends Extract {
             //Run the dumper 
             String tempWebCacheFileName = EDGE_WEBCACHE_PREFIX
                     + Integer.toString((int) webCacheFile.getId()) + EDGE_WEBCACHE_EXT; //NON-NLS
-            File tempWebCacheFile = new File(RAImageIngestModule.getRATempPath(currentCase, EDGE), tempWebCacheFileName);
+            File tempWebCacheFile = new File(moduleTempDir, tempWebCacheFileName);
 
             try {
                 ContentUtils.writeToFile(webCacheFile, tempWebCacheFile,
@@ -229,7 +236,7 @@ final class ExtractEdge extends Extract {
                 throw new IOException("Error writingToFile: " + webCacheFile, ex); //NON-NLS
             }
 
-            File resultsDir = new File(moduleTempResultPath.toAbsolutePath() + Integer.toString((int) webCacheFile.getId()));
+            File resultsDir = new File(moduleTempDir, Integer.toString((int) webCacheFile.getId()));
             resultsDir.mkdirs();
             try {
                 executeDumper(eseDumperPath, tempWebCacheFile.getAbsolutePath(),
@@ -264,10 +271,13 @@ final class ExtractEdge extends Extract {
      *
      * @param eseDumperPath Path to ESEDatabaseViewer
      * @param spartanFiles List of the case spartan.edb files
+     * @param moduleTempDir The temp directory for this module.
+     * @param moduleTempResultDir The temp results directory for this module.
      * @throws IOException
      * @throws TskCoreException
      */
-    void processSpartanDbFile(String eseDumperPath, List<AbstractFile> spartanFiles) throws IOException, TskCoreException {
+    void processSpartanDbFile(String eseDumperPath, List<AbstractFile> spartanFiles, 
+            String moduleTempDir, String moduleTempResultDir) throws IOException, TskCoreException {
 
         for (AbstractFile spartanFile : spartanFiles) {
 
@@ -278,7 +288,7 @@ final class ExtractEdge extends Extract {
             //Run the dumper 
             String tempSpartanFileName = EDGE_WEBCACHE_PREFIX
                     + Integer.toString((int) spartanFile.getId()) + EDGE_WEBCACHE_EXT; 
-            File tempSpartanFile = new File(RAImageIngestModule.getRATempPath(currentCase, EDGE), tempSpartanFileName);
+            File tempSpartanFile = new File(moduleTempDir, tempSpartanFileName);
 
             try {
                 ContentUtils.writeToFile(spartanFile, tempSpartanFile,
@@ -287,7 +297,7 @@ final class ExtractEdge extends Extract {
                 throw new IOException("Error writingToFile: " + spartanFile, ex); //NON-NLS
             }
 
-            File resultsDir = new File(moduleTempResultPath.toAbsolutePath() + Integer.toString((int) spartanFile.getId()));
+            File resultsDir = new File(moduleTempResultDir, Integer.toString((int) spartanFile.getId()));
             resultsDir.mkdirs();
             try {
                 executeDumper(eseDumperPath, tempSpartanFile.getAbsolutePath(),
@@ -628,14 +638,10 @@ final class ExtractEdge extends Extract {
         String accessTime = rowSplit[index].trim();
         Long ftime = parseTimestamp(accessTime);
 
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
-
-        bbart.addAttributes(createHistoryAttribute(url, ftime,
+        return createArtifactWithAttributes(TSK_WEB_HISTORY, origFile, createHistoryAttribute(url, ftime,
                 null, null,
                 this.getName(),
                 NetworkUtils.extractDomain(url), user));
-
-        return bbart;
     }
 
     /**
@@ -658,9 +664,7 @@ final class ExtractEdge extends Extract {
         String value = hexToChar(lineSplit[headers.indexOf(EDGE_HEAD_VALUE)].trim());
         String url = flipDomain(domain);
 
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
-        bbart.addAttributes(createCookieAttributes(url, null, ftime, null, name, value, this.getName(), NetworkUtils.extractDomain(url)));
-        return bbart;
+        return createArtifactWithAttributes(TSK_WEB_COOKIE, origFile, createCookieAttributes(url, null, ftime, null, name, value, this.getName(), NetworkUtils.extractDomain(url)));
     }
 
     /**
@@ -707,11 +711,9 @@ final class ExtractEdge extends Extract {
         if (url.isEmpty()) {
             return null;
         }
-
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-        bbart.addAttributes(createBookmarkAttributes(url, title, null,
+        
+        return createArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile, createBookmarkAttributes(url, title, null,
                 this.getName(), NetworkUtils.extractDomain(url)));
-        return bbart;
     }
     
 

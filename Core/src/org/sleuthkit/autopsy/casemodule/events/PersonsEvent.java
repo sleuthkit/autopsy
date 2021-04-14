@@ -42,7 +42,7 @@ public class PersonsEvent extends TskDataModelChangeEvent<Person> {
     private static List<Long> getIds(List<Person> persons) {
         return getSafeList(persons).stream()
                 .filter(h -> h != null)
-                .map(h -> h.getId()).collect(Collectors.toList());
+                .map(h -> h.getPersonId()).collect(Collectors.toList());
     }
 
     /**
