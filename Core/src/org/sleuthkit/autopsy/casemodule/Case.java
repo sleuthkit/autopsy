@@ -647,7 +647,7 @@ public class Case {
     /**
      * Adds a subscriber to specific case events.
      *
-     * @param eventName The event the subscriber is interested in.
+     * @param eventName  The event the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
      *
      * @deprecated Use addEventTypeSubscriber instead.
@@ -660,7 +660,7 @@ public class Case {
     /**
      * Removes a subscriber to specific case events.
      *
-     * @param eventName The event the subscriber is no longer interested in.
+     * @param eventName  The event the subscriber is no longer interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to remove.
      */
     public static void removeEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -709,17 +709,19 @@ public class Case {
      * IMPORTANT: This method should not be called in the event dispatch thread
      * (EDT).
      *
-     * @param caseDir The full path of the case directory. The directory will be
-     * created if it doesn't already exist; if it exists, it is ASSUMED it was
-     * created by calling createCaseDirectory.
+     * @param caseDir         The full path of the case directory. The directory
+     *                        will be created if it doesn't already exist; if it
+     *                        exists, it is ASSUMED it was created by calling
+     *                        createCaseDirectory.
      * @param caseDisplayName The display name of case, which may be changed
-     * later by the user.
-     * @param caseNumber The case number, can be the empty string.
-     * @param examiner The examiner to associate with the case, can be the empty
-     * string.
-     * @param caseType The type of case (single-user or multi-user).
+     *                        later by the user.
+     * @param caseNumber      The case number, can be the empty string.
+     * @param examiner        The examiner to associate with the case, can be
+     *                        the empty string.
+     * @param caseType        The type of case (single-user or multi-user).
      *
-     * @throws CaseActionException If there is a problem creating the case.
+     * @throws CaseActionException          If there is a problem creating the
+     *                                      case.
      * @throws CaseActionCancelledException If creating the case is cancelled.
      *
      * @deprecated use createAsCurrentCase(CaseType caseType, String caseDir,
@@ -736,14 +738,17 @@ public class Case {
      * IMPORTANT: This method should not be called in the event dispatch thread
      * (EDT).
      *
-     * @param caseDir The full path of the case directory. The directory will be
-     * created if it doesn't already exist; if it exists, it is ASSUMED it was
-     * created by calling createCaseDirectory.
-     * @param caseType The type of case (single-user or multi-user).
+     * @param caseDir     The full path of the case directory. The directory
+     *                    will be created if it doesn't already exist; if it
+     *                    exists, it is ASSUMED it was created by calling
+     *                    createCaseDirectory.
+     * @param caseType    The type of case (single-user or multi-user).
      * @param caseDetails Contains the modifiable details of the case such as
-     * the case display name, the case number, and the examiner related data.
+     *                    the case display name, the case number, and the
+     *                    examiner related data.
      *
-     * @throws CaseActionException If there is a problem creating the case.
+     * @throws CaseActionException          If there is a problem creating the
+     *                                      case.
      * @throws CaseActionCancelledException If creating the case is cancelled.
      */
     @Messages({
@@ -769,8 +774,9 @@ public class Case {
      * @param caseMetadataFilePath The path of the case metadata (.aut) file.
      *
      * @throws CaseActionException If there is a problem opening the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception.
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
      */
     @Messages({
         "# {0} - exception message", "Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata:\n{0}.",
@@ -847,8 +853,9 @@ public class Case {
      * Closes the current case.
      *
      * @throws CaseActionException If there is a problem closing the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception.
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
      */
     @Messages({
         "# {0} - exception message", "Case.closeException.couldNotCloseCase=Error closing case: {0}",
@@ -881,8 +888,9 @@ public class Case {
      * Deletes the current case.
      *
      * @throws CaseActionException If there is a problem deleting the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception.
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
      */
     public static void deleteCurrentCase() throws CaseActionException {
         synchronized (caseActionSerializationLock) {
@@ -901,8 +909,9 @@ public class Case {
      * @param dataSourceObjectID The object ID of the data source to delete.
      *
      * @throws CaseActionException If there is a problem deleting the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception.
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
      */
     @Messages({
         "Case.progressIndicatorTitle.deletingDataSource=Removing Data Source"
@@ -941,8 +950,9 @@ public class Case {
      * @param metadata The case metadata.
      *
      * @throws CaseActionException If there were one or more errors deleting the
-     * case. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             case. The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
      */
     @Messages({
         "Case.progressIndicatorTitle.deletingCase=Deleting Case",
@@ -987,9 +997,10 @@ public class Case {
      * Opens a new or existing case as the current case.
      *
      * @param newCurrentCase The case.
-     * @param isNewCase True for a new case, false otherwise.
+     * @param isNewCase      True for a new case, false otherwise.
      *
-     * @throws CaseActionException If there is a problem creating the case.
+     * @throws CaseActionException          If there is a problem creating the
+     *                                      case.
      * @throws CaseActionCancelledException If creating the case is cancelled.
      */
     @Messages({
@@ -1081,8 +1092,8 @@ public class Case {
      * Creates a case directory and its subdirectories.
      *
      * @param caseDirPath Path to the case directory (typically base + case
-     * name).
-     * @param caseType The type of case, single-user or multi-user.
+     *                    name).
+     * @param caseType    The type of case, single-user or multi-user.
      *
      * @throws CaseActionException throw if could not create the case dir
      */
@@ -1173,7 +1184,7 @@ public class Case {
      * @return The lock or null if the lock could not be acquired.
      *
      * @throws CaseActionException with a user-friendly message if the lock
-     * cannot be acquired due to an exception.
+     *                             cannot be acquired due to an exception.
      */
     @Messages({
         "Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources"
@@ -1462,7 +1473,6 @@ public class Case {
         return hostPath.toString();
     }
 
-
     /**
      * Gets the full path to the temp directory for this case, creating it if it
      * does not exist.
@@ -1473,18 +1483,18 @@ public class Case {
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        Path baseTempPath = TempDirChoice.CASE.equals(UserMachinePreferences.getTempDirChoice()) ?
-                Paths.get(getCaseDirectory()) :
-                UserMachinePreferences.getBaseTempPath().resolve(getName());
-        
-        Path caseRelPath = (CaseType.MULTI_USER_CASE.equals(getCaseType())) ?
-                Paths.get(NetworkUtils.getLocalHostName(), TEMP_FOLDER) :
-                Paths.get(TEMP_FOLDER);
-        
+        Path baseTempPath = TempDirChoice.CASE.equals(UserMachinePreferences.getTempDirChoice())
+                ? Paths.get(getCaseDirectory())
+                : UserMachinePreferences.getBaseTempPath().resolve(getName());
+
+        Path caseRelPath = (CaseType.MULTI_USER_CASE.equals(getCaseType()))
+                ? Paths.get(NetworkUtils.getLocalHostName(), TEMP_FOLDER)
+                : Paths.get(TEMP_FOLDER);
+
         File caseTempDir = baseTempPath
                 .resolve(caseRelPath)
                 .toFile();
-        
+
         // ensure directory exists
         if (!caseTempDir.exists()) {
             caseTempDir.mkdirs();
@@ -1558,7 +1568,7 @@ public class Case {
      * the case directory, creating it if it does not exist.
      *
      * @return The path to the module output directory, relative to the case
-     * directory.
+     *         directory.
      */
     public String getModuleOutputDirectoryRelativePath() {
         Path path = Paths.get(getModuleDirectory());
@@ -1575,7 +1585,8 @@ public class Case {
      * @return A list of data sources, possibly empty.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException if there is a problem
-     * querying the case database.
+     *                                                  querying the case
+     *                                                  database.
      */
     public List<Content> getDataSources() throws TskCoreException {
         return caseDb.getRootObjects();
@@ -1643,8 +1654,8 @@ public class Case {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param eventId A unique identifier for the event. This UUID must be used
-     * to call notifyFailedAddingDataSource or notifyNewDataSource after the
-     * data source is added.
+     *                to call notifyFailedAddingDataSource or
+     *                notifyNewDataSource after the data source is added.
      */
     public void notifyAddingDataSource(UUID eventId) {
         eventPublisher.publish(new AddingDataSourceEvent(eventId));
@@ -1657,7 +1668,8 @@ public class Case {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param addingDataSourceEventId The unique identifier for the
-     * corresponding adding data source event (see notifyAddingDataSource).
+     *                                corresponding adding data source event
+     *                                (see notifyAddingDataSource).
      */
     public void notifyFailedAddingDataSource(UUID addingDataSourceEventId) {
         eventPublisher.publish(new AddingDataSourceFailedEvent(addingDataSourceEventId));
@@ -1669,9 +1681,10 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param dataSource The data source.
+     * @param dataSource              The data source.
      * @param addingDataSourceEventId The unique identifier for the
-     * corresponding adding data source event (see notifyAddingDataSource).
+     *                                corresponding adding data source event
+     *                                (see notifyAddingDataSource).
      */
     public void notifyDataSourceAdded(Content dataSource, UUID addingDataSourceEventId) {
         eventPublisher.publish(new DataSourceAddedEvent(dataSource, addingDataSourceEventId));
@@ -1684,7 +1697,7 @@ public class Case {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param dataSource The data source.
-     * @param newName The new name for the data source
+     * @param newName    The new name for the data source
      */
     public void notifyDataSourceNameChanged(Content dataSource, String newName) {
         eventPublisher.publish(new DataSourceNameChangedEvent(dataSource, newName));
@@ -1706,9 +1719,9 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag The added ContentTag.
+     * @param newTag         The added ContentTag.
      * @param deletedTagList List of ContentTags that were removed as a result
-     * of the addition of newTag.
+     *                       of the addition of newTag.
      */
     public void notifyContentTagAdded(ContentTag newTag, List<ContentTag> deletedTagList) {
         eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTagList));
@@ -1743,8 +1756,8 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param contentId the objectId for the Content which has had its central
-     * repo comment changed
+     * @param contentId  the objectId for the Content which has had its central
+     *                   repo comment changed
      * @param newComment the new value of the comment
      */
     public void notifyCentralRepoCommentChanged(long contentId, String newComment) {
@@ -1771,9 +1784,9 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag The added ContentTag.
+     * @param newTag         The added ContentTag.
      * @param removedTagList List of ContentTags that were removed as a result
-     * of the addition of newTag.
+     *                       of the addition of newTag.
      */
     public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, List<BlackboardArtifactTag> removedTagList) {
         eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTagList));
@@ -1859,13 +1872,13 @@ public class Case {
     /**
      * Adds a report to the case.
      *
-     * @param localPath The path of the report file, must be in the case
-     * directory or one of its subdirectories.
+     * @param localPath     The path of the report file, must be in the case
+     *                      directory or one of its subdirectories.
      * @param srcModuleName The name of the module that created the report.
-     * @param reportName The report name, may be empty.
+     * @param reportName    The report name, may be empty.
      *
      * @throws TskCoreException if there is a problem adding the report to the
-     * case database.
+     *                          case database.
      */
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
         addReport(localPath, srcModuleName, reportName, null);
@@ -1874,16 +1887,16 @@ public class Case {
     /**
      * Adds a report to the case.
      *
-     * @param localPath The path of the report file, must be in the case
-     * directory or one of its subdirectories.
+     * @param localPath     The path of the report file, must be in the case
+     *                      directory or one of its subdirectories.
      * @param srcModuleName The name of the module that created the report.
-     * @param reportName The report name, may be empty.
-     * @param parent The Content used to create the report, if available.
+     * @param reportName    The report name, may be empty.
+     * @param parent        The Content used to create the report, if available.
      *
      * @return The new Report instance.
      *
      * @throws TskCoreException if there is a problem adding the report to the
-     * case database.
+     *                          case database.
      */
     public Report addReport(String localPath, String srcModuleName, String reportName, Content parent) throws TskCoreException {
         String normalizedLocalPath;
@@ -1908,7 +1921,7 @@ public class Case {
      * @return A collection of report objects.
      *
      * @throws TskCoreException if there is a problem querying the case
-     * database.
+     *                          database.
      */
     public List<Report> getAllReports() throws TskCoreException {
         return this.caseDb.getAllReports();
@@ -1989,12 +2002,13 @@ public class Case {
     /**
      * Constructs a Case object for a new Autopsy case.
      *
-     * @param caseType The type of case (single-user or multi-user).
-     * @param caseDir The full path of the case directory. The directory will be
-     * created if it doesn't already exist; if it exists, it is ASSUMED it was
-     * created by calling createCaseDirectory.
+     * @param caseType    The type of case (single-user or multi-user).
+     * @param caseDir     The full path of the case directory. The directory
+     *                    will be created if it doesn't already exist; if it
+     *                    exists, it is ASSUMED it was created by calling
+     *                    createCaseDirectory.
      * @param caseDetails Contains details of the case, such as examiner,
-     * display name, etc
+     *                    display name, etc
      *
      */
     private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
@@ -2026,17 +2040,19 @@ public class Case {
      * performs an orderly shut down of the case action executor.
      *
      * @param progressIndicatorTitle A title for the progress indicator for the
-     * case action.
-     * @param caseAction The case action method.
-     * @param caseLockType The type of case lock required for the case action.
-     * @param allowCancellation Whether or not to allow the action to be
-     * cancelled.
-     * @param additionalParams An Object that holds any additional parameters
-     * for a case action.
+     *                               case action.
+     * @param caseAction             The case action method.
+     * @param caseLockType           The type of case lock required for the case
+     *                               action.
+     * @param allowCancellation      Whether or not to allow the action to be
+     *                               cancelled.
+     * @param additionalParams       An Object that holds any additional
+     *                               parameters for a case action.
      *
      * @throws CaseActionException If there is a problem completing the action.
-     * The exception will have a user-friendly message and may be a wrapper for
-     * a lower-level exception.
+     *                             The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
      */
     @Messages({
         "Case.progressIndicatorCancelButton.label=Cancel",
@@ -2138,12 +2154,14 @@ public class Case {
      * case.
      *
      * @param progressIndicator A progress indicator.
-     * @param additionalParams An Object that holds any additional parameters
-     * for a case action. For this action, this is null.
+     * @param additionalParams  An Object that holds any additional parameters
+     *                          for a case action. For this action, this is
+     *                          null.
      *
      * @throws CaseActionException If there is a problem completing the action.
-     * The exception will have a user-friendly message and may be a wrapper for
-     * a lower-level exception.
+     *                             The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
      */
     private Void create(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams == null);
@@ -2188,12 +2206,14 @@ public class Case {
      * database and application services for this case.
      *
      * @param progressIndicator A progress indicator.
-     * @param additionalParams An Object that holds any additional parameters
-     * for a case action. For this action, this is null.
+     * @param additionalParams  An Object that holds any additional parameters
+     *                          for a case action. For this action, this is
+     *                          null.
      *
      * @throws CaseActionException If there is a problem completing the action.
-     * The exception will have a user-friendly message and may be a wrapper for
-     * a lower-level exception.
+     *                             The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
      */
     private Void open(ProgressIndicator progressIndicator, Object additionalParams) throws CaseActionException {
         assert (additionalParams == null);
@@ -2239,7 +2259,7 @@ public class Case {
      * finished the earlier one will be cancelled.
      *
      * @throws CaseActionCancelledException Exception thrown if task is
-     * cancelled.
+     *                                      cancelled.
      */
     @Messages({
         "# {0} - case", "Case.openFileSystems.retrievingImages=Retrieving images for case: {0}...",
@@ -2268,9 +2288,10 @@ public class Case {
         /**
          * Main constructor for the BackgroundOpenFileSystemsTask.
          *
-         * @param tskCase The case database to query for filesystems to open.
+         * @param tskCase           The case database to query for filesystems
+         *                          to open.
          * @param progressIndicator The progress indicator for file systems
-         * opened.
+         *                          opened.
          */
         BackgroundOpenFileSystemsTask(SleuthkitCase tskCase, ProgressIndicator progressIndicator) {
             this.tskCase = tskCase;
@@ -2283,7 +2304,7 @@ public class Case {
          * InterruptedException if it has.
          *
          * @throws InterruptedException The exception thrown if the operation
-         * has been cancelled.
+         *                              has been cancelled.
          */
         private void checkIfCancelled() throws InterruptedException {
             if (Thread.interrupted()) {
@@ -2316,7 +2337,8 @@ public class Case {
          * @param images The images whose file systems will be opened.
          *
          * @throws CaseActionCancelledException The exception thrown in the
-         * event that the operation is cancelled prior to completion.
+         *                                      event that the operation is
+         *                                      cancelled prior to completion.
          */
         private void openFileSystems(List<Image> images) throws TskCoreException, InterruptedException {
             byte[] tempBuff = new byte[512];
@@ -2372,13 +2394,14 @@ public class Case {
      * a data source from the case, and closes the case.
      *
      * @param progressIndicator A progress indicator.
-     * @param additionalParams An Object that holds any additional parameters
-     * for a case action. For this action, this the object ID of the data source
-     * to be deleted.
+     * @param additionalParams  An Object that holds any additional parameters
+     *                          for a case action. For this action, this the
+     *                          object ID of the data source to be deleted.
      *
      * @throws CaseActionException If there is a problem completing the action.
-     * The exception will have a user-friendly message and may be a wrapper for
-     * a lower-level exception.
+     *                             The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
      */
     @Messages({
         "Case.progressMessage.deletingDataSource=Removing the data source from the case...",
@@ -2416,7 +2439,7 @@ public class Case {
     /**
      * Create an empty portable case from the current case
      *
-     * @param caseName Case name
+     * @param caseName           Case name
      * @param portableCaseFolder Case folder - must not exist
      *
      * @return The portable case database
@@ -2456,7 +2479,8 @@ public class Case {
      * exception message.
      *
      * @throws CaseActionCancelledException If the current thread is
-     * interrupted, assumes interrupt was due to a user action.
+     *                                      interrupted, assumes interrupt was
+     *                                      due to a user action.
      */
     private static void checkForCancellation() throws CaseActionCancelledException {
         if (Thread.currentThread().isInterrupted()) {
@@ -2470,8 +2494,9 @@ public class Case {
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is a problem completing the
-     * operation. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             operation. The exception will have a
+     *                             user-friendly message and may be a wrapper
+     *                             for a lower-level exception.
      */
     @Messages({
         "Case.progressMessage.creatingCaseDirectory=Creating case directory..."
@@ -2509,8 +2534,9 @@ public class Case {
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is a problem completing the
-     * operation. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             operation. The exception will have a
+     *                             user-friendly message and may be a wrapper
+     *                             for a lower-level exception.
      */
     @Messages({
         "Case.progressMessage.savingCaseMetadata=Saving case metadata to file...",
@@ -2532,8 +2558,9 @@ public class Case {
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is a problem completing the
-     * operation. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             operation. The exception will have a
+     *                             user-friendly message and may be a wrapper
+     *                             for a lower-level exception.
      */
     @Messages({
         "Case.progressMessage.creatingCaseNodeData=Creating coordination service node data...",
@@ -2557,8 +2584,9 @@ public class Case {
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is a problem completing the
-     * operation. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             operation. The exception will have a
+     *                             user-friendly message and may be a wrapper
+     *                             for a lower-level exception.
      */
     @Messages({
         "Case.progressMessage.updatingCaseNodeData=Updating coordination service node data...",
@@ -2600,8 +2628,9 @@ public class Case {
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is a problem completing the
-     * operation. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             operation. The exception will have a
+     *                             user-friendly message and may be a wrapper
+     *                             for a lower-level exception.
      */
     @Messages({
         "Case.progressMessage.creatingCaseDatabase=Creating case database...",
@@ -2645,8 +2674,9 @@ public class Case {
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is a problem completing the
-     * operation. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             operation. The exception will have a
+     *                             user-friendly message and may be a wrapper
+     *                             for a lower-level exception.
      */
     @Messages({
         "Case.progressMessage.openingCaseDatabase=Opening case database...",
@@ -2698,11 +2728,12 @@ public class Case {
      * specific to this case.
      *
      * @param progressIndicator A progress indicator.
-     * @param isNewCase True if case is new
+     * @param isNewCase         True if case is new
      *
      * @throws CaseActionException If there is a problem completing the
-     * operation. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             operation. The exception will have a
+     *                             user-friendly message and may be a wrapper
+     *                             for a lower-level exception.
      */
     @NbBundle.Messages({
         "Case.progressMessage.openingApplicationServiceResources=Opening application service case resources...",
@@ -2811,8 +2842,9 @@ public class Case {
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is a problem completing the
-     * operation. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             operation. The exception will have a
+     *                             user-friendly message and may be a wrapper
+     *                             for a lower-level exception.
      */
     @Messages({
         "Case.progressMessage.settingUpNetworkCommunications=Setting up network communications...",
@@ -2844,8 +2876,9 @@ public class Case {
      * case closing action.
      *
      * @throws CaseActionException If there is a problem completing the action.
-     * The exception will have a user-friendly message and may be a wrapper for
-     * a lower-level exception.
+     *                             The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
      */
     private void doCloseCaseAction() throws CaseActionException {
         /*
@@ -3082,12 +3115,13 @@ public class Case {
     /**
      * Deletes a single-user case.
      *
-     * @param metadata The case metadata.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there were one or more errors deleting the
-     * case. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     *                             case. The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
      */
     @Messages({
         "Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details."
@@ -3122,15 +3156,17 @@ public class Case {
      * case directory coordination service node for the case is only deleted if
      * no errors occurred.
      *
-     * @param metadata The case metadata.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
      *
-     * @throws CaseActionException If there were one or more errors deleting the
-     * case. The exception will have a user-friendly message and may be a
-     * wrapper for a lower-level exception.
+     * @throws CaseActionException  If there were one or more errors deleting
+     *                              the case. The exception will have a
+     *                              user-friendly message and may be a wrapper
+     *                              for a lower-level exception.
      * @throws InterruptedException If the thread this code is running in is
-     * interrupted while blocked, i.e., if cancellation of the operation is
-     * detected during a wait.
+     *                              interrupted while blocked, i.e., if
+     *                              cancellation of the operation is detected
+     *                              during a wait.
      */
     @Messages({
         "Case.progressMessage.connectingToCoordSvc=Connecting to coordination service...",
@@ -3215,17 +3251,18 @@ public class Case {
      * release the case directory lock for the case and are responsible for
      * deleting the corresponding coordination service nodes, if desired.
      *
-     * @param caseNodeData The coordination service node data for the case.
-     * @param metadata The case metadata.
+     * @param caseNodeData      The coordination service node data for the case.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
-     * @param logger A logger.
+     * @param logger            A logger.
      *
      * @return True if one or more errors occurred (see log for details), false
-     * otherwise.
+     *         otherwise.
      *
      * @throws InterruptedException If the thread this code is running in is
-     * interrupted while blocked, i.e., if cancellation of the operation is
-     * detected during a wait.
+     *                              interrupted while blocked, i.e., if
+     *                              cancellation of the operation is detected
+     *                              during a wait.
      */
     @Beta
     public static boolean deleteMultiUserCase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws InterruptedException {
@@ -3251,20 +3288,22 @@ public class Case {
     /**
      * Attempts to delete the case database for a multi-user case.
      *
-     * @param caseNodeData The coordination service node data for the case.
-     * @param metadata The case metadata.
+     * @param caseNodeData      The coordination service node data for the case.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
-     * @param logger A logger.
+     * @param logger            A logger.
      *
      * @throws UserPreferencesException if there is an error getting the
-     * database server connection info.
-     * @throws ClassNotFoundException if there is an error gettting the required
-     * JDBC driver.
-     * @throws SQLException if there is an error executing the SQL to drop the
-     * database from the database server.
-     * @throws InterruptedException If interrupted while blocked waiting for
-     * coordination service data to be written to the coordination service node
-     * database.
+     *                                  database server connection info.
+     * @throws ClassNotFoundException   if there is an error gettting the
+     *                                  required JDBC driver.
+     * @throws SQLException             if there is an error executing the SQL
+     *                                  to drop the database from the database
+     *                                  server.
+     * @throws InterruptedException     If interrupted while blocked waiting for
+     *                                  coordination service data to be written
+     *                                  to the coordination service node
+     *                                  database.
      */
     @Messages({
         "Case.progressMessage.deletingCaseDatabase=Deleting case database..."
@@ -3292,16 +3331,17 @@ public class Case {
     /**
      * Attempts to delete the text index for a multi-user case.
      *
-     * @param caseNodeData The coordination service node data for the case.
-     * @param metadata The case metadata.
+     * @param caseNodeData      The coordination service node data for the case.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
-     * @param logger A logger.
+     * @param logger            A logger.
      *
      * @throws KeywordSearchServiceException If there is an error deleting the
-     * text index.
-     * @throws InterruptedException If interrupted while blocked waiting for
-     * coordination service data to be written to the coordination service node
-     * database.
+     *                                       text index.
+     * @throws InterruptedException          If interrupted while blocked
+     *                                       waiting for coordination service
+     *                                       data to be written to the
+     *                                       coordination service node database.
      */
     private static void deleteMultiUserCaseTextIndex(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws KeywordSearchServiceException, InterruptedException {
         if (!caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.TEXT_INDEX)) {
@@ -3314,11 +3354,11 @@ public class Case {
     /**
      * Attempts to delete the text index for a case.
      *
-     * @param metadata The case metadata.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
      *
      * @throws KeywordSearchServiceException If there is an error deleting the
-     * text index.
+     *                                       text index.
      */
     @Messages({
         "Case.progressMessage.deletingTextIndex=Deleting text index..."
@@ -3335,16 +3375,16 @@ public class Case {
     /**
      * Attempts to delete the case directory for a multi-user case.
      *
-     * @param caseNodeData The coordination service node data for the case.
-     * @param metadata The case metadata.
+     * @param caseNodeData      The coordination service node data for the case.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
-     * @param logger A logger.
+     * @param logger            A logger.
      *
-     * @throws CaseActionException if there is an error deleting the case
-     * directory.
+     * @throws CaseActionException  if there is an error deleting the case
+     *                              directory.
      * @throws InterruptedException If interrupted while blocked waiting for
-     * coordination service data to be written to the coordination service node
-     * database.
+     *                              coordination service data to be written to
+     *                              the coordination service node database.
      */
     private static void deleteMultiUserCaseDirectory(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws CaseActionException, InterruptedException {
         if (!caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.CASE_DIR)) {
@@ -3357,11 +3397,11 @@ public class Case {
     /**
      * Attempts to delete the case directory for a case.
      *
-     * @param metadata The case metadata.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is an error deleting the case
-     * directory.
+     *                             directory.
      */
     @Messages({
         "Case.progressMessage.deletingCaseDirectory=Deleting case directory..."
@@ -3377,7 +3417,7 @@ public class Case {
      * Attempts to remove a case from the recent cases menu if the main
      * application window is present.
      *
-     * @param metadata The case metadata.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
      */
     @Messages({
@@ -3416,11 +3456,11 @@ public class Case {
      * multi-user case.
      *
      * @param caseNodeData The coordination service node data for the case.
-     * @param flag The flag to set.
+     * @param flag         The flag to set.
      *
      * @throws InterruptedException If interrupted while blocked waiting for
-     * coordination service data to be written to the coordination service node
-     * database.
+     *                              coordination service data to be written to
+     *                              the coordination service node database.
      */
     private static void setDeletedItemFlag(CaseNodeData caseNodeData, CaseNodeData.DeletedFlags flag) throws InterruptedException {
         try {
@@ -3446,7 +3486,7 @@ public class Case {
          * The signature for a case action method.
          *
          * @param progressIndicator A ProgressIndicator.
-         * @param additionalParams The optional parameters stored in an Object.
+         * @param additionalParams  The optional parameters stored in an Object.
          *
          * @return A Void object (null).
          *
@@ -3483,7 +3523,8 @@ public class Case {
          * ModalDialogProgressIndicator when running with a GUI.
          *
          * @param cancellationMessage The message to display in the
-         * ModalDialogProgressIndicator when the cancel button is pressed.
+         *                            ModalDialogProgressIndicator when the
+         *                            cancel button is pressed.
          */
         private CancelButtonListener(String cancellationMessage) {
             this.cancellationMessage = cancellationMessage;
@@ -3598,18 +3639,20 @@ public class Case {
     /**
      * Creates a new, single-user Autopsy case.
      *
-     * @param caseDir The full path of the case directory. The directory will be
-     * created if it doesn't already exist; if it exists, it is ASSUMED it was
-     * created by calling createCaseDirectory.
+     * @param caseDir         The full path of the case directory. The directory
+     *                        will be created if it doesn't already exist; if it
+     *                        exists, it is ASSUMED it was created by calling
+     *                        createCaseDirectory.
      * @param caseDisplayName The display name of case, which may be changed
-     * later by the user.
-     * @param caseNumber The case number, can be the empty string.
-     * @param examiner The examiner to associate with the case, can be the empty
-     * string.
+     *                        later by the user.
+     * @param caseNumber      The case number, can be the empty string.
+     * @param examiner        The examiner to associate with the case, can be
+     *                        the empty string.
      *
      * @throws CaseActionException if there is a problem creating the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception.
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
      * @deprecated Use createAsCurrentCase instead.
      */
     @Deprecated
@@ -3620,19 +3663,21 @@ public class Case {
     /**
      * Creates a new Autopsy case and makes it the current case.
      *
-     * @param caseDir The full path of the case directory. The directory will be
-     * created if it doesn't already exist; if it exists, it is ASSUMED it was
-     * created by calling createCaseDirectory.
+     * @param caseDir         The full path of the case directory. The directory
+     *                        will be created if it doesn't already exist; if it
+     *                        exists, it is ASSUMED it was created by calling
+     *                        createCaseDirectory.
      * @param caseDisplayName The display name of case, which may be changed
-     * later by the user.
-     * @param caseNumber The case number, can be the empty string.
-     * @param examiner The examiner to associate with the case, can be the empty
-     * string.
-     * @param caseType The type of case (single-user or multi-user).
+     *                        later by the user.
+     * @param caseNumber      The case number, can be the empty string.
+     * @param examiner        The examiner to associate with the case, can be
+     *                        the empty string.
+     * @param caseType        The type of case (single-user or multi-user).
      *
      * @throws CaseActionException if there is a problem creating the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception.
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
      * @deprecated Use createAsCurrentCase instead.
      */
     @Deprecated
@@ -3646,8 +3691,9 @@ public class Case {
      * @param caseMetadataFilePath The path of the case metadata (.aut) file.
      *
      * @throws CaseActionException if there is a problem opening the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception.
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
      * @deprecated Use openAsCurrentCase instead.
      */
     @Deprecated
@@ -3659,8 +3705,9 @@ public class Case {
      * Closes this Autopsy case.
      *
      * @throws CaseActionException if there is a problem closing the case. The
-     * exception will have a user-friendly message and may be a wrapper for a
-     * lower-level exception.
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
      * @deprecated Use closeCurrentCase instead.
      */
     @Deprecated
@@ -3782,8 +3829,8 @@ public class Case {
      * Adds an image to the current case after it has been added to the DB.
      * Sends out event and reopens windows if needed.
      *
-     * @param imgPath The path of the image file.
-     * @param imgId The ID of the image.
+     * @param imgPath  The path of the image file.
+     * @param imgId    The ID of the image.
      * @param timeZone The time zone of the image.
      *
      * @return
@@ -3818,7 +3865,7 @@ public class Case {
     /**
      * Deletes reports from the case.
      *
-     * @param reports Collection of Report to be deleted from the case.
+     * @param reports        Collection of Report to be deleted from the case.
      * @param deleteFromDisk No longer supported - ignored.
      *
      * @throws TskCoreException
