@@ -46,17 +46,13 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 103),
 @ActionReference(path = "Toolbars/Case", position = 103)})
+@Messages({"CTL_OpenGeolocation=Geolocation"})
 public class OpenGeolocationAction extends CallableSystemAction {
     
     private static final long serialVersionUID = 1L;
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/blueGeo24.png"))); //NON-NLS
     
-    @Messages({
-        "OpenGeolocationAction_name=Geolocation",
-        "OpenGeolocationAction_displayName=Geolocation"
-    })
-
     /**
      * Constructs the new action of opening the Geolocation window.
      */
@@ -98,7 +94,7 @@ public class OpenGeolocationAction extends CallableSystemAction {
 
     @Override
     public String getName() {
-        return Bundle.OpenGeolocationAction_displayName();
+        return Bundle.CTL_OpenGeolocation();
     }
 
     /**
