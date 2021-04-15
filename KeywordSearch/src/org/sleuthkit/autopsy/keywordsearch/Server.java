@@ -53,6 +53,8 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.apache.commons.io.FileUtils;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -2034,8 +2036,8 @@ public class Server {
         * Typically main reason for this is Solr running out of memory. In this case we will stop trying to send new 
         * data to Solr (for this collection) after certain number of consecutive batches have failed. */
         private static final int MAX_NUM_CONSECUTIVE_FAILURES = 5;
-        private int numConsecutiveFailures = 0;
-        private boolean skipIndexing = false;
+        private AtomicInteger numConsecutiveFailures = new AtomicInteger(0);
+        private AtomicBoolean skipIndexing = new AtomicBoolean(false);
         
         private final ScheduledThreadPoolExecutor periodicTasksExecutor;
         private static final long PERIODIC_BATCH_SEND_INTERVAL_MINUTES = 10;
@@ -2084,7 +2086,7 @@ public class Server {
             @Override
             public void run() {
                 
-                if (skipIndexing) {
+                if (skipIndexing.get()) {
                     return;
                 }
                 
@@ -2255,7 +2257,7 @@ public class Server {
          */
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
             
-            if (skipIndexing) {
+            if (skipIndexing.get()) {
                 return;
             }
 
@@ -2313,12 +2315,11 @@ public class Server {
                         }                        
                     }
                     if (success) {
-                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg")); //NON-NLS
-                        /*numConsecutiveFailures = 0;
+                        numConsecutiveFailures.set(0);
                         if (reTryAttempt > 0) {
                             logger.log(Level.INFO, "Batch update suceeded after {0} re-try", reTryAttempt); //NON-NLS
                         }
-                        return;*/
+                        return;
                     }
                 }
                 // if we are here, it means all re-try attempts failed
@@ -2326,7 +2327,7 @@ public class Server {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg")); //NON-NLS
             } catch (Exception ex) {
                 // Solr throws a lot of unexpected exception types
-                numConsecutiveFailures++;
+                numConsecutiveFailures.incrementAndGet();
                 logger.log(Level.SEVERE, "Could not add batched documents to index", ex); //NON-NLS
                 
                 // display message to user that that a document batch is missing from the index
@@ -2336,9 +2337,9 @@ public class Server {
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
             } finally {
-                if (numConsecutiveFailures >= MAX_NUM_CONSECUTIVE_FAILURES) {
+                if (numConsecutiveFailures.get() >= MAX_NUM_CONSECUTIVE_FAILURES) {
                     // skip all future indexing
-                    skipIndexing = true;
+                    skipIndexing.set(true);
                     logger.log(Level.SEVERE, "Unable to add data to text index. All future text indexing for the current case will be skipped!"); //NON-NLS
 
                     // display message to user that no more data will be added to the index
