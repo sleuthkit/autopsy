@@ -40,6 +40,7 @@
     ====================================================== -->
     <folder name="Actions">
         <folder name="Case">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.core.Bundle"/>
             <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseNewAction.instance">
@@ -140,13 +141,14 @@
         <file name="Edit_hidden"/>
         <file name="File_hidden"/>
         <folder name="Case">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.core.Bundle"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseNewAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
                 <attr name="position" intvalue="100"/>
             </file>
-            <folder name="Open Recent Case">
+            <folder name="OpenRecentCase">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.core.Bundle"/>
                 <attr name="position" intvalue="101"/>
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.casemodule.Bundle"/>
                 <file name="org-sleuthkit-autopsy-casemodule-RecentCasesAction.shadow">
                     <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
                 </file>
@@ -281,7 +283,6 @@
         <folder name="Help">
             <file name="org-netbeans-core-actions-AboutAction.shadow_hidden"/>
             <file name="org-netbeans-modules-autoupdate-ui-actions-CheckForUpdatesAction.shadow_hidden"/>
-            <attr name="master-help.xml/org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow" boolvalue="true"/>
         </folder>
     </folder>
 
@@ -378,6 +379,7 @@
         <file name="UndoRedo_hidden"/>
         <file name="File_hidden"/>
         <folder name="Case">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.core.Bundle"/>
             <attr name="position" intvalue="90"/>
             <!--<file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.AddImageAction"/>

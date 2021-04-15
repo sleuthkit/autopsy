@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -115,6 +116,9 @@ public class ParseRegistryHive {
                 currentKey = currentKey.getSubkey(key);
             }
         } catch (RegistryParseException ex) {
+            return null;
+        } catch (NoSuchElementException ex) {
+            logger.log(Level.WARNING, String.format("Cannot find the registry key %s in the registry hive file %s", registryKey, registryHiveFile.toString()));
             return null;
         }
         return currentKey;   
