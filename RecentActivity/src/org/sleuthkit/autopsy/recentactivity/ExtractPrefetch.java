@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import static org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
@@ -119,7 +120,10 @@ final class ExtractPrefetch extends Extract {
         try {
             String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME, ingestJobId);
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
-            createAppExecArtifacts(modOutFile, dataSource);
+            File prefetchDatabase = new File(modOutFile);
+            if (prefetchDatabase.exists()) {
+                createAppExecArtifacts(modOutFile, dataSource);
+            }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error parsing prefetch files", ex); //NON-NLS 
             addErrorMessage(Bundle.ExtractPrefetch_errMsg_prefetchParsingFailed(Bundle.ExtractPrefetch_module_name()));
@@ -154,7 +158,7 @@ final class ExtractPrefetch extends Extract {
                 String origFileName = pFile.getName();
                 String ext = FilenameUtils.getExtension(origFileName);
                 String baseName = FilenameUtils.getBaseName(origFileName);
-                String fileName = String.format("%s_%d.%s", baseName, pFile.getId(), ext);
+                String fileName = escapeFileName(String.format("%s_%d.%s", baseName, pFile.getId(), ext));
                 String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME, ingestJobId);
                 String prefetchFile =  Paths.get(baseRaTempPath, fileName).toString();
                 try {

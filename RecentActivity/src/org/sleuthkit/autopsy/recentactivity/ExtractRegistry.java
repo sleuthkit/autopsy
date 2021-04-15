@@ -807,7 +807,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, value));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, itemMtime));
-                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_DELETED_PROG);
                                             bbart.addAttributes(bbattributes);
 
                                             newArtifacts.add(bbart);
@@ -1105,7 +1105,7 @@ class ExtractRegistry extends Extract {
             
             //add remaining userinfos as accounts;
             for (Map<String, String> userInfo : userInfoMap.values()) {
-                OsAccount osAccount = accountMgr.newWindowsOsAccount(userInfo.get(SID_KEY), null, domainName, host, domainName != null || !domainName.isEmpty() ? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
+                OsAccount osAccount = accountMgr.newWindowsOsAccount(userInfo.get(SID_KEY), null, domainName, host, domainName != null && !domainName.isEmpty() ? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
                 accountMgr.newOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
                 updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
@@ -1147,7 +1147,7 @@ class ExtractRegistry extends Extract {
         List<AbstractFile> regFiles = findRegistryFiles();
 
         for (AbstractFile systemHive: regFiles) {
-            if (systemHive.getName().toLowerCase().equals("system")) {
+            if (systemHive.getName().toLowerCase().equals("system")  && systemHive.getSize() > 0) {
                 
                 String systemFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg", ingestJobId) + File.separator + systemHive.getName();
                 File systemFileNameLocalFile = new File(systemFileNameLocal);
@@ -2025,7 +2025,7 @@ class ExtractRegistry extends Extract {
         Optional<OsAccount> optional = accountMgr.getWindowsOsAccount(sid, null, null, host);
         OsAccount osAccount;
         if (!optional.isPresent()) {
-            osAccount = accountMgr.newWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, domainName, host, domainName != null || !domainName.isEmpty()? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
+            osAccount = accountMgr.newWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, domainName, host, domainName != null && !domainName.isEmpty()? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
             accountMgr.newOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
         } else {
             osAccount = optional.get();
