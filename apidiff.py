@@ -1,13 +1,13 @@
 """
 Generates an api diff from one commit to another.  This script relies on gitpython and similarly require git
-installed on the system.  This script also requires python3
+installed on the system.  This script also requires python 3.
 
-Can be called as follows:
+This script can be called as follows:
 
 python apidiff.py <previous tag id> <latest tag id> -r <repo path> -o <output path>
 
-If the '-o' flag is not specified, this will create a folder at apidiff_output in the same directory as the script.
-For full list of options call:
+If the '-o' flag is not specified, this script will create a folder at apidiff_output in the same directory as the
+script.  For full list of options call:
 
 python apidiff.py -h
 """
@@ -43,10 +43,10 @@ def compare_xml(jdiff_path: str, root_dir: str, output_folder: str, oldapi_folde
     :param root_dir: directory for output .
     :param output_folder: Folder for diff output.
     :param oldapi_folder: Folder name of old api (i.e. release-4.10.2).
-    :param newapi_folder: Folder name of old api (i.e. release-4.10.2).
+    :param newapi_folder: Folder name of new api (i.e. release-4.10.2).
     :param api_file_name: Name of xml file name (i.e. if output.xml, just 'output')
     :param log_path: Path to log file.
-    :return: jdiff comparison code.
+    :return: jdiff exit code.
     """
     jdiff_parent = os.path.dirname(jdiff_path)
 
@@ -91,7 +91,7 @@ def compare_xml(jdiff_path: str, root_dir: str, output_folder: str, oldapi_folde
     return code
 
 
-def gen_xml(jdiff_path: str, output_path: str, log_output_path: str, src: str, packages):
+def gen_xml(jdiff_path: str, output_path: str, log_output_path: str, src: str, packages: List[str]):
     """
     Uses jdiff to generate an xml representation of the source code.
     :param jdiff_path: Path to jdiff jar.
@@ -103,7 +103,7 @@ def gen_xml(jdiff_path: str, output_path: str, log_output_path: str, src: str, p
     make_dir(output_path)
 
     log = open_log_file(log_output_path)
-    log_and_print(log, f"Generating XML for: {src} outputting {output_path}")
+    log_and_print(log, f"Generating XML for: {src} outputting to: {output_path}")
     cmd = ["javadoc",
            "-doclet", "jdiff.JDiff",
            "-docletpath", fix_path(jdiff_path),
@@ -144,7 +144,7 @@ def _list_paths(root_tree: Tree, src_folder, path: Path = None) -> Iterator[Tupl
 
 def _get_tree(repo_path: str, commit_id: str) -> Tree:
     """
-    Retrieves the tree that can be walked for files and file content at the specified commit.
+    Retrieves the git tree that can be walked for files and file content at the specified commit.
     Args:
         repo_path: The path to the repo or a child directory of the repo.
         commit_id: The commit id.
@@ -157,10 +157,10 @@ def _get_tree(repo_path: str, commit_id: str) -> Tree:
 
 def copy_commit_paths(repo_path, commit_id, src_folder, output_folder):
     """
-    Copies all files located within a repo within the folder 'src_folder' to 'output_folder'
+    Copies all files located within a repo in the folder 'src_folder' to 'output_folder'.
     :param repo_path: The path to the repo.
     :param commit_id: The commit id.
-    :param src_folder: The source folder.
+    :param src_folder: The relative path in the repo to the source folder.
     :param output_folder: The output folder where the source will be copied.
     """
     tree = _get_tree(repo_path, commit_id)
@@ -175,7 +175,7 @@ def copy_commit_paths(repo_path, commit_id, src_folder, output_folder):
 
 def open_log_file(log_path):
     """
-    Opens a path to a lof file for appending.  Creating necessary directories and files as necessary.
+    Opens a path to a lof file for appending.  Creating directories and log file as necessary.
     :param log_path: The path to the log file.
     :return: The log file opened for writing.
     """
@@ -189,7 +189,7 @@ def open_log_file(log_path):
 def fix_path(path):
     """
     Generates a path that is escaped from cygwin paths if present.
-    :param path: Path (possibly cygdrive).
+    :param path: Path (possibly including cygdrive).
     :return: The normalized path.
     """
     if "cygdrive" in path:
@@ -227,16 +227,17 @@ def make_dir(dir_path: str):
         return False
 
 
-def run_compare(output_path: str, jdiff_path: str, repo_path: str, src_rel_path: str, prev_commit_id: str, latest_commit_id: str, packages: List[str]):
+def run_compare(output_path: str, jdiff_path: str, repo_path: str, src_rel_path: str, prev_commit_id: str,
+                latest_commit_id: str, packages: List[str]):
     """
     Runs a comparison of the api between two different commits/branches/tags of the same repo generating a jdiff diff.
     :param output_path: The output path for artifacts.
     :param jdiff_path: The path to the jdiff jar.
     :param repo_path: The path to the repo.
     :param src_rel_path: The relative path in the repo to the source directory.
-    :param prev_commit_id: The previous commit id.
-    :param latest_commit_id: The latest commit id.
-    :param packages: The packages to be considered for the api diff
+    :param prev_commit_id: The previous commit/branch/tag id.
+    :param latest_commit_id: The latest commit/branch/tag id.
+    :param packages: The packages to be considered for the api diff.
     """
     log_path = os.path.join(output_path, "messages.log")
     output_file_name = "output"
@@ -254,12 +255,13 @@ def run_compare(output_path: str, jdiff_path: str, repo_path: str, src_rel_path:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generates a jdiff diff of the java api between two scripts",
+    parser = argparse.ArgumentParser(description="Generates a jdiff diff of the java api between two commits in a "
+                                                 "repo.",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(dest='prev_commit', type=str, help=r'The git commit id/branch/tag to be used for the first '
                                                            r'commit')
     parser.add_argument(dest='latest_commit', type=str, help=r'The git commit id/branch/tag to be used for the latest '
-                                                           r'commit')
+                                                             r'commit')
     parser.add_argument('-r', '--repo', dest='repo_path', type=str, required=True,
                         help='The path to the repo.  If not specified, path of script is used.')
 
