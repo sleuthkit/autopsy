@@ -38,7 +38,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -128,7 +127,6 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
-import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences.TempDirChoice;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -1474,24 +1472,49 @@ public class Case {
     }
 
     /**
+     * @return A subdirectory of java.io.tmpdir.
+     */
+    private Path getBaseSystemTempPath() {
+        return Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME, getName());
+    }
+
+    /**
      * Gets the full path to the temp directory for this case, creating it if it
      * does not exist.
-     *
-     * NOTE: UserMachinePreferences may also be affected by changes in this
-     * method. See JIRA-7505 for more information.
      *
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        Path baseTempPath = TempDirChoice.CASE.equals(UserMachinePreferences.getTempDirChoice())
-                ? Paths.get(getCaseDirectory())
-                : UserMachinePreferences.getBaseTempPath().resolve(getName());
+        // NOTE: UserPreferences may also be affected by changes in this method.
+        // See JIRA-7505 for more information.
+        Path basePath = null;
+        // get base temp path for the case based on user preference
+        switch (UserMachinePreferences.getTempDirChoice()) {
+            case CUSTOM:
+                String customDirectory = UserMachinePreferences.getCustomTempDirectory();
+                basePath = (StringUtils.isBlank(customDirectory))
+                        ? null
+                        : Paths.get(customDirectory, APP_NAME, getName());
+                break;
+            case CASE:
+                basePath = Paths.get(getCaseDirectory());
+                break;
+            case SYSTEM:
+            default:
+                // at this level, if the case directory is specified for a temp
+                // directory, return the system temp directory instead.
+                basePath = getBaseSystemTempPath();
+                break;
+        }
 
+        basePath = basePath == null ? getBaseSystemTempPath() : basePath;
+
+        // get sub directories based on multi user vs. single user
         Path caseRelPath = (CaseType.MULTI_USER_CASE.equals(getCaseType()))
                 ? Paths.get(NetworkUtils.getLocalHostName(), TEMP_FOLDER)
                 : Paths.get(TEMP_FOLDER);
 
-        File caseTempDir = baseTempPath
+        File caseTempDir = basePath
                 .resolve(caseRelPath)
                 .toFile();
 

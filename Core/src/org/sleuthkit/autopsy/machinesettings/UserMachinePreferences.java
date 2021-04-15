@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.machinesettings;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.prefs.Preferences;
@@ -27,7 +26,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -81,62 +79,7 @@ public final class UserMachinePreferences {
     private static final String CUSTOM_TEMP_DIR_KEY = "TempDirectory";
     private static final String TEMP_DIR_CHOICE_KEY = "TempDirChoice";
 
-    private static final String APP_NAME = UserPreferences.getAppName();
     private static final TempDirChoice DEFAULT_CHOICE = TempDirChoice.SYSTEM;
-
-    /**
-     * @return A subdirectory of java.io.tmpdir.
-     */
-    private static File getSystemTempDirFile() {
-        return Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME).toFile();
-    }
-
-    /**
-     * Returns the custom directory subdirectory to be used for temp files
-     * (otherwise null).
-     *
-     * @return A subdirectory of the custom user-specified path. If no path is
-     *         specified, returns null.
-     */
-    private static File getCustomTempDirFile() {
-        String customDirectory = getCustomTempDirectory();
-        return (StringUtils.isBlank(customDirectory))
-                ? null : Paths.get(customDirectory, APP_NAME).toFile();
-    }
-
-    /**
-     * Returns the base temp directory to use based on settings. This method
-     * also ensures the base temp directory has been created.
-     *
-     * NOTE: The Case class also handles providing a temp directory. When
-     * altering code in this class, also look at the Case class as well. See
-     * JIRA-7505 for more information.
-     *
-     * @return The base user-specified temporary directory.
-     */
-    public static Path getBaseTempPath() {
-        File dir = null;
-        TempDirChoice choice = getTempDirChoice();
-        switch (choice) {
-            case CUSTOM:
-                dir = getCustomTempDirFile();
-                break;
-            case SYSTEM:
-            default:
-                // at this level, if the case directory is specified for a temp
-                // directory, return the system temp directory instead.
-                dir = getSystemTempDirFile();
-                break;
-        }
-
-        dir = dir == null ? getSystemTempDirFile() : dir;
-
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        return dir.toPath();
-    }
 
     /**
      * @return The user-specified custom temp directory path or empty string.
@@ -188,7 +131,7 @@ public final class UserMachinePreferences {
      * @throws UserMachinePreferencesException If the directory cannot be
      *                                         accessed or created.
      */
-    public static void setCustomTempDirectoryProperty(String path) throws UserMachinePreferencesException {
+    public static void setCustomTempDirectory(String path) throws UserMachinePreferencesException {
         validateTempDirectory(path);
         preferences.put(CUSTOM_TEMP_DIR_KEY, path);
     }

@@ -25,6 +25,7 @@ import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
@@ -311,7 +312,7 @@ public final class UserPreferences {
      * Persists case database connection info.
      *
      * @param connectionInfo An object encapsulating the database connection
-     * info.
+     *                       info.
      *
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
@@ -474,7 +475,7 @@ public final class UserPreferences {
      * enabled.
      *
      * @return boolean True if process time out is functionality enabled, false
-     * otherwise.
+     *         otherwise.
      */
     public static boolean getIsTimeOutEnabled() {
         boolean enabled = preferences.getBoolean(PROCESS_TIME_OUT_ENABLED, false);
@@ -486,7 +487,7 @@ public final class UserPreferences {
      * enabled.
      *
      * @param enabled Persisted setting of whether process time out
-     * functionality is enabled.
+     *                functionality is enabled.
      */
     public static void setIsTimeOutEnabled(boolean enabled) {
         preferences.putBoolean(PROCESS_TIME_OUT_ENABLED, enabled);
@@ -542,7 +543,7 @@ public final class UserPreferences {
      * returned value depends on the platform (64bit vs 32bit).
      *
      * @return Saved value or default (2 GB for 64bit platforms, 512MB for
-     * 32bit)
+     *         32bit)
      */
     public static int getMaxSolrVMSize() {
         if (PlatformUtil.is64BitJVM()) {
@@ -674,16 +675,38 @@ public final class UserPreferences {
     }
 
     /**
-     * Retrieves the root application temp directory and ensures the directory
+     * @return A subdirectory of java.io.tmpdir.
+     */
+    private static File getSystemTempDirFile() {
+        return Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME, TEMP_FOLDER).toFile();
+    }
+
+    /**
+     * Retrieves the application temp directory and ensures the directory
      * exists.
      *
      * @return The absolute path to the application temp directory.
      */
     public static String getAppTempDirectory() {
-        File appTempDir = UserMachinePreferences.getBaseTempPath()
-                .resolve(TEMP_FOLDER)
-                .toAbsolutePath()
-                .toFile();
+        // NOTE: If this code changes, Case.getTempDirectory() should likely be checked
+        // as well.  See JIRA 7505 for more information.
+        File appTempDir = null;
+        switch (UserMachinePreferences.getTempDirChoice()) {
+            case CUSTOM:
+                String customDirectory = UserMachinePreferences.getCustomTempDirectory();
+                appTempDir = (StringUtils.isBlank(customDirectory))
+                        ? null
+                        : Paths.get(customDirectory, APP_NAME, TEMP_FOLDER).toFile();
+                break;
+            case SYSTEM:
+            default:
+                // at this level, if the case directory is specified for a temp
+                // directory, return the system temp directory instead.
+                appTempDir = getSystemTempDirFile();
+                break;
+        }
+
+        appTempDir = appTempDir == null ? getSystemTempDirFile() : appTempDir;
 
         if (!appTempDir.exists()) {
             appTempDir.mkdirs();
@@ -705,7 +728,7 @@ public final class UserPreferences {
      * Gets the last used health monitor report path.
      *
      * @return Last used health monitor report path. Empty string if no value
-     * has been recorded.
+     *         has been recorded.
      */
     public static String getHealthMonitorReportPath() {
         return preferences.get(HEALTH_MONITOR_REPORT_PATH, "");

@@ -575,7 +575,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         String tempDirectoryPath = tempCustomField.getText();
         if (!UserMachinePreferences.getCustomTempDirectory().equals(tempDirectoryPath)) {
             try {
-                UserMachinePreferences.setCustomTempDirectoryProperty(tempDirectoryPath);
+                UserMachinePreferences.setCustomTempDirectory(tempDirectoryPath);
             } catch (UserMachinePreferencesException ex) {
                 logger.log(Level.WARNING, "There was an error creating the temporary directory defined by the user: " + tempDirectoryPath, ex);
                 SwingUtilities.invokeLater(() -> {
