@@ -678,7 +678,7 @@ public final class UserPreferences {
      * @return A subdirectory of java.io.tmpdir.
      */
     private static File getSystemTempDirFile() {
-        return Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME, TEMP_FOLDER).toFile();
+        return Paths.get(System.getProperty("java.io.tmpdir"), getAppName(), TEMP_FOLDER).toFile();
     }
 
     /**
@@ -696,7 +696,7 @@ public final class UserPreferences {
                 String customDirectory = UserMachinePreferences.getCustomTempDirectory();
                 appTempDir = (StringUtils.isBlank(customDirectory))
                         ? null
-                        : Paths.get(customDirectory, APP_NAME, TEMP_FOLDER).toFile();
+                        : Paths.get(customDirectory, getAppName(), TEMP_FOLDER).toFile();
                 break;
             case SYSTEM:
             default:
