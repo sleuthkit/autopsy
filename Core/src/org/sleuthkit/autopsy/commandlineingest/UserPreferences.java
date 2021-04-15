@@ -30,7 +30,7 @@ public final class UserPreferences {
      * Get context string for command line mode ingest module settings.
      *
      * @return String Context string for command line mode ingest module
-     *         settings.
+     * settings.
      */
     public static String getCommandLineModeIngestModuleContextString() {
         return COMMAND_LINE_MODE_CONTEXT_STRING;
