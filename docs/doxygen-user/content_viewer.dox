@@ -83,7 +83,9 @@ The File Metadata tab displays basic information about the file, such as type, s
 
 \section cv_os_account OS Accounts
 
-TODO!
+The OS Accounts tab displays information on the OS account associated with a given result, if present. It is also used to give details on accounts listed under the OS Accounts node in the tree.
+
+\image html content_viewer_os_account.png
 
 \section cv_results Results
 
