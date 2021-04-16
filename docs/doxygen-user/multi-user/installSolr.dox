@@ -259,5 +259,32 @@ However, the dashboard does not show enough detail to know when Solr is out of h
 Solr heap and other performance tuning is described in the following article:
 <ul><li>https://cwiki.apache.org/confluence/display/SOLR/SolrPerformanceProblems</ul>
 
+\subsubsection install_solr_performance_tuning Notes on Solr Performance Tuning
+
+If you are going to work with large images (TBs) and KWS performance is important, the best approach is to use a network (Multi-User) Solr server. 
+
+Some notes:
+<ul>
+<li>A single Solr server works well for data sources up to 1TB; after that the performance starts to slow down. The performance doesn't "drop off the cliff," but it keeps slowing down as you add more data to the index. After 3TBs of input data the Solr performance takes a significant decline.
+
+<li>A single Multi-User Solr server may not perform much better than a Single-User Autopsy case. However, in Multi-User mode you can add additional Solr servers and create a Solr cluster. See the \ref install_sorl_adding_nodes section in the above documentation. These additional nodes are where the performance gains come from, especially for large input data sources. Apache Solr documentation calls this "SolrCloud" mode and each Solr server is called a "shard". The more Solr servers/shards you have, the better performance you will have for large data sets. On our test and production clusters, we are using 4-6 Solr servers to handle data sets of up to 10TB, which seems to be the upper limit. After that, you are better off breaking your Autopsy case into multiple cases, thus creating a separate Solr index for each case.
+
+<li>In our testing, a 3-node SolrCloud indexes data roughly twice as fast as single Solr node. A 6-node SolrCloud indexes data almost twice as fast as 3-node SolrCloud. After that we did not see much performance gain. These performance figures are heavily dependent on network throughput, machine resources, disk access speeds, and the type of data that is being indexed.
+
+<li>Exact match searches are much faster than substring or regex searches.
+
+<li>Regex searches tend to use a lot of RAM on the Solr server.
+
+<li>Indexing/searching of unallocated space really slows everything down because it is mostly binary or garbled data.
+
+<li>If you are not going to look at the search results until ingest is over then you should disable the periodic keyword searches. They will start taking longer as your input data grows. This can be done in Tools->Options->Keyword Search tab:
+
+\image html solr_disable_periodic_search.png
+
+<li>In Single-User mode, if you are ingesting and indexing data sources that are multiple TBs in size, then both Autopsy memory and especially the Solr JVM memory needs to be increased from their default settings. This can be done in Tools->Options->Application tab. We would recommend at least 10GB heap size for Autopsy and at least 6-8GB heap size for Solr. Note that these are "maximum" values that the process will be allowed to use/request. The operating system will not allocate more heap than the process actually needs.
+
+\image html solr_jvm.png
+
+</ul>
 
 */
