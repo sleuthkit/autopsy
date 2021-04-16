@@ -14,17 +14,24 @@ The first tab on the options panel is for general application settings.
 
 \image html options_application.png
 
-The top section lets you adjust how much memory is used by Autopsy and how many log files to keep. Generally each Autopsy session generates one log file, though it can generate more if the log file becomes too large. 
+The top section lets you adjust how much memory is used by Autopsy and how many log files to keep. Generally each Autopsy session generates one log file, though it can generate more if the log file becomes too large. You can also specify a custom location to write heap dumps to.
 
-The next section lets you specify where Autopsy should store temporary files. These files will be deleted when a case is closed. 
+The next section lets you specify where Autopsy should store temporary files. These files will be deleted when a case is closed. There are three options:
+<ul>
+<li>Local temp directory - Uses the system temp folder (On Windows, typically C:\\Users\\(user name)\\AppData\\Local\\Temp\\Autopsy)
+<li>Temp folder in case directory - Puts temporariy files in the "temp" directory in the case folder
+<li>Custom - Will use the given folder as a base for the temporary files
+</ul>
 
-The final section lets you set a custom logo. 
+The next section lets you set a custom logo. 
 
 \image html options_logo.png
 
 This logo will be displayed in any generated \ref report_html "HTML reports".
 
 \image html options_logo_report.jpg
+
+The final section lists instructions on how to change scaling for high DPI Windows systems.
 
 \section config_view View Options
 
