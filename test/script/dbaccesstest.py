@@ -37,9 +37,48 @@ def get_pg_table_columns(conn) -> Dict[str, List[str]]:
         mapping.setdefault(row[0], []).append(row[1])
 
     cursor.close()
-    conn.close()
     return mapping
 
-#for key, val in get_pg_table_columns(psycopg2.connect(dbname="jythontest1_20200414_124128", user="postgres", password="password12345")).items():
-#for key, val in get_sqlite_table_columns(sqlite3.connect(r"C:\Users\gregd\Documents\cases\7500-take4\autopsy.db")).items():
-#    print(f"{key}: {val}")
+
+def get_sql_insert_value(val) -> str:
+    if not val:
+        return "NULL"
+
+    if isinstance(val, str):
+        escaped_val = val.replace('\n', '\\n').replace("'", "''")
+        return f"'{escaped_val}'"
+
+    return str(val)
+
+
+def write_normalized(output_file, db_conn, table: str, column_names: List[str], normalizer=None):
+    cursor = db_conn.cursor()
+
+    joined_columns = ",".join([col for col in column_names])
+    cursor.execute(f"SELECT {joined_columns} FROM {table}")
+    for row in cursor:
+        if len(row) != len(column_names):
+            print(f"ERROR: in {table}, number of columns retrieved: {len(row)} but columns are {len(column_names)} with {str(column_names)}")
+            continue
+
+        row_dict = {}
+        for col_idx in range(0, len(column_names)):
+            row_dict[column_names[col_idx]] = row[col_idx]
+
+        if normalizer:
+            row_dict = normalizer(table, row_dict)
+
+        values_statement = ",".join(get_sql_insert_value(row_dict[col]) for col in column_names)
+        insert_statement = f'INSERT INTO "{table}" VALUES({values_statement})\n'
+        output_file.write(insert_statement)
+
+
+
+
+#with sqlite3.connect(r"C:\Users\gregd\Desktop\autopsy_412.db") as conn, \
+with psycopg2.connect(dbname="jythontest1_20200414_124128", user="postgres", password="password12345") as conn, \
+        open(r"C:\Users\gregd\Desktop\dbdump.sql", mode="w", encoding='utf-8') as output_file:
+
+    for table, cols in get_pg_table_columns(conn).items():
+    # for table, cols in get_sqlite_table_columns(conn).items():
+        write_normalized(output_file, conn, table, cols)
