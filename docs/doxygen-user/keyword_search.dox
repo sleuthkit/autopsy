@@ -44,12 +44,28 @@ Under the Keyword list is the option to send ingest inbox messages for each hit.
 The string extraction setting defines how strings are extracted from files from which text cannot be extracted normally because their file formats are not supported. This is the case with arbitrary binary files (such as the page file) and chunks of unallocated space that represent deleted files.
 When we extract strings from binary files we need to interpret sequences of bytes as text differently, depending on the possible text encoding and script/language used. In many cases we don't know in advance what the specific encoding/language the text is encoded in. However, it helps if the investigator is looking for a specific language, because by selecting less languages the indexing performance will be improved and the number of false positives will be reduced.
 
+\image html keyword-search-configuration-dialog-string-extraction.PNG
+
 The default setting is to search for English strings only, encoded as either UTF8 or UTF16. This setting has the best performance (shortest ingest time).
 The user can also use the String Viewer first and try different script/language settings, and see which settings give satisfactory results for the type of text relevant to the investigation. Then the same setting that works for the investigation can be applied to the keyword search ingest.
 
-\image html keyword-search-configuration-dialog-string-extraction.PNG
 
-There is also a setting to enable Optical Character Recognition (OCR). If enabled, text may be extracted from supported image types. Enabling this feature will make the keyword search module take longer to run, and the results are not perfect. The following shows a sample image containing text:
+## General Settings tab {#generalSettingsTab}
+
+\image html keyword-search-configuration-dialog-general.PNG
+
+### NIST NSRL Support
+The hash lookup ingest service can be configured to use the NIST NSRL hash set of known files. The keyword search advanced configuration dialog "General" tab contains an option to skip keyword indexing and search on files that have previously marked as "known" and uninteresting files. Selecting this option can greatly reduce size of the index and improve ingest performance. In most cases, user does not need to keyword search for "known" files.
+
+### Result update frequency during ingest
+To control how frequently searches are executed during ingest, the user can adjust the timing setting available in the keyword search advanced configuration dialog "General" tab. Setting the number of minutes lower will result in more frequent index updates and searches being executed and the user will be able to see results more in real-time. However, more frequent updates can affect the overall performance, especially on lower-end systems, and can potentially lengthen the overall time needed for the ingest to complete.
+
+One can also choose to have no periodic searches. This will speed up the ingest. Users choosing this option can run their keyword searches once the entire keyword search index is complete.
+
+### Optical Character Recognition
+There is also a setting to enable Optical Character Recognition (OCR). If enabled, text may be extracted from supported image types. Enabling this feature will make the keyword search module take longer to run, and the results are not perfect. The secondary checkbox can make OCR run faster by only processing large images and images extracted from documents. 
+
+The following shows a sample image containing text:
 
 \image html keyword-search-ocr-image.png
 
@@ -71,19 +87,6 @@ and move them to the right location. The following steps breakdown this process 
 </ol>
 
 The language files will now be supported when OCR is enabled in the Keyword Search Settings.
-
-## General Settings tab {#generalSettingsTab}
-
-\image html keyword-search-configuration-dialog-general.PNG
-
-### NIST NSRL Support
-The hash lookup ingest service can be configured to use the NIST NSRL hash set of known files. The keyword search advanced configuration dialog "General" tab contains an option to skip keyword indexing and search on files that have previously marked as "known" and uninteresting files. Selecting this option can greatly reduce size of the index and improve ingest performance. In most cases, user does not need to keyword search for "known" files.
-
-### Result update frequency during ingest
-To control how frequently searches are executed during ingest, the user can adjust the timing setting available in the keyword search advanced configuration dialog "General" tab. Setting the number of minutes lower will result in more frequent index updates and searches being executed and the user will be able to see results more in real-time. However, more frequent updates can affect the overall performance, especially on lower-end systems, and can potentially lengthen the overall time needed for the ingest to complete.
-
-One can also choose to have no periodic searches. This will speed up the ingest. Users choosing this option can run their keyword searches once the entire keyword search index is complete.
-
 
 <!----------------------------------------->
 

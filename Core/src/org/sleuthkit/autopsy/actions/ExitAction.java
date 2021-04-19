@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  * The action associated with the Case/Exit menu item. It closes the current
  * case, if any, and shuts down the application.
  */
-@ActionRegistration(displayName = "Exit", iconInMenu = true)
+@ActionRegistration(displayName = "#CTL_ExitAction", iconInMenu = true)
 @ActionReference(path = "Menu/Case", position = 1000, separatorBefore = 999)
 @ActionID(id = "org.sleuthkit.autopsy.casemodule.ExitAction", category = "Case")
 final public class ExitAction implements ActionListener {

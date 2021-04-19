@@ -3,6 +3,7 @@
 /*/build/
 */nbproject/private/*
 /nbproject/private/*
+/apidiff_output/
 
 /Core/release/
 /Core/src/org/sleuthkit/autopsy/coreutils/Version.properties
