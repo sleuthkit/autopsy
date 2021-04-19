@@ -283,7 +283,9 @@ final class ChromeCacheExtractor {
                     return;
                 }
                 
-                processCacheFolder(indexFile);
+                if (indexFile.getSize() > 0) {
+                    processCacheFolder(indexFile);
+                }
             }
         
         } catch (TskCoreException ex) {
