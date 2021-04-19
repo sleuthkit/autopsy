@@ -858,9 +858,15 @@ class Chromium extends Extract {
                     NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                     ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
 
+            String valueText;
+            if (result.get("value") instanceof byte[]) {
+                valueText = "Encrypted Text";
+            } else {
+                valueText = result.get("value").toString();
+            }
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
                     RecentActivityExtracterModuleFactory.getModuleName(),
-                    ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
+                    isFieldEncrypted(result.get("value")))); //NON-NLS
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
                     RecentActivityExtracterModuleFactory.getModuleName(),
@@ -921,20 +927,19 @@ class Chromium extends Extract {
         logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2} artifacts identified.", new Object[]{getName(), dbFilePath, addresses.size()}); //NON-NLS
         for (HashMap<String, Object> result : addresses) {
 
-            // get name fields
-            String first_name = result.get("first_name").toString() != null ? result.get("first_name").toString() : "";
-            String middle_name = result.get("middle_name").toString() != null ? result.get("middle_name").toString() : "";
-            String last_name = result.get("last_name").toString() != null ? result.get("last_name").toString() : "";
+            String first_name = isFieldEncrypted(result.get("first_name"));
+            String middle_name = isFieldEncrypted(result.get("middle_name"));
+            String last_name = isFieldEncrypted(result.get("last_name"));
 
             // get email and phone
-            String email_Addr = result.get("email").toString() != null ? result.get("email").toString() : "";
-            String phone_number = result.get("number").toString() != null ? result.get("number").toString() : "";
+            String email_Addr = isFieldEncrypted(result.get("email"));
+            String phone_number = isFieldEncrypted(result.get("number"));
 
             // Get the address fields
-            String city = result.get("city").toString() != null ? result.get("city").toString() : "";
-            String state = result.get("state").toString() != null ? result.get("state").toString() : "";
-            String zipcode = result.get("zipcode").toString() != null ? result.get("zipcode").toString() : "";
-            String country_code = result.get("country_code").toString() != null ? result.get("country_code").toString() : "";
+            String city = isFieldEncrypted(result.get("city"));
+            String state = isFieldEncrypted(result.get("state"));
+            String zipcode = isFieldEncrypted(result.get("zipcode"));
+            String country_code = isFieldEncrypted(result.get("country_code"));
 
             // schema version specific fields
             String full_name = "";
@@ -944,14 +949,15 @@ class Chromium extends Extract {
             long use_date = 0;
 
             if (isSchemaV8X) {
-                full_name = result.get("full_name").toString() != null ? result.get("full_name").toString() : "";
-                street_address = result.get("street_address").toString() != null ? result.get("street_address").toString() : "";
+                
+                full_name = isFieldEncrypted(result.get("full_name"));
+                street_address = isFieldEncrypted(result.get("street_address"));
                 date_modified = result.get("date_modified").toString() != null ? Long.valueOf(result.get("date_modified").toString()) : 0;
                 use_count = result.get("use_count").toString() != null ? Integer.valueOf(result.get("use_count").toString()) : 0;
                 use_date = result.get("use_date").toString() != null ? Long.valueOf(result.get("use_date").toString()) : 0;
             } else {
-                String address_line_1 = result.get("address_line_1").toString() != null ? result.get("street_address").toString() : "";
-                String address_line_2 = result.get("address_line_2").toString() != null ? result.get("address_line_2").toString() : "";
+                String address_line_1 = isFieldEncrypted(result.get("address_line_1"));
+                String address_line_2 = isFieldEncrypted(result.get("address_line_2"));
                 street_address = String.join(" ", address_line_1, address_line_2);
             }
 
@@ -976,6 +982,25 @@ class Chromium extends Extract {
         }
     }
 
+    /**
+     * Check the type of the object and if it is bytes then it is encrypted and return the string "Encrypted"
+     * otherwise return the string or an empty string
+     * @param dataValue Object to be checked, the object is from a database result set
+     * @return a string that says encrypted, the actual string or an empty string
+     */
+    private String isFieldEncrypted(Object dataValue) {
+
+        String stringValue;
+        if (dataValue instanceof byte[]) {
+            stringValue = "Encrypted Text";
+        } else {
+            stringValue = dataValue.toString() != null ? dataValue.toString() : "";
+        }
+        
+        return stringValue;
+        
+    }
+    
     private boolean isChromePreVersion30(String temps) {
         String query = "PRAGMA table_info(downloads)"; //NON-NLS
         List<HashMap<String, Object>> columns = this.dbConnect(temps, query);
