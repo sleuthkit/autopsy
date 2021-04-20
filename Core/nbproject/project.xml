@@ -738,10 +738,6 @@
                 <binary-origin>release\modules\ext\jai_imageio-1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/junit-3.8.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\junit-3.8.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/curator-client-2.8.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\curator-client-2.8.0.jar</binary-origin>
             </class-path-extension>
