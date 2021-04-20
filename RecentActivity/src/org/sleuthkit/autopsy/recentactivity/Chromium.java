@@ -91,6 +91,10 @@ class Chromium extends Extract {
     private static final String LOGIN_DATA_FILE_NAME = "Login Data";
     private static final String WEB_DATA_FILE_NAME = "Web Data";
     private static final String UC_BROWSER_NAME = "UC Browser";
+    private static final String ENCRYPTED_FIELD_MESSAGE = "The data was encrypted.";
+    
+    private Boolean databaseEncrypted = false;
+    private Boolean fieldEncrypted = false;
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
@@ -783,6 +787,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < webDataFiles.size()) {
+            databaseEncrypted = false;
             AbstractFile webDataFile = webDataFiles.get(j++);
             if ((webDataFile.getSize() == 0) || (webDataFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
@@ -817,11 +822,18 @@ class Chromium extends Extract {
             try {
                 // get form address atifacts
                 getFormAddressArtifacts(webDataFile, tempFilePath, isSchemaV8X);
+                if (databaseEncrypted) {
+                   Collection<BlackboardAttribute> bbattributes = new ArrayList<>(); 
+                   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                            RecentActivityExtracterModuleFactory.getModuleName(), 
+                            String.format("%s Autofill Database Encryption Detected", browser)));
+                   bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, webDataFile, bbattributes)); 
+                }
             } catch (NoCurrentCaseException | TskCoreException | Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, String.format("Error adding artifacts to the case database "
                         + "for chrome file %s [objId=%d]", webDataFile.getName(), webDataFile.getId()), ex);
             }
-
+            
             dbFile.delete();
         }
 
@@ -858,12 +870,7 @@ class Chromium extends Extract {
                     NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                     ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
 
-            String valueText;
-            if (result.get("value") instanceof byte[]) {
-                valueText = "Encrypted Text";
-            } else {
-                valueText = result.get("value").toString();
-            }
+            fieldEncrypted = false;
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
                     RecentActivityExtracterModuleFactory.getModuleName(),
                     isFieldEncrypted(result.get("value")))); //NON-NLS
@@ -885,7 +892,11 @@ class Chromium extends Extract {
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                     RecentActivityExtracterModuleFactory.getModuleName(), browser));
-
+            if (fieldEncrypted) {
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                        RecentActivityExtracterModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE));
+            }
+            
             // Add an artifact
             try {
                 bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, webDataFile, bbattributes));
@@ -927,6 +938,8 @@ class Chromium extends Extract {
         logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2} artifacts identified.", new Object[]{getName(), dbFilePath, addresses.size()}); //NON-NLS
         for (HashMap<String, Object> result : addresses) {
 
+            fieldEncrypted = false;
+            
             String first_name = isFieldEncrypted(result.get("first_name"));
             String middle_name = isFieldEncrypted(result.get("middle_name"));
             String last_name = isFieldEncrypted(result.get("last_name"));
@@ -973,6 +986,11 @@ class Chromium extends Extract {
                 otherAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         date_modified)); //NON-NLS
+                if (fieldEncrypted) {
+                    otherAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                            RecentActivityExtracterModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE)); //NON-NLS
+                    
+                }
             }
 
             helper.addWebFormAddress(
@@ -990,14 +1008,12 @@ class Chromium extends Extract {
      */
     private String isFieldEncrypted(Object dataValue) {
 
-        String stringValue;
         if (dataValue instanceof byte[]) {
-            stringValue = "Encrypted Text";
-        } else {
-            stringValue = dataValue.toString() != null ? dataValue.toString() : "";
+            fieldEncrypted = true;
+            databaseEncrypted = true;
         }
         
-        return stringValue;
+        return dataValue.toString() != null ? dataValue.toString() : "";
         
     }
     
