@@ -727,7 +727,7 @@ def get_pg_schema(pg_username: str, pg_pword: str, pg_host: str, pg_port: str):
     pg_dump = ["pg_dump", "--inserts", "-U", pg_username, "-h", pg_host, "-p", pg_port,
                "-T", "blackboard_artifacts", "-T", "blackboard_attributes"]
     output = subprocess.check_output(pg_dump)
-    return sanitize_schema(output)
+    return sanitize_schema(str(output))
 
 
 def get_sqlite_schema(db_conn):
