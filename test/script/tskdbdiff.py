@@ -589,7 +589,7 @@ def get_path_segs(path: Union[str, None]) -> Union[List[str], None]:
 
     """
     if path:
-        return list(filter(lambda x: len(x.strip()) > 0, [path for path in os.path.normpath(path).split(os.sep)]))
+        return list(filter(lambda x: len(x.strip()) > 0, [s for s in re.split(r"[\\/]", path)]))
     else:
         return None
 
@@ -759,7 +759,7 @@ def _mask_event_desc(desc: str) -> str:
     Returns: The normalized description.
 
     """
-    match = re.search(r"^\s*(\D+):\d+\s*$", desc.strip())
+    match = re.search(r"^\s*(.+?)\s*:\s*\d+\s*$", desc.strip())
     if match:
         return f"{match.group(1)}:<artifact_id>"
 
@@ -878,10 +878,10 @@ def normalize_tsk_files_path(guid_util: TskGuidUtils, row: Dict[str, any]) -> Di
         if module_output_idx >= 0:
             # remove everything up to and including ModuleOutput if ModuleOutput present
             path_parts = path_parts[module_output_idx:]
-            if len(path_parts) > 1 and path_parts[0] == 'Embedded File Extractor':
-                match = re.match(r'^(.+?)_[0-9]*$', path_parts[1])
+            if len(path_parts) > 1 and path_parts[1] == 'Embedded File Extractor':
+                match = re.match(r'^(.+?)_\d*$', path_parts[2])
                 if match:
-                    path_parts[1] = match.group(1)
+                    path_parts[2] = match.group(1)
 
         row_copy['path'] = os.path.join(*path_parts) if len(path_parts) > 0 else '/'
 
