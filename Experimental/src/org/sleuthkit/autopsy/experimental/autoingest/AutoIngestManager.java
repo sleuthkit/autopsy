@@ -24,9 +24,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import java.nio.file.FileVisitResult;
 import static java.nio.file.FileVisitResult.CONTINUE;
@@ -78,6 +75,7 @@ import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorC
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -145,7 +143,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         ControlEventType.RESUME.toString(),
         ControlEventType.SHUTDOWN.toString(),
         Event.CANCEL_JOB.toString(),
-        Event.REPROCESS_JOB.toString()}));
+        Event.REPROCESS_JOB.toString(),
+        Event.GENERATE_THREAD_DUMP_REQUEST.toString()}));
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
@@ -419,105 +418,19 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      */
     private void handleRemoteRequestThreadDumpEvent(AutoIngestJobThreadDumpRequestEvent event) {
         AutoIngestJob job = event.getJob();
-        String nodeName = job.getProcessingHostName(); // ELTODO
         // ETODO if (job != null && job.getProcessingHostName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
         if (job != null) {    
             sysLogger.log(Level.INFO, "Received thread dump request from machine {0}", event.getHostNodeName());
             
-            String threadDump = generateThreadDump(true, true);
-
-            // publish the thread dump
-            eventPublisher.publishRemotely(lastPublishedStateEvent); // ELTODO
+            new Thread(() -> {
+                // generate thread dump
+                String threadDump = ThreadUtils.generateThreadDump(true, true);
+                
+                // publish the thread dump
+                eventPublisher.publishRemotely(new AutoIngestJobThreadDumpResponseEvent(job, LOCAL_HOST_NAME, event.getHostNodeName(), threadDump));
+            }).start();
         }
     }
-
-    private static String generateThreadDump(boolean lockedMonitors, boolean lockedSynchronizers) {
-        StringBuilder threadDump = new StringBuilder(System.lineSeparator());
-        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        for (ThreadInfo threadInfo : threadMXBean.dumpAllThreads(lockedMonitors, lockedSynchronizers)) {
-            threadDump.append(threadInfo.toString());
-        }
-        return threadDump.toString();
-    }
-    
-/*
- * Method that dumps the stack trace for all of the threads to a file
-
-public static final String NEWLINE = System.getProperty("line.separator");
-
-public void dumpStack(String message, Writer writer) throws IOException {
-	ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
-	ThreadInfo[] threadInfos = mxBean.getThreadInfo(mxBean.getAllThreadIds(), 0);
-	Map<Long, ThreadInfo> threadInfoMap = new HashMap<Long, ThreadInfo>();
-	for (ThreadInfo threadInfo : threadInfos) {
-		threadInfoMap.put(threadInfo.getThreadId(), threadInfo);
-	}
-
-	try {
-		if (message != null) {
-			writer.write(message);
-			writer.write(NEWLINE);
-		}
-		Map<Thread, StackTraceElement[]> stacks = Thread.getAllStackTraces();
-		writer.write("Dump of " + stacks.size() + " threads at "
-				+ new SimpleDateFormat("yyyy/MM/dd HH:mm:ss z").format(new Date(System.currentTimeMillis()))
-				+ NEWLINE + NEWLINE);
-		for (Map.Entry<Thread, StackTraceElement[]> entry : stacks.entrySet()) {
-			Thread thread = entry.getKey();
-			writer.write("\"" + thread.getName() + "\" prio=" + thread.getPriority() + " tid=" + thread.getId()
-					+ " " + thread.getState() + " " + (thread.isDaemon() ? "deamon" : "worker") + NEWLINE);
-			ThreadInfo threadInfo = threadInfoMap.get(thread.getId());
-			if (threadInfo != null) {
-				writer.write("    native=" + threadInfo.isInNative() + ", suspended=" + threadInfo.isSuspended()
-						+ ", block=" + threadInfo.getBlockedCount() + ", wait=" + threadInfo.getWaitedCount()
-						+ NEWLINE);
-				writer.write("    lock="
-						+ threadInfo.getLockName()
-						+ " owned by "
-						+ threadInfo.getLockOwnerName()
-						+ " ("
-						+ threadInfo.getLockOwnerId()
-						+ "), cpu="
-						+ TimerHelper.durationMillisToString(mxBean.getThreadCpuTime(threadInfo.getThreadId()) / 1000000L)
-						+ ", user="
-						+ TimerHelper.durationMillisToString(mxBean.getThreadUserTime(threadInfo.getThreadId()) / 1000000L)
-						+ NEWLINE);
-			}
-			for (StackTraceElement element : entry.getValue()) {
-				writer.write("    ");
-				String eleStr = element.toString();
-				if (eleStr.startsWith("com.mprew")) {
-					writer.write(">>  ");
-				} else {
-					writer.write("    ");
-				}
-				writer.write(eleStr);
-				writer.write(NEWLINE);
-			}
-			writer.write(NEWLINE);
-		}
-		writer.write("------------------------------------------------------");
-		writer.write(NEWLINE);
-		writer.write("Non-daemon threads: ");
-		for (Thread thread : stacks.keySet()) {
-			if (!thread.isDaemon()) {
-				writer.write("\"" + thread.getName() + "\", ");
-			}
-		}
-		writer.write(NEWLINE);
-		writer.write("------------------------------------------------------");
-		writer.write(NEWLINE);
-		writer.write("Blocked threads: ");
-		for (Thread thread : stacks.keySet()) {
-			if (thread.getState() == State.BLOCKED) {
-				writer.write("\"" + thread.getName() + "\", ");
-			}
-		}
-		writer.write(NEWLINE);
-	} finally {
-		writer.close();
-	}
-}     */
 
     /**
      * Process a job reprocess event from a remote host.
@@ -3239,7 +3152,8 @@ public void dumpStack(String message, Writer writer) throws IOException {
         REPORT_STATE,
         CANCEL_JOB,
         REPROCESS_JOB,
-        GENERATE_THREAD_DUMP
+        GENERATE_THREAD_DUMP_REQUEST,
+        GENERATE_THREAD_DUMP_RESPONSE
     }
 
     /**

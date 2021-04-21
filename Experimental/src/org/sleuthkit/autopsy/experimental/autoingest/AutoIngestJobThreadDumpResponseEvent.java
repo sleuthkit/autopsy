@@ -21,20 +21,34 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import java.io.Serializable;
 
 /**
- * Event published to remotely generate a thread dump.
+ * Event published to send thread dump.
  */
-public final class AutoIngestJobThreadDumpRequestEvent extends AutoIngestJobEvent implements Serializable {
+public final class AutoIngestJobThreadDumpResponseEvent extends AutoIngestJobEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final String hostNodeName;
+    private final String targetNodeName;
+    private final String threadDump;
 
-    public AutoIngestJobThreadDumpRequestEvent(AutoIngestJob job, String hostNodeName) {
-        super(AutoIngestManager.Event.GENERATE_THREAD_DUMP_REQUEST, job);
+    public AutoIngestJobThreadDumpResponseEvent(AutoIngestJob job, String hostNodeName, String targetNodeName, String threadDump) {
+        super(AutoIngestManager.Event.GENERATE_THREAD_DUMP_RESPONSE, job);
         this.hostNodeName = hostNodeName;
+        this.targetNodeName = targetNodeName;
+        this.threadDump = threadDump;
     }
     
     String getHostNodeName() {
         return hostNodeName;
-    }    
+    }
+
+    String getTargetNodeName() {
+        return targetNodeName;
+    }
     
+    /**
+     * @return Thread dump
+     */
+    public String getThreadDump() {
+        return threadDump;
+    }    
 }

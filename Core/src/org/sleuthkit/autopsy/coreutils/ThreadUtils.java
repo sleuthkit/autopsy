@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -48,6 +51,26 @@ final public class ThreadUtils {
                  */
             }
         }
+    }
+
+    /**
+     * Returns the thread info for all live threads with stack trace and
+     * synchronization information. Some threads included in the returned array
+     * may have been terminated when this method returns.
+     *
+     * @param lockedMonitors      if true, dump all locked monitors.
+     * @param lockedSynchronizers if true, dump all locked ownable
+     *                            synchronizers.
+     *
+     * @return Thread dump of all live threads
+     */
+    public static String generateThreadDump(boolean lockedMonitors, boolean lockedSynchronizers) {
+        StringBuilder threadDump = new StringBuilder(System.lineSeparator());
+        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        for (ThreadInfo threadInfo : threadMXBean.dumpAllThreads(lockedMonitors, lockedSynchronizers)) {
+            threadDump.append(threadInfo.toString());
+        }
+        return threadDump.toString();
     }
 
     private ThreadUtils() {
