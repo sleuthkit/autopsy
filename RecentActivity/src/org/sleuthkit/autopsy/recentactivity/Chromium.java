@@ -1001,10 +1001,10 @@ class Chromium extends Extract {
     }
 
     /**
-     * Check the type of the object and if it is bytes then it is encrypted and return the string "Encrypted"
-     * otherwise return the string or an empty string
+     * Check the type of the object and if it is bytes then it is encrypted and return the string and
+     * set flag that field and file are encrypted
      * @param dataValue Object to be checked, the object is from a database result set
-     * @return a string that says encrypted, the actual string or an empty string
+     * @return the actual string or an empty string
      */
     private String isFieldEncrypted(Object dataValue) {
 
