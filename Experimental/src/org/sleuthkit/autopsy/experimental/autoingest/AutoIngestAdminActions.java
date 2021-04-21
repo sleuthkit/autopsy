@@ -166,6 +166,48 @@ final class AutoIngestAdminActions {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
         }
     }
+    
+    @NbBundle.Messages({"AutoIngestAdminActions.getThreadDump.title=Generate Thread Dump"})
+    static final class GenerateThreadDump extends AbstractAction {
+
+        private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
+
+        GenerateThreadDump(AutoIngestJob job) {
+            super(Bundle.AutoIngestAdminActions_getThreadDump_title());
+            this.job = job;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                /*
+                 * Call setCursor on this to ensure it appears (if there is time
+                 * to see it).
+                 */
+                dashboard.getRunningJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                EventQueue.invokeLater(() -> {
+                    dashboard.getMonitor().generateThreadDump(job);
+                    dashboard.getRunningJobsPanel().setCursor(Cursor.getDefaultCursor());
+                });
+            }
+        }
+
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+    }    
 
     @NbBundle.Messages({"AutoIngestAdminActions.cancelJobAction.title=Cancel Job"})
     static final class CancelJobAction extends AbstractAction {

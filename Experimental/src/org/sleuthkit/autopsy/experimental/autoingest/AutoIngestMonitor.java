@@ -607,6 +607,17 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             eventPublisher.publishRemotely(new AutoIngestJobCancelEvent(job, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
         }).start();
     }
+    
+    /**
+     * Send an event to tell a remote node to generate a thread dump.
+     *
+     * @param job
+     */
+    void generateThreadDump(AutoIngestJob job) {
+        new Thread(() -> {
+            eventPublisher.publishRemotely(new AutoIngestJobThreadDumpRequestEvent(job, LOCAL_HOST_NAME));
+        }).start();
+    }    
 
     /**
      * Reprocess the given job.
