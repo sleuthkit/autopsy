@@ -873,7 +873,7 @@ class Chromium extends Extract {
             fieldEncrypted = false;
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
                     RecentActivityExtracterModuleFactory.getModuleName(),
-                    isFieldEncrypted(result.get("value")))); //NON-NLS
+                    processFields(result.get("value")))); //NON-NLS
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
                     RecentActivityExtracterModuleFactory.getModuleName(),
@@ -940,19 +940,19 @@ class Chromium extends Extract {
 
             fieldEncrypted = false;
             
-            String first_name = isFieldEncrypted(result.get("first_name"));
-            String middle_name = isFieldEncrypted(result.get("middle_name"));
-            String last_name = isFieldEncrypted(result.get("last_name"));
+            String first_name = processFields(result.get("first_name"));
+            String middle_name = processFields(result.get("middle_name"));
+            String last_name = processFields(result.get("last_name"));
 
             // get email and phone
-            String email_Addr = isFieldEncrypted(result.get("email"));
-            String phone_number = isFieldEncrypted(result.get("number"));
+            String email_Addr = processFields(result.get("email"));
+            String phone_number = processFields(result.get("number"));
 
             // Get the address fields
-            String city = isFieldEncrypted(result.get("city"));
-            String state = isFieldEncrypted(result.get("state"));
-            String zipcode = isFieldEncrypted(result.get("zipcode"));
-            String country_code = isFieldEncrypted(result.get("country_code"));
+            String city = processFields(result.get("city"));
+            String state = processFields(result.get("state"));
+            String zipcode = processFields(result.get("zipcode"));
+            String country_code = processFields(result.get("country_code"));
 
             // schema version specific fields
             String full_name = "";
@@ -963,14 +963,14 @@ class Chromium extends Extract {
 
             if (isSchemaV8X) {
                 
-                full_name = isFieldEncrypted(result.get("full_name"));
-                street_address = isFieldEncrypted(result.get("street_address"));
+                full_name = processFields(result.get("full_name"));
+                street_address = processFields(result.get("street_address"));
                 date_modified = result.get("date_modified").toString() != null ? Long.valueOf(result.get("date_modified").toString()) : 0;
                 use_count = result.get("use_count").toString() != null ? Integer.valueOf(result.get("use_count").toString()) : 0;
                 use_date = result.get("use_date").toString() != null ? Long.valueOf(result.get("use_date").toString()) : 0;
             } else {
-                String address_line_1 = isFieldEncrypted(result.get("address_line_1"));
-                String address_line_2 = isFieldEncrypted(result.get("address_line_2"));
+                String address_line_1 = processFields(result.get("address_line_1"));
+                String address_line_2 = processFields(result.get("address_line_2"));
                 street_address = String.join(" ", address_line_1, address_line_2);
             }
 
@@ -1006,7 +1006,7 @@ class Chromium extends Extract {
      * @param dataValue Object to be checked, the object is from a database result set
      * @return the actual string or an empty string
      */
-    private String isFieldEncrypted(Object dataValue) {
+    private String processFields(Object dataValue) {
 
         if (dataValue instanceof byte[]) {
             fieldEncrypted = true;
