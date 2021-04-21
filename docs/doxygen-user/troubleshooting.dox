@@ -9,18 +9,19 @@ If you are experiencing an error, we encourage you to post on the forum (https:/
 <li>What led to the error. For example:
 <ul>
 <li>What type of data source was being processed?
-<li>Which ingest modules were running?
+<li>Which ingest modules were running? You can generate an \ref ingest_monitoring "ingest snapshot" to view the current ingest state.
 <li>Which specialized viewer were you using?
 </ul>
 <li>The error being displayed on screen (if applicable)
+<li>A \ref troubleshooting_stack "thread dump" or screenshot of the \ref ingest_monitoring "ingest snapshot" if Autopsy seems stuck
 <li>If there were any errors in the \ref troubleshooting_logs "logs"
 </ul>
 
 \section troubleshooting_specific_issues Specific Issues
 
-\subsection troubleshooting_fond_size Font Size Too Small in Windows
+\subsection troubleshooting_fond_size Font Size Too Small
 
-Make the following changes if the application is hard to navigate in High DPI systems:
+In Windows, you can make the following changes if the application is hard to navigate in High DPI systems:
 
 <ol>
 <li>Right-click on the application icon on your Desktop, Start Menu, etc.
@@ -32,7 +33,17 @@ Make the following changes if the application is hard to navigate in High DPI sy
 <li>Restart Autopsy.
 </ol>
 
+In Linux, you can supply the font size with "--fontsize XX" command line argument, but not all of the dialogs are correctly responsive and some of the text will get cut off.
+
 \section troubleshooting_general General Troubleshooting
+
+\subsection troubleshooting_reset_ui Resetting the UI
+
+If the Autopsy window no longer looks like the default \ref uilayout_page (for example, if a viewer has disappeared or there is a strange empty space), you can reset it. To do this, go to Window->Reset Windows. This will cause Autopsy to restart. If you have a case open, it will reopen after the reset.
+
+\image html reset_windows.png
+
+If resetting the windows does not fix the problem, you may need to delete your user folder as described in the next section.
 
 \subsection troubleshooting_user_folder Deleting the Autopsy User Folder
 

@@ -21,21 +21,19 @@ package org.sleuthkit.autopsy.machinesettings;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
  * Provides case-specific settings like the user-specified temp folder.
+ *
+ * NOTE: The Case class also handles providing a temp directory. When altering
+ * code in this class, also look at the Case class as well.
  */
 public final class UserMachinePreferences {
 
@@ -64,6 +62,7 @@ public final class UserMachinePreferences {
          * (whitespace and case insensitive).
          *
          * @param val The string value.
+         *
          * @return The choice or empty if not found.
          */
         static Optional<TempDirChoice> getValue(String val) {
@@ -80,97 +79,7 @@ public final class UserMachinePreferences {
     private static final String CUSTOM_TEMP_DIR_KEY = "TempDirectory";
     private static final String TEMP_DIR_CHOICE_KEY = "TempDirChoice";
 
-    private static final String AUTOPSY_SUBDIR = UserPreferences.getAppName();
-    private static final String CASE_SUBDIR = "Temp";
-
     private static final TempDirChoice DEFAULT_CHOICE = TempDirChoice.SYSTEM;
-
-    /**
-     * Returns the name of this computer's host name to be used as a directory
-     * in some instances.
-     *
-     * @return The name of this computer's host name to be used as a directory
-     * in some instances.
-     */
-    private static String getHostName() {
-        return NetworkUtils.getLocalHostName();
-    }
-
-    /**
-     * @return A subdirectory of java.io.tmpdir.
-     */
-    private static File getSystemTempDirFile() {
-        return Paths.get(System.getProperty("java.io.tmpdir"), AUTOPSY_SUBDIR).toFile();
-    }
-
-    /**
-     * @return A subdirectory of the open case or getSystemTempDirFile if no
-     * open case.
-     */
-    private static File getCaseTempDirFile() {
-        try {
-            Case autCase = Case.getCurrentCaseThrows();
-            String caseDirStr = autCase.getCaseDirectory();
-            switch (autCase.getCaseType()) {
-                case MULTI_USER_CASE: return Paths.get(caseDirStr, getHostName(), CASE_SUBDIR).toFile();
-                case SINGLE_USER_CASE: return Paths.get(caseDirStr, CASE_SUBDIR).toFile();
-                default: 
-                    logger.log(Level.SEVERE, "Unknown case type: " + autCase.getCaseType());
-                    return getSystemTempDirFile();
-            }
-            
-        } catch (NoCurrentCaseException ex) {
-            return getSystemTempDirFile();
-        }
-    }
-
-    /**
-     * Returns the custom directory subdirectory to be used for temp files
-     * (otherwise java.io.tmpdir subdir).
-     *
-     * @return A subdirectory of the custom user-specified path. If no path is
-     * specified, getSystemTempDirFile() is returned instead.
-     */
-    private static File getCustomTempDirFile() {
-        String customDirectory = getCustomTempDirectory();
-        return (StringUtils.isBlank(customDirectory))
-                ? getSystemTempDirFile() : Paths.get(customDirectory, AUTOPSY_SUBDIR, getHostName()).toFile();
-    }
-
-    /**
-     * Returns the temp directory file to use based on user choice.
-     *
-     * @return The directory.
-     */
-    private static File getTempDirFile() {
-        TempDirChoice choice = getTempDirChoice();
-        switch (choice) {
-            case CASE:
-                return getCaseTempDirFile();
-            case CUSTOM:
-                return getCustomTempDirFile();
-            case SYSTEM:
-            default:
-                return getSystemTempDirFile();
-        }
-    }
-
-    /**
-     * Returns the temp directory to use based on settings. This method also
-     * ensures the temp directory has been created.
-     *
-     * @return The base user-specified temporary directory.
-     */
-    public static String getTempDirectory() {
-        File dir = getTempDirFile();
-        dir = dir == null ? getSystemTempDirFile() : dir;
-
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        return dir.getAbsolutePath();
-    }
 
     /**
      * @return The user-specified custom temp directory path or empty string.
@@ -188,7 +97,8 @@ public final class UserMachinePreferences {
      * @return True if this is a valid location for a temp directory.
      *
      * @throws UserMachinePreferencesException If path could not be validated
-     * due to mkdirs failure or the directory is not read/write.
+     *                                         due to mkdirs failure or the
+     *                                         directory is not read/write.
      */
     @NbBundle.Messages({
         "# {0} - path",
@@ -219,7 +129,7 @@ public final class UserMachinePreferences {
      * @param path The path to the directory.
      *
      * @throws UserMachinePreferencesException If the directory cannot be
-     * accessed or created.
+     *                                         accessed or created.
      */
     public static void setCustomTempDirectory(String path) throws UserMachinePreferencesException {
         validateTempDirectory(path);
@@ -228,7 +138,8 @@ public final class UserMachinePreferences {
 
     /**
      * @return The user selection for how the temp directory should be handled
-     * (temp directory in case folder, in java.io.tmpdir, custom path).
+     *         (temp directory in case folder, in java.io.tmpdir, custom path).
+     *         Guaranteed to be non-null.
      */
     public static TempDirChoice getTempDirChoice() {
         return TempDirChoice.getValue(preferences.get(TEMP_DIR_CHOICE_KEY, null))
@@ -239,6 +150,7 @@ public final class UserMachinePreferences {
      * Sets the temp directory choice (i.e. system, case, custom).
      *
      * @param tempDirChoice The choice (must be non-null).
+     *
      * @throws UserMachinePreferencesException
      */
     public static void setTempDirChoice(TempDirChoice tempDirChoice) throws UserMachinePreferencesException {
