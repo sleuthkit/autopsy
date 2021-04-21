@@ -166,7 +166,7 @@ final class AutoIngestAdminActions {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
         }
     }
-    
+
     @NbBundle.Messages({"AutoIngestAdminActions.getThreadDump.title=Generate Thread Dump"})
     static final class GenerateThreadDump extends AbstractAction {
 
@@ -180,6 +180,7 @@ final class AutoIngestAdminActions {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+
             if (job == null) {
                 return;
             }
@@ -191,14 +192,8 @@ final class AutoIngestAdminActions {
 
             AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
             if (dashboard != null) {
-                /*
-                 * Call setCursor on this to ensure it appears (if there is time
-                 * to see it).
-                 */
-                dashboard.getRunningJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 EventQueue.invokeLater(() -> {
-                    dashboard.getMonitor().generateThreadDump(job);
-                    dashboard.getRunningJobsPanel().setCursor(Cursor.getDefaultCursor());
+                    dashboard.getMonitor().generateThreadDump(job.getProcessingHostName());
                 });
             }
         }
@@ -207,7 +202,7 @@ final class AutoIngestAdminActions {
         public Object clone() throws CloneNotSupportedException {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
         }
-    }    
+    }
 
     @NbBundle.Messages({"AutoIngestAdminActions.cancelJobAction.title=Cancel Job"})
     static final class CancelJobAction extends AbstractAction {

@@ -143,8 +143,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         ControlEventType.RESUME.toString(),
         ControlEventType.SHUTDOWN.toString(),
         Event.CANCEL_JOB.toString(),
-        Event.REPROCESS_JOB.toString(),
-        Event.GENERATE_THREAD_DUMP_REQUEST.toString()}));
+        Event.REPROCESS_JOB.toString()}));
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
@@ -308,8 +307,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     handleRemoteJobCancelEvent((AutoIngestJobCancelEvent) event);
                 } else if (event instanceof AutoIngestJobReprocessEvent) {
                     handleRemoteJobReprocessEvent((AutoIngestJobReprocessEvent) event);
-                } else if (event instanceof AutoIngestJobThreadDumpRequestEvent) {
-                    handleRemoteRequestThreadDumpEvent((AutoIngestJobThreadDumpRequestEvent) event);
                 }
             }
         }
@@ -410,25 +407,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             if (event.getJob().equals(currentJob)) {
                 cancelCurrentJob();
             }
-        }
-    }
-    
-    /**
-     * Handle a request for current state by re-sending the last state event.
-     */
-    private void handleRemoteRequestThreadDumpEvent(AutoIngestJobThreadDumpRequestEvent event) {
-        AutoIngestJob job = event.getJob();
-        // ETODO if (job != null && job.getProcessingHostName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
-        if (job != null) {    
-            sysLogger.log(Level.INFO, "Received thread dump request from machine {0}", event.getHostNodeName());
-            
-            new Thread(() -> {
-                // generate thread dump
-                String threadDump = ThreadUtils.generateThreadDump(true, true);
-                
-                // publish the thread dump
-                eventPublisher.publishRemotely(new AutoIngestJobThreadDumpResponseEvent(job, LOCAL_HOST_NAME, event.getHostNodeName(), threadDump));
-            }).start();
         }
     }
 
@@ -540,11 +518,30 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     setChanged();
                     notifyObservers(Event.SHUTTING_DOWN);
                     break;
+                case GENERATE_THREAD_DUMP_REQUEST:
+                    handleRemoteRequestThreadDumpEvent(event);
+                    break;
                 default:
                     sysLogger.log(Level.WARNING, "Received unsupported control event: {0}", event.getControlEventType());
                     break;
             }
         }
+    }
+    
+    /**
+     * Handle a request for current state by re-sending the last state event.
+     */
+    private void handleRemoteRequestThreadDumpEvent(AutoIngestNodeControlEvent event) {
+
+        new Thread(() -> {
+            sysLogger.log(Level.INFO, "Generating thread dump");
+            // generate thread dump
+            String threadDump = ThreadUtils.generateThreadDump(true, true);
+
+            // publish the thread dump
+            sysLogger.log(Level.INFO, "Sending thread dump reply to node {0}", event.getOriginatingNodeName());
+            eventPublisher.publishRemotely(new ThreadDumpResponseEvent(LOCAL_HOST_NAME, event.getOriginatingNodeName(), threadDump));
+        }).start();
     }
 
     /**
@@ -3152,7 +3149,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         REPORT_STATE,
         CANCEL_JOB,
         REPROCESS_JOB,
-        GENERATE_THREAD_DUMP_REQUEST,
         GENERATE_THREAD_DUMP_RESPONSE
     }
 

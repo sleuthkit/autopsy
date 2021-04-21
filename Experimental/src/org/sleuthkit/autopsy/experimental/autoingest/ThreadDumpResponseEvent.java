@@ -19,19 +19,20 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.Serializable;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
  * Event published to send thread dump.
  */
-public final class AutoIngestJobThreadDumpResponseEvent extends AutoIngestJobEvent implements Serializable {
+public final class ThreadDumpResponseEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final String hostNodeName;
     private final String targetNodeName;
     private final String threadDump;
 
-    public AutoIngestJobThreadDumpResponseEvent(AutoIngestJob job, String hostNodeName, String targetNodeName, String threadDump) {
-        super(AutoIngestManager.Event.GENERATE_THREAD_DUMP_RESPONSE, job);
+    public ThreadDumpResponseEvent(String hostNodeName, String targetNodeName, String threadDump) {
+        super(AutoIngestManager.Event.GENERATE_THREAD_DUMP_RESPONSE.toString(), null, null);
         this.hostNodeName = hostNodeName;
         this.targetNodeName = targetNodeName;
         this.threadDump = threadDump;

@@ -74,7 +74,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         AutoIngestManager.Event.STARTING_UP.toString(),
         AutoIngestManager.Event.SHUTTING_DOWN.toString(),
         AutoIngestManager.Event.SHUTDOWN.toString(),
-        AutoIngestManager.Event.RESUMED.toString()}));
+        AutoIngestManager.Event.RESUMED.toString(),
+        AutoIngestManager.Event.GENERATE_THREAD_DUMP_RESPONSE.toString()}));
     private final AutopsyEventPublisher eventPublisher;
     private CoordinationService coordinationService;
     private final ScheduledThreadPoolExecutor coordSvcQueryExecutor;
@@ -154,6 +155,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             handleCaseDeletedEvent((AutoIngestCaseDeletedEvent) event);
         } else if (event instanceof AutoIngestNodeStateEvent) {
             handleAutoIngestNodeStateEvent((AutoIngestNodeStateEvent) event);
+        } else if (event instanceof ThreadDumpResponseEvent) {
+            handleRemoteThreadDumpResponseEvent((ThreadDumpResponseEvent) event);
         }
     }
 
@@ -252,6 +255,15 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         setChanged();
         // Trigger a dashboard refresh.
         notifyObservers(oldNodeState == null ? nodeStates.get(event.getNodeName()) : oldNodeState);
+    }
+    
+    /**
+     * Handles thread dump response event.
+     *
+     * @param event ThreadDumpResponseEvent
+     */
+    private void handleRemoteThreadDumpResponseEvent(ThreadDumpResponseEvent event) {
+        // ELTODO
     }
 
     /**
@@ -607,17 +619,6 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             eventPublisher.publishRemotely(new AutoIngestJobCancelEvent(job, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
         }).start();
     }
-    
-    /**
-     * Send an event to tell a remote node to generate a thread dump.
-     *
-     * @param job
-     */
-    void generateThreadDump(AutoIngestJob job) {
-        new Thread(() -> {
-            eventPublisher.publishRemotely(new AutoIngestJobThreadDumpRequestEvent(job, LOCAL_HOST_NAME));
-        }).start();
-    }    
 
     /**
      * Reprocess the given job.
@@ -705,6 +706,15 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     void shutdownAutoIngestNode(String nodeName) {
         sendControlEventToNode(ControlEventType.SHUTDOWN, nodeName);
     }
+    
+    /**
+     * Tell the specified node to generate a thread dump.
+     *
+     * @param job
+     */
+    void generateThreadDump(String nodeName) {
+        sendControlEventToNode(ControlEventType.GENERATE_THREAD_DUMP_REQUEST, nodeName);
+    }    
 
     /**
      * A task that updates the state maintained by the monitor. At present this
