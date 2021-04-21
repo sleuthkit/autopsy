@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import com.google.common.collect.Lists;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
@@ -629,14 +630,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     /**
      * Gets the list of supported MIME types.
-     * 
+     *
      * @return A list of the supported MIME types as Strings.
      */
     @Override
     final public List<String> getSupportedMimeTypes() {
-        List<String> supported = new ArrayList<>();
-        supported.addAll(ImageUtils.getSupportedImageMimeTypes());
-        return Collections.unmodifiableList(supported);
+        return Collections.unmodifiableList(Lists.newArrayList(ImageUtils.getSupportedImageMimeTypes()));
     }
 
     /**
@@ -646,7 +645,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      */
     @Override
     final public List<String> getSupportedExtensions() {
-        return ImageUtils.getSupportedImageExtensions();
+        return ImageUtils.getSupportedImageExtensions().stream()
+                .map("."::concat) //NOI18N
+                .collect(Collectors.toList());
     }
 
     @Override
