@@ -414,7 +414,7 @@ class TskGuidUtils:
         cursor.execute(select_statement)
         ret_dict = {}
         for row in cursor:
-            ret_dict[row[0]] = delim.join([str(col) for col in row[1:]])
+            ret_dict[row[0]] = delim.join([str(col) if col else '' for col in row[1:]])
 
         return ret_dict
 
@@ -460,11 +460,11 @@ class TskGuidUtils:
                         path = artifact_parent_dict[par_obj_id]
                         break
 
-                guid_artifacts[par_obj_id] = "/".join([path, v])
+                guid_artifacts[k] = "/".join([path, v])
 
         return TskGuidUtils(
             obj_id_guids={**guid_files, **guid_reports, **guid_os_accounts, **guid_vs_parts,
-                          **guid_fs_info, **guid_fs_info, **guid_image_names},
+                          **guid_fs_info, **guid_fs_info, **guid_image_names, **guid_artifacts},
             artifact_types=objid_artifacts)
 
     artifact_types: Dict[int, str]
@@ -777,9 +777,9 @@ def normalize_tsk_event_descriptions(guid_util: TskGuidUtils, row: Dict[str, any
     """
     row_copy = row.copy()
     # replace object ids with information that is deterministic
+    row_copy['event_description_id'] = MASKED_ID
     row_copy['content_obj_id'] = guid_util.get_guid_for_file_objid(row['content_obj_id'])
-    row_copy['data_source_obj_id'] = guid_util.get_guid_for_file_objid(row['data_source_obj_id'])
-    row_copy['artifact_id'] = guid_util.get_guid_for_artifactid(row['artifact_id'])
+    row_copy['artifact_id'] = guid_util.get_guid_for_artifactid(row['artifact_id']) if row['artifact_id'] else None
 
     if row['full_description'] == row['med_description'] == row['short_description']:
         row_copy['full_description'] = _mask_event_desc(row['full_description'])
@@ -961,11 +961,11 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
         "obj_id": MASKED_OBJ_ID
     }),
     "image_gallery_groups": NormalizeColumns({
-        "obj_id": MASKED_OBJ_ID
+        "group_id": MASKED_ID
     }),
     "tsk_files_path": NormalizeRow(normalize_tsk_files_path),
     "tsk_file_layout": NormalizeColumns({
-        "obj_id": lambda guid_util, col: guid_util.get_guid_for_file_objid(col)
+        "obj_id": lambda guid_util, col: normalize_unalloc_files(guid_util.get_guid_for_file_objid(col))
     }),
     "tsk_objects": NormalizeRow(normalize_tsk_objects),
     "reports": NormalizeColumns({
@@ -1042,6 +1042,7 @@ def write_normalized(guid_utils: TskGuidUtils, output_file, db_conn, table: str,
             row_dict = row_masker.normalize(guid_utils, row_dict)
 
         if row_dict is not None:
+            # NOTE: This is an alternate approach to representing values as json-like lines
             # entries = []
             # for idx in range(0, len(column_names)):
             #     column = column_names[idx]
@@ -1051,7 +1052,7 @@ def write_normalized(guid_utils: TskGuidUtils, output_file, db_conn, table: str,
             # insert_statement = f"{table}: {{{insert_values}}}\n"
 
             values_statement = ",".join(get_sql_insert_value(row_dict[col]) for col in column_names)
-            insert_statement = f'INSERT INTO "{table}" VALUES({values_statement})\n'
+            insert_statement = f'INSERT INTO "{table}" VALUES({values_statement});\n'
             output_file.write(insert_statement)
 
 
