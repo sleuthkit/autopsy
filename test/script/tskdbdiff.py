@@ -169,12 +169,29 @@ class TskDbDiff(object):
 
         # create file path for gold files inside output folder. In case of diff, both gold and current run files
         # are available in the report output folder. Prefix Gold- is added to the filename.
-        gold_file_in_output_dir = output_file[:output_file.rfind("/")] + "/Gold-" + output_file[output_file.rfind("/")+1:]
+        gold_file_in_output_dir = os.path.join(os.path.dirname(output_file), "Gold-" + os.path.basename(output_file))
         shutil.copy(gold_file, gold_file_in_output_dir)
 
         return False
 
 
+    @staticmethod
+    def _get_associated_artifact_type(cur, artifact_id, isMultiUser):
+        if isMultiUser:
+            cur.execute(
+                "SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=%s",
+                [artifact_id])
+        else:
+            cur.execute(
+                "SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=?",
+                [artifact_id])
+
+        info = cur.fetchone()
+
+        return "File path: " + info[0] + " Artifact Type: " + info[1]
+
+
+    @staticmethod
     def _dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings, id_obj_path_table):
         """Dumps sorted text results to the given output location.
 
@@ -270,7 +287,7 @@ class TskDbDiff(object):
                             elif attr["value_type"] == 5:
                                 attr_value_as_string = str(attr["value_int64"])                        
                             if attr["display_name"] == "Associated Artifact":
-                                attr_value_as_string = getAssociatedArtifactType(attribute_cursor, attr_value_as_string, isMultiUser)                            
+                                attr_value_as_string = TskDbDiff._get_associated_artifact_type(attribute_cursor, attr_value_as_string, isMultiUser)
                             patrn = re.compile("[\n\0\a\b\r\f]")
                             attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
                             if attr["source"] == "Keyword Search" and attr["display_name"] == "Keyword Preview":
@@ -310,7 +327,7 @@ class TskDbDiff(object):
         srtcmdlst = ["sort", unsorted_dump, "-o", bb_dump_file]
         subprocess.call(srtcmdlst)
 
-
+    @staticmethod
     def _dump_output_db_nonbb(db_file, dump_file, isMultiUser, pgSettings):
         """Dumps a database to a text file.
 
@@ -321,7 +338,7 @@ class TskDbDiff(object):
             dump_file: a pathto_File, the location to dump the non-blackboard database items
         """
 
-        conn, output_file = db_connect(db_file, isMultiUser, pgSettings)
+        conn, backup_db_file = db_connect(db_file, isMultiUser, pgSettings)
         guid_utils = TskGuidUtils.create(conn)
 
         if isMultiUser:
@@ -331,14 +348,15 @@ class TskDbDiff(object):
             table_cols = get_sqlite_table_columns(conn)
             schema = get_sqlite_schema(conn)
 
-        output_file.write(schema + "\n")
-        for table, cols in sorted(table_cols.items(), key=lambda pr: pr[0]):
-            normalizer = TABLE_NORMALIZATIONS[table] if table in TABLE_NORMALIZATIONS else None
-            write_normalized(guid_utils, output_file, conn, table, cols, normalizer)
+        with codecs.open(dump_file, "wb", "utf_8") as output_file:
+            output_file.write(schema + "\n")
+            for table, cols in sorted(table_cols.items(), key=lambda pr: pr[0]):
+                normalizer = TABLE_NORMALIZATIONS[table] if table in TABLE_NORMALIZATIONS else None
+                write_normalized(guid_utils, output_file, conn, table, cols, normalizer)
 
         # Now sort the file
-        # srtcmdlst = ["sort", dump_file, "-o", dump_file]
-        # subprocess.call(srtcmdlst)
+        srtcmdlst = ["sort", dump_file, "-o", dump_file]
+        subprocess.call(srtcmdlst)
 
         conn.close()
         # cleanup the backup
@@ -346,6 +364,10 @@ class TskDbDiff(object):
         #    os.remove(backup_db_file)
         return guid_utils.obj_id_guids
 
+    @staticmethod
+    def _get_tmp_file(base, ext):
+        time = datetime.datetime.now().time().strftime("%H%M%f")
+        return os.path.join(os.environ['TMP'], base + time + ext)
 
 
 class TskDbDiffException(Exception):
