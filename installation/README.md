@@ -14,18 +14,14 @@
   ```
   brew tap bell-sw/liberica
   ```
-- Then, you can install this dependency using `brew`.  On OS X Big Sur (11.2.x) or later, installation can be done as follows:
+- Then, you can install this dependency using `brew`:
   ```
   brew install --cask liberica-jdk8-full
-  ```
-  for previous versions of OS X:
-  ```
-  brew cask install liberica-jdk8-full
   ```
 - You will need to set this Java to `JAVA_HOME` with something like:
   ```
   export JAVA_HOME=$(/usr/libexec/java_home -v 1.8) && \
-  echo 'export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)' | tee >> ~/.bashrc >> ~/.zshrc
+  echo 'export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)' | tee ~/.bash_profile
   ```
 - and properly link it to the OpenJDK location: 
   ```
@@ -44,15 +40,20 @@
 ## On Linux (Ubuntu / Debian-based)
 
 *A script to install these dependencies that can be found [here](scripts/install_prereqs_ubuntu.sh).*
+- You will need to include some repositories in order to install this software.  One way to do that is to uncomment lines in your `sources.list`:
+  ```
+  sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
+  ```
 - Use `apt` to install dependencies:
   ```
-  sudo apt update && \
-  sudo apt -y install build-essential autoconf libtool git-core automake && \
-  sudo apt -y build-dep imagemagick libmagickcore-dev libde265 libheif && \
-  sudo apt -y install testdisk ant libafflib-dev libewf-dev libpq-dev libvhdi-dev libvmdk-dev git zip zlib1-dev wget && \
-  sudo apt -y install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
-                  gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer1.0-x \
-                  gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
+  sudo apt -y install \
+  libpq-dev \
+  ant build-essential autoconf libtool git-core automake git zip wget \
+  libheif-dev libde265-dev libmagickcore-dev imagemagick \
+  testdisk libafflib-dev libewf-dev libvhdi-dev libvmdk-dev \
+  libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+  gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer1.0-x \
+  gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
   ```
 - You will also need to install Java 8 and JavaFX to run autopsy.  We recommend Liberica OpenJDK which can be installed as follows:
   ```
@@ -63,10 +64,10 @@
   sudo apt -y install bellsoft-java8-full && \
   popd
   ```
-- Then, you will need to set this Java to `JAVA_HOME` with something like:
+- Then, you will need to set this Java to `JAVA_HOME` with something like:e
   ```
   export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-full-amd64 && \
-  echo 'export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-full-amd64' | sudo tee >> ~/.bashrc >> ~/.zshrc
+  echo 'export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-full-amd64' | tee ~/.profile
   ```
 - Finally, you can verify this version of Java with:
   ```
@@ -132,3 +133,12 @@
   ./unix_setup.sh
   ```
 - At this point, you should be able to run Autopsy with the command `./autopsy` from within the `bin` directory of the extracted folder.
+
+
+# TODO
+- align scripts with README
+- open cv issues on linux?
+- stalling when not running autopsy as sudo?
+- troubleshooting from Running_Linux_OSX.txt
+- setup development environment guide
+- other installation steps

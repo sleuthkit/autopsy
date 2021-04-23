@@ -37,7 +37,6 @@ then
     popd
     if [[ ! -d $SLEUTHKIT_SRC_DIR ]] 
     then
-        popd
         echo "Unable to successfully clone Sleuthkit" >> /dev/stderr
         exit 1
     fi
@@ -51,7 +50,6 @@ git pull && \
 popd
 if [[ $? -ne 0 ]] 
 then
-    popd
     echo "Unable to reset Sleuthkit repo and pull latest on $TSK_BRANCH" >> /dev/stderr
     exit 1
 fi
@@ -66,7 +64,6 @@ sudo make install && \
 popd
 if [[ $? -ne 0 ]] 
 then
-    popd
     echo "Unable to build Sleuthkit." >> /dev/stderr
     exit 1
 fi

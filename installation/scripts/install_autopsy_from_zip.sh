@@ -15,6 +15,8 @@ while getopts "z:i:v:" o; do
         i)
             INSTALL_DIR=${OPTARG}
             ;;
+        v)  ASC_FILE=${OPTARG}
+            ;;
         *)
             usage
             exit 1
@@ -22,33 +24,33 @@ while getopts "z:i:v:" o; do
     esac
 done
 
-if [[ -z "${AUTOPSY_ZIP_PATH}" ]] || [[ -z "${INSTALL_DIR}" ]]; then
+if [[ -z "$AUTOPSY_ZIP_PATH" ]] || [[ -z "$INSTALL_DIR" ]]; then
     usage
     exit 1
 fi
 
-if [[ ! -z "${ASC_FILE}" ]]
+if [[ -n "$ASC_FILE" ]]
 then
     VERIFY_DIR=$(pwd)/temp
-    mkdir -p ${VERIFY_DIR} && \
-    pushd ${VERIFY_DIR} && \
-    wget https://sleuthkit.org/carrier.asc && \
-    gpg --homedir "${VERIFY_DIR}" --import https://sleuthkit.org/carrier.asc && \
-    gpgv --homedir "${VERIFY_DIR}" --keyring "${VERIFY_DIR}/pubring.kbx" ${ASC_FILE} ${AUTOPSY_ZIP_PATH} && \
-    rm -r ${VERIFY_DIR}
-    popd
+    KEY_DIR=$VERIFY_DIR/private
+    mkdir -p $VERIFY_DIR && \
+    sudo wget -O $VERIFY_DIR/carrier.asc https://sleuthkit.org/carrier.asc && \
+    mkdir -p $KEY_DIR && \
+    sudo chmod 600 $KEY_DIR && \
+    sudo gpg --homedir "$KEY_DIR" --import $VERIFY_DIR/carrier.asc && \
+    sudo gpgv --homedir "$KEY_DIR" --keyring "$KEY_DIR/pubring.kbx" $ASC_FILE $AUTOPSY_ZIP_PATH && \
+    sudo rm -r $VERIFY_DIR
     if [[ $? -ne 0 ]]
     then
-        popd
-        echo "Unable to successfully extract $AUTOPSY_ZIP_PATH to $AUTOPSY_EXTRACTED_PATH" >> /dev/stderr
+        echo "Unable to successfully verify $AUTOPSY_ZIP_PATH with $ASC_FILE" >> /dev/stderr
         exit 1
     fi
 fi
 
 
-zip_file_name=$(basename -- "$AUTOPSY_ZIP_PATH")
-zip_name="${filename%.*}"
-AUTOPSY_EXTRACTED_PATH=$INSTALL_DIR/$zip_name
+ZIP_FILE_NAME=$(basename -- "$AUTOPSY_ZIP_PATH")
+ZIP_NAME="${ZIP_FILE_NAME%.*}"
+AUTOPSY_EXTRACTED_PATH=$INSTALL_DIR/$ZIP_NAME
 
 if [[ -d $AUTOPSY_EXTRACTED_PATH || -f $AUTOPSY_EXTRACTED_PATH ]]
 then
@@ -58,10 +60,10 @@ fi
 
 echo "Extracting $AUTOPSY_ZIP_PATH to $AUTOPSY_EXTRACTED_PATH..."
 mkdir -p $AUTOPSY_EXTRACTED_PATH && \
-unzip $AUTOPSY_ZIP_PATH -d $AUTOPSY_EXTRACTED_PATH
+unzip $AUTOPSY_ZIP_PATH -d $INSTALL_DIR
 if [[ $? -ne 0 ]]
 then
-    echo "Unable to successfully extract $AUTOPSY_ZIP_PATH to $AUTOPSY_EXTRACTED_PATH" >> /dev/stderr
+    echo "Unable to successfully extract $AUTOPSY_ZIP_PATH to $INSTALL_DIR" >> /dev/stderr
     exit 1
 fi
 
@@ -73,7 +75,6 @@ chmod u+x ./unix_setup.sh && \
 popd
 if [[ $? -ne 0 ]]
 then
-    popd
     echo "Unable to setup permissions for autopsy binaries" >> /dev/stderr
     exit 1
 else
