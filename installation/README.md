@@ -141,4 +141,5 @@
 - stalling when not running autopsy as sudo?
 - troubleshooting from Running_Linux_OSX.txt
 - setup development environment guide
+- do we need all these dependencies and are these all of the dependencies we need?
 - other installation steps
