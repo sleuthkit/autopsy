@@ -27,19 +27,19 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 public final class ThreadDumpResponseEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final String hostNodeName;
+    private final String originalNodeName;
     private final String targetNodeName;
     private final String threadDump;
 
-    public ThreadDumpResponseEvent(String hostNodeName, String targetNodeName, String threadDump) {
+    public ThreadDumpResponseEvent(String originalNodeName, String targetNodeName, String threadDump) {
         super(AutoIngestManager.Event.GENERATE_THREAD_DUMP_RESPONSE.toString(), null, null);
-        this.hostNodeName = hostNodeName;
+        this.originalNodeName = originalNodeName;
         this.targetNodeName = targetNodeName;
         this.threadDump = threadDump;
     }
     
-    String getHostNodeName() {
-        return hostNodeName;
+    String getOriginalNodeName() {
+        return originalNodeName;
     }
 
     String getTargetNodeName() {

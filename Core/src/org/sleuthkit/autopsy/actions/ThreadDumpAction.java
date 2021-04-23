@@ -46,6 +46,8 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
 /**
  * Action class for the Thread Dump help menu item. If there is no case open the
@@ -62,8 +64,6 @@ public final class ThreadDumpAction extends CallableSystemAction implements Acti
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ThreadDumpAction.class.getName());
-
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss-SSSS");
 
     @Override
     public void performAction() {
@@ -114,26 +114,13 @@ public final class ThreadDumpAction extends CallableSystemAction implements Acti
          * @throws IOException
          */
         private File createThreadDump() throws IOException {
+            
+            // generate thread dump
+            String threadDump = ThreadUtils.generateThreadDump();
+            
             File dumpFile = createFilePath().toFile();
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(dumpFile, true))) {
-                ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-                ThreadInfo[] threadInfos = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), 100);
-                for (ThreadInfo threadInfo : threadInfos) {
-                    writer.write(threadInfo.toString());
-                    writer.write("\n");
-                }
-
-                long[] deadlockThreadIds = threadMXBean.findDeadlockedThreads();
-                if (deadlockThreadIds != null) {
-                    writer.write("-------------------List of Deadlocked Thread IDs ---------------------");
-                    String idsList = (Arrays
-                            .stream(deadlockThreadIds)
-                            .boxed()
-                            .collect(Collectors.toList()))
-                            .stream().map(n -> String.valueOf(n))
-                            .collect(Collectors.joining("-", "{", "}"));
-                    writer.write(idsList);
-                }
+                writer.write(threadDump);
             }
 
             return dumpFile;
@@ -145,7 +132,7 @@ public final class ThreadDumpAction extends CallableSystemAction implements Acti
          * @return Path for dump file.
          */
         private Path createFilePath() {
-            String fileName = "ThreadDump_" + DATE_FORMAT.format(new Date()) + ".txt";
+            String fileName = "ThreadDump_" + TimeStampUtils.createTimeStamp() + ".txt";
             if (Case.isCaseOpen()) {
                 return Paths.get(Case.getCurrentCase().getLogDirectoryPath(), fileName);
             }

@@ -19,8 +19,15 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.awt.Desktop;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,10 +44,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus;
@@ -263,7 +273,33 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @param event ThreadDumpResponseEvent
      */
     private void handleRemoteThreadDumpResponseEvent(ThreadDumpResponseEvent event) {
-        // ELTODO
+        if (event.getTargetNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+            LOGGER.log(Level.INFO, "Received thread dump response event from machine {0}", event.getOriginalNodeName());
+            File dumpFile = createFilePath(event.getOriginalNodeName()).toFile();
+            try {
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(dumpFile, true))) {
+                    writer.write(event.getThreadDump());
+                }
+
+                Desktop.getDesktop().open(dumpFile);
+            } catch (IOException ex) {
+                if (dumpFile != null) {
+                    LOGGER.log(Level.WARNING, "Failed to open thread dump file in external viewer: " + dumpFile.getAbsolutePath(), ex);
+                } else {
+                    LOGGER.log(Level.SEVERE, "Failed to create thread dump file.", ex);
+                }
+            }
+        }
+    }
+
+    /**
+     * Create the thread dump file path.
+     *
+     * @return Path for dump file.
+     */
+    private Path createFilePath(String nodeName) {
+        String fileName = "ThreadDump_Node_" + nodeName + "_" + TimeStampUtils.createTimeStamp() + ".txt";
+        return Paths.get(PlatformUtil.getLogDirectory(), fileName);
     }
 
     /**

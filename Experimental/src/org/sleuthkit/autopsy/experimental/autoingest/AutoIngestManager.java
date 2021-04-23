@@ -536,7 +536,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         new Thread(() -> {
             sysLogger.log(Level.INFO, "Generating thread dump");
             // generate thread dump
-            String threadDump = ThreadUtils.generateThreadDump(true, true);
+            String threadDump = ThreadUtils.generateThreadDump();
 
             // publish the thread dump
             sysLogger.log(Level.INFO, "Sending thread dump reply to node {0}", event.getOriginatingNodeName());

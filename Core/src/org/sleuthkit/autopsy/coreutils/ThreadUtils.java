@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.coreutils;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /*
  * Concurrent programming utilities.
@@ -58,17 +60,35 @@ final public class ThreadUtils {
      * synchronization information. Some threads included in the returned array
      * may have been terminated when this method returns.
      *
-     * @param lockedMonitors      if true, dump all locked monitors.
-     * @param lockedSynchronizers if true, dump all locked ownable
-     *                            synchronizers.
-     *
      * @return Thread dump of all live threads
      */
-    public static String generateThreadDump(boolean lockedMonitors, boolean lockedSynchronizers) {
+    public static String generateThreadDump() {
+        /*
+         * StringBuilder threadDump = new StringBuilder(System.lineSeparator());
+         * ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean(); for
+         * (ThreadInfo threadInfo : threadMXBean.dumpAllThreads(lockedMonitors,
+         * lockedSynchronizers)) { threadDump.append(threadInfo.toString()); }
+         * return threadDump.toString();
+         */
+
         StringBuilder threadDump = new StringBuilder(System.lineSeparator());
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        for (ThreadInfo threadInfo : threadMXBean.dumpAllThreads(lockedMonitors, lockedSynchronizers)) {
+        ThreadInfo[] threadInfos = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), 100);
+        for (ThreadInfo threadInfo : threadInfos) {
             threadDump.append(threadInfo.toString());
+            threadDump.append("\n");
+        }
+
+        long[] deadlockThreadIds = threadMXBean.findDeadlockedThreads();
+        if (deadlockThreadIds != null) {
+            threadDump.append("-------------------List of Deadlocked Thread IDs ---------------------");
+            String idsList = (Arrays
+                    .stream(deadlockThreadIds)
+                    .boxed()
+                    .collect(Collectors.toList()))
+                    .stream().map(n -> String.valueOf(n))
+                    .collect(Collectors.joining("-", "{", "}"));
+            threadDump.append(idsList);
         }
         return threadDump.toString();
     }
