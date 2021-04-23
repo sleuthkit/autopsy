@@ -1041,6 +1041,9 @@ final class ChromeCacheExtractor {
                 this.data = new byte [length];
                 ByteBuffer buf = cacheFileCopy.getByteBuffer();
                 int dataOffset = DATAFILE_HDR_SIZE + cacheAddress.getStartBlock() * cacheAddress.getBlockSize();
+                if (dataOffset > buf.capacity()) {
+                    return;
+                }
                 buf.position(dataOffset);
                 buf.get(data, 0, length);
                 
