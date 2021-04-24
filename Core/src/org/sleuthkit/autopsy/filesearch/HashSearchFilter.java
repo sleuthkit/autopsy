@@ -41,18 +41,36 @@ class HashSearchFilter extends AbstractFileSearchFilter<HashSearchPanel> {
 
     @Override
     public boolean isEnabled() {
-        return this.getComponent().getHashCheckBox().isSelected();
+        return (this.getComponent().getMd5HashCheckBox().isSelected()
+                || this.getComponent().getSha256HashCheckBox().isSelected());
     }
 
     @Override
     public String getPredicate() throws FilterValidationException {
-        String md5Hash = this.getComponent().getSearchTextField().getText();
+        String predicate = "";
+        if (this.getComponent().getMd5HashCheckBox().isSelected()) {
+            String md5Hash = this.getComponent().getMd5TextField().getText();
 
-        if (md5Hash.isEmpty()) {
-            throw new FilterValidationException(EMPTY_HASH_MESSAGE);
+            if (md5Hash.isEmpty()) {
+                throw new FilterValidationException(EMPTY_HASH_MESSAGE);
+            }
+            predicate = "md5 = '" + md5Hash.toLowerCase() + "'"; //NON-NLS
+        }
+        
+        if (this.getComponent().getSha256HashCheckBox().isSelected()) {
+            String sha256Hash = this.getComponent().getSha256TextField().getText();
+
+            if (sha256Hash.isEmpty()) {
+                throw new FilterValidationException(EMPTY_HASH_MESSAGE);
+            }
+            if (predicate.isEmpty()) {
+                predicate = "sha256 = '" + sha256Hash.toLowerCase() + "'"; //NON-NLS
+            } else {
+                predicate = "( " + predicate + " AND sha256 = '" + sha256Hash.toLowerCase() + "')"; //NON-NLS
+            }
         }
 
-        return "md5 = '" + md5Hash.toLowerCase() + "'"; //NON-NLS
+        return predicate;
     }
 
     @Override
@@ -63,23 +81,45 @@ class HashSearchFilter extends AbstractFileSearchFilter<HashSearchPanel> {
     @Override
     @Messages({
         "HashSearchFilter.errorMessage.emptyHash=Hash data is empty.",
-        "# {0} - hash data length", "HashSearchFilter.errorMessage.wrongLength=Input length({0}), doesn''t match the MD5 length(32).",
+        "# {0} - hash data length", 
+        "HashSearchFilter.errorMessage.wrongLengthMd5=Input length({0}), doesn''t match the MD5 length(32).",
+        "# {0} - hash data length", 
+        "HashSearchFilter.errorMessage.wrongLengthSha256=Input length({0}), doesn''t match the SHA-256 length(64).",
         "HashSearchFilter.errorMessage.wrongCharacter=MD5 contains invalid hex characters."
     })
     public boolean isValid() {
-        String inputHashData = this.getComponent().getSearchTextField().getText();
-        if (inputHashData.isEmpty()) {
-            setLastError(Bundle.HashSearchFilter_errorMessage_emptyHash());
-            return false;
+        if (this.getComponent().getMd5HashCheckBox().isSelected()) {
+            String inputHashData = this.getComponent().getMd5TextField().getText();
+            if (inputHashData.isEmpty()) {
+                setLastError(Bundle.HashSearchFilter_errorMessage_emptyHash());
+                return false;
+            }
+            if (inputHashData.length() != 32) {
+                setLastError(Bundle.HashSearchFilter_errorMessage_wrongLengthMd5(inputHashData.length()));
+                return false;
+            }
+            if (!inputHashData.matches("[0-9a-fA-F]+")) {
+                setLastError(Bundle.HashSearchFilter_errorMessage_wrongCharacter());
+                return false;
+            }
         }
-        if (inputHashData.length() != 32) {
-            setLastError(Bundle.HashSearchFilter_errorMessage_wrongLength(inputHashData.length()));
-            return false;
+        
+        if (this.getComponent().getSha256HashCheckBox().isSelected()) {
+            String inputHashData = this.getComponent().getSha256TextField().getText();
+            if (inputHashData.isEmpty()) {
+                setLastError(Bundle.HashSearchFilter_errorMessage_emptyHash());
+                return false;
+            }
+            if (inputHashData.length() != 64) {
+                setLastError(Bundle.HashSearchFilter_errorMessage_wrongLengthSha256(inputHashData.length()));
+                return false;
+            }
+            if (!inputHashData.matches("[0-9a-fA-F]+")) {
+                setLastError(Bundle.HashSearchFilter_errorMessage_wrongCharacter());
+                return false;
+            }
         }
-        if (!inputHashData.matches("[0-9a-fA-F]+")) {
-            setLastError(Bundle.HashSearchFilter_errorMessage_wrongCharacter());
-            return false;
-        }
+        
         return true;
     }
 }

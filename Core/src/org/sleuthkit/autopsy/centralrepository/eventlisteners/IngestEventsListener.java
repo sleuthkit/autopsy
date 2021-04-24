@@ -90,11 +90,11 @@ public class IngestEventsListener {
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
 
-    IngestEventsListener() {
+    public IngestEventsListener() {
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(INGEST_EVENT_THREAD_NAME).build());
     }
 
-    void shutdown() {
+    public void shutdown() {
         ThreadUtils.shutDownTaskExecutor(jobProcessingExecutor);
     }
 

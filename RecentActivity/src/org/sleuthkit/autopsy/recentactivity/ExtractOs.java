@@ -64,13 +64,17 @@ class ExtractOs extends Extract {
     private static final String LINUX_UBUNTU_PATH = "/etc/lsb-release";
 
     private Content dataSource;
-
+    
     @Override
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         try {
             progressBar.progress(Bundle.ExtractOS_progressMessage());
             for (OS_TYPE value : OS_TYPE.values()) {
+                if (context.dataSourceIngestIsCancelled()) {
+                    return;
+                }   
+
                 checkForOSFiles(value);
             }
         } catch (TskCoreException ex) {

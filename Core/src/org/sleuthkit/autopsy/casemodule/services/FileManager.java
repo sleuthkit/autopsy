@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -125,6 +126,24 @@ public class FileManager implements Closeable {
             throw new TskCoreException("File manager has been closed");
         }
         return caseDb.findAllFilesWhere("data_source_obj_id = " + dataSource.getId() + " AND " + createFileTypeInCondition(mimeTypes));
+    }
+    
+    /**
+     * Find all files with the exact given name and parentId.
+     * 
+     * @param parentId Id of the parent folder to search.
+     * @param name Exact file name to match.
+     * 
+     * @return A list of matching files.
+     * 
+     * @throws TskCoreException 
+     */
+    public synchronized List<AbstractFile> findFilesExactName(long parentId, String name) throws TskCoreException{
+        if (null == caseDb) {
+            throw new TskCoreException("File manager has been closed");
+        }
+        String whereClause = "name = '%s'";
+        return caseDb.findAllFilesInFolderWhere(parentId, String.format(whereClause, name));
     }
 
     /**
@@ -472,6 +491,40 @@ public class FileManager implements Closeable {
      *                          directory that does not exist or cannot be read.
      */
     public synchronized LocalFilesDataSource addLocalFilesDataSource(String deviceId, String rootVirtualDirectoryName, String timeZone, List<String> localFilePaths, FileAddProgressUpdater progressUpdater) throws TskCoreException, TskDataException {
+        return addLocalFilesDataSource(deviceId, rootVirtualDirectoryName, timeZone, null, localFilePaths, progressUpdater);
+    }
+    
+    /**
+     * Adds a set of local/logical files and/or directories to the case database
+     * as data source.
+     *
+     * @param deviceId                 An ASCII-printable identifier for the
+     *                                 device associated with the data source
+     *                                 that is intended to be unique across
+     *                                 multiple cases (e.g., a UUID).
+     * @param rootVirtualDirectoryName The name to give to the virtual directory
+     *                                 that will serve as the root for the
+     *                                 local/logical files and/or directories
+     *                                 that compose the data source. Pass the
+     *                                 empty string to get a default name of the
+     *                                 form: LogicalFileSet[N]
+     * @param timeZone                 The time zone used to process the data
+     *                                 source, may be the empty string.
+     * @param host                     The host for this data source (may be null).
+     * @param localFilePaths           A list of local/logical file and/or
+     *                                 directory localFilePaths.
+     * @param progressUpdater          Called after each file/directory is added
+     *                                 to the case database.
+     *
+     * @return A local files data source object.
+     *
+     * @throws TskCoreException If there is a problem completing a database
+     *                          operation.
+     * @throws TskDataException if any of the local file paths is for a file or
+     *                          directory that does not exist or cannot be read.
+     */
+    public synchronized LocalFilesDataSource addLocalFilesDataSource(String deviceId, String rootVirtualDirectoryName, String timeZone, Host host,
+            List<String> localFilePaths, FileAddProgressUpdater progressUpdater) throws TskCoreException, TskDataException {
         if (null == caseDb) {
             throw new TskCoreException("File manager has been closed");
         }
@@ -488,7 +541,7 @@ public class FileManager implements Closeable {
              * children to the case database.
              */
             trans = caseDb.beginTransaction();
-            LocalFilesDataSource dataSource = caseDb.addLocalFilesDataSource(deviceId, rootDirectoryName, timeZone, trans);
+            LocalFilesDataSource dataSource = caseDb.addLocalFilesDataSource(deviceId, rootDirectoryName, timeZone, host, trans);
             List<AbstractFile> filesAdded = new ArrayList<>();
             for (java.io.File localFile : localFiles) {
                 AbstractFile fileAdded = addLocalFile(trans, dataSource, localFile, TskData.EncodingType.NONE, progressUpdater);

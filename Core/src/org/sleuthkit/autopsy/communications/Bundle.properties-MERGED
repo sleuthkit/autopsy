@@ -1,8 +1,3 @@
-# {0} - PersonaAccount count
-AccountInstanceNode_Tooltip_suffix=(1 of {0})
-# {0} - Contact Name
-# {1} - Persona Name
-AccountInstanceNode_Tooltip_Template=Contact: {0} - Persona: {1}
 AccountNode.accountName=Account
 AccountNode.accountType=Type
 AccountNode.device=Device
@@ -26,7 +21,7 @@ FiltersPanel.endCheckBox.text=End:
 FiltersPanel.refreshButton.text=Refresh
 FiltersPanel.deviceRequiredLabel.text=Select at least one.
 FiltersPanel.accountTypeRequiredLabel.text=Select at least one.
-FiltersPanel.needsRefreshLabel.text=Displayed data is out of date. Press Refresh.
+FiltersPanel.needsRefreshLabel.text=Displayed data may be out of date. Press Refresh to update.
 OpenCVTAction.displayName=Communications
 PinAccountsAction.pluralText=Add Selected Accounts to Visualization
 PinAccountsAction.singularText=Add Selected Account to Visualization
@@ -61,7 +56,6 @@ CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1=Browse
 CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName=Visualize
 CVTTopComponent.vizPanel.TabConstraints.tabTitle_1=Visualize
 VisualizationPanel.fitGraphButton.text=
-VisualizationPanel.jTextArea1.text=Right-click an account in the Browse Accounts table, and select 'Visualize' to begin.
 VisualizationPanel.fitZoomButton.toolTipText=Fit visualization to available space.
 VisualizationPanel.fitZoomButton.text=
 # {0} -  layout name
@@ -99,6 +93,7 @@ VisualizationPanel.zoomLabel.text=Zoom:
 VisualizationPanel.snapshotButton.toolTipText=Generate Snapshot report.
 CVTTopComponent.filtersPane.TabConstraints.tabTitle=Filters
 CVTTopComponent.filterTabPanel.TabConstraints.tabTitle=Filters
+VisualizationPanel.jTextPane1.text=Right-click an account in the Browse Accounts table, and select 'Visualize' to begin.
 VisualizationPanel_action_dialogs_title=Communications
 VisualizationPanel_action_name_text=Snapshot Report
 VisualizationPanel_module_name=Communications

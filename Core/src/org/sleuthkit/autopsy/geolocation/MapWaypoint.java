@@ -63,7 +63,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 @SuppressWarnings("deprecation")
-final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint {
+public final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint {
 
     private static final Logger logger = Logger.getLogger(MapWaypoint.class.getName());
     private final static String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
@@ -78,7 +78,8 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID(), Color.GREEN);
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACK.getTypeID(), Color.ORANGE);
         artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT.getTypeID(), Color.ORANGE);
-        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(), Color.CYAN);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(), Color.MAGENTA);
+        artifactTypesToColors.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_AREA.getTypeID(), new Color(0x8a2be2)); // Blue violet
     }
 
     private final Waypoint dataModelWaypoint;
@@ -292,7 +293,6 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * Get the nicely formatted details for the given waypoint.
      *
      * @param point Waypoint object
-     * @param header String details header
      *
      * @return HTML formatted String of details for given waypoint
      */
@@ -363,6 +363,13 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      */
     Color getColor() {
         return getColor(dataModelWaypoint.getArtifact().getArtifactTypeID());
+    }
+
+    /**
+     * @return The timestamp associated with this map way point or null.
+     */
+    public Long getTimestamp() {
+        return dataModelWaypoint.getTimestamp();
     }
 
     /**

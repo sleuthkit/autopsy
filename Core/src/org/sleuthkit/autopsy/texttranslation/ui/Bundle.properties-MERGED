@@ -8,6 +8,7 @@ TranslatedContentViewer.errorExtractingText=An error occurred while extracting t
 TranslatedContentViewer.extractingText=Extracting text, please wait...
 TranslatedContentViewer.fileHasNoText=File has no text.
 TranslatedContentViewer.noServiceProvider=The machine translation software was not found.
+TranslatedContentViewer.ocrNotEnabled=OCR is not enabled. To change, go to Tools->Options->Machine Translation
 TranslatedContentViewer.translatingText=Translating text, please wait...
 # {0} - exception message
 TranslatedContentViewer.translationException=An error occurred while translating the text ({0}).

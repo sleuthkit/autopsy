@@ -1,5 +1,8 @@
 /*! \page view_options_page View Options
 
+[TOC]
+
+
 The View options allow you to configure how data is displayed in the Autopsy user interface.
 
 There are two ways to access the options. The first way is through the gear icon above the directory tree:
@@ -63,11 +66,15 @@ If you have a \ref machine_translation_page module installed, this option will a
 
 The settings in this section only apply to the current case.
 
-\subsection view_options_group Group by data source
+\subsection view_options_group Data Source Grouping
 
-The "Group by data source" option allows you to separate all elements in the \ref ui_tree by data source. This can help nodes load faster on large cases.
+The options here allow you to choose how to display data in the \ref ui_tree. The top option ("Group by Data Type") displays combined results for all data sources. All nodes on the tree will contain combined results for all data sources in the case.
 
-\image html ui_layout_group_tree.PNG
+\image html views_standard_tree.png
+
+The second option ("Group by Person/Host") separates the results for each data source, and organizes the data sources by \ref ui_tree_persons "person" and \ref ui_tree_hosts "host". 
+
+\image html views_grouped_tree.png
 
 \section view_options_session Current Session Settings
 

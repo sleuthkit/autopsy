@@ -1,4 +1,8 @@
 /*! \page image_gallery_page Image Gallery Module
+
+[TOC]
+
+
 Overview
 ========
 This document outlines the use of the Image Gallery feature of Autopsy.  This feature was funded by DHS S&T to help provide free and open source digital forensics tools to law enforcement. 
@@ -11,7 +15,7 @@ This document assumes basic familiarity with Autopsy.
 Quick Start 
 ===========
 1. The Image Gallery tool can be configured to collect data about images/videos as ingest runs or all at once after ingest.  To change this setting go to "Tools", "Options", "Image /Video Gallery".  This setting is saved per case, but cannot be changed during ingest. See the Options window for more details
-2. Create a case as normal and add a disk image (or folder of files) as a data source.  Ensure that you have the hash lookup module enabled with NSRL and known bad hashsets, the EXIF module enabled, and the File Type module enabled. 
+2. Create a case as normal and add a disk image (or folder of files) as a data source.  Ensure that you have the hash lookup module enabled with NSRL and known bad hashsets, the Picture Analyzer module enabled, and the File Type module enabled. 
 3. Click the "View Images/Videos" button or select "View Images/Videos" in the "Tools" menu.  This will open the  Autopsy Image/Video Analysis tool in a new window.
 4. Groups of images will be presented as they are analyzed by the background ingest modules.  You can later resort and regroup, but it is required to keep it grouped by folder while ingest is still ongoing. 
 5. As each group is reviewed, the next highest priority group is presented, according to a sorting criteria (the default is the density of hash set hits).

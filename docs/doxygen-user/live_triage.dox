@@ -1,5 +1,8 @@
 /*! \page live_triage_page Creating a Live Triage Drive
 
+[TOC]
+
+
 \section live_triage_overview Overview
 
 The Live Triage feature allows you to load Autopsy onto a removable drive to run on target systems while making minimal changes to that target system. This will currently only work on Windows systems.

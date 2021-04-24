@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang.StringUtils;
+import static org.openide.util.NbBundle.Messages;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -51,6 +53,9 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSets
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import java.util.Comparator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 class InterestingItemsFilesSetSettings implements Serializable {
 
@@ -118,6 +123,10 @@ class InterestingItemsFilesSetSettings implements Serializable {
      *
      * @throws FilesSetsManagerException if file could not be read
      */
+    @Messages({
+        "# {0} - filePathStr",
+        "InterestingItemsFilesSetSettings.readSerializedDefinitions.failedReadSettings=Failed to read settings from ''{0}''"
+    })
     private static Map<String, FilesSet> readSerializedDefinitions(String serialFileName) throws FilesSetsManager.FilesSetsManagerException {
         Path filePath = Paths.get(PlatformUtil.getUserConfigDirectory(), serialFileName);
         File fileSetFile = filePath.toFile();
@@ -129,7 +138,10 @@ class InterestingItemsFilesSetSettings implements Serializable {
                     return filesSetsSettings.getFilesSets();
                 }
             } catch (IOException | ClassNotFoundException ex) {
-                throw new FilesSetsManager.FilesSetsManagerException(String.format("Failed to read settings from %s", filePathStr), ex);
+
+                throw new FilesSetsManager.FilesSetsManagerException(
+                        Bundle.InterestingItemsFilesSetSettings_readSerializedDefinitions_failedReadSettings(filePathStr),
+                        ex);
             }
         } else {
             return new HashMap<>();
@@ -147,6 +159,12 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @throws
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
+    @Messages({
+        "# {0} - regex",
+        "InterestingItemsFilesSetSettings.readPathCondition.failedCompiledRegex=Error compiling ''{0}'' regex",
+        "# {0} - ruleName",
+        "InterestingItemsFilesSetSettings.readPathCondition.pathConditionCreationError=Error creating path condition for rule ''{0}''"
+    })
     private static ParentPathCondition readPathCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         // Read in the optional path condition. Null is o.k., but if the attribute
         // is there, be sure it is not malformed.
@@ -160,14 +178,17 @@ class InterestingItemsFilesSetSettings implements Serializable {
                     pathCondition = new ParentPathCondition(pattern);
                 } catch (PatternSyntaxException ex) {
                     logger.log(Level.SEVERE, "Error compiling " + PATH_REGEX_ATTR + " regex, ignoring malformed path condition definition", ex); // NON-NLS
-                    throw new FilesSetsManager.FilesSetsManagerException(String.format("error compiling %s regex", PATH_REGEX_ATTR), ex);
+                    throw new FilesSetsManager.FilesSetsManagerException(
+                            Bundle.InterestingItemsFilesSetSettings_readPathCondition_failedCompiledRegex(PATH_REGEX_ATTR),
+                            ex);
                 }
             } else if (!path.isEmpty() && pathRegex.isEmpty()) {
                 pathCondition = new ParentPathCondition(path);
             }
             if (pathCondition == null) {
                 // Malformed attribute.
-                throw new FilesSetsManager.FilesSetsManagerException(String.format("Error creating path condition for rule %s", readRuleName(ruleElement)));
+                throw new FilesSetsManager.FilesSetsManagerException(
+                        Bundle.InterestingItemsFilesSetSettings_readPathCondition_pathConditionCreationError(readRuleName(ruleElement)));
             }
         }
         return pathCondition;
@@ -184,6 +205,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @throws
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
+    @Messages({
+        "# {0} - regex",
+        "InterestingItemsFilesSetSettings.readDateCondition.failedCompiledRegex=Error determining ''{0}'' number",})
     private static DateCondition readDateCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         // Read in the optional path condition. Null is o.k., but if the attribute
         // is there, be sure it is not malformed.
@@ -195,7 +219,10 @@ class InterestingItemsFilesSetSettings implements Serializable {
                     dateCondition = new DateCondition(Integer.parseInt(daysIncluded));
                 } catch (NumberFormatException ex) {
                     logger.log(Level.SEVERE, "Error creating condition for " + daysIncluded + ", ignoring malformed date condition definition", ex); // NON-NLS
-                    throw new FilesSetsManager.FilesSetsManagerException(String.format("error compiling %s regex", DAYS_INCLUDED_ATTR), ex);
+
+                    throw new FilesSetsManager.FilesSetsManagerException(
+                            Bundle.InterestingItemsFilesSetSettings_readDateCondition_failedCompiledRegex(DAYS_INCLUDED_ATTR),
+                            ex);
                 }
             }
         }
@@ -230,6 +257,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @throws
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
+    @Messages({
+        "# {0} - ruleName",
+        "InterestingItemsFilesSetSettings.readRule.missingNecessary=Invalid rule in files set, missing necessary conditions for ''{0}''",})
     private static FilesSet.Rule readRule(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         String ruleName = readRuleName(elem);
         FileNameCondition nameCondition = readNameCondition(elem);
@@ -240,7 +270,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
         DateCondition dateCondition = readDateCondition(elem); //if meta type condition or all four types of conditions the user can create are all null then don't make the rule
         if (metaCondition == null || (nameCondition == null && pathCondition == null && mimeCondition == null && sizeCondition == null && dateCondition == null)) {
             logger.log(Level.WARNING, "Error Reading Rule, " + ruleName + " was either missing a meta condition or contained only a meta condition. No rule was imported."); // NON-NLS
-            throw new FilesSetsManager.FilesSetsManagerException(String.format("Invalid Rule in FilesSet xml, missing necessary conditions for %s", ruleName));
+
+            throw new FilesSetsManager.FilesSetsManagerException(
+                    Bundle.InterestingItemsFilesSetSettings_readRule_missingNecessary(ruleName));
         }
         return new FilesSet.Rule(ruleName, nameCondition, metaCondition, pathCondition, mimeCondition, sizeCondition, dateCondition);
     }
@@ -256,6 +288,16 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @throws
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
+    @Messages({
+        "# {0} - tagName",
+        "# {1} - ruleName",
+        "InterestingItemsFilesSetSettings.readNameCondition.invalidTag=Name condition has invalid tag name of ''{0}'' for rule ''{1}''",
+        "# {0} - regex",
+        "# {1} - rule",
+        "InterestingItemsFilesSetSettings.readNameCondition.errorCompilingRegex=Error compiling ''{0}'' regex in rule ''{1}''",
+        "# {0} - character",
+        "# {1} - rule",
+        "InterestingItemsFilesSetSettings.readNameCondition.illegalChar=File name has illegal character of ''{0}'' in rule ''{1}''",})
     private static FileNameCondition readNameCondition(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         FileNameCondition nameCondition = null;
         String content = elem.getTextContent();
@@ -269,17 +311,21 @@ class InterestingItemsFilesSetSettings implements Serializable {
                     } else if (elem.getTagName().equals(EXTENSION_RULE_TAG)) {
                         nameCondition = new FilesSet.Rule.ExtensionCondition(pattern);
                     } else {
-                        throw new FilesSetsManager.FilesSetsManagerException(String.format("Name condition has invalid tag name of %s for rule %s", elem.getTagName(), readRuleName(elem)));
+                        throw new FilesSetsManager.FilesSetsManagerException(
+                                Bundle.InterestingItemsFilesSetSettings_readNameCondition_invalidTag(elem.getTagName(), readRuleName(elem)));
                     }
                 } else {
-                    logger.log(Level.SEVERE, "Error compiling " + elem.getTagName() + " regex, ignoring malformed '{0}' rule definition", readRuleName(elem)); // NON-NLS
-                    throw new FilesSetsManager.FilesSetsManagerException(String.format("error compiling %s regex in rule %s", REGEX_ATTR, readRuleName(elem)));
+                    logger.log(Level.SEVERE, "Error compiling " + elem.getTagName() + " regex, ignoring malformed ''{0}'' rule definition", readRuleName(elem)); // NON-NLS
+                    throw new FilesSetsManager.FilesSetsManagerException(
+                            Bundle.InterestingItemsFilesSetSettings_readNameCondition_errorCompilingRegex(REGEX_ATTR, readRuleName(elem)));
                 }
             } else {
                 for (String illegalChar : illegalFileNameChars) {
                     if (content.contains(illegalChar)) {
-                        logger.log(Level.SEVERE, elem.getTagName() + " content has illegal chars, ignoring malformed '{0}' rule definition", new Object[]{elem.getTagName(), readRuleName(elem)}); // NON-NLS
-                        throw new FilesSetsManager.FilesSetsManagerException(String.format("File name has illegal character of %s in rule %s", illegalChar, readRuleName(elem)));
+                        logger.log(Level.SEVERE, elem.getTagName() + " content has illegal chars, ignoring malformed ''{0}'' rule definition", new Object[]{elem.getTagName(), readRuleName(elem)}); // NON-NLS
+
+                        throw new FilesSetsManager.FilesSetsManagerException(
+                                Bundle.InterestingItemsFilesSetSettings_readNameCondition_illegalChar(illegalChar, readRuleName(elem)));
                     }
                 }
                 if (elem.getTagName().equals(NAME_RULE_TAG)) {
@@ -322,6 +368,13 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @throws
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
+    @Messages({
+        "# {0} - rule",
+        "InterestingItemsFilesSetSettings.readSizeCondition.notIntegerValue=Non integer size in files set for rule ''{0}''",
+        "# {0} - rule",
+        "InterestingItemsFilesSetSettings.readSizeCondition.invalidComparator=Invalid comparator or size unit in files set for rule ''{0}''",
+        "# {0} - rule",
+        "InterestingItemsFilesSetSettings.readSizeCondition.malformedXml=Files set is malformed missing at least one 'fileSize' attribute for rule ''{0}''",})
     private static FileSizeCondition readSizeCondition(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         FileSizeCondition sizeCondition = null;
         if (!elem.getAttribute(FS_COMPARATOR_ATTR).isEmpty() && !elem.getAttribute(FS_SIZE_ATTR).isEmpty() && !elem.getAttribute(FS_UNITS_ATTR).isEmpty()) {
@@ -332,15 +385,20 @@ class InterestingItemsFilesSetSettings implements Serializable {
                 sizeCondition = new FileSizeCondition(comparator, sizeUnit, size);
             } catch (NumberFormatException nfEx) {
                 logger.log(Level.SEVERE, "Value in file size attribute was not an integer, unable to create FileSizeCondition for rule: " + readRuleName(elem), nfEx);
-                throw new FilesSetsManager.FilesSetsManagerException(String.format("Non integer size in FilesSet XML for rule %s", readRuleName(elem)), nfEx);
+                throw new FilesSetsManager.FilesSetsManagerException(
+                        Bundle.InterestingItemsFilesSetSettings_readSizeCondition_notIntegerValue(readRuleName(elem)),
+                        nfEx);
             } catch (IllegalArgumentException iaEx) {
                 logger.log(Level.SEVERE, "Invalid Comparator symbol or Size Unit set in FilesSet xml, unable to create FileSizeCondition for rule: " + readRuleName(elem), iaEx);
-                throw new FilesSetsManager.FilesSetsManagerException(String.format("Invalid Comparator or Size unit in FilesSet XML for rule %s", readRuleName(elem)), iaEx);
+                throw new FilesSetsManager.FilesSetsManagerException(
+                        Bundle.InterestingItemsFilesSetSettings_readSizeCondition_invalidComparator(readRuleName(elem)),
+                        iaEx);
             }
         } //if all of them aren't populated but some of them are this is a malformed xml
         else if (!elem.getAttribute(FS_COMPARATOR_ATTR).isEmpty() || !elem.getAttribute(FS_SIZE_ATTR).isEmpty() || !elem.getAttribute(FS_UNITS_ATTR).isEmpty()) {
             logger.log(Level.SEVERE, "Invalid Comparator symbol or Size Unit set in FilesSet xml, unable to create FileSizeCondition for rule: " + readRuleName(elem));
-            throw new FilesSetsManager.FilesSetsManagerException(String.format("XML malformed missing at least one fileSize attribute for rule %s", readRuleName(elem)));
+            throw new FilesSetsManager.FilesSetsManagerException(
+                    Bundle.InterestingItemsFilesSetSettings_readSizeCondition_malformedXml(readRuleName(elem)));
         }
         return sizeCondition;
     }
@@ -536,6 +594,34 @@ class InterestingItemsFilesSetSettings implements Serializable {
         }
         return true;
     }
+    
+
+    /**
+     * Generates an alphabetically sorted list based on the provided collection and Function to retrieve a string field from each object.
+     * @param itemsToSort The items to be sorted into the newly generated list.
+     * @param getName The method to retrieve the given field from the object.
+     * @return The newly generated list sorted alphabetically by the given field.
+     */
+    private static <T> List<T> sortOnField(Collection<T> itemsToSort, final Function<T, String> getName) {
+        Comparator<T> comparator = (a,b) -> {
+            String aName = getName.apply(a);
+            String bName = getName.apply(b);
+            if (aName == null) {
+                aName = "";
+            }
+            
+            if (bName == null) {
+                bName = "";
+            }
+            
+            return aName.compareToIgnoreCase(bName);
+        };
+        
+        return itemsToSort.stream()
+                .sorted(comparator)
+                .collect(Collectors.toList());
+    }
+    
 
     /**
      * Write the FilesSets to a file as an xml.
@@ -555,7 +641,12 @@ class InterestingItemsFilesSetSettings implements Serializable {
             Element rootElement = doc.createElement(FILE_SETS_ROOT_TAG);
             doc.appendChild(rootElement);
             // Add the interesting files sets to the document.
-            for (FilesSet set : interestingFilesSets) {
+
+            List<FilesSet> sortedFilesSets = sortOnField(
+                    interestingFilesSets, 
+                    filesSet -> filesSet == null ? null : filesSet.getName());
+            
+            for (FilesSet set : sortedFilesSets) {
                 // Add the files set element and its attributes.
                 Element setElement = doc.createElement(FILE_SET_TAG);
                 setElement.setAttribute(NAME_ATTR, set.getName());
@@ -565,7 +656,12 @@ class InterestingItemsFilesSetSettings implements Serializable {
                 setElement.setAttribute(VERSION_NUMBER, Integer.toString(set.getVersionNumber()));
                 // Add the child elements for the set membership rules.
                 // All conditions of a rule will be written as a single element in the xml
-                for (FilesSet.Rule rule : set.getRules().values()) {
+                
+                List<FilesSet.Rule> sortedRules = sortOnField(
+                        set.getRules().values(), 
+                        rule -> rule == null ? null : rule.getName());
+                
+                for (FilesSet.Rule rule : sortedRules) {
                     // Add a rule element with the appropriate name Condition 
                     // type tag.
                     Element ruleElement;
@@ -653,6 +749,11 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @throws
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
+    @Messages({
+        "# {0} - condition",
+        "# {1} - rule",
+        "InterestingItemsFilesSetSettings.readMetaTypeCondition.malformedXml=Files set is malformed for metatype condition, ''{0}'', in rule ''{1}''"
+    })
     private static MetaTypeCondition readMetaTypeCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         MetaTypeCondition metaCondition = null;
         // The rule must have a meta-type condition, unless a TSK Framework
@@ -674,7 +775,10 @@ class InterestingItemsFilesSetSettings implements Serializable {
                     default:
                         logger.log(Level.SEVERE, "Found {0} " + TYPE_FILTER_ATTR + " attribute with unrecognized value ''{0}'', ignoring malformed rule definition", conditionAttribute); // NON-NLS
                         // Malformed attribute.
-                        throw new FilesSetsManager.FilesSetsManagerException(String.format("Malformed XML for Metatype condition, %s, in rule %s", conditionAttribute, readRuleName(ruleElement)));
+
+                        throw new FilesSetsManager.FilesSetsManagerException(
+                                Bundle.InterestingItemsFilesSetSettings_readMetaTypeCondition_malformedXml(
+                                        conditionAttribute, readRuleName(ruleElement)));
                 }
             }
         }

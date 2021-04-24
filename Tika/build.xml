@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- You may freely edit this file. See harness/README in the NetBeans platform -->
+<!-- for some information on what you could do (e.g. targets to override). -->
+<!-- If you delete this file and reopen the project it will be recreated. -->
+<project name="org.sleuthkit.autopsy.Tika" default="netbeans" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant" >
+    <description>Builds, tests, and runs the project org.sleuthkit.autopsy.Tika.</description>
+    <import file="nbproject/build-impl.xml"/>
+    <import file="../BootstrapIvy.xml"/>
+    
+    <property name="modules.dir" value="${basedir}/release/modules/" />
+    <property name="ext.dir" value="${modules.dir}/ext" />
+    
+    <target name="run-ivy">
+        <ivy:resolve log="quiet"/>
+        <ivy:retrieve conf="tika" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
+    </target>
+
+    <target name="init" depends="init-ivy, run-ivy, harness.init"/>
+    <target name="clean" depends="projectized-common.clean">
+        <!-- Clean out all jars downloaded by Ivy -->
+        <delete dir="${basedir}/release/"/>
+    </target>
+</project>

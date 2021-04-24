@@ -28,6 +28,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.Cent
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * Configuration dialog for creating an account.
@@ -212,6 +214,11 @@ public class CreatePersonaAccountDialog extends JDialog {
         setVisible(true);
     }
     
+    @Messages({
+        "CreatePersonaAccountDialog_error_title=Account failure",
+        "CreatePersonaAccountDialog_error_msg=Failed to create account.",
+        "CreatePersonaAccountDialog_invalid_account_Title=Invalid account identifier",
+        "CreatePersonaAccountDialog_invalid_account_msg=Account identifier is not valid.",})
     private CentralRepoAccount createAccount(CentralRepoAccount.CentralRepoAccountType type, String identifier) {
         CentralRepoAccount ret = null;
         try {
@@ -220,20 +227,27 @@ public class CreatePersonaAccountDialog extends JDialog {
                 ret = cr.getOrCreateAccount(type, identifier);
             }
         } catch (CentralRepoException e) {
-            logger.log(Level.SEVERE, "Failed to access central repository", e);
+            logger.log(Level.SEVERE, "Failed to create account", e);
             JOptionPane.showMessageDialog(this,
-                    Bundle.PersonaAccountDialog_get_types_exception_Title(),
-                    Bundle.PersonaAccountDialog_get_types_exception_msg(),
+                    Bundle.CreatePersonaAccountDialog_error_msg(),
+                    Bundle.CreatePersonaAccountDialog_error_title(),
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (InvalidAccountIDException e) {
+            logger.log(Level.WARNING, "Invalid account identifier", e);
+            JOptionPane.showMessageDialog(this,
+                    Bundle.CreatePersonaAccountDialog_invalid_account_msg(),
+                    Bundle.CreatePersonaAccountDialog_invalid_account_Title(),
                     JOptionPane.ERROR_MESSAGE);
         }
         return ret;
     }
 
     @Messages({
-        "CreatePersonaAccountDialog_dup_Title=Account creation failure",
-        "CreatePersonaAccountDialog_dup_msg=An account with this identifier and type already exists.",})
+        "CreatePersonaAccountDialog_success_title=Account added",
+        "CreatePersonaAccountDialog_success_msg=Account added.",
+    })
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        if (identifierTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(identifierTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaAccountDialog_identifier_empty_msg(),
                     Bundle.PersonaAccountDialog_identifier_empty_Title(),
@@ -246,6 +260,12 @@ public class CreatePersonaAccountDialog extends JDialog {
         String identifier = identifierTextField.getText();
 
         if (createAccount(type, identifier) != null) {
+            // show account created message
+            JOptionPane.showMessageDialog(this,
+                    Bundle.CreatePersonaAccountDialog_success_msg(),
+                    Bundle.CreatePersonaAccountDialog_success_title(),
+                    JOptionPane.INFORMATION_MESSAGE);
+
             dispose();
         }
     }//GEN-LAST:event_okBtnActionPerformed

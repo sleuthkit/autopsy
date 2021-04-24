@@ -60,7 +60,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.19</specification-version>
+                        <specification-version>10.23</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -74,6 +74,10 @@
                 </dependency>
             </module-dependencies>
             <public-packages/>
+            <class-path-extension>
+                <runtime-relative-path>ext/Rejistry-1.1-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/Rejistry-1.1-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>

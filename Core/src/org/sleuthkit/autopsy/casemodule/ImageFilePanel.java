@@ -469,7 +469,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             return false;
         }
 
-        if (!PathValidator.isValidForMultiUserCase(path, Case.getCurrentCase().getCaseType())) {
+        if (!PathValidator.isValidForCaseType(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(Bundle.ImageFilePanel_validatePanel_dataSourceOnCDriveError());
         }

@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -51,7 +52,7 @@ import org.sleuthkit.datamodel.TskData;
  *
  * @author jwallace
  */
-class PstParser {
+class PstParser  implements AutoCloseable{
 
     private static final Logger logger = Logger.getLogger(PstParser.class.getName());
     /**
@@ -106,6 +107,11 @@ class PstParser {
                 logger.log(Level.INFO, "Found encrypted PST file."); //NON-NLS
                 return ParseResult.ENCRYPT;
             }
+            if (ex.getMessage().toLowerCase().startsWith("unable to")) {
+                logger.log(Level.WARNING, ex.getMessage());
+                logger.log(Level.WARNING, String.format("Error in parsing PST file %s, file may be empty or corrupt", file.getName()));
+                return ParseResult.ERROR;
+            }
             String msg = file.getName() + ": Failed to create internal java-libpst PST file to parse:\n" + ex.getMessage(); //NON-NLS
             logger.log(Level.WARNING, msg, ex);
             return ParseResult.ERROR;
@@ -119,6 +125,16 @@ class PstParser {
         }
 
         return ParseResult.OK;
+    }
+    
+    @Override
+    public void close() throws IOException{
+        if(pstFile != null) {
+            RandomAccessFile file = pstFile.getFileHandle();
+            if(file != null) {
+                file.close();
+            }
+        }
     }
 
     /**
@@ -266,16 +282,30 @@ class PstParser {
      */
     private EmailMessage extractEmailMessage(PSTMessage msg, String localPath, long fileID) {
         EmailMessage email = new EmailMessage();
-        email.setRecipients(msg.getDisplayTo());
-        email.setCc(msg.getDisplayCC());
-        email.setBcc(msg.getDisplayBCC());
-        email.setSender(getSender(msg.getSenderName(), msg.getSenderEmailAddress()));
+        String toAddress = msg.getDisplayTo();
+        String ccAddress = msg.getDisplayCC();
+        String bccAddress = msg.getDisplayBCC();
+        String receivedByName = msg.getReceivedByName();
+        String receivedBySMTPAddress = msg.getReceivedBySMTPAddress();
+        
+        if (toAddress.contains(receivedByName)) {
+            toAddress = toAddress.replace(receivedByName, receivedBySMTPAddress);
+        }
+        if (ccAddress.contains(receivedByName)) {
+            ccAddress = ccAddress.replace(receivedByName, receivedBySMTPAddress);
+        }
+        if (bccAddress.contains(receivedByName)) {
+            bccAddress = bccAddress.replace(receivedByName, receivedBySMTPAddress);
+        }
+        email.setRecipients(toAddress);
+        email.setCc(ccAddress);
+        email.setBcc(bccAddress);
+        email.setSender(getSender(msg.getSenderName(), msg.getSentRepresentingSMTPAddress()));
         email.setSentDate(msg.getMessageDeliveryTime());
         email.setTextBody(msg.getBody());
         if (false == msg.getTransportMessageHeaders().isEmpty()) {
             email.setHeaders("\n-----HEADERS-----\n\n" + msg.getTransportMessageHeaders() + "\n\n---END HEADERS--\n\n");
         }
-
         email.setHtmlBody(msg.getBodyHTML());
         String rtf = "";
         try {

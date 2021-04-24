@@ -12,13 +12,16 @@ Help Topics
 -------
 The following topics are available here:
 
-- Installation
- - \subpage installation_page
- - \subpage performance_page
+- \subpage installation_page
+- Notable Upgrades
+ - \subpage upgrade_solr8_page 
+- Configuration
+ - \subpage config_page
+ - \subpage performance_page 
  - Multi-user Cluster 
   - \subpage install_multiuser_page
   - \subpage multiuser_sec_page
-  - \subpage multiuser_page
+  - \subpage multiuser_page 
 
 - \subpage quick_start_guide "Quick Start Guide"
 
@@ -49,12 +52,16 @@ The following topics are available here:
  - \subpage plaso_page
  - \subpage drone_page
  - \subpage gpx_page
+ - \subpage ileapp_page
+ - \subpage aleapp_page
+ - \subpage yara_page
 
 - Reviewing the Results
  - \subpage uilayout_page
  - \subpage tree_viewer_page
  - \subpage result_viewer_page
  - \subpage content_viewer_page
+ - \subpage data_source_summary_page
  - \subpage machine_translation_page
 
 - Searching
@@ -70,7 +77,8 @@ The following topics are available here:
  - \subpage timeline_page
  - \subpage communications_page
  - \subpage geolocation_page
- - \subpage file_discovery_page
+ - \subpage discovery_page
+ - \subpage personas_page
 
 - Reporting
  - \subpage tagging_page
@@ -93,8 +101,11 @@ The following topics are available here:
   - \ref object_detection_page
   - \ref volatility_dsp_page
 
-- \subpage translations_page
+- Community Contributions
+  - \subpage translations_page
+  - \subpage update_interesting_files_page
  
+- \subpage troubleshooting_page
 
 If the topic you need is not listed, then you can:
 - Refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> 

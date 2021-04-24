@@ -37,11 +37,11 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.HashHitInfo;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
@@ -78,7 +79,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     private static final int CASE_CACHE_TIMEOUT = 5;
     private static final int DATA_SOURCE_CACHE_TIMEOUT = 5;
     private static final int ACCOUNTS_CACHE_TIMEOUT = 5;
-    private static final Cache<String, CentralRepoAccountType> accountTypesCache = CacheBuilder.newBuilder().build();
+    private static final Cache<String, Optional<CentralRepoAccountType>> accountTypesCache = CacheBuilder.newBuilder().build();
     private static final Cache<Pair<CentralRepoAccountType, String>, CentralRepoAccount> accountsCache = CacheBuilder.newBuilder()
             .expireAfterWrite(ACCOUNTS_CACHE_TIMEOUT, TimeUnit.MINUTES).
             build();
@@ -1081,33 +1082,41 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      *                          within TSK core
      */
     @Override
-    public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
+    public CentralRepoAccount getOrCreateAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException {
         // Get the account fom the accounts table
-        CentralRepoAccount account = getAccount(crAccountType, accountUniqueID);
+        String normalizedAccountID = CentralRepoAccount.normalizeAccountIdentifier(crAccountType, accountUniqueID);
 
-        // account not found in the table, create it
-        if (null == account) {
-
-            String query = "INSERT INTO accounts (account_type_id, account_unique_identifier) "
-                    + "VALUES ( " + crAccountType.getAccountTypeId() + ", '"
-                    + accountUniqueID + "' )";
-
-            try (Connection connection = connect();
-                    Statement s = connection.createStatement();) {
-
-                s.execute(query);
-                // get the account from the db - should exist now.
-                account = getAccount(crAccountType, accountUniqueID);
-            } catch (SQLException ex) {
-                throw new CentralRepoException("Error adding an account to CR database.", ex);
-            }
+        // insert the account.  If there is a conflict, ignore it.
+        String insertSQL;
+        switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
+            case POSTGRESQL:
+                insertSQL =  "INSERT INTO accounts (account_type_id, account_unique_identifier) VALUES (?, ?) " + getConflictClause();  //NON-NLS
+                break;
+            case SQLITE:
+                insertSQL = "INSERT OR IGNORE INTO accounts (account_type_id, account_unique_identifier) VALUES (?, ?) "; //NON-NLS
+                break;
+            default:
+                throw new CentralRepoException(String.format("Cannot add account to currently selected CR database platform %s", CentralRepoDbManager.getSavedDbChoice().getDbPlatform())); //NON-NLS
         }
+        
 
-        return account;
+        try (Connection connection = connect();
+                PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);) {
+
+            preparedStatement.setInt(1, crAccountType.getAccountTypeId());
+            preparedStatement.setString(2, normalizedAccountID);
+
+            preparedStatement.executeUpdate();
+
+            // get the account from the db - should exist now.
+            return getAccount(crAccountType, normalizedAccountID);
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error adding an account to CR database.", ex);
+        }
     }
 
     @Override
-    public CentralRepoAccountType getAccountTypeByName(String accountTypeName) throws CentralRepoException {
+    public Optional<CentralRepoAccountType> getAccountTypeByName(String accountTypeName) throws CentralRepoException {
         try {
             return accountTypesCache.get(accountTypeName, () -> getCRAccountTypeFromDb(accountTypeName));
         } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
@@ -1147,7 +1156,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      *
      * @throws CentralRepoException
      */
-    private CentralRepoAccountType getCRAccountTypeFromDb(String accountTypeName) throws CentralRepoException {
+    private Optional<CentralRepoAccountType> getCRAccountTypeFromDb(String accountTypeName) throws CentralRepoException {
 
         String sql = "SELECT * FROM account_types WHERE type_name = ?";
         try (Connection conn = connect();
@@ -1158,10 +1167,11 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 if (resultSet.next()) {
                     Account.Type acctType = new Account.Type(accountTypeName, resultSet.getString("display_name"));
                     CentralRepoAccountType crAccountType = new CentralRepoAccountType(resultSet.getInt("id"), acctType, resultSet.getInt("correlation_type_id"));
-                    accountTypesCache.put(accountTypeName, crAccountType);
-                    return crAccountType;
+                    accountTypesCache.put(accountTypeName, Optional.of(crAccountType));
+                    return Optional.of(crAccountType);
                 } else {
-                    throw new CentralRepoException("Failed to find entry for account type = " + accountTypeName);
+                    accountTypesCache.put(accountTypeName, Optional.empty());
+                    return Optional.empty();
                 }
             }
         } catch (SQLException ex) {
@@ -1183,15 +1193,17 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * @return CentralRepoAccount for the give type/id. May return null if not
      *         found.
      *
-     * @throws CentralRepoException
+     * @throws CentralRepoException  If there is an error accessing Central Repository.
+     * @throws InvalidAccountIDException If the account identifier is not valid.
      */
-    private CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws CentralRepoException {
-
-        CentralRepoAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, accountUniqueID));
+    @Override
+    public CentralRepoAccount getAccount(CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException {
+        String normalizedAccountID = CentralRepoAccount.normalizeAccountIdentifier(crAccountType, accountUniqueID);
+        CentralRepoAccount crAccount = accountsCache.getIfPresent(Pair.of(crAccountType, normalizedAccountID));
         if (crAccount == null) {
-            crAccount = getCRAccountFromDb(crAccountType, accountUniqueID);
+            crAccount = getCRAccountFromDb(crAccountType, normalizedAccountID);
             if (crAccount != null) {
-                accountsCache.put(Pair.of(crAccountType, accountUniqueID), crAccount);
+                accountsCache.put(Pair.of(crAccountType, normalizedAccountID), crAccount);
             }
         }
 
@@ -2543,89 +2555,52 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     @Override
-    public void executeInsertSQL(String insertClause) throws CentralRepoException {
-
-        if (insertClause == null) {
-            throw new CentralRepoException("Insert SQL is null");
-        }
-
-        String sql = getPlatformSpecificInsertSQL(insertClause);
-        try (Connection conn = connect();
-                PreparedStatement preparedStatement = conn.prepareStatement(sql);) {
+    public void executeCommand(String sql, List<Object> params) throws CentralRepoException {
+      
+        try (Connection conn = connect();) {
+            
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+                
+             // Fill in the params
+             if (params != null) {
+                int paramIndex = 1;
+                for (Object param : params) {
+                    preparedStatement.setObject(paramIndex, param);
+                    paramIndex += 1;
+                }
+            }
+            // execute the prepared statement
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new CentralRepoException(String.format("Error running SQL %s, exception = %s", sql, ex.getMessage()), ex);
+            throw new CentralRepoException(String.format("Error executing prepared statement for SQL %s", sql), ex);
         }
     }
 
     @Override
-    public void executeSelectSQL(String selectSQL, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
+    public void executeQuery(String sql, List<Object> params, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
         if (queryCallback == null) {
             throw new CentralRepoException("Query callback is null");
         }
 
-        if (selectSQL == null) {
-            throw new CentralRepoException("Select SQL is null");
-        }
-
-        StringBuilder sqlSb = new StringBuilder(QUERY_STR_MAX_LEN);
-        if (selectSQL.trim().toUpperCase().startsWith("SELECT") == false) {
-            sqlSb.append("SELECT ");
-        }
-
-        sqlSb.append(selectSQL);
-
-        try (Connection conn = connect();
-                PreparedStatement preparedStatement = conn.prepareStatement(sqlSb.toString());
-                ResultSet resultSet = preparedStatement.executeQuery();) {
-            queryCallback.process(resultSet);
+       
+        try ( Connection conn = connect();)   {
+             PreparedStatement preparedStatement = conn.prepareStatement(sql);
+             
+            // fill in the params
+            if (params != null) {
+                int paramIndex = 1;
+                for (Object param : params) {
+                    preparedStatement.setObject(paramIndex, param);
+                    paramIndex += 1;
+                }
+            }
+            // execute query, and the callback to process result
+            try (ResultSet resultSet = preparedStatement.executeQuery();) {
+                queryCallback.process(resultSet);
+            }
         } catch (SQLException ex) {
-            throw new CentralRepoException(String.format("Error running SQL %s, exception = %s", selectSQL, ex.getMessage()), ex);
-        }
-    }
-    
-    @Override
-    public void executeUpdateSQL(String updateSQL) throws CentralRepoException {
-
-        if (updateSQL == null) {
-            throw new CentralRepoException("Update SQL is null");
-        }
-
-        StringBuilder sqlSb = new StringBuilder(QUERY_STR_MAX_LEN);
-        if (updateSQL.trim().toUpperCase().startsWith("UPDATE") == false) {
-            sqlSb.append("UPDATE ");
-        }
-        
-        sqlSb.append(updateSQL);
-        
-        try (Connection conn = connect();
-                PreparedStatement preparedStatement = conn.prepareStatement(sqlSb.toString());) {
-            preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
-            throw new CentralRepoException(String.format("Error running SQL %s, exception = %s", updateSQL, ex.getMessage()), ex);
-        }
-    }
-    
-    @Override
-    public void executeDeleteSQL(String deleteSQL) throws CentralRepoException {
-        
-        if (deleteSQL == null) {
-            throw new CentralRepoException("Delete SQL is null");
-        }
-
-        StringBuilder sqlSb = new StringBuilder(QUERY_STR_MAX_LEN);
-        if (deleteSQL.trim().toUpperCase().startsWith("DELETE") == false) {
-            sqlSb.append("DELETE ");
-        }
-
-        sqlSb.append(deleteSQL);
-
-        try (Connection conn = connect();
-                PreparedStatement preparedStatement = conn.prepareStatement(sqlSb.toString());) {
-            preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
-            throw new CentralRepoException(String.format("Error running SQL %s, exception = %s", deleteSQL, ex.getMessage()), ex);
-        }
+            throw new CentralRepoException(String.format("Error executing prepared statement for SQL query %s", sql), ex);
+        } 
     }
 
     @Override

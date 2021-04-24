@@ -95,8 +95,7 @@ public final class ImageGalleryController {
     private static final Logger logger = Logger.getLogger(ImageGalleryController.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED, IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED, IngestManager.IngestModuleEvent.FILE_DONE);
-
-    private static String DEFAULT_TAG_SET_NAME = "Project VIC";
+    
     /*
      * The file limit for image gallery. If the selected data source (or all
      * data sources, if that option is selected) has more than this many files
@@ -193,11 +192,14 @@ public final class ImageGalleryController {
      * @param theCase The case.
      */
     static void shutDownController(Case theCase) {
+        ImageGalleryController controller = null;
         synchronized (controllersByCaseLock) {
             if (controllersByCase.containsKey(theCase.getName())) {
-                ImageGalleryController controller = controllersByCase.remove(theCase.getName());
-                controller.shutDown();
+                controller = controllersByCase.remove(theCase.getName());
             }
+        }
+        if (controller != null) {
+            controller.shutDown();
         }
     }
 
@@ -660,7 +662,7 @@ public final class ImageGalleryController {
 
     private static ListeningExecutorService getNewDBExecutor() {
         return MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
-                new ThreadFactoryBuilder().setNameFormat("DB-Worker-Thread-%d").build()));
+                new ThreadFactoryBuilder().setNameFormat("ImageGallery-DB-Worker-Thread-%d").build()));
     }
 
     /**
@@ -738,7 +740,7 @@ public final class ImageGalleryController {
         List<TagSet> tagSetList = getCaseDatabase().getTaggingManager().getTagSets();
         if (tagSetList != null && !tagSetList.isEmpty()) {
             for (TagSet set : tagSetList) {
-                if (set.getName().equals(getCategoryTagSetName())) {
+                if (set.getName().equals(ImageGalleryService.PROJECT_VIC_TAG_SET_NAME)) {
                     return set;
                 }
             }
@@ -749,14 +751,6 @@ public final class ImageGalleryController {
         }
     }
 
-    /**
-     * Returns the name of the category tag set.
-     *
-     * @return Tagset name
-     */
-    static String getCategoryTagSetName() {
-        return DEFAULT_TAG_SET_NAME;
-    }
 
     /**
      * A listener for ingest module application events.
@@ -839,8 +833,11 @@ public final class ImageGalleryController {
                             Content newDataSource = (Content) event.getNewValue();
                             if (isListeningEnabled()) {
                                 try {
-                                    drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
-                                } catch (SQLException ex) {
+                                    // If the data source already exists and has a status other than UNKNOWN, don’t overwrite it. 
+                                    if(drawableDB.getDataSourceDbBuildStatus(newDataSource.getId()) == DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN) {
+                                        drawableDB.insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
+                                    }
+                                } catch (SQLException | TskCoreException ex) {
                                     logger.log(Level.SEVERE, String.format("Error updating datasources table (data source object ID = %d, status = %s)", newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN.toString()), ex); //NON-NLS
                                 }
                             }

@@ -4,6 +4,8 @@ appcompatcache
 auditfail
 backuprestore
 bam
+bam_tln
+btconfig
 bthport
 comfoo
 compname

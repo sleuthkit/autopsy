@@ -31,8 +31,12 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class ResultsNode extends DisplayableItemNode {
 
     @NbBundle.Messages("ResultsNode.name.text=Results")
-    public static final String NAME = Bundle.ResultsNode_name_text();
+    private static final String NAME = Bundle.ResultsNode_name_text();
 
+    public static String getNameIdentifier() {
+        return NAME;
+    }
+    
     public ResultsNode(SleuthkitCase sleuthkitCase) {
         this(sleuthkitCase, 0);
     }
@@ -46,7 +50,8 @@ public class ResultsNode extends DisplayableItemNode {
                     new HashsetHits(sleuthkitCase, dsObjId),
                     new EmailExtracted(sleuthkitCase, dsObjId),
                     new InterestingHits(sleuthkitCase, dsObjId ),
-                    new Accounts(sleuthkitCase, dsObjId) )
+                    new Accounts(sleuthkitCase, dsObjId),
+                    new OsAccounts(sleuthkitCase, dsObjId))
                 ),
                 Lookups.singleton(NAME));
         setName(NAME);

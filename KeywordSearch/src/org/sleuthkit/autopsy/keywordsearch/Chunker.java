@@ -184,10 +184,16 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         return new StringBuilder(UTF_16.decode(UTF_16.encode(s)));
     }
 
-    private static StringBuilder sanitize(String s) {
+    /**
+     * Wrapper method that performs UTF-8 string sanitization.
+     *
+     * @param s String to be sanitized.
+     *
+     * @return Sanitized string.
+     */
+    static StringBuilder sanitize(String s) {
         String normStr = Normalizer.normalize(s, Normalizer.Form.NFKC);
         return sanitizeToUTF8(replaceInvalidUTF16(normStr));
-
     }
 
     @Override
@@ -336,8 +342,9 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 String chunkSegment;
                 if (Character.isHighSurrogate(ch)) {
                     //read another char into the buffer.
-                    charsRead = reader.read(tempChunkBuf, 1, 1);
-                    if (charsRead == -1) {
+                    int surrogateCharsRead = reader.read(tempChunkBuf, 1, 1);
+                    charsRead += surrogateCharsRead;
+                    if (surrogateCharsRead == -1) {
                         //this is the last chunk, so just drop the unpaired surrogate
                         endOfReaderReached = true;
                         return;
@@ -352,17 +359,32 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
                 //cleanup any invalid utf-16 sequences
                 StringBuilder sanitizedChunkSegment = sanitize(chunkSegment);
-                //check for whitespace.
-                whitespaceFound = Character.isWhitespace(sanitizedChunkSegment.codePointAt(0));
-                //add read chars to the chunk and update the length.
-                currentChunk.append(sanitizedChunkSegment);
-                chunkSizeBytes += sanitizedChunkSegment.toString().getBytes(UTF_8).length;
-
+                //get the length in utf8 bytes of the read chars
+                int segmentSize = chunkSegment.getBytes(UTF_8).length;
+                
                 // lower case the string and get it's size. NOTE: lower casing can 
                 // change the size of the string.
                 String lowerCasedSegment = sanitizedChunkSegment.toString().toLowerCase();
-                lowerCasedChunk.append(lowerCasedSegment);
-                lowerCasedChunkSizeBytes += lowerCasedSegment.getBytes(UTF_8).length;
+                int lowerCasedSegmentSize = lowerCasedSegment.getBytes(UTF_8).length;
+                
+                //if it will not put us past maxBytes
+                if ((chunkSizeBytes + segmentSize < maxBytes - MAX_CHAR_SIZE_INCREASE_IN_BYTES)
+                        && (lowerCasedChunkSizeBytes + lowerCasedSegmentSize < maxBytes - MAX_CHAR_SIZE_INCREASE_IN_BYTES)) {
+
+                    //add read chars to the chunk and update the length.
+                    currentChunk.append(sanitizedChunkSegment);
+                    chunkSizeBytes += segmentSize;
+
+                    lowerCasedChunk.append(lowerCasedSegment);
+                    lowerCasedChunkSizeBytes += lowerCasedSegmentSize;
+                    
+                    //check for whitespace.
+                    whitespaceFound = Character.isWhitespace(sanitizedChunkSegment.codePointAt(0));
+                } else {
+                    //unread it, and break out of read loop.
+                    reader.unread(tempChunkBuf, 0, charsRead);
+                    return;
+                }
             }
         }
     }

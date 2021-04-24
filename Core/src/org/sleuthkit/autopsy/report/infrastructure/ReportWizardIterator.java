@@ -64,26 +64,34 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
         
         ReportingConfig config = null;
         try {
-            config = ReportingConfigLoader.loadConfig(reportingConfigurationName);
+            if(ReportingConfigLoader.configExists(reportingConfigurationName)) {
+                config = ReportingConfigLoader.loadConfig(reportingConfigurationName);
+            }
         } catch (ReportConfigException ex) {
             logger.log(Level.SEVERE, "Unable to load reporting configuration " + reportingConfigurationName + ". Using default settings", ex);
         }
         
         if (config != null) {
-            firstPanel = new ReportWizardPanel1(config.getModuleConfigs());
+            firstPanel = new ReportWizardPanel1(config.getModuleConfigs(), useCaseSpecificData);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, config.getTableReportSettings());
             fileConfigPanel = new ReportWizardFileOptionsPanel(config.getFileReportSettings());
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(config.getModuleConfigs(), useCaseSpecificData);
         } else {
-            firstPanel = new ReportWizardPanel1(null);
+            firstPanel = new ReportWizardPanel1(null, useCaseSpecificData);
             tableConfigPanel = new ReportWizardPanel2(useCaseSpecificData, null);
             fileConfigPanel = new ReportWizardFileOptionsPanel(null);
             portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel(null, useCaseSpecificData);
         }
         
-        dataSourceSelectionPanel = new ReportWizardDataSourceSelectionPanel();
+        if (useCaseSpecificData) {
+            dataSourceSelectionPanel = new ReportWizardDataSourceSelectionPanel();
+            allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, dataSourceSelectionPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
+        }
+        else {
+            dataSourceSelectionPanel = null;
+            allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
+        }
 
-        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, dataSourceSelectionPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
         tableConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel};
         fileConfigPanels = new WizardDescriptor.Panel[]{firstPanel, fileConfigPanel};
         portableCaseConfigPanels = new WizardDescriptor.Panel[]{firstPanel, portableCaseConfigPanel};
@@ -118,15 +126,16 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
      * @param tableConfig true if a TReportModule was selected
      */
     private void enableConfigPanels(boolean generalModule, boolean tableModule, boolean portableCaseModule, boolean showDataSourceSelectionPanel) {
+        boolean includedDataSourceSelection = showDataSourceSelectionPanel && dataSourceSelectionPanel != null;
         if (generalModule) {
-            if(showDataSourceSelectionPanel) {
+            if(includedDataSourceSelection) {
                 panels = Arrays.asList(firstPanel, dataSourceSelectionPanel);
             }
         } else if (tableModule) {
             // Table Module selected, need Artifact Configuration Panel
             // (ReportWizardPanel2)
             panels = Arrays.asList(tableConfigPanels);
-            if(showDataSourceSelectionPanel) {
+            if(includedDataSourceSelection) {
                 panels = new ArrayList<>(panels);
                 panels.add(1, dataSourceSelectionPanel);
             }
@@ -138,7 +147,7 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
             // File Module selected, need File Report Configuration Panel
             // (ReportWizardFileOptionsPanel)
             panels = Arrays.asList(fileConfigPanels);
-            if(showDataSourceSelectionPanel) {
+            if(includedDataSourceSelection) {
                 panels = new ArrayList<>(panels);
                 panels.add(1, dataSourceSelectionPanel);
             }

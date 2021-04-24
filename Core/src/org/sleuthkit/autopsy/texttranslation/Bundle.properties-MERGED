@@ -10,3 +10,4 @@ TranslationOptionsPanelController.moduleErr.msg=A module caused an error listeni
 TranslationContentPanel.showLabel.text=Show:
 TranslationOptionsPanel.translationServiceLabel.text=Text translator:
 TranslationOptionsPanel.translationOptionsDescription.text=Configure a 3rd party text translation service to enable text and file name translation.
+TranslationOptionsPanel.enableOcrCheckBox.text=Enable Optical Character Recognition (OCR) in the translation content viewer

@@ -31,7 +31,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory;
-import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
@@ -40,6 +39,7 @@ import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFa
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionModuleFactory;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
@@ -60,7 +60,7 @@ final class IngestModuleFactoryLoader {
             add(FileTypeIdModuleFactory.class.getCanonicalName());
             add(FileExtMismatchDetectorModuleFactory.class.getCanonicalName());
             add(EmbeddedFileExtractorModuleFactory.class.getCanonicalName());
-            add(ExifParserModuleFactory.class.getCanonicalName());
+            add(PictureAnalyzerIngestModuleFactory.class.getCanonicalName());
             add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
             add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
             add(EncryptionDetectionModuleFactory.class.getCanonicalName());

@@ -43,6 +43,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
@@ -660,6 +661,8 @@ public class EamDbSettingsDialog extends JDialog {
      *         found.
      */
     private static boolean testStatusAndCreate(Component parent, CentralRepoDbManager manager, EamDbSettingsDialog dialog) {
+        closePersonasTopComponent();
+        
         parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         manager.testStatus();
 
@@ -690,6 +693,21 @@ public class EamDbSettingsDialog extends JDialog {
         parent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         return true;
     }
+    
+        
+    
+    /**
+     * Closes Personas top component if it exists.
+     */
+    private static void closePersonasTopComponent() {
+        SwingUtilities.invokeLater(() -> {
+            TopComponent personasWindow = WindowManager.getDefault().findTopComponent("PersonasTopComponent");
+            if (personasWindow != null && personasWindow.isOpened()) {
+                personasWindow.close();   
+            }
+        });
+    }
+    
 
     /**
      * This method returns if changes to the central repository configuration

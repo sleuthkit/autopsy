@@ -208,10 +208,12 @@ class TskDbDiff(object):
             while (row != None):
 
                 # File Name and artifact type
+                # Remove parent object ID from Unalloc file name
+                normalizedName = re.sub('^Unalloc_[0-9]+_', 'Unalloc_', row["name"])
                 if(row["parent_path"] != None):
-                    database_log.write(row["parent_path"] + row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
+                    database_log.write(row["parent_path"] + normalizedName + ' <artifact type="' + row["display_name"] + '" > ')
                 else:
-                    database_log.write(row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
+                    database_log.write(normalizedName + ' <artifact type="' + row["display_name"] + '" > ')
 
                 if isMultiUser:
                     attribute_cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -269,6 +271,8 @@ class TskDbDiff(object):
                                 attr_value_as_string = getAssociatedArtifactType(attribute_cursor, attr_value_as_string, isMultiUser)                            
                             patrn = re.compile("[\n\0\a\b\r\f]")
                             attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
+                            if attr["source"] == "Keyword Search" and attr["display_name"] == "Keyword Preview":
+                                attr_value_as_string = "<Keyword Preview placeholder>"
                             database_log.write('<attribute source="' + attr["source"] + '" type="' + attr["display_name"] + '" value="' + attr_value_as_string + '" />')
                         except IOError as e:
                             print("IO error")
@@ -325,7 +329,8 @@ class TskDbDiff(object):
         id_legacy_artifact_types = build_id_legacy_artifact_types_table(conn.cursor(), isMultiUser)
         id_reports_table = build_id_reports_table(conn.cursor(), isMultiUser)
         id_images_table = build_id_image_names_table(conn.cursor(), isMultiUser)
-        id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table, id_reports_table, id_images_table)
+        id_accounts_table = build_id_accounts_table(conn.cursor(), isMultiUser)
+        id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table, id_reports_table, id_images_table, id_accounts_table)
 
         if isMultiUser: # Use PostgreSQL
             os.environ['PGPASSWORD']=pgSettings.password
@@ -348,7 +353,7 @@ class TskDbDiff(object):
                     if 'INSERT INTO image_gallery_groups_seen' in dump_line:
                         dump_line = ''
                         continue;
-                    dump_line = normalize_db_entry(dump_line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types)
+                    dump_line = normalize_db_entry(dump_line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types, id_accounts_table)
                     db_log.write('%s\n' % dump_line)
                     dump_line = ''
             postgreSQL_db.close()
@@ -362,7 +367,7 @@ class TskDbDiff(object):
                 for line in conn.iterdump():
                     if 'INSERT INTO "image_gallery_groups_seen"' in line:
                         continue
-                    line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types)
+                    line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types, id_accounts_table)
                     db_log.write('%s\n' % line)
         # Now sort the file  
         srtcmdlst = ["sort", dump_file, "-o", dump_file]
@@ -415,7 +420,7 @@ class PGSettings(object):
         return self.password
 
 
-def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info_table, objects_table, reports_table, images_table, artifact_table):
+def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info_table, objects_table, reports_table, images_table, artifact_table, accounts_table):
     """ Make testing more consistent and reasonable by doctoring certain db entries.
 
     Args:
@@ -427,6 +432,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     files_index = line.find('INSERT INTO "tsk_files"') > -1 or line.find('INSERT INTO tsk_files ') > -1
     path_index = line.find('INSERT INTO "tsk_files_path"') > -1 or line.find('INSERT INTO tsk_files_path ') > -1
     object_index = line.find('INSERT INTO "tsk_objects"') > -1 or line.find('INSERT INTO tsk_objects ') > -1
+    vs_parts_index = line.find('INSERT INTO "tsk_vs_parts"') > -1 or line.find('INSERT INTO tsk_vs_parts ') > -1
     report_index = line.find('INSERT INTO "reports"') > -1 or line.find('INSERT INTO reports ') > -1
     layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
     data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
@@ -436,6 +442,10 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     examiners_index = line.find('INSERT INTO "tsk_examiners"') > -1 or line.find('INSERT INTO tsk_examiners ') > -1
     ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1
     ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
+    os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
+    os_account_attr_index = line.find('INSERT INTO "tsk_os_account_attributes"') > -1 or line.find('INSERT INTO tsk_os_account_attributes') > -1
+    os_account_instances_index = line.find('INSERT INTO "tsk_os_account_instances"') > -1 or line.find('INSERT INTO tsk_os_account_instances') > -1
+    data_artifacts_index = line.find('INSERT INTO "tsk_data_artifacts"') > -1 or line.find('INSERT INTO tsk_data_artifacts') > -1
     
     parens = line[line.find('(') + 1 : line.rfind(')')]
     no_space_parens = parens.replace(" ", "")
@@ -461,7 +471,22 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
 
     # remove object ID
     if files_index:
-        newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
+    
+        # Ignore TIFF size and hash if extracted from PDFs.
+        # See JIRA-6951 for more details.
+        # index -3 = 3rd from the end, which is extension
+        # index -5 = 5th from the end, which is the parent path.
+        if fields_list[-3] == "'tif'" and fields_list[-5].endswith(".pdf/'"):
+            fields_list[15] = "'SIZE_IGNORED'"
+            fields_list[23] = "'MD5_IGNORED'"
+            fields_list[24] = "'SHA256_IGNORED'"
+        newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:-1]) + ');') #leave off first (object id) and last (os_account_id) field 
+        # Remove object ID from Unalloc file name
+        newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
+        return newLine
+    # remove object ID
+    elif vs_parts_index:
+        newLine = ('INSERT INTO "tsk_vs_parts" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove group ID
     elif ig_groups_index:
@@ -496,7 +521,9 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     elif layout_index:
         obj_id = fields_list[0]
         path= files_table[int(obj_id)]
-        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');') 
+        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');')
+        # Remove object ID from Unalloc file name
+        newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
         return newLine
     # remove object ID
     elif object_index:
@@ -525,7 +552,6 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             path = fs_info_table[obj_id]
         elif obj_id in reports_table.keys():
             path = reports_table[obj_id]
-        
         # remove host name (for multi-user) and dates/times from path for reports
         if path is not None:
             if 'ModuleOutput' in path:
@@ -547,6 +573,8 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             parent_path = fs_info_table[parent_id]
         elif parent_id in images_table.keys():
             parent_path = images_table[parent_id]
+        elif parent_id in accounts_table.keys():
+            parent_path = accounts_table[parent_id]
         elif parent_id == 'NULL':
             parent_path = "NULL"
         
@@ -557,9 +585,14 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
                 parent_path = parent_path[parent_path.find('ModuleOutput'):]
 
         if path and parent_path:
+            # Remove object ID from Unalloc file names and regripper output
+            path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', path)
+            path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', path)
+            parent_path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', parent_path)
+            parent_path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', parent_path)
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
-            return line 
+            return newLine + '"OBJECT IDS OMITTED", ' + ', '.join(fields_list[2:]) + ');'  #omit parent object id and object id when we cant annonymize them
     # remove time-based information, ie Test_6/11/14 -> Test    
     elif report_index:
         fields_list[1] = "AutopsyTestCase"
@@ -568,6 +601,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         return newLine
     elif data_source_info_index:
         fields_list[1] = "{device id}"
+        fields_list[4] = "{dateTime}"
         newLine = ('INSERT INTO "data_source_info" VALUES(' + ','.join(fields_list) + ');')
         return newLine
     elif ingest_job_index:
@@ -601,10 +635,64 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             fields_list[4] = files_table[object_id]
         if legacy_artifact_id != 'NULL' and legacy_artifact_id in artifact_table.keys():
             fields_list[6] = artifact_table[legacy_artifact_id]
+        if fields_list[1] == fields_list[2] and fields_list[1] == fields_list[3]:	
+            fields_list[1] = cleanupEventDescription(fields_list[1])
+            fields_list[2] = cleanupEventDescription(fields_list[2])
+            fields_list[3] = cleanupEventDescription(fields_list[3])
         newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
+        return newLine
+    elif os_account_index:
+        newLine = ('INSERT INTO "tsk_os_accounts" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id since value that would be substituted is in diff line already
+        return newLine
+    elif os_account_attr_index:
+        #substitue the account object id for a non changing value
+        os_account_id = int(fields_list[1])
+        fields_list[1] = accounts_table[os_account_id]
+        #substitue the source object id for a non changing value
+        source_obj_id = int(fields_list[3])
+        if source_obj_id in files_table.keys():
+            fields_list[3] = files_table[source_obj_id]
+        elif source_obj_id in vs_parts_table.keys():
+            fields_list[3] = vs_parts_table[source_obj_id]
+        elif source_obj_id in vs_info_table.keys():
+            fields_list[3] = vs_info_table[source_obj_id]
+        elif source_obj_id in fs_info_table.keys():
+            fields_list[3] = fs_info_table[source_obj_id]
+        elif source_obj_id in images_table.keys():
+            fields_list[3] = images_table[source_obj_id]
+        elif source_obj_id in accounts_table.keys():
+            fields_list[3] = accounts_table[source_obj_id]
+        elif source_obj_id == 'NULL':
+            fields_list[3] = "NULL"
+        newLine = ('INSERT INTO "tsk_os_account_attributes" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
+        return newLine
+    elif os_account_instances_index:
+        os_account_id = int(fields_list[1])
+        fields_list[1] = accounts_table[os_account_id]
+        newLine = ('INSERT INTO "tsk_os_account_instances" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
+        return newLine
+    elif data_artifacts_index:
+        art_obj_id = int(fields_list[0])
+        if art_obj_id in files_table.keys():
+            fields_list[0] = files_table[art_obj_id]
+        else:
+            fields_list[0] = 'Artifact Object ID Omitted'
+        account_obj_id = int(fields_list[1])
+        if account_obj_id in files_table.keys():
+            fields_list[1] = files_table[account_obj_id]
+        else:
+            fields_list[1] = 'Account Object ID Omitted'
+        newLine = ('INSERT INTO "tsk_data_artifacts" VALUES(' + ','.join(fields_list[:]) + ');') # remove ids
         return newLine
     else:
         return line
+        
+def cleanupEventDescription(description):
+    test = re.search("^'\D+:\d+'$", description)
+    if test is not None:
+        return re.sub(":\d+", ":<artifact_id>", description)
+    else:
+        return description
 
 def getAssociatedArtifactType(cur, artifact_id, isMultiUser):
     if isMultiUser:
@@ -716,8 +804,18 @@ def build_id_reports_table(db_cursor, isPostgreSQL):
     mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, path FROM reports")])
     return mapping
 
+def build_id_accounts_table(db_cursor, isPostgreSQL):
+    """Build the map of object ids to OS account SIDs.
 
-def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports_table, images_table):
+    Args:
+        db_cursor: the database cursor
+    """
+    # for each row in the db, take the object id and account SID then creates a tuple in the dictionary
+    # with the object id as the key and the OS Account's SID as the value
+    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT os_account_obj_id, addr  FROM tsk_os_accounts")])
+    return mapping
+
+def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports_table, images_table, accounts_table):
     """Build the map of object ids to artifact ids.
 
     Args:
@@ -725,6 +823,8 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
         objects_table: obj_id, par_obj_id, type
         artifacts_table: obj_id, artifact_type_name
         reports_table: obj_id, path
+        images_table: obj_id, name
+        accounts_table: obj_id, addr  
     """
     # make a copy of files_table and update it with new data from artifacts_table and reports_table
     mapping = files_table.copy()
@@ -744,6 +844,8 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
                 elif par_obj_id in images_table.keys():
                     path = images_table[par_obj_id]
                 mapping[k] = path + "/" + artifacts_table[k]
+            elif k in accounts_table.keys(): # For an OS Account object ID we use its addr  field which is the account SID
+                mapping[k] = accounts_table[k]
         elif v[0] not in mapping.keys():
             if v[0] in artifacts_table.keys():
                 par_obj_id = objects_table[v[0]]

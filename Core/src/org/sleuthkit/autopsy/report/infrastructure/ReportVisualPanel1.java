@@ -59,11 +59,13 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private PortableCaseReportModule portableCaseModule;
     private Map<String, ReportModuleConfig> moduleConfigs;
     private Integer selectedIndex;
+    private final boolean displayCaseSpecificData;
 
     /**
      * Creates new form ReportVisualPanel1
      */
-    public ReportVisualPanel1(ReportWizardPanel1 wizPanel, Map<String, ReportModuleConfig> moduleConfigs) {
+    ReportVisualPanel1(ReportWizardPanel1 wizPanel, Map<String, ReportModuleConfig> moduleConfigs, boolean displayCaseSpecificData) {
+        this.displayCaseSpecificData = displayCaseSpecificData;
         this.wizPanel = wizPanel;
         this.moduleConfigs = moduleConfigs;
         initComponents();
@@ -151,6 +153,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         }
 
         modulesJList.getSelectionModel().addListSelectionListener(this);
+        modulesJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         modulesJList.setCellRenderer(new ModuleCellRenderer());
         modulesJList.setListData(modules.toArray(new ReportModule[modules.size()]));
         modulesJList.setSelectedIndex(selectedIndex);
@@ -370,7 +373,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
         // General modules that support data source selection will be presented
         // a data source selection panel, so they should not be finished immediately.
-        boolean generalModuleSelected = (module instanceof GeneralReportModule) && !((GeneralReportModule)module).supportsDataSourceSelection();
+        boolean generalModuleSelected = (module instanceof GeneralReportModule) && (!((GeneralReportModule)module).supportsDataSourceSelection() || !displayCaseSpecificData);
         
         wizPanel.setNext(!generalModuleSelected);
         wizPanel.setFinish(generalModuleSelected);

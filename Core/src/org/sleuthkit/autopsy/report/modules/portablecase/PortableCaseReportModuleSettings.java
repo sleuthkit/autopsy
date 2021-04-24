@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +36,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
     private ChunkSize chunkSize;
     private boolean allTagsSelected;
     private boolean allSetsSelected;
+    private boolean shouldIncludeApplication;
     
         /**
      * Enum for storing the display name for each chunk type and the
@@ -82,6 +83,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
         this.chunkSize = ChunkSize.NONE;
         this.allTagsSelected = true;
         this.allSetsSelected = true;
+        this.shouldIncludeApplication = false;
     }
 
     PortableCaseReportModuleSettings(List<String> setNames, List<TagName> tagNames,
@@ -92,6 +94,7 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
         this.chunkSize = chunkSize;
         this.allTagsSelected = allTagsSelected;
         this.allSetsSelected = allSetsSelected;
+        this.shouldIncludeApplication = false;
     }
 
     @Override
@@ -141,6 +144,10 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
     public boolean areAllSetsSelected() {
         return allSetsSelected;
     }
+    
+    public boolean includeApplication() {
+        return shouldIncludeApplication;
+    }
 
     /**
      * @param allTagsSelected the allTagsSelected to set
@@ -154,6 +161,10 @@ public class PortableCaseReportModuleSettings implements ReportModuleSettings {
      */
     public void setAllSetsSelected(boolean allSetsSelected) {
         this.allSetsSelected = allSetsSelected;
+    }
+    
+    public void setIncludeApplication(boolean includeApplication) {
+        this.shouldIncludeApplication = includeApplication;
     }
 
 }

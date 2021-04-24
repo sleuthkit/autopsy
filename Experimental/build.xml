@@ -19,12 +19,12 @@
     <target name="retrieve-experimental" depends="resolve">
         <ivy:retrieve conf="experimental"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
-
+    
     <target name="retrieve-all" depends="resolve">
         <ivy:retrieve conf="*"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
     
-    <target name="init" depends="retrieve-all, harness.init" />
+    <target name="init" depends="init-ivy, retrieve-all, harness.init" />
       
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy  

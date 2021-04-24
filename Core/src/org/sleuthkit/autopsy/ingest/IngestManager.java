@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +47,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
@@ -67,6 +69,8 @@ import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Manages the creation and execution of ingest jobs, i.e., the processing of
@@ -121,7 +125,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     private final int numberOfFileIngestThreads;
     private final AtomicLong nextIngestManagerTaskId = new AtomicLong(0L);
     private final ExecutorService startIngestJobsExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS;
+    @GuardedBy("startIngestJobFutures")
     private final Map<Long, Future<Void>> startIngestJobFutures = new ConcurrentHashMap<>();
+    @GuardedBy("ingestJobsById")
     private final Map<Long, IngestJob> ingestJobsById = new HashMap<>();
     private final ExecutorService dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;
     private final ExecutorService fileLevelIngestJobTasksExecutor;
@@ -287,6 +293,32 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
+     * Creates an ingest stream from the given ingest settings for a data
+     * source.
+     *
+     * @param dataSource The data source
+     * @param settings   The ingest job settings.
+     *
+     * @return The newly created ingest stream.
+     *
+     * @throws TskCoreException if there was an error starting the ingest job.
+     */
+    public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) throws TskCoreException {
+        IngestJob job = new IngestJob(dataSource, IngestJob.Mode.STREAMING, settings);
+        IngestJobInputStream stream = new IngestJobInputStream(job);
+        if (stream.getIngestJobStartResult().getJob() != null) {
+            return stream;
+        } else if (stream.getIngestJobStartResult().getModuleErrors().isEmpty()) {
+            for (IngestModuleError error : stream.getIngestJobStartResult().getModuleErrors()) {
+                logger.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), dataSource.getName()), error.getThrowable());
+            }
+            throw new TskCoreException("Error starting ingest modules");
+        } else {
+            throw new TskCoreException("Error starting ingest modules", stream.getIngestJobStartResult().getStartupException());
+        }
+    }
+
+    /**
      * Gets the number of file ingest threads the ingest manager is using to do
      * ingest jobs.
      *
@@ -304,11 +336,13 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
+            IngestJob job = new IngestJob(dataSources, settings);
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
-                startIngestJobFutures.put(taskId, task);
+                synchronized (startIngestJobFutures) {
+                    startIngestJobFutures.put(taskId, task);
+                }
             }
         }
     }
@@ -323,17 +357,19 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSource, files, settings, RuntimeProperties.runningWithGUI());
+            IngestJob job = new IngestJob(dataSource, files, settings);
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
-                startIngestJobFutures.put(taskId, task);
+                synchronized (startIngestJobFutures) {
+                    startIngestJobFutures.put(taskId, task);
+                }
             }
         }
     }
 
     /**
-     * Immdiately starts an ingest job for one or more data sources.
+     * Immediately starts an ingest job for one or more data sources.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
@@ -343,7 +379,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
+            IngestJob job = new IngestJob(dataSources, settings);
             if (job.hasIngestPipeline()) {
                 return startIngestJob(job);
             }
@@ -366,7 +402,22 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         "IngestManager.startupErr.dlgSolution=Please disable the failed modules or fix the errors before restarting ingest.",
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
-    private IngestJobStartResult startIngestJob(IngestJob job) {
+    IngestJobStartResult startIngestJob(IngestJob job) {
+
+        // initialize IngestMessageInbox, if it hasn't been initialized yet. This can't be done in
+        // the constructor because that ends up freezing the UI on startup (JIRA-7345).
+        if (SwingUtilities.isEventDispatchThread()) {
+            initIngestMessageInbox();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(() -> initIngestMessageInbox());
+            } catch (InterruptedException ex) {
+                // ignore interruptions
+            } catch (InvocationTargetException ex) {
+                logger.log(Level.WARNING, "There was an error starting ingest message inbox", ex);
+            }
+        }
+
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
@@ -473,9 +524,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @param reason The cancellation reason.
      */
     public void cancelAllIngestJobs(IngestJob.CancellationReason reason) {
-        startIngestJobFutures.values().forEach((handle) -> {
-            handle.cancel(true);
-        });
+        synchronized (startIngestJobFutures) {
+            startIngestJobFutures.values().forEach((handle) -> {
+                handle.cancel(true);
+            });
+        }
         synchronized (ingestJobsById) {
             this.ingestJobsById.values().forEach((job) -> {
                 job.cancel(reason);
@@ -491,10 +544,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void addIngestJobEventListener(final PropertyChangeListener listener) {
         jobEventPublisher.addSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
-    
+
     /**
-     * Adds an ingest job event property change listener for the given event types.
-     * 
+     * Adds an ingest job event property change listener for the given event
+     * types.
+     *
      * @param eventTypes The event types to listen for
      * @param listener   The PropertyChangeListener to be added
      */
@@ -512,18 +566,18 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void removeIngestJobEventListener(final PropertyChangeListener listener) {
         jobEventPublisher.removeSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
-    
+
     /**
      * Removes an ingest job event property change listener.
      *
      * @param eventTypes The event types to stop listening for
-     * @param listener The PropertyChangeListener to be removed.
+     * @param listener   The PropertyChangeListener to be removed.
      */
     public void removeIngestJobEventListener(Set<IngestJobEvent> eventTypes, final PropertyChangeListener listener) {
         eventTypes.forEach((IngestJobEvent event) -> {
             jobEventPublisher.removeSubscriber(event.toString(), listener);
         });
-    }   
+    }
 
     /**
      * Adds an ingest module event property change listener.
@@ -535,8 +589,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Adds an ingest module event property change listener for given event types.
-     * 
+     * Adds an ingest module event property change listener for given event
+     * types.
+     *
      * @param eventTypes The event types to listen for
      * @param listener   The PropertyChangeListener to be removed.
      */
@@ -545,7 +600,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             moduleEventPublisher.addSubscriber(event.toString(), listener);
         });
     }
-    
+
     /**
      * Removes an ingest module event property change listener.
      *
@@ -554,16 +609,16 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     public void removeIngestModuleEventListener(final PropertyChangeListener listener) {
         moduleEventPublisher.removeSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
     }
-    
+
     /**
      * Removes an ingest module event property change listener.
-     * 
+     *
      * @param eventTypes The event types to stop listening for
      * @param listener   The PropertyChangeListener to be removed.
      */
     public void removeIngestModuleEventListener(Set<IngestModuleEvent> eventTypes, final PropertyChangeListener listener) {
         moduleEventPublisher.removeSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
-    }    
+    }
 
     /**
      * Publishes an ingest job event signifying an ingest job started.
@@ -671,8 +726,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Causes the ingest manager to get the top component used to display ingest
-     * inbox messages. Called by the custom installer for this package once the
-     * window system is initialized.
+     * inbox messages. Used to be called by the custom installer for this
+     * package once the window system is initialized, but that results in a lot
+     * of UI components being initialized, which freezes the UI for a long
+     * period of time(JIRA-7345). Instead we are now initializing
+     * IngestMessageInbox immediately prior to running first ingest job.
      */
     void initIngestMessageInbox() {
         synchronized (this.ingestMessageBoxLock) {
@@ -719,60 +777,65 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Updates the ingest job snapshot when a data source level ingest job task
-     * starts to be processd by a data source ingest module in the data source
-     * ingest modules pipeline of an ingest job.
+     * Updates the ingest progress snapshot when a new ingest module starts
+     * working on a data source level ingest task.
      *
-     * @param task                    The data source level ingest job task that
-     *                                was started.
-     * @param ingestModuleDisplayName The dislpay name of the data source level
-     *                                ingest module that has started processing
-     *                                the task.
+     * @param task              The data source ingest task.
+     * @param currentModuleName The display name of the currently processing
+     *                          module.
      */
-    void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource()));
-    }
-
-    /**
-     * Updates the ingest job snapshot when a file source level ingest job task
-     * starts to be processed by a file level ingest module in the file ingest
-     * modules pipeline of an ingest job.
-     *
-     * @param task                    The file level ingest job task that was
-     *                                started.
-     * @param ingestModuleDisplayName The dislpay name of the file level ingest
-     *                                module that has started processing the
-     *                                task.
-     */
-    void setIngestTaskProgress(FileIngestTask task, String ingestModuleDisplayName) {
+    void setIngestTaskProgress(DataSourceIngestTask task, String currentModuleName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
-        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
+        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
+
+        /*
+         * Update the total run time for the PREVIOUS ingest module in the
+         * pipeline, which has now finished its processing for the task.
+         */
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
-     * Updates the ingest job snapshot when a data source level ingest job task
-     * is completed by the data source ingest modules in the data source ingest
-     * modules pipeline of an ingest job.
+     * Updates the ingest progress snapshot when a new ingest module starts
+     * working on a file ingest task.
      *
-     * @param task The data source level ingest job task that was completed.
+     * @param task              The file ingest task.
+     * @param currentModuleName The display name of the currently processing
+     *                          module.
      */
-    void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
-        ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
+    void setIngestTaskProgress(FileIngestTask task, String currentModuleName) {
+        IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
+        IngestThreadActivitySnapshot newSnap;
+        try {
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource(), task.getFile());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
+        }
+        ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
+
+        /*
+         * Update the total run time for the PREVIOUS ingest module in the
+         * pipeline, which has now finished its processing for the task.
+         */
+        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
-     * Updates the ingest job snapshot when a file level ingest job task is
-     * completed by the file ingest modules in the file ingest modules pipeline
-     * of an ingest job.
+     * Updates the ingest progress snapshot when an ingest task is completed.
      *
-     * @param task The file level ingest job task that was completed.
+     * @param task The ingest task.
      */
-    void setIngestTaskProgressCompleted(FileIngestTask task) {
+    void setIngestTaskProgressCompleted(IngestTask task) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
+
+        /*
+         * Update the total run time for the LAST ingest module in the pipeline,
+         * which has now finished its processing for the task.
+         */
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
@@ -782,7 +845,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @param moduleDisplayName The diplay name of the ingest module.
      * @param duration
      */
-    private void incrementModuleRunTime(String moduleDisplayName, Long duration) {
+    void incrementModuleRunTime(String moduleDisplayName, Long duration) {
         if (moduleDisplayName.equals("IDLE")) { //NON-NLS
             return;
         }
@@ -828,8 +891,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @return A list of ingest job state snapshots.
      */
     @Override
-    public List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
-        List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
+    public List<Snapshot> getIngestJobSnapshots() {
+        List<Snapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
                 snapShots.addAll(job.getDataSourceIngestJobSnapshots());
@@ -884,8 +947,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                             if (progress != null) {
                                 progress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.cancelling", displayName));
                             }
-                            Future<?> handle = startIngestJobFutures.remove(threadId);
-                            handle.cancel(true);
+                            synchronized (startIngestJobFutures) {
+                                Future<?> handle = startIngestJobFutures.remove(threadId);
+                                handle.cancel(true);
+                            }
                             return true;
                         }
                     });
@@ -899,7 +964,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 if (null != progress) {
                     progress.finish();
                 }
-                startIngestJobFutures.remove(threadId);
+                synchronized (startIngestJobFutures) {
+                    startIngestJobFutures.remove(threadId);
+                }
             }
         }
 

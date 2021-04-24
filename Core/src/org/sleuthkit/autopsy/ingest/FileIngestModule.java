@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,13 +36,4 @@ public interface FileIngestModule extends IngestModule {
      */
     ProcessResult process(AbstractFile file);
 
-    /**
-     * Invoked by Autopsy when an ingest job is completed (either because the
-     * data has been analyzed or because the job was canceled - check
-     * IngestJobContext.fileIngestIsCancelled()), before the ingest module
-     * instance is discarded. The module should respond by doing things like
-     * releasing private resources, submitting final results, and posting a
-     * final ingest message.
-     */
-    void shutDown();
 }

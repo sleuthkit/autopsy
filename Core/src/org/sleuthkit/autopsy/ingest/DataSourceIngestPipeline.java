@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2016 Basis Technology Corp.
+ *
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,186 +18,87 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * This class manages a sequence of data source level ingest modules for a data
- * source ingest job. It starts the modules, runs data sources through them, and
- * shuts them down when data source level ingest is complete.
- * <p>
- * This class is thread-safe.
+ * A pipeline of data source level ingest modules for performing data source
+ * level ingest tasks for an ingest job.
  */
-final class DataSourceIngestPipeline {
+final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngestTask> {
 
-    private static final IngestManager ingestManager = IngestManager.getInstance();
     private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());
-    private final DataSourceIngestJob job;
-    private final List<PipelineModule> modules = new ArrayList<>();
-    private volatile PipelineModule currentModule;
+    private static final IngestManager ingestManager = IngestManager.getInstance();
 
     /**
-     * Constructs an object that manages a sequence of data source level ingest
-     * modules. It starts the modules, runs data sources through them, and shuts
-     * them down when data source level ingest is complete.
+     * Constructs a pipeline of data source level ingest modules for performing
+     * data source level ingest tasks for an ingest job.
      *
-     * @param job             The data source ingest job that owns this
-     *                        pipeline.
-     * @param moduleTemplates Templates for the creating the ingest modules that
-     *                        make up this pipeline.
+     * @param ingestJobPipeline The ingest job pipeline that owns this pipeline.
+     * @param moduleTemplates   The ingest module templates that define this
+     *                          pipeline.
      */
-    DataSourceIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
-        this.job = job;
-        for (IngestModuleTemplate template : moduleTemplates) {
-            if (template.isDataSourceIngestModuleTemplate()) {
-                PipelineModule module = new PipelineModule(template.createDataSourceIngestModule(), template.getModuleName());
-                modules.add(module);
-            }
-        }
+    DataSourceIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+        super(ingestJobPipeline, moduleTemplates);
     }
 
-    /**
-     * Indicates whether or not there are any ingest modules in this pipeline.
-     *
-     * @return True or false.
-     */
-    boolean isEmpty() {
-        return modules.isEmpty();
+    @Override
+    Optional<IngestTaskPipeline.PipelineModule<DataSourceIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
+        Optional<IngestTaskPipeline.PipelineModule<DataSourceIngestTask>> module = Optional.empty();
+        if (template.isDataSourceIngestModuleTemplate()) {
+            DataSourceIngestModule ingestModule = template.createDataSourceIngestModule();
+            module = Optional.of(new DataSourcePipelineModule(ingestModule, template.getModuleName()));
+        }
+        return module;
     }
 
-    /**
-     * Starts up the ingest modules in this pipeline.
-     *
-     * @return A list of ingest module startup errors, possibly empty.
-     */
-    synchronized List<IngestModuleError> startUp() {
-        List<IngestModuleError> errors = new ArrayList<>();
-        for (PipelineModule module : modules) {
-            try {
-                module.startUp(new IngestJobContext(this.job));
-            } catch (Throwable ex) { // Catch-all exception firewall
-                errors.add(new IngestModuleError(module.getDisplayName(), ex));
-            }
-        }
-        return errors;
+    @Override
+    void prepareTask(DataSourceIngestTask task) {
     }
 
-    /**
-     * Runs a data source through the ingest modules in sequential order.
-     *
-     * @param task A data source level ingest task containing a data source to
-     *             be processed.
-     *
-     * @return A list of processing errors, possible empty.
-     */
-    synchronized List<IngestModuleError> process(DataSourceIngestTask task) {
-        List<IngestModuleError> errors = new ArrayList<>();
-        if (!this.job.isCancelled()) {
-            Content dataSource = task.getDataSource();
-            for (PipelineModule module : modules) {
-                try {
-                    this.currentModule = module;
-                    String displayName = NbBundle.getMessage(this.getClass(),
-                            "IngestJob.progress.dataSourceIngest.displayName",
-                            module.getDisplayName(), dataSource.getName());
-                    this.job.updateDataSourceIngestProgressBarDisplayName(displayName);
-                    this.job.switchDataSourceIngestProgressBarToIndeterminate();
-                    DataSourceIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) starting", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getId()}); //NON-NLS
-                    module.process(dataSource, new DataSourceIngestModuleProgress(this.job));
-                    logger.log(Level.INFO, "{0} analysis of {1} (jobId={2}) finished", new Object[]{module.getDisplayName(), this.job.getDataSource().getName(), this.job.getId()}); //NON-NLS
-                } catch (Throwable ex) { // Catch-all exception firewall
-                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                }
-                if (this.job.isCancelled()) {
-                    break;
-                } else if (this.job.currentDataSourceIngestModuleIsCancelled()) {
-                    this.job.currentDataSourceIngestModuleCancellationCompleted(currentModule.getDisplayName());
-                }
-            }
-        }
-        this.currentModule = null;
+    @Override
+    void completeTask(DataSourceIngestTask task) {
         ingestManager.setIngestTaskProgressCompleted(task);
-        return errors;
     }
 
     /**
-     * Gets the currently running module.
-     *
-     * @return The module, possibly null if no module is currently running.
+     * A wrapper that adds ingest infrastructure operations to a data source
+     * level ingest module.
      */
-    PipelineModule getCurrentlyRunningModule() {
-        return this.currentModule;
-    }
-
-    /**
-     * This class decorates a data source level ingest module with a display
-     * name and a processing start time.
-     */
-    static class PipelineModule implements DataSourceIngestModule {
+    static final class DataSourcePipelineModule extends IngestTaskPipeline.PipelineModule<DataSourceIngestTask> {
 
         private final DataSourceIngestModule module;
-        private final String displayName;
-        private volatile Date processingStartTime;
 
         /**
-         * Constructs an object that decorates a data source level ingest module
-         * with a display name and a processing start time.
-         *
-         * @param module      The data source level ingest module to be
-         *                    decorated.
-         * @param displayName The display name.
+         * Constructs a wrapper that adds ingest infrastructure operations to a
+         * data source level ingest module.
          */
-        PipelineModule(DataSourceIngestModule module, String displayName) {
+        DataSourcePipelineModule(DataSourceIngestModule module, String displayName) {
+            super(module, displayName);
             this.module = module;
-            this.displayName = displayName;
-            this.processingStartTime = new Date();
-        }
-
-        /**
-         * Gets the class name of the decorated ingest module.
-         *
-         * @return The class name.
-         */
-        String getClassName() {
-            return this.module.getClass().getCanonicalName();
-        }
-
-        /**
-         * Gets the display of the decorated ingest module.
-         *
-         * @return The display name.
-         */
-        String getDisplayName() {
-            return this.displayName;
-        }
-
-        /**
-         * Gets the time the decorated ingest module started processing the data
-         * source.
-         *
-         * @return The start time, will be null if the module has not started
-         *         processing the data source yet.
-         */
-        Date getProcessingStartTime() {
-            return this.processingStartTime;
         }
 
         @Override
-        public void startUp(IngestJobContext context) throws IngestModuleException {
-            this.module.startUp(context);
-        }
-
-        @Override
-        public IngestModule.ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
-            this.processingStartTime = new Date();
-            return this.module.process(dataSource, statusHelper);
+        void performTask(IngestJobPipeline ingestJobPipeline, DataSourceIngestTask task) throws IngestModuleException {
+            Content dataSource = task.getDataSource();
+            String progressBarDisplayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.displayName", getDisplayName(), dataSource.getName());
+            ingestJobPipeline.updateDataSourceIngestProgressBarDisplayName(progressBarDisplayName);
+            ingestJobPipeline.switchDataSourceIngestProgressBarToIndeterminate();
+            ingestManager.setIngestTaskProgress(task, getDisplayName());
+            logger.log(Level.INFO, "{0} analysis of {1} starting", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS
+            ProcessResult result = module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobPipeline));
+            logger.log(Level.INFO, "{0} analysis of {1} finished", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS            
+            if (!ingestJobPipeline.isCancelled() && ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
+                ingestJobPipeline.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
+            }
+            // See JIRA-7449            
+//            if (result == ProcessResult.ERROR) {
+//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (data source objId = %d)", getDisplayName(), dataSource.getName(), dataSource.getId())); //NON-NLS
+//            }            
         }
 
     }

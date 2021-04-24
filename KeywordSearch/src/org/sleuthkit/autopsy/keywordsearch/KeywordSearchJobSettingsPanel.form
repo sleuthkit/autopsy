@@ -99,6 +99,9 @@
             <Property name="showHorizontalLines" type="boolean" value="false"/>
             <Property name="showVerticalLines" type="boolean" value="false"/>
           </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="listsTable.setDefaultRenderer(String.class, new SimpleTableCellRenderer());"/>
+          </AuxValues>
         </Component>
       </SubComponents>
     </Container>

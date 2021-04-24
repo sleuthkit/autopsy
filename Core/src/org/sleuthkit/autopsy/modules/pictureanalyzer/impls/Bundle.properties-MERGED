@@ -1,0 +1,2 @@
+ExifProcessor.indexError.message=Failed to post EXIF Metadata artifact(s).
+ExifProcessor.userContent.description=EXIF metadata data exists for this file.

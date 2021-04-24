@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import com.google.common.annotations.Beta;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
@@ -128,8 +129,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     };
 
     private final BlackboardArtifact artifact;
-    private Content srcContent;  
-    private volatile String translatedSourceName; 
+    private Content srcContent;
+    private volatile String translatedSourceName;
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -234,7 +235,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param iconPath The path to the icon for the artifact type.
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
-        super(artifact, createLookup(artifact));
+        super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
         for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
             if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
@@ -260,6 +261,49 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         String displayName = srcContent.getName();
         setDisplayName(displayName);
         setShortDescription(displayName);
+        setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
+    }
+
+    /**
+     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
+     * can be used to represent an artifact of any type.
+     *
+     * @param artifact               The artifact to represent.
+     * @param lookupIsAssociatedFile True if the Content lookup should be made
+     *                               for the associated file instead of the
+     *                               parent file.
+     */
+    @Beta
+    public BlackboardArtifactNode(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
+        super(artifact, createLookup(artifact, lookupIsAssociatedFile));
+        this.artifact = artifact;
+        try {
+            //The lookup for a file may or may not exist so we define the srcContent as the parent.
+            srcContent = artifact.getParent();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the parent of the artifact for (artifact objID={0})", artifact.getId()), ex);
+        }
+        if (srcContent != null) {
+            try {
+                /*
+                 * Calling this getter causes the unique path of the source
+                 * content to be cached in the Content object. This is
+                 * advantageous as long as this node is constructed in a
+                 * background thread instead of a UI thread.
+                 */
+                srcContent.getUniquePath();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
+            }
+        } else {
+            throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
+        }
+        setName(Long.toString(artifact.getArtifactID()));
+        String displayName = srcContent.getName();
+        setDisplayName(displayName);
+        setShortDescription(displayName);
+        String iconPath = IconsUtil.getIconFilePath(artifact.getArtifactTypeID());
         setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
     }
@@ -295,6 +339,62 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
             return Lookups.fixed(artifact);
         }
+    }
+
+    /**
+     * Creates a Lookup object for this node and populates it with both the
+     * artifact this node represents and its source content.
+     *
+     * @param artifact               The artifact this node represents.
+     * @param lookupIsAssociatedFile True if the Content lookup should be made
+     *                               for the associated file instead of the
+     *                               parent file.
+     *
+     * @return The Lookup.
+     */
+    private static Lookup createLookup(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
+        Content content = null;
+        if (lookupIsAssociatedFile) {
+            try {
+                content = getPathIdFile(artifact);
+            } catch (ExecutionException ex) {
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
+                content = null;
+            }
+            if (content == null) {
+                return Lookups.fixed(artifact);
+            } else {
+                return Lookups.fixed(artifact, content);
+            }
+        } else {
+            return createLookup(artifact);
+        }
+
+    }
+
+    /**
+     * Private helper method to allow content specified in a path id attribute
+     * to be retrieved.
+     *
+     * @param artifact The artifact for which content may be specified as a tsk
+     *                 path attribute.
+     *
+     * @return The Content specified by the artifact's path id attribute or null
+     *         if there was no content available.
+     *
+     * @throws ExecutionException Error retrieving the file specified by the
+     *                            path id from the cache.
+     */
+    private static Content getPathIdFile(BlackboardArtifact artifact) throws ExecutionException {
+        try {
+            BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+            if (attribute != null) {
+                return contentCache.get(attribute.getValueLong(), () -> artifact.getSleuthkitCase().getContentById(attribute.getValueLong()));
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting content for path id attrbiute for artifact: ", artifact.getId()), ex); //NON-NLS
+        }
+        return null;
     }
 
     /**
@@ -950,7 +1050,21 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     }
                     map.put(attribute.getAttributeType().getDisplayName(), value);
                 } else {
-                    map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+                    switch (attribute.getAttributeType().getValueType()) {
+                        case INTEGER:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueInt());
+                            break;
+                        case DOUBLE:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueDouble());
+                            break;
+                        case LONG:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueLong());
+                            break;
+                        default:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+
+                    }
+
                 }
             }
         } catch (TskCoreException ex) {

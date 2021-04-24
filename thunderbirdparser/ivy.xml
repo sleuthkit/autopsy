@@ -14,5 +14,6 @@
         <dependency conf="autopsy->default" org="com.googlecode.ez-vcard" name="ez-vcard" rev="0.10.5"/>
         <dependency conf="autopsy->default" org="com.github.mangstadt" name="vinnie" rev="2.0.2"/>
         <dependency org="com.google.guava" name="guava" rev="19.0"/>
+        <dependency org="commons-validator" name="commons-validator" rev="1.6"/>
     </dependencies>
 </ivy-module>

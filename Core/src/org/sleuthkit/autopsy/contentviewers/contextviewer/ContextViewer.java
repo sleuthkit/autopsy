@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.contentviewers.contextviewer;
 
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * usage, if known.
  *
  */
-@ServiceProvider(service = DataContentViewer.class, position = 7)
+@ServiceProvider(service = DataContentViewer.class, position = 8)
 public final class ContextViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = 1L;
@@ -55,12 +57,12 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private static final int ATTRIBUTE_STR_MAX_LEN = 200;
 
     // defines a list of artifacts that provide context for a file
-    private static final List<BlackboardArtifact.ARTIFACT_TYPE> SOURCE_CONTEXT_ARTIFACTS = new ArrayList<>();
-    private final List<javax.swing.JPanel> contextSourcePanels = new ArrayList<>();
-    private final List<javax.swing.JPanel> contextUsagePanels = new ArrayList<>();
+    private static final List<BlackboardArtifact.ARTIFACT_TYPE> CONTEXT_ARTIFACTS = new ArrayList<>();
+    private final List<ContextSourcePanel> contextSourcePanels = new ArrayList<>();
+    private final List<ContextUsagePanel> contextUsagePanels = new ArrayList<>();
 
     static {
-        SOURCE_CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
+        CONTEXT_ARTIFACTS.add(TSK_ASSOCIATED_OBJECT);
     }
 
     /**
@@ -180,7 +182,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
 
         AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
         try {
-            populateSourceContextData(file);
+            populatePanels(file);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Exception displaying context for file %s", file.getName()), ex); //NON-NLS
         }
@@ -223,7 +225,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         // check if the node has an abstract file and the file has any context defining artifacts.
         if (node.getLookup().lookup(AbstractFile.class) != null) {
             AbstractFile abstractFile = node.getLookup().lookup(AbstractFile.class);
-            for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SOURCE_CONTEXT_ARTIFACTS) {
+            for (BlackboardArtifact.ARTIFACT_TYPE artifactType : CONTEXT_ARTIFACTS) {
                 List<BlackboardArtifact> artifactsList;
                 try {
                     artifactsList = abstractFile.getArtifacts(artifactType);
@@ -258,18 +260,18 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
      * @throws NoCurrentCaseException
      * @throws TskCoreException
      */
-    private void populateSourceContextData(AbstractFile sourceFile) throws NoCurrentCaseException, TskCoreException {
+    private void populatePanels(AbstractFile sourceFile) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         
         // Check for all context artifacts
         boolean foundASource = false;
-        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : SOURCE_CONTEXT_ARTIFACTS) {
+        for (BlackboardArtifact.ARTIFACT_TYPE artifactType : CONTEXT_ARTIFACTS) {
             List<BlackboardArtifact> artifactsList = tskCase.getBlackboardArtifacts(artifactType, sourceFile.getId());
 
             foundASource = !artifactsList.isEmpty();
             for (BlackboardArtifact contextArtifact : artifactsList) {
-                addSourceEntry(contextArtifact);
+                addAssociatedArtifactToPanel(contextArtifact);
             }
         }
         javax.swing.JPanel contextContainer = new javax.swing.JPanel();
@@ -290,6 +292,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 contextContainer.add(usagePanel);
             }
         }
+        
+        contextContainer.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
         contextContainer.setEnabled(foundASource);
         contextContainer.setVisible(foundASource);
         jScrollPane.getViewport().setView(contextContainer);
@@ -302,15 +306,14 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     }
 
     /**
-     * Adds a source context entry for the selected file based on the given
-     * context providing artifact.
+     * Resolves an TSK_ASSOCIATED_OBJECT artifact and adds it to the appropriate panel
      *
      * @param artifact Artifact that may provide context.
      *
      * @throws NoCurrentCaseException
      * @throws TskCoreException
      */
-    private void addSourceEntry(BlackboardArtifact artifact) throws TskCoreException {
+    private void addAssociatedArtifactToPanel(BlackboardArtifact artifact) throws TskCoreException {
 
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID() == artifact.getArtifactTypeID()) {
             BlackboardAttribute associatedArtifactAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -318,14 +321,13 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
                 long artifactId = associatedArtifactAttribute.getValueLong();
                 BlackboardArtifact associatedArtifact = artifact.getSleuthkitCase().getBlackboardArtifact(artifactId);
 
-                setSourceFields(associatedArtifact);
+                addArtifactToPanels(associatedArtifact);
             }
         }
     }
 
     /**
-     * Sets the source label and text fields based on the given associated
-     * artifact.
+     * Adds th passed in artifact to the appropriate source or usage panel
      *
      * @param associatedArtifact - associated artifact
      *
@@ -337,33 +339,37 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         "ContextViewer.recentDocs=Recent Documents: ",
         "ContextViewer.programExecution=Program Execution: "
     })
-    private void setSourceFields(BlackboardArtifact associatedArtifact) throws TskCoreException {
+    private void addArtifactToPanels(BlackboardArtifact associatedArtifact) throws TskCoreException {
+        Long dateTime = getArtifactDateTime(associatedArtifact);
         if (BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_attachmentSource();
             String sourceText = msgArtifactToAbbreviatedString(associatedArtifact);
-            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
+            ContextSourcePanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, dateTime);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == associatedArtifact.getArtifactTypeID()
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_downloadSource();
             String sourceText = webDownloadArtifactToString(associatedArtifact);
-            javax.swing.JPanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact);
+            ContextSourcePanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, dateTime);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_recentDocs();
             String sourceText = recentDocArtifactToString(associatedArtifact);
-            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
+            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);        
             contextUsagePanels.add(usagePanel);
             
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_programExecution();
             String sourceText = programExecArtifactToString(associatedArtifact);
-            javax.swing.JPanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact);        
+            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);        
             contextUsagePanels.add(usagePanel);
         }
+        
+        Collections.sort(contextSourcePanels, new SortByDateTime());
+        Collections.sort(contextUsagePanels, new SortByDateTime());
     }
 
     /**
@@ -531,6 +537,59 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         }
 
         return attributeMap;
+    }
+    
+    interface DateTimePanel {
+        /**
+         * Return the date time value for this panel.
+         *
+         * @return Date time value or null of one is not available.
+         */
+        Long getDateTime();
+    }
+    
+        /**
+     * Return the dateTime value for the given message artifact.
+     * 
+     * @param artifact 
+     * 
+     * @return Long dateTime value or null if the attribute was not found.
+     * 
+     * @throws TskCoreException 
+     */
+    private Long getArtifactDateTime(BlackboardArtifact artifact) throws TskCoreException {
+        BlackboardAttribute attribute =  artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
+        
+        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() == artifact.getArtifactTypeID()) {
+            attribute =  artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifact.getArtifactTypeID()
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID() == artifact.getArtifactTypeID()) {
+            attribute =  artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED));
+        }
+        return (attribute != null ? attribute.getValueLong() : null);
+    }
+    
+    /**
+     * Class for sorting lists of DateTimePanels.
+     */
+    class SortByDateTime implements Comparator<DateTimePanel> {
+
+        @Override
+        public int compare(DateTimePanel panel1, DateTimePanel panel2) {
+            Long dateTime1 = panel1.getDateTime();
+            Long dateTime2 = panel2.getDateTime();
+            
+            if(dateTime1 == null && dateTime2 == null) {
+                return 0;
+            } else if(dateTime1 == null) {
+                return -1;
+            } else if(dateTime2 == null) {
+                return 1;
+            }
+            
+            return dateTime1.compareTo(dateTime2);
+        }
+        
     }
 
 

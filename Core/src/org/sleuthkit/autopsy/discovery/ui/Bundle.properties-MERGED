@@ -1,0 +1,189 @@
+ArtifactMenuMouseAdapter.noFile.text=File does not exist.
+ArtifactMenuMouseAdapter_ExternalViewer_label=Open in external viewer
+ArtifactMenuMouseAdapter_label=Extract Files
+ArtifactsListPanel.dateColumn.name=Date/Time
+ArtifactsListPanel.fileNameColumn.name=Name
+ArtifactsListPanel.mimeTypeColumn.name=MIME Type
+ArtifactsListPanel.noResultsFound.text=No results found
+ArtifactsListPanel.termColumn.name=Term
+ArtifactsListPanel.titleColumn.name=Title
+ArtifactsListPanel.urlColumn.name=URL
+ArtifactsListPanel.value.noValue=No value available.
+ArtifactTypeFilterPanel.selectionNeeded.text=At least one Result type must be selected.
+CTL_OpenDiscoveryAction=Discovery
+DataSourceFilterPanel.error.text=At least one data source must be selected.
+# {0} - dataSourceName
+DataSourceModuleWrapper.exifModule.text=Picture Analyzer module was not run on data source: {0}\n
+# {0} - dataSourceName
+DataSourceModuleWrapper.fileTypeModule.text=File Type Identification module was not run on data source: {0}\n
+# {0} - dataSourceName
+DataSourceModuleWrapper.hashModule.text=Hash Lookup module was not run on data source: {0}\n
+# {0} - timeZone
+DateFilterPanel.dateRange.text=Date Range ({0}):
+DateFilterPanel.invalidRange.text=Range or Only Last must be selected.
+DateFilterPanel.startAfterEnd.text=Start date should be before the end date when both are enabled.
+DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter.
+DiscoveryDialog.name.text=Discovery
+DiscoveryTopComponent.additionalFilters.text=; 
+DiscoveryTopComponent.cancelButton.text=Cancel Search
+DiscoveryTopComponent.domainSearch.text=Type: Domain
+DiscoveryTopComponent.name=\ Discovery
+DiscoveryTopComponent.newSearch.text=New Search
+DiscoveryTopComponent.searchCancelled.text=Search has been cancelled.
+# {0} - search
+DiscoveryTopComponent.searchComplete.text=Results with {0}
+DiscoveryTopComponent.searchError.text=Error no type specified for search.
+# {0} - searchType
+DiscoveryTopComponent.searchInProgress.text=Performing search for results of type {0}. Please wait.
+DiscoveryUiUtility.bytes.text=bytes
+DiscoveryUiUtility.gigaBytes.text=GB
+DiscoveryUiUtility.kiloBytes.text=KB
+DiscoveryUiUtility.megaBytes.text=MB
+# {0} - fileSize
+# {1} - units
+DiscoveryUiUtility.sizeLabel.text=Size: {0} {1}
+DiscoveryUiUtility.terraBytes.text=TB
+# {0} - file name
+DiscoveryUiUtils.genVideoThumb.progress.text=extracting temporary file {0}
+DiscoveryUiUtils.isDeleted.text=All instances of file are deleted.
+DiscoveryUiUtils.resultsIncomplete.text=Discovery results may be incomplete
+# {0} - otherInstanceCount
+DocumentPanel.nameLabel.more.text=\ and {0} more
+DocumentPanel.noImageExtraction.text=0 of ? images
+DocumentPanel.numberOfImages.noImages=No images
+# {0} - numberOfImages
+DocumentPanel.numberOfImages.text=1 of {0} images
+DocumentWrapper.previewInitialValue=Preview not generated yet.
+DomainDetailsPanel.miniTimelineTitle.text=Timeline
+DomainDetailsPanel.otherOccurrencesTab.title=Other Occurrences
+# {0} - startDate
+# {1} - endDate
+DomainSummaryPanel.activity.text=Activity: {0} to {1}
+DomainSummaryPanel.category.text=Categories: 
+DomainSummaryPanel.downloads.text=Files downloaded: 
+DomainSummaryPanel.loadingImages.text=Loading thumbnail...
+DomainSummaryPanel.no.text=No
+DomainSummaryPanel.notability.text=Previously tagged as notable: 
+DomainSummaryPanel.pages.text=Page views in final 60 days: 
+DomainSummaryPanel.totalPages.text=Total page views: 
+DomainSummaryPanel.userRole.text=Account type: 
+DomainSummaryPanel.yes.text=Yes
+GroupsListPanel.noDomainResults.message.text=No domains were found for the selected filters.\n\nReminder:\n  -The Recent Activity module must be run on each data source you want to find results in.\n  -The Central Repository module must be run on each data source if you want to filter or sort by past occurrences.\n  -The iOS Analyzer (iLEAPP) module must be run on each data source which contains data from an iOS device.\n
+GroupsListPanel.noFileResults.message.text=No files were found for the selected filters.\n\nReminder:\n  -The File Type Identification module must be run on each data source you want to find results in.\n  -The Hash Lookup module must be run on each data source if you want to filter by past occurrence.\n  -The Picture Analyzer module must be run on each data source if you are filtering by User Created content.
+GroupsListPanel.noResults.title.text=No results found
+HashSetFilterPanel.error.text=At least one hash set name must be selected.
+ImageThumbnailPanel.isDeleted.text=All instances of file are deleted.
+# {0} - otherInstanceCount
+ImageThumbnailPanel.nameLabel.more.text=\ and {0} more
+InterestingItemsFilterPanel.error.text=At least one interesting file set name must be selected.
+LoadingPanel.loading.text=Loading, please wait.
+# {0} - resultInfo
+LoadingPanel.retrieving.text=Retrieving results for {0}.
+MiniTimelineArtifactListPanel.descriptionColumn.name=\ Description
+MiniTimelineArtifactListPanel.typeColumn.name=Result Type
+MiniTimelineArtifactListPanel.value.noValue=No value available.
+MiniTimelineDateListPanel.countColumn.name=Count
+MiniTimelineDateListPanel.dateColumn.name=Date
+MiniTimelineDateListPanel.value.noValue=No value available.
+MiniTimelinePanel.loadingPanel.details=the Timeline view
+MonthAbbreviation.aprilAbbrev=Apr
+MonthAbbreviation.augustAbbrev=Aug
+MonthAbbreviation.decemberAbbrev=Dec
+MonthAbbreviation.feburaryAbbrev=Feb
+MonthAbbreviation.januraryAbbrev=Jan
+MonthAbbreviation.julyAbbrev=Jul
+MonthAbbreviation.juneAbbrev=Jun
+MonthAbbreviation.marchAbbrev=Mar
+MonthAbbreviation.mayAbbrev=May
+MonthAbbreviation.novemberAbbrev=Nov
+MonthAbbreviation.octoberAbbrev=Oct
+MonthAbbreviation.septemberAbbrev=Sep
+ObjectDetectedFilterPanel.error.text=At least one object type name must be selected.
+ParentFolderFilterPanel.error.text=At least one parent path must be entered.
+PastOccurrencesFilterPanel.error.text=At least one value in the past occurrence filter must be selected.
+# {0} - currentPage
+# {1} - totalPages
+ResultsPanel.currentPage.displayValue=Page: {0} of {1}
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+ResultsPanel.currentPageLabel.text=Page: -
+DiscoveryDialog.sortingPanel.border.title=Step 3: Choose display settings
+DiscoveryDialog.searchButton.text=Search
+DiscoveryDialog.domainsButton.text=Domains
+DiscoveryDialog.groupByLabel.text=Group By:
+DiscoveryDialog.step1Label.text=Step 1: Choose result type
+DiscoveryDialog.orderByLabel.text=Order Within Groups By:
+DiscoveryDialog.documentsButton.text=Documents
+DiscoveryDialog.orderGroupsByLabel.text=Order Groups By:
+DiscoveryDialog.videosButton.text=Videos
+DiscoveryDialog.imagesButton.text=Images
+ResultsPanel.documentPreview.text=Document preview creation cancelled.
+# {0} - selectedPage
+# {1} - maxPage
+ResultsPanel.invalidPageNumber.message=The selected page number {0} does not exist. Please select a value from 1 to {1}.
+ResultsPanel.invalidPageNumber.title=Invalid Page Number
+ResultsPanel.openInExternalViewer.name=Open in External Viewer
+ResultsPanel.unableToCreate.text=Unable to create summary.
+ResultsPanel.viewFileInDir.name=View File in Directory
+SizeFilterPanel.error.text=At least one size must be selected.
+VideoFilterPanel.videoFiltersSplitPane.border.title=Step 2: Filter which videos to show
+DataSourceFilterPanel.dataSourceCheckbox.text=Data Source:
+ParentFolderFilterPanel.parentLabel.text_1=(All will be used)
+ParentFolderFilterPanel.parentCheckbox.text_1=Parent Folder:
+ParentFolderFilterPanel.addButton.text_1=Add
+ParentFolderFilterPanel.deleteButton.text_1=Delete
+ParentFolderFilterPanel.excludeRadioButton.text_1=Exclude
+ParentFolderFilterPanel.substringRadioButton.text_1=Substring
+ParentFolderFilterPanel.includeRadioButton.text_1=Include
+ParentFolderFilterPanel.fullRadioButton.text_1=Full
+UserCreatedFilterPanel.userCreatedCheckbox.text_1=Possibly User Created
+GroupListPanel.groupKeyList.border.title=Groups
+ResultsSplitPaneDivider.detailsLabel.text=Details Area
+ResultsSplitPaneDivider.showButton.text=
+ResultsSplitPaneDivider.hideButton.text=
+ImageFilterPanel.imageFiltersSplitPane.toolTipText=
+ImageFilterPanel.imageFiltersSplitPane.border.title=Step 2: Filter which images to show
+ArtifactTypeFilterPanel.artifactTypeCheckbox.text=Result Type:
+InterestingItemsFilterPanel.interestingItemsCheckbox.text=Interesting Item:
+DocumentPanel.fileSizeLabel.toolTipText=
+DocumentPanel.isDeletedLabel.toolTipText=
+DomainFilterPanel.domainFiltersSplitPane.toolTipText=
+DomainFilterPanel.domainFiltersSplitPane.border.title=Step 2: Filter which domains to show
+SizeFilterPanel.sizeCheckbox.text=File Size:
+DateFilterPanel.endCheckBox.text=End:
+DateFilterPanel.startCheckBox.text=Start:
+DateFilterPanel.daysLabel.text=days of activity
+ImageThumbnailPanel.isDeletedLabel.toolTipText=
+ResultsPanel.pageControlsLabel.text=Pages:
+ResultsPanel.currentPageLabel.text=Page: -
+ResultsPanel.pageSizeLabel.text=Page Size:
+ResultsPanel.gotoPageLabel.text=Go to Page:
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+HashSetFilterPanel.hashSetCheckbox.text=Hash Set:
+PastOccurrencesFilterPanel.pastOccurrencesCheckbox.text=Past Occurrences:
+DocumentFilterPanel.documentsFiltersSplitPane.border.title=Step 2: Filter which documents to show
+ObjectDetectedFilterPanel.text=Object Detected:
+DateFilterPanel.mostRecentRadioButton.text=Only final:
+DateFilterPanel.dateFilterCheckBox.text=Date Filter:
+DomainSummaryPanel.pagesLabel.text=
+DomainSummaryPanel.filesDownloadedLabel.text=
+FileDetailsPanel.instancesList.border.title=Instances
+CookieDetailsPanel.jLabel1.text=Artifact:
+CookieDetailsPanel.jLabel2.text=
+PreviouslyNotableFilterPanel.text_1=Include only previously notable domains
+KnownAccountTypeFilterPanel.text_1=Include only domains with a known account type
+LoadingPanel.detailsLabel.AccessibleContext.accessibleName=detailsLabel
+VideoThumbnailPanel.bytes.text=bytes
+VideoThumbnailPanel.deleted.text=All instances of file are deleted.
+VideoThumbnailPanel.gigaBytes.text=GB
+VideoThumbnailPanel.kiloBytes.text=KB
+VideoThumbnailPanel.megaBytes.text=MB
+# {0} - otherInstanceCount
+VideoThumbnailPanel.nameLabel.more.text=\ and {0} more
+# {0} - fileSize
+# {1} - units
+VideoThumbnailPanel.sizeLabel.text=Size: {0} {1}
+VideoThumbnailPanel.terraBytes.text=TB

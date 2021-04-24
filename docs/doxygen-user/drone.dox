@@ -1,10 +1,13 @@
-/*! \page drone_page Drone Analyzer
+/*! \page drone_page DJI Drone Analyzer
+
+[TOC]
+
 
 \section drone_overview Overview
 
-The Drone Analyzer module allows you to analyze files from a drone.
+The DJI Drone Analyzer module allows you to analyze files from a drone.
 
-Currently, the Drone Analyzer module works on images obtained from the internal SD card found in the following DJI drone models:
+Currently, the DJI Drone Analyzer module works on images obtained from the internal SD card found in the following DJI drone models:
 - Phantom 3
 - Phantom 4
 - Phantom 4 Pro
@@ -17,7 +20,7 @@ The module will find DAT files and process them using DatCon (https://datfile.ne
 
 \section drone_config Running the Module
 
-To enable the Drone Analyzer ingest module select the checkbox in the \ref ingest_configure "Ingest Modules configuration screen". 
+To enable the DJI Drone Analyzer ingest module select the checkbox in the \ref ingest_configure "Ingest Modules configuration screen". 
 
 \section drone_results Viewing Results
 

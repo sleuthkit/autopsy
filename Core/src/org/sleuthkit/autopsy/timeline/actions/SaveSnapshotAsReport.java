@@ -109,10 +109,12 @@ public class SaveSnapshotAsReport extends Action {
                 
                 String reportName = JOptionPane.showInputDialog(SwingUtilities.windowForComponent(controller.getTopComponent()), message, 
                         Bundle.SaveSnapShotAsReport_action_dialogs_title(), JOptionPane.QUESTION_MESSAGE);
+                // if reportName is null then cancel was selected, if reportName is empty then ok was selected and no report name specified
+                if (reportName != null) {
+                    reportName = StringUtils.defaultIfBlank(reportName, defaultReportName);
                 
-                reportName = StringUtils.defaultIfBlank(reportName, defaultReportName);
-                
-                createReport(controller, reportName, generationDate, snapshot);
+                    createReport(controller, reportName, generationDate, snapshot);
+                }
             });
         });
     }

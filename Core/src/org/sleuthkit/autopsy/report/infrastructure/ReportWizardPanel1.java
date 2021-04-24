@@ -37,9 +37,11 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
     private final Map<String, ReportModuleConfig> moduleConfigs;
     private final JButton nextButton;
     private final JButton finishButton;
+    private final boolean displayCaseSpecificData;
 
-    ReportWizardPanel1(Map<String, ReportModuleConfig> moduleConfigs) {
+    ReportWizardPanel1(Map<String, ReportModuleConfig> moduleConfigs, boolean displayCaseSpecificData) {
         this.moduleConfigs = moduleConfigs;
+        this.displayCaseSpecificData = displayCaseSpecificData;
         nextButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.nextButton.text"));
         finishButton = new JButton(NbBundle.getMessage(this.getClass(), "ReportWizardPanel1.finishButton.text"));
         finishButton.setEnabled(false);
@@ -63,7 +65,7 @@ class ReportWizardPanel1 implements WizardDescriptor.FinishablePanel<WizardDescr
     @Override
     public ReportVisualPanel1 getComponent() {
         if (component == null) {
-            component = new ReportVisualPanel1(this, moduleConfigs);
+            component = new ReportVisualPanel1(this, moduleConfigs, displayCaseSpecificData);
         }
         return component;
     }

@@ -87,7 +87,7 @@ public class ReportWizardDataSourceSelectionPanel implements WizardDescriptor.Fi
     }
 
     @NbBundle.Messages({
-        "ReportWizardDataSourceSelectionPanel.title=Select which datasource(s) to include"
+        "ReportWizardDataSourceSelectionPanel.title=Select which data source(s) to include"
     })
     @Override
     public CheckBoxListPanel<Long> getComponent() {

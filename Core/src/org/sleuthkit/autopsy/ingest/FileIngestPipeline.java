@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2014-2015 Basis Technology Corp.
+ *
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,212 +21,194 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * This class manages a sequence of file level ingest modules for a data source
- * ingest job. It starts the modules, runs files through them, and shuts them
- * down when file level ingest is complete.
- * <p>
- * This class is thread-safe.
+ * A pipeline of file ingest modules for performing file ingest tasks for an
+ * ingest job.
  */
-final class FileIngestPipeline {
+@NbBundle.Messages({
+    "FileIngestPipeline_SaveResults_Activity=Saving Results"
+})
+final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
 
+    private static final int FILE_BATCH_SIZE = 500;
+    private static final String SAVE_RESULTS_ACTIVITY = Bundle.FileIngestPipeline_SaveResults_Activity();
+    private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final DataSourceIngestJob job;
-    private final List<PipelineModule> modules = new ArrayList<>();
-    private Date startTime;
-    private volatile boolean running;
+    private final IngestJobPipeline ingestJobPipeline;
+    private final List<AbstractFile> fileBatch;
 
     /**
-     * Constructs an object that manages a sequence of file level ingest
-     * modules. It starts the modules, runs files through them, and shuts them
-     * down when file level ingest is complete.
+     * Constructs a pipeline of file ingest modules for performing file ingest
+     * tasks for an ingest job.
      *
-     * @param job             The data source ingest job that owns the pipeline.
-     * @param moduleTemplates The ingest module templates that define the
-     *                        pipeline.
+     * @param ingestJobPipeline The ingest job pipeline that owns this pipeline.
+     * @param moduleTemplates   The ingest module templates that define this
+     *                          pipeline.
      */
-    FileIngestPipeline(DataSourceIngestJob job, List<IngestModuleTemplate> moduleTemplates) {
-        this.job = job;
-        for (IngestModuleTemplate template : moduleTemplates) {
-            if (template.isFileIngestModuleTemplate()) {
-                PipelineModule module = new PipelineModule(template.createFileIngestModule(), template.getModuleName());
-                modules.add(module);
-            }
+    FileIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+        super(ingestJobPipeline, moduleTemplates);
+        this.ingestJobPipeline = ingestJobPipeline;
+        fileBatch = new ArrayList<>();
+    }
+
+    @Override
+    Optional<IngestTaskPipeline.PipelineModule<FileIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
+        Optional<IngestTaskPipeline.PipelineModule<FileIngestTask>> module = Optional.empty();
+        if (template.isFileIngestModuleTemplate()) {
+            FileIngestModule ingestModule = template.createFileIngestModule();
+            module = Optional.of(new FileIngestPipelineModule(ingestModule, template.getModuleName()));
         }
+        return module;
     }
 
-    /**
-     * Queries whether or not there are any ingest modules in this pipeline.
-     *
-     * @return True or false.
-     */
-    boolean isEmpty() {
-        return this.modules.isEmpty();
+    @Override
+    void prepareTask(FileIngestTask task) throws IngestTaskPipelineException {
     }
 
-    /**
-     * Queries whether or not this pipeline is running.
-     *
-     * @return True or false.
-     */
-    boolean isRunning() {
-        return this.running;
-    }
-
-    /**
-     * Returns the start up time of this pipeline.
-     *
-     * @return The file processing start time, may be null if this pipeline has
-     *         not been started yet.
-     */
-    Date getStartTime() {
-        return this.startTime;
-    }
-
-    /**
-     * Starts up all of the ingest modules in the pipeline.
-     *
-     * @return List of start up errors, possibly empty.
-     */
-    synchronized List<IngestModuleError> startUp() {
-        this.startTime = new Date();
-        this.running = true;
-        List<IngestModuleError> errors = new ArrayList<>();
-        for (PipelineModule module : this.modules) {
-            try {
-                module.startUp(new IngestJobContext(this.job));
-            } catch (Throwable ex) { // Catch-all exception firewall
-                errors.add(new IngestModuleError(module.getDisplayName(), ex));
-            }
-        }
-        return errors;
-    }
-
-    /**
-     * Runs a file through the ingest modules in sequential order.
-     *
-     * @param task A file level ingest task containing a file to be processed.
-     *
-     * @return A list of processing errors, possible empty.
-     */
-    synchronized List<IngestModuleError> process(FileIngestTask task) {
-        List<IngestModuleError> errors = new ArrayList<>();
-        if (!this.job.isCancelled()) {
+    @Override
+    void completeTask(FileIngestTask task) throws IngestTaskPipelineException {
+        try {
+            ingestManager.setIngestTaskProgress(task, SAVE_RESULTS_ACTIVITY);
             AbstractFile file = task.getFile();
-            for (PipelineModule module : this.modules) {
-                try {
-                    FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
-                    this.job.setCurrentFileIngestModule(module.getDisplayName(), task.getFile().getName());
-                    module.process(file);
-                } catch (Throwable ex) { // Catch-all exception firewall
-                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                }
-                if (this.job.isCancelled()) {
-                    break;
-                }
-            }
-            
-            if (!this.job.isCancelled()) {
-                // Save any properties that have not already been saved to the database
-                try{
-                    file.save();
-                } catch (TskCoreException ex){
-                    Logger.getLogger(FileIngestPipeline.class.getName()).log(Level.SEVERE, "Failed to save data for file " + file.getId(), ex); //NON-NLS
-                }
-                IngestManager.getInstance().fireFileIngestDone(file);
-            }
             file.close();
+            cacheFileForBatchUpdate(file);
+        } catch (TskCoreException ex) {
+            throw new IngestTaskPipelineException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
+        } finally {
+            ingestManager.setIngestTaskProgressCompleted(task);
         }
-        FileIngestPipeline.ingestManager.setIngestTaskProgressCompleted(task);
+    }
+
+    @Override
+    List<IngestModuleError> shutDown() {
+        List<IngestModuleError> errors = new ArrayList<>();
+        Date start = new Date();
+        try {
+            updateBatchedFiles();
+        } catch (IngestTaskPipelineException ex) {
+            errors.add(new IngestModuleError(SAVE_RESULTS_ACTIVITY, ex));
+        }
+        Date finish = new Date();
+        ingestManager.incrementModuleRunTime(SAVE_RESULTS_ACTIVITY, finish.getTime() - start.getTime());
+        errors.addAll(super.shutDown());
         return errors;
     }
 
     /**
-     * Shuts down all of the modules in the pipeline.
+     * Adds a file to a file cache used to update the case database with new
+     * properties added to the files in the cache by the ingest modules that
+     * processed them. If adding the file to the cache fills the cache, a batch
+     * update is done immediately.
      *
-     * @return A list of shut down errors, possibly empty.
+     * @param file The file.
+     *
+     * @throws IngestTaskPipelineException if the case database update fails.
      */
-    synchronized List<IngestModuleError> shutDown() {
-        List<IngestModuleError> errors = new ArrayList<>();
-        if (this.running == true) { // Don't shut down pipelines that never started
-            for (PipelineModule module : this.modules) {
-                try {
-                    module.shutDown();
-                } catch (Throwable ex) { // Catch-all exception firewall
-                    errors.add(new IngestModuleError(module.getDisplayName(), ex));
-                    String msg = ex.getMessage();
-                    // Jython run-time errors don't seem to have a message, but have details in toString.
-                    if (msg == null) {
-                        msg = ex.toString();
-                    }
-                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
-                }
+    private void cacheFileForBatchUpdate(AbstractFile file) throws IngestTaskPipelineException {
+        /*
+         * Only one file ingest thread at a time will try to access the file
+         * cache. The synchronization here is to ensure visibility of the files
+         * in all of the threads that share the cache, rather than to prevent
+         * simultaneous access in multiple threads.
+         */
+        synchronized (fileBatch) {
+            fileBatch.add(file);
+            if (fileBatch.size() >= FILE_BATCH_SIZE) {
+                updateBatchedFiles();
             }
         }
-        this.running = false;
-        return errors;
     }
 
     /**
-     * This class decorates a file level ingest module with a display name.
+     * Updates the case database with new properties added to the files in the
+     * cache by the ingest modules that processed them.
+     *
+     * @throws IngestTaskPipelineException if the case database update fails.
      */
-    private static final class PipelineModule implements FileIngestModule {
+    private void updateBatchedFiles() throws IngestTaskPipelineException {
+        /*
+         * Only one file ingest thread at a time will try to access the file
+         * cache. The synchronization here is to ensure visibility of the files
+         * in all of the threads that share the cache, rather than to prevent
+         * simultaneous access in multiple threads.
+         */
+        synchronized (fileBatch) {
+            CaseDbTransaction transaction = null;
+            try {
+                if (!ingestJobPipeline.isCancelled()) {
+                    Case currentCase = Case.getCurrentCaseThrows();
+                    SleuthkitCase caseDb = currentCase.getSleuthkitCase();
+                    transaction = caseDb.beginTransaction();
+                    for (AbstractFile file : fileBatch) {
+                        file.save(transaction);
+                    }
+                    transaction.commit();
+                    for (AbstractFile file : fileBatch) {
+                        IngestManager.getInstance().fireFileIngestDone(file);
+                    }
+                }
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                if (transaction != null) {
+                    try {
+                        transaction.rollback();
+                    } catch (TskCoreException ex1) {
+                        logger.log(Level.SEVERE, "Error rolling back transaction after failure to save updated properties for cached files from tasks", ex1);
+                    }
+                }
+                throw new IngestTaskPipelineException("Failed to save updated properties for cached files from tasks", ex); //NON-NLS                
+            } finally {
+                fileBatch.clear();
+            }
+        }
+    }
+
+    /**
+     * A wrapper that adds ingest infrastructure operations to a file ingest
+     * module.
+     */
+    static final class FileIngestPipelineModule extends IngestTaskPipeline.PipelineModule<FileIngestTask> {
 
         private final FileIngestModule module;
-        private final String displayName;
 
         /**
-         * Constructs an object that decorates a file level ingest module with a
-         * display name.
+         * Constructs a wrapper that adds ingest infrastructure operations to a
+         * file ingest module.
          *
-         * @param module      The file level ingest module to be decorated.
-         * @param displayName The display name.
+         *
+         * @param module      The module.
+         * @param displayName The display name of the module.
          */
-        PipelineModule(FileIngestModule module, String displayName) {
+        FileIngestPipelineModule(FileIngestModule module, String displayName) {
+            super(module, displayName);
             this.module = module;
-            this.displayName = displayName;
-        }
-
-        /**
-         * Gets the class name of the decorated ingest module.
-         *
-         * @return The class name.
-         */
-        String getClassName() {
-            return module.getClass().getCanonicalName();
-        }
-
-        /**
-         * Gets the display name of the decorated ingest module.
-         *
-         * @return The display name.
-         */
-        String getDisplayName() {
-            return displayName;
         }
 
         @Override
-        public void startUp(IngestJobContext context) throws IngestModuleException {
-            module.startUp(context);
-        }
-
-        @Override
-        public IngestModule.ProcessResult process(AbstractFile file) {
-            return module.process(file);
-        }
-
-        @Override
-        public void shutDown() {
-            module.shutDown();
+        void performTask(IngestJobPipeline ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
+            AbstractFile file = null;
+            try {
+                file = task.getFile();
+            } catch (TskCoreException ex) {
+                throw new IngestModuleException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
+            }
+            ingestManager.setIngestTaskProgress(task, getDisplayName());
+            ingestJobPipeline.setCurrentFileIngestModule(getDisplayName(), file.getName());
+            ProcessResult result = module.process(file);
+            // See JIRA-7449
+//            if (result == ProcessResult.ERROR) {
+//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (file objId = %d)", getDisplayName(), file.getName(), file.getId())); //NON-NLS
+//            }
         }
 
     }

@@ -1,0 +1,9 @@
+<ivy-module version="2.0">
+    <info organisation="org.sleuthkit.autopsy" module="tika"/>
+    <configurations >
+        <conf name="tika"/>
+    </configurations>
+    <dependencies >
+        <dependency conf="tika->default" org="org.apache.tika" name="tika-parsers" rev="1.23"/>
+    </dependencies>
+</ivy-module>

@@ -588,7 +588,7 @@ final public class ViewFrame extends BorderPane {
             long startMillis = filteredEvents.getTimeRange().getStartMillis();
             long endMillis = filteredEvents.getTimeRange().getEndMillis();
 
-            if (minTime > 0 && maxTime > minTime) {
+            if ( maxTime > minTime) {
                 Platform.runLater(() -> {
                     startPicker.localDateTimeProperty().removeListener(startListener);
                     endPicker.localDateTimeProperty().removeListener(endListener);

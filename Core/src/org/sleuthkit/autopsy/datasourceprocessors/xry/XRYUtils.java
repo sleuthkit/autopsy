@@ -27,7 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
 import org.sleuthkit.datamodel.CommunicationsUtils;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * Common utility methods shared among all XRY parser implementations.
@@ -46,7 +46,7 @@ final class XRYUtils {
         try {
             CommunicationsUtils.normalizePhoneNum(phoneNumber);
             return true;
-        } catch (TskCoreException ex) {
+        } catch (InvalidAccountIDException ex) {
             return false;
         }
     }
@@ -55,7 +55,7 @@ final class XRYUtils {
         try {
             CommunicationsUtils.normalizeEmailAddress(email);
             return true;
-        } catch (TskCoreException ex) {
+        } catch (InvalidAccountIDException ex) {
             return false;
         }
     }

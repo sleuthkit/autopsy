@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.List;
 import java.util.logging.Level;
@@ -73,7 +74,8 @@ final class AinStatusDashboardTopComponent extends TopComponent {
                 AinStatusDashboard nodeTab = new AinStatusDashboard(monitor);
                 nodeTab.startUp();
                 nodeTab.setSize(nodeTab.getPreferredSize());
-                tc.add(nodeTab);
+                tc.setLayout(new BorderLayout());
+                tc.add(nodeTab, BorderLayout.CENTER);
                 tc.open();
             }
         }

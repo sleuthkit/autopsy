@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
@@ -193,12 +194,31 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
      * in isPanelValid().
      */
     @Override
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        run(null, progressMonitor, callback);
+    }    
+    
+    /**
+     * Processes the XRY folder that the examiner selected. The heavy lifting is
+     * done off of the EDT, so this function will return while the 
+     * path is still being processed.
+     * 
+     * This function assumes the calling thread has sufficient privileges to
+     * read the folder and its child content, which should have been validated 
+     * in isPanelValid().
+     * 
+     * @param host            Host for the data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    @Override
     @NbBundle.Messages({
         "XRYDataSourceProcessor.noCurrentCase=No case is open."
     })
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        progressMonitor.setIndeterminate(true);
-
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        progressMonitor.setIndeterminate(true);      
         String selectedFilePath = configPanel.getSelectedFilePath();
         File selectedFile = new File(selectedFilePath);
         Path selectedPath = selectedFile.toPath();
@@ -209,7 +229,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
             String uniqueUUID = UUID.randomUUID().toString();
             //Move heavy lifting to a background task.
             swingWorker = new XRYReportProcessorSwingWorker(xryFolder, progressMonitor,
-                    callback, currentCase, uniqueUUID);
+                    callback, currentCase, uniqueUUID, host);
             swingWorker.execute();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "[XRY DSP] No case is currently open.", ex);
@@ -219,6 +239,11 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
         }
     }
 
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        process(deviceId, dataSourcePath, null, progressMonitor, callBack);
+    }
+    
     /**
      * Processes the XRY Folder encountered in an auto-ingest context. The heavy
      * lifting is done off of the EDT, so this function will return while the 
@@ -229,11 +254,12 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
      * 
      * @param deviceId
      * @param dataSourcePath
+     * @param host
      * @param progressMonitor
      * @param callBack
      */
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+    public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         progressMonitor.setIndeterminate(true);
 
         try {
@@ -241,7 +267,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
             Case currentCase = Case.getCurrentCaseThrows();
             //Move heavy lifting to a background task.
             swingWorker = new XRYReportProcessorSwingWorker(xryFolder, progressMonitor,
-                    callBack, currentCase, deviceId);
+                    callBack, currentCase, deviceId, host);
             swingWorker.execute();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "[XRY DSP] No case is currently open.", ex);
@@ -275,17 +301,19 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
         private final Case currentCase;
         private final XRYFolder xryFolder;
         private final String uniqueUUID;
+        private final Host host;
 
         public XRYReportProcessorSwingWorker(XRYFolder folder,
                 DataSourceProcessorProgressMonitor progressMonitor,
                 DataSourceProcessorCallback callback,
-                Case currentCase, String uniqueUUID) {
+                Case currentCase, String uniqueUUID, Host host) {
 
             this.xryFolder = folder;
             this.progressMonitor = progressMonitor;
             this.callback = callback;
             this.currentCase = currentCase;
             this.uniqueUUID = uniqueUUID;
+            this.host = host;
         }
 
         @Override
@@ -306,6 +334,7 @@ public class XRYDataSourceProcessor implements DataSourceProcessor, AutoIngestDa
                     uniqueUUID,
                     "XRY Text Export", //Name
                     "", //Timezone
+                    host,
                     filePaths,
                     new ProgressMonitorAdapter(progressMonitor));
 

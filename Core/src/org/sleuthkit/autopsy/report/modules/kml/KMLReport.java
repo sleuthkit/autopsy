@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationParseResult;
 import org.sleuthkit.autopsy.geolocation.datamodel.Waypoint;
 import org.sleuthkit.autopsy.geolocation.datamodel.Route;
 import org.sleuthkit.autopsy.geolocation.datamodel.Track;
+import org.sleuthkit.autopsy.geolocation.datamodel.Area;
 import org.sleuthkit.autopsy.geolocation.datamodel.WaypointBuilder;
 import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.ReportBranding;
@@ -84,6 +85,7 @@ public final class KMLReport implements GeneralReportModule {
     private Element gpsSearchesFolder;
     private Element gpsTrackpointsFolder;
     private Element gpsTracksFolder;
+    private Element gpsAreasFolder;
     
     private GeneralReportSettings settings;
 
@@ -154,7 +156,8 @@ public final class KMLReport implements GeneralReportModule {
         "Waypoint_Track_Display_String=GPS Track",
         "Route_Details_Header=GPS Route",
         "ReportBodyFile.ingestWarning.text=Ingest Warning message",
-        "Waypoint_Track_Point_Display_String=GPS Individual Track Point"
+        "Waypoint_Track_Point_Display_String=GPS Individual Track Point",
+        "Waypoint_Area_Point_Display_String=GPS Area Outline Point",
     })
 
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel, List<Waypoint> waypointList) {
@@ -212,6 +215,11 @@ public final class KMLReport implements GeneralReportModule {
         try {
             makeRoutes(skCase);
             boolean entirelySuccessful = makeTracks(skCase);
+            if (!entirelySuccessful) {
+                result = ReportProgressPanel.ReportStatus.ERROR;
+                errorMessage = Bundle.KMLReport_partialFailure();
+            }
+            entirelySuccessful = makeAreas(skCase);
             if (!entirelySuccessful) {
                 result = ReportProgressPanel.ReportStatus.ERROR;
                 errorMessage = Bundle.KMLReport_partialFailure();
@@ -326,6 +334,11 @@ public final class KMLReport implements GeneralReportModule {
         CDATA cdataTrack = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-trackpoint.png"); //NON-NLS
         Element hrefTrack = new Element("href", ns).addContent(cdataTrack); //NON-NLS
         gpsTracksFolder.addContent(new Element("Icon", ns).addContent(hrefTrack)); //NON-NLS
+        
+        gpsAreasFolder = new Element("Folder", ns); //NON-NLS
+        CDATA cdataArea = new CDATA("https://raw.githubusercontent.com/sleuthkit/autopsy/develop/Core/src/org/sleuthkit/autopsy/images/gps-area.png"); //NON-NLS
+        Element hrefArea = new Element("href", ns).addContent(cdataArea); //NON-NLS
+        gpsAreasFolder.addContent(new Element("Icon", ns).addContent(hrefArea)); //NON-NLS
 
         gpsExifMetadataFolder.addContent(new Element("name", ns).addContent("EXIF Metadata")); //NON-NLS
         gpsBookmarksFolder.addContent(new Element("name", ns).addContent("GPS Bookmarks")); //NON-NLS
@@ -334,6 +347,7 @@ public final class KMLReport implements GeneralReportModule {
         gpsSearchesFolder.addContent(new Element("name", ns).addContent("GPS Searches")); //NON-NLS
         gpsTrackpointsFolder.addContent(new Element("name", ns).addContent("GPS Trackpoints")); //NON-NLS
         gpsTracksFolder.addContent(new Element("name", ns).addContent("GPS Tracks")); //NON-NLS
+        gpsAreasFolder.addContent(new Element("name", ns).addContent("GPS Areas")); //NON-NLS
 
         document.addContent(gpsExifMetadataFolder);
         document.addContent(gpsBookmarksFolder);
@@ -342,6 +356,7 @@ public final class KMLReport implements GeneralReportModule {
         document.addContent(gpsSearchesFolder);
         document.addContent(gpsTrackpointsFolder);
         document.addContent(gpsTracksFolder);
+        document.addContent(gpsAreasFolder);
 
         return kmlDocument;
     }
@@ -570,6 +585,62 @@ public final class KMLReport implements GeneralReportModule {
                     point.getTimestamp(), element, formattedCoordinates(point.getLatitude(), point.getLongitude()))); //NON-NLS
         }
     }
+    
+    /**
+     * Add the area to the area folder in the document.
+     *
+     * @param skCase Currently open case.
+     * @return The operation was entirely successful.
+     * 
+     * @throws TskCoreException
+     */
+    boolean makeAreas(SleuthkitCase skCase) throws GeoLocationDataException, TskCoreException {
+        List<Area> areas;
+        boolean successful = true;
+        
+        if (waypointList == null) {
+            GeoLocationParseResult<Area> result = Area.getAreas(skCase, null);
+            areas = result.getItems();
+            successful = result.isSuccessfullyParsed();
+        } else {
+            areas = WaypointBuilder.getAreas(waypointList);
+        }
+
+        for (Area area : areas) {
+            if(shouldFilterFromReport(area.getArtifact())) {
+                continue;
+            }
+            addAreaToReport(area);
+        }
+        
+        return successful;
+    }
+
+    /**
+     * Add a area to the KML report.
+     *
+     * @param area
+     */
+    private void addAreaToReport(Area area) {
+        List<Waypoint> areaPoints = area.getPath();
+
+        if (areaPoints.isEmpty()) {
+            return;
+        }
+        
+        // Adding a folder with the area name so that all of the 
+        // area border points will be grouped together.
+        Element areaFolder = new Element("Folder", ns); //NON-NLS
+        areaFolder.addContent(new Element("name", ns).addContent(area.getLabel())); //NON-NLS
+        gpsAreasFolder.addContent(areaFolder);
+
+        // Create a polygon using the waypoints
+        Element element = makePolygon(areaPoints);
+        Waypoint firstWp = areaPoints.get(0);
+        areaFolder.addContent(makePlacemark("",
+            FeatureColor.GREEN, getFormattedDetails(firstWp, Bundle.Waypoint_Area_Point_Display_String()),
+            firstWp.getTimestamp(), element, formattedCoordinates(firstWp.getLatitude(), firstWp.getLongitude()))); //NON-NLS
+    }    
 
     /**
      * Format a point time stamp (in seconds) to the report format.
@@ -628,7 +699,7 @@ public final class KMLReport implements GeneralReportModule {
         point.addContent(coordinates);
 
         return point;
-    }
+    }   
 
     /**
      * Create a LineString for use in a Placemark. Note in this method, start
@@ -662,6 +733,35 @@ public final class KMLReport implements GeneralReportModule {
         return lineString;
     }
 
+    /**
+     * Create a Polygon for use in a Placemark. 
+     *
+     * @param waypoints The waypoints making up the outline.
+     *
+     * @return the Polygon as an Element
+     */
+    private Element makePolygon(List<Waypoint> waypoints) {
+
+        Element polygon = new Element("Polygon", ns); //NON-NLS
+
+        Element altitudeMode = new Element("altitudeMode", ns).addContent("clampToGround"); //NON-NLS
+        polygon.addContent(altitudeMode);
+        
+        // KML uses lon, lat. Deliberately reversed.
+        Element coordinates = new Element("coordinates", ns);
+        for (Waypoint wp : waypoints) {
+            coordinates.addContent(wp.getLongitude() + "," + wp.getLatitude() + ",0 "); //NON-NLS
+        }
+        // Add the first one again
+        coordinates.addContent(waypoints.get(0).getLongitude() + "," + waypoints.get(0).getLatitude() + ",0 "); //NON-NLS
+
+        Element linearRing = new Element("LinearRing", ns).addContent(coordinates);
+        Element outerBoundary = new Element("outerBoundaryIs", ns).addContent(linearRing);
+        polygon.addContent(outerBoundary);
+
+        return polygon;
+    }    
+    
     /**
      * Make a Placemark for use in displaying features. Takes a
      * coordinate-bearing feature (Point, LineString, etc) and places it in the

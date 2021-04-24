@@ -827,6 +827,10 @@
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-lang3-3.4.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-lang3-3.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/common-io-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/common-io-3.2.jar</binary-origin>
             </class-path-extension>
@@ -899,10 +903,6 @@
                 <binary-origin>release/modules/ext/commons-csv-1.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jna-5.5.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jna-5.5.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/imageio-sgi-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-sgi-3.2.jar</binary-origin>
             </class-path-extension>
@@ -921,6 +921,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-compress-1.18.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-compress-1.18.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jna-platform-5.8.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jna-platform-5.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
@@ -945,6 +949,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-bmp-3.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jna-5.8.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jna-5.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>
@@ -983,10 +991,6 @@
                 <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang3-3.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javaee-api-5.0-2.jar</binary-origin>
             </class-path-extension>
@@ -1013,10 +1017,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/dom4j-1.6.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jna-platform-5.5.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jna-platform-5.5.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-metadata-3.2.jar</runtime-relative-path>

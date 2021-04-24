@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.solr.client.solrj.impl.BaseHttpSolrClient;
 
 /**
  * Get terms from query using Solr.
@@ -70,7 +71,7 @@ final class QueryTermHelper {
         FieldAnalysisResponse response = new FieldAnalysisResponse();
         try {
             response.setResponse(server.request(request));
-        } catch (SolrServerException e) {
+        } catch (SolrServerException | BaseHttpSolrClient.RemoteSolrException e) {
             throw new KeywordSearchModuleException(e);
         }
 

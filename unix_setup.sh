@@ -5,7 +5,7 @@
 
 # NOTE: update_sleuthkit_version.pl updates this value and relies
 # on it keeping the same name and whitespace.  Don't change it.
-TSK_VERSION=4.9.0
+TSK_VERSION=4.10.2
 
 
 # In the beginning...
@@ -71,6 +71,13 @@ else
     fi
     echo "done"
 fi
+
+# make sure thirdparty files are executable
+chmod u+x autopsy/markmckinnon/Export*
+chmod u+x autopsy/markmckinnon/parse*
+
+# allow solr dependencies to execute
+chmod -R u+x autopsy/solr/bin
 
 # make sure it is executable
 chmod u+x bin/autopsy

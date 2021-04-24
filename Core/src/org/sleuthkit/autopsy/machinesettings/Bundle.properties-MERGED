@@ -1,0 +1,4 @@
+# {0} - path
+UserMachinePreferences_validateTempDirectory_errorOnCreate_text=There was an error creating the temp directory for path: {0}
+# {0} - path
+UserMachinePreferences_validateTempDirectory_errorOnReadWrite_text=There was an error reading or writing to temp directory path: {0}

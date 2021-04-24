@@ -25,7 +25,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.contentviewers.MessageArtifactViewer;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.MessageArtifactViewer;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;

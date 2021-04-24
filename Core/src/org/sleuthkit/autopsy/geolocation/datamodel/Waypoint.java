@@ -198,8 +198,13 @@ public class Waypoint {
         try {
             List<BlackboardAttribute> attributeList = artifact.getAttributes();
             for (BlackboardAttribute attribute : attributeList) {
-                BlackboardAttribute.ATTRIBUTE_TYPE type = BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attribute.getAttributeType().getTypeID());
-                attributeMap.put(type, attribute);
+                try{
+                    BlackboardAttribute.ATTRIBUTE_TYPE type = BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attribute.getAttributeType().getTypeID());
+                    attributeMap.put(type, attribute);
+                } catch(IllegalArgumentException ex) {
+                    // This was thrown due to a custom attribute that geolocation
+                    // does not currently support.
+                }
             }
         } catch (TskCoreException ex) {
             throw new GeoLocationDataException("Unable to get attributes from artifact", ex);

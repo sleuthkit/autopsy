@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.Stage;
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestJob;
+import org.sleuthkit.autopsy.ingest.Snapshot;
 
 /**
  * A node which represents all AutoIngestJobs of a given AutoIngestJobStatus.
@@ -96,7 +96,7 @@ final class AutoIngestJobsNode extends AbstractNode {
          * they can be changed by events in other threads which
          */
         private final Stage jobStage;
-        private final List<DataSourceIngestJob.Snapshot> jobSnapshot;
+        private final List<Snapshot> jobSnapshot;
         private final Integer jobPriority;
 
         AutoIngestJobWrapper(AutoIngestJob job) {

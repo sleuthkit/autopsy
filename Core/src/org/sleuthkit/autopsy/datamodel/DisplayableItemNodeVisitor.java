@@ -59,7 +59,7 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ImageNode in);
 
     T visit(VolumeNode vn);
-    
+
     T visit(PoolNode pn);
 
     T visit(SlackFileNode sfn);
@@ -193,6 +193,21 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(AttachmentNode node);
     
+    T visit(OsAccounts.OsAccountNode node);
+    
+    T visit(OsAccounts.OsAccountListNode node);
+
+    T visit(PersonGroupingNode node);
+
+    T visit(HostNode node);
+
+    T visit(DataSourcesByTypeNode node);
+    
+    /*
+     * Unsupported node
+     */
+    T visit(UnsupportedContentNode ucn);
+
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -264,7 +279,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(ImageNode in) {
             return defaultVisit(in);
         }
-        
+
         @Override
         public T visit(PoolNode pn) {
             return defaultVisit(pn);
@@ -534,11 +549,40 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(Accounts.DefaultAccountTypeNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(AttachmentNode node) {
             return defaultVisit(node);
         }
         
+        @Override
+        public T visit(OsAccounts.OsAccountNode node) {
+            return defaultVisit(node);
+        }
+        
+        @Override
+        public T visit(OsAccounts.OsAccountListNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(HostNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(DataSourcesByTypeNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(PersonGroupingNode node) {
+            return defaultVisit(node);
+        }
+        
+        @Override
+        public T visit(UnsupportedContentNode node) {
+            return defaultVisit(node);
+        }
     }
 }

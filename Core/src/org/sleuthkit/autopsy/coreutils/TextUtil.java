@@ -71,12 +71,19 @@ public class TextUtil {
      * have chosen to ignore the extended planes above Unicode BMP for the time
      * being. The net result of this is some non-BMP characters may be
      * interspersed with '^' characters in Autopsy.
+     * 
+     * Strip all non-characters
+     * http://unicode.org/cldr/utility/list-unicodeset.jsp?a=[:Noncharacter_Code_Point=True:]
+     * and non-printable control characters except tabulator, new line and carriage return
      *
      * @param ch the character to test
      *
      * @return Returns true if the character is valid UTF-8, false if not.
      */
     public static boolean isValidSolrUTF8(char ch) {
-        return ((ch <= 0xFDD0 || ch >= 0xFDEF) && (ch > 0x1F || ch == 0x9 || ch == 0xA || ch == 0xD) && (ch != 0xFFFF) && (ch != 0xFFFE));
+        return ((ch <= 0xFDD0 || ch >= 0xFDEF) // 0xfdd0 - 0xfdef
+                && (ch > 0x1F || ch == 0x9 || ch == 0xA || ch == 0xD)
+                && (ch % 0x10000 != 0xFFFF) // 0xffff - 0x10ffff range step 0x10000
+                && (ch % 0x10000 != 0xFFFE)); // 0xfffe - 0x10fffe range
     }
 }

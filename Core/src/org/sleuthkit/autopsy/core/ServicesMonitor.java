@@ -354,20 +354,33 @@ public class ServicesMonitor {
         KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
         try {
             if (kwsService != null) {
-                int port = Integer.parseUnsignedInt(UserPreferences.getIndexingServerPort());
-                kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
-                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.UP.toString(), "");
+                ServiceStatus status = ServiceStatus.DOWN;
+                // check Solr 8
+                String kwsHostName = UserPreferences.getIndexingServerHost();
+                if (!kwsHostName.isEmpty()) {
+                    int port = Integer.parseUnsignedInt(UserPreferences.getIndexingServerPort());
+                    kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
+                    status = ServiceStatus.UP;
+                }
+                
+                // check Solr 4
+                if (!UserPreferences.getSolr4ServerHost().trim().isEmpty()) {
+                    int port = Integer.parseUnsignedInt(UserPreferences.getSolr4ServerPort().trim());
+                    kwsService.tryConnect(UserPreferences.getSolr4ServerHost().trim(), port);
+                    status = ServiceStatus.UP;
+                }
+                setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), status.toString(), "");
             } else {
                 setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(),
                         NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.KeywordSearchNull"));
             }
         } catch (NumberFormatException ex) {
             String rootCause = NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.InvalidPortNumber");
-            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Unable to connect to Keyword Search server: " + rootCause, ex); //NON-NLS
             setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), rootCause);
         } catch (KeywordSearchServiceException ex) {
             String rootCause = ex.getMessage();
-            logger.log(Level.SEVERE, "Unable to connect to messaging server: " + rootCause, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Unable to connect to Keyword Search server: " + rootCause, ex); //NON-NLS
             setServiceStatus(Service.REMOTE_KEYWORD_SEARCH.toString(), ServiceStatus.DOWN.toString(), rootCause);
         }
     }

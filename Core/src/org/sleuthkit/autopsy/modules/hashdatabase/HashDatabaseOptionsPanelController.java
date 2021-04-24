@@ -72,7 +72,10 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
      */
     @Override
     public void cancel() {
-        getPanel().cancel();
+        if(changed) {
+            getPanel().cancel();
+            changed = false;
+        }
     }
 
     @Override

@@ -29,6 +29,7 @@ import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
@@ -285,8 +286,12 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             // If both callerId and calleeList were non-null/non-empty, then 
             // it would have been a valid combination.
             if (callerId != null) {
+                try {
                 currentCase.getCommunicationsManager().createAccountFileInstance(
                         Account.Type.PHONE, callerId, PARSER_NAME, parent);
+                } catch (InvalidAccountIDException ex) {
+                   logger.log(Level.WARNING, String.format("Invalid account identifier %s", callerId), ex);
+                }
 
                 otherAttributes.add(new BlackboardAttribute(
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
@@ -294,8 +299,13 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             }
 
             for (String phone : calleeList) {
+                try {
                 currentCase.getCommunicationsManager().createAccountFileInstance(
                         Account.Type.PHONE, phone, PARSER_NAME, parent);
+                } catch (InvalidAccountIDException ex) {
+                    logger.log(Level.WARNING, String.format("Invalid account identifier %s", phone), ex);
+                }
+                
 
                 otherAttributes.add(new BlackboardAttribute(
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,

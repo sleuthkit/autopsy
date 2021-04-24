@@ -474,6 +474,12 @@ public final class IngestJobSettings {
                     case "Correlation Engine": //NON-NLS
                         moduleNames.add("Central Repository"); //NON-NLS
                         break;
+                    case "Exif Parser": //NON-NLS
+                        moduleNames.add("Picture Analyzer"); //NON-NLS
+                        break;
+                    case "Drone Analyzer":
+                        moduleNames.add("DJI Drone Analyzer");
+                        break;
                     default:
                         moduleNames.add(name);
                 }

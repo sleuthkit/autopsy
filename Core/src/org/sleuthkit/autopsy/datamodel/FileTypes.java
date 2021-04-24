@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -34,15 +35,20 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.AnalysisResultAdded;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
@@ -389,6 +395,11 @@ public final class FileTypes implements AutopsyVisitableItem {
         public BlackboardArtifact newArtifact(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
             return content.newArtifact(type);
         }
+        
+        @Override
+        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, OsAccount osAccount) throws TskCoreException {
+            return content.newDataArtifact(artifactType, attributesList, osAccount);
+        }
 
         @Override
         public ArrayList<BlackboardArtifact> getArtifacts(String artifactTypeName) throws TskCoreException {
@@ -448,6 +459,26 @@ public final class FileTypes implements AutopsyVisitableItem {
         @Override
         public long getAllArtifactsCount() throws TskCoreException {
             return content.getAllArtifactsCount();
+        }
+
+        @Override
+        public AnalysisResultAdded newAnalysisResult(BlackboardArtifact.Type type, Score score, String string, String string1, String string2, Collection<BlackboardAttribute> clctn) throws TskCoreException {
+            return content.newAnalysisResult(type, score, string, string1, string2, clctn);
+        }
+
+        @Override
+        public Score getAggregateScore() throws TskCoreException {
+            return content.getAggregateScore();
+        }
+
+        @Override
+        public List<AnalysisResult> getAnalysisResults(BlackboardArtifact.Type type) throws TskCoreException {
+            return content.getAnalysisResults(type);
+        }
+
+        @Override
+        public List<AnalysisResult> getAllAnalysisResults() throws TskCoreException {
+            return content.getAllAnalysisResults();
         }
     }
 }

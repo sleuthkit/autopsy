@@ -32,9 +32,6 @@ public class DataContentViewerUtility {
      * preferring to return any Content object other than a BlackboardArtifact
      * object.
      *
-     * This method was written with the needs of the hex and strings content
-     * viewers in mind - the algorithm is exactly what those viewers require.
-     *
      * @param node A display Node object.
      *
      * @return If there are multiple Content objects associated with the Node,

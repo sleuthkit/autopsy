@@ -26,13 +26,21 @@
             <fileset dir="solr"/>
         </copy>
     </target>
+	<target name="get-solr4-deployment" description="copy the solr 4 deployment into release"> 
+        <copy  todir="${basedir}/release/solr4" > <!-- for embedded Solr 4 -->
+            <fileset dir="solr4"/>
+        </copy>
+    </target>
     
-    <target name="get-deps" depends="init-ivy, get-solr-deployment">
+    <target name="get-deps" depends="init-ivy, get-solr-deployment, get-solr4-deployment">
          <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="autopsy"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="solr-war"  pattern="${basedir}/release/solr/webapps/solr.war" />
-        <ivy:retrieve conf="start-solr"  pattern="${basedir}/release/solr/start.jar" />
+	<ivy:retrieve conf="solr-war"  pattern="${basedir}/release/solr4/webapps/solr.war" /> <!-- for embedded Solr 4 -->
+        <ivy:retrieve conf="start-solr"  pattern="${basedir}/release/solr4/start.jar" /> <!-- for embedded Solr 4 -->
+	<ivy:retrieve conf="jetty-libs"  pattern="${basedir}/release/solr4/lib/[artifact]-[revision](-[classifier]).[ext]" /> <!-- for embedded Solr 4 -->
+	<ivy:retrieve conf="slf4j-libs"  pattern="${basedir}/release/solr4/lib/ext/[artifact]-[revision](-[classifier]).[ext]" /> <!-- for embedded Solr 4 -->
+	<ivy:retrieve conf="servlet"  pattern="${basedir}/release/solr4/lib/servlet-api-3.0.jar" /> <!-- for embedded Solr 4 -->
         <ivy:retrieve conf="jetty-libs"  pattern="${basedir}/release/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="solr-libs"  pattern="${basedir}/release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="slf4j-libs"  pattern="${basedir}/release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />

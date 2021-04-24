@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2017-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.test;
 
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -54,7 +53,7 @@ public class CustomArtifactsCreatorDataSourceIngestModule extends DataSourceInge
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
             CustomArtifactType.addToCaseDatabase();
-        } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
+        } catch (Blackboard.BlackboardException ex) {
             throw new IngestModuleException(Bundle.CustomArtifactsCreatorDataSourceIngestModule_exceptionMessage_errorCreatingCustomType(), ex);
         }
     }
@@ -71,8 +70,8 @@ public class CustomArtifactsCreatorDataSourceIngestModule extends DataSourceInge
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         try {
-            CustomArtifactType.createInstance(dataSource);
-        } catch (TskCoreException ex) {
+            CustomArtifactType.createAndPostInstance(dataSource);
+        } catch (TskCoreException | Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process data source (obj_id = %d)", dataSource.getId()), ex);
             return ProcessResult.ERROR;
         }

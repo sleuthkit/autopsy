@@ -29,6 +29,9 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
+import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager.ContentViewerTag;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagRegion;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -83,9 +86,19 @@ public final class ReplaceContentTagAction extends ReplaceTagAction<ContentTag> 
                 try {
                     logger.log(Level.INFO, "Replacing tag {0}  with tag {1} for artifact {2}", new Object[]{oldTag.getName().getDisplayName(), newTagName.getDisplayName(), oldTag.getContent().getName()}); //NON-NLS
 
+                    // Check if there is an image tag before deleting the content tag.
+                    ContentViewerTag<ImageTagRegion> imageTag = ContentViewerTagManager.getTag(oldTag, ImageTagRegion.class);
+                    if(imageTag != null) {
+                        ContentViewerTagManager.deleteTag(imageTag);
+                    }
+                    
                     tagsManager.deleteContentTag(oldTag);
-                    tagsManager.addContentTag(oldTag.getContent(), newTagName, newComment);
-
+                    ContentTag newTag = tagsManager.addContentTag(oldTag.getContent(), newTagName, newComment);
+                    
+                    // Resave the image tag if present.
+                    if(imageTag != null) {
+                        ContentViewerTagManager.saveTag(newTag, imageTag.getDetails());
+                    }
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Error replacing artifact tag", tskCoreException); //NON-NLS
                     Platform.runLater(()

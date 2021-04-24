@@ -1,5 +1,8 @@
 /*! \page auto_ingest_page Automated Ingest
 
+[TOC]
+
+
 \section auto_ingest_overview Overview
 
 Auto ingest allows one or many computers to process \ref ds_page "data sources" automatically with minimal support from a user. The resulting \ref multiuser_page "multi-user cases" can be opened and reviewed by analysts, using any of the normal functions in Autopsy.

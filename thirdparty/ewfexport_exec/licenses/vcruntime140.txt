@@ -1,0 +1,17 @@
+vcruntime140.dll is part of the Visual Studio redistribuable code.
+https://visualstudio.microsoft.com/license-terms/microsoft-visual-studio-community-2015/
+
+DISTRIBUTABLE CODE. The software contains code that you are permitted to distribute in applications you develop if you comply with the terms below. (For this Section the term “distribution” also means deployment of your applications for third parties to access over the Internet.)
+1. Distribution Rights. The code and text files listed below are “Distributable Code.”
+* REDIST.TXT Files. You may copy and distribute the object code form of code listed on the REDIST list located at http://go.microsoft.com/fwlink/?LinkId=523763&clcid=0x409.
+* Sample Code, Templates and Styles. You may copy, modify and distribute the source and object code form of code marked as “sample”, “template”, “Simple Styles” or “Sketch Styles”.
+* Image Library. You may copy and distribute images, graphics and animations in the Image Library as described in the software documentation.
+* Third Party Distribution. You may permit distributors of your applications to copy and distribute the Distributable Code as part of those applications.
+
+2. Distribution Requirements. For any Distributable Code you distribute, you must:
+ *add significant primary functionality to it in your applications; and
+* require distributors and external end users to agree to terms that protect the Distributable Code at least as much as this agreement.
+
+3. Distribution Restrictions. You may not:
+* use Microsoft’s trademarks in your applications’ names or branding in a way that suggests your applications come from or are endorsed by Microsoft; or
+* modify or distribute the source code of any Distributable Code so that any part of it becomes subject to an Excluded License. An “Excluded License” is one that requires, as a condition of use, modification or distribution, that (i) the code be disclosed or distributed in source code form; or (ii) others have the right to modify it.

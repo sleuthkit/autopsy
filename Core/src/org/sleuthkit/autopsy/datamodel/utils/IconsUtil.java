@@ -70,7 +70,7 @@ public final class IconsUtil {
         } else if (typeID == ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY.getTypeID()) {
             imageFile = "speeddialentry.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()) {
-            imageFile = "bluetooth.png"; //NON-NLS
+            imageFile = "Bluetooth.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()) {
             imageFile = "gpsfav.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()) {
@@ -89,6 +89,20 @@ public final class IconsUtil {
             imageFile = "gps_trackpoint.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_REMOTE_DRIVE.getTypeID()) {
             imageFile = "drive_network.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_OS_ACCOUNT.getTypeID()) {
+            imageFile = "os-account.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID()) {
+            imageFile = "objects.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL.getTypeID()) {
+            imageFile = "web-form.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
+            imageFile = "cache.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_USER_CONTENT_SUSPECTED.getTypeID()) {
+            imageFile = "user-content.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_METADATA.getTypeID()) {
+            imageFile = "metadata.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_CLIPBOARD_CONTENT.getTypeID()) {
+            imageFile = "clipboard.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_FACE_DETECTED.getTypeID()) {
             imageFile = "face.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {
@@ -103,6 +117,16 @@ public final class IconsUtil {
             imageFile = "devices.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_VERIFICATION_FAILED.getTypeID()) {
             imageFile = "validationFailed.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE.getTypeID()) {
+            imageFile = "web-account-type.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()) {
+            imageFile = "web-form-address.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION.getTypeID()) {
+            imageFile = "domain-16.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_GPS_AREA.getTypeID()) {
+            imageFile = "gps-area.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_YARA_HIT.getTypeID()) {
+            imageFile = "yara_16.png"; //NON-NLS
         } else {
             imageFile = "artifact-icon.png"; //NON-NLS
         }

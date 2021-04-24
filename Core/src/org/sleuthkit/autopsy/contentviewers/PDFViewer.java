@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Container;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -97,6 +98,9 @@ final class PDFViewer implements FileTypeViewer {
 
         // Add the IcePDF view to the center of our container.
         this.container.add(icePdfPanel, BorderLayout.CENTER);
+        
+        // Disable all components until the document is ready to view.
+        enableComponents(container, false);
 
         // Document is the 'M' in IcePDFs MVC set up. Read the data needed to 
         // populate the model in the background.
@@ -122,12 +126,13 @@ final class PDFViewer implements FileTypeViewer {
                 // will cause UI widgets to be updated.
                 try {
                     Document doc = get();
-                    controller.openDocument(doc, null);
+                    controller.openDocument(doc, file.getName());
                     // This makes the PDF viewer appear as one continuous 
                     // document, which is the default for most popular PDF viewers.
                     controller.setPageViewMode(DocumentViewControllerImpl.ONE_COLUMN_VIEW, true);
                     // This makes it possible to select text by left clicking and dragging.
                     controller.setDisplayTool(DocumentViewModelImpl.DISPLAY_TOOL_TEXT_SELECTION);
+                    enableComponents(container, true);
                 } catch (InterruptedException ex) {
                     // Do nothing.
                 } catch (ExecutionException ex) {
@@ -140,9 +145,27 @@ final class PDFViewer implements FileTypeViewer {
                                 file.getId(), file.getName()), ex);
                         showErrorDialog();
                     }
+                } catch (Throwable ex) {
+                    logger.log(Level.WARNING, String.format("PDF content viewer "
+                            + "was unable to open document with id %d and name %s",
+                            file.getId(), file.getName()), ex);
                 }
             }
         }.execute();
+    }
+    
+    /**
+     * Recursively enable/disable all components in this content viewer.
+     * This will disable/enable all internal IcePDF Swing components too.
+     */
+    private void enableComponents(Container container, boolean enabled) {
+        Component[] components = container.getComponents();
+        for(Component component : components) {
+            component.setEnabled(enabled);
+            if (component instanceof Container) {
+                enableComponents((Container)component, enabled);
+            }
+        }
     }
 
     @Override

@@ -29,6 +29,9 @@ import org.openide.util.Utilities;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
+import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager.ContentViewerTag;
+import org.sleuthkit.autopsy.contentviewers.imagetagging.ImageTagRegion;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -72,6 +75,12 @@ public class DeleteContentTagAction extends AbstractAction {
         new Thread(() -> {
             for (ContentTag tag : selectedTags) {
                 try {
+                    // Check if there is an image tag before deleting the content tag.
+                    ContentViewerTag<ImageTagRegion> imageTag = ContentViewerTagManager.getTag(tag, ImageTagRegion.class);
+                    if(imageTag != null) {
+                        ContentViewerTagManager.deleteTag(imageTag);
+                    }
+                    
                     Case.getCurrentCaseThrows().getServices().getTagsManager().deleteContentTag(tag);
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(DeleteContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS

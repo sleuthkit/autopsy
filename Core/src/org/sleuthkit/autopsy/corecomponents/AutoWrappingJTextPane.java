@@ -27,6 +27,7 @@ import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.InlineView;
 import javax.swing.text.html.ParagraphView;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 
 /**
  * JTextPane extension that auto wraps input text using an HTMLEditorKit trick.
@@ -98,6 +99,6 @@ public class AutoWrappingJTextPane extends JTextPane {
 
     @Override
     public void setText(String text) {
-        super.setText("<pre>" + text + "</pre>");
+        super.setText("<pre>" + EscapeUtil.escapeHtml(text) + "</pre>");
     }
 }

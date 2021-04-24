@@ -22,6 +22,7 @@ import java.awt.Component;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
@@ -38,6 +39,8 @@ public class PersonaDetailsDialog extends JDialog {
     private static final Logger logger = Logger.getLogger(PersonaDetailsDialog.class.getName());
 
     private final PersonaDetailsDialogCallback callback;
+    
+    private String popupMessageOnStartup = "";
 
     @NbBundle.Messages({
         "PersonaDetailsDialogCreateTitle=Create Persona",
@@ -87,10 +90,15 @@ public class PersonaDetailsDialog extends JDialog {
 
         cancelBtn = new javax.swing.JButton();
         okBtn = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
         pdp = new org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setResizable(false);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowOpened(java.awt.event.WindowEvent evt) {
+                formWindowOpened(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(cancelBtn, org.openide.util.NbBundle.getMessage(PersonaDetailsDialog.class, "PersonaDetailsDialog.cancelBtn.text")); // NOI18N
         cancelBtn.setMaximumSize(new java.awt.Dimension(79, 23));
@@ -109,20 +117,20 @@ public class PersonaDetailsDialog extends JDialog {
             }
         });
 
+        jScrollPane1.setBorder(null);
+        jScrollPane1.setViewportView(pdp);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pdp, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 660, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(okBtn)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap(470, Short.MAX_VALUE)
+                .addComponent(okBtn)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cancelBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
+            .addComponent(jScrollPane1)
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelBtn, okBtn});
@@ -130,8 +138,8 @@ public class PersonaDetailsDialog extends JDialog {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(pdp, javax.swing.GroupLayout.PREFERRED_SIZE, 564, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(jScrollPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(okBtn)
@@ -159,12 +167,23 @@ public class PersonaDetailsDialog extends JDialog {
         dispose();
     }//GEN-LAST:event_cancelBtnActionPerformed
 
+    private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
+        if(!popupMessageOnStartup.isEmpty()) {
+            JOptionPane.showMessageDialog(this, popupMessageOnStartup, "Persona Details", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_formWindowOpened
+
     public PersonaDetailsPanel getDetailsPanel() {
         return this.pdp;
     }
     
+    public void setStartupPopupMessage(String message) {
+        popupMessageOnStartup = message;
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelBtn;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton okBtn;
     private org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel pdp;
     // End of variables declaration//GEN-END:variables

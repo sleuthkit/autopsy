@@ -29,6 +29,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelectionWizardPanel;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * The iterator class for the "Add Image" wizard panel. This class is used to
@@ -41,7 +42,10 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private final AddImageAction action;
     private int progressPanelIndex;
     private int dsPanelIndex;
+    private int hostPanelIndex;
+    private int ingestPanelIndex;
     private final static String PROP_LASTPROFILE_NAME = "AIW_LASTPROFILE_NAME"; //NON-NLS
+    private AddImageWizardSelectHostPanel hostPanel = null;
 
     AddImageWizardIterator(AddImageAction action) {
         this.action = action;
@@ -54,10 +58,12 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private List<ShortcutWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
+            hostPanel = new AddImageWizardSelectHostPanel();
+            panels.add(hostPanel);
+            hostPanelIndex = panels.indexOf(hostPanel);
             AddImageWizardSelectDspPanel dspSelection = new AddImageWizardSelectDspPanel();
             panels.add(dspSelection);
             AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel(action);
-
             AddImageWizardDataSourceSettingsPanel dsPanel = new AddImageWizardDataSourceSettingsPanel();
             AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(progressPanel);
             panels.add(dsPanel);
@@ -69,6 +75,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels.add(progressPanel);
             progressPanelIndex = panels.indexOf(progressPanel);  //Doing programatically because number of panels is variable
             dsPanelIndex = panels.indexOf(dsPanel);
+            ingestPanelIndex = panels.indexOf(ingestConfigPanel);
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -162,7 +169,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     @Override
     // disable the previous button on all panels except the data source panel
     public boolean hasPrevious() {
-        return (index == dsPanelIndex); //Users should be able to back up to select a different DSP
+        return (index <= dsPanelIndex && index > 0); //Users should be able to back up to select a different DSP
     }
 
     /**
@@ -177,9 +184,11 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         // Start processing the data source by handing it off to the selected DSP, 
         // so it gets going in the background while the user is still picking the Ingest modules    
         // This will occur when the next button is clicked on the panel where you have chosen your data to process
-        if (index == dsPanelIndex) {
-            ((AddImageWizardAddingProgressPanel) panels.get(progressPanelIndex)).
-                    startDataSourceProcessing(((AddImageWizardDataSourceSettingsPanel) panels.get(dsPanelIndex)).getComponent().getCurrentDSProcessor());
+        if (index == ingestPanelIndex) {
+            AddImageWizardAddingProgressPanel addingProgressPanel = (AddImageWizardAddingProgressPanel) panels.get(progressPanelIndex);
+            AddImageWizardDataSourceSettingsVisual dspSettingsPanel = ((AddImageWizardDataSourceSettingsPanel) panels.get(dsPanelIndex)).getComponent();
+            Host host = (hostPanel == null) ? null : hostPanel.getSelectedHost();
+            addingProgressPanel.startDataSourceProcessing(dspSettingsPanel.getCurrentDSProcessor(), host);
         }
         boolean panelEnablesSkipping = current().panelEnablesSkipping();
         boolean skipNextPanel = current().skipNextPanel();

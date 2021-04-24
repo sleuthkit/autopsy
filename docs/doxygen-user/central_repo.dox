@@ -1,5 +1,8 @@
 /*! \page central_repo_page Central Repository
 
+[TOC]
+
+
 \section cr_overview Overview
 
 The central repository allows a user to find matching artifacts both across cases and across data sources in the same case. 
@@ -217,12 +220,6 @@ the Case -> Case Properties menu.
 <b>Show Frequency</b>
 
 This shows how common the selected file is. The value is the percentage of case/data source tuples that have the selected property.
-
-\subsection central_repo_comment Add/Edit Comment
-
-If you want instead to edit the comment of a node, it can be done by right clicking on the original item in the result viewer and selecting "Add/Edit Central Repository Comment".
-
-\image html central_repo_comment_menu.png
 
 \subsection cr_interesting_items Interesting Items
 

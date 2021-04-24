@@ -37,14 +37,14 @@ import org.sleuthkit.autopsy.texttranslation.ui.TranslateTextTask;
 /**
  * This is a panel for translation with a subcomponent that allows for translation.
  */
-class TranslatablePanel extends JPanel {
+public class TranslatablePanel extends JPanel {
     
     /**
      * This is an exception that can occur during the normal operation of the translatable 
      * panel. For instance, this exception can be thrown if it is not possible to set the child
      * content to the provided content string.
      */
-    class TranslatablePanelException extends Exception {
+    public class TranslatablePanelException extends Exception {
         public static final long serialVersionUID = 1L;
 
         TranslatablePanelException(String message) {
@@ -61,7 +61,7 @@ class TranslatablePanel extends JPanel {
      * This describes a child component to be placed as a child of this panel.  The child received
      * from {@link #getRootComponent() getRootComponent() } will listen for content updates from setContent().
      */
-    interface ContentComponent {
+    public interface ContentComponent {
         /**
          * This method gets root component of the translation panel.
          * @return      the root component to insert into the translatable panel
@@ -191,7 +191,7 @@ class TranslatablePanel extends JPanel {
 
     @Messages({"TranslatablePanel.comboBoxOption.originalText=Original Text",
         "TranslatablePanel.comboBoxOption.translatedText=Translated Text"})
-    TranslatablePanel(ContentComponent contentComponent) {
+    public TranslatablePanel(ContentComponent contentComponent) {
         this(
             contentComponent,
             Bundle.TranslatablePanel_comboBoxOption_originalText(),
@@ -263,7 +263,7 @@ class TranslatablePanel extends JPanel {
      * This resets the component to an empty state and sets the translation bar visibility
      * based on whether there is a provider.
      */
-    final void reset() {
+    public final void reset() {
         setContent(null, null);
     }
 
@@ -272,7 +272,7 @@ class TranslatablePanel extends JPanel {
      * @param content               the content for the panel
      * @param contentDescriptor     the content descriptor to be used in error messages
      */
-    void setContent(String content, String contentDescriptor) {
+    public void setContent(String content, String contentDescriptor) {
         cancelPendingTranslation();
         setTranslationEnabled();
         this.translateComboBox.setSelectedIndex(0);

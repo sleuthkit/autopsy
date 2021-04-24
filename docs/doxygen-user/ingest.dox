@@ -1,5 +1,8 @@
 /*! \page ingest_page Ingest Modules
 
+[TOC]
+
+
 Ingest modules analyze the data in a data source.  They perform all of the analysis of the files and parse their contents.  Examples include \ref hash_db_page "hash calculation and lookup", \ref keyword_search_page "keyword searching", and \ref recent_activity_page "web artifact extraction". 
 
 Immediately after you add a data source to a case (see \ref ds_page), you will be presented with a dialog to configure the ingest modules to run on it.  Once configured, they will run in the background and provide you real-time results when they find relevant information.  

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import net.sf.sevenzipjbinding.SevenZip;
+import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
@@ -48,6 +50,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 
 /**
  * Wrapper over Installers in packages in Core module. This is the main
@@ -162,50 +165,23 @@ public class Installer extends ModuleInstall {
             } catch (UnsatisfiedLinkError e) {
                 logger.log(Level.SEVERE, "Error loading VHDI library, ", e); //NON-NLS
             }
+            
+            // Only attempt to load OpenSSL if we're in 64 bit mode
+            if(System.getProperty("sun.arch.data.model").contains("64")) {
+                // libcrypto must be loaded before libssl to make sure it's the correct version
+                try {
+                    System.loadLibrary("libcrypto-1_1-x64"); //NON-NLS
+                    logger.log(Level.INFO, "Crypto library loaded"); //NON-NLS
+                } catch (UnsatisfiedLinkError e) {
+                    logger.log(Level.SEVERE, "Error loading Crypto library, ", e); //NON-NLS
+                }  
 
-            /*
-             * PostgreSQL
-             */
-            try {
-                System.loadLibrary("msvcr120"); //NON-NLS
-                logger.log(Level.INFO, "MSVCR 120 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading MSVCR120 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("libeay32"); //NON-NLS
-                logger.log(Level.INFO, "LIBEAY32 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading LIBEAY32 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("ssleay32"); //NON-NLS
-                logger.log(Level.INFO, "SSLEAY32 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading SSLEAY32 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("libiconv-2"); //NON-NLS
-                logger.log(Level.INFO, "libiconv-2 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading libiconv-2 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("libintl-8"); //NON-NLS
-                logger.log(Level.INFO, "libintl-8 library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading libintl-8 library, ", e); //NON-NLS
-            }
-
-            try {
-                System.loadLibrary("libpq"); //NON-NLS
-                logger.log(Level.INFO, "LIBPQ library loaded"); //NON-NLS
-            } catch (UnsatisfiedLinkError e) {
-                logger.log(Level.SEVERE, "Error loading LIBPQ library, ", e); //NON-NLS
+                try {
+                    System.loadLibrary("libssl-1_1-x64"); //NON-NLS
+                    logger.log(Level.INFO, "OpenSSL library loaded"); //NON-NLS
+                } catch (UnsatisfiedLinkError e) {
+                    logger.log(Level.SEVERE, "Error loading OpenSSL library, ", e); //NON-NLS
+                }
             }
         }
     }
@@ -228,6 +204,7 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.healthmonitor.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
 
         /**
          * This is a temporary workaround for the following bug in Tika that
@@ -336,8 +313,8 @@ public class Installer extends ModuleInstall {
     }
 
     /**
-     * Make a folder in the config directory for object detection classifiers if one does not
-     * exist.
+     * Make a folder in the config directory for object detection classifiers if
+     * one does not exist.
      */
     private static void ensureClassifierFolderExists() {
         File objectDetectionClassifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
@@ -381,6 +358,7 @@ public class Installer extends ModuleInstall {
         ensureClassifierFolderExists();
         ensureOcrLanguagePacksFolderExists();
         initJavaFx();
+        initializeSevenZip();
         for (ModuleInstall mi : packageInstallers) {
             try {
                 mi.restored();
@@ -392,28 +370,57 @@ public class Installer extends ModuleInstall {
         }
         logger.log(Level.INFO, "Autopsy Core restore completed"); //NON-NLS    
         preloadJython();
+        preloadTranslationServices();
     }
-    
-    
+
+    /**
+     * Initializes 7zip-java bindings. We are performing initialization once
+     * because we encountered issues related to file locking when initialization
+     * was performed closer to where the bindings are used. See JIRA-6528.
+     */
+    private static void initializeSevenZip() {
+        try {
+            SevenZip.initSevenZipFromPlatformJAR();
+            logger.log(Level.INFO, "7zip-java bindings loaded"); //NON-NLS
+        } catch (SevenZipNativeInitializationException e) {
+            logger.log(Level.SEVERE, "Error loading 7zip-java bindings", e); //NON-NLS
+        }
+    }
+
     /**
      * Runs an initial load of the Jython modules to speed up subsequent loads.
      */
-    private void preloadJython() {
+    private static void preloadJython() {
         Runnable loader = () -> {
             try {
                 JythonModuleLoader.getIngestModuleFactories();
                 JythonModuleLoader.getGeneralReportModules();
                 JythonModuleLoader.getDataSourceProcessorModules();
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 // This is a firewall exception to ensure that any possible exception caused
                 // by this initial load of the Jython modules are caught and logged.
                 logger.log(Level.SEVERE, "There was an error while doing an initial load of python plugins.", ex);
             }
-            
+
         };
         new Thread(loader).start();
     }
+    
+    /**
+     * Runs an initial load of the translation services to speed up subsequent loads.
+     */
+    private static void preloadTranslationServices() {
+        Runnable loader = () -> {
+            try {
+                TextTranslationService.getInstance();
+            } catch (Exception ex) {
+                // This is a firewall exception to ensure that any possible exception caused
+                // by this initial load of the translation modules are caught and logged.
+                logger.log(Level.SEVERE, "There was an error while doing an initial load of translation services.", ex);
+            }
+        };
+        new Thread(loader).start();
+    }    
 
     @Override
     public void validate() throws IllegalStateException {

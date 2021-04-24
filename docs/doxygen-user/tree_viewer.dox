@@ -1,20 +1,40 @@
 /*! \page tree_viewer_page Tree Viewer
 
+[TOC]
+
+
 The tree on the left-hand side of the main window is where you can browse the files in the data sources in the case and find saved results from automated analyis (ingest). The tree has five main areas:
-- <b>Data Sources:</b> This shows the directory tree hierarchy of the data sources. You can navigate to a specific file or directory here. Each data source added to the case is represented as a distinct sub tree. If you add a data source multiple times, it shows up multiple times.
+- <b>Persons / Hosts / Data Sources:</b> This shows the directory tree hierarchy of the data sources. You can navigate to a specific file or directory here. Each data source added to the case is represented as a distinct sub tree. If you add a data source multiple times, it shows up multiple times.
 - <b>Views:</b> Specific types of files from the data sources are shown here, aggregated by type or other properties. Files here can come from more than one data source.
 - <b>Results:</b> This is where you can see the results from both the automated analysis (ingest) running in the background and your search results.
 - <b>Tags:</b> This is where files and results that have been \ref tagging_page "tagged" are shown.
 - <b>Reports:</b> Reports that you have generated, or that ingest modules have created, show up here.
 
-You can also use the "Group by data source" option available through the \ref view_options_page to move the Views, Results, and Tags tree nodes under their corresponding data sources. This can be helpful on very large cases to reduce the size of each sub tree. For example:
+You can also use the "Group by Person/Host" option available through the \ref view_options_page to move the Views, Results, and Tags tree nodes under their corresponding person and host. This can be helpful on very large cases to reduce the size of each sub tree.
 
-\image html ui_layout_group_tree.PNG
+\section ui_tree_ds Persons / Hosts / Data Sources
+By default, the top node of the tree viewer will contain all data sources in the case. The Data Sources node is organized by host and then the data source itself. Right clicking on the various nodes in the Data Sources area of the tree will allow you to get more options for each data source and its contents. 
 
-\section ui_tree_ds Data Sources
+\image html ui_tree_top_ds.png
 
-The Data Sources area shows each data source that has been added to the case, in order added (top one is first).
-Right clicking on the various nodes in the Data Sources area of the tree will allow you to get more options for each data source and its contents. 
+If the "Group by Person/Host" option has been selected in the \ref view_options_group "View Options", the hosts and data sources will be organized under any persons that have been associated with the hosts. Additionally, the rest of the nodes (Views, Results, etc) will be found under each data source.
+
+\image html ui_tree_top_persons.png
+
+\subsection ui_tree_persons Persons
+
+If the "Group by Person/Host" option in the \ref view_options_group "View Options" has been set, the top level nodes will display persons. Persons are manually created and can be associated with one or more hosts. To add or remove a person from a host, right-click on the host and select the appropriate option.
+
+\image html ui_person_select.png
+
+You can edit and delete persons by right-clicking on the node.
+
+\subsection ui_tree_hosts Hosts
+
+All data sources are organized under host nodes. See the \ref host_page "hosts page" for more information on using hosts.
+
+\subsection ui_tree_ds_node Data Sources
+Under the hosts are the nodes for each data source. 
 
 Unallocated space is the chunks of a file system that are currently not being used for anything. Unallocated space can hold deleted files and other interesting artifacts. In an image data source, unallocated space is stored in blocks with distinct locations in the file system. However, because of the way carving tools work, it is better to feed these tools a single, large unallocated space file. Autopsy provides access to both methods of looking at unallocated space.
 \li <b>Individual blocks in a volume</b>  For each volume, there is a "virtual" folder named "$Unalloc". This folder contains all the individual unallocated blocks in contiguous runs (unallocated space files) as the image is storing them. You can right click and extract any unallocated space file the same way you can extract any other type of file in the Data Sources area.

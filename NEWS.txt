@@ -1,3 +1,171 @@
+---------------- VERSION 4.19.0  --------------
+Data Source Management:
+- To make managing big cases easier, all data sources are now associated with a host that can be specified in the “Add Data Source” wizard. 
+- Hosts can be grouped by “person”, which is simply a name of the owner.
+- The main tree viewer can be configured to group by person and host. 
+
+OS Accounts:
+- Operating System (OS) accounts and realms are their own data types and not generic artifacts. 
+- OS Accounts are created for Windows accounts found in the registry. Domain-scoped realms are not fully detected yet. 
+- NTFS files are associated with OS Accounts by SID. 
+- The Recent Activity module associates artifacts with OS Accounts based on SID or path of database.  Other modules still need to be updated. 
+- OS accounts appear in a dedicated sub-tree of the main tree view and their properties can be viewed in the results view.
+- A new content viewer in the lower right area of the main window was built to display OS account data for the item selected in the result view.
+
+Discovery UI:
+- Domain categorization and account types are displayed in Domain Discovery results.
+- The Domain Discovery results view more explicitly shows when a downloaded file no longer exists. 
+- Check boxes are now used to select search options instead of shift-based multi-select.
+
+Ingest Modules: 
+- File metadata updates are batched up before being saved to the case database for better performance. 
+- Parsing of iLEAPP and aLEAPP output was expanded to create communication relationships which can be displayed in the Communications UI. 
+- EML email parsing handles EML messages that are attachments (and have their own attachments). 
+- Domain categorization within Recent Activity can be customized by user-defined rules that can be imported and exported.
+
+Miscellaneous:
+- A “Reset Windows” feature was created to help redock windows. 
+- A case-insensitive wordlist of all words in the keyword search index can be exported as a text document.
+- Information from the Data Source Summary panels can be exported as an Excel spreadsheet.
+- More artifacts are added to the timeline and artifacts with multiple time-based attributes are mapped to multiple timeline events.
+- The Auto Ingest Dashboard is resizable.
+- Added option to only perform optical character recognition on certain file types.
+- Heap dumps can be saved to a custom location.
+- Assorted bug fixes are included.
+
+---------------- VERSION 4.18.0  --------------
+Keyword Search:
+- A major upgrade from Solr 4 to Solr 8.6.3.  Single user cases continue to use the embedded server.  
+Multi-user clusters need to install a new Solr 8 server and can now create a Solr cloud with multiple servers. 
+-- NOTE: Cases created with Autopsy 4.18 cannot be opened by previous versions of Autopsy.  Autopsy 4.18 can open older cases though. 
+-- See http://sleuthkit.org/autopsy/docs/user-docs/4.18.0/upgrade_solr8_page.html for more details. 
+- Improved text indexing speed by not doing language detection on unknown file formats and unallocated space. 
+
+Domain Discovery:
+- Added details view to Domain Discovery to show what web-based artifacts are associated with the selected domain. 
+- Updated the Domain Discovery grouping and sorting by options. 
+- Added basic domain categorization for webmail-based domains.
+
+Content Viewers:
+- Built more specialized viewers for web-based artifacts.
+
+Data Source Summary: 
+- Added a “Geolocations” tab that shows what cities the data source was near (based on geolocation data).
+- Added a “Timeline” tab that shows counts of events from the last 30 days the data source was used. 
+- Added navigation buttons to jump from the summary view to the main Autopsy UI (for example to go to the map). 
+
+Ingest Modules:
+- New YARA ingest module to flag files based on regular expression patterns. 
+- New “Android Analyzer (aLEAPP)” module based on aLEAPP.  Previous “Android Analyzer” also still exists. 
+- Updated “iOS Analyzer (iLEAPP)” module to create more artifacts and work on disk images. 
+- Hash Database module will calculate SHA-256 hash in addition to MD5.
+- Removed Interesting Item rule that flagged existence of Bitlocker (since it ships with Windows). 
+- Fixed a major bug in the PhotoRec module that could result in an incorrect file layout if the carved file spanned non-contiguous sectors. 
+- Fixed MBOX detection bug in Email module. 
+
+Reporting:
+- Attachments from tagged messages are now included in a Portable Case. 
+
+Misc:
+- Added support for Ext4 inline data and sparse blocks (via TSK fix).
+- Fixed timeline controller deadlock issue 
+- Updated PostgreSQL JDBC driver to support any recent version of PostgreSQL for multi-user cases and PostgreSQL Central Repository.
+- Added personas to the summary viewer in CVT.
+- Handling of bad characters in auto ingest manifest files.
+- Assorted small bug fixes.
+
+
+---------------- VERSION 4.17.0  --------------
+GUI:
+- Expanded the Data Source Summary panel to show recent activity, past cases, analysis results, etc.  Also made this available from the main UI when a data source is selected.
+- Expanded Discovery UI to support searching for and basic display of web domains.  It collapses the various web artifacts into a single view. 
+
+Ingest Modules:
+- Added iOS Analyzer module based on iLEAPP and a subset of its artifacts. 
+- New Picture Analyzer module that does EXIF extraction and HEIC conversion. HEIC/HEIF images are converted to JPEGs that retain EXIF using ImageMagick (replaces the previous EXIF ingest module).
+- Added support for the latest version of Edge browser that is based on Chromium into Recent Activity. Other Chromium-based browsers are also supported. 
+- Updated the rules that search Web History artifacts for search queries.  Expanded module to support multiple search engines for ambiguous URLs.
+- Bluetooth pairing artifacts are created based on RegRipper output.
+- Prefetch artifacts record the full path of exes.
+- PhotoRec module allows you to include or exclude specific file types.
+- Upgraded to Tika 1.23.
+
+Performance:
+- Documents are added to Solr in batches instead of one by one. 
+- More efficient queries to find WAL files for SQLite databases. 
+- Use a local drive for temp files for multi-user cases instead of the shared folder. 
+
+Command Line
+- Command line support for report profiles.
+- Restored support for Windows file type association for opening a case in Autopsy by double clicking case metadata (.aut) file.
+- Better feedback for command line argument errors.
+
+Misc:
+- Updated versions of libvmdk, libvhdi, and libewf.
+- Persona UI fixes: Pre-populate account and changed order of New Persona dialog.
+- Streaming ingest support added to auto ingest.
+- Recent Activity module processes now use the global timeout.
+- Option to include Autopsy executable in portable case (Windows only.)
+- Upgraded to NetBeans 11 Rich Client Platform.
+- Added debug feature to save the stack trace on all threads. 
+
+
+---------------- VERSION 4.16.0  --------------
+Ingest:
+- Added streaming ingest capability for disk images that allow files to be analyzed as soon as they are added to the database. 
+- Changed backend code so that disk image-based files are added by Java code instead of C/C++ code. 
+
+Ingest Modules: 
+- Include Interesting File set rules for cloud storage, encryption, cryptocurrency and privacy programs.
+- Updated PhotoRec 7.1 and include 64-bit version.
+- Updated RegRipper in Recent Activity to 2.8
+- Create artifacts for Prefetch, Background Activity Monitor, and System Resource Usage. 
+- Support MBOX files greater than 2GB.
+- Document metadata is saved as explicit artifacts and added to the timeline. 
+- New “no change” hashset type that does not change status of file. 
+
+
+Central Repository / Personas:
+- Accounts in the Central Repository can be grouped together and associated with a digital persona.
+- All accounts are now stored in the Central Repository to support correlation and persona creation. 
+
+Content viewers:
+- Created artifact-specific viewers in the Results viewer for contact book and call log. 
+- Moved Message viewer to a Results sub-viewer and expanded to show accounts. 
+- Added Application sub-viewer for PDF files based on IcePDF.
+- Annotation viewer now includes comments from hash set hits.
+
+Geolocation Viewer:
+- Different data types now are displayed using different colors.
+- Track points in a track are now displayed as small, connected circles instead of full pins.
+- Filter panel shows only data sources with geo location data. 
+- Geolocation artifact points can be tagged and commented upon.
+
+File Discovery:
+- Changed UI to have more of a search flow and content viewer is hidden until an item is selected.
+
+Reports:
+- Can be generated for a single data source instead of the entire case. 
+- CASE / UCO report module now includes artifacts in addition to files. 
+- Added backend concept of Tag Sets to support Project Vic categories from different countries. 
+
+Performance: 
+- Add throttling of UI refreshes to ensure data is quickly displayed and the tree does not get backed up with requests. 
+- Improved efficiency of adding a data source with many orphan files.
+- Improved efficiency of loading file systems.
+- Jython interpreter is preloaded at application startup.
+
+Misc bug fixes and improvements:
+- Fixed bug from last release where hex content viewer text was no longer fixed width.
+- Altered locking to allow multiple data sources to be added at once more smoothly and to support batch inserts of file data.
+- Central repository comments will no longer store tag descriptions.
+- Account type nodes in the Accounts tree show counts.
+- Full time stamps displayed for messages in ingest inbox.
+- More detailed status during file exports.
+- Improved efficiency of adding timeline events.
+- Fixed bug with CVT most recent filter.
+- Improved documentation and support for running on Linux/macOS.
+
 ---------------- VERSION 4.15.0  --------------
 New UI Features:
 - Added Document view to File Discovery.

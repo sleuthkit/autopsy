@@ -43,7 +43,7 @@ class EmailMessage {
     private String localPath = "";
     private boolean hasAttachment = false;
     private long sentDate = 0L;
-    private List<Attachment> attachments = new ArrayList<>();
+    private final List<Attachment> attachments = new ArrayList<>();
     private long id = -1L;
     private String messageID = "";
     private String inReplyToID = "";
@@ -409,5 +409,17 @@ class EmailMessage {
             return encodingType;
         }
 
+    }
+    
+    static class AttachedEmailMessage extends Attachment {
+        private final EmailMessage emailMessage;
+        
+        AttachedEmailMessage(EmailMessage emailMessage) {
+            this.emailMessage = emailMessage;
+        }
+        
+        EmailMessage getEmailMessage() {
+            return emailMessage;
+        }
     }
 }

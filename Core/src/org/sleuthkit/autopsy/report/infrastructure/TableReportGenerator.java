@@ -1348,7 +1348,7 @@ class TableReportGenerator {
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)));
 
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME)));
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED )));
 
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID() == artifactTypeId) {
@@ -1793,6 +1793,7 @@ class TableReportGenerator {
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()
+                || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_AREA.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()

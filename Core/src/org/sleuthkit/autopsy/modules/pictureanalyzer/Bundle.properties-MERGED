@@ -1,0 +1,3 @@
+PictureAnalyzerIngestModule.cannot_run_file_type=Cannot run file type detection.
+PictureAnalyzerIngestModuleFactory.module_description=Performs general analysis on picture files, including extracting EXIF metadata and converting between formats.
+PictureAnalyzerIngestModuleFactory.module_name=Picture Analyzer

@@ -38,7 +38,7 @@ public interface IngestProgressSnapshotProvider {
      *
      * @return A list of ingest job snapshots.
      */
-    List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots();
+    List<Snapshot> getIngestJobSnapshots();
 
     /**
      * Gets the cumulative run times for the ingest module.

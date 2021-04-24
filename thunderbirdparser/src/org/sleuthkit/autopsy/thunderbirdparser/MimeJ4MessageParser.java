@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,18 +21,16 @@ package org.sleuthkit.autopsy.thunderbirdparser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
-import org.apache.james.mime4j.dom.BinaryBody;
 import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Message;
+import org.apache.james.mime4j.dom.MessageWriter;
 import org.apache.james.mime4j.dom.Multipart;
-import org.apache.james.mime4j.dom.SingleBody;
 import org.apache.james.mime4j.dom.TextBody;
 import org.apache.james.mime4j.dom.address.AddressList;
 import org.apache.james.mime4j.dom.address.Mailbox;
@@ -40,6 +38,7 @@ import org.apache.james.mime4j.dom.address.MailboxList;
 import org.apache.james.mime4j.dom.field.ContentDispositionField;
 import org.apache.james.mime4j.dom.field.ContentTypeField;
 import org.apache.james.mime4j.message.DefaultMessageBuilder;
+import org.apache.james.mime4j.message.DefaultMessageWriter;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.openide.util.NbBundle;
@@ -52,7 +51,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Super class for email parsers that can use the james.mime4J.Message objects.
  */
-class MimeJ4MessageParser {
+class MimeJ4MessageParser implements AutoCloseable{
 
     private static final Logger logger = Logger.getLogger(MimeJ4MessageParser.class.getName());
 
@@ -166,7 +165,11 @@ class MimeJ4MessageParser {
         if (msg.isMultipart()) {
             handleMultipart(email, (Multipart) msg.getBody(), sourceFileID);
         } else {
-            handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
+            if(msg.getBody() instanceof TextBody) {
+                handleTextBody(email, (TextBody) msg.getBody(), msg.getMimeType(), msg.getHeader().getFields());
+            } else  {
+               handleAttachment(email, msg, sourceFileID, 1);
+            }
         }
 
         return email;
@@ -227,15 +230,15 @@ class MimeJ4MessageParser {
             } else if (e.getDispositionType() != null
                     && e.getDispositionType().equals(ContentDispositionField.DISPOSITION_TYPE_ATTACHMENT)) {
                 handleAttachment(email, e, fileID, index);
-            } else if (e.getMimeType().equals(HTML_TYPE)
-                    || e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN)) {
-                handleTextBody(email, (TextBody) e.getBody(), e.getMimeType(), e.getHeader().getFields());
-            } else {
-                // Ignore other types.
-            }
+            } else if ((e.getMimeType().equals(HTML_TYPE) && (email.getHtmlBody() == null || email.getHtmlBody().isEmpty()))
+                    || (e.getMimeType().equals(ContentTypeField.TYPE_TEXT_PLAIN) && (email.getTextBody() == null || email.getTextBody().isEmpty()))) {
+                    handleTextBody(email, (TextBody) e.getBody(), e.getMimeType(), e.getHeader().getFields());
+            } else {               
+                handleAttachment(email, e, fileID, index);
+            } 
         }
     }
-
+    
     /**
      * Extract text out of a body part of the message.
      *
@@ -290,7 +293,7 @@ class MimeJ4MessageParser {
      * @param e
      */
     @NbBundle.Messages({"MimeJ4MessageParser.handleAttch.noOpenCase.errMsg=Exception while getting open case."})
-    private static void handleAttachment(EmailMessage email, Entity e, long fileID, int index) {
+    private void handleAttachment(EmailMessage email, Entity e, long fileID, int index) {
         String outputDirPath;
         String relModuleOutputPath;
         try {
@@ -319,23 +322,31 @@ class MimeJ4MessageParser {
         String outPath = outputDirPath + uniqueFilename;
         
         Body body = e.getBody();
-        if (body instanceof SingleBody) {
+        if (body != null) {
+            long fileLength;
             try (EncodedFileOutputStream fos = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1)) {
-                ((SingleBody) body).writeTo(fos);
+                
+                EmailMessage.Attachment attach;
+                MessageWriter msgWriter = new DefaultMessageWriter();
+                
+                if(body instanceof Message) {
+                    msgWriter.writeMessage((Message)body, fos);
+                    attach = new EmailMessage.AttachedEmailMessage(extractEmail((Message)body, email.getLocalPath(), fileID));
+                } else {
+                    msgWriter.writeBody(body, fos);
+                    attach = new EmailMessage.Attachment();
+                }
+                fileLength = fos.getBytesWritten();
+                attach.setName(filename);
+                attach.setLocalPath(relModuleOutputPath + uniqueFilename);
+                attach.setSize(fileLength);
+                attach.setEncodingType(TskData.EncodingType.XOR1);
+                email.addAttachment(attach);
+
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Failed to create file output stream for: " + outPath, ex); //NON-NLS
-                return;
             }
-            
-            EmailMessage.Attachment attach = new EmailMessage.Attachment();
-            attach.setName(filename);
-            attach.setLocalPath(relModuleOutputPath + uniqueFilename);
-            attach.setSize(new File(outPath).length());
-            attach.setEncodingType(TskData.EncodingType.XOR1);
-            email.addAttachment(attach);
         } 
-        
-        
     }
 
     /**
@@ -369,5 +380,10 @@ class MimeJ4MessageParser {
      */
     private static String getAddresses(AddressList addressList) {
         return (addressList == null) ? "" : getAddresses(addressList.flatten());
+    }
+
+    @Override
+    public void close() throws IOException{
+        
     }
 }

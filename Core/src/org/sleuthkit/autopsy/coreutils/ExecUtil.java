@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2013-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,28 +31,31 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
- * Executes a command line using an operating system process with a configurable
- * timeout and pluggable logic to kill or continue the process on timeout.
+ * Executes a command line using an operating system process with pluggable
+ * logic to terminate the process under certain conditions.
  */
 public final class ExecUtil {
 
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
-    private static final long DEFAULT_CHECK_INTERVAL = 5;
-    private static final TimeUnit DEFAULT_CHECK_INTERVAL_UNITS = TimeUnit.SECONDS;
+    private static final long DEFAULT_TERMINATION_CHECK_INTERVAL = 5;
+    private static final TimeUnit DEFAULT_TERMINATION_CHECK_INTERVAL_UNITS = TimeUnit.SECONDS;
+    private static final long MAX_WAIT_FOR_TERMINATION = 1;
+    private static final TimeUnit MAX_WAIT_FOR_TERMINATION_UNITS = TimeUnit.MINUTES;
 
     /**
-     * The execute() methods do a wait() with a timeout on the executing process
-     * and query a process terminator each time the timeout expires to determine
-     * whether or not to kill the process. See
+     * An interface for defining the conditions under which an operating system
+     * process spawned by an ExecUtil method should be terminated.
+     *
+     * Some existing implementations: TimedProcessTerminator,
+     * InterruptedThreadProcessTerminator,
      * DataSourceIngestModuleProcessTerminator and
-     * FileIngestModuleProcessTerminator as examples of ProcessTerminator
-     * implementations.
+     * FileIngestModuleProcessTerminator.
      */
     public interface ProcessTerminator {
 
         /**
-         * Decides whether or not to terminate a process being run by a
-         * ExcUtil.execute() methods.
+         * Decides whether or not to terminate a process being run by an
+         * ExecUtil method.
          *
          * @return True or false.
          */
@@ -78,11 +81,11 @@ public final class ExecUtil {
     public static class TimedProcessTerminator implements ProcessTerminator {
 
         private final long startTimeInSeconds;
-        private final long maxRunTimeInSeconds;
+        private final Long maxRunTimeInSeconds;
 
         /**
          * Creates a process terminator that can be used to kill a process after
-         * it has run for a given period of time.
+         * it exceeds a maximum allowable run time.
          *
          * @param maxRunTimeInSeconds The maximum allowable run time in seconds.
          */
@@ -93,32 +96,68 @@ public final class ExecUtil {
 
         /**
          * Creates a process terminator that can be used to kill a process after
-         * it has run for a given period of time. Maximum allowable run time is
-         * set via Autopsy Options panel. If the process termination
-         * functionality is disabled then the maximum allowable time is set to
-         * MAX_INT seconds.
+         * it exceeds a global maximum allowable run time specified as a user
+         * preference. If the user preference is not set, this terminator has no
+         * effect.
          */
         public TimedProcessTerminator() {
             if (UserPreferences.getIsTimeOutEnabled() && UserPreferences.getProcessTimeOutHrs() > 0) {
-                // user specified time out
-                this.maxRunTimeInSeconds = UserPreferences.getProcessTimeOutHrs() * 3600;
+                this.maxRunTimeInSeconds = (long) UserPreferences.getProcessTimeOutHrs() * 3600;
             } else {
-                // never time out
-                this.maxRunTimeInSeconds = Long.MAX_VALUE;
+                this.maxRunTimeInSeconds = null;
             }
             this.startTimeInSeconds = (new Date().getTime()) / 1000;
         }
 
         @Override
         public boolean shouldTerminateProcess() {
-            long currentTimeInSeconds = (new Date().getTime()) / 1000;
-            return (currentTimeInSeconds - this.startTimeInSeconds) > this.maxRunTimeInSeconds;
+            if (maxRunTimeInSeconds != null) {
+                long currentTimeInSeconds = (new Date().getTime()) / 1000;
+                return (currentTimeInSeconds - this.startTimeInSeconds) > this.maxRunTimeInSeconds;
+            } else {
+                return false;
+            }
+        }
+    }
+    
+    /**
+     * This class takes a list of ProcessTerminators checking all of them
+     * during shouldTerminateProcess.
+     */
+    public static class HybridTerminator implements ProcessTerminator {
+        private final List<ProcessTerminator> terminatorList;
+        
+        /**
+         * Constructs a new instance of the terminator.
+         * 
+         * @param terminators A list of terminators.
+         */
+        public HybridTerminator(List<ProcessTerminator> terminators) {
+            this.terminatorList = terminators;
+        }
+        
+        @Override
+        public boolean shouldTerminateProcess() {
+            for(ProcessTerminator terminator: terminatorList) {
+                if(terminator.shouldTerminateProcess()) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
     /**
-     * Runs a process without a termination check interval or process
-     * terminator.
+     * Runs a process without a process terminator. This method should be used
+     * with caution because there is nothing to stop the process from running
+     * forever.
+     *
+     * IMPORTANT: This method blocks while the process is running. For legacy
+     * API reasons, if there is an interrupt the InterruptedException is wrapped
+     * in an IOException instead of being thrown. Callers that need to know
+     * about interrupts to detect backgound task cancellation can call
+     * Thread.isInterrupted() or, if the thread's interrupt flag should be
+     * cleared, Thread.interrupted().
      *
      * @param processBuilder A process builder used to configure and construct
      *                       the process to be run.
@@ -127,7 +166,8 @@ public final class ExecUtil {
      *
      * @throws SecurityException If a security manager exists and vetoes any
      *                           aspect of running the process.
-     * @throws IOException       If an I/O error occurs.
+     * @throws IOException       If an error occurs while executing or
+     *                           terminating the process.
      */
     public static int execute(ProcessBuilder processBuilder) throws SecurityException, IOException {
         return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, new ProcessTerminator() {
@@ -142,6 +182,13 @@ public final class ExecUtil {
      * Runs a process using the default termination check interval and a process
      * terminator.
      *
+     * IMPORTANT: This method blocks while the process is running. For legacy
+     * API reasons, if there is an interrupt the InterruptedException is wrapped
+     * in an IOException instead of being thrown. Callers that need to know
+     * about interrupts to detect backgound task cancellation can call
+     * Thread.isInterrupted() or, if the thread's interrupt flag should be
+     * cleared, Thread.interrupted().
+     *
      * @param processBuilder A process builder used to configure and construct
      *                       the process to be run.
      * @param terminator     The terminator.
@@ -150,15 +197,23 @@ public final class ExecUtil {
      *
      * @throws SecurityException If a security manager exists and vetoes any
      *                           aspect of running the process.
-     * @throws IOException       If an I/O error occurs.
+     * @throws IOException       If an error occurs while executing or
+     *                           terminating the process.
      */
     public static int execute(ProcessBuilder processBuilder, ProcessTerminator terminator) throws SecurityException, IOException {
-        return ExecUtil.execute(processBuilder, ExecUtil.DEFAULT_CHECK_INTERVAL, ExecUtil.DEFAULT_CHECK_INTERVAL_UNITS, terminator);
+        return ExecUtil.execute(processBuilder, ExecUtil.DEFAULT_TERMINATION_CHECK_INTERVAL, ExecUtil.DEFAULT_TERMINATION_CHECK_INTERVAL_UNITS, terminator);
     }
 
     /**
      * Runs a process using a custom termination check interval and a process
      * terminator.
+     *
+     * IMPORTANT: This method blocks while the process is running. For legacy
+     * API reasons, if there is an interrupt the InterruptedException is wrapped
+     * in an IOException instead of being thrown. Callers that need to know
+     * about interrupts to detect backgound task cancellation can call
+     * Thread.isInterrupted() or, if the thread's interrupt flag should be
+     * cleared, Thread.interrupted().
      *
      * @param processBuilder           A process builder used to configure and
      *                                 construct the process to be run.
@@ -173,10 +228,50 @@ public final class ExecUtil {
      *
      * @throws SecurityException If a security manager exists and vetoes any
      *                           aspect of running the process.
-     * @throws IOException       If an I/O error occurs.
+     * @throws IOException       If an error occurs while executing or
+     *                           terminating the process.
      */
     public static int execute(ProcessBuilder processBuilder, long terminationCheckInterval, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         return waitForTermination(processBuilder.command().get(0), processBuilder.start(), terminationCheckInterval, units, terminator);
+    }
+
+    /**
+     * Waits for an existing process to finish, using a custom termination check
+     * interval and a process terminator.
+     *
+     * IMPORTANT: This method blocks while the process is running. For legacy
+     * API reasons, if there is an interrupt the InterruptedException is wrapped
+     * in an IOException instead of being thrown. Callers that need to know
+     * about interrupts to detect backgound task cancellation can call
+     * Thread.isInterrupted() or, if the thread's interrupt flag should be
+     * cleared, Thread.interrupted().
+     *
+     * @param processName              The name of the process, for logging
+     *                                 purposes.
+     * @param process                  The process.
+     * @param terminationCheckInterval The interval at which to query the
+     *                                 process terminator to see if the process
+     *                                 should be killed.
+     * @param units                    The units for the termination check
+     *                                 interval.
+     * @param terminator               The process terminator.
+     *
+     * @return The exit value of the process.
+     *
+     * @throws IOException If an error occurs while executing or terminating the
+     *                     process.
+     */
+    public static int waitForTermination(String processName, Process process, long terminationCheckInterval, TimeUnit units, ProcessTerminator terminator) throws IOException {
+        try {
+            return waitForProcess(processName, process, terminationCheckInterval, units, terminator);
+        } catch (InterruptedException ex) {
+            /*
+             * Reset the interrupted flag and wrap the exception in an
+             * IOException for backwards compatibility.
+             */
+            Thread.currentThread().interrupt();
+            throw new IOException(String.format("Interrupted executing %s", processName), ex); //NON-NLS
+        }
     }
 
     /**
@@ -195,67 +290,114 @@ public final class ExecUtil {
      *
      * @return The exit value of the process.
      *
-     * @throws SecurityException If a security manager exists and vetoes any
-     *                           aspect of running the process.
-     * @throws IOException       If an I/O error occurs.
+     * @throws IOException          If an error occurs while executing or
+     *                              terminating the process.
+     * @throws InterruptedException If the thread running this code is
+     *                              interrupted while the process is running.
      */
-    public static int waitForTermination(String processName, Process process, long terminationCheckInterval, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
-        try {
-            do {
-                process.waitFor(terminationCheckInterval, units);
-                if (process.isAlive() && terminator.shouldTerminateProcess()) {
-                    killProcess(process);
-                    try {
-                        process.waitFor();
-                    } catch (InterruptedException ex) {
-                        logger.log(Level.WARNING, String.format("Thread running %s was interrupted before the process completed", processName), ex);
-                    }
-                }
-            } while (process.isAlive());
-        } catch (InterruptedException ex) {
-            if (process.isAlive()) {
-                killProcess(process);
-            }
+    private static int waitForProcess(String processName, Process process, long terminationCheckInterval, TimeUnit units, ProcessTerminator terminator) throws IOException, InterruptedException {
+        do {
             try {
-                process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
-            } catch (InterruptedException exx) {
-                logger.log(Level.WARNING, String.format("Thread running %s was interrupted before the process completed", processName), exx);
+                process.waitFor(terminationCheckInterval, units);
+            } catch (InterruptedException ex) {
+                logger.log(Level.WARNING, String.format("Interrupted executing %s", processName), ex); //NON-NLS
+                Thread.currentThread().interrupt();
+                terminateProcess(processName, process);
+                /*
+                 * Note that if the preceding call to terminateProcess() throws
+                 * an IOException, the caller will get that exception instead of
+                 * this InterruptedException, which is arguably preferable. If
+                 * terminateProcess() does not throw an IOException, then its
+                 * call to waitFor() will throw a fresh InterruptedException,
+                 * which is fine.
+                 */
+                throw ex;
             }
-            logger.log(Level.WARNING, String.format("Thread running %s was interrupted before the process completed", processName), ex);
-            Thread.currentThread().interrupt();
-        }
+            if (process.isAlive() && terminator.shouldTerminateProcess()) {
+                terminateProcess(processName, process);
+            }
+        } while (process.isAlive());
+
+        /*
+         * Careful: Process.exitValue() throws an IllegalStateException if the
+         * process is still alive when the method is called. This code is set up
+         * so that the only way Process.exitValue() can be called is when it has
+         * not been bypassed by an exception and the preceding loop has
+         * terminated with Process.isAlive == false.
+         */
         return process.exitValue();
     }
 
     /**
-     * Kills a process and its children
+     * Terminates a process and its children, waiting with a time out to try to
+     * ensure the process is no longer alive before returning.
      *
-     * @param process The parent process to kill
+     * IMPORTANT: This method blocks while the process is running. For legacy
+     * API reasons, if there is an interrupt (or any other exception) the
+     * exception is logged instead of being thrown. Callers that need to know
+     * about interrupts to detect backgound task cancellation can call
+     * Thread.isInterrupted() or, if the thread's interrupt flag should be
+     * cleared, Thread.interrupted().
+     *
+     * @param process The process.
      */
     public static void killProcess(Process process) {
-        if (process == null) {
+        String processName = process.toString();
+        try {
+            terminateProcess(processName, process);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, String.format("Error occured executing %s", processName), ex); //NON-NLS
+        } catch (InterruptedException ex) {
+            logger.log(Level.WARNING, String.format("Interrupted executing %s", processName), ex); //NON-NLS
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * Terminates a process and its children, waiting with a time out to try to
+     * ensure the process is no longer alive before returning.
+     *
+     * @param processName The name of the process, for logging purposes.
+     * @param process     The process.
+     *
+     * @throws IOException          If an error occurs while trying to terminate
+     *                              the process.
+     * @throws InterruptedException If the thread running this code is
+     *                              interrupted while waiting for the process to
+     *                              terminate.
+     */
+    private static void terminateProcess(String processName, Process process) throws IOException, InterruptedException {
+        if (process == null || !process.isAlive()) {
             return;
         }
 
-        try {
-            if (PlatformUtil.isWindows()) {
+        if (PlatformUtil.isWindows()) {
+            try {
                 Win32Process parentProcess = new Win32Process(process);
                 List<Win32Process> children = parentProcess.getChildren();
-
                 children.stream().forEach((child) -> {
                     child.terminate();
                 });
                 parentProcess.terminate();
-            } else {
-                process.destroyForcibly();
+            } catch (Exception ex) {
+                /*
+                 * Wrap whatever exception was thrown from Windows in an
+                 * exception that is appropriate for this API.
+                 */
+                throw new IOException(String.format("Error occured terminating %s", processName), ex); //NON-NLS
             }
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error occurred when attempting to kill process: {0}", ex.getMessage()); // NON-NLS
+        } else {
+            process.destroyForcibly();
+        }
+
+        if (!process.waitFor(MAX_WAIT_FOR_TERMINATION, MAX_WAIT_FOR_TERMINATION_UNITS)) {
+            throw new IOException(String.format("Failed to terminate %s after %d %s", processName, MAX_WAIT_FOR_TERMINATION, MAX_WAIT_FOR_TERMINATION_UNITS)); //NON-NLS            
         }
     }
 
     /*
-     * Used by deprecated methods.
+     * Fields used by deprecated methods that require instantiation of an
+     * ExecUtil object.
      */
     private Process proc = null;
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -43,10 +44,8 @@ import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -56,7 +55,10 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.AbstractFile;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
+import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Extracts activity from Internet Explorer browser, as well as recent documents
@@ -65,15 +67,13 @@ import org.sleuthkit.datamodel.*;
 class ExtractIE extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private final IngestServices services = IngestServices.getInstance();
-    private final String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private final String JAVA_PATH;
     private static final String RESOURCE_URL_PREFIX = "res://";
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
-    
+
     @Messages({
         "Progress_Message_IE_History=IE History",
         "Progress_Message_IE_Bookmarks=IE Bookmarks",
@@ -81,29 +81,38 @@ class ExtractIE extends Extract {
         "Progress_Message_IE_Downloads=IE Downloads",
         "Progress_Message_IE_FormHistory=IE Form History",
         "Progress_Message_IE_AutoFill=IE Auto Fill",
-        "Progress_Message_IE_Logins=IE Logins",
-    })
+        "Progress_Message_IE_Logins=IE Logins",})
 
-    ExtractIE() throws NoCurrentCaseException {
-        moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
-        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), "IE") + File.separator + "results"; //NON-NLS
+    ExtractIE() {
+        super(NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text"));
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
 
     @Override
     public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+        String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), "IE", context.getJobId());
+        String moduleTempResultsDir = Paths.get(moduleTempDir, "results").toString();
+                
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
-        
+
         progressBar.progress(Bundle.Progress_Message_IE_Bookmarks());
         this.getBookmark();
         
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+
         progressBar.progress(Bundle.Progress_Message_IE_Cookies());
         this.getCookie();
         
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+
         progressBar.progress(Bundle.Progress_Message_IE_History());
-        this.getHistory();
+        this.getHistory(moduleTempDir, moduleTempResultsDir);
     }
 
     /**
@@ -148,7 +157,7 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                   RecentActivityExtracterModuleFactory.getModuleName(), url));
+                    RecentActivityExtracterModuleFactory.getModuleName(), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
                     RecentActivityExtracterModuleFactory.getModuleName(), name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
@@ -161,13 +170,16 @@ class ExtractIE extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
 
-            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
-            if (bbart != null) {
-                bbartifacts.add(bbart);
+            try {
+                bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d",ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getDisplayName(), fav.getId() ), ex);
             }
         }
-        
-        postArtifacts(bbartifacts);
+
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     private String getURLFromIEBookmarkFile(AbstractFile fav) {
@@ -258,7 +270,7 @@ class ExtractIE extends Extract {
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                     RecentActivityExtracterModuleFactory.getModuleName(), url));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME,
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
                     RecentActivityExtracterModuleFactory.getModuleName(), datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
                     RecentActivityExtracterModuleFactory.getModuleName(), (name != null) ? name : ""));
@@ -271,19 +283,25 @@ class ExtractIE extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
-            BlackboardArtifact bbart = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
-            if (bbart != null) {
-                bbartifacts.add(bbart);
+
+            try {
+                bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d",ARTIFACT_TYPE.TSK_WEB_COOKIE.getDisplayName(), cookiesFile.getId() ), ex);
             }
         }
 
-        postArtifacts(bbartifacts); 
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
      * Locates index.dat files, runs Pasco on them, and creates artifacts.
+     * @param moduleTempDir The path to the module temp directory.
+     * @param moduleTempResultsDir The path to the module temp results directory.
      */
-    private void getHistory() {
+    private void getHistory(String moduleTempDir, String moduleTempResultsDir) {
         logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
         boolean foundHistory = false;
 
@@ -335,7 +353,7 @@ class ExtractIE extends Extract {
             //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
             indexFileName = "index" + Integer.toString((int) indexFile.getId()) + ".dat"; //NON-NLS
             //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
-            temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName; //NON-NLS
+            temps = moduleTempDir + File.separator + indexFileName; //NON-NLS
             File datFile = new File(temps);
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -351,7 +369,7 @@ class ExtractIE extends Extract {
             }
 
             String filename = "pasco2Result." + indexFile.getId() + ".txt"; //NON-NLS
-            boolean bPascProcSuccess = executePasco(temps, filename);
+            boolean bPascProcSuccess = executePasco(temps, filename, moduleTempResultsDir);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
@@ -360,7 +378,7 @@ class ExtractIE extends Extract {
             //Now fetch the results, parse them and the delete the files.
             if (bPascProcSuccess) {
                 // Don't add TSK_OS_ACCOUNT artifacts to the ModuleDataEvent
-                bbartifacts.addAll(parsePascoOutput(indexFile, filename).stream()
+                bbartifacts.addAll(parsePascoOutput(indexFile, filename, moduleTempResultsDir).stream()
                         .filter(bbart -> bbart.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID())
                         .collect(Collectors.toList()));
                 if (context.dataSourceIngestIsCancelled()) {
@@ -376,8 +394,10 @@ class ExtractIE extends Extract {
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
             }
         }
-        
-        postArtifacts(bbartifacts);
+
+        if(!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     /**
@@ -385,10 +405,15 @@ class ExtractIE extends Extract {
      *
      * @param indexFilePath  Path to local index.dat file to analyze
      * @param outputFileName Name of file to save output to
+     * @param moduleTempResultsDir the path to the module temp directory.
      *
      * @return false on error
      */
-    private boolean executePasco(String indexFilePath, String outputFileName) {
+    @Messages({
+        "# {0} - sub module name", 
+        "ExtractIE_executePasco_errMsg_errorRunningPasco={0}: Error analyzing Internet Explorer web history",
+    })
+    private boolean executePasco(String indexFilePath, String outputFileName, String moduleTempResultsDir) {
         boolean success = true;
         try {
             final String outputFileFullPath = moduleTempResultsDir + File.separator + outputFileName;
@@ -414,11 +439,12 @@ class ExtractIE extends Extract {
              * contains a lot of useful data and only the last entry is
              * corrupted.
              */
-            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
+            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
             // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error executing Pasco to process Internet Explorer web history", ex); //NON-NLS
+            addErrorMessage(Bundle.ExtractIE_executePasco_errMsg_errorRunningPasco(getName()));            
             success = false;
-            logger.log(Level.SEVERE, "Unable to execute Pasco to process Internet Explorer web history.", ex); //NON-NLS
         }
         return success;
     }
@@ -429,10 +455,11 @@ class ExtractIE extends Extract {
      * @param origFile            Original index.dat file that was analyzed to
      *                            get this output
      * @param pascoOutputFileName name of pasco output file
+     * @param moduleTempResultsDir the path to the module temp directory.
      *
      * @return A collection of created artifacts
      */
-    private Collection<BlackboardArtifact> parsePascoOutput(AbstractFile origFile, String pascoOutputFileName) {
+    private Collection<BlackboardArtifact> parsePascoOutput(AbstractFile origFile, String pascoOutputFileName, String moduleTempResultsDir) {
 
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String fnAbs = moduleTempResultsDir + File.separator + pascoOutputFileName;
@@ -463,11 +490,11 @@ class ExtractIE extends Extract {
             return bbartifacts;
         }
         while (fileScanner.hasNext()) {
-            
+
             if (context.dataSourceIngestIsCancelled()) {
                 return bbartifacts;
             }
-            
+
             String line = fileScanner.nextLine();
             if (!line.startsWith("URL")) {   //NON-NLS
                 continue;
@@ -492,12 +519,12 @@ class ExtractIE extends Extract {
              */
             if (lineBuff[1].contains("@")) {
                 String url[] = lineBuff[1].split("@", 2);
-                
+
                 /*
                  * Verify the left portion of the URL is valid.
                  */
                 domain = extractDomain(url[0]);
-                
+
                 if (domain != null && domain.isEmpty() == false) {
                     /*
                      * Use the entire input for the URL.
@@ -540,59 +567,57 @@ class ExtractIE extends Extract {
                 }
             }
 
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                    RecentActivityExtracterModuleFactory.getModuleName(), realurl));
+            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
+
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), ftime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
+                    RecentActivityExtracterModuleFactory.getModuleName(), ""));
+            // @@@ NOte that other browser modules are adding TITLE in here for the title
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                            "ExtractIE.moduleName.text")));
+            if (domain != null && domain.isEmpty() == false) {
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+            }
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(), user));
+
             try {
-                BlackboardArtifact bbart = origFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(), realurl));
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
-
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(), ftime));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                       RecentActivityExtracterModuleFactory.getModuleName(), ""));
-                // @@@ NOte that other browser modules are adding TITLE in hre for the title
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.moduleName.text")));
-                if (domain != null && domain.isEmpty() == false) {
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
-                }
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), user));
-                bbart.addAttributes(bbattributes);
-
-                bbartifacts.add(bbart);
+                bbartifacts.add(createArtifactWithAttributes(TSK_WEB_HISTORY, origFile, bbattributes));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard. Pasco results will be incomplete", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d",ARTIFACT_TYPE.TSK_WEB_HISTORY.getDisplayName(), origFile.getId() ), ex);
             }
         }
         fileScanner.close();
         return bbartifacts;
     }
-    
+
     /**
      * Extract the domain from the supplied URL. This method does additional
      * checks to detect invalid URLs.
-     * 
+     *
      * @param url The URL from which to extract the domain.
-     * 
+     *
      * @return The domain.
      */
     private String extractDomain(String url) {
         if (url == null || url.isEmpty()) {
             return url;
         }
-        
+
         if (url.toLowerCase().startsWith(RESOURCE_URL_PREFIX)) {
             /*
              * Ignore URLs that begin with the matched text.
              */
             return null;
         }
-        
+
         return NetworkUtils.extractDomain(url);
     }
 }

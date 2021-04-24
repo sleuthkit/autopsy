@@ -19,29 +19,45 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a single file analysis task, which is defined by a file to analyze
  * and the InjestJob/Pipeline to run it on.
  */
 final class FileIngestTask extends IngestTask {
+    
+    private final long fileId;
+    private AbstractFile file = null;
 
-    private final AbstractFile file;
-
-    FileIngestTask(DataSourceIngestJob job, AbstractFile file) {
-        super(job);
+    FileIngestTask(IngestJobPipeline ingestJobPipeline, AbstractFile file) {
+        super(ingestJobPipeline);
         this.file = file;
+        fileId = file.getId();
     }
 
-    AbstractFile getFile() {
+    FileIngestTask(IngestJobPipeline ingestJobPipeline, long fileId) {
+        super(ingestJobPipeline);
+        this.fileId = fileId;
+    }
+
+    long getFileId() {
+        return fileId;
+    }
+
+    synchronized AbstractFile getFile() throws TskCoreException {
+        if (file == null) {
+            file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(fileId);
+        }
         return file;
     }
 
     @Override
     void execute(long threadId) throws InterruptedException {
         super.setThreadId(threadId);
-        getIngestJob().process(this);
+        getIngestJobPipeline().process(this);
     }
 
     @Override
@@ -53,22 +69,19 @@ final class FileIngestTask extends IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        DataSourceIngestJob job = getIngestJob();
-        DataSourceIngestJob otherJob = other.getIngestJob();
-        if (job != otherJob && (job == null || !job.equals(otherJob))) {
+        IngestJobPipeline thisPipeline = getIngestJobPipeline();
+        IngestJobPipeline otherPipeline = other.getIngestJobPipeline();
+        if (thisPipeline != otherPipeline && (thisPipeline == null || !thisPipeline.equals(otherPipeline))) {
             return false;
         }
-        if (this.file != other.file && (this.file == null || !this.file.equals(other.file))) {
-            return false;
-        }
-        return true;
+        return (this.fileId == other.fileId);
     }
 
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 47 * hash + Objects.hashCode(getIngestJob());
-        hash = 47 * hash + Objects.hashCode(this.file);
+        hash = 47 * hash + Objects.hashCode(getIngestJobPipeline());
+        hash = 47 * hash + Objects.hashCode(this.fileId);
         return hash;
     }
 }

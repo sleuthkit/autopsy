@@ -1,5 +1,8 @@
 /*! \page portable_case_page Portable Cases
 
+[TOC]
+
+
 \section portable_case_overview Overview
 
 A portable case is a partial copy of a normal Autopsy case that can be opened from anywhere. It contains a subset of the data from its original case and has been designed to make it easy to share relevant data with other examiners. Portable cases will contain a \ref report_case_uco report detailing the contents of the portable case.
@@ -33,7 +36,9 @@ You can tag any additional files you want to include in the portable case. See t
 
 \image html portable_case_tags.png
 
-Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags and interesting file sets that are in use in the current case and you can choose which ones you would like to include. At the bottom you can choose to optionally package the case. Choosing to package the case without chunking will simply compress the portable case in a single archive that can be extracted with common compression programs. If you choose split the packaged case into multiple files, you will need to use the "Unpack and Open Portable Case" option to open it. This will be discussed in the next section. 
+Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags and interesting file sets that are in use in the current case and you can choose which ones you would like to include. At the bottom you can choose to optionally package the case or to include the Autopsy application. Choosing to package the case without chunking will simply compress the portable case in a single archive that can be extracted with common compression programs. If you choose split the packaged case into multiple files, you will need to use the "Unpack and Open Portable Case" option to open it. You can not include the application if you use this option. Unpacking a portable case will be discussed in the next section. 
+
+If the recipient of the portable case does not have Autopsy, you can choose to include the Autopsy application in the portable case. This will allow the recipient to open the portable case without installing any other software. You may choose to package the case without chunking. If you do, the recipient will have to decompress it before opening Autopsy. 
 
 The portable case will be placed in the "Reports" folder in the current case.
 
@@ -49,7 +54,11 @@ If you packaged the portable case but did not choose to split it into chunks, yo
 
 \section portable_case_usage Using a Portable Case
 
-Unpackaged portable cases can be opened like any other case through Case->Open Case. If your portable case was packaged, you'll need to use the unpack option to open it. Open the "Case" menu and then select "Unpack and Open Portable Case" option. This will bring up a dialog where you can browse to your packaged case and select where to extract it to. The case will also open. Note that any changes made to the case at this point will be saved to the unpacked location, and next time you open it you will need to browse to the unpacked folder.
+If the Autopsy application was included in the portable case, it can be opened by double-clicking on the "open.bat" file.
+
+\image html portable_case_open_bat.png
+
+Otherwise, you'll start by opening the Autopsy application. Unpackaged portable cases can be opened like any other case through Case->Open Case. If your portable case was packaged, you'll need to use the unpack option to open it. Open the "Case" menu and then select "Unpack and Open Portable Case" option. This will bring up a dialog where you can browse to your packaged case and select where to extract it to. The case will also open. Note that any changes made to the case at this point will be saved to the unpacked location, and next time you open it you will need to browse to the unpacked folder.
 
 \image html portable_case_unpackage.png
 

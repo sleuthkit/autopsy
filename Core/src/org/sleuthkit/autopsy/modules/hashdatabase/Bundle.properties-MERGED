@@ -23,8 +23,6 @@ HashDbIngestModule.lookingUpKnownBadHashValueErr=Error encountered while looking
 HashDbIngestModule.lookingUpKnownHashValueErr=Error encountered while looking up known hash value for {0}.
 # {0} - fileName
 HashDbIngestModule.lookingUpNoChangeHashValueErr=Error encountered while looking up no change hash value for {0}.
-HashDbIngestModule.noChangeFileSearchWillNotExecuteWarn='No Change' file search will not be executed.
-HashDbIngestModule.noChangeHashDbSetMsg=No 'No Change' hash set.
 HashDbIngestModule.noKnownBadHashDbSetMsg=No notable hash set.
 HashDbIngestModule.noKnownHashDbSetMsg=No known hash set.
 HashDbManager.CentralRepoHashDb.orgError=Error loading organization
@@ -34,6 +32,8 @@ HashDbManager.knownBad.text=Notable
 HashDbManager.noChange.text=No Change
 # {0} - hash set name
 HashDbManager.noDbPath.message=Couldn't get valid hash set path for: {0}
+# {0} - hashSetName
+HashDbManager_handleNameConflict_conflictSuffix={0} (Custom)
 HashDbSearchAction.noOpenCase.errMsg=No open case available.
 HashDbSearchPanel.noOpenCase.errMsg=No open case available.
 HashLookupSettingsPanel.centralRepo=Central Repository

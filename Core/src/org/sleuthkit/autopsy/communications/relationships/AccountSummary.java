@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.FileAttachment;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 import org.sleuthkit.datamodel.CommunicationsUtils;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 
 /**
@@ -113,7 +114,7 @@ class AccountSummary {
                                         isReference = true;
                                         break;
                                     }
-                                } catch (TskCoreException ex) {
+                                } catch (InvalidAccountIDException ex) {
                                     logger.log(Level.WARNING, String.format("Exception thrown "
                                             + "in trying to normalize attribute value: %s",
                                             attributeValue), ex); //NON-NLS

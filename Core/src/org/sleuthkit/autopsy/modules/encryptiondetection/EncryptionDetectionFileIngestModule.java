@@ -324,7 +324,15 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     Database accessDatabase;
                     try {
                         accessDatabase = databaseBuilder.open();
-                    } catch (IOException | BufferUnderflowException | IndexOutOfBoundsException ignored) {
+                    } catch (InvalidCredentialsException ex) {
+                        logger.log(Level.INFO, String.format(
+                                "Jackcess throws invalid credentials exception for file (name: %s, id: %s).  It will be assumed to be password protected.", 
+                                file.getName(), file.getId()));
+                        return true;
+                    } catch (Exception ex) { // Firewall, see JIRA-7097
+                        logger.log(Level.WARNING, String.format("Unexpected exception "
+                                + "trying to open msaccess database using Jackcess "
+                                + "(name: %s, id: %d)", file.getName(), file.getId()), ex);
                         return passwordProtected; 
                     }
                     /*

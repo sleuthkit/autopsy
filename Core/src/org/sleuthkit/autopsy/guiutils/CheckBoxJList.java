@@ -32,8 +32,10 @@ import javax.swing.ListSelectionModel;
 
 /**
  * A JList that renders the list items as check boxes.
+ * 
+ * @param <T> An object that implements CheckboxListItem
  */
-final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JList<T> {
+public final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JList<T> {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,7 +44,7 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
      * a checkbox in CheckBoxJList.
      *
      */
-    interface CheckboxListItem {
+    public interface CheckboxListItem {
 
         /**
          * Returns the checkbox state.
@@ -83,7 +85,7 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
     /**
      * Construct a new JCheckBoxList.
      */
-    CheckBoxJList() {
+    public CheckBoxJList() {
         initalize();
     }
     
@@ -98,7 +100,7 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
             @Override
             public void mousePressed(MouseEvent e) {
                 int index = locationToIndex(e.getPoint());
-                if (index != -1) {
+                if (index != -1 && isEnabled()) {
                     CheckBoxJList.CheckboxListItem element = getModel().getElementAt(index);
                     element.setChecked(!element.isChecked());
                     repaint();
@@ -134,12 +136,16 @@ final class CheckBoxJList<T extends CheckBoxJList.CheckboxListItem> extends JLis
             checkbox.setSelected(value.isChecked());
             checkbox.setBackground(list.getBackground());
             checkbox.setEnabled(list.isEnabled());
+            checkbox.setOpaque(list.isOpaque());
             label.setText(value.getDisplayName());
             label.setEnabled(list.isEnabled());
+            label.setOpaque(list.isOpaque());
+            label.setBackground(list.getBackground());
             if (value.hasIcon()) {
                 label.setIcon(value.getIcon());
             }
 
+            setOpaque(list.isOpaque());
             setEnabled(list.isEnabled());
             return this;
         }

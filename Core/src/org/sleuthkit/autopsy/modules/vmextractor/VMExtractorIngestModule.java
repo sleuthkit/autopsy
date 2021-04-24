@@ -198,7 +198,6 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                     // for extracted virtual machines there is no manifest XML file to read data source ID from so use parent data source ID.
                     // ingest the data sources  
                     ingestVirtualMachineImage(Paths.get(folder, file));
-                    logger.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
                 } catch (InterruptedException ex) {
                     logger.log(Level.INFO, "Interrupted while ingesting virtual machine file " + file + " in folder " + folder, ex); //NON-NLS
                 } catch (IOException ex) {
@@ -287,8 +286,8 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         }
 
         /*
-         * If the image was added, analyze it with the ingest modules for this
-         * ingest context.
+         * If the image was added, start analysis on it with the ingest modules for this
+         * ingest context. Note that this does not wait for ingest to complete.
          */
         if (!dspCallback.vmDataSources.isEmpty()) {
             Case.getCurrentCaseThrows().notifyDataSourceAdded(dspCallback.vmDataSources.get(0), taskId);
@@ -300,7 +299,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO,
                     VMExtractorIngestModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.addedVirtualMachineImage.message", vmFile.toString())));
-            IngestManager.getInstance().queueIngestJob(dataSourceContent, ingestJobSettings);
+            IngestManager.getInstance().beginIngestJob(dataSourceContent, ingestJobSettings);
         } else {
             Case.getCurrentCaseThrows().notifyFailedAddingDataSource(taskId);
         }

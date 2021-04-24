@@ -24,6 +24,7 @@ import javafx.application.Platform;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
+import org.joda.time.Interval;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -46,13 +47,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An Action that opens the Timeline window. Has methods to open the window in
  * various specific states (e.g., showing a specific artifact in the List View)
  */
-
-
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 102)
-    ,
+    @ActionReference(path = "Menu/Tools", position = 104),
     @ActionReference(path = "Toolbars/Case", position = 104)})
 public final class OpenTimelineAction extends CallableSystemAction {
 
@@ -64,7 +62,6 @@ public final class OpenTimelineAction extends CallableSystemAction {
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png"))); //NON-NLS
 
-
     public OpenTimelineAction() {
         toolbarButton.addActionListener(actionEvent -> performAction());
         menuItem = super.getMenuPresenter();
@@ -74,9 +71,10 @@ public final class OpenTimelineAction extends CallableSystemAction {
     @Override
     public boolean isEnabled() {
         /**
-         * We used to also check if Case.getCurrentOpenCase().hasData() was true. We
-         * disabled that check because if it is executed while a data source is
-         * being added, it blocks the edt. We still do that in ImageGallery.
+         * We used to also check if Case.getCurrentOpenCase().hasData() was
+         * true. We disabled that check because if it is executed while a data
+         * source is being added, it blocks the edt. We still do that in
+         * ImageGallery.
          */
         return super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited();
     }
@@ -103,7 +101,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
     @NbBundle.Messages({
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
-    synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) throws TskCoreException {
+    synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact, Interval timeSpan) throws TskCoreException {
         try {
             Case currentCase = Case.getCurrentCaseThrows();
             if (currentCase.hasData() == false) {
@@ -112,6 +110,15 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 return;
             }
             TimeLineController controller = TimeLineModule.getController();
+            // if file or artifact not specified, specify the time range as either 
+            // a) full range if timeSpan is null or b) the timeSpan
+            if (file == null && artifact == null) {
+                if (timeSpan == null) {
+                    controller.showFullRange();
+                } else {
+                    controller.pushTimeRange(timeSpan);
+                }
+            }
             controller.showTimeLine(file, artifact);
         } catch (NoCurrentCaseException e) {
             //there is no case...   Do nothing.
@@ -123,7 +130,18 @@ public final class OpenTimelineAction extends CallableSystemAction {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void showTimeline() throws TskCoreException {
-        showTimeline(null, null);
+        showTimeline(null, null, null);
+    }
+
+    /**
+     * Open timeline with the given timeSpan time range.
+     *
+     * @param timeSpan The time range to display.
+     * @throws TskCoreException
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public void showTimeline(Interval timeSpan) throws TskCoreException {
+        showTimeline(null, null, timeSpan);
     }
 
     /**
@@ -135,7 +153,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void showFileInTimeline(AbstractFile file) throws TskCoreException {
-        showTimeline(file, null);
+        showTimeline(file, null, null);
     }
 
     /**
@@ -146,7 +164,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void showArtifactInTimeline(BlackboardArtifact artifact) throws TskCoreException {
-        showTimeline(null, artifact);
+        showTimeline(null, artifact, null);
     }
 
     @Override

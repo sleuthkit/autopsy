@@ -1,0 +1,26 @@
+/*! \page update_interesting_files_page Updating the Official Interesting File Sets
+
+The \ref interesting_files_identifier_page contains several official rule sets. You can select a rule set to display the rules it contains in the middle of the right side of the panel. 
+
+\image html InterestingFiles/if_official_rule_details.png
+
+If you have one or more rules that you think should be included in an official rule set you can submit your new rules using the process below. Consult the \ref interesting_files_config section for general instructions on creating and editing interesting file sets.
+
+<ol>
+<li> Create a new interesting file set. Give it a name similar to the set you wish to update to make it clear which set your new rules belong to. Do not copy the existing rule set.
+
+\image html InterestingFiles/if_create_set.png
+
+<li> Create your rule(s). Make sure each rule has a "Rule Name" that identifies the application it is detecting. Click the "Apply" button on the main panel when done.
+
+\image html InterestingFiles/if_new_rule.png
+
+<li> Export the set as XML.
+
+\image html InterestingFiles/if_export.png
+
+<li> Create an Autopsy Github issue that identifes the set to update and what applications were added, and attach the XML. Go to: https://github.com/sleuthkit/autopsy/issues
+</ol>
+
+
+*/

@@ -28,6 +28,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
@@ -36,6 +37,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 
 /**
  * Configuration dialog for adding an account to a persona.
@@ -276,16 +278,19 @@ public class PersonaAccountDialog extends JDialog {
         "PersonaAccountDialog_search_failure_Title=Account add failure",
         "PersonaAccountDialog_search_failure_msg=Central Repository account search failed.",
         "PersonaAccountDialog_search_empty_Title=Account not found",
-        "PersonaAccountDialog_search_empty_msg=Account not found for given identifier and type.",})
+        "PersonaAccountDialog_search_empty_msg=Account not found for given identifier and type.",
+        "PersonaAccountDialog_invalid_account_Title=Invalid account identifier",
+        "PersonaAccountDialog_invalid_account_msg=Account identifier is not valid.",
+    })
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        if (identifierTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(identifierTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaAccountDialog_identifier_empty_msg(),
                     Bundle.PersonaAccountDialog_identifier_empty_Title(),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (justificationTextField.getText().isEmpty()) {
+        if (StringUtils.isBlank(justificationTextField.getText())) {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaDetailsPanel_empty_justification_msg(),
                     Bundle.PersonaDetailsPanel_empty_justification_Title(),
@@ -300,6 +305,14 @@ public class PersonaAccountDialog extends JDialog {
             JOptionPane.showMessageDialog(this,
                     Bundle.PersonaAccountDialog_search_failure_msg(),
                     Bundle.PersonaAccountDialog_search_failure_Title(),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        catch (InvalidAccountIDException e) {
+            logger.log(Level.SEVERE, "Invalid account identifier", e);
+            JOptionPane.showMessageDialog(this,
+                    Bundle.PersonaAccountDialog_invalid_account_msg(),
+                    Bundle.PersonaAccountDialog_invalid_account_Title(),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }

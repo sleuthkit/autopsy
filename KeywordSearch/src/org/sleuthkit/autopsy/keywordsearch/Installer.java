@@ -18,7 +18,11 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -38,6 +42,7 @@ class Installer extends ModuleInstall {
 
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static final long serialVersionUID = 1L;
+    private static final String KWS_START_THREAD_NAME = "KWS-server-start-%d";
 
     @Override
     public void restored() {
@@ -45,19 +50,29 @@ class Installer extends ModuleInstall {
         KeywordSearchSettings.setDefaults();
 
         final Server server = KeywordSearch.getServer();
-        try {
-            server.start();
-        } catch (SolrServerNoPortException ex) {
-            logger.log(Level.SEVERE, "Failed to start Keyword Search server: ", ex); //NON-NLS
-            if (ex.getPortNumber() == server.getCurrentSolrServerPort()) {
-                reportPortError(ex.getPortNumber());
-            } else {
-                reportStopPortError(ex.getPortNumber());
+        
+        ExecutorService jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(KWS_START_THREAD_NAME).build());
+        Runnable kwsStartTask = new Runnable() {
+            public void run() {
+                try {
+                    server.start();
+                } catch (SolrServerNoPortException ex) {
+                    logger.log(Level.SEVERE, "Failed to start Keyword Search server: ", ex); //NON-NLS
+                    if (ex.getPortNumber() == server.getLocalSolrServerPort()) {
+                        reportPortError(ex.getPortNumber());
+                    } else {
+                        reportStopPortError(ex.getPortNumber());
+                    }
+                } catch (KeywordSearchModuleException | SolrServerException ex) {
+                    logger.log(Level.SEVERE, "Failed to start Keyword Search server: ", ex); //NON-NLS
+                    reportInitError(ex.getMessage());
+                }
             }
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.SEVERE, "Failed to start Keyword Search server: ", ex); //NON-NLS
-            reportInitError(ex.getMessage());
-        }
+        };
+
+        // start KWS service on the background thread. Currently all it does is start the embedded Solr server.
+        jobProcessingExecutor.submit(kwsStartTask);
+        jobProcessingExecutor.shutdown(); // tell executor no more work is coming
     }
 
     @Override

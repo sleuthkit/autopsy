@@ -1,0 +1,3 @@
+Netbeans platform does not properly scope classloaders while running qa-functional test code.  The result is that NoClassDefError's occur in instances where an external jar (i.e. importing a class from common-io) is referenced in test code and the same external jar is referenced in multiple NBM's.  Importing from external jars in qa-functional should be avoided.  See jira issue 6954 for more information.
+
+Many of the functional tests require external data sources.  The ant target 'getTestDataFiles' must be run successfully to download the files.  This should occur as a part of the 'test-init' ant target in build.xml.

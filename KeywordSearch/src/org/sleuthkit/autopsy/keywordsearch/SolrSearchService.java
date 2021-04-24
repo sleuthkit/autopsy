@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,26 +22,18 @@ import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -68,8 +60,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
-    private static final int LARGE_INDEX_SIZE_GB = 50;
-    private static final int GIANT_INDEX_SIZE_GB = 500;
     private static final Logger logger = Logger.getLogger(SolrSearchService.class.getName());
 
     /**
@@ -135,7 +125,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     // Try the StringsTextExtractor if Tika extractions fails.
                     TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(content, null);
                     Reader stringsExtractedTextReader = stringsExtractor.getReader();
-                    ingester.indexText(stringsExtractedTextReader, content.getId(), content.getName(), content, null);
+                    ingester.indexStrings(stringsExtractedTextReader, content.getId(), content.getName(), content, null);
                 } catch (Ingester.IngesterException | TextExtractor.InitReaderException ex1) {
                     throw new TskCoreException("Error indexing content", ex1);
                 }
@@ -154,16 +144,16 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
-        HttpSolrServer solrServer = null;
         if (host == null || host.isEmpty()) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
         }
-        try {
-            solrServer = new HttpSolrServer("http://" + host + ":" + Integer.toString(port) + "/solr"); //NON-NLS
-            KeywordSearch.getServer().connectToSolrServer(solrServer);
+        try {         
+            KeywordSearch.getServer().connectToSolrServer(host, Integer.toString(port));
         } catch (SolrServerException ex) {
-            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS*/
         } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             String result = NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort"); //NON-NLS
             String message = ex.getCause().getMessage().toLowerCase();
             if (message.startsWith(SERVER_REFUSED_CONNECTION)) {
@@ -183,13 +173,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
             throw new KeywordSearchServiceException(result);
         } catch (NumberFormatException ex) {
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             throw new KeywordSearchServiceException(Bundle.SolrConnectionCheck_Port());
         } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
             throw new KeywordSearchServiceException(ex.getMessage());
-        } finally {
-            if (null != solrServer) {
-                solrServer.shutdown();
-            }
         }
     }
 
@@ -221,6 +209,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     @NbBundle.Messages({
         "# {0} - case directory", "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}",
         "SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case",
+        "# {0} - collection name", "SolrSearchService.exceptionMessage.unableToDeleteCollection=Unable to delete collection {0}",
         "# {0} - index folder path", "SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}"
     })
     @Override
@@ -233,28 +222,29 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noIndexMetadata", caseDirectory), ex);
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noIndexMetadata", caseDirectory), ex);
         }
-        //find the index for the current version of solr (the one we are connected to) and delete its core using the index name
-        String currentSchema = IndexFinder.getCurrentSchemaVersion();
-        String currentSolr = IndexFinder.getCurrentSolrVersion();
+
+        if (indexMetadata.getIndexes().isEmpty()) {
+            logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class,
+                    "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class,
+                    "SolrSearchService.exceptionMessage.noCurrentSolrCore"));            
+        }
+
+        // delete index(es) for this case        
         for (Index index : indexMetadata.getIndexes()) {
-            if (index.getSolrVersion().equals(currentSolr) && index.getSchemaVersion().equals(currentSchema)) {
-                /*
-                 * Unload/delete the core on the server and then delete the text
-                 * index files.
-                 */
-                KeywordSearch.getServer().deleteCore(index.getIndexName(), metadata);
-                if (!FileUtil.deleteDir(new File(index.getIndexPath()).getParentFile())) {
+            try {
+                // Unload/delete the collection on the server and then delete the text index files.
+                KeywordSearch.getServer().deleteCollection(index.getIndexName(), metadata);
+            } catch (KeywordSearchModuleException ex) {
+                throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_unableToDeleteCollection(index.getIndexName()), ex);
+            }
+            File indexDir = new File(index.getIndexPath()).getParentFile();
+            if (indexDir.exists()) {
+                if (!FileUtil.deleteDir(indexDir)) {
                     throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_failedToDeleteIndexFiles(index.getIndexPath()));
                 }
             }
-            return; //only one core exists for each combination of solr and schema version
         }
-
-        //this code this code will only execute if an index for the current core was not found 
-        logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class,
-                "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
-        throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class,
-                "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
     }
 
     @Override
@@ -278,9 +268,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.creatingNewIndex.msg=Creating new text index",
         "SolrSearch.checkingForLatestIndex.msg=Looking for text index with latest Solr and schema version",
         "SolrSearch.indentifyingIndex.msg=Identifying text index to use",
-        "SolrSearch.openCore.msg=Opening text index",
-        "SolrSearch.openLargeCore.msg=Opening text index. This may take several minutes.",
-        "SolrSearch.openGiantCore.msg=Opening text index. Text index for this case is very large and may take long time to load.",
+        "SolrSearch.openCore.msg=Opening text index. For large cases this may take several minutes.",
+        "# {0} - futureVersion", "# {1} - currentVersion",
+        "SolrSearch.futureIndexVersion.msg=The text index for the case is for Solr {0}. This version of Autopsy is compatible with Solr {1}.",
+        "SolrSearch.unableToFindIndex.msg=Unable to find index that can be used for this case",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         if (context.cancelRequested()) {
@@ -306,16 +297,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 logger.log(Level.SEVERE, String.format("Unable to read text index metadata file"), ex);
                 throw new AutopsyServiceException("Unable to read text index metadata file", ex);
             }
-        } else {
-            // metadata file doesn't exist.
-            // do case subdirectory search to look for Solr 4 Schema 1.8 indexes
-            progressUnitsCompleted++;
-            progress.progress(Bundle.SolrSearch_findingIndexes_msg(), progressUnitsCompleted);
-            Index oldIndex = IndexFinder.findOldIndexDir(theCase);
-            if (oldIndex != null) {
-                // add index to the list of indexes that exist for this case
-                indexes.add(oldIndex);
-            }
         }
 
         if (context.cancelRequested()) {
@@ -328,56 +309,41 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             // new case that doesn't have an existing index. create new index folder
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted);
-            currentVersionIndex = IndexFinder.createLatestVersionIndexDir(theCase);
+            currentVersionIndex = IndexFinder.createLatestVersionIndex(theCase);
             // add current index to the list of indexes that exist for this case
             indexes.add(currentVersionIndex);
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_checkingForLatestIndex_msg(), progressUnitsCompleted);
-            currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
+            currentVersionIndex = IndexFinder.findLatestVersionIndex(indexes);
             if (currentVersionIndex == null) {
                 // found existing index(es) but none were for latest Solr version and schema version
                 progressUnitsCompleted++;
                 progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted);
                 Index indexToUse = IndexFinder.identifyIndexToUse(indexes);
                 if (indexToUse == null) {
-                    // unable to find index that can be used
-                    throw new AutopsyServiceException("Unable to find index that can be used for this case");
+                    // unable to find index that can be used. check if the available index is for a "future" version of Solr, 
+                    // i.e. the user is using an "old/legacy" version of Autopsy to open cases created by later versions of Autopsy.
+                    String futureIndexVersion = IndexFinder.isFutureIndexPresent(indexes);
+                    if (!futureIndexVersion.isEmpty()) {
+                        throw new AutopsyServiceException(Bundle.SolrSearch_futureIndexVersion_msg(futureIndexVersion, IndexFinder.getCurrentSolrVersion()));
+                    }
+                    throw new AutopsyServiceException(Bundle.SolrSearch_unableToFindIndex_msg());
                 }
 
                 if (context.cancelRequested()) {
                     return;
                 }
 
-                double currentSolrVersion = NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion());
-                double indexSolrVersion = NumberUtils.toDouble(indexToUse.getSolrVersion());
-                if (indexSolrVersion == currentSolrVersion) {
-                    // latest Solr version but schema not compatible. index should be used in read-only mode
-                    if (!indexToUse.isCompatible(IndexFinder.getCurrentSchemaVersion()) && RuntimeProperties.runningWithGUI()) {
-                        // pop up a message box to indicate the read-only restrictions.
-                        JOptionPane optionPane = new JOptionPane(
-                                NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.msg"),
-                                JOptionPane.WARNING_MESSAGE,
-                                JOptionPane.DEFAULT_OPTION);
-                        try {
-                            SwingUtilities.invokeAndWait(() -> {
-                                JDialog dialog = optionPane.createDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.title"));
-                                dialog.setVisible(true);
-                            });
-                        } catch (InterruptedException ex) {
-                            // Cancelled
-                            return;
-                        } catch (InvocationTargetException ex) {
-                            throw new AutopsyServiceException("Error displaying limited search features warning dialog", ex);
-                        }
-                    }
-                    // proceed with case open
-                    currentVersionIndex = indexToUse;
-                } else {
-                    // index needs to be upgraded to latest supported version of Solr
-                    throw new AutopsyServiceException("Unable to find index to use for Case open");
+                // check if schema is compatible
+                if (!indexToUse.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
+                    String msg = "Text index schema version " + indexToUse.getSchemaVersion() + " is not compatible with current schema";
+                    logger.log(Level.WARNING, msg);
+                    throw new AutopsyServiceException(msg);
                 }
+                // proceed with case open
+                currentVersionIndex = indexToUse;
             }
         }
 
@@ -392,17 +358,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         // open core
         try {
-            // check text index size to gauge estimated time to open/load the index
-            long indexSizeInBytes = FileUtils.sizeOfDirectory(new File(currentVersionIndex.getIndexPath()));
-            long sizeInGb = indexSizeInBytes / 1000000000;
-            if (sizeInGb < LARGE_INDEX_SIZE_GB) {
-                progress.progress(Bundle.SolrSearch_openCore_msg(), totalNumProgressUnits - 1);
-            } else if (sizeInGb >= LARGE_INDEX_SIZE_GB && sizeInGb < GIANT_INDEX_SIZE_GB) {
-                progress.switchToIndeterminate(Bundle.SolrSearch_openLargeCore_msg());
-            } else {
-                progress.switchToIndeterminate(Bundle.SolrSearch_openGiantCore_msg());
-            }
-
+            progress.progress(Bundle.SolrSearch_openCore_msg(), totalNumProgressUnits - 1);
             KeywordSearch.getServer().openCoreForCase(theCase, currentVersionIndex);
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", caseDirPath), ex);
@@ -445,7 +401,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
         }
 
-        context.getCase().getSleuthkitCase().unregisterForEvents(this);
+        if (context.getCase().getSleuthkitCase() != null) {
+            context.getCase().getSleuthkitCase().unregisterForEvents(this);
+        }
     }
 
     /**

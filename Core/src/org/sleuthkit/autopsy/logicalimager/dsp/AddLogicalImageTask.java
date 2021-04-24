@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -71,6 +72,7 @@ final class AddLogicalImageTask implements Runnable {
     private final String timeZone;
     private final File src;
     private final File dest;
+    private final Host host;
     private final DataSourceProcessorCallback callback;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final Blackboard blackboard;
@@ -87,7 +89,7 @@ final class AddLogicalImageTask implements Runnable {
 
     AddLogicalImageTask(String deviceId,
             String timeZone,
-            File src, File dest,
+            File src, File dest, Host host,
             DataSourceProcessorProgressMonitor progressMonitor,
             DataSourceProcessorCallback callback
     ) throws NoCurrentCaseException {
@@ -95,6 +97,7 @@ final class AddLogicalImageTask implements Runnable {
         this.timeZone = timeZone;
         this.src = src;
         this.dest = dest;
+        this.host = host;
         this.progressMonitor = progressMonitor;
         this.callback = callback;
         this.currentCase = Case.getCurrentCase();
@@ -229,7 +232,7 @@ final class AddLogicalImageTask implements Runnable {
 
             try {
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingExtractedFiles());
-                interestingFileMap = addExtractedFiles(dest, resultsPath, newDataSources);
+                interestingFileMap = addExtractedFiles(dest, resultsPath, host, newDataSources);
                 progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingExtractedFiles());
             } catch (IOException | TskCoreException ex) {
                 errorList.add(ex.getMessage());
@@ -248,7 +251,7 @@ final class AddLogicalImageTask implements Runnable {
                         callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
                         return;
                     }
-                    addMultipleImagesTask = new AddMultipleImagesTask(deviceId, imagePaths, timeZone , progressMonitor);
+                    addMultipleImagesTask = new AddMultipleImagesTask(deviceId, imagePaths, timeZone, host, progressMonitor);
                 }
                 addMultipleImagesTask.run();
                 if (addMultipleImagesTask.getResult() == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
@@ -474,14 +477,14 @@ final class AddLogicalImageTask implements Runnable {
     @Messages({
         "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingExtractedFile=Adding extracted files ({0}/{1})"
     })
-    private Map<String, List<Long>> addExtractedFiles(File src, Path resultsPath, List<Content> newDataSources) throws TskCoreException, IOException {
+    private Map<String, List<Long>> addExtractedFiles(File src, Path resultsPath, Host host, List<Content> newDataSources) throws TskCoreException, IOException {
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         SleuthkitCase.CaseDbTransaction trans = null;
         Map<String, List<Long>> interestingFileMap = new HashMap<>();
 
         try {
             trans = skCase.beginTransaction();
-            LocalFilesDataSource localFilesDataSource = skCase.addLocalFilesDataSource(deviceId, this.src.getName(), timeZone, trans);
+            LocalFilesDataSource localFilesDataSource = skCase.addLocalFilesDataSource(deviceId, this.src.getName(), timeZone, host, trans);
             LocalFileImporter fileImporter = new LocalFileImporter(skCase, trans);
 
             try (BufferedReader br = new BufferedReader(new InputStreamReader(

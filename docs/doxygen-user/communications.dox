@@ -1,5 +1,8 @@
 /*! \page communications_page Communications Visualization Tool
 
+[TOC]
+
+
 \section cvt_overview Overview
 
 The Communications Visualization Tool gives a consolidated view of all communication events for the case. This allows an analyst to quickly view communications data such as:
@@ -21,7 +24,7 @@ The middle column displays each account, its device and type, and the number of 
 Selecting an account in the middle column will bring up the data for that account in the right hand column. There are four tabs that show information about the selected account.
 
 <ul>
-<li> The <b>Summary</b> tab displays counts of how many times the account has appeared in different data types in the top section. In the middle it displays the files this account was found in. If the \ref central_repo_page is enabled, the bottom section will show any other cases that contained this account.
+<li> The <b>Summary</b> tab displays counts of how many times the account has appeared in different data types in the top section. In the middle it displays the files this account was found in. If the \ref central_repo_page is enabled, you can see if any \ref personas_page "personas" are associated with this account and whether any other cases that contained this account.
 
 \image html cvt_summary_tab.png
 

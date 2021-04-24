@@ -70,6 +70,7 @@ sub processShellActivities {
 	::rptMsg("");
 	
 	while ($offset < ($sz - 10)) {
+        
 # Code to locate the appropriate identifier		
 		$tag = 1;
 		while ($tag) {
@@ -78,9 +79,15 @@ sub processShellActivities {
 			}
 			else {
 				$offset++;
+                # Check if at end of file and exit loop if it is
+                last if ($offset >= $sz ); 
 			}
 		}
-		
+
+		# Check if at end of file and exit loop if it is
+        last if ($offset >= $sz ); 
+
+        
 		$offset += 2;
 		$l = unpack("C",substr($data,$offset,1));
 #		::rptMsg("String Length: ".sprintf "0x%x",$l);

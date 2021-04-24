@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescript
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
 
-    @Messages("AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules")
+    @Messages("AddImageWizardIngestConfigPanel.name.text=Configure Ingest")
     private final IngestJobSettingsPanel ingestJobSettingsPanel;
     /**
      * The visual component that displays this panel. If you need to access the

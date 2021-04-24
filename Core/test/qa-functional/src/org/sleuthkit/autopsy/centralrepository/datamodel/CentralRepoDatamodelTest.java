@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import junit.framework.Test;
 import junit.framework.TestCase;
-import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
 import junit.framework.Assert;
@@ -47,6 +46,7 @@ import org.sleuthkit.datamodel.TskData;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 
 /**
  * Functional tests for the Central Repository data model.
@@ -100,8 +100,8 @@ public class CentralRepoDatamodelTest extends TestCase {
                 if (CentralRepository.isEnabled()) {
                     CentralRepository.getInstance().shutdownConnections();
                 }
-                FileUtils.deleteDirectory(testDirectory.toFile());
-            } catch (IOException | CentralRepoException ex) {
+                FileUtil.deleteDir(testDirectory.toFile());
+            } catch (CentralRepoException ex) {
                 Assert.fail(ex.getMessage());
             }
         }
@@ -132,6 +132,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             dbSettingsSqlite.saveSettings();
             CentralRepoDbUtil.setUseCentralRepo(true);
             CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.SQLITE);
+            CentralRepository.getInstance().updateSettings();
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -194,8 +195,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             if (CentralRepository.isEnabled()) {
                 CentralRepository.getInstance().shutdownConnections();
             }
-            FileUtils.deleteDirectory(testDirectory.toFile());
-        } catch (CentralRepoException | IOException ex) {
+            FileUtil.deleteDir(testDirectory.toFile());
+        } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -1256,7 +1257,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getDefinedCorrelationTypes();
 
             // We expect 11 total - 10 default and the custom one made earlier
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 11", types.size() == 11);
+            // Note: this test will need to be updated based on the current default items defined in the correlation_types table
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 28", types.size() == 28);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -1267,7 +1269,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getEnabledCorrelationTypes();
 
             // We expect 10 - the custom type is disabled
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 10", types.size() == 10);
+            // Note: this test will need to be updated based on the current default items defined in the correlation_types table
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 27", types.size() == 27);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -1278,7 +1281,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             List<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getSupportedCorrelationTypes();
 
             // We expect 10 - the custom type is not supported
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 10", types.size() == 10);
+            // Note: this test will need to be updated based on the current default items defined in the correlation_types table
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 27", types.size() == 27);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());

@@ -207,19 +207,19 @@ public final class DrawableDB {
          */
         UNKNOWN,
         /**
-         * Analyis (an ingest job or image gallery database rebuild) for the
+         * Analysis (an ingest job or image gallery database rebuild) for the
          * data source is in progress.
          */
         IN_PROGRESS,
         /**
-         * Analyis (an ingest job or image gallery database rebuild) for the
+         * Analysis (an ingest job or image gallery database rebuild) for the
          * data source has been completed and at least one file in the data
          * source has a MIME type (ingest filters may have been applied, so some
          * files may not have been typed).
          */
         COMPLETE,
         /**
-         * Analyis (an ingest job or image gallery database rebuild) for the
+         * Analysis (an ingest job or image gallery database rebuild) for the
          * data source has been completed, but the files for the data source
          * were not assigned a MIME type (file typing was not enabled).
          */

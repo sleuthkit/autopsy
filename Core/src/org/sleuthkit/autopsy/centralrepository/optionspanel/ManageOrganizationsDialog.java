@@ -376,7 +376,7 @@ public final class ManageOrganizationsDialog extends JDialog {
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
         CentralRepoOrganization orgToDelete = organizationList.getSelectedValue();
         if (orgToDelete != null) {
-            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(this,
                     Bundle.ManageOrganizationsDialog_confirmDeletion_message(),
                     Bundle.ManageOrganizationsDialog_confirmDeletion_title(),
                     JOptionPane.YES_NO_OPTION)) {
@@ -397,7 +397,7 @@ public final class ManageOrganizationsDialog extends JDialog {
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void newButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newButtonActionPerformed
-        AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog();
+        AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog(this);
         if (dialogO.isChanged()) {
             try {
                 newOrg = dialogO.getNewOrg();
@@ -411,7 +411,7 @@ public final class ManageOrganizationsDialog extends JDialog {
     private void editButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editButtonActionPerformed
         CentralRepoOrganization orgToEdit = organizationList.getSelectedValue();
         if (orgToEdit != null) {
-            AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog(orgToEdit);
+            AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog(this, orgToEdit);
             if (dialogO.isChanged()) {
                 try {
                     newOrg = dialogO.getNewOrg();

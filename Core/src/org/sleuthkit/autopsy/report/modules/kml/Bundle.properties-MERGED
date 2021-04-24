@@ -27,6 +27,7 @@ ReportKML.genReport.reportName=KML Report
 ReportKML.latLongStartPoint={0};{1};;{2} (Start)\n
 ReportKML.latLongEndPoint={0};{1};;{2} (End)\n
 Route_Details_Header=GPS Route
+Waypoint_Area_Point_Display_String=GPS Area Outline Point
 Waypoint_Bookmark_Display_String=GPS Bookmark
 Waypoint_EXIF_Display_String=EXIF Metadata With Location
 Waypoint_Last_Known_Display_String=GPS Last Known Location

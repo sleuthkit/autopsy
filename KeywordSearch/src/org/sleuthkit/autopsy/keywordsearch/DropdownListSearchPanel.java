@@ -42,6 +42,7 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -94,6 +95,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
                 column.setCellRenderer(new LeftCheckBoxRenderer());
             } else {
                 column.setPreferredWidth(((int) (leftWidth * 0.89)));
+                column.setCellRenderer(new SimpleTableCellRenderer());
             }
         }
         final int rightWidth = rightPane.getPreferredSize().width;
@@ -105,6 +107,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
                 column.setPreferredWidth(((int) (rightWidth * 0.38)));
             }
         }
+        keywordsTable.setDefaultRenderer(String.class, new SimpleTableCellRenderer());
 
         loader = XmlKeywordSearchList.getCurrent();
         listsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {

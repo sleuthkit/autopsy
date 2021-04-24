@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -56,7 +55,6 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
 import org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
-import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
@@ -64,6 +62,9 @@ import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepoFactory;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModuleFactory;
+import org.sleuthkit.autopsy.testutils.TestUtilsException;
 
 /**
  * Utilities for testing intercase correlation feature.
@@ -168,7 +169,7 @@ class InterCaseTestUtils {
 
         this.imageDSProcessor = new ImageDSProcessor();
 
-        final IngestModuleTemplate exifTemplate = IngestUtils.getIngestModuleTemplate(new ExifParserModuleFactory());
+        final IngestModuleTemplate pictureAnalyzerTemplate = IngestUtils.getIngestModuleTemplate(new PictureAnalyzerIngestModuleFactory());
         final IngestModuleTemplate embeddedFileExtractorTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
         final IngestModuleTemplate interestingItemsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
         final IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
@@ -201,7 +202,7 @@ class InterCaseTestUtils {
 
         //kitchen sink
         ArrayList<IngestModuleTemplate> kitchenSink = new ArrayList<>();
-        kitchenSink.add(exifTemplate);
+        kitchenSink.add(pictureAnalyzerTemplate);
         kitchenSink.add(embeddedFileExtractorTemplate);
         kitchenSink.add(interestingItemsTemplate);
         kitchenSink.add(mimeTypeLookupTemplate);
@@ -218,7 +219,9 @@ class InterCaseTestUtils {
 //        kitchenSink.add(keywordSearchTemplate);
 
         this.kitchenShink = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.ALL_MODULES, kitchenSink);
+    }
 
+    void setupCorrelationTypes() {
         try {
             Collection<CorrelationAttributeInstance.Type> types = CentralRepository.getInstance().getDefinedCorrelationTypes();
 
@@ -247,23 +250,23 @@ class InterCaseTestUtils {
                 if (CentralRepository.isEnabled()) {
                     CentralRepository.getInstance().shutdownConnections();
                 }
-                FileUtils.deleteDirectory(CENTRAL_REPO_DIRECTORY_PATH.toFile());
-            } catch (IOException | CentralRepoException ex) {
+                FileUtil.deleteDir(CENTRAL_REPO_DIRECTORY_PATH.toFile());
+            } catch (CentralRepoException ex) {
                 Exceptions.printStackTrace(ex);
                 Assert.fail(ex.getMessage());
             }
         }
     }
-    
+
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
         return DataSourceLoader.getAllDataSources();
-    }    
+    }
 
     Map<String, Integer> getCaseMap() throws CentralRepoException {
 
         if (CentralRepository.isEnabled()) {
             Map<String, Integer> mapOfCaseIdsToCase = new HashMap<>();
-            
+
             for (CorrelationCase correlationCase : CentralRepository.getInstance().getCases()) {
                 mapOfCaseIdsToCase.put(correlationCase.getDisplayName(), correlationCase.getID());
             }
@@ -300,7 +303,7 @@ class InterCaseTestUtils {
         RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(CentralRepoPlatforms.SQLITE, crSettings);
         centralRepoSchemaFactory.initializeDatabaseSchema();
         centralRepoSchemaFactory.insertDefaultDatabaseContent();
-        
+
         crSettings.saveSettings();
         CentralRepoDbManager.saveDbChoice(CentralRepoDbChoice.SQLITE);
     }
@@ -313,10 +316,10 @@ class InterCaseTestUtils {
      * The length of caseNames and caseDataSourcePaths should be the same, and
      * cases should appear in the same order.
      *
-     * @param caseNames            list case names
-     * @param caseDataSourcePaths  two dimensional array listing the datasources
-     *                             in each case
-     * @param ingestJobSettings    HashLookup FileType etc...
+     * @param caseNames list case names
+     * @param caseDataSourcePaths two dimensional array listing the datasources
+     * in each case
+     * @param ingestJobSettings HashLookup FileType etc...
      * @param caseReferenceToStore
      */
     Case createCases(String[] caseNames, Path[][] caseDataSourcePaths, IngestJobSettings ingestJobSettings, String caseReferenceToStore) throws TskCoreException {
@@ -359,19 +362,26 @@ class InterCaseTestUtils {
     }
 
     private Case createCase(String caseName, IngestJobSettings ingestJobSettings, boolean keepAlive, Path... dataSetPaths) throws TskCoreException {
-        Case caze = CaseUtils.createAsCurrentCase(caseName);
-        for (Path dataSetPath : dataSetPaths) {
-            IngestUtils.addDataSource(this.imageDSProcessor, dataSetPath);
+        try {
+            Case caze = CaseUtils.createAsCurrentCase(caseName);
+            for (Path dataSetPath : dataSetPaths) {
+                IngestUtils.addDataSource(this.imageDSProcessor, dataSetPath);
+            }
+            if (ingestJobSettings != null) {
+                IngestUtils.runIngestJob(caze.getDataSources(), ingestJobSettings);
+            }
+            if (keepAlive) {
+                return caze;
+            } else {
+                CaseUtils.closeCurrentCase();
+                return null;
+            }
+        } catch (TestUtilsException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
         }
-        if (ingestJobSettings != null) {
-            IngestUtils.runIngestJob(caze.getDataSources(), ingestJobSettings);
-        }
-        if (keepAlive) {
-            return caze;
-        } else {
-            CaseUtils.closeCurrentCase();
-            return null;
-        }
+
+        return null;
     }
 
     static boolean verifyInstanceCount(CommonAttributeCountSearchResults searchDomain, int instanceCount) {
@@ -453,7 +463,12 @@ class InterCaseTestUtils {
      * central repo db.
      */
     void tearDown() {
-        CaseUtils.closeCurrentCase();
+        try {
+            CaseUtils.closeCurrentCase();
+        } catch (TestUtilsException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 
     /**

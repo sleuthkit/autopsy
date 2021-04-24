@@ -14,6 +14,7 @@ AddContentTagAction.taggingErr=Tagging Error
 AddContentTagAction.unableToTag.msg=Unable to tag {0}, not a regular file.
 # {0} - fileName
 AddContentTagAction.unableToTag.msg2=Unable to tag {0}.
+CTL_DumpThreadAction=Thread Dump
 CTL_ShowIngestProgressSnapshotAction=Ingest Status Details
 DeleteBlackboardArtifactTagAction.deleteTag=Remove Selected Tag(s)
 DeleteBlackboardArtifactTagAction.tagDelErr=Tag Deletion Error
@@ -95,3 +96,4 @@ OpenPythonModulesFolderAction.actionName.text=Python Plugins
 OpenPythonModulesFolderAction.errorMsg.folderNotFound=Python plugins folder not found: {0}
 CTL_OpenPythonModulesFolderAction=Python Plugins
 GetTagNameAndCommentDialog.tagCombo.toolTipText=Select tag to use
+CTL_ExitAction=Exit

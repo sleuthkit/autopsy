@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.joda.time.Instant;
 import org.openide.util.NbBundle.Messages;
@@ -45,19 +46,19 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_DELETED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * This module is based on the RecycleBin python module from Mark McKinnon.
@@ -81,7 +82,7 @@ final class ExtractRecycleBin extends Extract {
         "ExtractRecycleBin_module_name=Recycle Bin"
     })
     ExtractRecycleBin() {
-        this.moduleName = Bundle.ExtractRecycleBin_module_name();
+        super(Bundle.ExtractRecycleBin_module_name());
     }
 
     @Override
@@ -135,7 +136,7 @@ final class ExtractRecycleBin extends Extract {
             return;  // No need to continue
         }
 
-        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin"); //NON-NLS
+        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin", context.getJobId()); //NON-NLS
 
         // cycle through the $I files and process each. 
         for (AbstractFile iFile : iFiles) {
@@ -336,21 +337,11 @@ final class ExtractRecycleBin extends Extract {
      */
     private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException {
         Map<String, String> userNameMap = new HashMap<>();
-
-        List<BlackboardArtifact> accounts = blackboard.getArtifacts(TSK_OS_ACCOUNT.getTypeID(), dataSource.getId());
-
-        for (BlackboardArtifact account : accounts) {
-            BlackboardAttribute nameAttribute = getAttributeForArtifact(account, TSK_USER_NAME);
-            BlackboardAttribute idAttribute = getAttributeForArtifact(account, TSK_USER_ID);
-
-            String userName = nameAttribute != null ? nameAttribute.getDisplayString() : "";
-            String userID = idAttribute != null ? idAttribute.getDisplayString() : "";
-
-            if (!userID.isEmpty()) {
-                userNameMap.put(userID, userName);
-            }
+        
+         for(OsAccount account: tskCase.getOsAccountManager().getOsAccounts(((DataSource)dataSource).getHost())) {
+            Optional<String> userName = account.getLoginName();
+            userNameMap.put(account.getName(), userName.isPresent() ? userName.get() : "");
         }
-
         return userNameMap;
     }
 
@@ -415,6 +406,9 @@ final class ExtractRecycleBin extends Extract {
         return artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(type.getTypeID())));
     }
 
+    @Messages({
+        "ExtractRecycleBin_Recyle_Bin_Display_Name=Recycle Bin"
+    })
     /**
      * Create TSK_RECYCLE_BIN artifact type.
      *
@@ -422,9 +416,9 @@ final class ExtractRecycleBin extends Extract {
      */
     private void createRecycleBinArtifactType() throws TskCoreException {
         try {
-            tskCase.addBlackboardArtifactType(RECYCLE_BIN_ARTIFACT_NAME, "Recycle Bin"); //NON-NLS
-        } catch (TskDataException ex) {
-            logger.log(Level.INFO, String.format("%s may have already been defined for this case", RECYCLE_BIN_ARTIFACT_NAME));
+            tskCase.getBlackboard().getOrAddArtifactType(RECYCLE_BIN_ARTIFACT_NAME, Bundle.ExtractRecycleBin_Recyle_Bin_Display_Name()); //NON-NLS
+        } catch (BlackboardException ex) {
+            throw new TskCoreException(String.format("An exception was thrown while defining artifact type %s", RECYCLE_BIN_ARTIFACT_NAME), ex);
         }
 
     }
@@ -443,11 +437,11 @@ final class ExtractRecycleBin extends Extract {
      * @throws TskCoreException
      */
     private BlackboardArtifact createArtifact(AbstractFile rFile, BlackboardArtifact.Type type, String fileName, String userName, long dateTime) throws TskCoreException {
-        BlackboardArtifact bba = rFile.newArtifact(type.getTypeID());
-        bba.addAttribute(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-        bba.addAttribute(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
-        bba.addAttribute(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
-        return bba;
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+        attributes.add(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
+        attributes.add(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
+        return createArtifactWithAttributes(type, rFile, attributes);
     }
 
     /**

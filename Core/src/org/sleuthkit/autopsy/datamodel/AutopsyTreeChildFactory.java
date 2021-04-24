@@ -22,32 +22,46 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.PersonManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 /**
  * Child factory to create the top level children of the autopsy tree
- *  
+ *
  */
-public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Object> { 
-    
+public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Object> {
+
+    private static final Set<Case.Events> LISTENING_EVENTS = EnumSet.of(
+            Case.Events.DATA_SOURCE_ADDED,
+            Case.Events.HOSTS_ADDED,
+            Case.Events.HOSTS_DELETED,
+            Case.Events.PERSONS_ADDED,
+            Case.Events.PERSONS_DELETED,
+            Case.Events.PERSONS_CHANGED
+    );
+
+    private static final Set<String> LISTENING_EVENT_NAMES = LISTENING_EVENTS.stream()
+            .map(evt -> evt.name())
+            .collect(Collectors.toSet());
+
     private static final Logger logger = Logger.getLogger(AutopsyTreeChildFactory.class.getName());
-    
+
     /**
      * Listener for handling DATA_SOURCE_ADDED events.
      */
@@ -55,59 +69,62 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString()) &&
-                Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                    refreshChildren();
+            if (LISTENING_EVENT_NAMES.contains(eventType)
+                    && Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                refreshChildren();
             }
         }
     };
-    
+
     @Override
     protected void addNotify() {
         super.addNotify();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+        Case.addEventTypeSubscriber(LISTENING_EVENTS, pcl);
     }
 
     @Override
     protected void removeNotify() {
         super.removeNotify();
-        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+        Case.removeEventTypeSubscriber(LISTENING_EVENTS, pcl);
     }
 
     /**
-     * Creates keys for the top level children.  
-     * 
+     * Creates keys for the top level children.
+     *
      * @param list list of keys created
      * @return true, indicating that the key list is complete
      */
     @Override
     protected boolean createKeys(List<Object> list) {
-
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-           
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                List<DataSource> dataSources = tskCase.getDataSources();
-                
-                Collections.sort(dataSources, new Comparator<DataSource>() {
-                    @Override
-                    public int compare(DataSource dataS1, DataSource dataS2) {
-                        String dataS1Name = dataS1.getName().toLowerCase();
-                        String dataS2Name = dataS2.getName().toLowerCase();
-                        return dataS1Name.compareTo(dataS2Name);
+                PersonManager personManager = tskCase.getPersonManager();
+                List<Person> persons = personManager.getPersons();
+                // show persons level if there are persons to be shown
+                if (!CollectionUtils.isEmpty(persons)) {
+                    persons.stream()
+                            .map(PersonGrouping::new)
+                            .sorted()
+                            .forEach(list::add);
+
+                    if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
+                        list.add(new PersonGrouping(null));
                     }
-                });
-                
-                List<DataSourceGrouping> keys = new ArrayList<>();
-                dataSources.forEach((datasource) -> {
-                    keys.add(new DataSourceGrouping(datasource));
-                });
-                list.addAll(keys);
-                
-                list.add(new Reports());
+
+                    return true;
+                } else {
+                    // otherwise, just show host level
+                    tskCase.getHostManager().getAllHosts().stream()
+                            .map(HostGrouping::new)
+                            .sorted()
+                            .forEach(list::add);
+                    return true;
+                }
             } else {
+                // data source by type view
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
-                        new DataSources(),
+                        new DataSourcesByType(),
                         new Views(tskCase),
                         new Results(tskCase),
                         new Tags(),
@@ -115,38 +132,35 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
 
                 list.addAll(keys);
             }
-
-        } catch (TskCoreException tskCoreException) {
-            logger.log(Level.SEVERE, "Error getting datas sources list from the database.", tskCoreException);
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Exception while getting data from case.", ex); //NON-NLS
         }
         return true;
     }
-    
+
     /**
      * Creates nodes for the top level Key
-     * 
+     *
      * @param key
-     * 
+     *
      * @return Node for the key, null if key is unknown.
      */
     @Override
     protected Node createNodeForKey(Object key) {
-        
         if (key instanceof SleuthkitVisitableItem) {
             return ((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor());
         } else if (key instanceof AutopsyVisitableItem) {
             return ((AutopsyVisitableItem) key).accept(new RootContentChildren.CreateAutopsyNodeVisitor());
-        }
-        else {
+        } else {
             logger.log(Level.SEVERE, "Unknown key type ", key.getClass().getName());
             return null;
         }
     }
-    
+
     /**
-     *  Refresh the children
+     * Refresh the children
      */
     public void refreshChildren() {
         refresh(true);

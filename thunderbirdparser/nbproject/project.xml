@@ -40,12 +40,21 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.Tika</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>23</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.sleuthkit.autopsy.core</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.19</specification-version>
+                        <specification-version>10.23</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -76,12 +85,12 @@
                 <binary-origin>release/modules/ext/apache-mime4j-core-0.8.0-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/java-libpst-1.0-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/java-libpst-1.0-SNAPSHOT.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/java-libpst-0.9.5-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/java-libpst-0.9.5-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-dom-0.8.0-SNAPSHOT.jar</runtime-relative-path>
@@ -90,6 +99,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/vinnie-2.0.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/vinnie-2.0.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.6.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

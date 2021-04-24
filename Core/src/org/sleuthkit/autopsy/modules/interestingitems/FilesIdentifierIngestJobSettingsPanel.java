@@ -18,13 +18,16 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.TreeMap;
+import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -110,6 +113,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
             if (i == 0) {
                 column.setPreferredWidth(((int) (width * 0.07)));
             } else {
+                column.setCellRenderer(new FileSetsTableCellRenderer());
                 column.setPreferredWidth(((int) (width * 0.92)));
             }
         }
@@ -157,6 +161,24 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
 
         // Cache the snapshot so it will be avaialble for the next update.
         this.filesSetSnapshot = newFilesSetSnapshot;
+    }
+    
+    /**
+     * Simple TableCellRenderer to add tool tips to cells.
+     */
+    private static final class FileSetsTableCellRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object value,
+                boolean isSelected, boolean hasFocus,
+                int row, int column) {
+            JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            label.setToolTipText(label.getText());
+            return label;
+        }
     }
 
     /**

@@ -1,61 +1,65 @@
 <ivy-module version="2.0">
-    <info organisation="org.sleuthkit.autopsy" module="emailparser"/>
+    <info organisation="org.sleuthkit.autopsy" module="core"/>
     <configurations >
         <!-- module dependencies -->
         <conf name="core"/>
-     
+
     </configurations>
     <dependencies >
         <dependency conf="core->default" org="com.github.vlsi.mxgraph" name="jgraphx" rev="4.1.0" />
-        
+
         <dependency conf="core->default" org="org.apache.activemq" name="activemq-all" rev="5.11.1"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-client" rev="2.8.0"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-framework" rev="2.8.0"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-recipes" rev="2.8.0"/>
-               
-        <dependency conf="core->default" org="org.python" name="jython-standalone" rev="2.7.0" />
-        <dependency conf="core->default" org="org.apache.tika" name="tika-core" rev="1.20"/>
-        <!-- Exclude the version of cxf-rt-rs-client from Tika 1.20, one of its depedencies breaks Ivy -->
-        <dependency conf="core->default" org="org.apache.tika" name="tika-parsers" rev="1.20">
-            <exclude module="cxf-rt-rs-client"/>
-            <exclude module="cleartk-ml"/>
-        </dependency>
-        
-        <!-- Pull down the latest cxf-rt-rs-client which has the Ivy fix -->
-        <dependency conf="core->default" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.3.0"/>
-        <dependency conf="core->default" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/>
-        
+
+        <dependency conf="core->default" org="org.python" name="jython-standalone" rev="2.7.2" />
+
         <dependency conf="core->default" org="com.adobe.xmp" name="xmpcore" rev="5.1.2"/>
         <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.4.6"/>
 
         <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess" rev="2.2.0"/>
         <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess-encrypt" rev="2.1.4"/>
-        
+
         <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.1.1"/>
         <dependency conf="core->default" org="org.apache.commons" name="commons-pool2" rev="2.4.2"/>
         <dependency conf="core->default" org="commons-codec" name="commons-codec" rev="1.11"/>
 
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
-		
-        <dependency conf="core->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.9.7"/>
+
+        <dependency conf="core->default" org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.9.7"/>
+        <dependency org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.9.7"/>
+
+        <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.11.0"/>
 
         <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="1.70.0"/>
         <dependency conf="core->default" org="org.apache.opennlp" name="opennlp-tools" rev="1.9.1"/>
 
         <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
-        <dependency conf="core->default" org="com.beetstra.jutf7" name="jutf7" rev="1.0.0"/>
-        
-        <dependency org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
-        <dependency org="com.googlecode.libphonenumber" name="libphonenumber" rev="3.5" />
+
+        <dependency conf="core->default" org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
+        <dependency conf="core->default" org="com.googlecode.libphonenumber" name="libphonenumber" rev="3.5" />
         <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         <dependency conf="core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
-        <dependency org="com.squareup.okhttp" name="okhttp" rev="2.7.5"/>
-        
+
+        <dependency conf="core->default" org="com.squareup.okhttp" name="okhttp" rev="2.7.5"/>
+        <dependency conf="core->default" org="org.jfree" name="jfreechart" rev="1.0.19"/>
+
+        <!-- for yaml reading/writing -->
+        <dependency org="org.yaml" name="snakeyaml" rev="1.27"/>
+
         <!-- map support for geolocation -->
-        <dependency conf="core->default" org="org.jxmapviewer" name="jxmapviewer2" rev="2.4"/> 
-        
+        <dependency conf="core->default" org="org.jxmapviewer" name="jxmapviewer2" rev="2.4"/>
+
+        <!-- For Discovery testing -->
+        <dependency conf="core->default" org="org.mockito" name="mockito-core" rev="3.5.7"/>
+
+        <!-- for handling diffs -->
+        <dependency org="io.github.java-diff-utils" name="java-diff-utils" rev="4.8"/>
+
+
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
-        <dependency org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0"/>
+        <dependency conf="core->default" org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0"/>
         <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>
     </dependencies>
 </ivy-module>

@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -95,12 +96,61 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         }
     };
 
+    /**
+     * Main constructor.
+     */
+    public KdTree() {
+    }
+
+    /**
+     * Constructor that creates a balanced tree with the provided nodes.
+     *
+     * @param points The points to add and balance.
+     */
+    public KdTree(List<T> points) {
+        this.root = getBalancedNode(null, points, 0);
+    }
+
     static final int X_AXIS = 0;
     static final int Y_AXIS = 1;
     static final int Z_AXIS = 2;
 
     public KdNode getRoot() {
         return root;
+    }
+
+    /**
+     * Recursively creates balanced KdNode's from the given list. NOTE: The
+     * approach is to: 1) sort the list based on the depth's comparator 2) find
+     * a center point 3) For lesser and greater, recurse until base case.
+     *
+     * There may be more efficient means of achieving balanced nodes.
+     *
+     * @param parent The parent of this node or null if this will be root.
+     * @param points The points to be balanced in the tree.
+     * @param depth The current depth (used to determine axis to sort on).
+     * @return The balanced KdNode.
+     */
+    private KdNode getBalancedNode(KdNode parent, List<T> points, int depth) {
+        // if no points, return null.
+        if (points == null || points.size() < 1) {
+            return null;
+        }
+
+        // sort with comparator for depth
+        points.sort((a, b) -> KdNode.compareTo(depth, a, b));
+
+        // find center point
+        int centerPtIdx = points.size() / 2;
+        KdNode thisNode = new KdNode(points.get(centerPtIdx), depth, parent);
+
+        // recurse on lesser and greater
+        List<T> lesserList = centerPtIdx > 0 ? points.subList(0, centerPtIdx) : null;
+        thisNode.setLesser(getBalancedNode(thisNode, lesserList, depth + 1));
+        List<T> greaterList = centerPtIdx < points.size() - 1 ? points.subList(centerPtIdx + 1, points.size()) : null;
+        thisNode.setGreater(getBalancedNode(thisNode, greaterList, depth + 1));
+
+        return thisNode;
     }
 
     /**
@@ -163,7 +213,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
     /**
      * Locates T in the tree.
      *
-     * @param tree  to search.
+     * @param tree to search.
      * @param value to search for.
      *
      * @return KdNode or NULL if not found
@@ -197,8 +247,8 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
      * Searches for numNeighbors nearest neighbor.
      *
      * @param numNeighbors Number of neighbors to retrieve. Can return more than
-     *                     numNeighbors, if last nodes are equal distances.
-     * @param value        to find neighbors of.
+     * numNeighbors, if last nodes are equal distances.
+     * @param value to find neighbors of.
      *
      * @return Collection of T neighbors.
      */
@@ -252,11 +302,11 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
      * Searches the tree to find any nodes that are closer than what is
      * currently in results.
      *
-     * @param value        Nearest value search point
-     * @param node         Search starting node
+     * @param value Nearest value search point
+     * @param node Search starting node
      * @param numNeighbors Number of nearest neighbors to return
-     * @param results      Current result set
-     * @param examined     List of examined nodes
+     * @param results Current result set
+     * @param examined List of examined nodes
      */
     private <T extends KdTree.XYZPoint> void searchNode(T value, KdNode node, int numNeighbors, TreeSet<KdNode> results, Set<KdNode> examined) {
         examined.add(node);
@@ -343,7 +393,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
      * Adds, in a specified queue, a given node and its related nodes (lesser,
      * greater).
      *
-     * @param node    Node to check. May be null.
+     * @param node Node to check. May be null.
      *
      * @param results Queue containing all found entries. Must not be null.
      */
@@ -388,7 +438,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
      * Searches all entries from the first to the last entry.
      *
      * @return Iterator allowing to iterate through a collection containing all
-     *         found entries.
+     * found entries.
      */
     @Override
     public Iterator<T> iterator() {
@@ -401,7 +451,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
      * Searches all entries from the last to the first entry.
      *
      * @return Iterator allowing to iterate through a collection containing all
-     *         found entries.
+     * found entries.
      */
     public Iterator<T> reverse_iterator() {
         final Deque<T> results = new ArrayDeque<>();
@@ -428,8 +478,8 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         /**
          * Constructs a new KdNode.
          *
-         * @param point  Node point
-         * @param depth  Depth of node in the tree, set to 0 if root node
+         * @param point Node point
+         * @param depth Depth of node in the tree, set to 0 if root node
          * @param parent Parent of this node, can be null if root node
          */
         public KdNode(XYZPoint point, int depth, KdNode parent) {
@@ -442,12 +492,12 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
          * Compares two XYZPoints. The value used for the comparision is based
          * on the depth of the node in the tree and the tree's dimension.
          *
-         * @param depth  Depth of node in the tree
+         * @param depth Depth of node in the tree
          * @param point1 First point to compare
          * @param point2 Second point to compare
          *
          * @return 0 if points are equal -1 if point2 is "less than" point1 1 if
-         *         point1 is "greater than" point2
+         * point1 is "greater than" point2
          */
         public static int compareTo(int depth, XYZPoint point1, XYZPoint point2) {
             int axis = depth % DIMENSIONS;
@@ -475,7 +525,7 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
          * tree root node.
          *
          * @return Returns the parent of this node, or null if node is tree
-         *         root.
+         * root.
          */
         KdNode getParent() {
             return parent;
@@ -584,12 +634,12 @@ public class KdTree<T extends KdTree.XYZPoint> implements Iterable<T> {
         /**
          * Constructs a new XYZPoint.
          *
-         * @param latitude
-         * @param longitude
+         * @param x
+         * @param y
          */
-        public XYZPoint(Double latitude, Double longitude) {
-            x = latitude;
-            y = longitude;
+        public XYZPoint(Double x, Double y) {
+            this.x = x;
+            this.y = y;
             z = 0;
         }
 

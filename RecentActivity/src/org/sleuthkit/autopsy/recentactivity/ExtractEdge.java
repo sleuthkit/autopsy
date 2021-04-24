@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Scanner;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -48,6 +52,9 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -57,7 +64,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class ExtractEdge extends Extract {
 
     private static final Logger LOG = Logger.getLogger(ExtractEdge.class.getName());
-    private final Path moduleTempResultPath;
     private Content dataSource;
     private IngestJobContext context;
     private HashMap<String, ArrayList<String>> containersTable;
@@ -99,7 +105,9 @@ final class ExtractEdge extends Extract {
     private static final String ESE_TOOL_FOLDER = "ESEDatabaseView"; //NON-NLS
     private static final String EDGE_RESULT_FOLDER_NAME = "results"; //NON-NLS
 
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a"); //NON-NLS
+    // ESEDatabaseView converts long timestamps into a string based on the current locale,
+    // so the default format may not always work.
+    private SimpleDateFormat previouslyValidDateFormat = null;
 
     @Messages({
         "ExtractEdge_process_errMsg_unableFindESEViewer=Unable to find ESEDatabaseViewer",
@@ -116,8 +124,8 @@ final class ExtractEdge extends Extract {
     /**
     * Extract the bookmarks, cookies, downloads and history from Microsoft Edge
     */
-    ExtractEdge() throws NoCurrentCaseException {
-        moduleTempResultPath = Paths.get(RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), EDGE), EDGE_RESULT_FOLDER_NAME);
+    ExtractEdge() {
+        super(Bundle.ExtractEdge_Module_Name());
     }
 
     @Override
@@ -127,6 +135,9 @@ final class ExtractEdge extends Extract {
 
     @Override
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+        String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), EDGE, context.getJobId());
+        String moduleTempResultDir = Paths.get(moduleTempDir, EDGE_RESULT_FOLDER_NAME).toString();
+        
         this.dataSource = dataSource;
         this.context = context;
         this.setFoundData(false);
@@ -139,6 +150,10 @@ final class ExtractEdge extends Extract {
         } catch (TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_errGettingWebCacheFiles());
             LOG.log(Level.SEVERE, "Error fetching 'WebCacheV01.dat' files for Microsoft Edge", ex); //NON-NLS
+        }
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
         }
 
         try {
@@ -159,27 +174,31 @@ final class ExtractEdge extends Extract {
             LOG.log(Level.WARNING, "Microsoft Edge files found, unable to parse on Non-Windows system"); //NON-NLS
             return;
         }
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
 
         final String esedumper = getPathForESEDumper();
         if (esedumper == null) {
-            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_unableFindESEViewer());
             LOG.log(Level.SEVERE, "Error finding ESEDatabaseViewer program"); //NON-NLS
+            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_unableFindESEViewer());
             return; //If we cannot find the ESEDatabaseView we cannot proceed
         }
 
         try {
-            this.processWebCacheDbFile(esedumper, webCacheFiles, progressBar);
+            this.processWebCacheDbFile(esedumper, webCacheFiles, progressBar, moduleTempDir, moduleTempResultDir);
         } catch (IOException | TskCoreException ex) {
+            LOG.log(Level.SEVERE, "Error processing 'WebCacheV01.dat' files for Microsoft Edge", ex); // NON-NLS
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_webcacheFail());
-            LOG.log(Level.SEVERE, "Error returned from processWebCacheDbFile", ex); // NON-NLS
         }
 
         progressBar.progress(Bundle.Progress_Message_Edge_Bookmarks());
         try {
-            this.processSpartanDbFile(esedumper, spartanFiles);
+            this.processSpartanDbFile(esedumper, spartanFiles, moduleTempDir, moduleTempResultDir);
         } catch (IOException | TskCoreException ex) {
+            LOG.log(Level.SEVERE, "Error processing 'spartan.edb' files for Microsoft Edge", ex); // NON-NLS
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_spartanFail());
-            LOG.log(Level.SEVERE, "Error returned from processSpartanDbFile", ex); // NON-NLS
         }
     }
 
@@ -189,10 +208,13 @@ final class ExtractEdge extends Extract {
      *
      * @param eseDumperPath Path to ESEDatabaseView.exe
      * @param webCacheFiles List of case WebCacheV01.dat files
+     * @param moduleTempDir The temp directory for this module.
+     * @param moduleTempResultDir The temp results directory for this module.
      * @throws IOException
      * @throws TskCoreException
      */
-    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles, DataSourceIngestModuleProgress progressBar) throws IOException, TskCoreException {
+    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles, DataSourceIngestModuleProgress progressBar, 
+            String moduleTempDir, String moduleTempResultDir) throws IOException, TskCoreException {
 
         for (AbstractFile webCacheFile : webCacheFiles) {
 
@@ -205,7 +227,7 @@ final class ExtractEdge extends Extract {
             //Run the dumper 
             String tempWebCacheFileName = EDGE_WEBCACHE_PREFIX
                     + Integer.toString((int) webCacheFile.getId()) + EDGE_WEBCACHE_EXT; //NON-NLS
-            File tempWebCacheFile = new File(RAImageIngestModule.getRATempPath(currentCase, EDGE), tempWebCacheFileName);
+            File tempWebCacheFile = new File(moduleTempDir, tempWebCacheFileName);
 
             try {
                 ContentUtils.writeToFile(webCacheFile, tempWebCacheFile,
@@ -214,7 +236,7 @@ final class ExtractEdge extends Extract {
                 throw new IOException("Error writingToFile: " + webCacheFile, ex); //NON-NLS
             }
 
-            File resultsDir = new File(moduleTempResultPath.toAbsolutePath() + Integer.toString((int) webCacheFile.getId()));
+            File resultsDir = new File(moduleTempDir, Integer.toString((int) webCacheFile.getId()));
             resultsDir.mkdirs();
             try {
                 executeDumper(eseDumperPath, tempWebCacheFile.getAbsolutePath(),
@@ -249,10 +271,13 @@ final class ExtractEdge extends Extract {
      *
      * @param eseDumperPath Path to ESEDatabaseViewer
      * @param spartanFiles List of the case spartan.edb files
+     * @param moduleTempDir The temp directory for this module.
+     * @param moduleTempResultDir The temp results directory for this module.
      * @throws IOException
      * @throws TskCoreException
      */
-    void processSpartanDbFile(String eseDumperPath, List<AbstractFile> spartanFiles) throws IOException, TskCoreException {
+    void processSpartanDbFile(String eseDumperPath, List<AbstractFile> spartanFiles, 
+            String moduleTempDir, String moduleTempResultDir) throws IOException, TskCoreException {
 
         for (AbstractFile spartanFile : spartanFiles) {
 
@@ -263,7 +288,7 @@ final class ExtractEdge extends Extract {
             //Run the dumper 
             String tempSpartanFileName = EDGE_WEBCACHE_PREFIX
                     + Integer.toString((int) spartanFile.getId()) + EDGE_WEBCACHE_EXT; 
-            File tempSpartanFile = new File(RAImageIngestModule.getRATempPath(currentCase, EDGE), tempSpartanFileName);
+            File tempSpartanFile = new File(moduleTempDir, tempSpartanFileName);
 
             try {
                 ContentUtils.writeToFile(spartanFile, tempSpartanFile,
@@ -272,7 +297,7 @@ final class ExtractEdge extends Extract {
                 throw new IOException("Error writingToFile: " + spartanFile, ex); //NON-NLS
             }
 
-            File resultsDir = new File(moduleTempResultPath.toAbsolutePath() + Integer.toString((int) spartanFile.getId()));
+            File resultsDir = new File(moduleTempResultDir, Integer.toString((int) spartanFile.getId()));
             resultsDir.mkdirs();
             try {
                 executeDumper(eseDumperPath, tempSpartanFile.getAbsolutePath(),
@@ -346,7 +371,7 @@ final class ExtractEdge extends Extract {
                 fileScanner.close();
             }
 
-            if (!bbartifacts.isEmpty()) {
+            if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
                 postArtifacts(bbartifacts);
             }
         }
@@ -392,7 +417,7 @@ final class ExtractEdge extends Extract {
             fileScanner.close();
         }
 
-        if (!bbartifacts.isEmpty()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -448,7 +473,7 @@ final class ExtractEdge extends Extract {
                 fileScanner.close();
             }
 
-            if (!bbartifacts.isEmpty()) {
+            if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
                 postArtifacts(bbartifacts);
             }
         }
@@ -510,7 +535,9 @@ final class ExtractEdge extends Extract {
                 fileScanner.close();
             }
 
-            postArtifacts(bbartifacts);
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(bbartifacts);
+            }
         }
     }
 
@@ -584,7 +611,7 @@ final class ExtractEdge extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
-        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
+        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
     }
 
     /**
@@ -609,22 +636,12 @@ final class ExtractEdge extends Extract {
 
         index = headers.indexOf(EDGE_HEAD_ACCESSTIME);
         String accessTime = rowSplit[index].trim();
-        Long ftime = null;
-        try {
-            Long epochtime = DATE_FORMATTER.parse(accessTime).getTime();
-            ftime = epochtime / 1000;
-        } catch (ParseException ex) {
-            LOG.log(Level.WARNING, "The Accessed Time format in history file seems invalid " + accessTime, ex); //NON-NLS
-        }
+        Long ftime = parseTimestamp(accessTime);
 
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
-
-        bbart.addAttributes(createHistoryAttribute(url, ftime,
+        return createArtifactWithAttributes(TSK_WEB_HISTORY, origFile, createHistoryAttribute(url, ftime,
                 null, null,
                 this.getName(),
                 NetworkUtils.extractDomain(url), user));
-
-        return bbart;
     }
 
     /**
@@ -640,22 +657,14 @@ final class ExtractEdge extends Extract {
         String[] lineSplit = line.split(","); // NON-NLS
 
         String accessTime = lineSplit[headers.indexOf(EDGE_HEAD_LASTMOD)].trim();
-        Long ftime = null;
-        try {
-            Long epochtime = DATE_FORMATTER.parse(accessTime).getTime();
-            ftime = epochtime / 1000;
-        } catch (ParseException ex) {
-            LOG.log(Level.WARNING, "The Accessed Time format in history file seems invalid " + accessTime, ex); //NON-NLS
-        }
+        Long ftime = parseTimestamp(accessTime);
 
         String domain = lineSplit[headers.indexOf(EDGE_HEAD_RDOMAIN)].trim();
         String name = hexToChar(lineSplit[headers.indexOf(EDGE_HEAD_NAME)].trim());
         String value = hexToChar(lineSplit[headers.indexOf(EDGE_HEAD_VALUE)].trim());
         String url = flipDomain(domain);
 
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
-        bbart.addAttributes(createCookieAttributes(url, ftime, name, value, this.getName(), NetworkUtils.extractDomain(url)));
-        return bbart;
+        return createArtifactWithAttributes(TSK_WEB_COOKIE, origFile, createCookieAttributes(url, null, ftime, null, name, value, this.getName(), NetworkUtils.extractDomain(url)));
     }
 
     /**
@@ -702,11 +711,118 @@ final class ExtractEdge extends Extract {
         if (url.isEmpty()) {
             return null;
         }
-
-        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-        bbart.addAttributes(createBookmarkAttributes(url, title, null,
+        
+        return createArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile, createBookmarkAttributes(url, title, null,
                 this.getName(), NetworkUtils.extractDomain(url)));
-        return bbart;
+    }
+    
+
+    /**
+     * Attempt to parse the timestamp.
+     * 
+     * ESEDatabaseView makes timestamps based on the locale of the machine so
+     * they will not always be in the expected format. Additionally, the format
+     * used in the database output does not appear to match the default format
+     * using DateFormat.SHORT. Therefore, if the default US format doesn't work,
+     * we will attempt to determine the correct pattern to use and save any
+     * working pattern for the next attempt.
+     * 
+     * @param timeStr The date/time string to parse
+     * 
+     * @return The epoch time as a Long or null if it could not be parsed.
+     */
+    private Long parseTimestamp(String timeStr) {
+        
+        // If we had a pattern that worked on the last date, use it again.
+        if (previouslyValidDateFormat != null) {
+            try {
+                return previouslyValidDateFormat.parse(timeStr).getTime() / 1000;
+            } catch (ParseException ex) {
+                // Continue on to format detection
+            }
+        }
+        
+        // Try the default US pattern
+        try {
+            SimpleDateFormat usDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a"); //NON-NLS
+            usDateFormat.setLenient(false); // Fail if month or day are out of range
+            Long epochTime = usDateFormat.parse(timeStr).getTime();
+            previouslyValidDateFormat = usDateFormat;
+            return epochTime / 1000;
+        } catch (ParseException ex) {
+            // Continue on to format detection
+        }
+        
+        // This generally doesn't match the data in the file but can give information on whether
+        // the month or day is first.
+        boolean monthFirstFromLocale = true;
+        String localeDatePattern = ((SimpleDateFormat) DateFormat.getDateInstance(
+                        DateFormat.SHORT, Locale.getDefault())).toPattern();
+        if (localeDatePattern.startsWith("d")) {
+            monthFirstFromLocale = false;
+        }
+
+        // Try to determine if the month or day is first by looking at the data. 
+        // If both variations appear valid, use the locale result.
+        boolean monthFirst = monthFirstFromLocale;
+        Pattern pattern = Pattern.compile("^([0-9]{1,2})[^0-9]([0-9]{1,2})");
+        Matcher matcher = pattern.matcher(timeStr);
+        if (matcher.find()) {
+            int firstVal = Integer.parseInt(matcher.group(1));
+            int secondVal = Integer.parseInt(matcher.group(2));
+            
+            if (firstVal > 12) {
+                monthFirst = false; 
+            } else if (secondVal > 12) {
+                monthFirst = true;
+            } 
+            // Otherwise keep the setting from the locale
+        }
+        
+        // See if the time has AM/PM attached
+        boolean hasAmPm = false;
+        if (timeStr.endsWith("M") || timeStr.endsWith("m")) {
+            hasAmPm = true;
+        }
+        
+        // See if the date appears to use forward slashes. If not, assume '.' is being used.
+        boolean hasSlashes = false;
+        if (timeStr.contains("/")) {
+            hasSlashes = true;
+        }
+        
+        // Make our best guess at the pattern
+        String dateFormatPattern;
+        if (monthFirst) {
+            if (hasSlashes) {
+                dateFormatPattern = "MM/dd/yyyy ";
+            } else {
+                dateFormatPattern = "MM.dd.yyyy ";
+            }
+        } else {
+             if (hasSlashes) {
+                dateFormatPattern = "dd/MM/yyyy ";
+            } else {
+                dateFormatPattern = "dd.MM.yyyy ";
+            }           
+        }
+        
+        if (hasAmPm) {
+            dateFormatPattern += "hh:mm:ss a";
+        } else {
+            dateFormatPattern += "HH:mm:ss";
+        }
+        
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat(dateFormatPattern); //NON-NLS
+            dateFormat.setLenient(false); // Fail if month or day are out of range
+            Long epochTime = dateFormat.parse(timeStr).getTime();
+            previouslyValidDateFormat = dateFormat;
+            return epochTime / 1000;
+        } catch (ParseException ex) {
+            LOG.log(Level.WARNING, "Timestamp could not be parsed ({0})", timeStr); //NON-NLS
+            return null;
+        }
     }
 
     /**

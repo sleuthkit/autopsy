@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.apache.commons.lang.math.NumberUtils;
-import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 
 /**
  * This class encapsulates KWS index data.
@@ -33,7 +32,6 @@ final class Index {
     private final String solrVersion;
     private final String indexName;
     private static final String DEFAULT_CORE_NAME = "text_index"; //NON-NLS
-    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
 
     /**
      * Constructs a representation of a text index.
@@ -47,9 +45,9 @@ final class Index {
      *                      need to be generated.
      */
     Index(String indexPath, String solrVersion, String schemaVersion, String coreName, String caseName) {
-        this.indexPath = uncPathUtilities.convertPathToUNC(indexPath);
+        this.indexPath = indexPath;
         this.solrVersion = solrVersion;
-        this.schemaVersion = schemaVersion;
+        this.schemaVersion = schemaVersion; 
         if (coreName == null || coreName.isEmpty()) {
             // come up with a new core name
             coreName = createCoreName(caseName);

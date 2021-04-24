@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,6 +62,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -70,7 +72,7 @@ import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
-import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryAction;
+import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -81,6 +83,15 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsRemovedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
@@ -104,16 +115,18 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.datamodel.hosts.OpenHostsAction;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.discovery.OpenDiscoveryAction;
+import org.sleuthkit.autopsy.discovery.ui.OpenDiscoveryAction;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -127,13 +140,17 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.SleuthkitCaseAdminUtil;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
+import org.sleuthkit.datamodel.TskEvent;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
 /**
@@ -143,6 +160,8 @@ public class Case {
 
     private static final int CASE_LOCK_TIMEOUT_MINS = 1;
     private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
+    private static final String APP_NAME = UserPreferences.getAppName();
+    private static final String TEMP_FOLDER = "Temp";
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static final String CACHE_FOLDER = "Cache"; //NON-NLS
@@ -150,7 +169,6 @@ public class Case {
     private static final String LOG_FOLDER = "Log"; //NON-NLS
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
     private static final String CONFIG_FOLDER = "Config"; // NON-NLS
-    private static final String TEMP_FOLDER = "Temp"; //NON-NLS
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
@@ -409,8 +427,45 @@ public class Case {
          * An item in the central repository has had its comment modified. The
          * old value is null, the new value is string for current comment.
          */
-        CR_COMMENT_CHANGED;
-
+        CR_COMMENT_CHANGED,
+        /**
+         * OSAccount associated with the current case added. Call getOsAccount
+         * to get the added account;
+         */
+        OS_ACCOUNT_ADDED,
+        /**
+         * OSAccount associated with the current case has changed. Call
+         * getOsAccount to get the changed account;
+         */
+        OS_ACCOUNT_CHANGED,
+        /**
+         * OSAccount associated with the current case has been deleted.
+         */
+        OS_ACCOUNT_REMOVED,
+        /**
+         * Hosts associated with the current case added.
+         */
+        HOSTS_ADDED,
+        /**
+         * Hosts associated with the current case has changed.
+         */
+        HOSTS_CHANGED,
+        /**
+         * Hosts associated with the current case has been deleted.
+         */
+        HOSTS_DELETED,
+        /**
+         * Persons associated with the current case added.
+         */
+        PERSONS_ADDED,
+        /**
+         * Persons associated with the current case has changed.
+         */
+        PERSONS_CHANGED,
+        /**
+         * Persons associated with the current case has been deleted.
+         */
+        PERSONS_DELETED;
     };
 
     /**
@@ -442,6 +497,99 @@ public class Case {
                         artifactType,
                         event.getArtifacts(artifactType)));
             }
+        }
+
+        @Subscribe
+        public void publishOsAccountAddedEvent(TskEvent.OsAccountsAddedTskEvent event) {
+            for (OsAccount account : event.getOsAcounts()) {
+                eventPublisher.publish(new OsAccountAddedEvent(account));
+            }
+        }
+
+        @Subscribe
+        public void publishOsAccountChangedEvent(TskEvent.OsAccountsChangedTskEvent event) {
+            for (OsAccount account : event.getOsAcounts()) {
+                eventPublisher.publish(new OsAccountChangedEvent(account));
+            }
+        }
+
+        @Subscribe
+        public void publishOsAccountDeletedEvent(TskEvent.OsAccountsDeletedTskEvent event) {
+            for (Long accountId : event.getOsAcountObjectIds()) {
+                eventPublisher.publish(new OsAccountDeletedEvent(accountId));
+            }
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit HostAddedEvent
+         * indicating that hosts have been created.
+         *
+         * @param event The sleuthkit event for the creation of hosts.
+         */
+        @Subscribe
+        public void publishHostsAddedEvent(TskEvent.HostsAddedTskEvent event) {
+            eventPublisher.publish(new HostsAddedEvent(
+                    event == null ? Collections.emptyList() : event.getHosts()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit HostUpdateEvent
+         * indicating that hosts have been updated.
+         *
+         * @param event The sleuthkit event for the updating of hosts.
+         */
+        @Subscribe
+        public void publishHostsChangedEvent(TskEvent.HostsChangedTskEvent event) {
+            eventPublisher.publish(new HostsChangedEvent(
+                    event == null ? Collections.emptyList() : event.getHosts()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit HostDeletedEvent
+         * indicating that hosts have been deleted.
+         *
+         * @param event The sleuthkit event for the deleting of hosts.
+         */
+        @Subscribe
+        public void publishHostsDeletedEvent(TskEvent.HostsDeletedTskEvent event) {
+            eventPublisher.publish(new HostsRemovedEvent(
+                    event == null ? Collections.emptyList() : event.getHosts()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit PersonAddedEvent
+         * indicating that persons have been created.
+         *
+         * @param event The sleuthkit event for the creation of persons.
+         */
+        @Subscribe
+        public void publishPersonsAddedEvent(TskEvent.PersonsAddedTskEvent event) {
+            eventPublisher.publish(new PersonsAddedEvent(
+                    event == null ? Collections.emptyList() : event.getPersons()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit PersonChangedEvent
+         * indicating that persons have been updated.
+         *
+         * @param event The sleuthkit event for the updating of persons.
+         */
+        @Subscribe
+        public void publishPersonsChangedEvent(TskEvent.PersonsChangedTskEvent event) {
+            eventPublisher.publish(new PersonsChangedEvent(
+                    event == null ? Collections.emptyList() : event.getPersons()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit PersonDeletedEvent
+         * indicating that persons have been deleted.
+         *
+         * @param event The sleuthkit event for the deleting of persons.
+         */
+        @Subscribe
+        public void publishPersonsDeletedEvent(TskEvent.PersonsDeletedTskEvent event) {
+            eventPublisher.publish(new PersonsDeletedEvent(
+                    event == null ? Collections.emptyList() : event.getPersons()));
         }
     }
 
@@ -720,13 +868,13 @@ public class Case {
             try {
                 eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), closedCase, null));
                 logger.log(Level.INFO, "Closing current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
-                currentCase = null;
                 closedCase.doCloseCaseAction();
                 logger.log(Level.INFO, "Closed current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
             } catch (CaseActionException ex) {
                 logger.log(Level.SEVERE, String.format("Error closing current case %s (%s) in %s", closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()), ex); //NON-NLS                
                 throw ex;
             } finally {
+                currentCase = null;
                 if (RuntimeProperties.runningWithGUI()) {
                     updateGUIForCaseClosed();
                 }
@@ -988,11 +1136,6 @@ public class Case {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", logsDir));
         }
 
-        Path tempDir = Paths.get(caseDirPath, hostPathComponent, TEMP_FOLDER);
-        if (!tempDir.toFile().mkdirs()) {
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", tempDir));
-        }
-
         Path cacheDir = Paths.get(caseDirPath, hostPathComponent, CACHE_FOLDER);
         if (!cacheDir.toFile().mkdirs()) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreateCaseDir", cacheDir));
@@ -1116,6 +1259,7 @@ public class Case {
                  * Enable the case-specific actions.
                  */
                 CallableSystemAction.get(AddImageAction.class).setEnabled(FeatureAccessUtils.canAddDataSources());
+                CallableSystemAction.get(OpenHostsAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
@@ -1171,6 +1315,7 @@ public class Case {
                  * Disable the case-specific menu items.
                  */
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenHostsAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseDetailsAction.class).setEnabled(false);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(false);
@@ -1193,25 +1338,6 @@ public class Case {
                  */
                 mainFrame.setTitle(getNameForTitle());
             });
-        }
-    }
-
-    /**
-     * Empties the temp subdirectory for the current case.
-     */
-    private static void clearTempSubDir(String tempSubDirPath) {
-        File tempFolder = new File(tempSubDirPath);
-        if (tempFolder.isDirectory()) {
-            File[] files = tempFolder.listFiles();
-            if (files.length > 0) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        FileUtil.deleteDir(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
         }
     }
 
@@ -1346,13 +1472,58 @@ public class Case {
     }
 
     /**
+     * @return A subdirectory of java.io.tmpdir.
+     */
+    private Path getBaseSystemTempPath() {
+        return Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME, getName());
+    }
+
+    /**
      * Gets the full path to the temp directory for this case, creating it if it
      * does not exist.
      *
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        return getOrCreateSubdirectory(TEMP_FOLDER);
+        // NOTE: UserPreferences may also be affected by changes in this method.
+        // See JIRA-7505 for more information.
+        Path basePath = null;
+        // get base temp path for the case based on user preference
+        switch (UserMachinePreferences.getTempDirChoice()) {
+            case CUSTOM:
+                String customDirectory = UserMachinePreferences.getCustomTempDirectory();
+                basePath = (StringUtils.isBlank(customDirectory))
+                        ? null
+                        : Paths.get(customDirectory, APP_NAME, getName());
+                break;
+            case CASE:
+                basePath = Paths.get(getCaseDirectory());
+                break;
+            case SYSTEM:
+            default:
+                // at this level, if the case directory is specified for a temp
+                // directory, return the system temp directory instead.
+                basePath = getBaseSystemTempPath();
+                break;
+        }
+
+        basePath = basePath == null ? getBaseSystemTempPath() : basePath;
+
+        // get sub directories based on multi user vs. single user
+        Path caseRelPath = (CaseType.MULTI_USER_CASE.equals(getCaseType()))
+                ? Paths.get(NetworkUtils.getLocalHostName(), TEMP_FOLDER)
+                : Paths.get(TEMP_FOLDER);
+
+        File caseTempDir = basePath
+                .resolve(caseRelPath)
+                .toFile();
+
+        // ensure directory exists
+        if (!caseTempDir.exists()) {
+            caseTempDir.mkdirs();
+        }
+
+        return caseTempDir.getAbsolutePath();
     }
 
     /**
@@ -1451,15 +1622,16 @@ public class Case {
      */
     public Set<TimeZone> getTimeZones() {
         Set<TimeZone> timezones = new HashSet<>();
-        try {
-            for (Content c : getDataSources()) {
-                final Content dataSource = c.getDataSource();
-                if ((dataSource != null) && (dataSource instanceof Image)) {
-                    Image image = (Image) dataSource;
-                    timezones.add(TimeZone.getTimeZone(image.getTimeZone()));
+        String query = "SELECT time_zone FROM data_source_info";
+        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
+            ResultSet timeZoneSet = dbQuery.getResultSet();
+            while (timeZoneSet.next()) {
+                String timeZone = timeZoneSet.getString("time_zone");
+                if (timeZone != null && !timeZone.isEmpty()) {
+                    timezones.add(TimeZone.getTimeZone(timeZone));
                 }
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Error getting data source time zones", ex); //NON-NLS
         }
         return timezones;
@@ -1483,9 +1655,16 @@ public class Case {
      */
     public boolean hasData() {
         boolean hasDataSources = false;
-        try {
-            hasDataSources = (getDataSources().size() > 0);
-        } catch (TskCoreException ex) {
+        String query = "SELECT count(*) AS count FROM data_source_info";
+        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            if (resultSet.next()) {
+                long numDataSources = resultSet.getLong("count");
+                if (numDataSources > 0) {
+                    hasDataSources = true;
+                }
+            }
+        } catch (TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
         }
         return hasDataSources;
@@ -1563,9 +1742,9 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag            The added ContentTag.
-     * @param deletedTagList    List of ContentTags that were removed as a result 
-     *                          of the addition of newTag.
+     * @param newTag         The added ContentTag.
+     * @param deletedTagList List of ContentTags that were removed as a result
+     *                       of the addition of newTag.
      */
     public void notifyContentTagAdded(ContentTag newTag, List<ContentTag> deletedTagList) {
         eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTagList));
@@ -1628,9 +1807,9 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param newTag            The added ContentTag.
-     * @param removedTagList    List of ContentTags that were removed as a result 
-     *                          of the addition of newTag.
+     * @param newTag         The added ContentTag.
+     * @param removedTagList List of ContentTags that were removed as a result
+     *                       of the addition of newTag.
      */
     public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, List<BlackboardArtifactTag> removedTagList) {
         eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTagList));
@@ -1645,6 +1824,72 @@ public class Case {
      */
     public void notifyBlackBoardArtifactTagDeleted(BlackboardArtifactTag deletedTag) {
         eventPublisher.publish(new BlackBoardArtifactTagDeletedEvent(deletedTag));
+    }
+
+    public void notifyOsAccountAdded(OsAccount account) {
+        eventPublisher.publish(new OsAccountAddedEvent(account));
+    }
+
+    public void notifyOsAccountChanged(OsAccount account) {
+        eventPublisher.publish(new OsAccountChangedEvent(account));
+    }
+
+    public void notifyOsAccountRemoved(Long osAccountObjectId) {
+        eventPublisher.publish(new OsAccountDeletedEvent(osAccountObjectId));
+    }
+
+    /**
+     * Notify via an autopsy event that a host has been added.
+     *
+     * @param host The host that has been added.
+     */
+    public void notifyHostAdded(Host host) {
+        eventPublisher.publish(new HostsAddedEvent(Collections.singletonList(host)));
+    }
+
+    /**
+     * Notify via an autopsy event that a host has been changed.
+     *
+     * @param newValue The host that has been updated.
+     */
+    public void notifyHostChanged(Host newValue) {
+        eventPublisher.publish(new HostsChangedEvent(Collections.singletonList(newValue)));
+    }
+
+    /**
+     * Notify via an autopsy event that a host has been deleted.
+     *
+     * @param host The host that has been deleted.
+     */
+    public void notifyHostDeleted(Host host) {
+        eventPublisher.publish(new HostsRemovedEvent(Collections.singletonList(host)));
+    }
+
+    /**
+     * Notify via an autopsy event that a person has been added.
+     *
+     * @param person The person that has been added.
+     */
+    public void notifyPersonAdded(Person person) {
+        eventPublisher.publish(new PersonsAddedEvent(Collections.singletonList(person)));
+    }
+
+    /**
+     * Notify via an autopsy event that a person has been changed.
+     *
+     * @param newValue The person that has been updated.
+     */
+    public void notifyPersonChanged(Person newValue) {
+        eventPublisher.publish(new PersonsChangedEvent(Collections.singletonList(newValue)));
+    }
+
+    /**
+     * Notify via an autopsy event that a person has been deleted.
+     *
+     * @param person The person that has been deleted.
+     */
+    public void notifyPersonDeleted(Person person) {
+        eventPublisher.publish(new PersonsDeletedEvent(Collections.singletonList(person)));
     }
 
     /**
@@ -1725,7 +1970,7 @@ public class Case {
      *
      * @return A CaseMetaData object.
      */
-    CaseMetadata getMetadata() {
+    public CaseMetadata getMetadata() {
         return metadata;
     }
 
@@ -2120,7 +2365,7 @@ public class Case {
          */
         private void openFileSystems(List<Image> images) throws TskCoreException, InterruptedException {
             byte[] tempBuff = new byte[512];
-            
+
             for (Image image : images) {
                 String imageStr = image.getName();
 
@@ -2144,12 +2389,12 @@ public class Case {
                 if (images == null) {
                     return;
                 }
-                
+
                 if (images.size() > MAX_IMAGE_THRESHOLD) {
                     // If we have a large number of images, don't try to preload anything
                     logger.log(
-                        Level.INFO,
-                        String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
+                            Level.INFO,
+                            String.format("Skipping background load of file systems due to large number of images in case (%d)", images.size()));
                     return;
                 }
 
@@ -2396,7 +2641,7 @@ public class Case {
          * Clear the temp subdirectory of the case directory.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_clearingTempDirectory());
-        Case.clearTempSubDir(this.getTempDirectory());
+        FileUtil.deleteDir(new File(this.getTempDirectory()));
     }
 
     /**
@@ -2506,7 +2751,7 @@ public class Case {
      * specific to this case.
      *
      * @param progressIndicator A progress indicator.
-     * @param isNewCase True if case is new
+     * @param isNewCase         True if case is new
      *
      * @throws CaseActionException If there is a problem completing the
      *                             operation. The exception will have a
@@ -2764,6 +3009,11 @@ public class Case {
             caseDb.close();
         }
 
+        /**
+         * Delete files from temp directory if any exist.
+         */
+        deleteTempfilesFromCaseDirectory(progressIndicator);
+
         /*
          * Switch the log directory.
          */
@@ -2830,8 +3080,8 @@ public class Case {
      * @throws CaseActionException If the lock cannot be acquired.
      */
     @Messages({
-        "Case.lockingException.couldNotAcquireSharedLock=Failed to get an shared lock on the case.",
-        "Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a exclusive lock on the case."
+        "Case.lockingException.couldNotAcquireSharedLock=Failed to get a shared lock on the case.",
+        "Case.lockingException.couldNotAcquireExclusiveLock=Failed to get an exclusive lock on the case."
     })
     private void acquireCaseLock(CaseLockType lockType) throws CaseActionException {
         String caseDir = metadata.getCaseDirectory();

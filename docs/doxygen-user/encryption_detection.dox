@@ -1,5 +1,8 @@
 /*! \page encryption_page Encryption Detection Module
 
+[TOC]
+
+
 \section encrypt_overview Overview
 
 The Encryption Detection Module searches for files that could be encrypted using both a general entropy calculation and more specialized tests for certain file types. 

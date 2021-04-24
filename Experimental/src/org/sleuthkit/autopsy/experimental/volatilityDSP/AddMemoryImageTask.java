@@ -34,6 +34,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
 
 /*
  * A runnable that adds a memory image data source to a case database.
@@ -44,6 +45,7 @@ final class AddMemoryImageTask implements Runnable {
     private final String deviceId;
     private final String memoryImagePath;
     private final String timeZone;
+    private final Host host;
     private final List<String> pluginsToRun;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
@@ -63,16 +65,18 @@ final class AddMemoryImageTask implements Runnable {
      * @param timeZone        The time zone to use when processing dates and
      *                        times for the image, obtained from
      *                        java.util.TimeZone.getID.
+     * @param host            The host for this data source (may be null).
      * @param progressMonitor Progress monitor for reporting progressMonitor
      *                        during processing.
      * @param callback        Callback to call when processing is done.
      */
-    AddMemoryImageTask(String deviceId, String memoryImagePath, String profile, List<String> pluginsToRun, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    AddMemoryImageTask(String deviceId, String memoryImagePath, String profile, List<String> pluginsToRun, String timeZone, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.memoryImagePath = memoryImagePath;
         this.profile = profile;
         this.pluginsToRun = pluginsToRun;
         this.timeZone = timeZone;
+        this.host = host;
         this.callback = callback;
         this.progressMonitor = progressMonitor;
     }
@@ -128,7 +132,7 @@ final class AddMemoryImageTask implements Runnable {
     /**
      * Attempts to add the input memory image to the case as a data source.
      *
-     * @return The Image object representation of the memeory image file data
+     * @return The Image object representation of the memory image file data
      *         source.
      *
      * @throws NoCurrentCaseException If there is no current case.
@@ -163,7 +167,7 @@ final class AddMemoryImageTask implements Runnable {
          * will need to be changed when a Device abstraction is added to the
          * SleuthKit data model.
          */
-        Image dataSource = caseDatabase.addImageInfo(0, new ArrayList<>(Arrays.asList(memoryImagePath)), timeZone);
+        Image dataSource = caseDatabase.addImageInfo(0, new ArrayList<>(Arrays.asList(memoryImagePath)), timeZone, host);
         return dataSource;
     }
 

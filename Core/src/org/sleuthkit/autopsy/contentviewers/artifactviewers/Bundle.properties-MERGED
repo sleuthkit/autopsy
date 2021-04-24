@@ -1,0 +1,117 @@
+CalllogArtifactViewer_cr_disabled_message=Enable Central Repository to view, create and edit personas.
+CallLogArtifactViewer_heading_metadata=Metadata
+CallLogArtifactViewer_heading_others=Other Attributes
+CallLogArtifactViewer_heading_parties=Parties
+CallLogArtifactViewer_heading_Source=Source
+CallLogArtifactViewer_label_datasource=Data Source
+CallLogArtifactViewer_label_date=Date
+CallLogArtifactViewer_label_direction=Direction
+CallLogArtifactViewer_label_duration=Duration
+CallLogArtifactViewer_label_from=From
+CallLogArtifactViewer_label_to=To
+CallLogArtifactViewer_suffix_local=(Local)
+CallLogArtifactViewer_value_unknown=Unknown
+# {0} - contact name
+CommunicationArtifactViewerHelper_contact_label=Contact: {0}
+CommunicationArtifactViewerHelper_contact_label_unknown=Unknown
+CommunicationArtifactViewerHelper_menuitem_copy=Copy
+CommunicationArtifactViewerHelper_persona_button_create=Create
+CommunicationArtifactViewerHelper_persona_button_view=View
+CommunicationArtifactViewerHelper_persona_label=Persona: 
+CommunicationArtifactViewerHelper_persona_searching=Searching...
+CommunicationArtifactViewerHelper_persona_unknown=Unknown
+ContactArtifactViewer.contactImage.text=
+ContactArtifactViewer_contactname_unknown=Unknown
+ContactArtifactViewer_cr_disabled_message=Enable Central Repository to view, create and edit personas.
+ContactArtifactViewer_emails_header=Email
+ContactArtifactViewer_found_all_accounts_label=All accounts found.
+ContactArtifactViewer_heading_Source=Source
+# {0} - accountIdentifer
+ContactArtifactViewer_id_not_found_in_cr=Unable to find account(s) associated with contact {0} in the Central Repository.
+ContactArtifactViewer_label_datasource=Data Source
+ContactArtifactViewer_missing_account_label=Missing contact account
+ContactArtifactViewer_others_header=Other
+ContactArtifactViewer_persona_account_justification=Account found in Contact artifact
+ContactArtifactViewer_persona_button_new=Create
+ContactArtifactViewer_persona_button_view=View
+ContactArtifactViewer_persona_header=Persona
+ContactArtifactViewer_persona_label=Persona 
+ContactArtifactViewer_persona_match_num=Match 
+ContactArtifactViewer_persona_no_match=No matches found
+ContactArtifactViewer_persona_searching=Searching...
+ContactArtifactViewer_persona_unknown=Unknown
+ContactArtifactViewer_phones_header=Phone
+DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database
+DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database
+DefaultTableArtifactContentViewer.attrsTableHeader.sources=Source(s)
+DefaultTableArtifactContentViewer.attrsTableHeader.type=Type
+DefaultTableArtifactContentViewer.attrsTableHeader.value=Value
+GeneralPurposeArtifactViewer.dates.created=Created
+GeneralPurposeArtifactViewer.dates.end=End
+GeneralPurposeArtifactViewer.dates.start=Start
+GeneralPurposeArtifactViewer.dates.time=Time
+GeneralPurposeArtifactViewer.details.attrHeader=Details
+GeneralPurposeArtifactViewer.details.bookmarkHeader=Bookmark Details
+GeneralPurposeArtifactViewer.details.cachedHeader=Cached File
+GeneralPurposeArtifactViewer.details.cookieHeader=Cookie Details
+GeneralPurposeArtifactViewer.details.dataSource=Data Source
+GeneralPurposeArtifactViewer.details.datesHeader=Dates
+GeneralPurposeArtifactViewer.details.downloadHeader=Downloaded File
+GeneralPurposeArtifactViewer.details.file=File
+GeneralPurposeArtifactViewer.details.historyHeader=Visit Details
+GeneralPurposeArtifactViewer.details.otherHeader=Other
+GeneralPurposeArtifactViewer.details.searchHeader=Web Search
+GeneralPurposeArtifactViewer.details.sourceHeader=Source
+GeneralPurposeArtifactViewer.noFile.text=\ (no longer exists)
+GeneralPurposeArtifactViewer.term.label=Term
+GeneralPurposeArtifactViewer.unknown.text=Unknown
+GeneralPurposeArtifactViewer_menuitem_copy=Copy
+MessageAccountPanel.account.justification=Account found in Message artifact
+MessageAccountPanel_button_create_label=Create
+MessageAccountPanel_button_view_label=View
+MessageAccountPanel_contact_label=Contact:
+MessageAccountPanel_copy_label=Copy
+# {0} - accountIdentifer
+MessageAccountPanel_id_not_found_in_cr=Unable to find an account with identifier {0} in the Central Repository.
+MessageAccountPanel_no_matches=No matches found.
+MessageAccountPanel_persona_label=Persona:
+MessageAccountPanel_unknown_label=Unknown
+MessageArtifactViewer.AttachmentPanel.title=Attachments
+MessageArtifactViewer.ccLabel.text=CC:
+MessageArtifactViewer.rtfbodyScrollPane.TabConstraints.tabTitle=RTF
+MessageArtifactViewer.toText.text=to list goes here
+MessageArtifactViewer.toLabel.text=To:
+MessageArtifactViewer.htmlPane.TabConstraints.tabTitle=HTML
+MessageArtifactViewer.fromText.text=from address goes here
+MessageArtifactViewer.datetimeText.text=date goes here
+MessageArtifactViewer.headersScrollPane.TabConstraints.tabTitle=Headers
+MessageArtifactViewer.fromLabel.text=From:
+MessageArtifactViewer.accountsTab.TabConstraints.tabTitle=Accounts
+MessageArtifactViewer.directionText.text=direction
+MessageArtifactViewer.subjectText.text=subject goes here
+MessageArtifactViewer.viewInNewWindowButton.text=View in New Window
+MessageArtifactViewer.subjectLabel.text=Subject:
+MessageArtifactViewer.attachmentsPanel.TabConstraints.tabTitle=Attachments
+MessageArtifactViewer.ccText.text=cc list goes here
+MessageArtifactViewer.textbodyScrollPane.TabConstraints.tabTitle=Text
+DefaultTableArtifactContentViewer.selectAllMenuItem.text=Select All
+# Copyright 2020 Basis Technology Corp.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the
+# License. You may obtain a copy of the License at
+
+#        http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an "AS
+# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language
+# governing permissions and limitations under the License.
+
+DefaultTableArtifactContentViewer.copyMenuItem.text=Copy
+PersonaAccountFetcher.account.justification=Account found in Call Log artifact
+# {0} - accountIdentifer
+PersonaAccountFetcher_not_account_in_cr=Unable to find an account with identifier {0} in the Central Repository.
+# {0} - Persona count
+PersonaDisplayTask_persona_count_suffix=(1 of {0})

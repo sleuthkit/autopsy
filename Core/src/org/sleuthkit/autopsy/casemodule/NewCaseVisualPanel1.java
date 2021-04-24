@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
@@ -149,13 +148,22 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     private void validateSettings() {
         /**
          * Check the base case directory for the selected case type and show a
-         * warning if it is a dubious choice.
+         * warning if it is a dubious choice. For single user cases, disable 
+         * the "Next" button if path is invalid.
          */
         caseParentDirWarningLabel.setVisible(false);
         String parentDir = getCaseParentDir();
-        if (!PathValidator.isValidForMultiUserCase(parentDir, getCaseType())) {
-            caseParentDirWarningLabel.setVisible(true);
-            caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
+        if (!PathValidator.isValidForCaseType(parentDir, getCaseType())) {
+            if (getCaseType() == CaseType.MULTI_USER_CASE) {
+                caseParentDirWarningLabel.setVisible(true);
+                caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
+            } else {
+                // disable the "Next" button
+                caseParentDirWarningLabel.setVisible(true);
+                caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.uncPath.error"));                
+                wizPanel.setIsFinish(false);
+                return;
+            }
         }
         
         /**

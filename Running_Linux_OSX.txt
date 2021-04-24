@@ -9,6 +9,43 @@ The following need to be done at least once. They do not need to be repeated for
 -- Linux:  % sudo apt-get install testdisk
 -- OS X: % brew install testdisk
 
+- (Optional) Install ImageMagick for Apple's High Efficiency Photo (HEIC/HEIF) support.
+-- OS X: % brew install imagemagick
+-- Linux:
+     % sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
+
+     % sudo apt-get update
+     % sudo apt-get install build-essential autoconf libtool git-core
+     % sudo apt-get build-dep imagemagick libmagickcore-dev libde265 libheif
+
+     % cd /usr/src/ 
+
+     % sudo git clone https://github.com/strukturag/libde265.git 
+     % sudo git clone https://github.com/strukturag/libheif.git 
+
+     % cd libde265/ 
+     % sudo ./autogen.sh 
+     % sudo ./configure 
+     % sudo make 
+     % sudo make install 
+
+     % cd /usr/src/libheif/ 
+     % sudo ./autogen.sh 
+     % sudo ./configure 
+     % sudo make 
+     % sudo make install 
+
+     % cd /usr/src/ 
+     % sudo wget https://www.imagemagick.org/download/ImageMagick.tar.gz 
+     % sudo tar xf ImageMagick.tar.gz 
+
+     % cd ImageMagick-7*
+     % sudo ./configure --with-heic=yes 
+     % sudo make 
+     % sudo make install 
+
+     % sudo ldconfig  
+
 - Install the BellSoft Java 8 JRE and JavaFX 8 distribution and set JAVA_HOME.
   * The BellSoft distribution bundles OpenJDK and OpenJFX. Other distributions we have tried either don't
     bundle OpenJFX (AdoptOpenJDK) or don't include all necessary binaries (Amazon Corretto).
@@ -27,7 +64,10 @@ The following need to be done at least once. They do not need to be repeated for
 -- OS X:
     1. Install BellSoft Java 8.
         % brew tap bell-sw/liberica
-        % brew cask install liberica-jdk8-full
+        for macOS BigSur and later:
+             % brew install --cask liberica-jdk8-full
+        for macOS versions before BigSur:
+             % brew cask install liberica-jdk8-full
     2. Set JAVA_HOME environment variable to location of JRE installation.
        e.g. add the following to ~/.bashrc
            export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)

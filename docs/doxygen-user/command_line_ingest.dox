@@ -1,20 +1,33 @@
 /*! \page command_line_ingest_page Command Line Ingest
 
+[TOC]
+
+
 \section command_line_ingest_overview Overview
 
 The Command Line Ingest feature allows you to run many of Autopsy's functions from the command line. You can add data sources to cases, choose which ingest modules to run, and automatically generate a report. When complete, these cases can be opened as normal or you can simply use the reports and other output without opening Autopsy.
 
 \section command_line_ingest_config Configuration
 
-Go to Tools->Options and then select the "Command Line Ingest" tab. 
+To configure command line ingest, go to Tools->Options and then select the "Command Line Ingest" tab. If you would like to create or open multi-user cases, you'll need to \ref install_multiuser_page "configure the multi-user settings".
 
 \image html command_line_ingest_options.png
 
-Use the ingest module settings to configure how you want to run ingest. This is the same as normal \ref ingest_page "ingest module" configuration - choose a file filter then enable or disable the individual ingest modules, changing their settings if desired. Press "OK" to save your settings.
+\subsection command_line_ingest_profile Configuring Ingest Profiles
 
-Use the report module settings to choose and configure a report type. Only the selected report type will be generated. Configuration is generally the same as normal \ref reporting_page "report generation" with some slight differences. This is mainly seen in places where your options are dependent on the open case, such as choosing \ref tagging_page "tags" to report on or \ref interesting_files_identifier_page "interesting file" set names to include. For example, the HTML report normally allows you to choose specific tags to include but for command line ingest it will only have the option to include all tags.
+From the options panel you can configure the default ingest profile. This is the same as normal \ref ingest_page "ingest module" configuration - choose a file filter then enable or disable the individual ingest modules, changing their settings if desired. Press "OK" to save your settings.
 
-If you would like to create or open multi-user cases, you'll need to \ref install_multiuser_page "configure the multi-user settings".
+Currently custom ingest profiles can not be configured on the command line ingest options panel but they can be created through the \ref ingest_page "ingest options panel" and then used on the command line. Here we've created an ingest profile that will only process image file types and will only run certain ingest modules. 
+
+\image html command_line_ingest_profile.png
+
+See the section on \ref command_line_ds "running ingest" below for instructions on specifying an ingest profile on the command line.
+
+\subsection command_line_report_profile Configuring Report Profiles
+
+You can set up report profiles to use with command line ingest. You'll start with a "default" profile and can create additional profiles. Each profile will allow you to generate one type of report. Configuration is generally the same as normal \ref reporting_page "report generation" with some slight differences. This is mainly seen in places where your options are dependent on the open case, such as choosing \ref tagging_page "tags" to report on or \ref interesting_files_identifier_page "interesting file" set names to include. For example, the HTML report normally allows you to choose specific tags to include but for command line ingest it will only have the option to include all tags.
+
+If you wish to create additional report profiles, select "Make new profile" in the drop-down menu and then click the "Configure" button. You'll be prompted to name your new report profile and then will go through the normal report configuration. Having multiple report profiles will allow you to easily generate different report types from the command line. For example, you might have an "htmlReport" report profile that creates the HTML report and another report profile to generate KML reports. See the \ref command_line_report "report generation" section below for directions on how to specifiy a report profile on the command line.
 
 \section command_line_ingest_commands Command Options
 
@@ -35,11 +48,16 @@ The table below shows a summary of the command line operations. You can run one 
 <tr><td><b>Open Existing Case</b></td><td>&nbsp;</td><td><pre>--caseDir</pre></td><td><pre>--caseDir="C:\work\Cases\test5_2019_09_20_11_01_29"</pre></td></tr>
 
 <tr><td><b>Add a Data Source</b></td><td><pre>--addDataSource
---runIngest (optional)</pre></td><td><pre>--dataSourcePath</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest</pre></td></tr>
+--runIngest (optional)
+--runIngest=(ingest profile name) (optional)</pre></td><td><pre>--dataSourcePath</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest</pre></td></tr>
 
-<tr><td><b>Run Ingest on Existing Data Source</b><td><pre>--runIngest</pre></td><td><pre>--dataSourceObjectId</pre></td><td><pre>--runIngest --dataSourceObjectId=1</pre></td></tr>
+<tr><td><b>Run Ingest on Existing Data Source</b><td><pre>--runIngest
+--runIngest=(ingest profile name)</pre></td><td><pre>--dataSourceObjectId</pre></td><td><pre>--runIngest --dataSourceObjectId=1
+--runIngest="imageAnalysis" --dataSourceObjectId=1</pre></td></tr>
 
-<tr><td><b>Generate Reports</b></td><td><pre>--generateReports</pre></td><td>&nbsp;</td><td><pre>--generateReports</pre></td></tr>
+<tr><td><b>Generate Reports</b></td><td><pre>--generateReports
+--generateReports=(report profile name)</pre></td><td>&nbsp;</td><td><pre>--generateReports
+--generateReports="kmlReport"</pre></td></tr>
 
 <tr><td><b>Create List of Data Sources</b></td><td><pre>--listAllDataSources</pre></td><td>&nbsp;</td><td></td><pre>--listAllDataSources</pre></tr>
 </table>
@@ -92,6 +110,13 @@ autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSourc
    --dataSourcePath="R:\work\images\green_images.img"
 \endverbatim
 
+Next we'll add a third data source ("red_images.img") to the case and run ingest using a custom ingest profile "imageAnalysis" created as described in the \ref command_line_ingest_profile "Configuring Ingest Profiles" section above. 
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest="imageAnalysis"
+   --dataSourcePath="R:\work\images\red_images.img"
+\endverbatim
+
 Finally we'll add a folder ("Test files") as a logical file set to a new case ("test9"). 
 
 \verbatim
@@ -132,6 +157,12 @@ autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSourc
    --dataSourcePath="R:\work\images\small2.img" --runIngest --generateReports
 \endverbatim
 
+The example above uses the default report profile. If you set up a custom report profile as described in the \ref command_line_report_profile "Configuring Ingest Profiles section" above, you can specify that profile after the --generateReports option.
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --generateReports="html"
+\endverbatim
+
 \subsection command_line_listds Listing All Data Sources
 
 You can add the --listAllDataSources at any time to output a list of all data sources currently in the case along with their object IDs, to be used when \ref command_line_existing_ds "running on an existing data source". This command can even be run alone with just the path to the case.
@@ -151,7 +182,7 @@ If you've entered everything correctly, Autopsy will load and you'll see this di
 
 \image html command_line_ingest_dialog.png
 
-If you instead see the normal case open dialog, it most likely means that your command line is malformed. Verify that there are no typos and that you have the appropriate parameters for the operation(s) you're attempting. 
+If you entered something incorrectly you will likely see an error in the output. You'll want to compare what you ran with the descriptions and examples above to try to fix the error.
 
 If everything works correctly, you'll see a log of the processing being done and Autopsy will close when finished.
 
@@ -160,7 +191,13 @@ If everything works correctly, you'll see a log of the processing being done and
 
 \section command_line_ingest_results Viewing Results
 
-You can open the case created on the command line like any other Autopsy case. Simply go to "Open Case" and then browse to the output folder you set up in the \ref command_line_ingest_config section and look for the folder starting with your case name. It will have a timestamp appended to the name you specified.
+You can open the case you created directly from the command line by specifying either the case folder or the path to the ".aut" file. Remember that the folder name will have a timestamp appended to your case name.
+\verbatim
+autopsy64.exe "C:\work\cases\xpCase_2019_09_20_14_39_25"
+autopsy64.exe "C:\work\cases\xpCase_2019_09_20_14_39_25\xpCase.aut"
+\endverbatim
+
+You can also open the case normally through Autopsy. Simply go to "Open Case" and then browse to the output folder you set up in the \ref command_line_ingest_config section and look for the folder starting with your case name. It will have a timestamp appended to the name you specified.
 
 \image html command_line_ingest_open_case.png
 

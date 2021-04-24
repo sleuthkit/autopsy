@@ -43,6 +43,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.TimedProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -248,9 +249,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         try {
             Index indexInfo = server.getIndexInfo();
-            if (!IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
-                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSolrVersionNotSupported(indexInfo.getSolrVersion()));
-            }
             if (!indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
                 throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));
             }
@@ -295,7 +293,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             } else {
                 // for single-user cases need to verify connection to local SOLR service
                 try {
-                    if (!server.isRunning()) {
+                    if (!server.isLocalSolrRunning()) {
                         throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()));
                     }
                 } catch (KeywordSearchModuleException ex) {
@@ -515,6 +513,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         private boolean extractTextAndIndex(AbstractFile aFile, Map<String, String> extractedMetadata) throws IngesterException {
             ImageConfig imageConfig = new ImageConfig();
             imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
+            imageConfig.setLimitedOCREnabled(KeywordSearchSettings.getLimitedOcrOption());
             ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
             Lookup extractionContext = Lookups.fixed(imageConfig, terminator);
 
@@ -526,6 +525,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 try {
                     Map<String, String> metadata = extractor.getMetadata();
                     if (!metadata.isEmpty()) {
+                        // Creating the metadata artifact here causes occasional problems
+                        // when indexing the text, so we save the metadata map to 
+                        // use after this method is complete.
                         extractedMetadata.putAll(metadata);
                     }
                     CharSource formattedMetadata = getMetaDataCharSource(metadata);
@@ -649,7 +651,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
                 TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(aFile, stringsExtractionContext);
                 Reader extractedTextReader = stringsExtractor.getReader();
-                if (Ingester.getDefault().indexText(extractedTextReader, aFile.getId(), aFile.getName(), aFile, KeywordSearchIngestModule.this.context)) {
+                if (Ingester.getDefault().indexStrings(extractedTextReader, aFile.getId(), aFile.getName(), aFile, KeywordSearchIngestModule.this.context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {
@@ -773,7 +775,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 extractStringsAndIndex(aFile);
             }
             
-            // Testing whether creating the metadata artifact here will solve the pipe broken issue
+            // Now that the indexing is complete, create the metadata artifact (if applicable).
+            // It is unclear why calling this from extractTextAndIndex() generates
+            // errors.
             if (!extractedMetadata.isEmpty()) {
                 createMetadataArtifact(aFile, extractedMetadata);
             }

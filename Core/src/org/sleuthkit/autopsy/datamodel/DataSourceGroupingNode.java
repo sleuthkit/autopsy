@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.logging.Level;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,7 +47,8 @@ class DataSourceGroupingNode extends DisplayableItemNode {
     DataSourceGroupingNode(DataSource dataSource) {
 
         super (Optional.ofNullable(createDSGroupingNodeChildren(dataSource))
-                        .orElse(new RootContentChildren(Arrays.asList(Collections.EMPTY_LIST))));
+                        .orElse(new RootContentChildren(Arrays.asList(Collections.EMPTY_LIST))), 
+                Lookups.singleton(dataSource));
 
         if (dataSource instanceof Image) {
             Image image = (Image) dataSource;

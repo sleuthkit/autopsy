@@ -23,6 +23,8 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.eventlisteners.CaseEventListener;
+import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -33,6 +35,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = AutopsyService.class)
 public class CentralRepositoryService implements AutopsyService {
 
+    private CaseEventListener caseEventListener = new CaseEventListener();
+    private IngestEventsListener ingestEventListener = new IngestEventsListener();
+    
     @Override
     @NbBundle.Messages({
         "CentralRepositoryService.serviceName=Central Repository Service"
@@ -42,8 +47,8 @@ public class CentralRepositoryService implements AutopsyService {
     }
 
     @NbBundle.Messages({
-        "CentralRepositoryService.progressMsg.updatingSchema=Updating schema...",
-        "CentralRepositoryService.progressMsg.updatingDataSourcesTable=Checking for v1.2 data updates...",})
+        "CentralRepositoryService.progressMsg.updatingSchema=Checking for schema updates..."
+    })
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         if (!CentralRepository.isEnabled()) {
@@ -58,8 +63,33 @@ public class CentralRepositoryService implements AutopsyService {
             return;
         }
 
-        progress.progress(Bundle.CentralRepositoryService_progressMsg_updatingDataSourcesTable());
         dataUpgradeForVersion1dot2(context.getCase());
+        
+        caseEventListener = new CaseEventListener();
+        caseEventListener.installListeners();
+        
+        ingestEventListener = new IngestEventsListener();
+        ingestEventListener.installListeners();
+        
+    }
+    
+    @NbBundle.Messages({
+        "CentralRepositoryService.progressMsg.waitingForListeners=Finishing adding data to central repository database...."
+    })
+    @Override
+    public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
+        ProgressIndicator progress = context.getProgressIndicator();
+        progress.progress(Bundle.CentralRepositoryService_progressMsg_waitingForListeners());
+        
+        if (caseEventListener != null) {
+            caseEventListener.uninstallListeners();
+            caseEventListener.shutdown();
+        }
+        
+        if (ingestEventListener != null) {
+            ingestEventListener.uninstallListeners();
+            ingestEventListener.shutdown();
+        }
     }
 
     /**

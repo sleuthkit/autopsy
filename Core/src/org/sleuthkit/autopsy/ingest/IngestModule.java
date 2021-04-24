@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,9 +25,8 @@ package org.sleuthkit.autopsy.ingest;
  * ingest job it performs (one for each thread that it is using).
  *
  * Autopsy will call startUp() before any data is processed, will pass any data
- * to be analyzed into the process() method (FileIngestModule.process() or
- * DataSourceIngestModule.process()), and call shutDown() after either all data
- * is analyzed or the user has canceled the job.
+ * to be analyzed into the process() method, and call shutDown() after either
+ * all data is analyzed or the user has canceled the job.
  *
  * Autopsy may use multiple threads to complete an ingest job, but it is
  * guaranteed that a module instance will always be called from a single thread.
@@ -47,24 +46,52 @@ package org.sleuthkit.autopsy.ingest;
 public interface IngestModule {
 
     /**
-     * A return code for derived class process() methods.
+     * Invoked by Autopsy to allow an ingest module instance to set up any
+     * internal data structures and acquire any private resources it will need
+     * during an ingest job. If the module depends on loading any resources, it
+     * should do so in this method so that it can throw an exception in the case
+     * of an error and alert the user. Exceptions that are thrown from startUp()
+     * are logged and stop processing of the data source.
+     *
+     * IMPORTANT: If the module instances must share resources, the modules are
+     * responsible for synchronizing access to the shared resources and doing
+     * reference counting as required to release those resources correctly.
+     * Also, more than one ingest job may be in progress at any given time. This
+     * must also be taken into consideration when sharing resources between
+     * module instances. See IngestModuleReferenceCounter.
+     *
+     * @param context Provides data and services specific to the ingest job and
+     *                the ingest pipeline of which the module is a part.
+     *
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
-    public enum ProcessResult {
-
-        OK,
-        ERROR
-    };
+    default void startUp(IngestJobContext context) throws IngestModuleException {
+    }
 
     /**
-     * A custom exception for the use of ingest modules.
+     * Invoked by Autopsy when an ingest job is completed (either because the
+     * data has been analyzed or because the job was cancelled), before the
+     * ingest module instance is discarded. The module should respond by doing
+     * things like releasing private resources, submitting final results, and
+     * posting a final ingest message.
+     * 
+     * IMPORTANT: If the module instances must share resources, the modules are
+     * responsible for synchronizing access to the shared resources and doing
+     * reference counting as required to release those resources correctly.
+     * Also, more than one ingest job may be in progress at any given time. This
+     * must also be taken into consideration when sharing resources between
+     * module instances. See IngestModuleReferenceCounter.
+     *
+     */
+    default void shutDown() {
+    }
+
+    /**
+     * An exception for the use of ingest modules.
      */
     public class IngestModuleException extends Exception {
 
         private static final long serialVersionUID = 1L;
-
-        @Deprecated
-        public IngestModuleException() {
-        }
 
         public IngestModuleException(String message) {
             super(message);
@@ -73,26 +100,21 @@ public interface IngestModule {
         public IngestModuleException(String message, Throwable cause) {
             super(message, cause);
         }
+
+        @Deprecated
+        public IngestModuleException() {
+        }
+
     }
 
     /**
-     * Invoked by Autopsy to allow an ingest module instance to set up any
-     * internal data structures and acquire any private resources it will need
-     * during an ingest job. If the module depends on loading any resources, it
-     * should do so in this method so that it can throw an exception in the case
-     * of an error and alert the user. Exceptions that are thrown from process()
-     * and shutDown() are logged, but do not stop processing of the data source.
-     *
-     * @param context Provides data and services specific to the ingest job and
-     *                the ingest pipeline of which the module is a part.
-     *
-     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
+     * A return code for subclass process() methods.
      */
-    void startUp(IngestJobContext context) throws IngestModuleException;
+    public enum ProcessResult {
 
-    /**
-     * TODO: The next time an API change is legal, add a cancel() method and
-     * remove the "ingest job is canceled" queries from the IngestJobContext
-     * class.
-     */
+        OK,
+        ERROR
+
+    };
+
 }

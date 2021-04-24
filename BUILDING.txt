@@ -1,4 +1,4 @@
-                  Last Updated: 1 February 2019
+                  Last Updated: 5 August 2020
 
 This file outlines what it takes to build Autopsy from source.
 
@@ -15,14 +15,13 @@ STEPS:
 that we use, you'll need 1.8.0_66 or greater. You can now use 32-bit or 64-bit, 
 but special work is needed to get The Sleuth Kit to compile as 64-bit.
 
-Autopsy has been used and tested with Oracle JavaSE and the included JavaFX support
-(http://www.oracle.com/technetwork/java/javase/downloads/index.html).
+Autopsy has been used and tested with the following OpenJDK build
+(https://github.com/ojdkbuild/ojdkbuild/releases/tag/java-1.8.0-openjdk-1.8.0.222-1.b10).
 
-OpenJDK and OpenJFX might work, but they are not fully tested with Autopsy.
 
 1b) Ensure that JDK_HOME is set to the root JDK directory.
 
-1c) (optional) Download and install Netbeans IDE (http://netbeans.org/)
+1c) (optional) Download and install Netbeans IDE (https://netbeans.apache.org/download/index.html)
 Note: Netbeans IDE is not required to build and run Autopsy,
 but it is a recommended IDE to use for development of Autopsy modules.
 
@@ -37,16 +36,16 @@ to the root 64-bit JRE directory.
 2) Get Sleuth Kit Setup
 2a) Download and build a Release version of Sleuth Kit (TSK) 4.0. See
     win32\BUILDING.txt in the TSK package for more information. You need to 
-    build the tsk_jni project. Select the Release_PostgreSQL Win32 or x64 target,
+    build the tsk_jni project. Select the Release Win32 or x64 target,
     depending upon your target build. You can use a released version or download 
     the latest from github:
 - git://github.com/sleuthkit/sleuthkit.git
 
-2b) Build the TSK JAR file by typing 'ant dist-PostgreSQL' in
+2b) Build the TSK JAR file by typing 'ant dist' in
     bindings/java in the
     TSK source code folder from a command line. Note it is case
     sensitive. You can also add the code to a NetBeans project and build
-    it from there, selecting the dist-PostgreSQL target.
+    it from there, selecting the dist target.
 
 2c) Set TSK_HOME environment variable to the root directory of TSK
 
@@ -54,6 +53,9 @@ to the root 64-bit JRE directory.
 from the TSK root directory to install the libraries and such in
 the needed places (i.e. '/usr/local').
 
+2e) Build the TSK CaseUco jar file by running 'ant' in
+    the case-uco/java folder of the TSK source folder. You can also add the
+    code to a NetBeans project and build using the regular 'build' action.
 
 3) For Windows builds, GStreamer must be setup. GStreamer is used to view video
 files. You can either download it and install it, or you can copy it from the
@@ -100,7 +102,7 @@ the build process.
 
 - The Sleuth Kit Java datamodel JAR file has native JNI libraries
 that are copied into it. These JNI libraries have dependencies on
-libewf, zlib, libpq, libintl-8, libeay32, and ssleay32 DLL files. On non-Windows 
+libewf, zlib, libintl-8, libeay32, and ssleay32 DLL files. On non-Windows 
 platforms, the JNI library also has a dependency on libtsk (on Windows, 
 it is compiled into libtsk_jni).
 

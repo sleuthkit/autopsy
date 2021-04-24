@@ -10,6 +10,16 @@
      
      
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    
+    <!-- import ant-contrib tools -->
+    <property name="ant-contrib.dir" value="${thirdparty.dir}/ant-contrib/1.0b3" />
+    <property name="ant.contrib.jar" value="${ant-contrib.dir}/ant-contrib.jar" />
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="${ant.contrib.jar}"/>
+        </classpath>
+    </taskdef>
+
     <property name="modules.dir" value="${basedir}/release/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
     <property name="test-input" location="test/qa-functional/data"/>
@@ -21,6 +31,17 @@
     </target>
 
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
+        <!--
+            Copy netbeans localization jars: 
+            This contains jars provided in Netbeans 8 RCP that provide localization bundles.  
+            They do not appear to be included in Netbeans >= 9.  
+            See VIK-7434 for more information.
+        -->
+        <mkdir dir="${modules.dir}/locale"/>
+        <copy todir="${modules.dir}/locale" >
+            <fileset dir="${thirdparty.dir}/NetbeansLocalization"/>
+        </copy>
+
         <!--Copy photorec to release-->
         <copy todir="${basedir}/release/photorec_exec" >
             <fileset dir="${thirdparty.dir}/photorec_exec"/>
@@ -48,6 +69,16 @@
         <copy todir="${basedir}/release/gstreamer" >
             <fileset dir="${thirdparty.dir}/gstreamer"/>
         </copy>
+        
+        <!--Copy iLeapp to release-->
+        <copy todir="${basedir}/release/iLeapp" >
+            <fileset dir="${thirdparty.dir}/iLeapp"/>
+        </copy>
+		
+        <!--Copy aLeapp to release-->
+        <copy todir="${basedir}/release/aLeapp" >
+            <fileset dir="${thirdparty.dir}/aLeapp"/>
+        </copy>
 		
         <!--Copy 7-Zip to release-->
         <copy todir="${basedir}/release/7-Zip" >
@@ -57,6 +88,21 @@
         <!--Copy InterestingFileSetRules to release-->
         <copy todir="${basedir}/release/InterestingFileSetRules" >
             <fileset dir="${thirdparty.dir}/InterestingFileSetRules"/>
+        </copy>
+
+        <!--Copy OfficialHashSets to release-->
+        <copy todir="${basedir}/release/OfficialHashSets" >
+            <fileset dir="${thirdparty.dir}/OfficialHashSets"/>
+        </copy>
+        
+        <!--Copy ImageMagick to release-->
+        <copy todir="${basedir}/release/ImageMagick-7.0.10-27-portable-Q16-x64" >
+            <fileset dir="${thirdparty.dir}/ImageMagick-7.0.10-27-portable-Q16-x64"/>
+        </copy>
+
+        <!--Copy DomainCategorization to release-->
+        <copy todir="${basedir}/release/DomainCategorization" >
+            <fileset dir="${thirdparty.dir}/DomainCategorization"/>
         </copy>
 
         <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
@@ -83,6 +129,11 @@
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5-contrib.jar" todir="${ext.dir}" />
 		<copy file="${thirdparty.dir}/DatCon/3.6.9/DatCon.jar" todir="${ext.dir}" />
+        <!--Copy YARA to release-->
+        <copy todir="${basedir}/release/yara" >
+            <fileset dir="${thirdparty.dir}/yara/bin"/>
+        </copy>
+        <copy file="${thirdparty.dir}/yara/bin/YaraJNIWrapper.jar" todir="${ext.dir}" />
     </target>
     
     
@@ -103,14 +154,16 @@
               tofile="${ext.dir}/sleuthkit-${TSK_VERSION}.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.25.2.jar"
               tofile="${ext.dir}/sqlite-jdbc-3.25.2.jar"/>
-		<copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 
-              tofile="${ext.dir}/postgresql-9.4.1211.jre7.jar"/>
+		<copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-42.2.18.jar" 
+              tofile="${ext.dir}/postgresql-42.2.18.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"
               tofile="${ext.dir}/mchange-commons-java-0.2.9.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
               tofile="${ext.dir}/c3p0-0.9.5.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
-                      tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	  
+              tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	
+        <copy file="${env.TSK_HOME}/case-uco/java/dist/sleuthkit-caseuco-${TSK_VERSION}.jar" 
+              tofile="${ext.dir}/sleuthkit-caseuco-${TSK_VERSION}.jar"/>  
     </target>
 
     <target name="download-binlist">
@@ -122,12 +175,11 @@
 
     <target name="getTestDataFiles">
         <mkdir dir="${basedir}/test/qa-functional/data"/>
-	<get src="https://drive.google.com/uc?id=1gyKzqJHtaBjFBqeB29N5vSpf1oH9N0bV" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1gyKzqJHtaBjFBqeB29N5vSpf1oH9N0bV" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1gvvV797dKczkwpWII4hIryBXCc0w5zL-" dest="${test-input}/BitlockerDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1lYzd--9YUB7yDccM7NPOo8PC1xxuOiKs" dest="${test-input}/SqlCipherDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1QRNKs824kksiJLZ4qcs59Nytw0fJKEjb" dest="${test-input}/IngestFilters_img1_v1.img" skipexisting="true"/>  
         <get src="https://drive.google.com/uc?id=1OMTB5gD4_VuaFkLWu2I33FN8VAHoRQbW" dest="${test-input}/IngestFilters_local1_v1.zip" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1WGMkivlDi_I_vB1aYY6puAPktbmlNSL-" dest="${test-input}/PasswordDetection_img1_v1.img" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1X2DzJOJ1SjUkAtZXJ3oQHXkjF0NX_jOz" dest="${test-input}/VeracryptDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=19gRepVVvLsDHtBwIkX2VVjsBWIub7aIV" dest="${test-input}/CommonFiles_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1chUMtA0CNyPBZ0yuTl9F_O103R21Ox0p" dest="${test-input}/CommonFiles_img2_v1.vhd" skipexisting="true"/>
@@ -145,7 +197,7 @@
         <get src="https://drive.google.com/uc?id=1ns2olaWsBu_c4EoE4Seh8t_B3U5RnLKd" dest="${test-input}/CommonFilesAttrs_img1_v1.vhd" skipexisting="true"/>
 
     </target>
-
+    
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist">
         <mkdir dir="${ext.dir}"/>
         <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />        
@@ -155,6 +207,8 @@
     </target>
 
     <target name="init" depends="get-deps,harness.init"/>
+  
+
   
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy, 
@@ -166,7 +220,7 @@
     <target name="compile" depends="projectized-common.compile">
         <antcall target="copy-bundle" />
     </target>
-
+    
     <target name="copy-bundle">
         <!-- the externalized strings in 'src' are in both the java files as annotations and in the Bundle.property files.
         The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
@@ -178,5 +232,153 @@
             <globmapper from="*" to="*-MERGED"/>
         </copy>
     </target>
+
+    <!--sets up integration test system properties, calls underlying test-init, 
+    get test data files if they have not been retrieved, and then sets up the pathing jar and unit test simplification -->
+    <target name="test-init" depends="setup-integration-props,projectized-common.test-init,getTestDataFiles,qa-functional-pathing-jar,unit-test-path-simplification" />
+        
     
+    <target name="test-qa-functional">
+        <!--We don't want integration testing to run from standard qa functional-->
+        <property name="test.excludes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>
+        <antcall target="projectized-common.test-qa-functional" />
+    </target>   
+    
+     
+    <!--map from integration-test variables to test-qa-functional-sys-prop so they will be used as system properties-->
+    <target name="setup-integration-props" depends="init">   
+        <propertyselector 
+            property="integration-test-sys-props" 
+            match="^integration-test\.(.*)" 
+            select="\1" 
+            delimiter="," 
+            casesensitive="true" 
+            distinct="true"
+        />
+
+        <for list="${integration-test-sys-props}" param="integration-test-sys-prop">
+            <sequential>
+                <property 
+                    name="test-qa-functional-sys-prop.integration-test.@{integration-test-sys-prop}" 
+                    value="${integration-test.@{integration-test-sys-prop}}" 
+                />
+            </sequential>
+        </for>
+    </target>
+
+        
+    <!--    
+        The paths specified in 'module.run.classpath' are incorporated into the manifest of a jar and then the path to the 
+        jar is used as part of the classpath for '-do-junit' instead of 'module.run.classpath'.  This was done to prevent 
+        classpath length issues on windows.  More information on this technique can be found here: 
+        https://stackoverflow.com/a/201969.
+    -->
+    <target name="qa-functional-pathing-jar" depends="projectized-common.test-init">
+        <sequential>
+            <!--set up pathing jar based on module.run.classpath as classpath-->
+            <path id="test.qa-functional.pathing-jar.module-cp.classpath" path="${module.run.classpath}"/>
+            <pathconvert pathsep=" " refid="test.qa-functional.pathing-jar.module-cp.classpath" property="test.qa-functional.pathing-jar.module-cp.classpathstr"/>
+            <property name="test.qa-functional.pathing-jar.module-cp.loc" value="${cluster}/test.qa-functional.pathing.module-cp.jar"/>
+            <jar destfile="${test.qa-functional.pathing-jar.module-cp.loc}">
+                <manifest>
+                    <attribute name="Class-Path" value="${test.qa-functional.pathing-jar.module-cp.classpathstr}"/>
+                </manifest>
+            </jar>
+             
+            <!--grab properties from common.xml:test-init so that "test.qa-functional.run.cp" can be properly formed-->
+            <property name="build.test.qa-functional.dir" location="${build.dir}/test/qa-functional"/>
+            <property name="build.test.qa-functional.classes.dir" location="${build.test.qa-functional.dir}/classes"/>
+            <property name="test.qa-functional.cp.extra" value=""/>
+                
+            <!--set up "test.qa-functional.run.cp" to be used by common.xml:-do-junit-->
+            <path id="test.qa-functional.run.cp">
+                <pathelement path="${build.test.qa-functional.classes.dir}"/>
+                <!-- Cannot use <path refid="cp"/> since that uses ${module.classpath} and we want ${module.run.classpath}: -->
+                <pathelement path="${test.qa-functional.runtime.cp}"/>
+                <pathelement path="${cp.extra}"/>
+                <pathelement location="${cluster}/${module.jar}"/>
+                <path refid="test.unit.lib.cp"/>
+                <!-- for compatibility with property based classpath-->
+                <pathelement path="${test.qa-functional.pathing-jar.module-cp.loc}"/>
+                <pathelement path="${test.qa-functional.run.cp.extra}"/>
+                <pathelement path="${test.qa-functional.cp.extra}"/>
+                <pathelement path="${test.extra.nb.javac.deps}"/>
+            </path>
+        </sequential>
+    </target>
+
+    <target name="integration-test">
+        <!--We want only integration testing to run from this-->
+        <sequential>
+            <property name="test.includes" value="**/org/sleuthkit/autopsy/integrationtesting/TestRunner.class"/>   
+            <!-- This overrides the value in common.xml:test-init that sets each test lasting 10 minutes maximum.
+            More information on the timeout can be found here: http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-nbjunit/org/netbeans/junit/NbTestCase.html 
+            under timeout() or in the harness README. Current value is 4 hours (4 * 60 * 60 * 1000) -->
+            <property name="test.timeout" value="14400000"/>     
+            <antcall target="projectized-common.test-qa-functional" />
+        </sequential>
+    </target>    
+    
+ 
+    <!--  
+    This specifies the classpath for unit tests using * notation 
+    (i.e. https://stackoverflow.com/questions/219585/including-all-the-jars-in-a-directory-within-the-java-classpath).  
+    This solution involves taking the initial ‘module.run.classpath’ property and simplifying it to the directories containing jars 
+    (i.e. instead of “/dir/lib1.jar:/dir/lib2.jar:/dir/lib3.jar” it becomes “/dir/*” ).  
+    More information on ‘module.run.classpath’ can be found in “netbeans-plat\11.3\harness\README” and it appears that
+    “netbeans-plat\11.3\harness\build.xml:build-init target is in charge of setting the ‘module.run.classpath’ variable.
+    More information in Jira: 6970.
+    -->
+    <target name="unit-test-path-simplification" depends="projectized-common.test-init">
+        <sequential>
+            <script language="javascript">
+                <![CDATA[ 
+                    var moduleRunClasspath = project.getProperty("module.run.classpath");
+
+                    var directories = [];
+                    // searches for jar file parent directories with path separators of \ or /
+                    var individualPathRegex = /^\s*(.+?[\\\/])[^\\\/]+?\.jar\s*$/i;
+                    // split on ':' but not 'C:\'
+                    var classPathRegex = /((C:\\)?.+?)(:|$)/gi;
+                    var match;
+                    while((match = classPathRegex.exec(moduleRunClasspath)) !== null) {
+                        var thisPath = match[1];
+                        var pathMatch = thisPath.match(individualPathRegex);
+                        // find unique matches
+                        if (pathMatch && directories.indexOf(pathMatch[1]) < 0) {
+                            directories.push(pathMatch[1]);
+                        }
+                    }
+
+                    // suffix with *
+                    for (var i = 0; i < directories.length; i++) {
+                        directories[i] = directories[i] + "*";
+                    }
+
+                    // set project property
+                    project.setNewProperty("test.unit.abbreviatedModuleRunClassPath", directories.join(":"));
+                ]]>
+            </script>
+
+            <!--grab properties from common.xml:test-init so that "test.unit.run.cp" can be properly formed-->
+            <property name="build.test.unit.dir" location="${build.dir}/test/unit"/>
+            <property name="build.test.unit.classes.dir" location="${build.test.unit.dir}/classes"/>
+            <property name="test.unit.cp.extra" value=""/>
+                
+            <!--set up "test.unit.run.cp" to be used by common.xml:-do-junit-->
+            <path id="test.unit.run.cp">
+                <pathelement path="${build.test.unit.classes.dir}"/>
+                <!-- Cannot use <path refid="cp"/> since that uses ${module.classpath} and we want ${module.run.classpath}: -->
+                <pathelement path="${test.unit.runtime.cp}"/>
+                <pathelement path="${cp.extra}"/>
+                <pathelement location="${cluster}/${module.jar}"/>
+                <path refid="test.unit.lib.cp"/>
+                <!-- for compatibility with property based classpath-->
+                <pathelement path="${test.unit.abbreviatedModuleRunClassPath}"/>
+                <pathelement path="${test.unit.run.cp.extra}"/>
+                <pathelement path="${test.unit.cp.extra}"/>
+                <pathelement path="${test.extra.nb.javac.deps}"/>
+            </path>
+        </sequential>
+    </target>     
 </project>

@@ -40,6 +40,7 @@
     ====================================================== -->
     <folder name="Actions">
         <folder name="Case">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.core.Bundle"/>
             <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseNewAction.instance">
@@ -49,6 +50,7 @@
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDetailsAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-datasourcesummary-DataSourceSummaryAction.instance"/>
+            <file name="org-sleuthkit-autopsy-datamodel-hosts-OpenHostsAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-UnpackagePortableCaseAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance">
@@ -139,13 +141,14 @@
         <file name="Edit_hidden"/>
         <file name="File_hidden"/>
         <folder name="Case">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.core.Bundle"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseNewAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
                 <attr name="position" intvalue="100"/>
             </file>
-            <folder name="Open Recent Case">
+            <folder name="OpenRecentCase">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.core.Bundle"/>
                 <attr name="position" intvalue="101"/>
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.casemodule.Bundle"/>
                 <file name="org-sleuthkit-autopsy-casemodule-RecentCasesAction.shadow">
                     <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
                 </file>
@@ -164,7 +167,11 @@
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImage-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="200"/>
+                <attr name="position" intvalue="150"/>
+            </file>
+                <file name="org-sleuthkit-autopsy-datamodel-hosts-OpenHostsAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-datamodel-hosts-OpenHostsAction.instance"/>
+                <attr name="position" intvalue="151"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-AddImageAction.instance"/>
@@ -276,7 +283,6 @@
         <folder name="Help">
             <file name="org-netbeans-core-actions-AboutAction.shadow_hidden"/>
             <file name="org-netbeans-modules-autoupdate-ui-actions-CheckForUpdatesAction.shadow_hidden"/>
-            <attr name="master-help.xml/org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow" boolvalue="true"/>
         </folder>
     </folder>
 
@@ -373,6 +379,7 @@
         <file name="UndoRedo_hidden"/>
         <file name="File_hidden"/>
         <folder name="Case">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.core.Bundle"/>
             <attr name="position" intvalue="90"/>
             <!--<file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.AddImageAction"/>
@@ -450,6 +457,7 @@
             <file name="cvt.wsmode" url="cvtWsmode.xml"/>
             <file name="discovery.wsmode" url="discoveryWsmode.xml"/>
             <file name="geolocation.wsmode" url="geolocationWsmode.xml"/>
+            <file name="personas.wsmode" url="personasWsmode.xml"/>
         </folder>
     </folder>
     

@@ -1,5 +1,8 @@
 /*! \page logical_imager_page Logical Imager
 
+[TOC]
+
+
 \section logical_imager_overview Overview
 
 The logical imager allows you to collect files from a live Windows computer. The imager is configured with rules that specify what files to collect. Rules can be based on file attributes such as folder names, extensions, and sizes. You can use this feature when you do not have time or authorization to perform a full drive acquisition.

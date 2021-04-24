@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -59,8 +59,6 @@ import org.sleuthkit.datamodel.TskException;
 @Messages({
     "HashDbIngestModule.noKnownBadHashDbSetMsg=No notable hash set.",
     "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Notable file search will not be executed.",
-    "HashDbIngestModule.noChangeHashDbSetMsg=No 'No Change' hash set.",
-    "HashDbIngestModule.noChangeFileSearchWillNotExecuteWarn='No Change' file search will not be executed.",
     "HashDbIngestModule.noKnownHashDbSetMsg=No known hash set.",
     "HashDbIngestModule.knownFileSearchWillNotExecuteWarn=Known file search will not be executed.",
     "# {0} - fileName", "HashDbIngestModule.lookingUpKnownBadHashValueErr=Error encountered while looking up notable hash value for {0}.",
@@ -146,13 +144,6 @@ public class HashDbIngestModule implements FileIngestModule {
                         Bundle.HashDbIngestModule_noKnownBadHashDbSetMsg(),
                         Bundle.HashDbIngestModule_knownBadFileSearchWillNotExecuteWarn()));
             }
-            
-            if (noChangeHashSets.isEmpty()) {
-                services.postMessage(IngestMessage.createWarningMessage(
-                        HashLookupModuleFactory.getModuleName(),
-                        Bundle.HashDbIngestModule_noChangeHashDbSetMsg(),
-                        Bundle.HashDbIngestModule_noChangeFileSearchWillNotExecuteWarn()));
-            }
 
             if (knownHashSets.isEmpty()) {
                 services.postMessage(IngestMessage.createWarningMessage(
@@ -217,10 +208,17 @@ public class HashDbIngestModule implements FileIngestModule {
         // Safely get a reference to the totalsForIngestJobs object
         IngestJobTotals totals = getTotalsForIngestJobs(jobId);
 
-        // calc hash value        
-        String md5Hash = getHash(file, totals);
-        if (md5Hash == null) {
-            return ProcessResult.ERROR;
+        // calc hash values
+        try {
+            calculateHashes(file, totals);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, String.format("Error calculating hash of file '%s' (id=%d).", file.getName(), file.getId()), ex); //NON-NLS
+            services.postMessage(IngestMessage.createErrorMessage(
+                    HashLookupModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(), "HashDbIngestModule.fileReadErrorMsg", file.getName()),
+                    NbBundle.getMessage(this.getClass(), "HashDbIngestModule.calcHashValueErr",
+                            file.getParentPath() + file.getName(),
+                            file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC) ? "Allocated File" : "Deleted File")));
         }
 
         // the processing result of handling this file
@@ -460,50 +458,46 @@ public class HashDbIngestModule implements FileIngestModule {
     }
 
     /**
-     * Retrieves the md5 hash for a file or generates one if no one exists on
-     * the file.
+     * Generates hashes for the given file if they haven't already been set. 
+     * Hashes are saved to the AbstractFile object.
      *
      * @param file   The file in order to determine the hash.
      * @param totals The timing metrics for this process.
-     *
-     * @return The found or determined md5 hash or null if none could be
-     *         determined.
      */
-    private String getHash(AbstractFile file, IngestJobTotals totals) {
+    private void calculateHashes(AbstractFile file, IngestJobTotals totals) throws TskCoreException {
+        
+        // First check if we've already calculated the hashes.
         String md5Hash = file.getMd5Hash();
-        if (md5Hash != null && md5Hash.isEmpty()) {
-            return md5Hash;
+        String sha256Hash = file.getSha256Hash();
+        if ((md5Hash != null && ! md5Hash.isEmpty())
+                && (sha256Hash != null && ! sha256Hash.isEmpty())) {
+            return;
         }
 
-        try {
-            TimingMetric metric = HealthMonitor.getTimingMetric("Disk Reads: Hash calculation");
-            long calcstart = System.currentTimeMillis();
-            md5Hash = HashUtility.calculateMd5Hash(file);
-            if (file.getSize() > 0) {
-                // Surprisingly, the hash calculation does not seem to be correlated that
-                // strongly with file size until the files get large.
-                // Only normalize if the file size is greater than ~1MB.
-                if (file.getSize() < 1000000) {
-                    HealthMonitor.submitTimingMetric(metric);
-                } else {
-                    // In testing, this normalization gave reasonable resuls
-                    HealthMonitor.submitNormalizedTimingMetric(metric, file.getSize() / 500000);
-                }
+        TimingMetric metric = HealthMonitor.getTimingMetric("Disk Reads: Hash calculation");
+        long calcstart = System.currentTimeMillis();
+        List<HashUtility.HashResult> newHashResults = 
+                HashUtility.calculateHashes(file, Arrays.asList(HashUtility.HashType.MD5,HashUtility.HashType.SHA256 ));
+        if (file.getSize() > 0) {
+            // Surprisingly, the hash calculation does not seem to be correlated that
+            // strongly with file size until the files get large.
+            // Only normalize if the file size is greater than ~1MB.
+            if (file.getSize() < 1000000) {
+                HealthMonitor.submitTimingMetric(metric);
+            } else {
+                // In testing, this normalization gave reasonable resuls
+                HealthMonitor.submitNormalizedTimingMetric(metric, file.getSize() / 500000);
             }
-            file.setMd5Hash(md5Hash);
-            long delta = (System.currentTimeMillis() - calcstart);
-            totals.totalCalctime.addAndGet(delta);
-            return md5Hash;
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, String.format("Error calculating hash of file '%s' (id=%d).", file.getName(), file.getId()), ex); //NON-NLS
-            services.postMessage(IngestMessage.createErrorMessage(
-                    HashLookupModuleFactory.getModuleName(),
-                    NbBundle.getMessage(this.getClass(), "HashDbIngestModule.fileReadErrorMsg", file.getName()),
-                    NbBundle.getMessage(this.getClass(), "HashDbIngestModule.calcHashValueErr",
-                            file.getParentPath() + file.getName(),
-                            file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC) ? "Allocated File" : "Deleted File")));
-            return null;
         }
+        for (HashUtility.HashResult hash : newHashResults) {
+            if (hash.getType().equals(HashUtility.HashType.MD5)) {
+                file.setMd5Hash(hash.getValue());
+            } else if (hash.getType().equals(HashUtility.HashType.SHA256)) {
+                file.setSha256Hash(hash.getValue());
+            }
+        }
+        long delta = (System.currentTimeMillis() - calcstart);
+        totals.totalCalctime.addAndGet(delta);
     }
 
     /**

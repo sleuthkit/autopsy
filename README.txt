@@ -46,9 +46,9 @@ JRE (Java Runtime Environment) 1.8
 - Web page: http://www.oracle.com/technetwork/java/index.html
 - License: http://www.oracle.com/technetwork/java/javase/terms/license/index.html
 
-Netbeans 8.0.2 RCP platform and .jar files bundled with the platform
-- Web page: http://netbeans.org/features/platform/
-- License: https://netbeans.org/downloads/jdk-bundle/8.0.2/nb802-LICENSE.txt
+Netbeans 11.3 RCP platform and .jar files bundled with the platform
+- Web page: https://netbeans.apache.org/
+- License: https://www.apache.org/licenses/LICENSE-2.0
 
 Sleuth Kit for analyzing disk images.
 - Web page: http://www.sleuthkit.org/sleuthkit/

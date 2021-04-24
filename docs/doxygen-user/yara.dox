@@ -1,0 +1,50 @@
+/*! \page yara_page YARA Analyzer
+
+[TOC]
+
+
+\section yara_overview Overview
+
+The YARA Analyzer module uses a set of rules to search files for textual or binary patterns. YARA was designed for malware analysis but can be used to search for any type of files. For more information on YARA see <a href="https://virustotal.github.io/yara/">https://virustotal.github.io/yara/</a>.
+
+\section yara_config Configuration
+
+To create and edit your rule sets, go to "Tools", "Options" and then select the "YARA" tab. 
+
+\image html yara_options.png
+
+YARA rule sets are stored in folders in the user's Autopsy folder. To create a new rule set, click the "New Set" button in the lower left and enter the name for your new set.
+
+\image html yara_new_rule_set.png
+
+With your new rule set selected, click the "Open Folder" button to go to the newly created rules folder. You can now copy existing YARA files into this folder to include them in the rule set. Information on writing YARA rules can be found <a href="https://yara.readthedocs.io/en/stable/writingrules.html">here</a> and many existing YARA rules can be found through a web search. As a very simple example, we will add this rule to the sample rule set to find files that contain the words "hello" and "world":
+
+\verbatim
+rule HelloWorldRule
+{
+    strings:
+        $part1 = "hello" nocase 
+        $part2 = "world" nocase 
+
+    condition:
+        $part1 and $part2
+}
+\endverbatim
+
+Once you've added your rules to the folder, click the "Refresh File List" button to show them in the options panel.
+
+\section yara_running Running the Module
+
+To enable the YARA Analyzer ingest module select the checkbox in the \ref ingest_configure "Ingest Modules configuration screen". 
+
+\image html yara_ingest_settings.png
+
+Make sure all rule sets you want to run are checked. You can also choose between running on all files or only running on executable files. 
+
+\section yara_results Viewing Results
+
+Results are show in the Results tree under "Extracted Content". 
+
+\image html yara_results.png
+
+*/

@@ -434,7 +434,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         setColumnWidths();
-        
+
         /*
          * Load column sorting information from preferences file and apply it to
          * columns.
@@ -460,26 +460,27 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * If one of the child nodes of the root node is to be selected, select
          * it.
          */
-        SwingUtilities.invokeLater(() -> {
-            if (rootNode instanceof TableFilterNode) {
-                NodeSelectionInfo selectedChildInfo = ((TableFilterNode) rootNode).getChildNodeSelectionInfo();
-                if (null != selectedChildInfo) {
-                    Node[] childNodes = rootNode.getChildren().getNodes(true);
-                    for (int i = 0; i < childNodes.length; ++i) {
-                        Node childNode = childNodes[i];
-                        if (selectedChildInfo.matches(childNode)) {
+        if (rootNode instanceof TableFilterNode) {
+            NodeSelectionInfo selectedChildInfo = ((TableFilterNode) rootNode).getChildNodeSelectionInfo();
+            if (null != selectedChildInfo) {
+                Node[] childNodes = rootNode.getChildren().getNodes(true);
+                for (int i = 0; i < childNodes.length; ++i) {
+                    Node childNode = childNodes[i];
+                    if (selectedChildInfo.matches(childNode)) {
+                        SwingUtilities.invokeLater(() -> {
                             try {
-                                this.getExplorerManager().setSelectedNodes(new Node[]{childNode});
+                                this.getExplorerManager().setExploredContextAndSelection(this.rootNode, new Node[]{childNode});
                             } catch (PropertyVetoException ex) {
                                 LOGGER.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
                             }
-                            break;
-                        }
+                        });
+
+                        break;
                     }
-                    ((TableFilterNode) rootNode).setChildNodeSelectionInfo(null);
                 }
+                ((TableFilterNode) rootNode).setChildNodeSelectionInfo(null);
             }
-        });
+        }
 
         /*
          * The table setup is done, so any added/removed events can now be
@@ -516,7 +517,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     protected void setColumnWidths() {
         if (rootNode.getChildren().getNodesCount() != 0) {
             final Graphics graphics = outlineView.getGraphics();
-            
+
             if (graphics != null) {
                 // Current width of the outlineView
                 double outlineViewWidth = outlineView.getSize().getWidth();
@@ -526,10 +527,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 int margin = 4;
                 int padding = 8;
-                
+
                 int totalColumnWidth = 0;
-                int cntMaxSizeColumns =0;
-                
+                int cntMaxSizeColumns = 0;
+
                 // Calulate the width for each column keeping track of the number
                 // of columns that were set to columnwidthLimit.
                 for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
@@ -552,40 +553,40 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                     columnWidth = Math.min(columnWidth, columnWidthLimit);
                     columnWidths.add(columnWidth);
-                    
+
                     totalColumnWidth += columnWidth;
-                    
-                    if( columnWidth == columnWidthLimit) {
+
+                    if (columnWidth == columnWidthLimit) {
                         cntMaxSizeColumns++;
                     }
                 }
-                
+
                 // Figure out how much extra, if any can be given to the columns
                 // so that the table is as wide as outlineViewWidth. If cntMaxSizeColumns
                 // is greater than 0 divide the extra space between the columns 
                 // that could use more space.  Otherwise divide evenly amoung 
                 // all columns.
                 int extraWidth = 0;
-                
+
                 if (totalColumnWidth < outlineViewWidth) {
-                    if  (cntMaxSizeColumns > 0) {
-                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth)/cntMaxSizeColumns);
+                    if (cntMaxSizeColumns > 0) {
+                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth) / cntMaxSizeColumns);
                     } else {
-                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth)/columnWidths.size());
+                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth) / columnWidths.size());
                     }
                 }
-                
-                for(int column = 0; column < columnWidths.size(); column++) {
+
+                for (int column = 0; column < columnWidths.size(); column++) {
                     int columnWidth = columnWidths.get(column);
-                    
-                    if(cntMaxSizeColumns > 0) {
-                        if(columnWidth >= ((column == 0) ? 350 : 300)) {
+
+                    if (cntMaxSizeColumns > 0) {
+                        if (columnWidth >= ((column == 0) ? 350 : 300)) {
                             columnWidth += extraWidth;
                         }
                     } else {
                         columnWidth += extraWidth;
                     }
-                    
+
                     outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
                 }
             }

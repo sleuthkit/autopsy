@@ -1,5 +1,8 @@
 /*! \page manifest_tool_page Manifest Tool
 
+[TOC]
+
+
 \section manifest_tool_overview Overview
 
 Manifest Tool is an executable designed to assist in the automated creation of manifest files 	which are necessary to run Auto Ingest on a data source. There is no installation necessary. To 	use the tool double click on Manifest Tool executable, when it opens select the option with the  	algorithm you 	wish to run from the combo box, and fill in all the available settings before 	clicking the Run button. A log with the success or failure of each manifest file it attempts to 	create will appear in the progress area.

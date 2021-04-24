@@ -28,10 +28,10 @@ import org.sleuthkit.datamodel.Content;
  */
 public final class IngestJobContext {
 
-    private final DataSourceIngestJob ingestJob;
+    private final IngestJobPipeline ingestJobPipeline;
 
-    IngestJobContext(DataSourceIngestJob ingestJob) {
-        this.ingestJob = ingestJob;
+    IngestJobContext(IngestJobPipeline ingestJobPipeline) {
+        this.ingestJobPipeline = ingestJobPipeline;
     }
 
     /**
@@ -40,7 +40,7 @@ public final class IngestJobContext {
      * @return The context string.
      */
     public String getExecutionContext() {
-        return this.ingestJob.getExecutionContext();
+        return this.ingestJobPipeline.getExecutionContext();
     }
         
     /**
@@ -49,7 +49,7 @@ public final class IngestJobContext {
      * @return The data source.
      */
     public Content getDataSource() {
-        return this.ingestJob.getDataSource();
+        return this.ingestJobPipeline.getDataSource();
     }
 
     /**
@@ -58,7 +58,7 @@ public final class IngestJobContext {
      * @return The ingest job identifier.
      */
     public long getJobId() {
-        return this.ingestJob.getId();
+        return this.ingestJobPipeline.getId();
     }
 
     /**
@@ -83,7 +83,7 @@ public final class IngestJobContext {
      * @return True or false.
      */
     public boolean dataSourceIngestIsCancelled() {
-        return this.ingestJob.currentDataSourceIngestModuleIsCancelled() || this.ingestJob.isCancelled();
+        return this.ingestJobPipeline.currentDataSourceIngestModuleIsCancelled() || this.ingestJobPipeline.isCancelled();
     }
 
     /**
@@ -94,7 +94,7 @@ public final class IngestJobContext {
      * @return True or false.
      */
     public boolean fileIngestIsCancelled() {
-        return this.ingestJob.isCancelled();
+        return this.ingestJobPipeline.isCancelled();
     }
 
     /**
@@ -104,7 +104,7 @@ public final class IngestJobContext {
      * @return True or false.
      */
     public boolean processingUnallocatedSpace() {
-        return this.ingestJob.shouldProcessUnallocatedSpace();
+        return this.ingestJobPipeline.shouldProcessUnallocatedSpace();
     }
 
     /**
@@ -127,7 +127,7 @@ public final class IngestJobContext {
      * @param files The files to be added.
      */
     public void addFilesToJob(List<AbstractFile> files) {
-        this.ingestJob.addFiles(files);
+        this.ingestJobPipeline.addFiles(files);
     }
 
 }

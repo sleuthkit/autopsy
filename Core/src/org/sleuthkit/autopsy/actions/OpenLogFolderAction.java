@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ActionRegistration(displayName = "#CTL_OpenLogFolder", iconInMenu = true)
-@ActionReference(path = "Menu/Help", position = 1750)
+@ActionReference(path = "Menu/Help", position = 2000)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenLogFolderAction", category = "Help")
 public final class OpenLogFolderAction implements ActionListener {
 

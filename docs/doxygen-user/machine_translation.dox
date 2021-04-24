@@ -1,5 +1,8 @@
 /*! \page machine_translation_page Machine Translation
 
+[TOC]
+
+
 You can configure a machine translation service to use with Autopsy. If one is configured, you will be able to translate text in the \ref content_viewer_page and file names in the \ref result_viewer_page and \ref tree_viewer_page.
 
 \section mt_config Configuration
@@ -13,6 +16,8 @@ To set up a machine translation service, go to Options->Tools and then select th
 \image html mt_config.png
 
 Each service will require slightly different configuration steps. After setting everything up, you can run a quick check that the service is set up correctly using the "Test" button.
+
+The checkbox at the bottom allows you to enable or disable optical character recognition (OCR). When enabled, if you select an image in the \ref mt_content_viewer "content viewer" Autopsy will use OCR to attempt to extract text to be translated. Instructions for installing OCR packages for different languages can be found on the \ref keyword_search_ocr_config "Keyword Search page".
 
 \section mt_file_names Translating File Names
 
@@ -45,5 +50,13 @@ Machine translation also works for messages. To translate a message, select the 
 Then use the drop-down menu on the right to change from "Original Text" to "Translated Text".
 
 \image html mt_message_translated.png
+
+If you've enabled OCR as described in the \ref mt_config section above, you can extract and translate text from images. Here is an image containing the beginning of a French poem:
+
+\image html mt_ocr_image.png
+
+If you go to the Text tab and then the Translation viewer it will use OCR to read text from the image and then display the translation. 
+
+\image html mt_ocr_result.png
 
 */

@@ -191,7 +191,7 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
         }
         // display warning if there is one (but don't disable "next" button)
         try {
-            if (!PathValidator.isValidForMultiUserCase(path, Case.getCurrentCaseThrows().getCaseType())) {
+            if (!PathValidator.isValidForCaseType(path, Case.getCurrentCaseThrows().getCaseType())) {
                 errorLabel.setVisible(true);
                 errorLabel.setText(Bundle.LogicalEvidenceFilePanel_pathValidation_dataSourceOnCDriveError());
                 return false;

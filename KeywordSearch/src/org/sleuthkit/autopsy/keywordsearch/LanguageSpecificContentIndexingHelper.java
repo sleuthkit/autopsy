@@ -49,12 +49,12 @@ class LanguageSpecificContentIndexingHelper {
         List<String> values = new ArrayList<>();
         values.add(chunk.toString());
         if (fields.containsKey(Server.Schema.FILE_NAME.toString())) {
-            values.add(fields.get(Server.Schema.FILE_NAME.toString()).toString());
+            values.add(Chunker.sanitize(fields.get(Server.Schema.FILE_NAME.toString()).toString()).toString());
         }
 
         // index the chunk to a language specific field
         fields.put(Server.Schema.CONTENT_JA.toString(), values);
-        fields.put(Server.Schema.LANGUAGE.toString(), language.getValue());
+        fields.put(Server.Schema.LANGUAGE.toString(), Chunker.sanitize(language.getValue()).toString());
     }
 
     void indexMiniChunk(Chunker.Chunk chunk, String sourceName, Map<String, Object> fields, String baseChunkID, Language language)
@@ -62,15 +62,19 @@ class LanguageSpecificContentIndexingHelper {
         //Make a SolrInputDocument out of the field map
         SolrInputDocument updateDoc = new SolrInputDocument();
         for (String key : fields.keySet()) {
-            updateDoc.addField(key, fields.get(key));
-        }
+            if (fields.get(key).getClass() == String.class) {
+                updateDoc.addField(key, Chunker.sanitize((String)fields.get(key)).toString());
+            } else {
+                updateDoc.addField(key, fields.get(key));
+            }
+        } 
 
         try {
-            updateDoc.setField(Server.Schema.ID.toString(), MiniChunkHelper.getChunkIdString(baseChunkID));
+            updateDoc.setField(Server.Schema.ID.toString(), Chunker.sanitize(MiniChunkHelper.getChunkIdString(baseChunkID)).toString());
 
             // index the chunk to a language specific field
-            updateDoc.addField(Server.Schema.CONTENT_JA.toString(), chunk.toString().substring(chunk.getBaseChunkLength()));
-            updateDoc.addField(Server.Schema.LANGUAGE.toString(), language.getValue());
+            updateDoc.addField(Server.Schema.CONTENT_JA.toString(), Chunker.sanitize(chunk.toString().substring(chunk.getBaseChunkLength())).toString());
+            updateDoc.addField(Server.Schema.LANGUAGE.toString(), Chunker.sanitize(language.getValue()).toString());
 
             TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
 

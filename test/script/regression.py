@@ -273,19 +273,24 @@ class TestRunner(object):
 
         # Compare output with gold and display results
         TestResultsDiffer.run_diff(test_data)
-        print("Html report passed: ", test_data.html_report_passed)
+        # NOTE: commented out html version items
+        # print("Html report passed: ", test_data.html_report_passed)
         print("Errors diff passed: ", test_data.errors_diff_passed)
         print("DB diff passed: ", test_data.db_diff_passed)
 
         # run time test only for the specific jenkins test
         if test_data.main_config.timing:
             print("Run time test passed: ", test_data.run_time_passed)
-            test_data.overall_passed = (test_data.html_report_passed and
-            test_data.errors_diff_passed and test_data.db_diff_passed)
+            # NOTE: commented out html version items
+            #test_data.overall_passed = (test_data.html_report_passed and
+            #test_data.errors_diff_passed and test_data.db_diff_passed)
+            test_data.overall_passed = (test_data.errors_diff_passed and test_data.db_diff_passed)
         # otherwise, do the usual
         else:
-            test_data.overall_passed = (test_data.html_report_passed and
-            test_data.errors_diff_passed and test_data.db_diff_passed)
+            # NOTE: commented out html version items
+            #test_data.overall_passed = (test_data.html_report_passed and
+            #test_data.errors_diff_passed and test_data.db_diff_passed)
+            test_data.overall_passed = (test_data.errors_diff_passed and test_data.db_diff_passed)
 
         Reports.generate_reports(test_data)
         if(not test_data.overall_passed):
@@ -339,10 +344,14 @@ class TestRunner(object):
         """
         copied = False
 
+        # string for whether or it is single user or multi user for diff
+        mu_su_str = "multi" if test_data.isMultiUser else "single"
+
         for file in glob.glob(test_data.output_path + "/*-Diff.txt"):
+            newPath = test_data.main_config.args.diff_files_output_folder + "/" + test_data.image + "-" + mu_su_str + "-" + os.path.basename(file)
             # Eg. copies HTML-Report-Diff.txt to <Image-name>-HTML-Report-Diff.txt
-            shutil.copy(file, test_data.main_config.args.diff_files_output_folder +
-                        "/" + test_data.image + "-" + os.path.basename(file))
+            print('copying ' + str(file) + ' to ' + newPath)
+            shutil.copy(file, newPath)
             copied = True
         if not copied:
             print_report([], "NO DIFF FILES COPIED FROM " + test_data.output_path, "")
@@ -471,6 +480,12 @@ class TestRunner(object):
         test_data.ant.append("-DsolrPort=" + str(test_config.solrPort))
         test_data.ant.append("-DmessageServiceHost=" + test_config.messageServiceHost)
         test_data.ant.append("-DmessageServicePort=" + str(test_config.messageServicePort))
+        test_data.ant.append("-DcrHost=" + str(test_config.crHost))
+        test_data.ant.append("-DcrPort=" + str(test_config.crPort))
+        test_data.ant.append("-DcrUserName=" + str(test_config.crUserName))
+        test_data.ant.append("-DcrPassword=" + str(test_config.crPassword))
+        test_data.ant.append("-DzooKeeperHost=" + str(test_config.zooKeeperHost))
+        test_data.ant.append("-DzooKeeperPort=" + str(test_config.zooKeeperPort))
         if test_data.isMultiUser:
             test_data.ant.append("-DisMultiUser=true")
         # Note: test_data has autopys_version attribute, but we couldn't see it from here. It's set after run ingest.
@@ -854,6 +869,18 @@ class TestConfiguration(object):
                 self.messageServicePort = parsed_config.getElementsByTagName("messageServicePort")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("multiUser_outdir"):
                 self.multiUser_outdir = parsed_config.getElementsByTagName("multiUser_outdir")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("crHost"):
+                self.crHost = parsed_config.getElementsByTagName("crHost")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("crPort"):
+                self.crPort = parsed_config.getElementsByTagName("crPort")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("crUserName"):
+                self.crUserName = parsed_config.getElementsByTagName("crUserName")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("crPassword"):
+                self.crPassword = parsed_config.getElementsByTagName("crPassword")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("zooKeeperHost"):
+                self.zooKeeperHost = parsed_config.getElementsByTagName("zooKeeperHost")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("zooKeeperPort"):
+                self.zooKeeperPort = parsed_config.getElementsByTagName("zooKeeperPort")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
@@ -991,10 +1018,11 @@ class TestResultsDiffer(object):
             test_data.errors_diff_passed = passed
 
             # Compare html output
-            gold_report_path = test_data.get_html_report_path(DBType.GOLD)
-            output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
-            passed = TestResultsDiffer._html_report_diff(test_data)
-            test_data.html_report_passed = passed
+            # NOTE: commented out html version items
+            # gold_report_path = test_data.get_html_report_path(DBType.GOLD)
+            # output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
+            # passed = TestResultsDiffer._html_report_diff(test_data)
+            # test_data.html_report_passed = passed
 
             # Compare time outputs
             if test_data.main_config.timing:
@@ -1052,51 +1080,52 @@ class TestResultsDiffer(object):
         else:
             return True
 
-    def _html_report_diff(test_data):
-        """Compare the output and gold html reports. Diff util is used for this purpose.
-        Diff -r -N -x <non-textual files> --ignore-matching-lines <regex> <folder-location-1> <folder-location-2>
-        is executed.
-        Diff is recursively used to scan through the HTML report directories. Modify the <regex> to suit the needs.
-        Currently, the regex is set to match certain lines found on index.html and summary.html, and skip (read ignore)
-        them.
-        Diff returns 0 when there is no difference, 1 when there is difference, and 2 when there is trouble (trouble not
-        defined in the official documentation).
-
-        Args:
-            test_data TestData object which contains initialized report_paths.
-
-        Returns:
-            true, if the reports match, false otherwise.
-        """
-        gold_report_path = test_data.get_html_report_path(DBType.GOLD)
-        output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
-        try:
-            # Ensure gold is passed before output 
-            (subprocess.check_output(["diff", '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
-                                      'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
-                                      '\|Examiner:', gold_report_path, output_report_path]))
-            print_report("", "REPORT COMPARISON", "The test html reports matched the gold reports")
-            return True
-        except subprocess.CalledProcessError as e:
-            if e.returncode == 1:
-                Errors.print_error("Error Code: 1\nThe HTML reports did not match.")
-                diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
-                diff_file.write(str(e.output.decode("utf-8")))
-                return False
-            if e.returncode == 2:
-                Errors.print_error("Error Code: 2\nTrouble executing the Diff Utility.")
-                diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
-                diff_file.write(str(e.output.decode("utf-8")))
-                return False
-        except OSError as e:
-            Errors.print_error("Error: OSError while performing html report diff")
-            Errors.print_error(str(e) + "\n")
-            return False
-        except Exception as e:
-            Errors.print_error("Error: Unknown fatal error comparing reports.")
-            Errors.print_error(str(e) + "\n")
-            logging.critical(traceback.format_exc())
-            return False
+    # NOTE: commented out html version items
+    # def _html_report_diff(test_data):
+    #     """Compare the output and gold html reports. Diff util is used for this purpose.
+    #     Diff -r -N -x <non-textual files> --ignore-matching-lines <regex> <folder-location-1> <folder-location-2>
+    #     is executed.
+    #     Diff is recursively used to scan through the HTML report directories. Modify the <regex> to suit the needs.
+    #     Currently, the regex is set to match certain lines found on index.html and summary.html, and skip (read ignore)
+    #     them.
+    #     Diff returns 0 when there is no difference, 1 when there is difference, and 2 when there is trouble (trouble not
+    #     defined in the official documentation).
+    #
+    #     Args:
+    #         test_data TestData object which contains initialized report_paths.
+    #
+    #     Returns:
+    #         true, if the reports match, false otherwise.
+    #     """
+    #     gold_report_path = test_data.get_html_report_path(DBType.GOLD)
+    #     output_report_path = test_data.get_html_report_path(DBType.OUTPUT)
+    #     try:
+    #         # Ensure gold is passed before output
+    #         (subprocess.check_output(["diff", '-r', '-N', '-x', '*.png', '-x', '*.ico', '--ignore-matching-lines',
+    #                                   'HTML Report Generated on \|Autopsy Report for case \|Case:\|Case Number:'
+    #                                   '\|Examiner:\|Unalloc_', gold_report_path, output_report_path]))
+    #         print_report("", "REPORT COMPARISON", "The test html reports matched the gold reports")
+    #         return True
+    #     except subprocess.CalledProcessError as e:
+    #         if e.returncode == 1:
+    #             Errors.print_error("Error Code: 1\nThe HTML reports did not match.")
+    #             diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
+    #             diff_file.write(str(e.output.decode("utf-8")))
+    #             return False
+    #         if e.returncode == 2:
+    #             Errors.print_error("Error Code: 2\nTrouble executing the Diff Utility.")
+    #             diff_file = codecs.open(test_data.output_path + "\HTML-Report-Diff.txt", "wb", "utf_8")
+    #             diff_file.write(str(e.output.decode("utf-8")))
+    #             return False
+    #     except OSError as e:
+    #         Errors.print_error("Error: OSError while performing html report diff")
+    #         Errors.print_error(str(e) + "\n")
+    #         return False
+    #     except Exception as e:
+    #         Errors.print_error("Error: Unknown fatal error comparing reports.")
+    #         Errors.print_error(str(e) + "\n")
+    #         logging.critical(traceback.format_exc())
+    #         return False
 
     def _run_time_diff(test_data, old_time_path):
         """ Compare run times for this run, and the run previous.
@@ -1353,7 +1382,8 @@ class Reports(object):
             vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk", test_data))) )
             vars.append( make_local_path("gold", test_data.image_name, DB_FILENAME) )
             vars.append( make_local_path("gold", test_data.image_name, "standard.html") )
-            vars.append( str(test_data.html_report_passed) )
+            # NOTE: commented out html version items
+            # vars.append( str(test_data.html_report_passed) )
             vars.append( test_data.ant_to_string() )
             # Join it together with a ", "
             output = "|".join(vars)

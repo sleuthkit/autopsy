@@ -18,17 +18,21 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.StringsExtractOptions;
@@ -255,6 +259,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
         listsScrollPane.setViewportView(listsTable);
+        listsTable.setDefaultRenderer(String.class, new SimpleTableCellRenderer());
 
         titleLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.titleLabel.text")); // NOI18N
 

@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.communications.relationships;
 import java.beans.PropertyChangeEvent;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.contentviewers.ContactArtifactViewer;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.ContactArtifactViewer;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 

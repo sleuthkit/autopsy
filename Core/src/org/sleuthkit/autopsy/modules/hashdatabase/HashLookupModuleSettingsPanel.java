@@ -18,14 +18,17 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -78,6 +81,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
             if (i == 0) {
                 column.setPreferredWidth(((int) (width1 * 0.07)));
             } else {
+                column.setCellRenderer(new HashSetTableCellRenderer());
                 column.setPreferredWidth(((int) (width1 * 0.92)));
             }
         }
@@ -224,6 +228,24 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         boolean isValid() {
             return valid;
         }
+    }
+    
+    /** 
+     * Simple TableCellRenderer to add tool tips to the cells
+     */
+    private static final class HashSetTableCellRenderer extends DefaultTableCellRenderer{
+        
+        private static final long serialVersionUID = 1L;
+        @Override
+        public Component getTableCellRendererComponent(
+                        JTable table, Object value,
+                        boolean isSelected, boolean hasFocus,
+                        int row, int column) {
+          JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          label.setToolTipText(label.getText());
+          return label;
+        }
+        
     }
 
     private static final class HashSetsTableModel extends AbstractTableModel {

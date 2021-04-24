@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,11 +46,13 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
@@ -99,14 +101,6 @@ final class ExtractSafari extends Extract {
         "Progress_Message_Safari_Downloads=Safari Downloads",
     })
 
-    /**
-     * Extract the bookmarks, cookies, downloads and history from Safari.
-     *
-     */
-    ExtractSafari() {
-
-    }
-
     @Override
     protected String getName() {
         return Bundle.ExtractSafari_Module_Name();
@@ -124,6 +118,10 @@ final class ExtractSafari extends Extract {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Getting_History());
             LOG.log(Level.SEVERE, "Exception thrown while processing history file.", ex); //NON-NLS
         }
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
 
         progressBar.progress(Bundle.Progress_Message_Safari_Bookmarks());
         try {
@@ -133,12 +131,20 @@ final class ExtractSafari extends Extract {
             LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file.", ex); //NON-NLS
         }
         
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+        
         progressBar.progress(Bundle.Progress_Message_Safari_Downloads());
         try {
             processDownloadsPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
             LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Download.plist file.", ex); //NON-NLS
+        }
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
         }
 
         progressBar.progress(Bundle.Progress_Message_Safari_Cookies());
@@ -283,7 +289,7 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        File tempHistoryFile = createTemporaryFile(context, historyFile);
+        File tempHistoryFile = createTemporaryFile(context, historyFile, context.getJobId());
 
         try {
             ContentUtils.writeToFile(historyFile, tempHistoryFile, context::dataSourceIngestIsCancelled);
@@ -292,7 +298,9 @@ final class ExtractSafari extends Extract {
         }
 
         try {
-            postArtifacts(getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context));
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context));
+            }
         } finally {
             tempHistoryFile.delete();
         }
@@ -316,10 +324,12 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        File tempFile = createTemporaryFile(context, file);
+        File tempFile = createTemporaryFile(context, file, context.getJobId());
 
         try {
-            postArtifacts(getBookmarkArtifacts(file, tempFile, context));
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(getBookmarkArtifacts(file, tempFile, context));
+            }
         } finally {
             tempFile.delete();
         }
@@ -344,11 +354,12 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        File tempFile = createTemporaryFile(context, file);
+        File tempFile = createTemporaryFile(context, file, context.getJobId());
 
         try {
-            postArtifacts(getDownloadArtifacts(dataSource, file, tempFile));
-            
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(getDownloadArtifacts(dataSource, file, tempFile));
+            }
         } finally {
             if (tempFile != null) {
                 tempFile.delete();
@@ -374,9 +385,11 @@ final class ExtractSafari extends Extract {
         File tempFile = null;
 
         try {
-            tempFile = createTemporaryFile(context, file);
+            tempFile = createTemporaryFile(context, file, context.getJobId());
 
-            postArtifacts(getCookieArtifacts(file, tempFile, context));
+            if(!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(getCookieArtifacts(file, tempFile, context));
+            }
            
         } finally {
             if (tempFile != null) {
@@ -412,10 +425,12 @@ final class ExtractSafari extends Extract {
             String title = row.get(HEAD_TITLE).toString();
             Long time = (Double.valueOf(row.get(HEAD_TIME).toString())).longValue();
 
-            BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
-            bbart.addAttributes(createHistoryAttribute(url, time, null, title,
-                    this.getName(), NetworkUtils.extractDomain(url), null));
-            bbartifacts.add(bbart);
+            bbartifacts.add(
+                    createArtifactWithAttributes(
+                            TSK_WEB_HISTORY, 
+                            origFile, 
+                            createHistoryAttribute(url, time, null, title,
+                    this.getName(), NetworkUtils.extractDomain(url), null)));
         }
 
         return bbartifacts;
@@ -546,10 +561,19 @@ final class ExtractSafari extends Extract {
                 }
                 
                 Cookie cookie = iter.next();
-
-                BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
-                bbart.addAttributes(createCookieAttributes(cookie.getURL(), cookie.getCreationDate(), cookie.getName(), cookie.getValue(), this.getName(), NetworkUtils.extractDomain(cookie.getURL())));
-                bbartifacts.add(bbart);
+                
+                bbartifacts.add(
+                        createArtifactWithAttributes(
+                                TSK_WEB_COOKIE, 
+                                origFile, 
+                                createCookieAttributes(
+                                        cookie.getURL(), 
+                                        cookie.getCreationDate(), 
+                                        null, 
+                                        cookie.getExpirationDate(), 
+                                        cookie.getName(), cookie.getValue(), 
+                                        this.getName(), 
+                                        NetworkUtils.extractDomain(cookie.getURL()))));
             }
         }
 
@@ -597,9 +621,12 @@ final class ExtractSafari extends Extract {
             }
 
             if (url != null || title != null) {
-                BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-                bbart.addAttributes(createBookmarkAttributes(url, title, null, getName(), NetworkUtils.extractDomain(url)));
-                bbartifacts.add(bbart);
+                bbartifacts.add(createArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile,
+                        createBookmarkAttributes(url, 
+                                title, 
+                                null, 
+                                getName(), 
+                                NetworkUtils.extractDomain(url))));
             }
         }
     }
@@ -638,17 +665,12 @@ final class ExtractSafari extends Extract {
             time = date.getDate().getTime();
         }
 
-        BlackboardArtifact webDownloadArtifact = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
-        webDownloadArtifact.addAttributes(this.createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName()));
+        BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(TSK_WEB_DOWNLOAD, origFile, createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName())); 
         bbartifacts.add(webDownloadArtifact);
         
         // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
         for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(path), FilenameUtils.getPath(path))) {
-            BlackboardArtifact associatedObjectArtifact = downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
-            associatedObjectArtifact.addAttribute(
-                    new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
-                            RecentActivityExtracterModuleFactory.getModuleName(), webDownloadArtifact.getArtifactID()));
-            bbartifacts.add(associatedObjectArtifact);
+            bbartifacts.add(createAssociatedArtifact(downloadedFile, webDownloadArtifact));
             break;
         }
         

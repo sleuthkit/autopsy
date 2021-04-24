@@ -76,6 +76,12 @@
                 <sysproperty key="solrPort" value="${solrPort}"/>
                 <sysproperty key="messageServiceHost" value="${messageServiceHost}"/>
                 <sysproperty key="messageServicePort" value="${messageServicePort}"/>
+                <sysproperty key="crHost" value="${crHost}"/>
+                <sysproperty key="crPort" value="${crPort}"/>
+                <sysproperty key="crUserName" value="${crUserName}"/>
+                <sysproperty key="crPassword" value="${crPassword}"/>
+                <sysproperty key="zooKeeperHost" value="${zooKeeperHost}"/>
+                <sysproperty key="zooKeeperPort" value="${zooKeeperPort}"/>
                 <sysproperty key="isMultiUser" value="${isMultiUser}"/>
                 <!--needed to have tests NOT to steal focus when running, works in latest apple jdk update only.-->
                 <sysproperty key="apple.awt.UIElement" value="@{disable.apple.ui}"/>

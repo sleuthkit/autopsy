@@ -1,3 +1,5 @@
+# {0} - area name
+GEOArea_point_label_header=Area outline point for area: {0}
 # {0} - track name
 GEOTrack_point_label_header=Trackpoint for track: {0}
 LastKnownWaypoint_Label=Last Known Location

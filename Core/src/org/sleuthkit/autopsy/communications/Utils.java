@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.awt.Component;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.TimeZone;
+import javax.swing.table.TableCellRenderer;
+import org.netbeans.swing.outline.Outline;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.datamodel.Account;
@@ -46,6 +49,30 @@ public final class Utils {
      */
     static public final String getIconFilePath(Account.Type type) {
         return Accounts.getIconFilePath(type);
+    }
+    
+    static public  void setColumnWidths(Outline outline) {
+        int margin = 4;
+        int padding = 8;
+
+        final int rows = Math.min(100, outline.getRowCount());
+
+        for (int column = 0; column < outline.getColumnCount(); column++) {
+            int columnWidthLimit = 500;
+            int columnWidth = 0;
+
+            // find the maximum width needed to fit the values for the first 100 rows, at most
+            for (int row = 0; row < rows; row++) {
+                TableCellRenderer renderer = outline.getCellRenderer(row, column);
+                Component comp = outline.prepareRenderer(renderer, row, column);
+                columnWidth = Math.max(comp.getPreferredSize().width, columnWidth);
+            }
+
+            columnWidth += 2 * margin + padding; // add margin and regular padding
+            columnWidth = Math.min(columnWidth, columnWidthLimit);
+
+            outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
+        }
     }
 
 }

@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 
 /**
  * Filters database results by file extension.

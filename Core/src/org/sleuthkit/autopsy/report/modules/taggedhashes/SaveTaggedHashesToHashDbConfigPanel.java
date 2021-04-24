@@ -221,7 +221,10 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
                 setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
-                setText(TagUtils.getDecoratedTagDisplayName(value));
+                
+                String text = TagUtils.getDecoratedTagDisplayName(value);
+                setText(text);
+                this.setToolTipText(text);
                 return this;
             }
             return new JLabel();

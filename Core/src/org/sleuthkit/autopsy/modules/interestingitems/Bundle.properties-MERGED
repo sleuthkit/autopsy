@@ -6,9 +6,15 @@ FilesIdentifierIngestModule.indexError.message=Failed to index interesting file 
 FilesSet.rule.dateRule.toString=(modified within {0} day(s))
 FilesSetDefsPanel.bytes=Bytes
 FilesSetDefsPanel.cancelImportMsg=Cancel import
+FilesSetDefsPanel.cancelNewSetMsg=Cancel
 # {0} - file name
 FilesSetDefsPanel.exportButtonActionPerformed.fileExistPrompt=File {0} exists, overwrite?
 FilesSetDefsPanel.gigaBytes=Gigabytes
+# {0} - fileName
+# {1} - errorMessage
+FilesSetDefsPanel.importSetButtonActionPerformed.importError=The rules file "{0}" could not be read:\n{1}.
+FilesSetDefsPanel.importSetButtonActionPerformed.noFiles=No files sets were found in the selected files.
+FilesSetDefsPanel.importSetButtonActionPerformed.noFilesSelected=No files sets were selected.
 # {0} - filter name
 # {1} - profile name
 FilesSetDefsPanel.ingest.fileFilterInUseError=The selected file filter, {0}, is being used by a profile, {1}, and cannot be deleted while any profile uses it.
@@ -23,10 +29,12 @@ FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Se
 FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import
 FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict
 FilesSetDefsPanel.interesting.importSetButton.text=Import Set
+FilesSetDefsPanel.interesting.newOwConflict=Interesting files set conflict
 # {0} - FilesSet name
-FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set <{0}> already exists locally, overwrite?
+FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set "{0}" already exists locally, overwrite?
 # {0} - FilesSet name
-FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name <{0}>.  Would you like to create a custom version of this file set?
+# {1} - New FilesSet name
+FilesSetDefsPanel.interesting.standardFileConflict=A standard interesting file set already exists with the name "{0}."  Would you like to rename your set to "{1}?"
 FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings
 FilesSetDefsPanel.kiloBytes=Kilobytes
 FilesSetDefsPanel.loadError=Error loading interesting files sets from file.
@@ -56,6 +64,34 @@ FilesSetRulePanel.NoPathError=Path cannot be empty
 FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected).
 FilesSetsManager.allFilesAndDirectories=All Files and Directories (Not Unallocated Space)
 FilesSetsManager.allFilesDirectoriesAndUnallocated=All Files, Directories, and Unallocated Space
+# {0} - regex
+InterestingItemsFilesSetSettings.readDateCondition.failedCompiledRegex=Error determining ''{0}'' number
+# {0} - condition
+# {1} - rule
+InterestingItemsFilesSetSettings.readMetaTypeCondition.malformedXml=Files set is malformed for metatype condition, ''{0}'', in rule ''{1}''
+# {0} - regex
+# {1} - rule
+InterestingItemsFilesSetSettings.readNameCondition.errorCompilingRegex=Error compiling ''{0}'' regex in rule ''{1}''
+# {0} - character
+# {1} - rule
+InterestingItemsFilesSetSettings.readNameCondition.illegalChar=File name has illegal character of ''{0}'' in rule ''{1}''
+# {0} - tagName
+# {1} - ruleName
+InterestingItemsFilesSetSettings.readNameCondition.invalidTag=Name condition has invalid tag name of ''{0}'' for rule ''{1}''
+# {0} - regex
+InterestingItemsFilesSetSettings.readPathCondition.failedCompiledRegex=Error compiling ''{0}'' regex
+# {0} - ruleName
+InterestingItemsFilesSetSettings.readPathCondition.pathConditionCreationError=Error creating path condition for rule ''{0}''
+# {0} - ruleName
+InterestingItemsFilesSetSettings.readRule.missingNecessary=Invalid rule in files set, missing necessary conditions for ''{0}''
+# {0} - filePathStr
+InterestingItemsFilesSetSettings.readSerializedDefinitions.failedReadSettings=Failed to read settings from ''{0}''
+# {0} - rule
+InterestingItemsFilesSetSettings.readSizeCondition.invalidComparator=Invalid comparator or size unit in files set for rule ''{0}''
+# {0} - rule
+InterestingItemsFilesSetSettings.readSizeCondition.malformedXml=Files set is malformed missing at least one 'fileSize' attribute for rule ''{0}''
+# {0} - rule
+InterestingItemsFilesSetSettings.readSizeCondition.notIntegerValue=Non integer size in files set for rule ''{0}''
 InterestingItemsIngestModuleFactory.defaultSettingsError=Error getting default interesting files settings from file.
 OpenIDE-Module-Display-Category=Ingest Module
 OpenIDE-Module-Long-Description=Interesting Files Identifier ingest module. \n\n Identifies interesting files as defined by interesting files rule sets.
@@ -145,3 +181,6 @@ FilesSetDefsPanel.mimeTypeLabel.text=MIME Type:
 FilesSetDefsPanel.fileSizeLabel.text=File Size:
 # {0} - filesSetName
 StandardInterestingFileSetsLoader.customSuffixed={0} (Custom)
+StandardInterestingFilesSetsLoader_cannotLoadStandard=Unable to properly read standard interesting files sets.
+StandardInterestingFilesSetsLoader_cannotLoadUserConfigured=Unable to properly read user-configured interesting files sets.
+StandardInterestingFilesSetsLoader_cannotUpdateInterestingFilesSets=Unable to write updated configuration for interesting files sets to config directory.
