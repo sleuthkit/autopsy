@@ -71,7 +71,12 @@ public final class CaseUtils {
         String caseDirectory = currentCase.getCaseDirectory();
         try {
             Case.closeCurrentCase();
-        } catch (CaseActionException ex) {
+            /**
+             * Insert a small wait period after case has closed to ensure all
+             * events have been processed accordingly.
+             */
+            Thread.sleep(10 * 1000);
+        } catch (CaseActionException | InterruptedException ex) {
             throw new TestUtilsException(String.format("Failed to close case %s at %s", caseName, caseDirectory), ex);
         }
     }
