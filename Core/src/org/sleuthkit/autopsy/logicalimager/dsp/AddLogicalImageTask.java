@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -59,6 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * case database.
  */
 final class AddLogicalImageTask implements Runnable {
+    private final static BlackboardArtifact.Type INTERESTING_FILE_TYPE = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
 
     private final static Logger LOGGER = Logger.getLogger(AddLogicalImageTask.class.getName());
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS
@@ -400,12 +402,19 @@ final class AddLogicalImageTask implements Runnable {
     }
 
     private void addInterestingFileToArtifacts(long fileId, String ruleSetName, String ruleName, List<BlackboardArtifact> artifacts) throws TskCoreException {
+        switch (INTERESTING_FILE_TYPE.getCategory()) {
+            case DATA_ARTIFACT:
+            case ANALYSIS_RESULT:
+                return this.currentCase.getSleuthkitCase().getBlackboard().newAnalysisResult(INTERESTING_FILE_TYPE, fileId, fileId, Score.SCORE_UNKNOWN, null, null, null);
+            default: 
+                throw new TskCoreException("Unknown category: " + INTERESTING_FILE_TYPE.getCategory().getDisplayName());
+        }
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName);
         attributes.add(setNameAttribute);
         BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName);
         attributes.add(ruleNameAttribute);
-        BlackboardArtifact artifact = this.currentCase.getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, fileId);
+        //BlackboardArtifact artifact = this.currentCase.getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, fileId);
         artifact.addAttributes(attributes);
         artifacts.add(artifact);
     }
