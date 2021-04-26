@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,10 +57,50 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A runnable that - copy the logical image folder to a destination folder - add
- * SearchResults.txt and *_users.txt files to report - add an image data source to the
- * case database.
+ * SearchResults.txt and *_users.txt files to report - add an image data source
+ * to the case database.
  */
 final class AddLogicalImageTask implements Runnable {
+
+    /**
+     * Information about a file including the object id of the file as well as
+     * the object id of the data source.
+     */
+    private static class FileId {
+
+        private final long dataSourceId;
+        private final long fileId;
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceId Object Id of the data source.
+         * @param fileId       Object Id of the file.
+         */
+        FileId(long dataSourceId, long fileId) {
+            this.dataSourceId = dataSourceId;
+            this.fileId = fileId;
+        }
+
+        /**
+         * Returns the data source id of the file.
+         *
+         * @return The data source id of the file.
+         */
+        long getDataSourceId() {
+            return dataSourceId;
+        }
+
+        /**
+         * Returns the object id of the file.
+         *
+         * @return The object id of the file.
+         */
+        long getFileId() {
+            return fileId;
+        }
+    }
+
     private final static BlackboardArtifact.Type INTERESTING_FILE_TYPE = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
 
     private final static Logger LOGGER = Logger.getLogger(AddLogicalImageTask.class.getName());
@@ -108,8 +149,8 @@ final class AddLogicalImageTask implements Runnable {
     }
 
     /**
-     * Add SearchResults.txt and *_users.txt to the case
-     * report Adds the image to the case database.
+     * Add SearchResults.txt and *_users.txt to the case report Adds the image
+     * to the case database.
      */
     @Messages({
         "# {0} - src", "# {1} - dest", "AddLogicalImageTask.copyingImageFromTo=Copying image from {0} to {1}",
@@ -180,7 +221,7 @@ final class AddLogicalImageTask implements Runnable {
                 return name.endsWith(USERS_TXT);
             }
         });
-        
+
         for (File userFile : userFiles) {
             progressMonitor.setProgressText(Bundle.AddLogicalImageTask_addingToReport(userFile.getName()));
             status = addReport(userFile.toPath(), userFile.getName() + " " + src.getName());
@@ -188,10 +229,10 @@ final class AddLogicalImageTask implements Runnable {
                 errorList.add(status);
                 callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errorList, emptyDataSources);
                 return;
-            }            
+            }
             progressMonitor.setProgressText(Bundle.AddLogicalImageTask_doneAddingToReport(userFile.getName()));
         }
-    
+
         // Get all VHD files in the dest directory
         List<String> imagePaths = new ArrayList<>();
         for (File f : dest.listFiles()) {
@@ -217,7 +258,7 @@ final class AddLogicalImageTask implements Runnable {
         }
 
         List<Content> newDataSources = new ArrayList<>();
-        Map<String, List<Long>> interestingFileMap = new HashMap<>();
+        Map<String, List<FileId>> interestingFileMap = new HashMap<>();
 
         if (imagePaths.isEmpty()) {
             createVHD = false;
@@ -361,11 +402,11 @@ final class AddLogicalImageTask implements Runnable {
         "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingInterestingFile=Adding interesting files ({0}/{1})",
         "AddLogicalImageTask.logicalImagerResults=Logical Imager results"
     })
-    private void addInterestingFiles(Map<String, List<Long>> interestingFileMap) throws IOException, TskCoreException {
+    private void addInterestingFiles(Map<String, List<FileId>> interestingFileMap) throws IOException, TskCoreException {
         int lineNumber = 0;
         List<BlackboardArtifact> artifacts = new ArrayList<>();
 
-        Iterator<Map.Entry<String, List<Long>>> iterator = interestingFileMap.entrySet().iterator();
+        Iterator<Map.Entry<String, List<FileId>>> iterator = interestingFileMap.entrySet().iterator();
         while (iterator.hasNext()) {
 
             if (cancelled) {
@@ -374,14 +415,14 @@ final class AddLogicalImageTask implements Runnable {
                 break;
             }
 
-            Map.Entry<String, List<Long>> entry = iterator.next();
+            Map.Entry<String, List<FileId>> entry = iterator.next();
             String key = entry.getKey();
             String ruleName;
             String[] split = key.split("\t");
             ruleName = split[1];
 
-            List<Long> fileIds = entry.getValue();
-            for (Long fileId: fileIds) {
+            List<FileId> fileIds = entry.getValue();
+            for (FileId fileId : fileIds) {
                 if (cancelled) {
                     postArtifacts(artifacts);
                     return;
@@ -393,7 +434,7 @@ final class AddLogicalImageTask implements Runnable {
                     postArtifacts(artifacts);
                     artifacts.clear();
                 }
-                addInterestingFileToArtifacts(fileId, Bundle.AddLogicalImageTask_logicalImagerResults(), ruleName, artifacts);
+                addInterestingFileToArtifacts(fileId.getFileId(), fileId.getDataSourceId(), Bundle.AddLogicalImageTask_logicalImagerResults(), ruleName, artifacts);
                 lineNumber++;
             }
             iterator.remove();
@@ -401,34 +442,33 @@ final class AddLogicalImageTask implements Runnable {
         postArtifacts(artifacts);
     }
 
-    private void addInterestingFileToArtifacts(long fileId, String ruleSetName, String ruleName, List<BlackboardArtifact> artifacts) throws TskCoreException {
-        switch (INTERESTING_FILE_TYPE.getCategory()) {
-            case DATA_ARTIFACT:
-            case ANALYSIS_RESULT:
-                return this.currentCase.getSleuthkitCase().getBlackboard().newAnalysisResult(INTERESTING_FILE_TYPE, fileId, fileId, Score.SCORE_UNKNOWN, null, null, null);
-            default: 
-                throw new TskCoreException("Unknown category: " + INTERESTING_FILE_TYPE.getCategory().getDisplayName());
-        }
-        Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName);
-        attributes.add(setNameAttribute);
-        BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName);
-        attributes.add(ruleNameAttribute);
-        //BlackboardArtifact artifact = this.currentCase.getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, fileId);
-        artifact.addAttributes(attributes);
+    private void addInterestingFileToArtifacts(long fileId, long dataSourceId, String ruleSetName, String ruleName, List<BlackboardArtifact> artifacts) throws TskCoreException {
+        BlackboardArtifact artifact = this.blackboard.newAnalysisResult(
+                INTERESTING_FILE_TYPE,
+                fileId,
+                dataSourceId,
+                Score.SCORE_UNKNOWN,
+                null,
+                null,
+                null,
+                Arrays.asList(
+                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName),
+                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName)
+                ));
+
         artifacts.add(artifact);
     }
 
     @Messages({
         "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.searchingInterestingFile=Searching for interesting files ({0}/{1})"
     })
-    private Map<String, List<Long>> getInterestingFileMapForVHD(Path resultsPath) throws TskCoreException, IOException {
+    private Map<String, List<FileId>> getInterestingFileMapForVHD(Path resultsPath) throws TskCoreException, IOException {
         Map<Long, List<String>> objIdToimagePathsMap = currentCase.getSleuthkitCase().getImagePaths();
         imagePathToObjIdMap = imagePathsToDataSourceObjId(objIdToimagePathsMap);
-        Map<String, List<Long>> interestingFileMap = new HashMap<>();
+        Map<String, List<FileId>> interestingFileMap = new HashMap<>();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                      new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
+                new FileInputStream(resultsPath.toFile()), "UTF8"))) { // NON-NLS
             String line;
             br.readLine(); // skip the header line
             int lineNumber = 2;
@@ -458,16 +498,14 @@ final class AddLogicalImageTask implements Runnable {
 
                 String query = makeQuery(vhdFilename, fileMetaAddressStr, parentPath, filename);
                 List<AbstractFile> matchedFiles = Case.getCurrentCase().getSleuthkitCase().findAllFilesWhere(query);
-                List<Long> fileIds = new ArrayList<>();
+                List<FileId> fileIds = new ArrayList<>();
                 for (AbstractFile file : matchedFiles) {
-                    fileIds.add(file.getId());
+                    fileIds.add(new FileId(file.getDataSourceObjectId(), file.getId()));
                 }
                 String key = String.format("%s\t%s", ruleSetName, ruleName);
-                if (interestingFileMap.containsKey(key)) {
-                    interestingFileMap.get(key).addAll(fileIds);
-                } else {
-                    interestingFileMap.put(key, fileIds);
-                }
+                interestingFileMap.computeIfAbsent(key, (k) -> new ArrayList<>())
+                        .addAll(fileIds);
+                
                 lineNumber++;
             } // end reading file
         }
@@ -486,10 +524,10 @@ final class AddLogicalImageTask implements Runnable {
     @Messages({
         "# {0} - file number", "# {1} - total files", "AddLogicalImageTask.addingExtractedFile=Adding extracted files ({0}/{1})"
     })
-    private Map<String, List<Long>> addExtractedFiles(File src, Path resultsPath, Host host, List<Content> newDataSources) throws TskCoreException, IOException {
+    private Map<String, List<FileId>> addExtractedFiles(File src, Path resultsPath, Host host, List<Content> newDataSources) throws TskCoreException, IOException {
         SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         SleuthkitCase.CaseDbTransaction trans = null;
-        Map<String, List<Long>> interestingFileMap = new HashMap<>();
+        Map<String, List<FileId>> interestingFileMap = new HashMap<>();
 
         try {
             trans = skCase.beginTransaction();
@@ -533,21 +571,20 @@ final class AddLogicalImageTask implements Runnable {
 
                     //addLocalFile here
                     AbstractFile fileAdded = fileImporter.addLocalFile(
-                        Paths.get(src.toString(), extractedFilePath).toFile(),
-                        filename,
-                        parentPath,
-                        Long.parseLong(ctime),
-                        Long.parseLong(crtime),
-                        Long.parseLong(atime),
-                        Long.parseLong(mtime),
-                        localFilesDataSource);
+                            Paths.get(src.toString(), extractedFilePath).toFile(),
+                            filename,
+                            parentPath,
+                            Long.parseLong(ctime),
+                            Long.parseLong(crtime),
+                            Long.parseLong(atime),
+                            Long.parseLong(mtime),
+                            localFilesDataSource);
                     String key = String.format("%s\t%s", ruleSetName, ruleName);
-                    List<Long> value = new ArrayList<>();
-                    if (interestingFileMap.containsKey(key)) {
-                        value = interestingFileMap.get(key);
-                    }
-                    value.add(fileAdded.getId());
-                    interestingFileMap.put(key, value);
+
+                    long dataSourceId = fileAdded.getDataSourceObjectId();
+                    long fileId = fileAdded.getId();
+                    interestingFileMap.computeIfAbsent(key, (k) -> new ArrayList<>())
+                            .add(new FileId(dataSourceId, fileId));
                     lineNumber++;
                 } // end reading file
             }

@@ -64,6 +64,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
@@ -74,7 +75,9 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Pool;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
@@ -103,7 +106,7 @@ public class PortableCaseReportModule implements ReportModule {
     // These are the types for the exported file subfolders
     private static final List<FileTypeCategory> FILE_TYPE_CATEGORIES = Arrays.asList(FileTypeCategory.AUDIO, FileTypeCategory.DOCUMENTS,
             FileTypeCategory.EXECUTABLE, FileTypeCategory.IMAGE, FileTypeCategory.VIDEO);
-    
+
     // These are attribute types that have special handling and should not be copied
     // into the new artifact directly.
     private static final List<Integer> SPECIALLY_HANDLED_ATTRS = Arrays.asList(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
@@ -452,7 +455,7 @@ public class PortableCaseReportModule implements ReportModule {
         if (options.shouldCompress()) {
             progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_compressingCase());
 
-            if(!compressCase(progressPanel, options.includeApplication() ? outputDir.getAbsolutePath() : caseFolder.getAbsolutePath())){
+            if (!compressCase(progressPanel, options.includeApplication() ? outputDir.getAbsolutePath() : caseFolder.getAbsolutePath())) {
                 // Errors have been handled already
                 return;
             }
@@ -870,8 +873,9 @@ public class PortableCaseReportModule implements ReportModule {
     /**
      * Add all artifacts with a given tag to the portable case.
      *
-     * @param oldTagName    The TagName object from the current case
-     * @param progressPanel The progress panel
+     * @param dataSourceId  The data source id.
+     * @param oldTagName    The TagName object from the current case.
+     * @param progressPanel The progress panel.
      *
      * @throws TskCoreException
      */
@@ -892,11 +896,14 @@ public class PortableCaseReportModule implements ReportModule {
             long newContentId = copyContentToPortableCase(content, progressPanel);
 
             // Copy the artifact
-            BlackboardArtifact newArtifact = copyArtifact(newContentId, tag.getArtifact());
-            
+            Long dataSourceObjId = content == null || content.getDataSource() == null
+                    ? null
+                    : content.getDataSource().getId();
+            BlackboardArtifact newArtifact = copyArtifact(dataSourceObjId, newContentId, tag.getArtifact());
+
             // Copy any attachments
             copyAttachments(newArtifact, tag.getArtifact(), portableSkCase.getAbstractFileById(newContentId));
-            
+
             // Copy any files associated with this artifact through the TSK_PATH_ID attribute
             copyPathID(newArtifact, tag.getArtifact());
 
@@ -912,15 +919,16 @@ public class PortableCaseReportModule implements ReportModule {
      * Copy an artifact into the new case. Will also copy any associated
      * artifacts
      *
-     * @param newContentId   The content ID (in the portable case) of the source
-     *                       content
-     * @param artifactToCopy The artifact to copy
+     * @param newDataSourceId The data source ID (in the portable case).
+     * @param newContentId    The content ID (in the portable case) of the
+     *                        source content.
+     * @param artifactToCopy  The artifact to copy.
      *
-     * @return The new artifact in the portable case
+     * @return The new artifact in the portable case.
      *
      * @throws TskCoreException
      */
-    private BlackboardArtifact copyArtifact(long newContentId, BlackboardArtifact artifactToCopy) throws TskCoreException {
+    private BlackboardArtifact copyArtifact(Long newDataSourceId, long newContentId, BlackboardArtifact artifactToCopy) throws TskCoreException {
 
         if (oldArtifactIdToNewArtifact.containsKey(artifactToCopy.getArtifactID())) {
             return oldArtifactIdToNewArtifact.get(artifactToCopy.getArtifactID());
@@ -931,14 +939,11 @@ public class PortableCaseReportModule implements ReportModule {
         List<BlackboardAttribute> newAttrs = new ArrayList<>();
         if (oldAssociatedAttribute != null) {
             BlackboardArtifact oldAssociatedArtifact = currentCase.getSleuthkitCase().getBlackboardArtifact(oldAssociatedAttribute.getValueLong());
-            BlackboardArtifact newAssociatedArtifact = copyArtifact(newContentId, oldAssociatedArtifact);
+            BlackboardArtifact newAssociatedArtifact = copyArtifact(newDataSourceId, newContentId, oldAssociatedArtifact);
             newAttrs.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
                     String.join(",", oldAssociatedAttribute.getSources()), newAssociatedArtifact.getArtifactID()));
         }
-
-        // Create the new artifact
-        int newArtifactTypeId = getNewArtifactTypeId(artifactToCopy);
-        BlackboardArtifact newArtifact = portableSkCase.newBlackboardArtifact(newArtifactTypeId, newContentId);
+        
         List<BlackboardAttribute> oldAttrs = artifactToCopy.getAttributes();
 
         // Copy over each attribute, making sure the type is in the new case.
@@ -978,8 +983,21 @@ public class PortableCaseReportModule implements ReportModule {
             }
         }
 
-        newArtifact.addAttributes(newAttrs);
-
+        // Create the new artifact
+        int newArtifactTypeId = getNewArtifactTypeId(artifactToCopy);
+        BlackboardArtifact.Type type = new BlackboardArtifact.Type(ARTIFACT_TYPE.fromID(newArtifactTypeId));
+        BlackboardArtifact newArtifact = null;
+        switch (type.getCategory()) {
+            case ANALYSIS_RESULT:
+                newArtifact = portableSkCase.getBlackboard().newDataArtifact(type, newContentId, newDataSourceId, newAttrs, osAccount);
+                break;
+            case DATA_ARTIFACT:
+                newArtifact = portableSkCase.getBlackboard().newAnalysisResult(type, newContentId, newDataSourceId, Score.SCORE_UNKNOWN, null, null, null, newAttrs);
+                break;
+            default:
+                throw new TskCoreException("Unknown category: " + type.getCategory());
+        }
+        
         oldArtifactIdToNewArtifact.put(artifactToCopy.getArtifactID(), newArtifact);
         return newArtifact;
     }
@@ -1075,19 +1093,21 @@ public class PortableCaseReportModule implements ReportModule {
             parentId = copyContent(content.getParent());
         }
 
+        Long dataSourceObjId = content.getDataSource() == null ? null : content.getDataSource().getId();
+
         Content newContent;
         if (content instanceof BlackboardArtifact) {
             BlackboardArtifact artifactToCopy = (BlackboardArtifact) content;
-            newContent = copyArtifact(parentId, artifactToCopy);
+            newContent = copyArtifact(dataSourceObjId, parentId, artifactToCopy);
         } else {
-            
+
             // Get or create the host (if needed) before beginning transaction.
             Host newHost = null;
             if (content instanceof DataSource) {
-                Host oldHost = ((DataSource)content).getHost();
+                Host oldHost = ((DataSource) content).getHost();
                 newHost = portableSkCase.getHostManager().newHost(oldHost.getName());
             }
-            
+
             CaseDbTransaction trans = portableSkCase.beginTransaction();
             try {
                 if (content instanceof Image) {
@@ -1111,7 +1131,7 @@ public class PortableCaseReportModule implements ReportModule {
                             fs.getName(), trans);
                 } else if (content instanceof BlackboardArtifact) {
                     BlackboardArtifact artifactToCopy = (BlackboardArtifact) content;
-                    newContent = copyArtifact(parentId, artifactToCopy);
+                    newContent = copyArtifact(dataSourceObjId, parentId, artifactToCopy);
                 } else if (content instanceof AbstractFile) {
                     AbstractFile abstractFile = (AbstractFile) content;
 
@@ -1169,12 +1189,13 @@ public class PortableCaseReportModule implements ReportModule {
 
     /**
      * Copy path ID attribute to new case along with the referenced file.
-     * 
-     * @param newArtifact The new artifact in the portable case. Should not have a TSK_PATH_ID attribute.
+     *
+     * @param newArtifact The new artifact in the portable case. Should not have
+     *                    a TSK_PATH_ID attribute.
      * @param oldArtifact The old artifact.
-     * 
-     * @throws TskCoreException 
-     */    
+     *
+     * @throws TskCoreException
+     */
     private void copyPathID(BlackboardArtifact newArtifact, BlackboardArtifact oldArtifact) throws TskCoreException {
         // Get the path ID attribute
         BlackboardAttribute oldPathIdAttr = oldArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
@@ -1189,15 +1210,17 @@ public class PortableCaseReportModule implements ReportModule {
             }
         }
     }
-        
+
     /**
      * Copy attachments to the portable case.
-     * 
-     * @param newArtifact The new artifact in the portable case. Should not have a TSK_ATTACHMENTS attribute.
+     *
+     * @param newArtifact The new artifact in the portable case. Should not have
+     *                    a TSK_ATTACHMENTS attribute.
      * @param oldArtifact The old artifact.
-     * @param newFile     The new file in the portable case associated with the artifact.
-     * 
-     * @throws TskCoreException 
+     * @param newFile     The new file in the portable case associated with the
+     *                    artifact.
+     *
+     * @throws TskCoreException
      */
     private void copyAttachments(BlackboardArtifact newArtifact, BlackboardArtifact oldArtifact, AbstractFile newFile) throws TskCoreException {
         // Get the attachments from TSK_ATTACHMENTS attribute.
@@ -1220,20 +1243,19 @@ public class PortableCaseReportModule implements ReportModule {
                         newFileAttachments.add(new MessageAttachments.FileAttachment(portableSkCase.getAbstractFileById(newFileID)));
                     }
                 }
-                
+
                 // Get the name of the module(s) that created the attachment
                 String newSourceStr = "";
                 List<String> oldSources = attachmentsAttr.getSources();
-                if (! oldSources.isEmpty()) {
+                if (!oldSources.isEmpty()) {
                     newSourceStr = String.join(",", oldSources);
                 }
-                
+
                 // Add the attachment. The account type specified in the constructor will not be used.
                 CommunicationArtifactsHelper communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
                         newSourceStr, newFile, Account.Type.EMAIL);
                 communicationArtifactsHelper.addAttachments(newArtifact, new MessageAttachments(newFileAttachments, msgAttachments.getUrlAttachments()));
-            } 
-            catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
+            } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
                 throw new TskCoreException(String.format("Unable to parse json for MessageAttachments object in artifact: %s", oldArtifact.getName()), ex);
             }
         } else {    // backward compatibility - email message attachments are derived files, children of the message.
@@ -1404,7 +1426,7 @@ public class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.compressCase.errorCompressingCase=Error compressing case",
         "PortableCaseReportModule.compressCase.canceled=Compression canceled by user",})
     private boolean compressCase(ReportProgressPanel progressPanel, String folderToCompress) {
-        
+
         closePortableCaseDatabase();
 
         // Make a temporary folder for the compressed case
