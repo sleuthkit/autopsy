@@ -241,6 +241,12 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     protected BaseDataSourceSummaryPanel(UpdateGovernor... governors) {
         this.governors = (governors == null) ? Collections.emptyList() : Arrays.asList(governors);
         this.updateHandler = new EventUpdateHandler(this::onRefresh, updateGovernor);
+    }
+    
+    /**
+     * Initializes the class so that it listens for events.
+     */
+    void init() {
         this.updateHandler.register();
     }
 

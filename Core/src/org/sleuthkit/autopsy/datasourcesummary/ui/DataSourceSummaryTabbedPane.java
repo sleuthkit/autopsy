@@ -62,36 +62,42 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         private final Consumer<DataSource> onDataSource;
         private final Function<DataSource, List<ExcelSheetExport>> excelExporter;
         private final Runnable onClose;
+        private final Runnable onInit;
 
         /**
          * Main constructor.
          *
          * @param tabTitle The title of the tab.
-         * @param panel The component to be displayed in the tab.
+         * @param panel    The component to be displayed in the tab.
          */
         DataSourceTab(String tabTitle, BaseDataSourceSummaryPanel panel) {
-            this(tabTitle, panel, panel::setDataSource, panel::getExports, panel::close);
+            this(tabTitle, panel, panel::setDataSource, panel::getExports, panel::close, panel::init);
             panel.setParentCloseListener(() -> notifyParentClose());
         }
 
         /**
          * Main constructor.
          *
-         * @param tabTitle The title of the tab.
-         * @param component The component to be displayed.
-         * @param onDataSource The function to be called on a new data source.
+         * @param tabTitle      The title of the tab.
+         * @param component     The component to be displayed.
+         * @param onDataSource  The function to be called on a new data source.
          * @param excelExporter The function that creates excel exports for a
-         * particular data source for this tab. Can be null for no exports.
-         * @param onClose Called to cleanup resources when closing tabs. Can be
-         * null for no-op.
+         *                      particular data source for this tab. Can be null
+         *                      for no exports.
+         * @param onClose       Called to cleanup resources when closing tabs.
+         *                      Can be null for no-op.
+         * @param onInit        Called when the panel is first initialized and
+         *                      added to the tabbed pane.
          */
         DataSourceTab(String tabTitle, Component component, Consumer<DataSource> onDataSource,
-                Function<DataSource, List<ExcelSheetExport>> excelExporter, Runnable onClose) {
+                Function<DataSource, List<ExcelSheetExport>> excelExporter, Runnable onClose,
+                Runnable onInit) {
             this.tabTitle = tabTitle;
             this.component = component;
             this.onDataSource = onDataSource;
             this.excelExporter = excelExporter;
             this.onClose = onClose;
+            this.onInit = onInit;
         }
 
         /**
@@ -127,6 +133,14 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         public Runnable getOnClose() {
             return onClose;
         }
+
+        /**
+         * @return The action for initialization after added to the tabbed pane
+         *         or null.
+         */
+        public Runnable getOnInit() {
+            return onInit;
+        }
     }
 
     private static final long serialVersionUID = 1L;
@@ -155,11 +169,13 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
                     ingestHistoryPanel,
                     ingestHistoryPanel::setDataSource,
                     IngestJobExcelExport::getExports,
+                    null,
                     null),
             new DataSourceTab(Bundle.DataSourceSummaryTabbedPane_detailsTab_title(), new ContainerPanel()),
             new DataSourceTab(
                     Bundle.DataSourceSummaryTabbedPane_exportTab_title(),
                     exportPanel,
+                    null,
                     null,
                     null,
                     null)
@@ -217,6 +233,12 @@ public class DataSourceSummaryTabbedPane extends javax.swing.JPanel {
         // set up the tabs
         for (DataSourceTab tab : tabs) {
             tabbedPane.addTab(tab.getTabTitle(), tab.getComponent());
+            
+            // initialize the tab pane if it has an initialization method
+            Runnable onInitMethod = tab.getOnInit();
+            if (onInitMethod != null) {
+                onInitMethod.run();
+            }
         }
 
         // set this to no datasource initially
