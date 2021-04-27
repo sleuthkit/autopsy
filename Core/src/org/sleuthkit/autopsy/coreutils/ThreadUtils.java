@@ -63,14 +63,6 @@ final public class ThreadUtils {
      * @return Thread dump of all live threads
      */
     public static String generateThreadDump() {
-        /*
-         * StringBuilder threadDump = new StringBuilder(System.lineSeparator());
-         * ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean(); for
-         * (ThreadInfo threadInfo : threadMXBean.dumpAllThreads(lockedMonitors,
-         * lockedSynchronizers)) { threadDump.append(threadInfo.toString()); }
-         * return threadDump.toString();
-         */
-
         StringBuilder threadDump = new StringBuilder(System.lineSeparator());
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         ThreadInfo[] threadInfos = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), 100);

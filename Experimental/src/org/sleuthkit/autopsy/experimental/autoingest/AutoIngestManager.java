@@ -142,6 +142,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         ControlEventType.PAUSE.toString(),
         ControlEventType.RESUME.toString(),
         ControlEventType.SHUTDOWN.toString(),
+        ControlEventType.GENERATE_THREAD_DUMP_REQUEST.toString(),
         Event.CANCEL_JOB.toString(),
         Event.REPROCESS_JOB.toString()}));
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);

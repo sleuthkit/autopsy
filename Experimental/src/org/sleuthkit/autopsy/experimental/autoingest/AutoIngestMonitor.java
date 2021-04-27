@@ -298,7 +298,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @return Path for dump file.
      */
     private Path createFilePath(String nodeName) {
-        String fileName = "ThreadDump_Node_" + nodeName + "_" + TimeStampUtils.createTimeStamp() + ".txt";
+        String fileName = "ThreadDumpFromNode_" + nodeName + "_" + TimeStampUtils.createTimeStamp() + ".txt";
         return Paths.get(PlatformUtil.getLogDirectory(), fileName);
     }
 
