@@ -29,6 +29,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
@@ -52,6 +53,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.xml.sax.ContentHandler;
@@ -106,7 +108,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         try {
             validateSettings();
-	    this.context = context;
+            this.context = context;
             blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
             fileTypeDetector = new FileTypeDetector();
@@ -130,12 +132,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
              * verify the file hasn't been deleted.
              */
             if (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
-                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
-                && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)
-                && !file.getKnown().equals(TskData.FileKnown.KNOWN)
-                && !file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
+                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
+                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
+                    && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)
+                    && !file.getKnown().equals(TskData.FileKnown.KNOWN)
+                    && !file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
                 /*
                  * Is the file in FILE_IGNORE_LIST?
                  */
@@ -187,7 +189,8 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      * Create a blackboard artifact.
      *
      * @param file         The file to be processed.
-     * @param artifactType The type of artifact to create.
+     * @param artifactType The type of artifact to create. Assumed to be an
+     *                     analysis result type.
      * @param comment      A comment to be attached to the artifact.
      *
      * @return 'OK' if the file was processed successfully, or 'ERROR' if there
@@ -198,10 +201,11 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
             if (context.fileIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
-            
-            BlackboardArtifact artifact = file.newArtifact(artifactType);
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
-                    EncryptionDetectionModuleFactory.getModuleName(), comment));
+
+            BlackboardArtifact artifact = file.newAnalysisResult(new BlackboardArtifact.Type(artifactType), Score.SCORE_UNKNOWN, null, null, null, 
+                    Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                    EncryptionDetectionModuleFactory.getModuleName(), comment)))
+                    .getAnalysisResult();
 
             try {
                 /*
@@ -326,14 +330,14 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                         accessDatabase = databaseBuilder.open();
                     } catch (InvalidCredentialsException ex) {
                         logger.log(Level.INFO, String.format(
-                                "Jackcess throws invalid credentials exception for file (name: %s, id: %s).  It will be assumed to be password protected.", 
+                                "Jackcess throws invalid credentials exception for file (name: %s, id: %s).  It will be assumed to be password protected.",
                                 file.getName(), file.getId()));
                         return true;
                     } catch (Exception ex) { // Firewall, see JIRA-7097
                         logger.log(Level.WARNING, String.format("Unexpected exception "
                                 + "trying to open msaccess database using Jackcess "
                                 + "(name: %s, id: %d)", file.getName(), file.getId()), ex);
-                        return passwordProtected; 
+                        return passwordProtected;
                     }
                     /*
                      * No exception has been thrown at this point, so the file

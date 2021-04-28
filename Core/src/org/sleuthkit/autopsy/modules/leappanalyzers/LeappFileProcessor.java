@@ -71,6 +71,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
@@ -1218,10 +1219,24 @@ public final class LeappFileProcessor {
      * @return The newly-created artifact, or null on error
      */
     private BlackboardArtifact createArtifactWithAttributes(int type, Content dataSource, Collection<BlackboardAttribute> bbattributes) {
+        BlackboardArtifact.Type artType = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.fromID(type));
+
         try {
-            BlackboardArtifact bbart = dataSource.newArtifact(type);
-            bbart.addAttributes(bbattributes);
-            return bbart;
+            if (artType == null || artType.getCategory() == null) {
+                logger.log(Level.WARNING, "Unable to get an artifact type for type: " + type);
+                return null;
+            }
+            switch (artType.getCategory()) {
+                case DATA_ARTIFACT:
+                    return (dataSource instanceof AbstractFile) 
+                            ? ((AbstractFile) dataSource).newDataArtifact(artType, bbattributes)
+                            : dataSource.newDataArtifact(artType, bbattributes, null);
+                case ANALYSIS_RESULT:
+                    return dataSource.newAnalysisResult(artType, Score.SCORE_UNKNOWN, null, null, null, bbattributes).getAnalysisResult();
+                default:
+                    logger.log(Level.SEVERE, "Unknown category type: " + artType.getCategory().getDisplayName());
+                    return null;
+            }
         } catch (TskException ex) {
             logger.log(Level.WARNING, Bundle.LeappFileProcessor_error_creating_new_artifacts(), ex); //NON-NLS
         }

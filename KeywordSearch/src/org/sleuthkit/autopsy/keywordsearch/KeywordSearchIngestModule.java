@@ -569,8 +569,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
             if (!attributes.isEmpty()) {
                 try {
-                    BlackboardArtifact bbart = aFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA);
-                    bbart.addAttributes(attributes);
+                    BlackboardArtifact bbart = aFile.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA), attributes);
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     // Log error and return to continue processing

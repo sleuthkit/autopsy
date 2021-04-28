@@ -142,9 +142,10 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
         } else {
             // Just create an artifact with the attributes that we do have.
             if (!additionalAttributes.isEmpty()) {
-                BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
-                artifact.addAttributes(additionalAttributes);
-
+                BlackboardArtifact artifact = (parent instanceof AbstractFile)
+                        ? ((AbstractFile) parent).newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), additionalAttributes)
+                        : parent.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), additionalAttributes, null);
+                        
                 currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
             }
         }

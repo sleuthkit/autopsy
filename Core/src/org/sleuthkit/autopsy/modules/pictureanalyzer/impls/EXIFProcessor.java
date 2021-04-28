@@ -29,6 +29,7 @@ import com.drew.metadata.exif.GpsDirectory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
@@ -56,11 +57,12 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
+import org.sleuthkit.datamodel.Score;
 
 /**
  * Extracts EXIF metadata from JPEG, TIFF, and WAV files. Currently only date,
  * latitude, longitude, altitude, device model, and device make are extracted.
- * 
+ *
  * User content suspected artifacts are also created by this processor.
  */
 @ServiceProvider(service = PictureProcessor.class)
@@ -143,16 +145,18 @@ public class EXIFProcessor implements PictureProcessor {
             if (context.fileIngestIsCancelled()) {
                 return;
             }
-            
+
             final Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
             if (!attributes.isEmpty() && !blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
+
+                final BlackboardArtifact exifArtifact = file.newDataArtifact(new BlackboardArtifact.Type(TSK_METADATA_EXIF), attributes);
                 
-                final BlackboardArtifact exifArtifact = file.newArtifact(TSK_METADATA_EXIF);
-                final BlackboardArtifact userSuspectedArtifact = file.newArtifact(TSK_USER_CONTENT_SUSPECTED);
-                exifArtifact.addAttributes(attributes);
-                userSuspectedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
-                        MODULE_NAME, Bundle.ExifProcessor_userContent_description()));
+                final BlackboardArtifact userSuspectedArtifact = file.newAnalysisResult(
+                        new BlackboardArtifact.Type(TSK_USER_CONTENT_SUSPECTED), Score.SCORE_UNKNOWN, null, null, null,
+                        Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, Bundle.ExifProcessor_userContent_description())))
+                        .getAnalysisResult();
+                
                 try {
                     // index the artifact for keyword search
                     blackboard.postArtifact(exifArtifact, MODULE_NAME);

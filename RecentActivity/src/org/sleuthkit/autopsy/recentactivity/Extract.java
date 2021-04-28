@@ -52,6 +52,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOC
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -160,12 +161,13 @@ abstract class Extract {
      */
     BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
         Optional<OsAccount> optional = getOsAccount(content);
-        if (optional.isPresent() && type.getCategory() == BlackboardArtifact.Category.DATA_ARTIFACT) {
-            return content.newDataArtifact(type, attributes, optional.get());
-        } else {
-            BlackboardArtifact bbart = content.newArtifact(type.getTypeID());
-            bbart.addAttributes(attributes);
-            return bbart;
+        switch (type.getCategory()) {
+            case DATA_ARTIFACT:
+                return content.newDataArtifact(type, attributes, optional.orElse(null));
+            case ANALYSIS_RESULT:
+                return content.newAnalysisResult(type, Score.SCORE_UNKNOWN, null, null, null, attributes).getAnalysisResult();
+            default:
+                throw new TskCoreException("Unknown category type: " + type.getCategory().getDisplayName());
         }
     }
 

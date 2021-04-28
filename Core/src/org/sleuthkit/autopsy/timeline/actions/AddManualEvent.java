@@ -22,7 +22,7 @@ import java.awt.Dialog;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import static java.util.Arrays.asList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -142,9 +142,7 @@ public class AddManualEvent extends Action {
         try {
             //Use the current examiners name plus a fixed string as the source / module name.
             String source = MANUAL_CREATION + ": " + sleuthkitCase.getCurrentExaminer().getLoginName();
-
-            BlackboardArtifact artifact = sleuthkitCase.newBlackboardArtifact(TSK_TL_EVENT, eventInfo.datasource.getId());
-            artifact.addAttributes(asList(
+            List<BlackboardAttribute> attributes = Arrays.asList(
                     new BlackboardAttribute(
                             TSK_TL_EVENT_TYPE, source,
                             TimelineEventType.USER_CREATED.getTypeID()),
@@ -154,7 +152,10 @@ public class AddManualEvent extends Action {
                     new BlackboardAttribute(
                             TSK_DATETIME, source,
                             eventInfo.time)
-            ));
+            );
+            
+            BlackboardArtifact artifact = eventInfo.datasource.newDataArtifact(new BlackboardArtifact.Type(TSK_TL_EVENT), attributes, null);
+            
             try {
                 sleuthkitCase.getBlackboard().postArtifact(artifact, source);
             } catch (Blackboard.BlackboardException ex) {
