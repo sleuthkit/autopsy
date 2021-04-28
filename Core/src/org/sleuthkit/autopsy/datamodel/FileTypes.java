@@ -34,6 +34,8 @@ import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.AnalysisResultAdded;
@@ -76,16 +78,10 @@ public final class FileTypes implements AutopsyVisitableItem {
      */
     private boolean showCounts = true;
 
-    private final SleuthkitCase skCase;
-
     private final long datasourceObjId;
-    
-    FileTypes(SleuthkitCase skCase) {
-        this(skCase, 0);
-    }
 
-    FileTypes(SleuthkitCase skCase, long dsObjId) {
-        this.skCase = skCase;
+
+    FileTypes(long dsObjId) {
         this.datasourceObjId = dsObjId;
         updateShowCounts();
     }
@@ -93,10 +89,6 @@ public final class FileTypes implements AutopsyVisitableItem {
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
-    }
-
-    SleuthkitCase getSleuthkitCase() {
-        return skCase;
     }
 
     long filteringDataSourceObjId() {
@@ -112,10 +104,10 @@ public final class FileTypes implements AutopsyVisitableItem {
          */
         if (showCounts) {
             try {
-                if (skCase.countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) { //NON-NLS
+                if (Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) { //NON-NLS
                     showCounts = false;
                 }
-            } catch (TskCoreException tskCoreException) {
+            } catch (NoCurrentCaseException | TskCoreException tskCoreException) {
                 showCounts = false;
                 logger.log(Level.SEVERE, "Error counting files.", tskCoreException); //NON-NLS
             }
