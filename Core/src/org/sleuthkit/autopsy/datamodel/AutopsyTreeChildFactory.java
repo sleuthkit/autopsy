@@ -127,6 +127,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                         new DataSourcesByType(),
                         new Views(tskCase),
                         new Results(tskCase),
+                        new OsAccounts(tskCase),
                         new Tags(),
                         new Reports()));
 

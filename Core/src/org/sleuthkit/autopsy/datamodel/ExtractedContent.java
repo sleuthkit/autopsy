@@ -37,6 +37,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.RootContentChildren.CreateAutopsyNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -99,7 +100,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
         return skCase;
     }
 
-    public class RootNode extends DisplayableItemNode {
+    public static class RootNode extends DisplayableItemNode {
 
         public RootNode(SleuthkitCase skCase) {
             super(Children.create(new TypeFactory(), true), Lookups.singleton(NAME));
@@ -139,17 +140,51 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return getClass().getName();
         }
     }
+    
+    static class DataArtifactTypeFactory extends TypeFactory {
+        
+    }
+    
+    static class ArtifactKey {
+        private static final CreateAutopsyNodeVisitor visitor new CreateAutopsyNodeVisitor();
+        private final AutopsyVisitableItem visitable;
+        private final BlackboardArtifact.Type type;
+        private final Long dsFilteringObjId;
+
+        ArtifactKey(AutopsyVisitableItem visitable, BlackboardArtifact.Type type, long dsFilteringObjId) {
+            this.visitable = visitable;
+            this.type = type;
+            this.dsFilteringObjId = dsFilteringObjId;
+        }
+
+        Node getNode() {
+            if (visitable!= null) {
+                return visitable.accept(visitor);
+            } else {
+                TypeNode node = new TypeNode(type, dsFilteringObjId);
+                node.updateDisplayName();
+                return node;
+            }
+        }
+        
+        String getName() {
+
+        }
+    }
 
     /**
      * Creates the children for the ExtractedContent area of the results tree.
      * This area has all of the blackboard artifacts that are not displayed in a
      * more specific form elsewhere in the tree.
      */
-    private class TypeFactory extends ChildFactory.Detachable<BlackboardArtifact.Type> implements RefreshThrottler.Refresher {
+    abstract static class TypeFactory extends ChildFactory.Detachable<ArtifactKey> implements RefreshThrottler.Refresher {
+
+        private static final Logger logger = Logger.getLogger(TypeNode.class.getName());
 
         private final ArrayList<BlackboardArtifact.Type> doNotShow = new ArrayList<>();
         // maps the artifact type to its child node 
         private final HashMap<BlackboardArtifact.Type, TypeNode> typeNodeList = new HashMap<>();
+        private final Long filteringDSObjId;
 
         /**
          * RefreshThrottler is used to limit the number of refreshes performed
@@ -159,8 +194,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
         private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
 
         @SuppressWarnings("deprecation")
-        TypeFactory() {
+        TypeFactory(Long filteringDSObjId) {
             super();
+            this.filteringDSObjId = filteringDSObjId;
 
             // these are shown in other parts of the UI
             doNotShow.add(new BlackboardArtifact.Type(TSK_GEN_INFO));
@@ -184,7 +220,6 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 // case was closed. Remove listeners so that we don't get called with a stale case handle
                 if (evt.getNewValue() == null) {
                     removeNotify();
-                    skCase = null;
                 }
             } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                     || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
@@ -219,42 +254,59 @@ public class ExtractedContent implements AutopsyVisitableItem {
             typeNodeList.clear();
         }
 
+        /**
+         * Retrieves all the artifact types that should be displayed for this
+         * factory.
+         *
+         * @param filteringDSObjId The data source object id to filter on or
+         *                         null if no filtering on data source should
+         *                         occur.
+         *
+         * @return The list of artifact types to be displayed.
+         *
+         * @throws NoCurrentCaseException
+         * @throws TskCoreException
+         */
+        protected abstract List<ArtifactKey> getTypes(Long filteringDSObjId) throws NoCurrentCaseException, TskCoreException;
+
+        // Potentially can reuse
+//        (filteringDSObjId > 0)
+//                        ? Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifactTypesInUse(filteringDSObjId)
+//                        : Case.getCurrentCaseThrows().getSleuthkitCase().getArtifactTypesInUse();
+        //                 types.removeAll(doNotShow);
         @Override
-        protected boolean createKeys(List<BlackboardArtifact.Type> list) {
-            if (skCase != null) {
-                try {
-                    List<BlackboardArtifact.Type> types = (filteringDSObjId > 0)
-                            ? blackboard.getArtifactTypesInUse(filteringDSObjId)
-                            : skCase.getArtifactTypesInUse();
+        protected boolean createKeys(List<ArtifactKey> list) {
 
-                    types.removeAll(doNotShow);
-                    Collections.sort(types,
-                            new Comparator<BlackboardArtifact.Type>() {
-                        @Override
-                        public int compare(BlackboardArtifact.Type a, BlackboardArtifact.Type b) {
-                            return a.getDisplayName().compareTo(b.getDisplayName());
-                        }
-                    });
-                    list.addAll(types);
-
-                    // the create node method will get called only for new types
-                    // refresh the counts if we already created them from a previous update
-                    for (BlackboardArtifact.Type art : types) {
-                        TypeNode node = typeNodeList.get(art);
-                        if (node != null) {
-                            node.updateDisplayName();
-                        }
+            try {
+                List<ArtifactKey> types = getTypes(this.filteringDSObjId);
+                Collections.sort(types,
+                        new Comparator<BlackboardArtifact.Type>() {
+                    @Override
+                    public int compare(BlackboardArtifact.Type a, BlackboardArtifact.Type b) {
+                        return a.getDisplayName().compareTo(b.getDisplayName());
                     }
-                } catch (TskCoreException ex) {
-                    Logger.getLogger(TypeFactory.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
+                });
+                list.addAll(types);
+
+                // the create node method will get called only for new types
+                // refresh the counts if we already created them from a previous update
+                for (BlackboardArtifact.Type art : types) {
+                    TypeNode node = typeNodeList.get(art);
+                    if (node != null) {
+                        node.updateDisplayName();
+                    }
                 }
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Trying to access case when no case is open.", ex); //NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
             }
             return true;
         }
 
         @Override
         protected Node createNodeForKey(BlackboardArtifact.Type key) {
-            TypeNode node = new TypeNode(key);
+            TypeNode node = new TypeNode(key, filteringDSObjId);
             typeNodeList.put(key, node);
             return node;
         }
@@ -300,35 +352,33 @@ public class ExtractedContent implements AutopsyVisitableItem {
      * the artifacts of a given type. Its children will be
      * BlackboardArtifactNode objects.
      */
-    public class TypeNode extends DisplayableItemNode {
+    public static class TypeNode extends DisplayableItemNode {
+
+        private static final Logger logger = Logger.getLogger(TypeNode.class.getName());
 
         private final BlackboardArtifact.Type type;
         private long childCount = 0;
+        private final Long filteringDSObjId;
 
-        TypeNode(BlackboardArtifact.Type type) {
-            super(Children.create(new ArtifactFactory(type), true), Lookups.singleton(type.getDisplayName()));
+        TypeNode(BlackboardArtifact.Type type, Long filteringDSObjId) {
+            super(Children.create(new ArtifactFactory(type, filteringDSObjId), true), Lookups.singleton(type.getDisplayName()));
             super.setName(type.getTypeName());
             this.type = type;
+            this.filteringDSObjId = filteringDSObjId;
             String iconPath = IconsUtil.getIconFilePath(type.getTypeID());
             setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
             updateDisplayName();
         }
 
         final void updateDisplayName() {
-            if (skCase == null) {
-                return;
-            }
-
-            // NOTE: This completely destroys our lazy-loading ideal
-            //    a performance increase might be had by adding a 
-            //    "getBlackboardArtifactCount()" method to skCase
             try {
                 this.childCount = (filteringDSObjId > 0)
-                        ? blackboard.getArtifactsCount(type.getTypeID(), filteringDSObjId)
-                        : skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
+                        ? Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifactsCount(type.getTypeID(), filteringDSObjId)
+                        : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifactsTypeCount(type.getTypeID());
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Error fetching data when case closed.", ex);
             } catch (TskCoreException ex) {
-                Logger.getLogger(TypeNode.class.getName())
-                        .log(Level.WARNING, "Error getting child count", ex); //NON-NLS
+                logger.log(Level.WARNING, "Error getting child count", ex); //NON-NLS
             }
             super.setDisplayName(type.getDisplayName() + " \u200E(\u200E" + childCount + ")\u200E");
         }
@@ -374,8 +424,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
     /**
      * Creates children for a given artifact type
      */
-    private class ArtifactFactory extends BaseChildFactory<BlackboardArtifact> implements RefreshThrottler.Refresher {
+    private static class ArtifactFactory extends BaseChildFactory<BlackboardArtifact> implements RefreshThrottler.Refresher {
 
+        private static final Logger logger = Logger.getLogger(ArtifactFactory.class.getName());
         private final BlackboardArtifact.Type type;
 
         /**
@@ -384,10 +435,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
          * received.
          */
         private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
+        private final Long filteringDSObjId;
 
-        ArtifactFactory(BlackboardArtifact.Type type) {
+        ArtifactFactory(BlackboardArtifact.Type type, Long filteringDSObjId) {
             super(type.getTypeName());
             this.type = type;
+            this.filteringDSObjId = filteringDSObjId;
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -430,23 +483,22 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected List<BlackboardArtifact> makeKeys() {
-            if (skCase != null) {
-                try {
-                    List<BlackboardArtifact> arts;
-                    if (filteringDSObjId > 0) {
-                        arts = blackboard.getArtifacts(type.getTypeID(), filteringDSObjId);
-                    } else {
-                        arts = skCase.getBlackboardArtifacts(type.getTypeID());
-                    }
-                    for (BlackboardArtifact art : arts) {
-                        //Cache attributes while we are off the EDT.
-                        //See JIRA-5969
-                        art.getAttributes();
-                    }
-                    return arts;
-                } catch (TskCoreException ex) {
-                    Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
+            try {
+                List<BlackboardArtifact> arts;
+                arts = (filteringDSObjId != null)
+                        ? Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(type.getTypeID(), filteringDSObjId)
+                        : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifacts(type.getTypeID());
+
+                for (BlackboardArtifact art : arts) {
+                    //Cache attributes while we are off the EDT.
+                    //See JIRA-5969
+                    art.getAttributes();
                 }
+                return arts;
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Trying to access case when no case is open.", ex); //NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
             }
             return Collections.emptyList();
         }

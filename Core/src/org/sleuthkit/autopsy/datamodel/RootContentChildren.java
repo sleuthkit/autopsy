@@ -204,5 +204,15 @@ public class RootContentChildren extends Children.Keys<Object> {
         public AbstractNode visit(DataSourcesByType dataSourceHosts) {
             return new DataSourcesByTypeNode();
         }
+
+        @Override
+        public AbstractNode visit(AnalysisResults analysisResults) {
+            return new AnalysisResultsNode(analysisResults);
+        }
+
+        @Override
+        public AbstractNode visit(DataArtifacts dataArtifacts) {
+            return new DataArtifactsNode(dataArtifacts);
+        }
     }
 }

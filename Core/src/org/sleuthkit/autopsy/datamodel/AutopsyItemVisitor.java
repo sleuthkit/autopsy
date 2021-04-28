@@ -85,6 +85,11 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(DataSourcesByType aThis);
 
+    T visit(AnalysisResults aThis);
+
+    T visit(DataArtifacts aThis);
+    
+
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
@@ -232,6 +237,16 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(DataSourcesByType dataSourceHosts) {
             return defaultVisit(dataSourceHosts);
+        }
+        
+        @Override
+        public T visit(DataArtifacts aThis) {
+            return defaultVisit(aThis);
+        }
+
+        @Override
+        public T visit(AnalysisResults aThis) {
+            return defaultVisit(aThis);
         }
     }
 }
