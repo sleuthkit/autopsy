@@ -54,6 +54,7 @@ from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.datamodel import Score
+from java.util import ArrayList
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the analysis.
