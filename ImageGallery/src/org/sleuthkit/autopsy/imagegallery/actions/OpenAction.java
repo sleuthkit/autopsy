@@ -40,6 +40,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -255,28 +256,7 @@ public final class OpenAction extends CallableSystemAction {
                             // They don't want to rebuild. Just open the UI as is.
                             // NOTE: There could be no data....
                         } else if (answer == ButtonType.YES) {
-                            if (controller.getCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-                                /*
-                                 * For a single-user case, we favor user
-                                 * experience, and rebuild the database as soon
-                                 * as Image Gallery is enabled for the case.
-                                 *
-                                 * Turning listening off is necessary in order
-                                 * to invoke the listener that will call
-                                 * controller.rebuildDB();
-                                 */
-                                controller.setListeningEnabled(false);
-                                controller.setListeningEnabled(true);
-                            } else {
-                                /*
-                                 * For a multi-user case, we favor overall
-                                 * performance and user experience, not every
-                                 * user may want to review images, so we rebuild
-                                 * the database only when a user launches Image
-                                 * Gallery.
-                                 */
-                                controller.rebuildDrawablesDb();
-                            }
+                            controller.rebuildDrawablesDb();
                         }
                         openTopComponent();
                         return;
