@@ -393,7 +393,7 @@ public final class LeappFileProcessor {
                                 geoAbstractFile = createTrackpoint(bbattributes, dataSource, fileName, trackpointSegmentName, pointList);
                                 break;
                             default: // There is no relationship defined so just process the artifact normally
-                                BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
+                                BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType, dataSource, bbattributes);
                                 if (bbartifact != null) {
                                     bbartifacts.add(bbartifact);
                                 }
@@ -1209,8 +1209,7 @@ public final class LeappFileProcessor {
     /**
      * Generic method for creating a blackboard artifact with attributes
      *
-     * @param type is a blackboard.artifact_type enum to determine which type
-     * the artifact should be
+     * @param artType The artifact type.
      * @param dataSource is the Content object that needs to have the artifact
      * added for it
      * @param bbattributes is the collection of blackboard attributes that need
@@ -1218,14 +1217,8 @@ public final class LeappFileProcessor {
      *
      * @return The newly-created artifact, or null on error
      */
-    private BlackboardArtifact createArtifactWithAttributes(int type, Content dataSource, Collection<BlackboardAttribute> bbattributes) {
-        BlackboardArtifact.Type artType = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.fromID(type));
-
+    private BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type artType, Content dataSource, Collection<BlackboardAttribute> bbattributes) {
         try {
-            if (artType == null || artType.getCategory() == null) {
-                logger.log(Level.WARNING, "Unable to get an artifact type for type: " + type);
-                return null;
-            }
             switch (artType.getCategory()) {
                 case DATA_ARTIFACT:
                     return (dataSource instanceof AbstractFile) 
