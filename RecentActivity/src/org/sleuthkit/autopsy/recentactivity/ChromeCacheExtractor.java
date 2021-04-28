@@ -175,8 +175,8 @@ final class ChromeCacheExtractor {
             fileManager = currentCase.getServices().getFileManager();
              
             // Create an output folder to save any derived files
-            absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName);
-            relOutputFolderName = Paths.get( RAImageIngestModule.getRelModuleOutputPath(), moduleName).normalize().toString();
+            absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName, context.getJobId());
+            relOutputFolderName = Paths.get(RAImageIngestModule.getRelModuleOutputPath(currentCase, moduleName, context.getJobId())).normalize().toString();
             
             File dir = new File(absOutputFolderName);
             if (dir.exists() == false) {
@@ -206,7 +206,7 @@ final class ChromeCacheExtractor {
             outDir.mkdirs();
         }
         
-        String cacheTempPath = RAImageIngestModule.getRATempPath(currentCase, moduleName) + cachePath;
+        String cacheTempPath = RAImageIngestModule.getRATempPath(currentCase, moduleName, context.getJobId()) + cachePath;
         File tempDir = new File(cacheTempPath);
         if (tempDir.exists() == false) {
             tempDir.mkdirs();
@@ -222,7 +222,7 @@ final class ChromeCacheExtractor {
     private void cleanup () {
         
         for (Entry<String, FileWrapper> entry : this.fileCopyCache.entrySet()) {
-            Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(currentCase, moduleName), entry.getKey() ); 
+            Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(currentCase, moduleName, context.getJobId()), entry.getKey() ); 
             try {
                 entry.getValue().getFileCopy().getChannel().close();
                 entry.getValue().getFileCopy().close();
@@ -283,7 +283,9 @@ final class ChromeCacheExtractor {
                     return;
                 }
                 
-                processCacheFolder(indexFile);
+                if (indexFile.getSize() > 0) {
+                    processCacheFolder(indexFile);
+                }
             }
         
         } catch (TskCoreException ex) {
@@ -652,7 +654,7 @@ final class ChromeCacheExtractor {
         // write the file to disk so that we can have a memory-mapped ByteBuffer
         AbstractFile cacheFile = abstractFileOptional.get();
         RandomAccessFile randomAccessFile = null;
-        String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName) + cacheFolderName + cacheFile.getName(); //NON-NLS
+        String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName, context.getJobId()) + cacheFolderName + cacheFile.getName(); //NON-NLS
         try {
             File newFile = new File(tempFilePathname);
             ContentUtils.writeToFile(cacheFile, newFile, context::dataSourceIngestIsCancelled);
@@ -1039,6 +1041,9 @@ final class ChromeCacheExtractor {
                 this.data = new byte [length];
                 ByteBuffer buf = cacheFileCopy.getByteBuffer();
                 int dataOffset = DATAFILE_HDR_SIZE + cacheAddress.getStartBlock() * cacheAddress.getBlockSize();
+                if (dataOffset > buf.capacity()) {
+                    return;
+                }
                 buf.position(dataOffset);
                 buf.get(data, 0, length);
                 

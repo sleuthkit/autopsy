@@ -31,6 +31,7 @@ import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.SlackFile;
+import org.sleuthkit.datamodel.UnsupportedContent;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -112,5 +113,10 @@ final class GetRootDirectoryVisitor extends GetFilesContentVisitor {
     @Override
     public Collection<AbstractFile> visit(OsAccount art) {
         return getAllFromChildren(art);
+    }
+    
+    @Override
+    public Collection<AbstractFile> visit(UnsupportedContent uc) {
+        return getAllFromChildren(uc);
     }
 }

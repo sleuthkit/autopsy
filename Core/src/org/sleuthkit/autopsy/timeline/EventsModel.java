@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.SqlFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 import org.sleuthkit.autopsy.timeline.zooming.EventsModelParams;
@@ -222,8 +223,7 @@ public final class EventsModel {
      * @param rootFilterState A root filter state object.
      */
     synchronized void addDataSourceFilters(RootFilterState rootFilterState) {
-        DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
-        datasourceIDsToNamesMap.entrySet().forEach(entry -> dataSourcesFilter.addSubFilter(newDataSourceFilter(entry)));
+        datasourceIDsToNamesMap.entrySet().forEach(entry -> rootFilterState.getDataSourcesFilterState().addSubFilterState(new SqlFilterState<>(newDataSourceFilter(entry))));
     }
 
     /**

@@ -47,7 +47,7 @@ public class CentralRepositoryService implements AutopsyService {
     }
 
     @NbBundle.Messages({
-        "CentralRepositoryService.progressMsg.updatingSchema=Updating schema..."
+        "CentralRepositoryService.progressMsg.updatingSchema=Checking for schema updates..."
     })
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {

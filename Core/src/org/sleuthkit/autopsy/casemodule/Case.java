@@ -62,6 +62,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -157,9 +158,10 @@ import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
  */
 public class Case {
 
-    private static final String CASE_TEMP_DIR = Case.class.getSimpleName();
     private static final int CASE_LOCK_TIMEOUT_MINS = 1;
     private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
+    private static final String APP_NAME = UserPreferences.getAppName();
+    private static final String TEMP_FOLDER = "Temp";
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static final String CACHE_FOLDER = "Cache"; //NON-NLS
@@ -496,35 +498,35 @@ public class Case {
                         event.getArtifacts(artifactType)));
             }
         }
-        
-        @Subscribe 
+
+        @Subscribe
         public void publishOsAccountAddedEvent(TskEvent.OsAccountsAddedTskEvent event) {
-            for(OsAccount account: event.getOsAcounts()) {
+            for (OsAccount account : event.getOsAcounts()) {
                 eventPublisher.publish(new OsAccountAddedEvent(account));
             }
         }
-        
-        @Subscribe 
+
+        @Subscribe
         public void publishOsAccountChangedEvent(TskEvent.OsAccountsChangedTskEvent event) {
-            for(OsAccount account: event.getOsAcounts()) {
+            for (OsAccount account : event.getOsAcounts()) {
                 eventPublisher.publish(new OsAccountChangedEvent(account));
             }
         }
-        
-        @Subscribe 
+
+        @Subscribe
         public void publishOsAccountDeletedEvent(TskEvent.OsAccountsDeletedTskEvent event) {
-            for(Long accountId: event.getOsAcountObjectIds()) {
+            for (Long accountId : event.getOsAcountObjectIds()) {
                 eventPublisher.publish(new OsAccountDeletedEvent(accountId));
             }
         }
 
         /**
-         * Publishes an autopsy event from the sleuthkit HostAddedEvent 
+         * Publishes an autopsy event from the sleuthkit HostAddedEvent
          * indicating that hosts have been created.
          *
          * @param event The sleuthkit event for the creation of hosts.
          */
-        @Subscribe 
+        @Subscribe
         public void publishHostsAddedEvent(TskEvent.HostsAddedTskEvent event) {
             eventPublisher.publish(new HostsAddedEvent(
                     event == null ? Collections.emptyList() : event.getHosts()));
@@ -535,8 +537,8 @@ public class Case {
          * indicating that hosts have been updated.
          *
          * @param event The sleuthkit event for the updating of hosts.
-         */        
-        @Subscribe 
+         */
+        @Subscribe
         public void publishHostsChangedEvent(TskEvent.HostsChangedTskEvent event) {
             eventPublisher.publish(new HostsChangedEvent(
                     event == null ? Collections.emptyList() : event.getHosts()));
@@ -547,32 +549,32 @@ public class Case {
          * indicating that hosts have been deleted.
          *
          * @param event The sleuthkit event for the deleting of hosts.
-         */    
-        @Subscribe 
+         */
+        @Subscribe
         public void publishHostsDeletedEvent(TskEvent.HostsDeletedTskEvent event) {
             eventPublisher.publish(new HostsRemovedEvent(
                     event == null ? Collections.emptyList() : event.getHosts()));
         }
 
         /**
-         * Publishes an autopsy event from the sleuthkit PersonAddedEvent 
+         * Publishes an autopsy event from the sleuthkit PersonAddedEvent
          * indicating that persons have been created.
          *
          * @param event The sleuthkit event for the creation of persons.
          */
-        @Subscribe 
+        @Subscribe
         public void publishPersonsAddedEvent(TskEvent.PersonsAddedTskEvent event) {
             eventPublisher.publish(new PersonsAddedEvent(
                     event == null ? Collections.emptyList() : event.getPersons()));
         }
 
         /**
-         * Publishes an autopsy event from the sleuthkit PersonChangedEvent 
+         * Publishes an autopsy event from the sleuthkit PersonChangedEvent
          * indicating that persons have been updated.
          *
          * @param event The sleuthkit event for the updating of persons.
-         */        
-        @Subscribe 
+         */
+        @Subscribe
         public void publishPersonsChangedEvent(TskEvent.PersonsChangedTskEvent event) {
             eventPublisher.publish(new PersonsChangedEvent(
                     event == null ? Collections.emptyList() : event.getPersons()));
@@ -583,8 +585,8 @@ public class Case {
          * indicating that persons have been deleted.
          *
          * @param event The sleuthkit event for the deleting of persons.
-         */    
-        @Subscribe 
+         */
+        @Subscribe
         public void publishPersonsDeletedEvent(TskEvent.PersonsDeletedTskEvent event) {
             eventPublisher.publish(new PersonsDeletedEvent(
                     event == null ? Collections.emptyList() : event.getPersons()));
@@ -1470,13 +1472,58 @@ public class Case {
     }
 
     /**
+     * @return A subdirectory of java.io.tmpdir.
+     */
+    private Path getBaseSystemTempPath() {
+        return Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME, getName());
+    }
+
+    /**
      * Gets the full path to the temp directory for this case, creating it if it
      * does not exist.
      *
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        return UserMachinePreferences.getTempDirectory();
+        // NOTE: UserPreferences may also be affected by changes in this method.
+        // See JIRA-7505 for more information.
+        Path basePath = null;
+        // get base temp path for the case based on user preference
+        switch (UserMachinePreferences.getTempDirChoice()) {
+            case CUSTOM:
+                String customDirectory = UserMachinePreferences.getCustomTempDirectory();
+                basePath = (StringUtils.isBlank(customDirectory))
+                        ? null
+                        : Paths.get(customDirectory, APP_NAME, getName());
+                break;
+            case CASE:
+                basePath = Paths.get(getCaseDirectory());
+                break;
+            case SYSTEM:
+            default:
+                // at this level, if the case directory is specified for a temp
+                // directory, return the system temp directory instead.
+                basePath = getBaseSystemTempPath();
+                break;
+        }
+
+        basePath = basePath == null ? getBaseSystemTempPath() : basePath;
+
+        // get sub directories based on multi user vs. single user
+        Path caseRelPath = (CaseType.MULTI_USER_CASE.equals(getCaseType()))
+                ? Paths.get(NetworkUtils.getLocalHostName(), TEMP_FOLDER)
+                : Paths.get(TEMP_FOLDER);
+
+        File caseTempDir = basePath
+                .resolve(caseRelPath)
+                .toFile();
+
+        // ensure directory exists
+        if (!caseTempDir.exists()) {
+            caseTempDir.mkdirs();
+        }
+
+        return caseTempDir.getAbsolutePath();
     }
 
     /**
@@ -1923,7 +1970,7 @@ public class Case {
      *
      * @return A CaseMetaData object.
      */
-    CaseMetadata getMetadata() {
+    public CaseMetadata getMetadata() {
         return metadata;
     }
 

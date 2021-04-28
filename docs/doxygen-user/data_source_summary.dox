@@ -80,4 +80,10 @@ The Container tab displays information on the data source itself, such as the si
 
 \image html ds_summary_container.png
 
+\subsection ds_summary_export Export
+
+The Export tab allows you to export the contents of the other data source summary tabs to an Excel-formatted file.
+
+\image html ds_summary_export.png
+
 */

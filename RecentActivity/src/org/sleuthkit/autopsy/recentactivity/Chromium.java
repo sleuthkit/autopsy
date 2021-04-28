@@ -91,6 +91,10 @@ class Chromium extends Extract {
     private static final String LOGIN_DATA_FILE_NAME = "Login Data";
     private static final String WEB_DATA_FILE_NAME = "Web Data";
     private static final String UC_BROWSER_NAME = "UC Browser";
+    private static final String ENCRYPTED_FIELD_MESSAGE = "The data was encrypted.";
+    
+    private Boolean databaseEncrypted = false;
+    private Boolean fieldEncrypted = false;
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
@@ -130,42 +134,43 @@ class Chromium extends Extract {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+        long ingestJobId = context.getJobId();
 
         for (Map.Entry<String, String> browser : BROWSERS_MAP.entrySet()) {
             String browserName = browser.getKey();
             String browserLocation = browser.getValue();
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_History", browserName));
-            this.getHistory(browser.getKey(), browser.getValue());
+            this.getHistory(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Bookmarks", browserName));
-            this.getBookmark(browser.getKey(), browser.getValue());
+            this.getBookmark(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Cookies", browserName));
-            this.getCookie(browser.getKey(), browser.getValue());
+            this.getCookie(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Logins", browserName));
-            this.getLogins(browser.getKey(), browser.getValue());
+            this.getLogins(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_AutoFill", browserName));
-            this.getAutofill(browser.getKey(), browser.getValue());
+            this.getAutofill(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Downloads", browserName));
-            this.getDownload(browser.getKey(), browser.getValue());
+            this.getDownload(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
@@ -179,8 +184,11 @@ class Chromium extends Extract {
 
     /**
      * Query for history databases and add artifacts
+     * @param browser 
+     * @param browserLocation 
+     * @param ingestJobId The ingest job id.
      */
-    private void getHistory(String browser, String browserLocation) {
+    private void getHistory(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> historyFiles;
         String historyFileName = HISTORY_FILE_NAME;
@@ -215,7 +223,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < allocatedHistoryFiles.size()) {
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
             final AbstractFile historyFile = allocatedHistoryFiles.get(j++);
             if ((historyFile.getSize() == 0) || (historyFile.getName().toLowerCase().contains("-slack"))
                     || (historyFile.getName().toLowerCase().contains("cache")) || (historyFile.getName().toLowerCase().contains("media"))
@@ -281,8 +289,11 @@ class Chromium extends Extract {
 
     /**
      * Search for bookmark files and make artifacts.
+     * @param browser
+     * @param browserLocation 
+     * @param ingestJobId The ingest job id.
      */
-    private void getBookmark(String browser, String browserLocation) {
+    private void getBookmark(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles;
         String bookmarkFileName = BOOKMARK_FILE_NAME;
@@ -315,7 +326,7 @@ class Chromium extends Extract {
                     || (bookmarkFile.getName().toLowerCase().contains("bak")) || (bookmarkFile.getParentPath().toLowerCase().contains("backup"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -423,8 +434,11 @@ class Chromium extends Extract {
 
     /**
      * Queries for cookie files and adds artifacts
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId The ingest job id.
      */
-    private void getCookie(String browser, String browserLocation) {
+    private void getCookie(String browser, String browserLocation, long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
@@ -456,7 +470,7 @@ class Chromium extends Extract {
             if ((cookiesFile.getSize() == 0) || (cookiesFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -519,8 +533,11 @@ class Chromium extends Extract {
 
     /**
      * Queries for download files and adds artifacts
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId The ingest job id.
      */
-    private void getDownload(String browser, String browserLocation) {
+    private void getDownload(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadFiles;
         String historyFileName = HISTORY_FILE_NAME;
@@ -551,7 +568,7 @@ class Chromium extends Extract {
                 continue;
             }
 
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(downloadFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -633,8 +650,11 @@ class Chromium extends Extract {
 
     /**
      * Gets user logins from Login Data sqlite database
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId The ingest job id.
      */
-    private void getLogins(String browser, String browserLocation) {
+    private void getLogins(String browser, String browserLocation, long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> loginDataFiles;
@@ -665,7 +685,7 @@ class Chromium extends Extract {
             if ((loginDataFile.getSize() == 0) || (loginDataFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + loginDataFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + loginDataFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(loginDataFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -736,8 +756,11 @@ class Chromium extends Extract {
     /**
      * Gets and parses Autofill data from 'Web Data' database, and creates
      * TSK_WEB_FORM_AUTOFILL, TSK_WEB_FORM_ADDRESS artifacts
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId The ingest job id.
      */
-    private void getAutofill(String browser, String browserLocation) {
+    private void getAutofill(String browser, String browserLocation, long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> webDataFiles;
@@ -764,11 +787,12 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < webDataFiles.size()) {
+            databaseEncrypted = false;
             AbstractFile webDataFile = webDataFiles.get(j++);
             if ((webDataFile.getSize() == 0) || (webDataFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, browser) + File.separator + webDataFile.getName() + j + ".db"; //NON-NLS
+            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + webDataFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(webDataFile, new File(tempFilePath), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -798,11 +822,18 @@ class Chromium extends Extract {
             try {
                 // get form address atifacts
                 getFormAddressArtifacts(webDataFile, tempFilePath, isSchemaV8X);
+                if (databaseEncrypted) {
+                   Collection<BlackboardAttribute> bbattributes = new ArrayList<>(); 
+                   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                            RecentActivityExtracterModuleFactory.getModuleName(), 
+                            String.format("%s Autofill Database Encryption Detected", browser)));
+                   bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, webDataFile, bbattributes)); 
+                }
             } catch (NoCurrentCaseException | TskCoreException | Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, String.format("Error adding artifacts to the case database "
                         + "for chrome file %s [objId=%d]", webDataFile.getName(), webDataFile.getId()), ex);
             }
-
+            
             dbFile.delete();
         }
 
@@ -839,9 +870,10 @@ class Chromium extends Extract {
                     NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                     ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
 
+            fieldEncrypted = false;
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
                     RecentActivityExtracterModuleFactory.getModuleName(),
-                    ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
+                    processFields(result.get("value")))); //NON-NLS
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
                     RecentActivityExtracterModuleFactory.getModuleName(),
@@ -860,7 +892,11 @@ class Chromium extends Extract {
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                     RecentActivityExtracterModuleFactory.getModuleName(), browser));
-
+            if (fieldEncrypted) {
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                        RecentActivityExtracterModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE));
+            }
+            
             // Add an artifact
             try {
                 bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, webDataFile, bbattributes));
@@ -902,20 +938,21 @@ class Chromium extends Extract {
         logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2} artifacts identified.", new Object[]{getName(), dbFilePath, addresses.size()}); //NON-NLS
         for (HashMap<String, Object> result : addresses) {
 
-            // get name fields
-            String first_name = result.get("first_name").toString() != null ? result.get("first_name").toString() : "";
-            String middle_name = result.get("middle_name").toString() != null ? result.get("middle_name").toString() : "";
-            String last_name = result.get("last_name").toString() != null ? result.get("last_name").toString() : "";
+            fieldEncrypted = false;
+            
+            String first_name = processFields(result.get("first_name"));
+            String middle_name = processFields(result.get("middle_name"));
+            String last_name = processFields(result.get("last_name"));
 
             // get email and phone
-            String email_Addr = result.get("email").toString() != null ? result.get("email").toString() : "";
-            String phone_number = result.get("number").toString() != null ? result.get("number").toString() : "";
+            String email_Addr = processFields(result.get("email"));
+            String phone_number = processFields(result.get("number"));
 
             // Get the address fields
-            String city = result.get("city").toString() != null ? result.get("city").toString() : "";
-            String state = result.get("state").toString() != null ? result.get("state").toString() : "";
-            String zipcode = result.get("zipcode").toString() != null ? result.get("zipcode").toString() : "";
-            String country_code = result.get("country_code").toString() != null ? result.get("country_code").toString() : "";
+            String city = processFields(result.get("city"));
+            String state = processFields(result.get("state"));
+            String zipcode = processFields(result.get("zipcode"));
+            String country_code = processFields(result.get("country_code"));
 
             // schema version specific fields
             String full_name = "";
@@ -925,14 +962,15 @@ class Chromium extends Extract {
             long use_date = 0;
 
             if (isSchemaV8X) {
-                full_name = result.get("full_name").toString() != null ? result.get("full_name").toString() : "";
-                street_address = result.get("street_address").toString() != null ? result.get("street_address").toString() : "";
+                
+                full_name = processFields(result.get("full_name"));
+                street_address = processFields(result.get("street_address"));
                 date_modified = result.get("date_modified").toString() != null ? Long.valueOf(result.get("date_modified").toString()) : 0;
                 use_count = result.get("use_count").toString() != null ? Integer.valueOf(result.get("use_count").toString()) : 0;
                 use_date = result.get("use_date").toString() != null ? Long.valueOf(result.get("use_date").toString()) : 0;
             } else {
-                String address_line_1 = result.get("address_line_1").toString() != null ? result.get("street_address").toString() : "";
-                String address_line_2 = result.get("address_line_2").toString() != null ? result.get("address_line_2").toString() : "";
+                String address_line_1 = processFields(result.get("address_line_1"));
+                String address_line_2 = processFields(result.get("address_line_2"));
                 street_address = String.join(" ", address_line_1, address_line_2);
             }
 
@@ -948,6 +986,11 @@ class Chromium extends Extract {
                 otherAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         date_modified)); //NON-NLS
+                if (fieldEncrypted) {
+                    otherAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                            RecentActivityExtracterModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE)); //NON-NLS
+                    
+                }
             }
 
             helper.addWebFormAddress(
@@ -957,6 +1000,23 @@ class Chromium extends Extract {
         }
     }
 
+    /**
+     * Check the type of the object and if it is bytes then it is encrypted and return the string and
+     * set flag that field and file are encrypted
+     * @param dataValue Object to be checked, the object is from a database result set
+     * @return the actual string or an empty string
+     */
+    private String processFields(Object dataValue) {
+
+        if (dataValue instanceof byte[]) {
+            fieldEncrypted = true;
+            databaseEncrypted = true;
+        }
+        
+        return dataValue.toString() != null ? dataValue.toString() : "";
+        
+    }
+    
     private boolean isChromePreVersion30(String temps) {
         String query = "PRAGMA table_info(downloads)"; //NON-NLS
         List<HashMap<String, Object>> columns = this.dbConnect(temps, query);

@@ -28,7 +28,6 @@ AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_descr
 AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_title=Path cannot be used
 CTL_DataContentAction=DataContent
 CTL_DataContentTopComponent=Data Content
-CTL_CustomAboutAction=About
 CTL_OfflineHelpAction=Offline Autopsy Documentation
 CTL_OnlineHelpAction=Online Autopsy Documentation
 DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database

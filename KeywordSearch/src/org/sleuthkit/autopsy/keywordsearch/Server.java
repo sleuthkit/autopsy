@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,6 +53,8 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.apache.commons.io.FileUtils;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -85,6 +87,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -95,7 +98,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
-import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.Content;
 
@@ -2030,6 +2032,13 @@ public class Server {
         private final List<SolrInputDocument> buffer;
         private final Object bufferLock;
         
+        /* (JIRA-7521) Sometimes we get into a situation where Solr server is no longer able to index new data. 
+        * Typically main reason for this is Solr running out of memory. In this case we will stop trying to send new 
+        * data to Solr (for this collection) after certain number of consecutive batches have failed. */
+        private static final int MAX_NUM_CONSECUTIVE_FAILURES = 5;
+        private AtomicInteger numConsecutiveFailures = new AtomicInteger(0);
+        private AtomicBoolean skipIndexing = new AtomicBoolean(false);
+        
         private final ScheduledThreadPoolExecutor periodicTasksExecutor;
         private static final long PERIODIC_BATCH_SEND_INTERVAL_MINUTES = 10;
         private static final int NUM_BATCH_UPDATE_RETRIES = 10;
@@ -2076,6 +2085,11 @@ public class Server {
 
             @Override
             public void run() {
+                
+                if (skipIndexing.get()) {
+                    return;
+                }
+                
                 List<SolrInputDocument> clone;
                 synchronized (bufferLock) {
                     
@@ -2242,6 +2256,10 @@ public class Server {
          * @throws KeywordSearchModuleException
          */
         void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
+            
+            if (skipIndexing.get()) {
+                return;
+            }
 
             List<SolrInputDocument> clone;
             synchronized (bufferLock) {
@@ -2268,6 +2286,10 @@ public class Server {
          *
          * @throws KeywordSearchModuleException
          */
+        @NbBundle.Messages({
+            "Collection.unableToIndexData.error=Unable to add data to text index. All future text indexing for the current case will be skipped.",
+            
+        })
         private void sendBufferedDocs(List<SolrInputDocument> docBuffer) throws KeywordSearchModuleException {
             
             if (docBuffer.isEmpty()) {
@@ -2293,6 +2315,7 @@ public class Server {
                         }                        
                     }
                     if (success) {
+                        numConsecutiveFailures.set(0);
                         if (reTryAttempt > 0) {
                             logger.log(Level.INFO, "Batch update suceeded after {0} re-try", reTryAttempt); //NON-NLS
                         }
@@ -2304,10 +2327,29 @@ public class Server {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg")); //NON-NLS
             } catch (Exception ex) {
                 // Solr throws a lot of unexpected exception types
+                numConsecutiveFailures.incrementAndGet();
                 logger.log(Level.SEVERE, "Could not add batched documents to index", ex); //NON-NLS
+                
+                // display message to user that that a document batch is missing from the index
+                MessageNotifyUtil.Notify.error(
+                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"),
+                        NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"));
                 throw new KeywordSearchModuleException(
                         NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"), ex); //NON-NLS
             } finally {
+                if (numConsecutiveFailures.get() >= MAX_NUM_CONSECUTIVE_FAILURES) {
+                    // skip all future indexing
+                    skipIndexing.set(true);
+                    logger.log(Level.SEVERE, "Unable to add data to text index. All future text indexing for the current case will be skipped!"); //NON-NLS
+
+                    // display message to user that no more data will be added to the index
+                    MessageNotifyUtil.Notify.error(
+                            NbBundle.getMessage(this.getClass(), "Server.addDocBatch.exception.msg"),
+                            Bundle.Collection_unableToIndexData_error());
+                    if (RuntimeProperties.runningWithGUI()) {
+                        MessageNotifyUtil.Message.error(Bundle.Collection_unableToIndexData_error());
+                    }
+                }
                 docBuffer.clear();
             }
         }
