@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datasourceprocessors.xry.AbstractSingleEntityParser.PARSER_NAME;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;

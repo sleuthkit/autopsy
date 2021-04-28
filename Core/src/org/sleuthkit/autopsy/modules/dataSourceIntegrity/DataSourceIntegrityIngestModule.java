@@ -299,7 +299,8 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                             Score.SCORE_UNKNOWN,
                             null, null, null,
                             Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
-                                    DataSourceIntegrityModuleFactory.getModuleName(), artifactComment)));
+                                    DataSourceIntegrityModuleFactory.getModuleName(), artifactComment)))
+                            .getAnalysisResult();
 
                     Case.getCurrentCase().getServices().getArtifactsBlackboard()
                             .postArtifact(verificationFailedArtifact, DataSourceIntegrityModuleFactory.getModuleName());

@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.io.FileUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -443,18 +444,24 @@ final class AddLogicalImageTask implements Runnable {
     }
 
     private void addInterestingFileToArtifacts(long fileId, long dataSourceId, String ruleSetName, String ruleName, List<BlackboardArtifact> artifacts) throws TskCoreException {
-        BlackboardArtifact artifact = this.blackboard.newAnalysisResult(
-                INTERESTING_FILE_TYPE,
-                fileId,
-                dataSourceId,
-                Score.SCORE_UNKNOWN,
-                null,
-                null,
-                null,
-                Arrays.asList(
-                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName),
-                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName)
-                ));
+        BlackboardArtifact artifact;
+        try {
+            artifact = this.blackboard.newAnalysisResult(
+                    INTERESTING_FILE_TYPE,
+                    fileId,
+                    dataSourceId,
+                    Score.SCORE_UNKNOWN,
+                    null,
+                    null,
+                    null,
+                    Arrays.asList(
+                            new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName),
+                            new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName)
+                    ))
+                    .getAnalysisResult();
+        } catch (Blackboard.BlackboardException ex) {
+            throw new TskCoreException("Unable to create analysis result.", ex);
+        }
 
         artifacts.add(artifact);
     }

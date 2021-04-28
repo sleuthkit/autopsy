@@ -86,7 +86,6 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                         altitude = poisResultSet.getDouble("poialt")
 
                         attributes = ArrayList()
-                        artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK)
                         attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, self._MODULE_NAME, time))
                         attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, self._MODULE_NAME, latitude))
                         attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, self._MODULE_NAME, longitude))
@@ -94,6 +93,8 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                         attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, self._MODULE_NAME, name))
                         attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, self._MODULE_NAME, self._PROGRAM_NAME))
 						
+                        artifact = abstractFile.newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK), attributes)
+
                         artifact.addAttributes(attributes)
                         try:
                             # index the artifact for keyword search

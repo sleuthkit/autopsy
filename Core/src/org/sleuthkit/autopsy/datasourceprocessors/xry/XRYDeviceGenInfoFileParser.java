@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -106,7 +107,7 @@ final class XRYDeviceGenInfoFileParser extends AbstractSingleEntityParser {
         }
         if(!attributes.isEmpty()) {
             if (parent instanceof AbstractFile) {
-                ((AbstractFile) parent).newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO), attributes)
+                ((AbstractFile) parent).newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO), attributes);
             } else {
                 parent.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO), attributes, null);
             }
