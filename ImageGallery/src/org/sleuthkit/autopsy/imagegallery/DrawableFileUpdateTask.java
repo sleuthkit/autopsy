@@ -161,7 +161,7 @@ final class DrawableFileUpdateTask extends DrawableDbTask {
             int workDone = 0;
             // Cycle through all of the files returned and call processFile on each
             //do in transaction
-
+            drawableDbTransaction = getDrawableDB().beginTransaction();
             /*
              * We are going to periodically commit the CaseDB transaction and
              * sleep so that the user can have Autopsy do other stuff while
@@ -174,11 +174,7 @@ final class DrawableFileUpdateTask extends DrawableDbTask {
                 if (caseDbTransaction == null) {
                     caseDbTransaction = getCaseDB().beginTransaction();
                 }
-
-                if (drawableDbTransaction == null) {
-                    drawableDbTransaction = getDrawableDB().beginTransaction();
-                }
-
+                
                 if (isCancelled() || Thread.interrupted()) {
                     logger.log(Level.WARNING, "Task cancelled or interrupted: not all contents may be transfered to drawable database."); //NON-NLS
                     endedEarly = true;
@@ -195,11 +191,7 @@ final class DrawableFileUpdateTask extends DrawableDbTask {
                 if ((++caseDbCounter % 200) == 0) {
                     caseDbTransaction.commit();
                     caseDbTransaction = null;
-
-                    getDrawableDB().commitTransaction(drawableDbTransaction, true);
-                    drawableDbTransaction = null;
-
-                    Thread.sleep(500); // 1/2 second
+                    Thread.sleep(500); // 1/2 millisecond
                 }
             }
             progressHandle.finish();
