@@ -87,7 +87,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public ExtractedContent.RootNode visit(ExtractedContent ec) {
-            return new ExtractedContent.RootNode(ec.getCategory(), ec.getFilteringDSObjId());
+            return new ExtractedContent.DataArtifactsNode(0);
         }
 
         @Override
@@ -169,7 +169,7 @@ public class RootContentChildren extends Children.Keys<Object> {
         public AbstractNode visit(Accounts accountsItem) {
             return accountsItem.new AccountsRootNode();
         }
-        
+
         @Override
         public AbstractNode visit(OsAccounts osAccountsItem) {
             return osAccountsItem.new OsAccountListNode();
@@ -209,15 +209,13 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(AnalysisResults analysisResults) {
-            return new ExtractedContent.RootNode(
-                    Category.ANALYSIS_RESULT, 
+            return new ExtractedContent.AnalysisResultsNode(
                     analysisResults.getFilteringDataSourceObjId());
         }
 
         @Override
         public AbstractNode visit(DataArtifacts dataArtifacts) {
-            return new ExtractedContent.RootNode(
-                    Category.ANALYSIS_RESULT, 
+            return new ExtractedContent.DataArtifactsNode(
                     dataArtifacts.getFilteringDataSourceObjId());
         }
     }

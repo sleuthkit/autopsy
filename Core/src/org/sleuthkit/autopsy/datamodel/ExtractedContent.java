@@ -18,12 +18,9 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -33,13 +30,12 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -49,7 +45,6 @@ import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
@@ -76,7 +71,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     public static final String NAME = NbBundle.getMessage(RootNode.class, "ExtractedContentNode.name.text");
     private static final Category DEFAULT_CATEGORY = Category.DATA_ARTIFACT;
-            
+
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
     private SleuthkitCase skCase;   // set to null after case has been closed
     private final Category category;
@@ -89,7 +84,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
     public ExtractedContent(SleuthkitCase skCase) {
         this(skCase, 0, DEFAULT_CATEGORY);
     }
-    
+
     public ExtractedContent(SleuthkitCase skCase, Category category) {
         this(skCase, 0, DEFAULT_CATEGORY);
     }
@@ -103,7 +98,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
     public ExtractedContent(SleuthkitCase skCase, long objId) {
         this(skCase, objId, DEFAULT_CATEGORY);
     }
-    
+
     public ExtractedContent(SleuthkitCase skCase, long dataSourceObjId, Category category) {
         this.skCase = skCase;
         this.filteringDSObjId = dataSourceObjId;
@@ -118,41 +113,45 @@ public class ExtractedContent implements AutopsyVisitableItem {
     public SleuthkitCase getSleuthkitCase() {
         return skCase;
     }
-    
+
     long getFilteringDSObjId() {
         return filteringDSObjId;
     }
-    
+
     Category getCategory() {
         return category;
     }
-    
-    
-    
-    
-    
-    
-    static class RootNode extends DisplayableItemNode {
-        private static final Logger logger = Logger.getLogger(RootNode.class.getName());
-        
-        private static Children getFactory(Category category, long filteringDSObjId) {
-            try {
-                TypeFactory factory = Category.ANALYSIS_RESULT.equals(category) ?
-                        new AnalysisResultsTypeFactory(filteringDSObjId) :
-                        new DataArtifactsTypeFactory(filteringDSObjId);
-                
-                return Children.create(factory, true);
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.WARNING, "Attempt to instantiate TypeFactory with no open case.", ex);
-                return null;
-            }
-        }
 
-        RootNode(Category category, long filteringDSObjId) {
-            super(getFactory(category, filteringDSObjId), Lookups.singleton(NAME));
-            super.setName(NAME);
-            super.setDisplayName(NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/extracted_content.png"); //NON-NLS
+    @Messages({
+        "AnalysisResultsNode_name=Analysis Results",})
+    static class AnalysisResultsNode extends RootNode {
+
+        AnalysisResultsNode(long filteringDSObjId) {
+            super(Children.create(new AnalysisResultsTypeFactory(filteringDSObjId), true),
+                    "org/sleuthkit/autopsy/images/analysis_result.png",
+                    Bundle.AnalysisResultsNode_name(),
+                    Bundle.AnalysisResultsNode_name());
+        }
+    }
+
+    @Messages({
+        "DataArtifactsNode_name=Data Artifacts",})
+    static class DataArtifactsNode extends RootNode {
+
+        DataArtifactsNode(long filteringDSObjId) {
+            super(Children.create(new DataArtifactsTypeFactory(filteringDSObjId), true),
+                    "org/sleuthkit/autopsy/images/extracted_content.png",
+                    Bundle.DataArtifactsNode_name(),
+                    Bundle.DataArtifactsNode_name());
+        }
+    }
+
+    static class RootNode extends DisplayableItemNode {
+        RootNode(Children children, String icon, String name, String displayName) {
+            super(children, Lookups.singleton(name));
+            super.setName(name);
+            super.setDisplayName(displayName);
+            this.setIconBaseWithExtension(icon); //NON-NLS        
         }
 
         @Override
@@ -187,8 +186,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
     }
 
-    
     private static class AnalysisResultsTypeFactory extends TypeFactory {
+
+        private static final Logger logger = Logger.getLogger(AnalysisResultsTypeFactory.class.getName());
 
         private static final Set<BlackboardArtifact.Type> EXCLUDED_ANALYSIS_RESULTS = Stream.of(
                 // these are shown in other parts of the UI (and different node types)
@@ -199,23 +199,30 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE)
         ).collect(Collectors.toSet());
 
-        private static Map<AutopsyVisitableItem, String> getVisitableItems(long filteringDSObjId) throws NoCurrentCaseException {
-            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            return new HashMap<AutopsyVisitableItem, String>() {
-                {
-                    put(new KeywordHits(skCase, filteringDSObjId), KeywordHits.getDisplayName());
-                    put(new HashsetHits(skCase, filteringDSObjId), HashsetHits.getDisplayName());
-                    put(new InterestingHits(skCase, filteringDSObjId), InterestingHits.getDisplayName());
-                }
-            };
+        private static Map<String, AutopsyVisitableItem> getVisitableItems(long filteringDSObjId) {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                return new HashMap<String, AutopsyVisitableItem>() {
+                    {
+                        put(KeywordHits.getDisplayName(), new KeywordHits(skCase, filteringDSObjId));
+                        put(HashsetHits.getDisplayName(), new HashsetHits(skCase, filteringDSObjId));
+                        put(InterestingHits.getDisplayName(), new InterestingHits(skCase, filteringDSObjId));
+                    }
+                };
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Trying to create AnalysisResultsTypeFactory with no open case.", ex);
+                return Collections.emptyMap();
+            }
         }
 
-        AnalysisResultsTypeFactory(long filteringDSObjId) throws NoCurrentCaseException {
-            super(getVisitableItems(filteringDSObjId), EXCLUDED_ANALYSIS_RESULTS, Category.DATA_ARTIFACT, filteringDSObjId);
+        AnalysisResultsTypeFactory(long filteringDSObjId) {
+            super(getVisitableItems(filteringDSObjId), EXCLUDED_ANALYSIS_RESULTS, Category.ANALYSIS_RESULT, filteringDSObjId);
         }
     }
 
     private static class DataArtifactsTypeFactory extends TypeFactory {
+
+        private static final Logger logger = Logger.getLogger(DataArtifactsTypeFactory.class.getName());
 
         @SuppressWarnings("deprecation")
         private static final Set<BlackboardArtifact.Type> EXCLUDED_DATA_ARTIFACTS = Stream.of(
@@ -229,17 +236,22 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 new BlackboardArtifact.Type(TSK_ASSOCIATED_OBJECT)
         ).collect(Collectors.toSet());
 
-        private static Map<AutopsyVisitableItem, String> getVisitableItems(long filteringDSObjId) throws NoCurrentCaseException {
-            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            return new HashMap<AutopsyVisitableItem, String>() {
-                {
-                    put(new EmailExtracted(skCase, filteringDSObjId), EmailExtracted.getDisplayName());
-                    put(new Accounts(skCase, filteringDSObjId), Accounts.getDisplayName());
-                }
-            };
+        private static Map<String, AutopsyVisitableItem> getVisitableItems(long filteringDSObjId) {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                return new HashMap<String, AutopsyVisitableItem>() {
+                    {
+                        put(EmailExtracted.getDisplayName(), new EmailExtracted(skCase, filteringDSObjId));
+                        put(Accounts.getDisplayName(), new Accounts(skCase, filteringDSObjId));
+                    }
+                };
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Trying to create DataArtifactsTypeFactory with no open case.", ex);
+                return Collections.emptyMap();
+            }
         }
 
-        DataArtifactsTypeFactory(long filteringDSObjId) throws NoCurrentCaseException {
+        DataArtifactsTypeFactory(long filteringDSObjId) {
             super(getVisitableItems(filteringDSObjId), EXCLUDED_DATA_ARTIFACTS, Category.DATA_ARTIFACT, filteringDSObjId);
         }
     }
@@ -283,10 +295,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         public int hashCode() {
-            int hash = 5;
-            hash = 37 * hash + Objects.hashCode(this.visitable);
-            hash = 37 * hash + Objects.hashCode(this.name);
-            hash = 37 * hash + Objects.hashCode(this.dsFilteringObjId);
+            int hash = 7;
+            hash = 53 * hash + Objects.hashCode(this.name);
+            hash = 53 * hash + (int) (this.dsFilteringObjId ^ (this.dsFilteringObjId >>> 32));
             return hash;
         }
 
@@ -302,18 +313,14 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 return false;
             }
             final VisitableArtifactKey other = (VisitableArtifactKey) obj;
+            if (this.dsFilteringObjId != other.dsFilteringObjId) {
+                return false;
+            }
             if (!Objects.equals(this.name, other.name)) {
-                return false;
-            }
-            if (!Objects.equals(this.visitable, other.visitable)) {
-                return false;
-            }
-            if (!Objects.equals(this.dsFilteringObjId, other.dsFilteringObjId)) {
                 return false;
             }
             return true;
         }
-
     }
 
     private static class TypeArtifactKey implements ArtifactKey {
@@ -346,9 +353,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 83 * hash + Objects.hashCode(this.type);
-            hash = 83 * hash + Objects.hashCode(this.typeMapping);
-            hash = 83 * hash + Objects.hashCode(this.dsFilteringObjId);
+            hash = 53 * hash + Objects.hashCode(this.type);
+            hash = 53 * hash + (int) (this.dsFilteringObjId ^ (this.dsFilteringObjId >>> 32));
             return hash;
         }
 
@@ -364,18 +370,14 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 return false;
             }
             final TypeArtifactKey other = (TypeArtifactKey) obj;
+            if (this.dsFilteringObjId != other.dsFilteringObjId) {
+                return false;
+            }
             if (!Objects.equals(this.type, other.type)) {
-                return false;
-            }
-            if (!Objects.equals(this.typeMapping, other.typeMapping)) {
-                return false;
-            }
-            if (!Objects.equals(this.dsFilteringObjId, other.dsFilteringObjId)) {
                 return false;
             }
             return true;
         }
-
     }
 
     /**
@@ -397,12 +399,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
          * received.
          */
         private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
-        private final Map<AutopsyVisitableItem, String> visitableItems;
+        private final Map<String, AutopsyVisitableItem> visitableItems;
         private final Category category;
         private final Set<BlackboardArtifact.Type> excludeTypes;
 
         @SuppressWarnings("deprecation")
-        TypeFactory(Map<AutopsyVisitableItem, String> visitableItems, Set<BlackboardArtifact.Type> excludeTypes,
+        TypeFactory(Map<String, AutopsyVisitableItem> visitableItems, Set<BlackboardArtifact.Type> excludeTypes,
                 Category category, long filteringDSObjId) {
             super();
             this.filteringDSObjId = filteringDSObjId;
@@ -464,14 +466,20 @@ public class ExtractedContent implements AutopsyVisitableItem {
                         .map(tp -> new TypeArtifactKey(tp, this.typeNodeMap, this.filteringDSObjId));
 
                 Stream<ArtifactKey> visitableKeys = visitableItems.entrySet().stream()
-                        .map(entry -> new VisitableArtifactKey(entry.getKey(), entry.getValue(), filteringDSObjId));
+                        .map(entry -> new VisitableArtifactKey(entry.getValue(), entry.getKey(), filteringDSObjId));
 
-                Stream.concat(typeArtifactKeys, visitableKeys)
-                        .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getName(), b.getName()))
-                        .forEach((artifactTypeKey -> {
-                            artifactTypeKey.update();
-                            list.add(artifactTypeKey);
-                        }));
+                List<ArtifactKey> allKeysSorted = Stream.concat(typeArtifactKeys, visitableKeys)
+                        .filter(item -> item != null)
+                        .sorted((a, b) -> {
+                            String aSafe = (a.getName() == null) ? "" : a.getName();
+                            String bSafe = (b.getName() == null) ? "" : b.getName();
+                            return aSafe.compareToIgnoreCase(bSafe);
+                        })
+                        .collect(Collectors.toList());
+                
+                allKeysSorted.forEach(ArtifactKey::update);
+                
+                list.addAll(allKeysSorted);
 
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Trying to access case when no case is open.", ex); //NON-NLS
