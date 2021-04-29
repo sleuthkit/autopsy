@@ -742,6 +742,16 @@ class ExtractRegistry extends Extract {
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
+                            for (Map.Entry userMap : userNameMap.entrySet()) { 
+                                String sid = "";
+                                try{
+                                    sid = (String)userMap.getKey();
+                                    String userName = (String)userMap.getValue();
+                                    createOrUpdateOsAccount(regFile, sid, userName, null);
+                                } catch(TskCoreException | TskDataException | NotUserSIDException ex) {
+                                    logger.log(Level.WARNING, String.format("Failed to update Domain for existing OsAccount: %s, sid: %s", regFile.getId(), sid), ex);
+                                }
+                            }
                         } catch (TskCoreException ex) {
                             logger.log(Level.SEVERE, String.format("Error adding os_info artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS
                         }
