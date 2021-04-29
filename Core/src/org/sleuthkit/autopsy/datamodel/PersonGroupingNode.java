@@ -36,7 +36,7 @@ import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.events.PersonsChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsUpdatedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.persons.DeletePersonAction;
 import org.sleuthkit.autopsy.datamodel.persons.EditPersonAction;
@@ -145,8 +145,8 @@ public class PersonGroupingNode extends DisplayableItemNode {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (personId != null && eventType.equals(Case.Events.PERSONS_CHANGED.toString()) && evt instanceof PersonsChangedEvent) {
-                ((PersonsChangedEvent) evt).getNewValue().stream()
+            if (personId != null && eventType.equals(Case.Events.PERSONS_CHANGED.toString()) && evt instanceof PersonsUpdatedEvent) {
+                ((PersonsUpdatedEvent) evt).getNewValue().stream()
                         .filter(p -> p != null && p.getPersonId() == personId)
                         .findFirst()
                         .ifPresent((newPerson) -> {

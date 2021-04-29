@@ -39,7 +39,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -184,9 +184,9 @@ public final class OsAccounts implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(Case.Events.OS_ACCOUNT_CHANGED.name())) {
-                    if (((OsAccountChangedEvent) evt).getOsAccount().getId() == account.getId()) {
+                    if (((OsAccountsUpdatedEvent) evt).getOsAccount().getId() == account.getId()) {
                         // Update the account node to the new one
-                        account = ((OsAccountChangedEvent) evt).getOsAccount();
+                        account = ((OsAccountsUpdatedEvent) evt).getOsAccount();
                         updateSheet();
                     }
                 } else if (evt.getPropertyName().equals(REALM_DATA_AVAILABLE_EVENT)) {

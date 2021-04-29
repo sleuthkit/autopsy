@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Event published when a report is added to a case.
  */
-public final class ReportAddedEvent extends TskDataModelChangeEvent<Report> {
+public final class ReportAddedEvent extends TskDataModelChangedEvent<Report> {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,7 +40,7 @@ public final class ReportAddedEvent extends TskDataModelChangeEvent<Report> {
      * @param report The data source that was added.
      */
     public ReportAddedEvent(Report report) {
-        super(Case.Events.REPORT_ADDED.toString(), Stream.of(report.getId()).collect(Collectors.toList()), Stream.of(report).collect(Collectors.toList()));
+        super(Case.Events.REPORT_ADDED.toString(), Stream.of(report).collect(Collectors.toList()), Report::getId);
     }
 
     public Report getReport() {

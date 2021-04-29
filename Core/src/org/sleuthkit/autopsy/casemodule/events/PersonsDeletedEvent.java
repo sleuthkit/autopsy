@@ -18,22 +18,33 @@
  */
 package org.sleuthkit.autopsy.casemodule.events;
 
+import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Event fired when persons are removed.
+ * An event fired when persons are deleted from the case.
  */
-public class PersonsDeletedEvent extends PersonsEvent {
-    
+public class PersonsDeletedEvent extends TskDataModelChangedEvent<Person> {
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
-     * Main constructor.
-     * @param dataModelObjects The list of persons that have been deleted.
+     * Constructs an event fired when persons are deleted from the case.
+     *
+     * @param dataModelObjectIds The unique numeric IDs (case database row IDs)
+     *                           of the persons that have been deleted.
      */
-    public PersonsDeletedEvent(List<Person> dataModelObjects) {
-        super(Case.Events.PERSONS_DELETED.name(), dataModelObjects);
+    public PersonsDeletedEvent(List<Long> dataModelObjectIds) {
+        super(Case.Events.PERSONS_DELETED.name(), dataModelObjectIds);
     }
+
+    @Override
+    protected List<Person> getDataModelObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        return Collections.emptyList();
+    }
+
 }

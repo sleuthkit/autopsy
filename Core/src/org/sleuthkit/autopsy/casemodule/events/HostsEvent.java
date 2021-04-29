@@ -19,10 +19,8 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -31,31 +29,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Base event class for when something pertaining to hosts changes.
  */
-public class HostsEvent extends TskDataModelChangeEvent<Host> {
+public class HostsEvent extends TskDataModelChangedEvent<Host> {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * Retrieves a list of ids from a list of hosts.
-     *
-     * @param hosts The hosts.
-     * @return The list of ids.
-     */
-    private static List<Long> getIds(List<Host> hosts) {
-        return getSafeList(hosts).stream()
-                .filter(h -> h != null)
-                .map(h -> h.getHostId()).collect(Collectors.toList());
-    }
-
-    /**
-     * Returns the hosts or an empty list.
-     *
-     * @param hosts The host list.
-     * @return The host list or an empty list if the parameter is null.
-     */
-    private static List<Host> getSafeList(List<Host> hosts) {
-        return hosts == null ? Collections.emptyList() : hosts;
-    }
 
     /**
      * Main constructor.
@@ -65,7 +41,7 @@ public class HostsEvent extends TskDataModelChangeEvent<Host> {
      * @param dataModelObjects The list of hosts for the event.
      */
     protected HostsEvent(String eventName, List<Host> dataModelObjects) {
-        super(eventName, getIds(dataModelObjects), new ArrayList<>(getSafeList(dataModelObjects)));
+        super(eventName, dataModelObjects, Host::getHostId);
     }
 
     @Override

@@ -23,17 +23,19 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Person;
 
 /**
- * Event fired when new persons are added.
+ * Event fired when new persons are added to a case.
  */
 public class PersonsAddedEvent extends PersonsEvent {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
-     * Main constructor.
-     * @param dataModelObjects The persons that have been added.
+     * Constructs an event fired when new persons are added to a case.
+     *
+     * @param persons The persons that have been added.
      */
-    public PersonsAddedEvent(List<Person> dataModelObjects) {
-        super(Case.Events.PERSONS_ADDED.name(), dataModelObjects);
+    public PersonsAddedEvent(List<Person> persons) {
+        super(Case.Events.PERSONS_ADDED.name(), persons);
     }
+    
 }

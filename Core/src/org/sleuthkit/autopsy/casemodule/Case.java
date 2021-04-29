@@ -84,13 +84,13 @@ import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
-import org.sleuthkit.autopsy.casemodule.events.HostsRemovedEvent;
-import org.sleuthkit.autopsy.casemodule.events.OsAccountAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
-import org.sleuthkit.autopsy.casemodule.events.OsAccountDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.PersonsChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
@@ -500,24 +500,18 @@ public class Case {
         }
 
         @Subscribe
-        public void publishOsAccountAddedEvent(TskEvent.OsAccountsAddedTskEvent event) {
-            for (OsAccount account : event.getOsAcounts()) {
-                eventPublisher.publish(new OsAccountAddedEvent(account));
-            }
+        public void publishOsAccountsAddedEvent(TskEvent.OsAccountsAddedTskEvent event) {           
+            eventPublisher.publish(new OsAccountsAddedEvent(event.getOsAcounts()));
         }
 
         @Subscribe
-        public void publishOsAccountChangedEvent(TskEvent.OsAccountsChangedTskEvent event) {
-            for (OsAccount account : event.getOsAcounts()) {
-                eventPublisher.publish(new OsAccountChangedEvent(account));
-            }
+        public void publishOsAccountsUpdatedEvent(TskEvent.OsAccountsUpdatedTskEvent event) {
+            eventPublisher.publish(new OsAccountsUpdatedEvent(event.getOsAcounts()));
         }
 
         @Subscribe
-        public void publishOsAccountDeletedEvent(TskEvent.OsAccountsDeletedTskEvent event) {
-            for (Long accountId : event.getOsAcountObjectIds()) {
-                eventPublisher.publish(new OsAccountDeletedEvent(accountId));
-            }
+        public void publishOsAccountsDeletedEvent(TskEvent.OsAccountsDeletedTskEvent event) {
+            eventPublisher.publish(new OsAccountsDeletedEvent(event.getObjectIds()));
         }
 
         /**
@@ -528,8 +522,7 @@ public class Case {
          */
         @Subscribe
         public void publishHostsAddedEvent(TskEvent.HostsAddedTskEvent event) {
-            eventPublisher.publish(new HostsAddedEvent(
-                    event == null ? Collections.emptyList() : event.getHosts()));
+            eventPublisher.publish(new HostsAddedEvent(event.getHosts()));
         }
 
         /**
@@ -539,9 +532,8 @@ public class Case {
          * @param event The sleuthkit event for the updating of hosts.
          */
         @Subscribe
-        public void publishHostsChangedEvent(TskEvent.HostsChangedTskEvent event) {
-            eventPublisher.publish(new HostsChangedEvent(
-                    event == null ? Collections.emptyList() : event.getHosts()));
+        public void publishHostsUpdatedEvent(TskEvent.HostsUpdatedTskEvent event) {
+            eventPublisher.publish(new HostsUpdatedEvent(event.getHosts()));
         }
 
         /**
@@ -552,8 +544,7 @@ public class Case {
          */
         @Subscribe
         public void publishHostsDeletedEvent(TskEvent.HostsDeletedTskEvent event) {
-            eventPublisher.publish(new HostsRemovedEvent(
-                    event == null ? Collections.emptyList() : event.getHosts()));
+            eventPublisher.publish(new HostsDeletedEvent(event.getObjectIds()));
         }
 
         /**
@@ -575,8 +566,8 @@ public class Case {
          * @param event The sleuthkit event for the updating of persons.
          */
         @Subscribe
-        public void publishPersonsChangedEvent(TskEvent.PersonsChangedTskEvent event) {
-            eventPublisher.publish(new PersonsChangedEvent(
+        public void publishPersonsUpdatedEvent(TskEvent.PersonsUpdatedTskEvent event) {
+            eventPublisher.publish(new PersonsUpdatedEvent(
                     event == null ? Collections.emptyList() : event.getPersons()));
         }
 
@@ -588,8 +579,7 @@ public class Case {
          */
         @Subscribe
         public void publishPersonsDeletedEvent(TskEvent.PersonsDeletedTskEvent event) {
-            eventPublisher.publish(new PersonsDeletedEvent(
-                    event == null ? Collections.emptyList() : event.getPersons()));
+            eventPublisher.publish(new PersonsDeletedEvent(event.getObjectIds()));
         }
     }
 
@@ -1824,72 +1814,6 @@ public class Case {
      */
     public void notifyBlackBoardArtifactTagDeleted(BlackboardArtifactTag deletedTag) {
         eventPublisher.publish(new BlackBoardArtifactTagDeletedEvent(deletedTag));
-    }
-
-    public void notifyOsAccountAdded(OsAccount account) {
-        eventPublisher.publish(new OsAccountAddedEvent(account));
-    }
-
-    public void notifyOsAccountChanged(OsAccount account) {
-        eventPublisher.publish(new OsAccountChangedEvent(account));
-    }
-
-    public void notifyOsAccountRemoved(Long osAccountObjectId) {
-        eventPublisher.publish(new OsAccountDeletedEvent(osAccountObjectId));
-    }
-
-    /**
-     * Notify via an autopsy event that a host has been added.
-     *
-     * @param host The host that has been added.
-     */
-    public void notifyHostAdded(Host host) {
-        eventPublisher.publish(new HostsAddedEvent(Collections.singletonList(host)));
-    }
-
-    /**
-     * Notify via an autopsy event that a host has been changed.
-     *
-     * @param newValue The host that has been updated.
-     */
-    public void notifyHostChanged(Host newValue) {
-        eventPublisher.publish(new HostsChangedEvent(Collections.singletonList(newValue)));
-    }
-
-    /**
-     * Notify via an autopsy event that a host has been deleted.
-     *
-     * @param host The host that has been deleted.
-     */
-    public void notifyHostDeleted(Host host) {
-        eventPublisher.publish(new HostsRemovedEvent(Collections.singletonList(host)));
-    }
-
-    /**
-     * Notify via an autopsy event that a person has been added.
-     *
-     * @param person The person that has been added.
-     */
-    public void notifyPersonAdded(Person person) {
-        eventPublisher.publish(new PersonsAddedEvent(Collections.singletonList(person)));
-    }
-
-    /**
-     * Notify via an autopsy event that a person has been changed.
-     *
-     * @param newValue The person that has been updated.
-     */
-    public void notifyPersonChanged(Person newValue) {
-        eventPublisher.publish(new PersonsChangedEvent(Collections.singletonList(newValue)));
-    }
-
-    /**
-     * Notify via an autopsy event that a person has been deleted.
-     *
-     * @param person The person that has been deleted.
-     */
-    public void notifyPersonDeleted(Person person) {
-        eventPublisher.publish(new PersonsDeletedEvent(Collections.singletonList(person)));
     }
 
     /**
