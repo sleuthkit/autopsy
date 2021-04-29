@@ -93,6 +93,7 @@ final public class Accounts implements AutopsyVisitableItem {
     private static final String ICON_BASE_PATH = "/org/sleuthkit/autopsy/images/"; //NON-NLS
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
+    private static final String DISPLAY_NAME = Bundle.Accounts_RootNode_displayName();
     
     @NbBundle.Messages("AccountsRootNode.name=Accounts")
     final public static String NAME = Bundle.AccountsRootNode_name();
@@ -113,6 +114,15 @@ final public class Accounts implements AutopsyVisitableItem {
     // tracks the number of each account type found
     private final AccountTypeResults accountTypeResults;
 
+    
+    /**
+     * Returns the display name for this module.
+     * @return The display name for this module.
+     */
+    public static String getDisplayName() {
+        return DISPLAY_NAME;
+    }
+    
     /**
      * Constructor
      *
@@ -236,7 +246,7 @@ final public class Accounts implements AutopsyVisitableItem {
         public AccountsRootNode() {
             super(Children.create(new AccountTypeFactory(), true), Lookups.singleton(Accounts.this));
             setName(Accounts.NAME);
-            setDisplayName(Bundle.Accounts_RootNode_displayName());
+            setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/accounts.png");    //NON-NLS
         }
 

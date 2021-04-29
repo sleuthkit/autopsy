@@ -103,6 +103,15 @@ public class KeywordHits implements AutopsyVisitableItem {
     static private boolean isOnlyDefaultInstance(List<String> instances) {
         return (instances.size() == 1) && (instances.get(0).equals(DEFAULT_INSTANCE_NAME));
     }
+    
+    
+    /**
+     * Returns the display name for KeywordHits.
+     * @return The display name for KeywordHits.
+     */
+    static String getDisplayName() {
+        return KEYWORD_HITS;
+    }
 
     /**
      * Constructor

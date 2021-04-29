@@ -29,7 +29,7 @@ public class AnalysisResults implements AutopsyVisitableItem {
      * Main constructor.
      */
     public AnalysisResults() {
-        this(null);
+        this(0);
     }
 
     /**
@@ -37,7 +37,7 @@ public class AnalysisResults implements AutopsyVisitableItem {
      *
      * @param dsObjId The data source object id.
      */
-    public AnalysisResults(Long dsObjId) {
+    public AnalysisResults(long dsObjId) {
         this.datasourceObjId = dsObjId;
     }
 
@@ -53,7 +53,7 @@ public class AnalysisResults implements AutopsyVisitableItem {
      * @return Whether or not there is a data source object for which results
      *         should be filtered.
      */
-    Long filteringDataSourceObjId() {
+    Long getFilteringDataSourceObjId() {
         return datasourceObjId;
     }
 }

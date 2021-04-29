@@ -64,6 +64,14 @@ public class InterestingHits implements AutopsyVisitableItem {
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
     /**
+     * Returns the display name for this module.
+     * @return The display name for this module.
+     */
+    static String getDisplayName() {
+        return DISPLAY_NAME;
+    }
+    
+    /**
      * Constructor
      *
      * @param skCase Case DB

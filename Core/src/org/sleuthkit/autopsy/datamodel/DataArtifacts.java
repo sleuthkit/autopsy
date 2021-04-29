@@ -29,7 +29,7 @@ public class DataArtifacts implements AutopsyVisitableItem {
      * Main constructor.
      */
     public DataArtifacts() {
-        this(null);
+        this(0);
     }
 
     /**
@@ -37,7 +37,7 @@ public class DataArtifacts implements AutopsyVisitableItem {
      *
      * @param dsObjId The data source object id.
      */
-    public DataArtifacts(Long dsObjId) {
+    public DataArtifacts(long dsObjId) {
         this.datasourceObjId = dsObjId;
     }
 
@@ -53,7 +53,7 @@ public class DataArtifacts implements AutopsyVisitableItem {
      * @return Whether or not there is a data source object for which results
      *         should be filtered.
      */
-    Long filteringDataSourceObjId() {
+    Long getFilteringDataSourceObjId() {
         return datasourceObjId;
     }
 }

@@ -25,6 +25,8 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 /**
@@ -85,7 +87,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public ExtractedContent.RootNode visit(ExtractedContent ec) {
-            return ec.new RootNode(ec.getSleuthkitCase());
+            return new ExtractedContent.RootNode(ec.getCategory(), ec.getFilteringDSObjId());
         }
 
         @Override
@@ -207,12 +209,16 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(AnalysisResults analysisResults) {
-            return new AnalysisResultsNode(analysisResults);
+            return new ExtractedContent.RootNode(
+                    Category.ANALYSIS_RESULT, 
+                    analysisResults.getFilteringDataSourceObjId());
         }
 
         @Override
         public AbstractNode visit(DataArtifacts dataArtifacts) {
-            return new DataArtifactsNode(dataArtifacts);
+            return new ExtractedContent.RootNode(
+                    Category.ANALYSIS_RESULT, 
+                    dataArtifacts.getFilteringDataSourceObjId());
         }
     }
 }
