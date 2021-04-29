@@ -148,7 +148,7 @@ public abstract class TskDataModelChangedEvent<T> extends AutopsyEvent {
      * Gets the Sleuth Kit Data Model objects associated with this application
      * event. If this event came from another host collaborating on a multi-user
      * case, the Sleuth Kit Data Model objects, this method will be called to
-     * reconstruct the objects on the current host.
+     * reconstruct the objects on the curartifactExists(), I think we should continue to use what we have and suppress the deprecation warnings.Bent host.
      *
      * @param caseDb The case database.
      * @param ids    The unique, numeric IDs (TSK object IDs, case database row

@@ -555,8 +555,7 @@ public class Case {
          */
         @Subscribe
         public void publishPersonsAddedEvent(TskEvent.PersonsAddedTskEvent event) {
-            eventPublisher.publish(new PersonsAddedEvent(
-                    event == null ? Collections.emptyList() : event.getPersons()));
+            eventPublisher.publish(new PersonsAddedEvent(event.getPersons()));
         }
 
         /**
@@ -567,8 +566,7 @@ public class Case {
          */
         @Subscribe
         public void publishPersonsUpdatedEvent(TskEvent.PersonsUpdatedTskEvent event) {
-            eventPublisher.publish(new PersonsUpdatedEvent(
-                    event == null ? Collections.emptyList() : event.getPersons()));
+            eventPublisher.publish(new PersonsUpdatedEvent(event.getPersons()));
         }
 
         /**
