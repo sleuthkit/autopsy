@@ -25,8 +25,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 /**
@@ -84,12 +82,6 @@ public class RootContentChildren extends Children.Keys<Object> {
      * Set Hits, etc.).
      */
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
-
-        @Override
-        public ExtractedContent.RootNode visit(ExtractedContent ec) {
-            return new ExtractedContent.DataArtifactsNode(0);
-        }
-
         @Override
         public AbstractNode visit(FileTypesByExtension sf) {
             return sf.new FileTypesByExtNode(sf.getSleuthkitCase(), null);
@@ -148,11 +140,6 @@ public class RootContentChildren extends Children.Keys<Object> {
         @Override
         public AbstractNode visit(Views v) {
             return new ViewsNode(v.getSleuthkitCase(), v.filteringDataSourceObjId());
-        }
-
-        @Override
-        public AbstractNode visit(Results results) {
-            return new ResultsNode(results.getSleuthkitCase(), results.filteringDataSourceObjId());
         }
 
         @Override

@@ -92,7 +92,6 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      * Creates keys for the top level children.
      *
      * @param list list of keys created
-     *
      * @return true, indicating that the key list is complete
      */
     @Override
@@ -112,16 +111,16 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                     if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
                         list.add(new PersonGrouping(null));
                     }
-
-                    return true;
                 } else {
                     // otherwise, just show host level
                     tskCase.getHostManager().getAllHosts().stream()
                             .map(HostGrouping::new)
                             .sorted()
                             .forEach(list::add);
-                    return true;
+                    
                 }
+                list.add(new Reports());
+                return true;
             } else {
                 // data source by type view
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(

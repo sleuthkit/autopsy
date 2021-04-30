@@ -88,11 +88,6 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(RecentFilesFilterNode rffn);
 
-    /*
-     * Extracted Results Area
-     */
-    T visit(ResultsNode rn);
-
     T visit(BlackboardArtifactNode ban);
 
     T visit(ExtractedContent.TypeNode atn);
@@ -403,11 +398,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
             return defaultVisit(dataSourceGroupingNode);
-        }
-
-        @Override
-        public T visit(ResultsNode rn) {
-            return defaultVisit(rn);
         }
 
         @Override

@@ -53,8 +53,6 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(FileSize.FileSizeFilter fsf);
 
-    T visit(ExtractedContent ec);
-
     T visit(KeywordHits kh);
 
     T visit(HashsetHits hh);
@@ -62,8 +60,6 @@ public interface AutopsyItemVisitor<T> {
     T visit(EmailExtracted ee);
 
     T visit(InterestingHits ih);
-
-    T visit(Results r);
 
     T visit(Tags tagsNodeKey);
 
@@ -93,11 +89,6 @@ public interface AutopsyItemVisitor<T> {
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
-
-        @Override
-        public T visit(ExtractedContent ec) {
-            return defaultVisit(ec);
-        }
 
         @Override
         public T visit(FileTypesByExtension sf) {
@@ -202,11 +193,6 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(PersonGrouping personGrouping) {
             return defaultVisit(personGrouping);
-        }
-
-        @Override
-        public T visit(Results r) {
-            return defaultVisit(r);
         }
 
         @Override

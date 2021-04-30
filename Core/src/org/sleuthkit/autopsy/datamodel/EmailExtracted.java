@@ -91,7 +91,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private SleuthkitCase skCase;
     private final EmailResults emailResults;
     private final long filteringDSObjId;    // 0 if not filtering/grouping by data source
-    
+
     /**
      * Constructor
      *
@@ -147,7 +147,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @SuppressWarnings("deprecation")
-        public void update() { 
+        public void update() {
             // clear cache if no case
             if (skCase == null) {
                 synchronized (accounts) {
@@ -159,20 +159,20 @@ public class EmailExtracted implements AutopsyVisitableItem {
             // get artifact id and path (if present) of all email artifacts
             int emailArtifactId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
             int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
-            
-            String query = "SELECT \n" +
-                        "	art.artifact_id AS artifact_id,\n" +
-                        "	(SELECT value_text FROM blackboard_attributes attr\n" +
-                        "	WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + pathAttrId + "\n" +
-                        "	LIMIT 1) AS value_text\n" +
-                        "FROM \n" +
-                        "	blackboard_artifacts art\n" +
-                        "	WHERE art.artifact_type_id = " + emailArtifactId + "\n" +
-                        ((filteringDSObjId > 0) ? "	AND art.data_source_obj_id = " + filteringDSObjId : "");
-            
+
+            String query = "SELECT \n"
+                    + "	art.artifact_id AS artifact_id,\n"
+                    + "	(SELECT value_text FROM blackboard_attributes attr\n"
+                    + "	WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + pathAttrId + "\n"
+                    + "	LIMIT 1) AS value_text\n"
+                    + "FROM \n"
+                    + "	blackboard_artifacts art\n"
+                    + "	WHERE art.artifact_type_id = " + emailArtifactId + "\n"
+                    + ((filteringDSObjId > 0) ? "	AND art.data_source_obj_id = " + filteringDSObjId : "");
+
             // form hierarchy of account -> folder -> account id
             Map<String, Map<String, List<Long>>> newMapping = new HashMap<>();
-            
+
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
@@ -180,7 +180,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     Map<String, String> accountFolderMap = parsePath(resultSet.getString("value_text"));
                     String account = accountFolderMap.get(MAIL_ACCOUNT);
                     String folder = accountFolderMap.get(MAIL_FOLDER);
-                    
+
                     Map<String, List<Long>> folders = newMapping.computeIfAbsent(account, (str) -> new LinkedHashMap<>());
                     List<Long> messages = folders.computeIfAbsent(folder, (str) -> new ArrayList<>());
                     messages.add(artifactId);
@@ -188,18 +188,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
             } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
             }
-            
-            
+
             synchronized (accounts) {
                 accounts.clear();
                 accounts.putAll(newMapping);
             }
-            
+
             setChanged();
             notifyObservers();
         }
     }
-    
 
     /**
      * Mail root node grouping all mail accounts, supports account-> folder

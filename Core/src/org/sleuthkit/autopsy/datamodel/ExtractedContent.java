@@ -20,11 +20,9 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -66,61 +64,9 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWO
  * Parent of the "extracted content" artifacts to be displayed in the tree.
  * Other artifacts are displayed under other more specific parents.
  */
-public class ExtractedContent implements AutopsyVisitableItem {
+public class ExtractedContent {
 
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
-    public static final String NAME = NbBundle.getMessage(RootNode.class, "ExtractedContentNode.name.text");
-    private static final Category DEFAULT_CATEGORY = Category.DATA_ARTIFACT;
-
-    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
-    private SleuthkitCase skCase;   // set to null after case has been closed
-    private final Category category;
-
-    /**
-     * Constructs extracted content object
-     *
-     * @param skCase Case DB
-     */
-    public ExtractedContent(SleuthkitCase skCase) {
-        this(skCase, 0, DEFAULT_CATEGORY);
-    }
-
-    public ExtractedContent(SleuthkitCase skCase, Category category) {
-        this(skCase, 0, DEFAULT_CATEGORY);
-    }
-
-    /**
-     * Constructs extracted content object
-     *
-     * @param skCase Case DB
-     * @param objId  Object id of the parent datasource
-     */
-    public ExtractedContent(SleuthkitCase skCase, long objId) {
-        this(skCase, objId, DEFAULT_CATEGORY);
-    }
-
-    public ExtractedContent(SleuthkitCase skCase, long dataSourceObjId, Category category) {
-        this.skCase = skCase;
-        this.filteringDSObjId = dataSourceObjId;
-        this.category = category;
-    }
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
-
-    public SleuthkitCase getSleuthkitCase() {
-        return skCase;
-    }
-
-    long getFilteringDSObjId() {
-        return filteringDSObjId;
-    }
-
-    Category getCategory() {
-        return category;
-    }
 
     @Messages({
         "AnalysisResultsNode_name=Analysis Results",})
@@ -177,7 +123,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.desc"),
-                    NAME));
+                    super.getDisplayName()));
             return sheet;
         }
 
@@ -211,11 +157,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
             this(new TypeNode(type, dsObjId), type);
         }
 
-        private TypeNodeRecord(UpdatableTypeCountNode typeNode, BlackboardArtifact.Type...types) {
+        private TypeNodeRecord(UpdatableTypeCountNode typeNode, BlackboardArtifact.Type... types) {
             this(typeNode, typeNode::updateDisplayName, types);
         }
 
-        TypeNodeRecord(Node node, Runnable onUpdate, BlackboardArtifact.Type...types) {
+        TypeNodeRecord(Node node, Runnable onUpdate, BlackboardArtifact.Type... types) {
             this.node = node;
             this.onUpdate = onUpdate;
             this.applicableTypes = Stream.of(types)
@@ -273,13 +219,13 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 KeywordHits.RootNode keywordsNode = new KeywordHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeRecord(keywordsNode, new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
 
-            } else if (TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == typeId || 
-                    TSK_INTERESTING_FILE_HIT.getTypeID() == typeId) {
-                
+            } else if (TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == typeId
+                    || TSK_INTERESTING_FILE_HIT.getTypeID() == typeId) {
+
                 InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, dsObjId).new RootNode();
-                return new TypeNodeRecord(interestingHitsNode, 
-                                new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT),
-                                new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
+                return new TypeNodeRecord(interestingHitsNode,
+                        new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT),
+                        new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
 
             } else {
                 return new TypeNodeRecord(type, dsObjId);

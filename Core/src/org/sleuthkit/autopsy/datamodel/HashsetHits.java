@@ -48,13 +48,11 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
-
 
 /**
  * Hash set hits node support. Inner classes have all of the nodes in the tree.
@@ -70,7 +68,6 @@ public class HashsetHits implements AutopsyVisitableItem {
     private final HashsetResults hashsetResults;
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
-    
     /**
      * Constructor
      *
@@ -176,12 +173,12 @@ public class HashsetHits implements AutopsyVisitableItem {
     public class RootNode extends UpdatableTypeCountNode {
 
         public RootNode() {
-            super(Children.create(new HashsetNameFactory(), true), 
+            super(Children.create(new HashsetNameFactory(), true),
                     Lookups.singleton(DISPLAY_NAME),
                     DISPLAY_NAME,
                     filteringDSObjId,
                     new BlackboardArtifact.Type(TSK_HASHSET_HIT));
-                        
+
             super.setName(HASHSET_HITS);
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS

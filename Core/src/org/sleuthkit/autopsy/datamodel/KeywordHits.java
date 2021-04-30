@@ -105,7 +105,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     static private boolean isOnlyDefaultInstance(List<String> instances) {
         return (instances.size() == 1) && (instances.get(0).equals(DEFAULT_INSTANCE_NAME));
     }
-    
+
     /**
      * Constructor
      *
@@ -380,7 +380,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     public class RootNode extends UpdatableTypeCountNode {
 
         public RootNode() {
-            super(Children.create(new ListFactory(), true), 
+            super(Children.create(new ListFactory(), true),
                     Lookups.singleton(KEYWORD_HITS),
                     KEYWORD_HITS,
                     filteringDSObjId,

@@ -51,8 +51,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
-
 
 public class InterestingHits implements AutopsyVisitableItem {
 
@@ -171,7 +169,7 @@ public class InterestingHits implements AutopsyVisitableItem {
     public class RootNode extends UpdatableTypeCountNode {
 
         public RootNode() {
-            super(Children.create(new SetNameFactory(), true), 
+            super(Children.create(new SetNameFactory(), true),
                     Lookups.singleton(DISPLAY_NAME),
                     DISPLAY_NAME,
                     filteringDSObjId,
@@ -407,8 +405,8 @@ public class InterestingHits implements AutopsyVisitableItem {
             this.typeName = typeName;
             this.setName = setName;
             /**
-             * We use the combination of setName and typeName as the name of
-             * the node to ensure that nodes have a unique name. This comes into
+             * We use the combination of setName and typeName as the name of the
+             * node to ensure that nodes have a unique name. This comes into
              * play when associating paging state with the node.
              */
             super.setName(setName + "_" + typeName);
@@ -469,9 +467,9 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         private HitFactory(String setName, String typeName) {
             /**
-             * The node name passed to the parent constructor must be the
-             * same as the name set in the InterestingItemTypeNode constructor,
-             * i.e. setName underscore typeName
+             * The node name passed to the parent constructor must be the same
+             * as the name set in the InterestingItemTypeNode constructor, i.e.
+             * setName underscore typeName
              */
             super(setName + "_" + typeName);
             this.setName = setName;
