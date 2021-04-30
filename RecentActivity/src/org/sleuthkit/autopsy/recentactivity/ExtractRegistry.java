@@ -175,8 +175,8 @@ class ExtractRegistry extends Extract {
     private IngestJobContext context;
     private Map<String, String> userNameMap;
 
-    private String hostName = null;
-    private String domainName = null;
+    private String compName = "";
+    private String domainName = "";
     
     private static final String SHELLBAG_ARTIFACT_NAME = "RA_SHELL_BAG"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_LAST_WRITE = "RA_SHELL_BAG_LAST_WRITE"; //NON-NLS
@@ -714,8 +714,6 @@ class ExtractRegistry extends Extract {
                         }
                         break;
                     case "CompName": // NON-NLS
-                        String compName = "";
-                        String domain = "";
                         for (int j = 0; j < myartlist.getLength(); j++) {
                             Node artchild = myartlist.item(j);
                             // If it has attributes, then it is an Element (based off API)
@@ -728,14 +726,14 @@ class ExtractRegistry extends Extract {
                                 if (name.equals("ComputerName")) { // NON-NLS
                                     compName = value;
                                 } else if (name.equals("Domain")) { // NON-NLS
-                                    domain = value;
+                                    domainName = value;
                                 }
                             }
                         }
                         try {
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, parentModuleName, compName));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, parentModuleName, domain));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, parentModuleName, domainName));
 
                             // Check if there is already an OS_INFO artifact for this file and add to that if possible
                             ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
@@ -743,6 +741,16 @@ class ExtractRegistry extends Extract {
                                 newArtifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_OS_INFO, regFile, bbattributes));
                             } else {
                                 results.get(0).addAttributes(bbattributes);
+                            }
+                            for (Map.Entry userMap : userNameMap.entrySet()) { 
+                                String sid = "";
+                                try{
+                                    sid = (String)userMap.getKey();
+                                    String userName = (String)userMap.getValue();
+                                    createOrUpdateOsAccount(regFile, sid, userName, null);
+                                } catch(TskCoreException | TskDataException | NotUserSIDException ex) {
+                                    logger.log(Level.WARNING, String.format("Failed to update Domain for existing OsAccount: %s, sid: %s", regFile.getId(), sid), ex);
+                                }
                             }
                         } catch (TskCoreException ex) {
                             logger.log(Level.SEVERE, String.format("Error adding os_info artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS
@@ -1055,7 +1063,6 @@ class ExtractRegistry extends Extract {
      * @return true if successful, false if parsing failed at some point
      */
     private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile, long ingestJobId) {
-        parseSystemHostDomain(ingestJobId);
         
         File regfile = new File(regFilePath);
         List<BlackboardArtifact> newArtifacts = new ArrayList<>();
@@ -1138,54 +1145,6 @@ class ExtractRegistry extends Extract {
         return false;
     }
 
-    
-    /**
-     *  Finds the Host and Domain information from the registry.
-     * @param ingestJobId The ingest job id.
-     */
-    private void parseSystemHostDomain(long ingestJobId) {
-        List<AbstractFile> regFiles = findRegistryFiles();
-
-        for (AbstractFile systemHive: regFiles) {
-            if (systemHive.getName().toLowerCase().equals("system")  && systemHive.getSize() > 0) {
-                
-                String systemFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg", ingestJobId) + File.separator + "Domain-" + systemHive.getName();
-                File systemFileNameLocalFile = new File(systemFileNameLocal);
-        
-                if (!systemFileNameLocalFile.exists()) {
-                    try {
-                        ContentUtils.writeToFile(systemHive, systemFileNameLocalFile, context::dataSourceIngestIsCancelled);
-                    } catch (ReadContentInputStreamException ex) {
-                        logger.log(Level.WARNING, String.format("Error reading registry file '%s' (id=%d).",
-                                systemHive.getName(), systemHive.getId()), ex); //NON-NLS
-                        this.addErrorMessage(
-                                NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
-                                this.getName(), systemHive.getName()));
-                        continue;
-                    } catch (IOException ex) {
-                        logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
-                                systemFileNameLocal, systemHive.getName(), systemHive.getId()), ex); //NON-NLS
-                        this.addErrorMessage(
-                                NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
-                                        this.getName(), systemHive.getName()));
-                        continue;
-                    }                
-                }
-					
-                try {
-                    ParseRegistryHive systemRegFile = new ParseRegistryHive(systemFileNameLocalFile);
-                    hostName = systemRegFile.getRegistryKeyValue("ControlSet001/Services/Tcpip/Parameters", "hostname");
-                    domainName = systemRegFile.getRegistryKeyValue("ControlSet001/Services/Tcpip/Parameters", "domain");
-                    break;
-                } catch (IOException ex) {
-		    logger.log(Level.SEVERE, String.format("Error reading registry file '%s' for registry file '%s' (id=%d).",
-                            systemFileNameLocal, systemHive.getName(), systemHive.getId()), ex); //NON-NLS
-                    this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
-                                    this.getName(), systemHive.getName()));                }
-            }
-        }
-    }
-    
     /**
      * Read the User Information section of the SAM regripper plugin's output
      * and collect user account information from the file.
