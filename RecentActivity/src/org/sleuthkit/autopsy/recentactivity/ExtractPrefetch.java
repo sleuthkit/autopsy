@@ -332,7 +332,8 @@ final class ExtractPrefetch extends Extract {
 
             }
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
+            logger.log(Level.WARNING, String.format("Error while trying to read into a sqlite db %s.", prefetchDb));//NON-NLS
+            logger.log(Level.WARNING, ex.getMessage());
         }
 
         if (!blkBrdArtList.isEmpty() && !context.dataSourceIngestIsCancelled()) {
