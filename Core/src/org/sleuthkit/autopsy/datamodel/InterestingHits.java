@@ -50,6 +50,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
+
 
 public class InterestingHits implements AutopsyVisitableItem {
 
@@ -63,14 +66,6 @@ public class InterestingHits implements AutopsyVisitableItem {
     private final InterestingResults interestingResults = new InterestingResults();
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
-    /**
-     * Returns the display name for this module.
-     * @return The display name for this module.
-     */
-    static String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-    
     /**
      * Constructor
      *
@@ -173,12 +168,16 @@ public class InterestingHits implements AutopsyVisitableItem {
     /**
      * Node for the interesting items
      */
-    public class RootNode extends DisplayableItemNode {
+    public class RootNode extends UpdatableTypeCountNode {
 
         public RootNode() {
-            super(Children.create(new SetNameFactory(), true), Lookups.singleton(DISPLAY_NAME));
+            super(Children.create(new SetNameFactory(), true), 
+                    Lookups.singleton(DISPLAY_NAME),
+                    DISPLAY_NAME,
+                    filteringDSObjId,
+                    new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT),
+                    new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
             super.setName(INTERESTING_ITEMS);
-            super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
         }
 

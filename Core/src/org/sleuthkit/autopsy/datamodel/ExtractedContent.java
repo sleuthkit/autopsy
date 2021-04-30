@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -32,6 +34,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
@@ -185,12 +188,14 @@ public class ExtractedContent implements AutopsyVisitableItem {
     }
 
     private static class AnalysisResultsTypeFactory extends TypeFactory {
+
         AnalysisResultsTypeFactory(long filteringDSObjId) {
             super(Category.ANALYSIS_RESULT, filteringDSObjId);
         }
     }
 
     private static class DataArtifactsTypeFactory extends TypeFactory {
+
         DataArtifactsTypeFactory(long filteringDSObjId) {
             super(Category.DATA_ARTIFACT, filteringDSObjId);
         }
@@ -274,7 +279,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
                         null,
                         Sets.newHashSet(new BlackboardArtifact.Type(TSK_KEYWORD_HIT)));
 
-            } else if (TSK_EMAIL_MSG.getTypeID() == typeId) {
+            } else if (TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == typeId || 
+                    TSK_INTERESTING_FILE_HIT.getTypeID() == typeId) {
+                
                 InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeRecord(
                         interestingHitsNode,
@@ -351,13 +358,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected boolean createKeys(List<TypeNodeRecord> list) {
             try {
 
-                // Potentially can reuse
-                List<BlackboardArtifact.Type> types = (this.filteringDSObjId > 0)
-                        ? Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifactTypesInUse(this.filteringDSObjId)
-                        : Case.getCurrentCaseThrows().getSleuthkitCase().getArtifactTypesInUse();
-
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                
+                List<BlackboardArtifact.Type> types = (this.filteringDSObjId > 0)
+                        ? skCase.getBlackboard().getArtifactTypesInUse(this.filteringDSObjId)
+                        : skCase.getArtifactTypesInUse();
+
                 List<TypeNodeRecord> allKeysSorted = types.stream()
                         .filter(tp -> category.equals(tp.getCategory()) && !IGNORED_TYPES.contains(tp))
                         .map(tp -> {
@@ -435,41 +440,84 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
     }
 
+    public static abstract class UpdatableTypeCountNode extends DisplayableItemNode {
+
+        private static final Logger logger = Logger.getLogger(UpdatableTypeCountNode.class.getName());
+
+        private final Set<BlackboardArtifact.Type> types;
+        private final long filteringDSObjId;
+        private long childCount = 0;
+        private final String baseName;
+
+        /**
+         * Constructs a node that is eligible for display in the tree view or
+         * results view. Capabilitites include accepting a
+         * DisplayableItemNodeVisitor, indicating whether or not the node is a
+         * leaf node, providing an item type string suitable for use as a key,
+         * and storing information about a child node that is to be selected if
+         * the node is selected in the tree view.
+         *
+         * @param children The Children object for the node.
+         * @param lookup   The Lookup object for the node.
+         */
+        public UpdatableTypeCountNode(Children children, Lookup lookup, String baseName, long filteringDSObjId, BlackboardArtifact.Type... types) {
+            super(children, lookup);
+            this.types = Stream.of(types).collect(Collectors.toSet());
+            this.filteringDSObjId = filteringDSObjId;
+            this.baseName = baseName;
+            updateDisplayName();
+        }
+
+        protected long getChildCount() {
+            return this.childCount;
+        }
+
+        void updateDisplayName() {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+
+                int count = 0;
+                for (BlackboardArtifact.Type type : this.types) {
+                    if (filteringDSObjId > 0) {
+                        count += skCase.getBlackboard().getArtifactsCount(type.getTypeID(), filteringDSObjId);
+                    } else {
+                        count += skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
+                    }
+                }
+
+                this.childCount = count;
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Error fetching data when case closed.", ex);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error getting child count", ex); //NON-NLS
+            }
+            super.setDisplayName(this.baseName + " \u200E(\u200E" + this.childCount + ")\u200E");
+        }
+    }
+
     /**
      * Node encapsulating blackboard artifact type. This is used on the
      * left-hand navigation side of the Autopsy UI as the parent node for all of
      * the artifacts of a given type. Its children will be
      * BlackboardArtifactNode objects.
      */
-    public static class TypeNode extends DisplayableItemNode {
+    public static class TypeNode extends UpdatableTypeCountNode {
 
         private static final Logger logger = Logger.getLogger(TypeNode.class.getName());
 
         private final BlackboardArtifact.Type type;
-        private long childCount = 0;
-        private final long filteringDSObjId;
 
         TypeNode(BlackboardArtifact.Type type, long filteringDSObjId) {
-            super(Children.create(new ArtifactFactory(type, filteringDSObjId), true), Lookups.singleton(type.getDisplayName()));
+            super(Children.create(new ArtifactFactory(type, filteringDSObjId), true),
+                    Lookups.singleton(type.getDisplayName()),
+                    type.getDisplayName(),
+                    filteringDSObjId,
+                    type);
+
             super.setName(type.getTypeName());
             this.type = type;
-            this.filteringDSObjId = filteringDSObjId;
             String iconPath = IconsUtil.getIconFilePath(type.getTypeID());
             setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
-            updateDisplayName();
-        }
-
-        final void updateDisplayName() {
-            try {
-                this.childCount = (filteringDSObjId > 0)
-                        ? Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifactsCount(type.getTypeID(), filteringDSObjId)
-                        : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifactsTypeCount(type.getTypeID());
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.WARNING, "Error fetching data when case closed.", ex);
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error getting child count", ex); //NON-NLS
-            }
-            super.setDisplayName(type.getDisplayName() + " \u200E(\u200E" + childCount + ")\u200E");
         }
 
         @Override
@@ -489,7 +537,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.name"),
                     NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.displayName"),
                     NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.desc"),
-                    childCount));
+                    getChildCount()));
 
             return sheet;
         }

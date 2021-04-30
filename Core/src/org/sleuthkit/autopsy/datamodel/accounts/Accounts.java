@@ -69,6 +69,8 @@ import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -77,6 +79,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -114,14 +117,6 @@ final public class Accounts implements AutopsyVisitableItem {
     // tracks the number of each account type found
     private final AccountTypeResults accountTypeResults;
 
-    
-    /**
-     * Returns the display name for this module.
-     * @return The display name for this module.
-     */
-    public static String getDisplayName() {
-        return DISPLAY_NAME;
-    }
     
     /**
      * Constructor
@@ -241,12 +236,16 @@ final public class Accounts implements AutopsyVisitableItem {
      * Top-level node for the accounts tree
      */
     @NbBundle.Messages({"Accounts.RootNode.displayName=Accounts"})
-    final public class AccountsRootNode extends DisplayableItemNode {
+    final public class AccountsRootNode extends UpdatableTypeCountNode {
 
         public AccountsRootNode() {
-            super(Children.create(new AccountTypeFactory(), true), Lookups.singleton(Accounts.this));
+            super(Children.create(new AccountTypeFactory(), true), 
+                    Lookups.singleton(Accounts.this),
+                    DISPLAY_NAME,
+                    filteringDSObjId,
+                    new BlackboardArtifact.Type(TSK_ACCOUNT));
+            
             setName(Accounts.NAME);
-            setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/accounts.png");    //NON-NLS
         }
 
@@ -303,7 +302,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     = "SELECT blackboard_attributes.value_text as account_type, COUNT(*) as count "
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + TSK_ACCOUNT.getTypeID() //NON-NLS
                     + " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
                     + getFilterByDataSourceClause()
                     + " GROUP BY blackboard_attributes.value_text ";

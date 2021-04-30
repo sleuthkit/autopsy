@@ -32,7 +32,6 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -45,10 +44,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
 
 /**
  * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree.
@@ -59,7 +60,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class EmailExtracted implements AutopsyVisitableItem {
 
     private static final String LABEL_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getLabel();
-    private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName();
     private static final Logger logger = Logger.getLogger(EmailExtracted.class.getName());
     private static final String MAIL_ACCOUNT = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailAccount.text");
     private static final String MAIL_FOLDER = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailFolder.text");
@@ -91,14 +91,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private SleuthkitCase skCase;
     private final EmailResults emailResults;
     private final long filteringDSObjId;    // 0 if not filtering/grouping by data source
-
-    /**
-     * Returns the display name for this module.
-     * @return The display name for this module.
-     */
-    static String getDisplayName() {
-        return DISPLAY_NAME;
-    }
     
     /**
      * Constructor
@@ -213,12 +205,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Mail root node grouping all mail accounts, supports account-> folder
      * structure
      */
-    public class RootNode extends DisplayableItemNode {
+    public class RootNode extends UpdatableTypeCountNode {
 
         public RootNode() {
-            super(Children.create(new AccountFactory(), true), Lookups.singleton(DISPLAY_NAME));
+            super(Children.create(new AccountFactory(), true),
+                    Lookups.singleton(TSK_EMAIL_MSG.getDisplayName()),
+                    TSK_EMAIL_MSG.getDisplayName(),
+                    filteringDSObjId,
+                    new BlackboardArtifact.Type(TSK_EMAIL_MSG));
+            //super(Children.create(new AccountFactory(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(LABEL_NAME);
-            super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
             emailResults.update();
         }

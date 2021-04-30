@@ -55,6 +55,8 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
 
 /**
  * Keyword hits node support
@@ -104,15 +106,6 @@ public class KeywordHits implements AutopsyVisitableItem {
         return (instances.size() == 1) && (instances.get(0).equals(DEFAULT_INSTANCE_NAME));
     }
     
-    
-    /**
-     * Returns the display name for KeywordHits.
-     * @return The display name for KeywordHits.
-     */
-    static String getDisplayName() {
-        return KEYWORD_HITS;
-    }
-
     /**
      * Constructor
      *
@@ -384,12 +377,16 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     // Created by CreateAutopsyNodeVisitor
-    public class RootNode extends DisplayableItemNode {
+    public class RootNode extends UpdatableTypeCountNode {
 
         public RootNode() {
-            super(Children.create(new ListFactory(), true), Lookups.singleton(KEYWORD_HITS));
+            super(Children.create(new ListFactory(), true), 
+                    Lookups.singleton(KEYWORD_HITS),
+                    KEYWORD_HITS,
+                    filteringDSObjId,
+                    new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
+
             super.setName(NAME);
-            super.setDisplayName(KEYWORD_HITS);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
         }
 
