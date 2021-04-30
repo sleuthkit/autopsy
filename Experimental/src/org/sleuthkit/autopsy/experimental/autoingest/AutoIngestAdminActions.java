@@ -137,6 +137,25 @@ final class AutoIngestAdminActions {
                 }
             }
         }
+
+        static final class GenerateThreadDumpControlAction extends AutoIngestNodeControlAction {
+
+            private static final long serialVersionUID = 1L;
+
+            GenerateThreadDumpControlAction(AutoIngestNodeState nodeState) {
+                super(nodeState, Bundle.AutoIngestAdminActions_getThreadDump_title());
+            }
+
+            @Override
+            public Object clone() throws CloneNotSupportedException {
+                return super.clone(); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            protected void controlAutoIngestNode(AinStatusDashboard dashboard) throws AutoIngestMonitor.AutoIngestMonitorException {
+                dashboard.getMonitor().generateThreadDump(getNodeState().getName());
+            }
+        }
     }
 
     @NbBundle.Messages({"AutoIngestAdminActions.progressDialogAction.title=Ingest Progress"})
@@ -192,9 +211,7 @@ final class AutoIngestAdminActions {
 
             AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
             if (dashboard != null) {
-                EventQueue.invokeLater(() -> {
-                    dashboard.getMonitor().generateThreadDump(job.getProcessingHostName());
-                });
+                dashboard.getMonitor().generateThreadDump(job.getProcessingHostName());
             }
         }
 
