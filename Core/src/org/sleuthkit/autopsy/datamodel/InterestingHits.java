@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 
 public class InterestingHits implements AutopsyVisitableItem {
 
@@ -166,7 +166,7 @@ public class InterestingHits implements AutopsyVisitableItem {
     /**
      * Node for the interesting items
      */
-    public class RootNode extends UpdatableTypeCountNode {
+    public class RootNode extends UpdatableCountTypeNode {
 
         public RootNode() {
             super(Children.create(new SetNameFactory(), true),

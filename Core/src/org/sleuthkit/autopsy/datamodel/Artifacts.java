@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -61,40 +62,71 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTER
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 
 /**
- * Parent of the "extracted content" artifacts to be displayed in the tree.
- * Other artifacts are displayed under other more specific parents.
+ * Classes for creating nodes for BlackboardArtifacts.
  */
-public class ExtractedContent {
+public class Artifacts {
 
-    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
+            = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
 
+    /**
+     * Parent node of all analysis results.
+     */
     @Messages({
         "AnalysisResultsNode_name=Analysis Results",})
-    static class AnalysisResultsNode extends RootNode {
+    static class AnalysisResultsNode extends BaseArtifactNode {
 
+        /**
+         * Main constructor.
+         *
+         * @param filteringDSObjId The data source object id for which results
+         *                         should be filtered. If no filtering should
+         *                         occur, this number should be <= 0.
+         */
         AnalysisResultsNode(long filteringDSObjId) {
-            super(Children.create(new AnalysisResultsTypeFactory(filteringDSObjId), true),
+            super(Children.create(new TypeFactory(Category.ANALYSIS_RESULT, filteringDSObjId), true),
                     "org/sleuthkit/autopsy/images/analysis_result.png",
                     Bundle.AnalysisResultsNode_name(),
                     Bundle.AnalysisResultsNode_name());
         }
     }
 
+    /**
+     * Parent node of all data artifacts.
+     */
     @Messages({
         "DataArtifactsNode_name=Data Artifacts",})
-    static class DataArtifactsNode extends RootNode {
+    static class DataArtifactsNode extends BaseArtifactNode {
 
+        /**
+         * Main constructor.
+         *
+         * @param filteringDSObjId The data source object id for which results
+         *                         should be filtered. If no filtering should
+         *                         occur, this number should be <= 0.
+         */
         DataArtifactsNode(long filteringDSObjId) {
-            super(Children.create(new DataArtifactsTypeFactory(filteringDSObjId), true),
+            super(Children.create(new TypeFactory(Category.DATA_ARTIFACT, filteringDSObjId), true),
                     "org/sleuthkit/autopsy/images/extracted_content.png",
                     Bundle.DataArtifactsNode_name(),
                     Bundle.DataArtifactsNode_name());
         }
     }
 
-    static class RootNode extends DisplayableItemNode {
+    /**
+     * Base class for a parent node of artifacts.
+     */
+    private static class BaseArtifactNode extends DisplayableItemNode {
 
-        RootNode(Children children, String icon, String name, String displayName) {
+        /**
+         * Main constructor.
+         *
+         * @param children    The children of the node.
+         * @param icon        The icon for the node.
+         * @param name        The name identifier of the node.
+         * @param displayName The display name for the node.
+         */
+        BaseArtifactNode(Children children, String icon, String name, String displayName) {
             super(children, Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(displayName);
@@ -133,64 +165,87 @@ public class ExtractedContent {
         }
     }
 
-    private static class AnalysisResultsTypeFactory extends TypeFactory {
+    /**
+     * A key to be used with the type factory.
+     */
+    private static class TypeNodeKey {
 
-        AnalysisResultsTypeFactory(long filteringDSObjId) {
-            super(Category.ANALYSIS_RESULT, filteringDSObjId);
-        }
-    }
-
-    private static class DataArtifactsTypeFactory extends TypeFactory {
-
-        DataArtifactsTypeFactory(long filteringDSObjId) {
-            super(Category.DATA_ARTIFACT, filteringDSObjId);
-        }
-    }
-
-    private static class TypeNodeRecord {
-
-        private final Node node;
-        private final Runnable onUpdate;
+        private final UpdatableCountTypeNode node;
         private final Set<BlackboardArtifact.Type> applicableTypes;
 
-        TypeNodeRecord(BlackboardArtifact.Type type, long dsObjId) {
+        /**
+         * Constructor generating a generic TypeNode for a given artifact type.
+         *
+         * @param type    The type for the key.
+         * @param dsObjId The data source object id if filtering should occur.
+         *                If no filtering should occur, this number should be <=
+         *                0.
+         */
+        TypeNodeKey(BlackboardArtifact.Type type, long dsObjId) {
             this(new TypeNode(type, dsObjId), type);
         }
 
-        private TypeNodeRecord(UpdatableTypeCountNode typeNode, BlackboardArtifact.Type... types) {
-            this(typeNode, typeNode::updateDisplayName, types);
-        }
-
-        TypeNodeRecord(Node node, Runnable onUpdate, BlackboardArtifact.Type... types) {
-            this.node = node;
-            this.onUpdate = onUpdate;
+        /**
+         * Constructor for any UpdatableCountTypeNode.
+         *
+         * @param typeNode The UpdatableCountTypeNode.
+         * @param types    The blackboard artifact types corresponding to this
+         *                 node.
+         */
+        TypeNodeKey(UpdatableCountTypeNode typeNode, BlackboardArtifact.Type... types) {
+            this.node = typeNode;
             this.applicableTypes = Stream.of(types)
                     .filter(t -> t != null)
                     .collect(Collectors.toSet());
         }
 
-        Node getNode() {
+        /**
+         * Returns the node associated with this key.
+         * @return The node associated with this key.
+         */
+        UpdatableCountTypeNode getNode() {
             return node;
         }
 
-        void update() {
-            if (onUpdate != null) {
-                onUpdate.run();
-            }
-        }
-
+        /**
+         * Returns the blackboard artifact types associated with this key.
+         * @return The blackboard artifact types associated with this key.
+         */
         Set<BlackboardArtifact.Type> getApplicableTypes() {
             return applicableTypes;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 61 * hash + Objects.hashCode(this.applicableTypes);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final TypeNodeKey other = (TypeNodeKey) obj;
+            if (!Objects.equals(this.applicableTypes, other.applicableTypes)) {
+                return false;
+            }
+            return true;
         }
 
     }
 
     /**
-     * Creates the children for the ExtractedContent area of the results tree.
-     * This area has all of the blackboard artifacts that are not displayed in a
-     * more specific form elsewhere in the tree.
+     * 
      */
-    private static class TypeFactory extends ChildFactory.Detachable<TypeNodeRecord> implements RefreshThrottler.Refresher {
+    private static class TypeFactory extends ChildFactory.Detachable<TypeNodeKey> implements RefreshThrottler.Refresher {
 
         private static final Logger logger = Logger.getLogger(TypeNode.class.getName());
 
@@ -205,35 +260,36 @@ public class ExtractedContent {
                 new BlackboardArtifact.Type(TSK_ASSOCIATED_OBJECT)
         );
 
-        private static TypeNodeRecord getRecord(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
+        
+        private static TypeNodeKey getRecord(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
             int typeId = type.getTypeID();
             if (TSK_EMAIL_MSG.getTypeID() == typeId) {
                 EmailExtracted.RootNode emailNode = new EmailExtracted(skCase, dsObjId).new RootNode();
-                return new TypeNodeRecord(emailNode, new BlackboardArtifact.Type(TSK_EMAIL_MSG));
+                return new TypeNodeKey(emailNode, new BlackboardArtifact.Type(TSK_EMAIL_MSG));
 
             } else if (TSK_ACCOUNT.getTypeID() == typeId) {
                 Accounts.AccountsRootNode accountsNode = new Accounts(skCase, dsObjId).new AccountsRootNode();
-                return new TypeNodeRecord(accountsNode, new BlackboardArtifact.Type(TSK_ACCOUNT));
+                return new TypeNodeKey(accountsNode, new BlackboardArtifact.Type(TSK_ACCOUNT));
 
             } else if (TSK_KEYWORD_HIT.getTypeID() == typeId) {
                 KeywordHits.RootNode keywordsNode = new KeywordHits(skCase, dsObjId).new RootNode();
-                return new TypeNodeRecord(keywordsNode, new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
+                return new TypeNodeKey(keywordsNode, new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
 
             } else if (TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == typeId
                     || TSK_INTERESTING_FILE_HIT.getTypeID() == typeId) {
 
                 InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, dsObjId).new RootNode();
-                return new TypeNodeRecord(interestingHitsNode,
+                return new TypeNodeKey(interestingHitsNode,
                         new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT),
                         new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
 
             } else {
-                return new TypeNodeRecord(type, dsObjId);
+                return new TypeNodeKey(type, dsObjId);
             }
         }
 
         // maps the artifact type to its child node 
-        private final HashMap<BlackboardArtifact.Type, TypeNodeRecord> typeNodeMap = new HashMap<>();
+        private final HashMap<BlackboardArtifact.Type, TypeNodeKey> typeNodeMap = new HashMap<>();
         private final long filteringDSObjId;
 
         /**
@@ -292,7 +348,7 @@ public class ExtractedContent {
         }
 
         @Override
-        protected boolean createKeys(List<TypeNodeRecord> list) {
+        protected boolean createKeys(List<TypeNodeKey> list) {
             try {
 
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -300,15 +356,15 @@ public class ExtractedContent {
                         ? skCase.getBlackboard().getArtifactTypesInUse(this.filteringDSObjId)
                         : skCase.getArtifactTypesInUse();
 
-                List<TypeNodeRecord> allKeysSorted = types.stream()
+                List<TypeNodeKey> allKeysSorted = types.stream()
                         .filter(tp -> category.equals(tp.getCategory()) && !IGNORED_TYPES.contains(tp))
                         .map(tp -> {
                             if (typeNodeMap.containsKey(tp)) {
-                                TypeNodeRecord record = typeNodeMap.get(tp);
-                                record.update();
+                                TypeNodeKey record = typeNodeMap.get(tp);
+                                record.getNode().updateDisplayName();
                                 return record;
                             } else {
-                                TypeNodeRecord newRecord = getRecord(tp, skCase, filteringDSObjId);
+                                TypeNodeKey newRecord = getRecord(tp, skCase, filteringDSObjId);
                                 for (BlackboardArtifact.Type recordType : newRecord.getApplicableTypes()) {
                                     typeNodeMap.put(recordType, newRecord);
                                 }
@@ -324,8 +380,6 @@ public class ExtractedContent {
                         })
                         .collect(Collectors.toList());
 
-                allKeysSorted.forEach(record -> record.update());
-
                 list.addAll(allKeysSorted);
 
             } catch (NoCurrentCaseException ex) {
@@ -337,7 +391,7 @@ public class ExtractedContent {
         }
 
         @Override
-        protected Node createNodeForKey(TypeNodeRecord key) {
+        protected Node createNodeForKey(TypeNodeKey key) {
             return key.getNode();
         }
 
@@ -377,9 +431,9 @@ public class ExtractedContent {
         }
     }
 
-    public static abstract class UpdatableTypeCountNode extends DisplayableItemNode {
+    public static abstract class UpdatableCountTypeNode extends DisplayableItemNode {
 
-        private static final Logger logger = Logger.getLogger(UpdatableTypeCountNode.class.getName());
+        private static final Logger logger = Logger.getLogger(UpdatableCountTypeNode.class.getName());
 
         private final Set<BlackboardArtifact.Type> types;
         private final long filteringDSObjId;
@@ -397,7 +451,7 @@ public class ExtractedContent {
          * @param children The Children object for the node.
          * @param lookup   The Lookup object for the node.
          */
-        public UpdatableTypeCountNode(Children children, Lookup lookup, String baseName, long filteringDSObjId, BlackboardArtifact.Type... types) {
+        public UpdatableCountTypeNode(Children children, Lookup lookup, String baseName, long filteringDSObjId, BlackboardArtifact.Type... types) {
             super(children, lookup);
             this.types = Stream.of(types).collect(Collectors.toSet());
             this.filteringDSObjId = filteringDSObjId;
@@ -438,7 +492,7 @@ public class ExtractedContent {
      * the artifacts of a given type. Its children will be
      * BlackboardArtifactNode objects.
      */
-    public static class TypeNode extends UpdatableTypeCountNode {
+    public static class TypeNode extends UpdatableCountTypeNode {
 
         private static final Logger logger = Logger.getLogger(TypeNode.class.getName());
 

@@ -78,7 +78,7 @@ import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.Artifacts;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
@@ -1391,7 +1391,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else {
-            Node extractedContent = resultsChilds.findChild(ExtractedContent.NAME);
+            Node extractedContent = resultsChilds.findChild(Artifacts.NAME);
             Children extractedChilds = extractedContent.getChildren();
             if (extractedChilds == null) {
                 return;

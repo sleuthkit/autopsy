@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 
 /**
  * Hash set hits node support. Inner classes have all of the nodes in the tree.
@@ -170,7 +170,7 @@ public class HashsetHits implements AutopsyVisitableItem {
     /**
      * Top-level node for all hash sets
      */
-    public class RootNode extends UpdatableTypeCountNode {
+    public class RootNode extends UpdatableCountTypeNode {
 
         public RootNode() {
             super(Children.create(new HashsetNameFactory(), true),

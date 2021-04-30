@@ -69,7 +69,7 @@ import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -235,7 +235,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * Top-level node for the accounts tree
      */
     @NbBundle.Messages({"Accounts.RootNode.displayName=Accounts"})
-    final public class AccountsRootNode extends UpdatableTypeCountNode {
+    final public class AccountsRootNode extends UpdatableCountTypeNode {
 
         public AccountsRootNode() {
             super(Children.create(new AccountTypeFactory(), true), 

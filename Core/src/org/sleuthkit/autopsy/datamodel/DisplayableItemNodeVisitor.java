@@ -90,9 +90,9 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(BlackboardArtifactNode ban);
 
-    T visit(ExtractedContent.TypeNode atn);
+    T visit(Artifacts.TypeNode atn);
 
-    T visit(ExtractedContent.RootNode ecn);
+    T visit(Artifacts.BaseArtifactNode ecn);
 
     T visit(KeywordHits.RootNode khrn);
 
@@ -296,12 +296,12 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(ExtractedContent.TypeNode atn) {
+        public T visit(Artifacts.TypeNode atn) {
             return defaultVisit(atn);
         }
 
         @Override
-        public T visit(ExtractedContent.RootNode ecn) {
+        public T visit(Artifacts.BaseArtifactNode ecn) {
             return defaultVisit(ecn);
         }
 

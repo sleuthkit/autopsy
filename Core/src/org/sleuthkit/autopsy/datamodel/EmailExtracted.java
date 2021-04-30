@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 
 /**
  * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree.
@@ -203,7 +203,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Mail root node grouping all mail accounts, supports account-> folder
      * structure
      */
-    public class RootNode extends UpdatableTypeCountNode {
+    public class RootNode extends UpdatableCountTypeNode {
 
         public RootNode() {
             super(Children.create(new AccountFactory(), true),

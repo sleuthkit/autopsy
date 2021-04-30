@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent.UpdatableTypeCountNode;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 
 /**
  * Keyword hits node support
@@ -377,7 +377,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     // Created by CreateAutopsyNodeVisitor
-    public class RootNode extends UpdatableTypeCountNode {
+    public class RootNode extends UpdatableCountTypeNode {
 
         public RootNode() {
             super(Children.create(new ListFactory(), true),

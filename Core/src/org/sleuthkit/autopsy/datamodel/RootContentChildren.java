@@ -196,13 +196,13 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(AnalysisResults analysisResults) {
-            return new ExtractedContent.AnalysisResultsNode(
+            return new Artifacts.AnalysisResultsNode(
                     analysisResults.getFilteringDataSourceObjId());
         }
 
         @Override
         public AbstractNode visit(DataArtifacts dataArtifacts) {
-            return new ExtractedContent.DataArtifactsNode(
+            return new Artifacts.DataArtifactsNode(
                     dataArtifacts.getFilteringDataSourceObjId());
         }
     }
