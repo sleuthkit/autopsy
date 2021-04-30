@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2020 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import com.google.common.collect.Lists;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
@@ -32,7 +33,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import static java.util.Objects.nonNull;
-import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -70,7 +70,6 @@ import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
 import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
-import org.python.google.common.collect.Lists;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog.TagNameAndComment;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -110,10 +109,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(MediaViewImagePanel.class.getName());
-    private static final SortedSet<String> supportedMimes = ImageUtils.getSupportedImageMimeTypes();
-    private static final List<String> supportedExtensions = ImageUtils.getSupportedImageExtensions().stream()
-            .map("."::concat) //NOI18N
-            .collect(Collectors.toList());
     private static final double[] ZOOM_STEPS = {
         0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
         1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10};
@@ -634,30 +629,25 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }
 
     /**
-     * @return supported mime types
+     * Gets the list of supported MIME types.
+     *
+     * @return A list of the supported MIME types as Strings.
      */
     @Override
     final public List<String> getSupportedMimeTypes() {
-        return Collections.unmodifiableList(Lists.newArrayList(supportedMimes));
+        return Collections.unmodifiableList(Lists.newArrayList(ImageUtils.getSupportedImageMimeTypes()));
     }
 
     /**
-     * returns supported extensions (each starting with .)
+     * Returns supported extensions (each starting with .)
      *
-     * @return
+     * @return A unmodifiable list of image extensions as Strings.
      */
     @Override
     final public List<String> getSupportedExtensions() {
-        return getExtensions();
-    }
-
-    /**
-     * returns supported extensions (each starting with .)
-     *
-     * @return
-     */
-    final public List<String> getExtensions() {
-        return Collections.unmodifiableList(supportedExtensions);
+        return ImageUtils.getSupportedImageExtensions().stream()
+                .map("."::concat) //NOI18N
+                .collect(Collectors.toList());
     }
 
     @Override

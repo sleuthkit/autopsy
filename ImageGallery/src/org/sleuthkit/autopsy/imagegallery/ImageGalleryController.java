@@ -966,19 +966,7 @@ public final class ImageGalleryController {
              * of the local drawables database.
              */
             if (isListeningEnabled()) {
-                groupManager.resetCurrentPathGroup();
-                if (drawableDB.getDataSourceDbBuildStatus(dataSourceObjId) == DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS) {
-
-                    // If at least one file in CaseDB has mime type, then set to COMPLETE
-                    // Otherwise, back to UNKNOWN since we assume file type module was not run        
-                    DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus
-                            = hasFilesWithMimeType(dataSourceObjId)
-                            ? DrawableDB.DrawableDbBuildStatusEnum.COMPLETE
-                            : DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN;
-
-                    drawableDB.insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
-                }
-                drawableDB.freeFileMetaDataCache();
+                queueDBTask(new HandleDataSourceAnalysisCompleteTask(dataSourceObjId, this));
             }
         } else if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
             /*
