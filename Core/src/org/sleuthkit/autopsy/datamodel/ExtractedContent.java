@@ -211,14 +211,16 @@ public class ExtractedContent implements AutopsyVisitableItem {
             this(new TypeNode(type, dsObjId), type);
         }
 
-        private TypeNodeRecord(TypeNode typeNode, BlackboardArtifact.Type type) {
-            this(typeNode, typeNode::updateDisplayName, Stream.of(type).collect(Collectors.toSet()));
+        private TypeNodeRecord(UpdatableTypeCountNode typeNode, BlackboardArtifact.Type...types) {
+            this(typeNode, typeNode::updateDisplayName, types);
         }
 
-        TypeNodeRecord(Node node, Runnable onUpdate, Set<BlackboardArtifact.Type> applicableTypes) {
+        TypeNodeRecord(Node node, Runnable onUpdate, BlackboardArtifact.Type...types) {
             this.node = node;
             this.onUpdate = onUpdate;
-            this.applicableTypes = applicableTypes;
+            this.applicableTypes = Stream.of(types)
+                    .filter(t -> t != null)
+                    .collect(Collectors.toSet());
         }
 
         Node getNode() {
@@ -246,6 +248,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         private static final Logger logger = Logger.getLogger(TypeNode.class.getName());
 
+        @SuppressWarnings("deprecation")
         private static final Set<BlackboardArtifact.Type> IGNORED_TYPES = Sets.newHashSet(
                 // these are shown in other parts of the UI (and different node types)
                 new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE),
@@ -260,35 +263,23 @@ public class ExtractedContent implements AutopsyVisitableItem {
             int typeId = type.getTypeID();
             if (TSK_EMAIL_MSG.getTypeID() == typeId) {
                 EmailExtracted.RootNode emailNode = new EmailExtracted(skCase, dsObjId).new RootNode();
-                return new TypeNodeRecord(
-                        emailNode,
-                        null,
-                        Sets.newHashSet(new BlackboardArtifact.Type(TSK_EMAIL_MSG)));
+                return new TypeNodeRecord(emailNode, new BlackboardArtifact.Type(TSK_EMAIL_MSG));
 
             } else if (TSK_ACCOUNT.getTypeID() == typeId) {
                 Accounts.AccountsRootNode accountsNode = new Accounts(skCase, dsObjId).new AccountsRootNode();
-                return new TypeNodeRecord(
-                        accountsNode,
-                        null,
-                        Sets.newHashSet(new BlackboardArtifact.Type(TSK_ACCOUNT)));
+                return new TypeNodeRecord(accountsNode, new BlackboardArtifact.Type(TSK_ACCOUNT));
 
             } else if (TSK_KEYWORD_HIT.getTypeID() == typeId) {
                 KeywordHits.RootNode keywordsNode = new KeywordHits(skCase, dsObjId).new RootNode();
-                return new TypeNodeRecord(
-                        keywordsNode,
-                        null,
-                        Sets.newHashSet(new BlackboardArtifact.Type(TSK_KEYWORD_HIT)));
+                return new TypeNodeRecord(keywordsNode, new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
 
             } else if (TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == typeId || 
                     TSK_INTERESTING_FILE_HIT.getTypeID() == typeId) {
                 
                 InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, dsObjId).new RootNode();
-                return new TypeNodeRecord(
-                        interestingHitsNode,
-                        null,
-                        Sets.newHashSet(
+                return new TypeNodeRecord(interestingHitsNode, 
                                 new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT),
-                                new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT)));
+                                new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
 
             } else {
                 return new TypeNodeRecord(type, dsObjId);
