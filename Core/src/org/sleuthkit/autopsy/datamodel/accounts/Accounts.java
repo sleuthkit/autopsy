@@ -96,7 +96,7 @@ final public class Accounts implements AutopsyVisitableItem {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     private static final String DISPLAY_NAME = Bundle.Accounts_RootNode_displayName();
-    
+
     @NbBundle.Messages("AccountsRootNode.name=Accounts")
     final public static String NAME = Bundle.AccountsRootNode_name();
 
@@ -112,11 +112,10 @@ final public class Accounts implements AutopsyVisitableItem {
 
     private final RejectAccounts rejectActionInstance;
     private final ApproveAccounts approveActionInstance;
-    
+
     // tracks the number of each account type found
     private final AccountTypeResults accountTypeResults;
 
-    
     /**
      * Constructor
      *
@@ -135,7 +134,7 @@ final public class Accounts implements AutopsyVisitableItem {
     public Accounts(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
         this.filteringDSObjId = objId;
-        
+
         this.rejectActionInstance = new RejectAccounts();
         this.approveActionInstance = new ApproveAccounts();
         this.accountTypeResults = new AccountTypeResults();
@@ -238,12 +237,12 @@ final public class Accounts implements AutopsyVisitableItem {
     final public class AccountsRootNode extends UpdatableCountTypeNode {
 
         public AccountsRootNode() {
-            super(Children.create(new AccountTypeFactory(), true), 
+            super(Children.create(new AccountTypeFactory(), true),
                     Lookups.singleton(Accounts.this),
                     DISPLAY_NAME,
                     filteringDSObjId,
                     new BlackboardArtifact.Type(TSK_ACCOUNT));
-            
+
             setName(Accounts.NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/accounts.png");    //NON-NLS
         }
@@ -262,37 +261,71 @@ final public class Accounts implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
+
+        @Override
+        protected long fetchChildCount(SleuthkitCase skCase) throws TskCoreException {
+            long count = 0;
+            String dataSourceFilterClause = (filteringDSObjId > 0)
+                    ? " AND " + filteringDSObjId + " IN (SELECT art.data_source_obj_id FROM blackboard_artifacts art WHERE art.artifact_id = attr.artifact_id)"
+                    : "";
+
+            String accountTypesInUseQuery
+                    = "SELECT COUNT(attr.value_text) AS count"
+                    + " FROM blackboard_attributes attr"
+                    + " WHERE attr.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID()
+                    + " AND attr.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()
+                    + dataSourceFilterClause
+                    + " GROUP BY attr.value_text";
+
+            try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(accountTypesInUseQuery);
+                    ResultSet resultSet = executeQuery.getResultSet()) {
+
+                if (resultSet.next()) {
+                    count = resultSet.getLong("count");
+                }
+
+            } catch (TskCoreException | SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error querying for count of all account types", ex);
+            }
+            return count;
+        }
+
     }
-    
+
     /**
      * Tracks the account types and the number of account types found.
      */
     private class AccountTypeResults {
+
         private final Map<String, Long> counts = new HashMap<>();
-        
+
         AccountTypeResults() {
             update();
         }
-        
+
         /**
-         * Given the type name of the Account.Type, provides the count of those type.
-         * @param accountType   The type name of the Account.Type.
-         * @return              The number of results found for the given account type.
+         * Given the type name of the Account.Type, provides the count of those
+         * type.
+         *
+         * @param accountType The type name of the Account.Type.
+         *
+         * @return The number of results found for the given account type.
          */
         Long getCount(String accountType) {
             return counts.get(accountType);
         }
-        
+
         /**
          * Retrieves an alphabetically organized list of all the account types.
-         * @return      An alphabetically organized list of all the account types.
+         *
+         * @return An alphabetically organized list of all the account types.
          */
         List<String> getTypes() {
             List<String> types = new ArrayList<>(counts.keySet());
             Collections.sort(types);
             return types;
         }
-        
+
         /**
          * Queries the database and updates the counts for each account type.
          */
@@ -308,7 +341,7 @@ final public class Accounts implements AutopsyVisitableItem {
 
             try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(accountTypesInUseQuery);
                     ResultSet resultSet = executeQuery.getResultSet()) {
-                
+
                 counts.clear();
                 while (resultSet.next()) {
                     String accountType = resultSet.getString("account_type");
@@ -325,7 +358,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * Creates child nodes for each account type in the db.
      */
     private class AccountTypeFactory extends ObservingChildren<String> {
-        
+
         /*
          * The pcl is in this class because it has the easiest mechanisms to add
          * and remove itself during its life cycles.
@@ -399,12 +432,14 @@ final public class Accounts implements AutopsyVisitableItem {
             list.addAll(accountTypeResults.getTypes());
             return true;
         }
-        
+
         /**
-         * Registers the given node with the reviewStatusBus and returns
-         * the node wrapped in an array.
-         * @param node      The node to be wrapped.
-         * @return          The array containing this node.
+         * Registers the given node with the reviewStatusBus and returns the
+         * node wrapped in an array.
+         *
+         * @param node The node to be wrapped.
+         *
+         * @return The array containing this node.
          */
         private Node[] getNodeArr(Node node) {
             reviewStatusBus.register(node);
@@ -584,8 +619,9 @@ final public class Accounts implements AutopsyVisitableItem {
      * no special behavior.
      */
     final public class DefaultAccountTypeNode extends DisplayableItemNode {
+
         private final Account.Type accountType;
-        
+
         private DefaultAccountTypeNode(Account.Type accountType) {
             super(Children.create(new DefaultAccountFactory(accountType), true), Lookups.singleton(accountType));
             this.accountType = accountType;
@@ -608,8 +644,7 @@ final public class Accounts implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
-        
-        
+
         @Subscribe
         void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateName();
@@ -619,12 +654,13 @@ final public class Accounts implements AutopsyVisitableItem {
         void handleDataAdded(ModuleDataEvent event) {
             updateName();
         }
-        
+
         /**
-         * Gets the latest counts for the account type and then updates the name.
+         * Gets the latest counts for the account type and then updates the
+         * name.
          */
         public void updateName() {
-            setName(String.format("%s (%d)", accountType.getDisplayName(), accountTypeResults.getCount(accountType.getTypeName())));
+            setDisplayName(String.format("%s (%d)", accountType.getDisplayName(), accountTypeResults.getCount(accountType.getTypeName())));
         }
     }
 
@@ -755,14 +791,15 @@ final public class Accounts implements AutopsyVisitableItem {
             setName(Account.Type.CREDIT_CARD.getDisplayName());
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png");   //NON-NLS
         }
-        
+
         /**
-         * Gets the latest counts for the account type and then updates the name.
+         * Gets the latest counts for the account type and then updates the
+         * name.
          */
         public void updateName() {
             setName(String.format("%s (%d)", Account.Type.CREDIT_CARD.getDisplayName(), accountTypeResults.getCount(Account.Type.CREDIT_CARD.getTypeName())));
         }
-        
+
         @Subscribe
         void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateName();

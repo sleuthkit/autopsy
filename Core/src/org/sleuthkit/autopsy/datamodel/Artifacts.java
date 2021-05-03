@@ -70,7 +70,6 @@ public class Artifacts {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
             = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
 
-    
     /**
      * Base class for a parent node of artifacts.
      */
@@ -464,23 +463,34 @@ public class Artifacts {
         }
 
         /**
+         * Fetches the count to be displayed from the case.
+         *
+         * @param skCase The relevant SleuthkitCase.
+         *
+         * @return The count to be displayed.
+         *
+         * @throws TskCoreException
+         */
+        protected long fetchChildCount(SleuthkitCase skCase) throws TskCoreException {
+            int count = 0;
+            for (BlackboardArtifact.Type type : this.types) {
+                if (filteringDSObjId > 0) {
+                    count += skCase.getBlackboard().getArtifactsCount(type.getTypeID(), filteringDSObjId);
+                } else {
+                    count += skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
+                }
+            }
+            return count;
+        }
+
+        /**
          * When this method is called, the count to be displayed will be
          * updated.
          */
         void updateDisplayName() {
             try {
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-
-                int count = 0;
-                for (BlackboardArtifact.Type type : this.types) {
-                    if (filteringDSObjId > 0) {
-                        count += skCase.getBlackboard().getArtifactsCount(type.getTypeID(), filteringDSObjId);
-                    } else {
-                        count += skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
-                    }
-                }
-
-                this.childCount = count;
+                this.childCount = fetchChildCount(skCase);
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Error fetching data when case closed.", ex);
             } catch (TskCoreException ex) {
