@@ -18,10 +18,46 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.openide.nodes.Children;
+import org.openide.util.NbBundle;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+
 /**
  * Analysis Results node support.
  */
+@NbBundle.Messages({
+    "DataArtifacts_name=Data Artifacts",})
 public class DataArtifacts implements AutopsyVisitableItem {
+
+    /**
+     * Returns the name of this node that is the key in the children object.
+     *
+     * @return The name of this node that is the key in the children object.
+     */
+    public static String getName() {
+        return Bundle.DataArtifacts_name();
+    }
+
+    /**
+     * Parent node of all data artifacts.
+     */
+    static class RootNode extends Artifacts.BaseArtifactNode {
+
+        /**
+         * Main constructor.
+         *
+         * @param filteringDSObjId The data source object id for which results
+         *                         should be filtered. If no filtering should
+         *                         occur, this number should be less than or
+         *                         equal to 0.
+         */
+        RootNode(long filteringDSObjId) {
+            super(Children.create(new Artifacts.TypeFactory(BlackboardArtifact.Category.DATA_ARTIFACT, filteringDSObjId), true),
+                    "org/sleuthkit/autopsy/images/extracted_content.png",
+                    DataArtifacts.getName(),
+                    DataArtifacts.getName());
+        }
+    }
 
     private final long datasourceObjId;
 

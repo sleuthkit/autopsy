@@ -82,6 +82,7 @@ public class RootContentChildren extends Children.Keys<Object> {
      * Set Hits, etc.).
      */
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
+
         @Override
         public AbstractNode visit(FileTypesByExtension sf) {
             return sf.new FileTypesByExtNode(sf.getSleuthkitCase(), null);
@@ -196,13 +197,13 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(AnalysisResults analysisResults) {
-            return new Artifacts.AnalysisResultsNode(
+            return new AnalysisResults.RootNode(
                     analysisResults.getFilteringDataSourceObjId());
         }
 
         @Override
         public AbstractNode visit(DataArtifacts dataArtifacts) {
-            return new Artifacts.DataArtifactsNode(
+            return new DataArtifacts.RootNode(
                     dataArtifacts.getFilteringDataSourceObjId());
         }
     }

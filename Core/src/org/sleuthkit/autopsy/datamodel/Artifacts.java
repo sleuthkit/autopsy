@@ -70,56 +70,11 @@ public class Artifacts {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
             = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
 
-    /**
-     * Parent node of all analysis results.
-     */
-    @Messages({
-        "AnalysisResultsNode_name=Analysis Results",})
-    static class AnalysisResultsNode extends BaseArtifactNode {
-
-        /**
-         * Main constructor.
-         *
-         * @param filteringDSObjId The data source object id for which results
-         *                         should be filtered. If no filtering should
-         *                         occur, this number should be less than or
-         *                         equal to 0.
-         */
-        AnalysisResultsNode(long filteringDSObjId) {
-            super(Children.create(new TypeFactory(Category.ANALYSIS_RESULT, filteringDSObjId), true),
-                    "org/sleuthkit/autopsy/images/analysis_result.png",
-                    Bundle.AnalysisResultsNode_name(),
-                    Bundle.AnalysisResultsNode_name());
-        }
-    }
-
-    /**
-     * Parent node of all data artifacts.
-     */
-    @Messages({
-        "DataArtifactsNode_name=Data Artifacts",})
-    static class DataArtifactsNode extends BaseArtifactNode {
-
-        /**
-         * Main constructor.
-         *
-         * @param filteringDSObjId The data source object id for which results
-         *                         should be filtered. If no filtering should
-         *                         occur, this number should be less than or
-         *                         equal to 0.
-         */
-        DataArtifactsNode(long filteringDSObjId) {
-            super(Children.create(new TypeFactory(Category.DATA_ARTIFACT, filteringDSObjId), true),
-                    "org/sleuthkit/autopsy/images/extracted_content.png",
-                    Bundle.DataArtifactsNode_name(),
-                    Bundle.DataArtifactsNode_name());
-        }
-    }
-
+    
     /**
      * Base class for a parent node of artifacts.
      */
-    private static class BaseArtifactNode extends DisplayableItemNode {
+    static class BaseArtifactNode extends DisplayableItemNode {
 
         /**
          * Main constructor.
@@ -251,7 +206,7 @@ public class Artifacts {
      * Factory for showing a list of artifact types (i.e. all the data artifact
      * types).
      */
-    private static class TypeFactory extends ChildFactory.Detachable<TypeNodeKey> implements RefreshThrottler.Refresher {
+    static class TypeFactory extends ChildFactory.Detachable<TypeNodeKey> implements RefreshThrottler.Refresher {
 
         private static final Logger logger = Logger.getLogger(TypeNode.class.getName());
 
@@ -541,7 +496,7 @@ public class Artifacts {
      * all of the artifacts of a given type. Its children will be
      * BlackboardArtifactNode objects.
      */
-    public static class TypeNode extends UpdatableCountTypeNode {
+    static class TypeNode extends UpdatableCountTypeNode {
 
         private final BlackboardArtifact.Type type;
 
