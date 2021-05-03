@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
@@ -81,7 +82,8 @@ public class Artifacts {
          *
          * @param filteringDSObjId The data source object id for which results
          *                         should be filtered. If no filtering should
-         *                         occur, this number should be <= 0.
+         *                         occur, this number should be less than or
+         *                         equal to 0.
          */
         AnalysisResultsNode(long filteringDSObjId) {
             super(Children.create(new TypeFactory(Category.ANALYSIS_RESULT, filteringDSObjId), true),
@@ -103,7 +105,8 @@ public class Artifacts {
          *
          * @param filteringDSObjId The data source object id for which results
          *                         should be filtered. If no filtering should
-         *                         occur, this number should be <= 0.
+         *                         occur, this number should be less than or
+         *                         equal to 0.
          */
         DataArtifactsNode(long filteringDSObjId) {
             super(Children.create(new TypeFactory(Category.DATA_ARTIFACT, filteringDSObjId), true),
@@ -178,8 +181,8 @@ public class Artifacts {
          *
          * @param type    The type for the key.
          * @param dsObjId The data source object id if filtering should occur.
-         *                If no filtering should occur, this number should be <=
-         *                0.
+         *                If no filtering should occur, this number should be
+         *                less than or equal to 0.
          */
         TypeNodeKey(BlackboardArtifact.Type type, long dsObjId) {
             this(new TypeNode(type, dsObjId), type);
@@ -201,6 +204,7 @@ public class Artifacts {
 
         /**
          * Returns the node associated with this key.
+         *
          * @return The node associated with this key.
          */
         UpdatableCountTypeNode getNode() {
@@ -209,6 +213,7 @@ public class Artifacts {
 
         /**
          * Returns the blackboard artifact types associated with this key.
+         *
          * @return The blackboard artifact types associated with this key.
          */
         Set<BlackboardArtifact.Type> getApplicableTypes() {
@@ -243,12 +248,16 @@ public class Artifacts {
     }
 
     /**
-     * 
+     * Factory for showing a list of artifact types (i.e. all the data artifact
+     * types).
      */
     private static class TypeFactory extends ChildFactory.Detachable<TypeNodeKey> implements RefreshThrottler.Refresher {
 
         private static final Logger logger = Logger.getLogger(TypeNode.class.getName());
 
+        /**
+         * Types that should not be shown in the tree.
+         */
         @SuppressWarnings("deprecation")
         private static final Set<BlackboardArtifact.Type> IGNORED_TYPES = Sets.newHashSet(
                 // these are shown in other parts of the UI (and different node types)
@@ -260,8 +269,18 @@ public class Artifacts {
                 new BlackboardArtifact.Type(TSK_ASSOCIATED_OBJECT)
         );
 
-        
-        private static TypeNodeKey getRecord(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
+        /**
+         * Returns a Children key to be use for a particular artifact type.
+         *
+         * @param type    The artifact type.
+         * @param skCase  The relevant Sleuthkit case in order to create the
+         *                node.
+         * @param dsObjId The data source object id to use for filtering. If id
+         *                is less than or equal to 0, no filtering will occur.
+         *
+         * @return The generated key.
+         */
+        private static TypeNodeKey getTypeKey(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
             int typeId = type.getTypeID();
             if (TSK_EMAIL_MSG.getTypeID() == typeId) {
                 EmailExtracted.RootNode emailNode = new EmailExtracted(skCase, dsObjId).new RootNode();
@@ -289,7 +308,7 @@ public class Artifacts {
         }
 
         // maps the artifact type to its child node 
-        private final HashMap<BlackboardArtifact.Type, TypeNodeKey> typeNodeMap = new HashMap<>();
+        private final Map<BlackboardArtifact.Type, TypeNodeKey> typeNodeMap = new HashMap<>();
         private final long filteringDSObjId;
 
         /**
@@ -300,7 +319,14 @@ public class Artifacts {
         private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
         private final Category category;
 
-        @SuppressWarnings("deprecation")
+        /**
+         * Main constructor.
+         *
+         * @param category         The category of types to be displayed.
+         * @param filteringDSObjId The data source object id to use for
+         *                         filtering. If id is less than or equal to 0,
+         *                         no filtering will occur.
+         */
         TypeFactory(Category category, long filteringDSObjId) {
             super();
             this.filteringDSObjId = filteringDSObjId;
@@ -350,29 +376,36 @@ public class Artifacts {
         @Override
         protected boolean createKeys(List<TypeNodeKey> list) {
             try {
-
+                // Get all types in use
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 List<BlackboardArtifact.Type> types = (this.filteringDSObjId > 0)
                         ? skCase.getBlackboard().getArtifactTypesInUse(this.filteringDSObjId)
                         : skCase.getArtifactTypesInUse();
 
                 List<TypeNodeKey> allKeysSorted = types.stream()
+                        // filter types by category and ensure they are not in the list of ignored types
                         .filter(tp -> category.equals(tp.getCategory()) && !IGNORED_TYPES.contains(tp))
                         .map(tp -> {
+                            // if typeNodeMap already contains key, update the relevant node and return the node
                             if (typeNodeMap.containsKey(tp)) {
-                                TypeNodeKey record = typeNodeMap.get(tp);
-                                record.getNode().updateDisplayName();
-                                return record;
+                                TypeNodeKey typeKey = typeNodeMap.get(tp);
+                                typeKey.getNode().updateDisplayName();
+                                return typeKey;
                             } else {
-                                TypeNodeKey newRecord = getRecord(tp, skCase, filteringDSObjId);
-                                for (BlackboardArtifact.Type recordType : newRecord.getApplicableTypes()) {
-                                    typeNodeMap.put(recordType, newRecord);
+                                // if key is not in map, create the type key and add to map
+                                TypeNodeKey newTypeKey = getTypeKey(tp, skCase, filteringDSObjId);
+                                for (BlackboardArtifact.Type recordType : newTypeKey.getApplicableTypes()) {
+                                    typeNodeMap.put(recordType, newTypeKey);
                                 }
-                                return newRecord;
+                                return newTypeKey;
                             }
                         })
+                        // ensure record is returned
                         .filter(record -> record != null)
+                        // there are potentially multiple types that apply to the same node (i.e. Interesting Files / Artifacts)
+                        // ensure the keys are distinct
                         .distinct()
+                        // sort by display name
                         .sorted((a, b) -> {
                             String aSafe = (a.getNode() == null || a.getNode().getDisplayName() == null) ? "" : a.getNode().getDisplayName();
                             String bSafe = (b.getNode() == null || b.getNode().getDisplayName() == null) ? "" : b.getNode().getDisplayName();
@@ -431,6 +464,10 @@ public class Artifacts {
         }
     }
 
+    /**
+     * Abstract class for type(s) nodes. This class allows for displaying a
+     * count artifacts with the type(s) associated with this node.
+     */
     public static abstract class UpdatableCountTypeNode extends DisplayableItemNode {
 
         private static final Logger logger = Logger.getLogger(UpdatableCountTypeNode.class.getName());
@@ -441,17 +478,20 @@ public class Artifacts {
         private final String baseName;
 
         /**
-         * Constructs a node that is eligible for display in the tree view or
-         * results view. Capabilitites include accepting a
-         * DisplayableItemNodeVisitor, indicating whether or not the node is a
-         * leaf node, providing an item type string suitable for use as a key,
-         * and storing information about a child node that is to be selected if
-         * the node is selected in the tree view.
+         * Main constructor.
          *
-         * @param children The Children object for the node.
-         * @param lookup   The Lookup object for the node.
+         * @param children         The Children to associated with this node.
+         * @param lookup           The Lookup to use with this name.
+         * @param baseName         The display name. The Node.displayName will
+         *                         be of format "[baseName] ([count])".
+         * @param filteringDSObjId The data source object id to use for
+         *                         filtering. If id is less than or equal to 0,
+         *                         no filtering will occur.
+         * @param types            The types associated with this type node.
          */
-        public UpdatableCountTypeNode(Children children, Lookup lookup, String baseName, long filteringDSObjId, BlackboardArtifact.Type... types) {
+        public UpdatableCountTypeNode(Children children, Lookup lookup, String baseName,
+                long filteringDSObjId, BlackboardArtifact.Type... types) {
+
             super(children, lookup);
             this.types = Stream.of(types).collect(Collectors.toSet());
             this.filteringDSObjId = filteringDSObjId;
@@ -459,10 +499,19 @@ public class Artifacts {
             updateDisplayName();
         }
 
+        /**
+         * Returns the count of artifacts associated with these type(s).
+         *
+         * @return The count of artifacts associated with these type(s).
+         */
         protected long getChildCount() {
             return this.childCount;
         }
 
+        /**
+         * When this method is called, the count to be displayed will be
+         * updated.
+         */
         void updateDisplayName() {
             try {
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -493,8 +542,6 @@ public class Artifacts {
      * BlackboardArtifactNode objects.
      */
     public static class TypeNode extends UpdatableCountTypeNode {
-
-        private static final Logger logger = Logger.getLogger(TypeNode.class.getName());
 
         private final BlackboardArtifact.Type type;
 
