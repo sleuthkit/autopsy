@@ -627,6 +627,7 @@ final public class Accounts implements AutopsyVisitableItem {
             this.accountType = accountType;
             String iconPath = getIconFilePath(accountType);
             this.setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);   //NON-NLS
+            setName(accountType.getTypeName());
             updateName();
         }
 
