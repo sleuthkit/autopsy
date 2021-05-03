@@ -77,8 +77,8 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
+import org.sleuthkit.datamodel.BlackboardArtifact.Type;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -241,7 +241,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     Lookups.singleton(Accounts.this),
                     DISPLAY_NAME,
                     filteringDSObjId,
-                    new BlackboardArtifact.Type(TSK_ACCOUNT));
+                    TSK_ACCOUNT);
 
             setName(Accounts.NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/accounts.png");    //NON-NLS
@@ -384,7 +384,7 @@ final public class Accounts implements AutopsyVisitableItem {
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                         if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
                             accountTypeResults.update();
                             reviewStatusBus.post(eventData);
                         }
@@ -519,7 +519,7 @@ final public class Accounts implements AutopsyVisitableItem {
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                         if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
                     } catch (NoCurrentCaseException notUsed) {
@@ -572,7 +572,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text = '" + accountType.getTypeName() + "'" //NON-NLS
                     + getFilterByDataSourceClause()
@@ -696,7 +696,7 @@ final public class Accounts implements AutopsyVisitableItem {
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                         if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
                     } catch (NoCurrentCaseException notUsed) {
@@ -850,7 +850,7 @@ final public class Accounts implements AutopsyVisitableItem {
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                         if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
                     } catch (NoCurrentCaseException notUsed) {
@@ -928,7 +928,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
                     + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
                     + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.getTypeName() + "'" //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
@@ -997,7 +997,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
                     + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
                     + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.getTypeName() + "'" //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text ) AS foo";
@@ -1065,7 +1065,7 @@ final public class Accounts implements AutopsyVisitableItem {
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                         if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
                     } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
@@ -1133,7 +1133,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "     COUNT(blackboard_artifacts.artifact_id) AS count " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
                     + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause()
@@ -1200,7 +1200,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     = "SELECT count(distinct SUBSTR(blackboard_attributes.value_text,1,8)) AS BINs " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
                     + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause(); //NON-NLS
@@ -1495,7 +1495,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text >= '" + bin.getBINStart() + "' AND  blackboard_attributes.value_text < '" + (bin.getBINEnd() + 1) + "'" //NON-NLS
                     + getFilterByDataSourceClause()
@@ -1569,7 +1569,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     = "SELECT count(blackboard_artifacts.artifact_id ) AS count" //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text >= '" + bin.getBINStart() + "' AND  blackboard_attributes.value_text < '" + (bin.getBINEnd() + 1) + "'" //NON-NLS
                     + getFilterByDataSourceClause()

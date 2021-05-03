@@ -36,7 +36,6 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -46,21 +45,22 @@ import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.python.google.common.collect.Sets;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ACCOUNT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_EMAIL_MSG;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_HASHSET_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_GEN_INFO;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_TL_EVENT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
 
 /**
  * Classes for creating nodes for BlackboardArtifacts.
@@ -215,12 +215,12 @@ public class Artifacts {
         @SuppressWarnings("deprecation")
         private static final Set<BlackboardArtifact.Type> IGNORED_TYPES = Sets.newHashSet(
                 // these are shown in other parts of the UI (and different node types)
-                new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE),
-                new BlackboardArtifact.Type(TSK_GEN_INFO),
+                TSK_DATA_SOURCE_USAGE,
+                TSK_GEN_INFO,
                 new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE),
-                new BlackboardArtifact.Type(TSK_TL_EVENT),
+                TSK_TL_EVENT,
                 //This is not meant to be shown in the UI at all. It is more of a meta artifact.
-                new BlackboardArtifact.Type(TSK_ASSOCIATED_OBJECT)
+                TSK_ASSOCIATED_OBJECT
         );
 
         /**
@@ -238,24 +238,28 @@ public class Artifacts {
             int typeId = type.getTypeID();
             if (TSK_EMAIL_MSG.getTypeID() == typeId) {
                 EmailExtracted.RootNode emailNode = new EmailExtracted(skCase, dsObjId).new RootNode();
-                return new TypeNodeKey(emailNode, new BlackboardArtifact.Type(TSK_EMAIL_MSG));
+                return new TypeNodeKey(emailNode, TSK_EMAIL_MSG);
 
             } else if (TSK_ACCOUNT.getTypeID() == typeId) {
                 Accounts.AccountsRootNode accountsNode = new Accounts(skCase, dsObjId).new AccountsRootNode();
-                return new TypeNodeKey(accountsNode, new BlackboardArtifact.Type(TSK_ACCOUNT));
+                return new TypeNodeKey(accountsNode, TSK_ACCOUNT);
 
             } else if (TSK_KEYWORD_HIT.getTypeID() == typeId) {
                 KeywordHits.RootNode keywordsNode = new KeywordHits(skCase, dsObjId).new RootNode();
-                return new TypeNodeKey(keywordsNode, new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
+                return new TypeNodeKey(keywordsNode, TSK_KEYWORD_HIT);
 
             } else if (TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == typeId
                     || TSK_INTERESTING_FILE_HIT.getTypeID() == typeId) {
 
                 InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(interestingHitsNode,
-                        new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT),
-                        new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
+                        TSK_INTERESTING_ARTIFACT_HIT,
+                        TSK_INTERESTING_FILE_HIT);
 
+            } else if (TSK_HASHSET_HIT.getTypeID() == typeId) {
+                HashsetHits.RootNode hashsetHits = new HashsetHits(skCase, dsObjId).new RootNode();
+                return new TypeNodeKey(hashsetHits, TSK_HASHSET_HIT);
+                
             } else {
                 return new TypeNodeKey(type, dsObjId);
             }

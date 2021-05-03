@@ -1261,16 +1261,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Children typesChildren = categoryChildrenOpt.get();
 
         Node treeNode = null;
-        if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+        if (typeID == BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()) {
             treeNode = getHashsetNode(typesChildren, art);
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
             treeNode = getKeywordHitNode(typesChildren, art);
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
-                || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
+                || typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             treeNode = getInterestingItemNode(typesChildren, art);
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
             treeNode = getEmailNode(typesChildren, art);
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
             treeNode = getAccountNode(typesChildren, art);
         } else {
             treeNode = typesChildren.findChild(typeName);
@@ -1371,7 +1371,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 return null;
             }
             if (regex != null) {  //For support of regex nodes such as URLs, IPs, Phone Numbers, and Email Addrs as they are down another level
-                Node regexNode = listChildren.findChild(regex);
+                Node regexNode = listChildren.findChild(listName);
+                regexNode = (regexNode == null) ? listChildren.findChild(listName + "_" + regex) : regexNode;
                 if (regexNode == null) {
                     return null;
                 }
@@ -1423,7 +1424,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 return null;
             }
 
-            return (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())
+            return (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID())
                     ? fileArtifactNodes[0]
                     : fileArtifactNodes[1];
         } catch (TskCoreException ex) {

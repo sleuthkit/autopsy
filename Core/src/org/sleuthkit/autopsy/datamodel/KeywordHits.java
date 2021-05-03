@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 
 /**
@@ -73,7 +73,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     @NbBundle.Messages("KeywordHits.singleRegexSearch.text=Single Regular Expression Search")
     private static final String SIMPLE_REGEX_SEARCH = KeywordHits_singleRegexSearch_text();
 
-    public static final String NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel();
+    public static final String NAME = BlackboardArtifact.Type.TSK_KEYWORD_HIT.getLabel();
 
     private SleuthkitCase skCase;
     private final KeywordResults keywordResults;
@@ -95,7 +95,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             + "blackboard_attributes.attribute_type_id "//NON-NLS
             + "FROM blackboard_attributes, blackboard_artifacts "//NON-NLS
             + "WHERE blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id "//NON-NLS
-            + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() //NON-NLS
+            + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() //NON-NLS
             + " AND (attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()//NON-NLS
             + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()//NON-NLS
             + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()//NON-NLS
@@ -384,7 +384,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     Lookups.singleton(KEYWORD_HITS),
                     KEYWORD_HITS,
                     filteringDSObjId,
-                    new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
+                    TSK_KEYWORD_HIT);
 
             super.setName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
@@ -470,7 +470,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
                             keywordResults.update();
                         }
                     } catch (NoCurrentCaseException notUsed) {

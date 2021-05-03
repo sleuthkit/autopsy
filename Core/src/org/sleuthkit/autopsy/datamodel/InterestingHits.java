@@ -111,8 +111,8 @@ public class InterestingHits implements AutopsyVisitableItem {
             synchronized (interestingItemsMap) {
                 interestingItemsMap.clear();
             }
-            loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+            loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT);
+            loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT);
             setChanged();
             notifyObservers();
         }
@@ -122,7 +122,7 @@ public class InterestingHits implements AutopsyVisitableItem {
          * the interestingItemsMap
          */
         @SuppressWarnings("deprecation")
-        private void loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE artType) {
+        private void loadArtifacts(BlackboardArtifact.Type artType) {
             if (skCase == null) {
                 return;
             }
@@ -146,8 +146,8 @@ public class InterestingHits implements AutopsyVisitableItem {
                         long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                         if (!interestingItemsMap.containsKey(value)) {
                             interestingItemsMap.put(value, new LinkedHashMap<>());
-                            interestingItemsMap.get(value).put(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName(), new HashSet<>());
-                            interestingItemsMap.get(value).put(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName(), new HashSet<>());
+                            interestingItemsMap.get(value).put(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName(), new HashSet<>());
+                            interestingItemsMap.get(value).put(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName(), new HashSet<>());
                         }
                         interestingItemsMap.get(value).get(artType.getDisplayName()).add(artifactId);
                     }
@@ -173,8 +173,8 @@ public class InterestingHits implements AutopsyVisitableItem {
                     Lookups.singleton(DISPLAY_NAME),
                     DISPLAY_NAME,
                     filteringDSObjId,
-                    new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT),
-                    new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
+                    BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT,
+                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT);
             super.setName(INTERESTING_ITEMS);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
         }
@@ -237,8 +237,8 @@ public class InterestingHits implements AutopsyVisitableItem {
                      * event to have a null oldValue.
                      */
                     ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                    if (null != eventData && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-                            || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())) {
+                    if (null != eventData && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
+                            || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID())) {
                         interestingResults.update();
                     }
                 } catch (NoCurrentCaseException notUsed) {
@@ -319,8 +319,8 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         private void updateDisplayName() {
-            int sizeOfSet = interestingResults.getArtifactIds(setName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName()).size()
-                    + interestingResults.getArtifactIds(setName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName()).size();
+            int sizeOfSet = interestingResults.getArtifactIds(setName, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName()).size()
+                    + interestingResults.getArtifactIds(setName, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName()).size();
             super.setDisplayName(setName + " (" + sizeOfSet + ")");
         }
 
@@ -379,8 +379,8 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<String> list) {
-            list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName());
-            list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName());
+            list.add(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName());
+            list.add(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName());
             return true;
         }
 
