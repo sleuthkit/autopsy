@@ -536,15 +536,23 @@ public class Artifacts {
     }
 
     /**
-     * Node encapsulating blackboard artifact type. This is used on the
-     * left-hand navigation side of the Autopsy UI as the parent node for all of
-     * the artifacts of a given type. Its children will be
+     * Default node encapsulating a blackboard artifact type. This is used on
+     * the left-hand navigation side of the Autopsy UI as the parent node for
+     * all of the artifacts of a given type. Its children will be
      * BlackboardArtifactNode objects.
      */
     public static class TypeNode extends UpdatableCountTypeNode {
 
         private final BlackboardArtifact.Type type;
 
+        /**
+         * Main constructor.
+         *
+         * @param type             The blackboard artifact type for this node.
+         * @param filteringDSObjId The data source object id to use for
+         *                         filtering. If id is less than or equal to 0,
+         *                         no filtering will occur.
+         */
         TypeNode(BlackboardArtifact.Type type, long filteringDSObjId) {
             super(Children.create(new ArtifactFactory(type, filteringDSObjId), true),
                     Lookups.singleton(type.getDisplayName()),
@@ -612,6 +620,14 @@ public class Artifacts {
         private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
         private final long filteringDSObjId;
 
+        /**
+         * Main constructor.
+         *
+         * @param type             The blackboard artifact type for this node.
+         * @param filteringDSObjId The data source object id to use for
+         *                         filtering. If id is less than or equal to 0,
+         *                         no filtering will occur.
+         */
         ArtifactFactory(BlackboardArtifact.Type type, long filteringDSObjId) {
             super(type.getTypeName());
             this.type = type;
