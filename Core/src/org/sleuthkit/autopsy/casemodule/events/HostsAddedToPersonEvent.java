@@ -18,22 +18,28 @@
  */
 package org.sleuthkit.autopsy.casemodule.events;
 
-import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
 
 /**
- *
- * @author rcordovano
+ * Application events published when one or more hosts have been added to a
+ * person.
  */
 public final class HostsAddedToPersonEvent extends PersonHostsEvent {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
+    /**
+     * Constructs an application event published when one or more hosts have
+     * been added to a person.
+     *
+     * @param person The person.
+     * @param hosts  The hosts.
+     */
     HostsAddedToPersonEvent(Person person, List<Host> hosts) {
         super(Case.Events.HOSTS_ADDED_TO_PERSON.toString(), person, hosts);
     }
-        
+
 }

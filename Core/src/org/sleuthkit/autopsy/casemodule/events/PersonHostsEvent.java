@@ -15,37 +15,41 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author rcordovano
+ * An abstract super class for person and host association change events.
  */
 public abstract class PersonHostsEvent extends TskDataModelChangedEvent<Person, Host> {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
-     * 
-     * @param eventName
-     * @param person
-     * @param hosts 
+     * Constructs the abstract super class part of a person and host association
+     * change event.
+     *
+     * @param eventName The name of the Case.Events enum value for the event
+     *                  type.
+     * @param person    The person that is the subject of the event.
+     * @param hosts     The hosts that are the subject of the event.
      */
     PersonHostsEvent(String eventName, Person person, List<Host> hosts) {
         super(eventName, Collections.singletonList(person), Person::getPersonId, hosts, Host::getHostId);
     }
-    
+
     /**
-     * 
-     * @return 
+     * Gets the person.
+     *
+     * @return The person.
      */
-    Person getPerson() {
+    public Person getPerson() {
         return getOldValue().get(0);
     }
-    
+
     /**
-     * 
-     * @return 
+     * Gets the hosts.
+     *
+     * @return The hosts.
      */
-    List<Host> getHosts() {
-        return getNewValue();                
+    public List<Host> getHosts() {
+        return getNewValue();
     }
 
     @Override
@@ -58,8 +62,8 @@ public abstract class PersonHostsEvent extends TskDataModelChangedEvent<Person, 
             }
         }
         return persons;
-    }    
-    
+    }
+
     @Override
     protected List<Host> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
         List<Host> hosts = new ArrayList<>();
@@ -70,6 +74,6 @@ public abstract class PersonHostsEvent extends TskDataModelChangedEvent<Person, 
             }
         }
         return hosts;
-    }    
-    
+    }
+
 }

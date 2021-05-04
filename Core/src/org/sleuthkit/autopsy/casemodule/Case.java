@@ -84,8 +84,10 @@ import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsAddedToPersonEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsRemovedFromPersonEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsDeletedEvent;
@@ -586,6 +588,17 @@ public class Case {
         public void publishPersonsDeletedEvent(TskEvent.PersonsDeletedTskEvent event) {
             eventPublisher.publish(new PersonsDeletedEvent(event.getPersonIds()));
         }
+        
+        @Subscribe
+        public void publishHostsAddedToPersonEvent(TskEvent.HostsAddedToPersonTskEvent event) {
+            eventPublisher.publish(new HostsAddedToPersonEvent(event.getPerson(), event.getHosts()));            
+        }
+        
+        @Subscribe 
+        public void publisHostsRemovedFromPersonEvent(TskEvent.HostsRemovedFromPersonTskEvent event) {
+            eventPublisher.publish(new HostsRemovedFromPersonEvent(event.getPerson(), event.getHosts()));            
+        }
+        
     }
 
     /**
