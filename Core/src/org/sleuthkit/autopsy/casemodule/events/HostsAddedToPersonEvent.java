@@ -38,7 +38,7 @@ public final class HostsAddedToPersonEvent extends PersonHostsEvent {
      * @param person The person.
      * @param hosts  The hosts.
      */
-    HostsAddedToPersonEvent(Person person, List<Host> hosts) {
+    public HostsAddedToPersonEvent(Person person, List<Host> hosts) {
         super(Case.Events.HOSTS_ADDED_TO_PERSON.toString(), person, hosts);
     }
 

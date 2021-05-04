@@ -38,7 +38,7 @@ public class HostsRemovedFromPersonEvent extends PersonHostsEvent {
      * @param person The person.
      * @param hosts  The hosts.
      */
-    HostsRemovedFromPersonEvent(Person person, List<Host> hosts) {
+    public HostsRemovedFromPersonEvent(Person person, List<Host> hosts) {
         super(Case.Events.HOSTS_REMOVED_FROM_PERSON.toString(), person, hosts);
     }
 
