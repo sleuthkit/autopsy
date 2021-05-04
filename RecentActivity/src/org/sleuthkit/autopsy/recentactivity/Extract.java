@@ -160,7 +160,9 @@ abstract class Extract {
      */
     BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
         if (type.getCategory() == BlackboardArtifact.Category.DATA_ARTIFACT) {
-            return content.newDataArtifact(type, attributes);
+            return (content instanceof AbstractFile) 
+                    ? ((AbstractFile) content).newDataArtifact(type, attributes) 
+                    : content.newDataArtifact(type, attributes, null);
         } else {
             BlackboardArtifact bbart = content.newArtifact(type.getTypeID());
             bbart.addAttributes(attributes);
