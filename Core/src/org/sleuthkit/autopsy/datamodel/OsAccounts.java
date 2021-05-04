@@ -183,7 +183,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
         private final PropertyChangeListener listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.Events.OS_ACCOUNT_CHANGED.name())) {
+                if (evt.getPropertyName().equals(Case.Events.OS_ACCOUNTS_UPDATED.name())) {
                     OsAccountsUpdatedEvent updateEvent = (OsAccountsUpdatedEvent) evt;
                     for (OsAccount acct : updateEvent.getOsAccounts()) {
                         if (acct.getId() == account.getId()) {
@@ -224,7 +224,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
             setDisplayName(account.getName());
             setIconBaseWithExtension(ICON_PATH);
 
-            Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_CHANGED), weakListener);
+            Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNTS_UPDATED), weakListener);
         }
 
         @Override

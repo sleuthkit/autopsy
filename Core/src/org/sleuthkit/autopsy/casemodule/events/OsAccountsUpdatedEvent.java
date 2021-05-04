@@ -37,7 +37,7 @@ public final class OsAccountsUpdatedEvent extends OsAccountsEvent {
      * @param osAccounts The OS accounts that were updated.
      */
     public OsAccountsUpdatedEvent(List<OsAccount> osAccounts) {
-        super(Case.Events.OS_ACCOUNT_CHANGED.toString(), osAccounts);
+        super(Case.Events.OS_ACCOUNTS_UPDATED.toString(), osAccounts);
     }
     
 }

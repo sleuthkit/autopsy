@@ -429,49 +429,47 @@ public class Case {
          */
         CR_COMMENT_CHANGED,
         /**
-         * OSAccount associated with the current case added. Call getOsAccount
-         * to get the added account;
+         * One or more OS accounts have been added to the case.
          */
         OS_ACCOUNTS_ADDED,
         /**
-         * OSAccount associated with the current case has changed. Call
-         * getOsAccount to get the changed account;
+         * One or more OS accounts in the case have been updated.
          */
-        OS_ACCOUNT_CHANGED,
+        OS_ACCOUNTS_UPDATED,
         /**
-         * OSAccount associated with the current case has been deleted.
+         * One or more OS accounts have been deleted from the case.
          */
         OS_ACCOUNTS_DELETED,
         /**
-         * Hosts associated with the current case added.
+         * One or more hosts have been added to the case.
          */
         HOSTS_ADDED,
         /**
-         * Hosts associated with the current case has changed.
+         * One or more hosts in the case have been updated.
          */
         HOSTS_UPDATED,
         /**
-         * Hosts associated with the current case has been deleted.
+         * One or more hosts have been deleted from the case.
          */
         HOSTS_DELETED,
         /**
-         * Persons associated with the current case added.
+         * One or more persons have been added to the case.
          */
         PERSONS_ADDED,
         /**
-         * Persons associated with the current case has changed.
+         * One or more persons in the case have been updated.
          */
         PERSONS_UPDATED,
         /**
-         * Persons associated with the current case has been deleted.
+         * One or more hosts persons been deleted from the case.
          */
         PERSONS_DELETED,
         /**
-         * Hosts have been added to a person.
+         * One or more hosts have been added to a person.
          */
         HOSTS_ADDED_TO_PERSON, 
         /**
-         * Hosts have been removed from a person.
+         * One or more hosts have been removed from a person.
          */
         HOSTS_REMOVED_FROM_PERSON;
         
