@@ -151,7 +151,8 @@ final class AinStatusNode extends AbstractNode {
                         || nodeState.getState() == AutoIngestNodeState.State.RUNNING) {
                     actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.PauseResumeAction(nodeState));
                 }
-                actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.ShutdownAction(nodeState));
+                actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.ShutdownAction(nodeState)); 
+                actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.GenerateThreadDumpControlAction(nodeState));
             }
             return actions.toArray(new Action[actions.size()]);
         }

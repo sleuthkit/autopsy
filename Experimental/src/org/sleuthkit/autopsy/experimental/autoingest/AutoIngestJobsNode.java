@@ -367,6 +367,7 @@ final class AutoIngestJobsNode extends AbstractNode {
                         break;
                     case RUNNING_JOB:
                         actions.add(new AutoIngestAdminActions.ProgressDialogAction(jobWrapper.getJob()));
+                        actions.add(new AutoIngestAdminActions.GenerateThreadDump(jobWrapper.getJob()));
                         actions.add(new AutoIngestAdminActions.CancelJobAction(jobWrapper.getJob()));
 //                        actions.add(new AutoIngestAdminActions.CancelModuleAction());
                         break;

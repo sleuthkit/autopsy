@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,6 +75,7 @@ import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorC
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -141,6 +142,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         ControlEventType.PAUSE.toString(),
         ControlEventType.RESUME.toString(),
         ControlEventType.SHUTDOWN.toString(),
+        ControlEventType.GENERATE_THREAD_DUMP_REQUEST.toString(),
         Event.CANCEL_JOB.toString(),
         Event.REPROCESS_JOB.toString()}));
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
@@ -303,7 +305,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 } else if (event instanceof AutoIngestNodeControlEvent) {
                     handleRemoteNodeControlEvent((AutoIngestNodeControlEvent) event);
                 } else if (event instanceof AutoIngestJobCancelEvent) {
-                    handleRemoteJobCancelledEvent((AutoIngestJobCancelEvent) event);
+                    handleRemoteJobCancelEvent((AutoIngestJobCancelEvent) event);
                 } else if (event instanceof AutoIngestJobReprocessEvent) {
                     handleRemoteJobReprocessEvent((AutoIngestJobReprocessEvent) event);
                 }
@@ -398,7 +400,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      *
      * @param event
      */
-    private void handleRemoteJobCancelledEvent(AutoIngestJobCancelEvent event) {
+    private void handleRemoteJobCancelEvent(AutoIngestJobCancelEvent event) {
         AutoIngestJob job = event.getJob();
         if (job != null && job.getProcessingHostName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
             sysLogger.log(Level.INFO, "Received cancel job event for data source {0} in case {1} from user {2} on machine {3}",
@@ -491,7 +493,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private void handleRemoteRequestNodeStateEvent() {
         // Re-publish last state event.
         eventPublisher.publishRemotely(lastPublishedStateEvent);
-    }
+    } 
 
     private void handleRemoteNodeControlEvent(AutoIngestNodeControlEvent event) {
         if (event.getTargetNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
@@ -517,11 +519,30 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     setChanged();
                     notifyObservers(Event.SHUTTING_DOWN);
                     break;
+                case GENERATE_THREAD_DUMP_REQUEST:
+                    handleRemoteRequestThreadDumpEvent(event);
+                    break;
                 default:
                     sysLogger.log(Level.WARNING, "Received unsupported control event: {0}", event.getControlEventType());
                     break;
             }
         }
+    }
+    
+    /**
+     * Handle a request for a thread dump.
+     */
+    private void handleRemoteRequestThreadDumpEvent(AutoIngestNodeControlEvent event) {
+
+        new Thread(() -> {
+            sysLogger.log(Level.INFO, "Generating thread dump");
+            // generate thread dump
+            String threadDump = ThreadUtils.generateThreadDump();
+
+            // publish the thread dump
+            sysLogger.log(Level.INFO, "Sending thread dump reply to node {0}", event.getOriginatingNodeName());
+            eventPublisher.publishRemotely(new ThreadDumpResponseEvent(LOCAL_HOST_NAME, event.getOriginatingNodeName(), threadDump));
+        }).start();
     }
 
     /**
@@ -3128,7 +3149,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         SHUTDOWN,
         REPORT_STATE,
         CANCEL_JOB,
-        REPROCESS_JOB
+        REPROCESS_JOB,
+        GENERATE_THREAD_DUMP_RESPONSE
     }
 
     /**

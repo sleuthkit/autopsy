@@ -63,7 +63,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
 
     private final static Logger logger = Logger.getLogger(FileTypesByMimeType.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
-    private final SleuthkitCase skCase;
+
     /**
      * The nodes of this tree will be determined dynamically by the mimetypes
      * which exist in the database. This hashmap will store them with the media
@@ -130,11 +130,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 + " GROUP BY mime_type";
         synchronized (existingMimeTypeCounts) {
             existingMimeTypeCounts.clear();
-
-            if (skCase == null) {
-                return;
-            }
-            try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+            try 
+                (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
                     final String mime_type = resultSet.getString("mime_type"); //NON-NLS
@@ -149,7 +146,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                         }
                     }
                 }
-            } catch (TskCoreException | SQLException ex) {
+            } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
                 logger.log(Level.SEVERE, "Unable to populate File Types by MIME Type tree view from DB: ", ex); //NON-NLS
             }
         }
@@ -159,7 +156,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     }
 
     FileTypesByMimeType(FileTypes typesRoot) {
-        this.skCase = typesRoot.getSleuthkitCase();
         this.typesRoot = typesRoot;
         this.pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
@@ -497,9 +493,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         @Override
         protected List<FileTypesKey> makeKeys() {
             try {
-                return skCase.findAllFilesWhere(createBaseWhereExpr() + " AND mime_type = '" + mimeType + "'")
+                return Case.getCurrentCaseThrows().getSleuthkitCase()
+                        .findAllFilesWhere(createBaseWhereExpr() + " AND mime_type = '" + mimeType + "'")
                         .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList()); //NON-NLS
-            } catch (TskCoreException ex) {
+            } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
             }
             return Collections.emptyList();

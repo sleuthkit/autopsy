@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -137,6 +137,25 @@ final class AutoIngestAdminActions {
                 }
             }
         }
+
+        static final class GenerateThreadDumpControlAction extends AutoIngestNodeControlAction {
+
+            private static final long serialVersionUID = 1L;
+
+            GenerateThreadDumpControlAction(AutoIngestNodeState nodeState) {
+                super(nodeState, Bundle.AutoIngestAdminActions_getThreadDump_title());
+            }
+
+            @Override
+            public Object clone() throws CloneNotSupportedException {
+                return super.clone(); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            protected void controlAutoIngestNode(AinStatusDashboard dashboard) throws AutoIngestMonitor.AutoIngestMonitorException {
+                dashboard.getMonitor().generateThreadDump(getNodeState().getName());
+            }
+        }
     }
 
     @NbBundle.Messages({"AutoIngestAdminActions.progressDialogAction.title=Ingest Progress"})
@@ -158,6 +177,41 @@ final class AutoIngestAdminActions {
                 if (dashboard != null) {
                     new IngestProgressSnapshotDialog(dashboard.getTopLevelAncestor(), true, job);
                 }
+            }
+        }
+
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+    }
+
+    @NbBundle.Messages({"AutoIngestAdminActions.getThreadDump.title=Generate Thread Dump"})
+    static final class GenerateThreadDump extends AbstractAction {
+
+        private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
+
+        GenerateThreadDump(AutoIngestJob job) {
+            super(Bundle.AutoIngestAdminActions_getThreadDump_title());
+            this.job = job;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                dashboard.getMonitor().generateThreadDump(job.getProcessingHostName());
             }
         }
 
