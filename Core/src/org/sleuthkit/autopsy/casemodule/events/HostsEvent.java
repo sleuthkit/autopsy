@@ -22,44 +22,48 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Base event class for when something pertaining to hosts changes.
+ * A base class for application events published when hosts in the Sleuth Kit
+ * data model for a case have been added or updated.
  */
-public class HostsEvent extends TskDataModelChangedEvent<Host> {
+public class HostsEvent extends TskDataModelChangedEvent<Host, Host> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Main constructor.
+     * Constructs the base class part of an application event published when
+     * hosts in the Sleuth Kit data model for a case have been added or updated.
      *
      * @param eventName The name of the Case.Events enum value for the event
-     * type.
-     * @param dataModelObjects The list of hosts for the event.
+     *                  type.
+     * @param hosts     The hosts.
      */
-    protected HostsEvent(String eventName, List<Host> dataModelObjects) {
-        super(eventName, dataModelObjects, Host::getHostId);
+    protected HostsEvent(String eventName, List<Host> hosts) {
+        super(eventName, null, null, hosts, Host::getHostId);
+    }
+
+    /**
+     * Gets the hosts that have been added or updated.
+     *
+     * @return The hosts.
+     */
+    public List<Host> getHosts() {
+        return getNewValue();
     }
 
     @Override
-    protected List<Host> getDataModelObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
-        HostManager hostManager = caseDb.getHostManager();
-        List<Host> toRet = new ArrayList<>();
-        if (ids != null) {
-            for (Long id : ids) {
-                if (id == null) {
-                    continue;
-                }
-
-                Optional<Host> thisHostOpt = hostManager.getHostById(id);
-                thisHostOpt.ifPresent((h) -> toRet.add(h));
+    protected List<Host> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        List<Host> hosts = new ArrayList<>();
+        for (Long id : ids) {
+            Optional<Host> host = caseDb.getHostManager().getHostById(id);
+            if (host.isPresent()) {
+                hosts.add(host.get());
             }
         }
-
-        return toRet;
+        return hosts;
     }
 
 }

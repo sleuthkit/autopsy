@@ -32,123 +32,142 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An abstract base class for application events published when Sleuth Kit Data
- * Model objects for a case are added, updated, or deleted.
+ * An abstract base class for application events published when one or more
+ * Sleuth Kit Data Model objects for a case change in some way.
  *
- * @param <T> A Sleuth Kit Data Model object type.
+ * This class extends AutopsyEvent. The AutopsyEvent class extends
+ * PropertyChangeEvent to integrate with legacy use of JavaBeans
+ * PropertyChangeEvents and PropertyChangeListeners as an application event
+ * publisher-subcriber mechanism. Subclasses need to decide what constitutes
+ * "old" and "new" objects for them and are encouraged to provide getters for
+ * these values that do not require clients to cast the return values.
+ *
+ * The AutopsyEvent class implements Serializable to allow local event instances
+ * to be published to other Autopsy nodes over a network in serialized form. TSK
+ * Data Model objects are generally not serializable because they encapsulate a
+ * reference to a SleuthkitCase object that represents the case database and
+ * which has local JDBC Connection objects. For this reason, this class supports
+ * serialization of the unique numeric IDs (TSK object IDs, case database row
+ * IDs, etc.) of the subject TSK Data Model objects and the "reconstruction" of
+ * those objects on other Autopsy nodes by querying the case database by unique
+ * ID.
+ *
+ * @param <T> The Sleuth Kit Data Model object type of the "old" data model
+ *            objects.
+ * @param <U> The Sleuth Kit Data Model object type of the "new" data model
+ *            objects.
  */
-public abstract class TskDataModelChangedEvent<T> extends AutopsyEvent {
+public abstract class TskDataModelChangedEvent<T, U> extends AutopsyEvent {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(TskDataModelChangedEvent.class.getName());
-    private final boolean isDeletionEvent;
-    private final List<Long> dataModelObjectIds;
-    private transient List<T> dataModelObjects;
+    private final boolean hasOldValue;
+    private final List<Long> oldValueIds;
+    private transient List<T> oldValueObjects;
+    private final boolean hasNewValue;
+    private final List<Long> newValueIds;
+    private transient List<U> newValueObjects;
 
     /**
-     * Constructs an instance of an abstract base class for application events
-     * published when Sleuth Kit Data Model objects for a case are added or
-     * updated. The getNewValue() method of this event will return the objects
-     * and the getOldValue() method will return an empty list.
+     * Constructs the base class part for application events published when one
+     * or more Sleuth Kit Data Model objects for a case change in some way.
      *
-     * @param eventName        The event name.
-     * @param dataModelObjects The Sleuth Kit Data Model objects that have been
-     *                         added or updated.
-     * @param getIdMethod      A method that can be applied to the data model
-     *                         objects to get their unique numeric IDs (TSK
-     *                         object IDs, case database row IDs, etc.).
+     * @param eventName           The event name.
+     * @param oldValueObjects     A list of he Data Model objects that have been
+     *                            designated as the "old" objects in the event.
+     *                            May be null.
+     * @param oldValueGetIdMethod A method that can be applied to the "old" data
+     *                            model objects to get their unique numeric IDs
+     *                            (TSK object IDs, case database row IDs, etc.).
+     *                            May be null if there are no "old" objects.
+     * @param newValueObjects     A list of he Data Model objects that have been
+     *                            designated as the "new" objects in the event.
+     *                            May be null.
+     * @param newValueGetIdMethod A method that can be applied to the "new" data
+     *                            model objects to get their unique numeric IDs
+     *                            (TSK object IDs, case database row IDs, etc.).
+     *                            May be null if there are no "new" objects.
      */
-    protected TskDataModelChangedEvent(String eventName, List<T> dataModelObjects, Function<T, Long> getIdMethod) {
+    protected TskDataModelChangedEvent(String eventName, List<T> oldValueObjects, Function<T, Long> oldValueGetIdMethod, List<U> newValueObjects, Function<U, Long> newValueGetIdMethod) {
         super(eventName, null, null);
-        isDeletionEvent = false;
-        this.dataModelObjectIds = new ArrayList<>();
-        this.dataModelObjectIds.addAll(dataModelObjects.stream().map(o -> getIdMethod.apply(o)).collect(Collectors.toList()));
-        this.dataModelObjects = new ArrayList<>();
-        this.dataModelObjects.addAll(dataModelObjects);
-    }
-
-    /**
-     * Constructs an instance of an abstract base class for application events
-     * published when Sleuth Kit Data Model objects for a case are added or
-     * updated. The getOldValue() method of this event will return the object
-     * IDs and the getNewValue() method will return an empty list.
-     *
-     * @param eventName          The event name.
-     * @param dataModelObjectIds The unique numeric IDs (TSK object IDs, case
-     *                           database row IDs, etc.) of the Sleuth Kit Data
-     *                           Model objects that have been deleted.
-     */
-    protected TskDataModelChangedEvent(String eventName, List<Long> dataModelObjectIds) {
-        super(eventName, null, null);
-        isDeletionEvent = true;
-        this.dataModelObjectIds = new ArrayList<>();
-        this.dataModelObjectIds.addAll(dataModelObjectIds);
-        dataModelObjects = Collections.emptyList();
-    }
-
-    /**
-     * Gets the the unique numeric IDs (TSK object IDs, case database row IDs,
-     * etc.) of the Sleuth Kit Data Model objects that were deleted.
-     *
-     * @return The unique IDs.
-     */
-    @Override
-    public List<Long> getOldValue() {
-        if (isDeletionEvent) {
-            return getDataModelObjectIds();
+        oldValueIds = new ArrayList<>();
+        this.oldValueObjects = new ArrayList<>();
+        if (oldValueObjects != null) {
+            hasOldValue = true;
+            oldValueIds.addAll(oldValueObjects.stream()
+                    .map(o -> oldValueGetIdMethod.apply(o))
+                    .collect(Collectors.toList()));
+            this.oldValueObjects.addAll(oldValueObjects);
         } else {
-            return Collections.emptyList();
+            hasOldValue = false;
+        }
+        newValueIds = new ArrayList<>();
+        this.newValueObjects = new ArrayList<>();
+        if (oldValueObjects != null) {
+            hasNewValue = true;
+            newValueIds.addAll(newValueObjects.stream()
+                    .map(o -> newValueGetIdMethod.apply(o))
+                    .collect(Collectors.toList()));
+            this.newValueObjects.addAll(newValueObjects);
+        } else {
+            hasNewValue = false;
         }
     }
 
     /**
-     * Gets the Sleuth Kit Data Model objects that were added or updated. If
-     * this event came from another host collaborating on a multi-user case, the
-     * Sleuth Kit Data Model objects will be reconstructed on the current host.
+     * Gets a list of the Data Model objects that have been designated as the
+     * "old" objects in the event.
      *
-     * @return The objects.
+     * @return The list of the "old" data model objects. May be empty.
      */
     @Override
-    public List<T> getNewValue() {
-        if (!isDeletionEvent) {
-            if (dataModelObjects == null) {
+    public List<T> getOldValue() {
+        if (hasOldValue) {
+            if (oldValueObjects == null) {
                 try {
                     Case currentCase = Case.getCurrentCaseThrows();
                     SleuthkitCase caseDb = currentCase.getSleuthkitCase();
-                    dataModelObjects = getDataModelObjects(caseDb, dataModelObjectIds);
+                    oldValueObjects = getOldValueObjects(caseDb, oldValueIds);
                 } catch (NoCurrentCaseException | TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error geting TSK Data Model objects for %s event (%s)", getPropertyName(), getSourceType()), ex);
+                    logger.log(Level.SEVERE, String.format("Error getting oldValue() TSK Data Model objects for %s event (%s)", getPropertyName(), getSourceType()), ex);
                     return Collections.emptyList();
                 }
             }
-            return Collections.unmodifiableList(dataModelObjects);
+            return Collections.unmodifiableList(oldValueObjects);
         } else {
             return Collections.emptyList();
         }
     }
 
+    /**
+     * Gets a list of the Data Model objects that have been designated as the
+     * "new" objects in the event.
+     *
+     * @return The list of the "new" data model objects. May be empty.
+     */
+    @Override
+    public List<U> getNewValue() {
+        if (hasNewValue) {
+            if (newValueObjects == null) {
+                try {
+                    Case currentCase = Case.getCurrentCaseThrows();
+                    SleuthkitCase caseDb = currentCase.getSleuthkitCase();
+                    newValueObjects = getNewValueObjects(caseDb, newValueIds);
+                } catch (NoCurrentCaseException | TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Error getting newValue() TSK Data Model objects for %s event (%s)", getPropertyName(), getSourceType()), ex);
+                    return Collections.emptyList();
+                }
+            }
+            return Collections.unmodifiableList(newValueObjects);
+        } else {
+            return Collections.emptyList();
+        }
+    }
 
     /**
-     * Gets the unique numeric IDs (TSK object IDs, case database row IDs, etc.)
-     * of the Sleuth Kit Data Model objects associated with this application
-     * event.
-     *
-     * This method is provided as an optimization that allows handling of an
-     * event that came from another host collaborating on a multi-user case
-     * without reconstructing the data model objects that are the subject s of
-     * the event.
-     *
-     * @return The unique IDs.
-     */
-    public final List<Long> getDataModelObjectIds() {
-        return Collections.unmodifiableList(dataModelObjectIds);
-    }    
-    
-    /**
-     * Gets the Sleuth Kit Data Model objects associated with this application
-     * event. If this event came from another host collaborating on a multi-user
-     * case, the Sleuth Kit Data Model objects, this method will be called to
-     * reconstruct the objects on the curartifactExists(), I think we should continue to use what we have and suppress the deprecation warnings.Bent host.
+     * Reconstructs the "old" Sleuth Kit Data Model objects associated with this
+     * application event, if any, using the given unique numeric IDs (TSK object
+     * IDs, case database row IDs, etc.) to query the given case database.
      *
      * @param caseDb The case database.
      * @param ids    The unique, numeric IDs (TSK object IDs, case database row
@@ -160,6 +179,27 @@ public abstract class TskDataModelChangedEvent<T> extends AutopsyEvent {
      *                                                  getting the Sleuth Kit
      *                                                  Data Model objects.
      */
-    abstract protected List<T> getDataModelObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException;
+    protected List<T> getOldValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Reconstructs the "new" Sleuth Kit Data Model objects associated with this
+     * application event, if any, using the given unique numeric IDs (TSK object
+     * IDs, case database row IDs, etc.) to query the given case database.
+     *
+     * @param caseDb The case database.
+     * @param ids    The unique, numeric IDs (TSK object IDs, case database row
+     *               IDs, etc.) of the Sleuth Kit Data Model objects.
+     *
+     * @return The objects.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException If there is an error
+     *                                                  getting the Sleuth Kit
+     *                                                  Data Model objects.
+     */
+    protected List<U> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        return Collections.emptyList();
+    }
 
 }

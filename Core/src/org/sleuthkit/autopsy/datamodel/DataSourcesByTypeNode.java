@@ -50,11 +50,10 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
      */
     public static class DataSourcesByTypeChildren extends ChildFactory.Detachable<HostDataSources> {
 
-        private static final Set<Case.Events> UPDATE_EVTS = EnumSet.of(
-                Case.Events.DATA_SOURCE_ADDED,
+        private static final Set<Case.Events> UPDATE_EVTS = EnumSet.of(Case.Events.DATA_SOURCE_ADDED,
                 Case.Events.HOSTS_ADDED,
                 Case.Events.HOSTS_DELETED,
-                Case.Events.HOSTS_CHANGED);
+                Case.Events.HOSTS_UPDATED);
         
         private static final Set<String> UPDATE_EVT_STRS = UPDATE_EVTS.stream()
                 .map(evt -> evt.name())

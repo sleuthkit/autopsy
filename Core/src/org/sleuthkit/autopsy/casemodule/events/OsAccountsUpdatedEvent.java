@@ -23,19 +23,21 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.OsAccount;
 
 /**
- * Event published when OS accounts in the case have been updated.
+ * An application event published when OS accounts in the Sleuth Kit data model
+ * for a case have been updated.
  */
 public final class OsAccountsUpdatedEvent extends OsAccountsEvent {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs an event published when OS accounts in the case have been
-     * updated.
+     * Constructs an application event published when OS accounts in the Sleuth
+     * Kit data model for a case have been updated.
      *
-     * @param accounts The accounts.
+     * @param osAccounts The OS accounts that were updated.
      */
-    public OsAccountsUpdatedEvent(List<OsAccount> accounts) {
-        super(Case.Events.OS_ACCOUNT_CHANGED.toString(), accounts);
+    public OsAccountsUpdatedEvent(List<OsAccount> osAccounts) {
+        super(Case.Events.OS_ACCOUNT_CHANGED.toString(), osAccounts);
     }
+    
 }

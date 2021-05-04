@@ -47,13 +47,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Object> {
 
-    private static final Set<Case.Events> LISTENING_EVENTS = EnumSet.of(
-            Case.Events.DATA_SOURCE_ADDED,
+    private static final Set<Case.Events> LISTENING_EVENTS = EnumSet.of(Case.Events.DATA_SOURCE_ADDED,
             Case.Events.HOSTS_ADDED,
             Case.Events.HOSTS_DELETED,
             Case.Events.PERSONS_ADDED,
             Case.Events.PERSONS_DELETED,
-            Case.Events.PERSONS_CHANGED
+            Case.Events.PERSONS_UPDATED
     );
 
     private static final Set<String> LISTENING_EVENT_NAMES = LISTENING_EVENTS.stream()

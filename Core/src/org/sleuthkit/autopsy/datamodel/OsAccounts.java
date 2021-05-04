@@ -124,8 +124,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.OS_ACCOUNT_ADDED.toString())
-                        || eventType.equals(Case.Events.OS_ACCOUNT_REMOVED.toString())) {
+                if (eventType.equals(Case.Events.OS_ACCOUNTS_ADDED.toString())
+                        || eventType.equals(Case.Events.OS_ACCOUNTS_DELETED.toString())) {
                     refresh(true);
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
@@ -139,13 +139,13 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNT_ADDED, Case.Events.OS_ACCOUNT_REMOVED), listener);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNTS_ADDED, Case.Events.OS_ACCOUNTS_DELETED), listener);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
 
         @Override
         protected void removeNotify() {
-            Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), listener);
+            Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNTS_ADDED), listener);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
 
@@ -184,10 +184,13 @@ public final class OsAccounts implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(Case.Events.OS_ACCOUNT_CHANGED.name())) {
-                    if (((OsAccountsUpdatedEvent) evt).getOsAccount().getId() == account.getId()) {
-                        // Update the account node to the new one
-                        account = ((OsAccountsUpdatedEvent) evt).getOsAccount();
-                        updateSheet();
+                    OsAccountsUpdatedEvent updateEvent = (OsAccountsUpdatedEvent) evt;
+                    for (OsAccount acct : updateEvent.getOsAccounts()) {
+                        if (acct.getId() == account.getId()) {
+                            account = acct;
+                            updateSheet();
+                            break;
+                        }
                     }
                 } else if (evt.getPropertyName().equals(REALM_DATA_AVAILABLE_EVENT)) {
                     OsAccountRealm realm = (OsAccountRealm) evt.getNewValue();

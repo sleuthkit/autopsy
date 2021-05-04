@@ -177,7 +177,7 @@ public class HostNode extends DisplayableItemNode {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (hostId != null && eventType.equals(Case.Events.HOSTS_CHANGED.toString()) && evt instanceof HostsUpdatedEvent) {
+            if (hostId != null && eventType.equals(Case.Events.HOSTS_UPDATED.toString()) && evt instanceof HostsUpdatedEvent) {
                 ((HostsUpdatedEvent) evt).getNewValue().stream()
                         .filter(h -> h != null && h.getHostId() == hostId)
                         .findFirst()
@@ -246,7 +246,7 @@ public class HostNode extends DisplayableItemNode {
                 host == null ? Lookups.fixed(displayName) : Lookups.fixed(host, displayName));
                 
         hostId = host == null ? null : host.getHostId();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED),
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_UPDATED),
                 WeakListeners.propertyChange(hostChangePcl, this));
         super.setName(displayName);
         super.setDisplayName(displayName);

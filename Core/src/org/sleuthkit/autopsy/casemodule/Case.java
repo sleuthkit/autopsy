@@ -432,7 +432,7 @@ public class Case {
          * OSAccount associated with the current case added. Call getOsAccount
          * to get the added account;
          */
-        OS_ACCOUNT_ADDED,
+        OS_ACCOUNTS_ADDED,
         /**
          * OSAccount associated with the current case has changed. Call
          * getOsAccount to get the changed account;
@@ -441,7 +441,7 @@ public class Case {
         /**
          * OSAccount associated with the current case has been deleted.
          */
-        OS_ACCOUNT_REMOVED,
+        OS_ACCOUNTS_DELETED,
         /**
          * Hosts associated with the current case added.
          */
@@ -449,7 +449,7 @@ public class Case {
         /**
          * Hosts associated with the current case has changed.
          */
-        HOSTS_CHANGED,
+        HOSTS_UPDATED,
         /**
          * Hosts associated with the current case has been deleted.
          */
@@ -461,11 +461,20 @@ public class Case {
         /**
          * Persons associated with the current case has changed.
          */
-        PERSONS_CHANGED,
+        PERSONS_UPDATED,
         /**
          * Persons associated with the current case has been deleted.
          */
-        PERSONS_DELETED;
+        PERSONS_DELETED,
+        /**
+         * Hosts have been added to a person.
+         */
+        HOSTS_ADDED_TO_PERSON, 
+        /**
+         * Hosts have been removed from a person.
+         */
+        HOSTS_REMOVED_FROM_PERSON;
+        
     };
 
     /**
@@ -511,7 +520,7 @@ public class Case {
 
         @Subscribe
         public void publishOsAccountsDeletedEvent(TskEvent.OsAccountsDeletedTskEvent event) {
-            eventPublisher.publish(new OsAccountsDeletedEvent(event.getObjectIds()));
+            eventPublisher.publish(new OsAccountsDeletedEvent(event.getOsAccountObjectIds()));
         }
 
         /**
@@ -544,7 +553,7 @@ public class Case {
          */
         @Subscribe
         public void publishHostsDeletedEvent(TskEvent.HostsDeletedTskEvent event) {
-            eventPublisher.publish(new HostsDeletedEvent(event.getObjectIds()));
+            eventPublisher.publish(new HostsDeletedEvent(event.getHostIds()));
         }
 
         /**
@@ -577,7 +586,7 @@ public class Case {
          */
         @Subscribe
         public void publishPersonsDeletedEvent(TskEvent.PersonsDeletedTskEvent event) {
-            eventPublisher.publish(new PersonsDeletedEvent(event.getObjectIds()));
+            eventPublisher.publish(new PersonsDeletedEvent(event.getPersonIds()));
         }
     }
 

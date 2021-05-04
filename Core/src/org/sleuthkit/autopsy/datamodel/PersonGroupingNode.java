@@ -68,10 +68,9 @@ public class PersonGroupingNode extends DisplayableItemNode {
 
         private static final Logger logger = Logger.getLogger(PersonChildren.class.getName());
 
-        private static final Set<Case.Events> CHILD_EVENTS = EnumSet.of(
-                Case.Events.HOSTS_ADDED, 
+        private static final Set<Case.Events> CHILD_EVENTS = EnumSet.of(Case.Events.HOSTS_ADDED, 
                 Case.Events.HOSTS_DELETED, 
-                Case.Events.PERSONS_CHANGED);
+                Case.Events.PERSONS_UPDATED);
         
         private static final Set<String> CHILD_EVENTS_STR = CHILD_EVENTS.stream()
                 .map(ev -> ev.name())
@@ -145,7 +144,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (personId != null && eventType.equals(Case.Events.PERSONS_CHANGED.toString()) && evt instanceof PersonsUpdatedEvent) {
+            if (personId != null && eventType.equals(Case.Events.PERSONS_UPDATED.toString()) && evt instanceof PersonsUpdatedEvent) {
                 ((PersonsUpdatedEvent) evt).getNewValue().stream()
                         .filter(p -> p != null && p.getPersonId() == personId)
                         .findFirst()
@@ -192,7 +191,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
         this.setIconBaseWithExtension(ICON_PATH);
         this.person = person;
         this.personId = person == null ? null : person.getPersonId();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_CHANGED),
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_UPDATED),
                 WeakListeners.propertyChange(personChangePcl, this));
     }
 

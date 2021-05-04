@@ -22,44 +22,49 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.sleuthkit.datamodel.Person;
-import org.sleuthkit.datamodel.PersonManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Base event class for when something pertaining to persons changes.
+ * A base class for application events published when persons in the Sleuth Kit
+ * data model for a case have been added or updated.
  */
-public class PersonsEvent extends TskDataModelChangedEvent<Person> {
+public class PersonsEvent extends TskDataModelChangedEvent<Person, Person> {
 
     private static final long serialVersionUID = 1L;
-        
+
     /**
-     * Main constructor.
+     * Constructs the base class part of an application event published when
+     * persons in the Sleuth Kit data model for a case have been added or
+     * updated.
      *
      * @param eventName The name of the Case.Events enum value for the event
-     * type.
-     * @param dataModelObjects The list of persons for the event.
+     *                  type.
+     * @param persons   The persons.
      */
-    PersonsEvent(String eventName, List<Person> dataModelObjects) {
-        super(eventName, dataModelObjects, Person::getPersonId);
+    PersonsEvent(String eventName, List<Person> persons) {
+        super(eventName, null, null, persons, Person::getPersonId);
     }
-    
-    @Override
-    protected List<Person> getDataModelObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
-        PersonManager personManager = caseDb.getPersonManager();
-        List<Person> toRet = new ArrayList<>();
-        if (ids != null) {
-            for (Long id : ids) {
-                if (id == null) {
-                    continue;
-                }
 
-                Optional<Person> thisPersonOpt = personManager.getPerson(id);
-                thisPersonOpt.ifPresent((h) -> toRet.add(h));
+    /**
+     * Gets the persons that have been added or updated.
+     *
+     * @return The persons.
+     */
+    public List<Person> getPersons() {
+        return getNewValue();
+    }
+
+    @Override
+    protected List<Person> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        List<Person> persons = new ArrayList<>();
+        for (Long id : ids) {
+            Optional<Person> person = caseDb.getPersonManager().getPerson(id);
+            if (person.isPresent()) {
+                persons.add(person.get());
             }
         }
-
-        return toRet;
+        return persons;
     }
 
 }

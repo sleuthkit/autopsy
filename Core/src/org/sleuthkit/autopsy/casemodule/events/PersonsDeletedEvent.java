@@ -18,33 +18,34 @@
  */
 package org.sleuthkit.autopsy.casemodule.events;
 
-import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.Person;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An event fired when persons are deleted from the case.
+ * Application events published when persons have been deleted from the Sleuth
+ * Kit data model for a case.
  */
-public class PersonsDeletedEvent extends TskDataModelChangedEvent<Person> {
+public class PersonsDeletedEvent extends TskDataModelObjectsDeletedEvent {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs an event fired when persons are deleted from the case.
+     * Constructs an application event published when persons have been deleted
+     * from the Sleuth Kit data model for a case.
      *
-     * @param dataModelObjectIds The unique numeric IDs (case database row IDs)
-     *                           of the persons that have been deleted.
+     * @param personIds The IDs of the persons that have been deleted.
      */
-    public PersonsDeletedEvent(List<Long> dataModelObjectIds) {
-        super(Case.Events.PERSONS_DELETED.name(), dataModelObjectIds);
+    public PersonsDeletedEvent(List<Long> personIds) {
+        super(Case.Events.PERSONS_DELETED.name(), personIds);
     }
 
-    @Override
-    protected List<Person> getDataModelObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
-        return Collections.emptyList();
+    /**
+     * Gets the person IDs of the persons that have been deleted.
+     *
+     * @return The person IDs.
+     */
+    List<Long> getPersonIds() {
+        return getOldValue();
     }
 
 }

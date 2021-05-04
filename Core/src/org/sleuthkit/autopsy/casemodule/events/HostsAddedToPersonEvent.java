@@ -18,34 +18,22 @@
  */
 package org.sleuthkit.autopsy.casemodule.events;
 
+import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 
 /**
- * Application events published when hosts have been deleted from the Sleuth
- * Kit data model for a case.
+ *
+ * @author rcordovano
  */
-public final class HostsDeletedEvent extends TskDataModelObjectsDeletedEvent {
-
+public final class HostsAddedToPersonEvent extends PersonHostsEvent {
+    
     private static final long serialVersionUID = 1L;
-
-    /**
-     * Constructs an application event published when hosts have been deleted
-     * from the Sleuth Kit data model for a case.
-     *
-     * @param hostIds The host IDs of the deleted hosts.
-     */
-    public HostsDeletedEvent(List<Long> hostIds) {
-        super(Case.Events.HOSTS_DELETED.name(), hostIds);
+    
+    HostsAddedToPersonEvent(Person person, List<Host> hosts) {
+        super(Case.Events.HOSTS_ADDED_TO_PERSON.toString(), person, hosts);
     }
-
-    /**
-     * Gets the host IDs of the hosts that have been deleted.
-     *
-     * @return The host IDs.
-     */
-    public List<Long> getHostIds() {
-        return getOldValue();
-    }
-
+        
 }

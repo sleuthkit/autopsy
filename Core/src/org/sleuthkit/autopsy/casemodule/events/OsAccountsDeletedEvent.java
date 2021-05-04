@@ -18,32 +18,34 @@
  */
 package org.sleuthkit.autopsy.casemodule.events;
 
-import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An event published when OS accounts are deleted from a case.
+ * An application event published when OS accounts have been deleted from the
+ * Sleuth Kit data model for a case.
  */
-public final class OsAccountsDeletedEvent extends TskDataModelChangedEvent<OsAccount> {
+public final class OsAccountsDeletedEvent extends TskDataModelObjectsDeletedEvent {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs an event published when OS accounts are deleted from a case.
+     * Constructs an application event published when OS accounts have been
+     * deleted from the Sleuth Kit data model for a case.
      *
-     * @param osAccountObjectIds The object IDs of the deleted accounts.
+     * @param osAccountObjectIds TSK object IDs of the deleted accounts.
      */
     public OsAccountsDeletedEvent(List<Long> osAccountObjectIds) {
-        super(Case.Events.OS_ACCOUNT_REMOVED.toString(), osAccountObjectIds);
+        super(Case.Events.OS_ACCOUNTS_DELETED.toString(), osAccountObjectIds);
     }
 
-    @Override
-    protected List<OsAccount> getDataModelObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
-        return Collections.emptyList();
+    /**
+     * Gets the Sleuth Kit object IDs of the deleted OS accounts.
+     *
+     * @return The object IDs.
+     */
+    List<Long> getOsAccountObjectIds() {
+        return getOldValue();
     }
 
 }
