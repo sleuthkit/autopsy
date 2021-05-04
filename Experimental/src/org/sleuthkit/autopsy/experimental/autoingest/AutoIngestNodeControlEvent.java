@@ -32,7 +32,8 @@ public final class AutoIngestNodeControlEvent extends AutopsyEvent implements Se
     public enum ControlEventType {
         PAUSE,
         RESUME,
-        SHUTDOWN
+        SHUTDOWN,
+        GENERATE_THREAD_DUMP_REQUEST
     }
 
     private static final long serialVersionUID = 1L;

@@ -10,6 +10,7 @@ AinStatusNode.status.title=Status
 AinStatusNode.status.unknown=Unknown
 AutoIngestAdminActions.cancelJobAction.title=Cancel Job
 AutoIngestAdminActions.cancelModuleAction.title=Cancel Module
+AutoIngestAdminActions.getThreadDump.title=Generate Thread Dump
 AutoIngestAdminActions.pause.title=Pause Node
 AutoIngestAdminActions.progressDialogAction.title=Ingest Progress
 AutoIngestAdminActions.reprocessJobAction.error=Failed to reprocess job

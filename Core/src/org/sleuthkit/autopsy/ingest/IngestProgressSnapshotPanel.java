@@ -373,7 +373,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         moduleTable = new javax.swing.JTable();
 
         setMinimumSize(new java.awt.Dimension(500, 500));
-        setPreferredSize(new java.awt.Dimension(600, 500));
+        setPreferredSize(new java.awt.Dimension(1100, 500));
         setLayout(new java.awt.GridBagLayout());
 
         threadActivitySnapshotsTable.setModel(new javax.swing.table.DefaultTableModel(
