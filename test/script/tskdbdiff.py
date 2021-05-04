@@ -365,6 +365,18 @@ class TskDbDiff(object):
         return guid_utils.obj_id_guids
 
     @staticmethod
+    def dump_output_db(db_file, dump_file, bb_dump_file, isMultiUser, pgSettings):
+        """Dumps the given database to text files for later comparison.
+
+        Args:
+            db_file: a pathto_File, the database file to dump
+            dump_file: a pathto_File, the location to dump the non-blackboard database items
+            bb_dump_file: a pathto_File, the location to dump the blackboard database items
+        """
+        id_obj_path_table = TskDbDiff._dump_output_db_nonbb(db_file, dump_file, isMultiUser, pgSettings)
+        TskDbDiff._dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings, id_obj_path_table)
+
+    @staticmethod
     def _get_tmp_file(base, ext):
         time = datetime.datetime.now().time().strftime("%H%M%f")
         return os.path.join(os.environ['TMP'], base + time + ext)
