@@ -59,7 +59,7 @@ import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
  */
 public class EmailExtracted implements AutopsyVisitableItem {
 
-    private static final String LABEL_NAME = BlackboardArtifact.Type.TSK_EMAIL_MSG.getLabel();
+    private static final String LABEL_NAME = BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeName();
     private static final Logger logger = Logger.getLogger(EmailExtracted.class.getName());
     private static final String MAIL_ACCOUNT = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailAccount.text");
     private static final String MAIL_FOLDER = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailFolder.text");
@@ -210,7 +210,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     Lookups.singleton(TSK_EMAIL_MSG.getDisplayName()),
                     TSK_EMAIL_MSG.getDisplayName(),
                     filteringDSObjId,
-                    new BlackboardArtifact.Type(TSK_EMAIL_MSG));
+                    TSK_EMAIL_MSG);
             //super(Children.create(new AccountFactory(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(LABEL_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS

@@ -73,7 +73,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     @NbBundle.Messages("KeywordHits.singleRegexSearch.text=Single Regular Expression Search")
     private static final String SIMPLE_REGEX_SEARCH = KeywordHits_singleRegexSearch_text();
 
-    public static final String NAME = BlackboardArtifact.Type.TSK_KEYWORD_HIT.getLabel();
+    public static final String NAME = BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeName();
 
     private SleuthkitCase skCase;
     private final KeywordResults keywordResults;
