@@ -601,6 +601,7 @@ def get_path_segs(path: Union[str, None]) -> Union[List[str], None]:
 
     """
     if path:
+        # split on backslash or forward slash
         return list(filter(lambda x: len(x.strip()) > 0, [s for s in re.split(r"[\\/]", path)]))
     else:
         return None
@@ -771,6 +772,8 @@ def _mask_event_desc(desc: str) -> str:
     Returns: The normalized description.
 
     """
+
+    # Takes a string like "Shell Bags: 30840" and replaces with "ShellBags:<artifact_id>"
     match = re.search(r"^\s*(.+?)\s*:\s*\d+\s*$", desc.strip())
     if match:
         return f"{match.group(1)}:<artifact_id>"
@@ -832,6 +835,9 @@ def normalize_unalloc_files(path_str: Union[str, None]) -> Union[str, None]:
     Returns: The path string where timestamps are removed from unalloc strings.
 
     """
+
+    # takes a file name like "Unalloc_30580_7466496_2980941312" and removes the object id to become
+    # "Unalloc_7466496_2980941312"
     return re.sub('Unalloc_[0-9]+_', 'Unalloc_', path_str) if path_str else None
 
 
@@ -844,6 +850,7 @@ def normalize_regripper_files(path_str: Union[str, None]) -> Union[str, None]:
     Returns: The path string where timestamps are removed from regripper paths.
 
     """
+    # takes a file name like "regripper-12345-full" and removes the id to become "regripper-full"
     return re.sub(r'regripper\-[0-9]+\-full', 'regripper-full', path_str) if path_str else None
 
 
@@ -891,6 +898,9 @@ def normalize_tsk_files_path(guid_util: TskGuidUtils, row: Dict[str, any]) -> Di
             # remove everything up to and including ModuleOutput if ModuleOutput present
             path_parts = path_parts[module_output_idx:]
             if len(path_parts) > 1 and path_parts[1] == 'Embedded File Extractor':
+                # Takes a folder like ModuleOutput\Embedded File Extractor/f_000168_4435\f_000168
+                # and fixes the folder after 'Embedded File Extractor', 'f_000168_4435' to remove the last number
+                # to become 'f_000168'
                 match = re.match(r'^(.+?)_\d*$', path_parts[2])
                 if match:
                     path_parts[2] = match.group(1)
