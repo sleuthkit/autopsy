@@ -46,19 +46,20 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_HASHSET_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 
 /**
  * Hash set hits node support. Inner classes have all of the nodes in the tree.
  */
 public class HashsetHits implements AutopsyVisitableItem {
 
-    private static final String HASHSET_HITS = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel();
-    private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName();
+    private static final String HASHSET_HITS = BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeName();
+    private static final String DISPLAY_NAME = BlackboardArtifact.Type.TSK_HASHSET_HIT.getDisplayName();
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
@@ -134,7 +135,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             }
 
             int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-            int artId = ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
+            int artId = TSK_HASHSET_HIT.getTypeID();
             String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
                     + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
                     + "attribute_type_id=" + setNameId //NON-NLS
@@ -168,10 +169,15 @@ public class HashsetHits implements AutopsyVisitableItem {
     /**
      * Top-level node for all hash sets
      */
-    public class RootNode extends DisplayableItemNode {
+    public class RootNode extends UpdatableCountTypeNode {
 
         public RootNode() {
-            super(Children.create(new HashsetNameFactory(), true), Lookups.singleton(DISPLAY_NAME));
+            super(Children.create(new HashsetNameFactory(), true),
+                    Lookups.singleton(DISPLAY_NAME),
+                    DISPLAY_NAME,
+                    filteringDSObjId,
+                    TSK_HASHSET_HIT);
+
             super.setName(HASHSET_HITS);
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
@@ -239,7 +245,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                          * oldValue if the event is a remote event.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == TSK_HASHSET_HIT.getTypeID()) {
                             hashsetResults.update();
                         }
                     } catch (NoCurrentCaseException notUsed) {
