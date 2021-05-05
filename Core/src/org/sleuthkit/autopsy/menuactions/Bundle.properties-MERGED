@@ -1,3 +1,5 @@
+DataContentDynamicMenu.contentViewers.text=Content Viewers
+DataContentDynamicMenu.mainContentViewer.name=Main
 OpenIDE-Module-Name=MenuActions
 DataContentDynamicMenu.menu.dataContentWin.text=Data Content Windows
 DataContentMenu.getName.text=DataContent Menu
@@ -5,3 +7,4 @@ DataExplorerMenu.getName.text=DataExplorer Tools
 DataResultMenu.menu.dataResWin.text=DataResult Windows
 DataResultMenu.getName.text=DataResult Menu
 SearchResultMenu.menu.dataRes.text=Data Results
+SearchResultMenu.resultViewers.text=Result Viewers
