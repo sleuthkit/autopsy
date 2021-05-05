@@ -1034,6 +1034,10 @@ public class Case {
                 }
                 newCurrentCase.doOpenCaseAction(progressIndicatorTitle, openCaseAction, CaseLockType.SHARED, true, null);
                 currentCase = newCurrentCase;
+                logger.log(Level.INFO, "Opened {0} ({1}) in {2} as the current case", new Object[]{newCurrentCase.getDisplayName(), newCurrentCase.getName(), newCurrentCase.getCaseDirectory()}); //NON-NLS
+                if (RuntimeProperties.runningWithGUI()) {
+                    updateGUIForCaseOpened(newCurrentCase);
+                }
                 eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
             } catch (CaseActionCancelledException ex) {
                 logger.log(Level.INFO, String.format("Cancelled opening %s (%s) in %s as the current case", newCurrentCase.getDisplayName(), newCurrentCase.getName(), newCurrentCase.getCaseDirectory())); //NON-NLS                
@@ -2144,12 +2148,6 @@ public class Case {
                     throw ex;
                 }
             }
-            
-            logger.log(Level.INFO, "Opened {0} ({1}) in {2} as the current case", new Object[]{this.getDisplayName(), this.getName(), this.getCaseDirectory()}); //NON-NLS
-            if (RuntimeProperties.runningWithGUI()) {
-                updateGUIForCaseOpened(this);
-            }
-            
             return null;
         });
         if (null != cancelButtonListener) {
