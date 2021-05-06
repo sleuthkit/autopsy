@@ -563,7 +563,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
         final Case currentCase = openCase;
         // close the top component if there's no image in this case
-        if (!caseWithData(currentCase)) {
+        if (!caseHasData(currentCase)) {
             getTree().setRootVisible(false); // hide the root
         } else {
             // If the case contains a lot of data sources, and they aren't already grouping
@@ -748,7 +748,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
          */
         try {
             Case openCase = Case.getCurrentCaseThrows();
-            return caseWithData(openCase) == false;
+            return caseHasData(openCase) == false;
         } catch (NoCurrentCaseException ex) {
             return true;
         }
@@ -1041,7 +1041,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } catch (NoCurrentCaseException ex) {
             // No open case.
         }
-        if (!caseWithData(currentCase)) {
+        //Will return if no open case or case has no data.
+        if (!caseHasData(currentCase)) {
             return;
         }
 
@@ -1079,7 +1080,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @return True if the case exists and has data, false otherwise.
      */
-    private static boolean caseWithData(Case currentCase) {
+    private static boolean caseHasData(Case currentCase) {
         // if no open case or has no data then there is no tree to rebuild
         boolean hasData;
         if (null == currentCase) {
