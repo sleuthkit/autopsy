@@ -343,7 +343,8 @@ class TskDbDiff(object):
 
         if isMultiUser:
             table_cols = get_pg_table_columns(conn)
-            schema = get_pg_schema(pgSettings.username, pgSettings.password, pgSettings.pgHost, pgSettings.pgPort)
+            schema = get_pg_schema(db_file, pgSettings.username, pgSettings.password,
+                                   pgSettings.pgHost, pgSettings.pgPort)
         else:
             table_cols = get_sqlite_table_columns(conn)
             schema = get_sqlite_schema(conn)
@@ -707,9 +708,14 @@ def sanitize_schema(original: str) -> str:
     dump_line = ''
     for line in original.splitlines():
         line = line.strip('\r\n ')
+        lower_line = line.lower()
         # It's comment or alter statement or catalog entry or set idle entry or empty line
-        if (line.startswith('--') or line.lower().startswith(
-                'alter') or "pg_catalog" in line or "idle_in_transaction_session_timeout" in line or not line):
+        if (not line or
+                line.startswith('--') or
+                lower_line.startswith('set') or
+                lower_line.startswith('alter') or
+                "pg_catalog" in line or
+                "idle_in_transaction_session_timeout" in line):
             continue
         elif line.endswith(';'):  # Statement not finished
             dump_line += line
@@ -724,10 +730,11 @@ def sanitize_schema(original: str) -> str:
     return "\n".join(sanitized_lines)
 
 
-def get_pg_schema(pg_username: str, pg_pword: str, pg_host: str, pg_port: str):
+def get_pg_schema(dbname: str, pg_username: str, pg_pword: str, pg_host: str, pg_port: str):
     """
     Gets the schema to be added to the dump text from the postgres database.
     Args:
+        dbname: The name of the database.
         pg_username: The postgres user name.
         pg_pword: The postgres password.
         pg_host: The postgres host.
@@ -737,10 +744,11 @@ def get_pg_schema(pg_username: str, pg_pword: str, pg_host: str, pg_port: str):
 
     """
     os.environ['PGPASSWORD'] = pg_pword
-    pg_dump = ["pg_dump", "--inserts", "-U", pg_username, "-h", pg_host, "-p", pg_port,
-               "-T", "blackboard_artifacts", "-T", "blackboard_attributes"]
+    pg_dump = ["pg_dump", "-U", pg_username, "-h", pg_host, "-p", pg_port, "--schema-only", "-d", dbname, "-t",
+               "public.*"]
     output = subprocess.check_output(pg_dump)
-    return sanitize_schema(str(output))
+    output_str = output.decode('UTF-8')
+    return sanitize_schema(output_str)
 
 
 def get_sqlite_schema(db_conn):
@@ -1052,7 +1060,8 @@ def write_normalized(guid_utils: TskGuidUtils, output_file, db_conn, table: str,
     for row in cursor:
         if len(row) != len(column_names):
             print(
-                f"ERROR: in {table}, number of columns retrieved: {len(row)} but columns are {len(column_names)} with {str(column_names)}")
+                f"ERROR: in {table}, number of columns retrieved: {len(row)} but columns are"
+                f" {len(column_names)} with {str(column_names)}")
             continue
 
         row_dict = {}
@@ -1082,7 +1091,8 @@ def write_normalized(guid_utils: TskGuidUtils, output_file, db_conn, table: str,
 def db_connect(db_file, isMultiUser, pgSettings=None):
     if isMultiUser: # use PostgreSQL
         try:
-            return psycopg2.connect("dbname=" + db_file + " user=" + pgSettings.username + " host=" + pgSettings.pgHost + " password=" + pgSettings.password), None
+            return psycopg2.connect("dbname=" + db_file + " user=" + pgSettings.username + " host=" +
+                                    pgSettings.pgHost + " password=" + pgSettings.password), None
         except:
             print("Failed to connect to the database: " + db_file)
     else: # Sqlite
@@ -1122,4 +1132,3 @@ if __name__ == "__main__":
         sys.exit(1)
 
     main()
-
