@@ -744,8 +744,8 @@ def get_pg_schema(dbname: str, pg_username: str, pg_pword: str, pg_host: str, pg
 
     """
     os.environ['PGPASSWORD'] = pg_pword
-    pg_dump = ["pg_dump", "-U", pg_username, "-h", pg_host, "-p", pg_port, "--schema-only", "-d", dbname, "-t",
-               "public.*"]
+    pg_dump = ["pg_dump", "-U", pg_username, "-h", pg_host, "-p", pg_port,
+               "--schema-only", "-d", dbname, "-t", "public.*"]
     output = subprocess.check_output(pg_dump)
     output_str = output.decode('UTF-8')
     return sanitize_schema(output_str)
