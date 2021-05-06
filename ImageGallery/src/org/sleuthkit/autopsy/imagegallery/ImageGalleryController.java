@@ -486,8 +486,7 @@ public final class ImageGalleryController {
      *
      */
     public void rebuildDrawablesDb() {
-        // queue a rebuild task for each stale data source
-        getStaleDataSourceIds().forEach(dataSourceObjId -> queueDBTask(new AddDrawableFilesTask(dataSourceObjId, this)));
+        queueDBTask(new DrawableFileUpdateTask(this));
     }
 
     /**
@@ -670,7 +669,7 @@ public final class ImageGalleryController {
      *
      * @param bgTask
      */
-    public synchronized void queueDBTask(DrawableDbTask bgTask) {
+    public synchronized void queueDBTask(Runnable bgTask) {
         if (!dbExecutor.isShutdown()) {
             incrementQueueSize();
             dbExecutor.submit(bgTask).addListener(this::decrementQueueSize, MoreExecutors.directExecutor());
