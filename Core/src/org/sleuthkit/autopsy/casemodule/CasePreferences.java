@@ -35,22 +35,22 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
  * Read and update case preference file values.
  */
 public final class CasePreferences {
-    
+
     private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
     private static final String KEY_GROUP_BY_DATA_SOURCE = "groupByDataSource"; //NON-NLS
     private static final String VALUE_TRUE = "true"; //NON-NLS
     private static final String VALUE_FALSE = "false"; //NON-NLS
-    
+
     private static final Logger logger = Logger.getLogger(CasePreferences.class.getName());
-    
+
     private static Boolean groupItemsInTreeByDataSource = false;
-    
+
     /**
      * Prevent instantiation.
      */
     private CasePreferences() {
     }
-    
+
     static {
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             if (evt.getNewValue() != null) {
@@ -66,25 +66,27 @@ public final class CasePreferences {
             logger.log(Level.SEVERE, "No current case open.", ex);
         }
     }
-    
+
     /**
      * Get the 'groupItemsInTreeByDataSource' value. This can be true, false, or
      * null.
-     * 
+     *
      * @return The value.
      */
     public static Boolean getGroupItemsInTreeByDataSource() {
         return groupItemsInTreeByDataSource;
     }
-    
+
     /**
      * Set the 'groupItemsInTreeByDataSource' value to true or false.
-     * 
+     *
      * @param value The value to use for the value change.
      */
     public static void setGroupItemsInTreeByDataSource(boolean value) {
         groupItemsInTreeByDataSource = value;
-        DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
+        if (Case.isCaseOpen()) {
+            DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
+        }
     }
 
     /**
@@ -120,7 +122,7 @@ public final class CasePreferences {
             }
         }
     }
-    
+
     /**
      * Reset all values to their default states.
      */

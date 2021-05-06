@@ -116,6 +116,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.hosts.OpenHostsAction;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -1287,6 +1288,9 @@ public class Case {
                  */
                 if (newCurrentCase.hasData()) {
                     CoreComponentControl.openCoreWindows();
+                } else {
+                    //ensure that the DirectoryTreeTopComponent is open so that it's listener can open the core windows including making it visible.
+                    DirectoryTreeTopComponent.findInstance();
                 }
 
                 /*
