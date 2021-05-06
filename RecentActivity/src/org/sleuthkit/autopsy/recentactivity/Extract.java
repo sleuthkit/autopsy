@@ -160,10 +160,9 @@ abstract class Extract {
      * @throws TskCoreException
      */
     BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
-        Optional<OsAccount> optional = getOsAccount(content);
         switch (type.getCategory()) {
             case DATA_ARTIFACT:
-                return content.newDataArtifact(type, attributes, optional.orElse(null));
+                return content.newDataArtifact(type, attributes);
             case ANALYSIS_RESULT:
                 return content.newAnalysisResult(type, Score.SCORE_UNKNOWN, null, null, null, attributes).getAnalysisResult();
             default:
@@ -538,29 +537,5 @@ abstract class Extract {
         }
          
         return tempFile;
-    }
-    
-    /**
-     * Return the appropriate OsAccount for the given file.
-     * 
-     * @param file
-     * 
-     * @return An Optional OsACcount object.
-     * 
-     * @throws TskCoreException 
-     */
-    Optional<OsAccount> getOsAccount(Content content) throws TskCoreException {
-        if(content instanceof AbstractFile) {
-            if(osAccountCache == null) {
-                Optional<Long> accountId = ((AbstractFile)content).getOsAccountObjectId();
-                if(accountId.isPresent()) {
-                    return Optional.ofNullable(tskCase.getOsAccountManager().getOsAccountByObjectId(accountId.get()));
-                }
-                return Optional.empty();
-            } 
-
-            return osAccountCache.getOsAccount(((AbstractFile)content));
-        }
-        return Optional.empty();
     }
 }
