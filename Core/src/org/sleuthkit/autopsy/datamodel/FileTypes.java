@@ -379,12 +379,14 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Deprecated
+        @SuppressWarnings("Deprecated")
         @Override
         public BlackboardArtifact newArtifact(int artifactTypeID) throws TskCoreException {
             return content.newArtifact(artifactTypeID);
         }
 
         @Deprecated
+        @SuppressWarnings("Deprecated")
         @Override
         public BlackboardArtifact newArtifact(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
             return content.newArtifact(type);
