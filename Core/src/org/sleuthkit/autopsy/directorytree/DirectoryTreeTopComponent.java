@@ -57,6 +57,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
@@ -555,40 +556,58 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public void componentOpened() {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        Case currentCase = null;
+        Case openCase = null;
         try {
-            currentCase = Case.getCurrentCaseThrows();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             // No open case.
         }
-
+        final Case currentCase = openCase;
         // close the top component if there's no image in this case
-        if (null == currentCase || currentCase.hasData() == false) {
+        if (!caseWithData(currentCase)) {
             getTree().setRootVisible(false); // hide the root
         } else {
             // If the case contains a lot of data sources, and they aren't already grouping
             // by data source, give the user the option to do so before loading the tree.
             if (RuntimeProperties.runningWithGUI()) {
-                long threshold = DEFAULT_DATASOURCE_GROUPING_THRESHOLD;
+                Long settingsThreshold = null;
                 if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME)) {
                     try {
-                        threshold = Long.parseLong(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME));
+                        settingsThreshold = Long.parseLong(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME));
                     } catch (NumberFormatException ex) {
                         LOGGER.log(Level.SEVERE, "Group data sources threshold is not a number", ex);
                     }
                 } else {
-                    ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME, String.valueOf(threshold));
+                    ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME, String.valueOf(DEFAULT_DATASOURCE_GROUPING_THRESHOLD));
                 }
+                final long threshold = settingsThreshold == null ? DEFAULT_DATASOURCE_GROUPING_THRESHOLD : settingsThreshold;
 
-                try {
-                    int dataSourceCount = currentCase.getDataSources().size();
-                    if (!Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)
-                            && dataSourceCount > threshold) {
-                        promptForDataSourceGrouping(dataSourceCount);
+                new SwingWorker<Integer, Void>() {
+                    @Override
+                    protected Integer doInBackground() throws Exception {
+                        int dataSourceCount = 0;
+                        try {
+                            dataSourceCount = currentCase.getDataSources().size();
+                        } catch (TskCoreException ex) {
+                            LOGGER.log(Level.SEVERE, "Error loading data sources", ex);
+                        }
+                        return dataSourceCount;
                     }
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error loading data sources", ex);
-                }
+
+                    @Override
+                    protected void done() {
+                        int dataSourceCount = 0;
+                        try {
+                            dataSourceCount = get();
+                        } catch (ExecutionException | InterruptedException ex) {
+                            LOGGER.log(Level.SEVERE, "Error loading data sources and getting count on background thread", ex);
+                        }
+                        if (!CasePreferences.getGroupItemsInTreeByDataSource()
+                                && dataSourceCount > threshold) {
+                            promptForDataSourceGrouping(dataSourceCount);
+                        }
+                    }
+                }.execute();
             }
 
             // if there's at least one image, load the image and open the top componen
@@ -730,7 +749,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
          */
         try {
             Case openCase = Case.getCurrentCaseThrows();
-            return openCase.hasData() == false;
+            return caseWithData(openCase) == false;
         } catch (NoCurrentCaseException ex) {
             return true;
         }
@@ -1017,15 +1036,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Does nothing if there is no open case.
      */
     private void rebuildTree() {
-
-        // if no open case or has no data then there is no tree to rebuild
-        Case currentCase;
+        Case currentCase = null;
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            return;
+            // No open case.
         }
-        if (null == currentCase || currentCase.hasData() == false) {
+        if (!caseWithData(currentCase)) {
             return;
         }
 
@@ -1054,6 +1071,39 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 } //NON-NLS
             }
         }.execute();
+    }
+
+    /**
+     * Identify if the specified case has data.
+     *
+     * @param currentCase The case you are checking for data.
+     *
+     * @return True if the case exists and has data, false otherwise.
+     */
+    private static boolean caseWithData(Case currentCase) {
+        // if no open case or has no data then there is no tree to rebuild
+        boolean hasData;
+        if (null == currentCase) {
+            hasData = false;
+        } else {
+            try {
+                hasData = new SwingWorker<Boolean, Void>() {
+                    @Override
+                    protected Boolean doInBackground() throws Exception {
+                        return currentCase.hasData();
+                    }
+
+                    @Override
+                    protected void done() {
+                        super.done();
+                    }
+                }.get();
+            } catch (ExecutionException | InterruptedException ex) {
+                hasData = false;
+                LOGGER.log(Level.SEVERE, "Error while checking current case for data", ex); //NON-NLS
+            }
+        }
+        return hasData;
     }
 
     /**
