@@ -1728,6 +1728,11 @@ class ExtractRegistry extends Extract {
         return map;
     }
     
+    /**
+     * Returns a mapping of user sids to user names.
+     * 
+     * @return username man or empty list if none where found.
+     */
     private Map<String, String> getUserNameMap() {
         if(userNameMap == null) {
             // Get a mapping of user sids to user names and save globally so it can be used for other areas
