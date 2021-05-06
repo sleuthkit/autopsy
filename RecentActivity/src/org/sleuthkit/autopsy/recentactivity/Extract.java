@@ -162,7 +162,9 @@ abstract class Extract {
     BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
         switch (type.getCategory()) {
             case DATA_ARTIFACT:
-                return content.newDataArtifact(type, attributes);
+                return (content instanceof AbstractFile) ?
+                        ((AbstractFile) content).newDataArtifact(type, attributes) :
+                        content.newDataArtifact(type, attributes, null);
             case ANALYSIS_RESULT:
                 return content.newAnalysisResult(type, Score.SCORE_UNKNOWN, null, null, null, attributes).getAnalysisResult();
             default:

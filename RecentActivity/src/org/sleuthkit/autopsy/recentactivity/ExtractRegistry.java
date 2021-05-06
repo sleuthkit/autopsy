@@ -742,7 +742,7 @@ class ExtractRegistry extends Extract {
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
-                            for (Map.Entry userMap : userNameMap.entrySet()) { 
+                            for (Map.Entry<String, String> userMap : userNameMap.entrySet()) { 
                                 String sid = "";
                                 try{
                                     sid = (String)userMap.getKey();
