@@ -57,7 +57,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
@@ -1086,22 +1085,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (null == currentCase) {
             hasData = false;
         } else {
-            try {
-                hasData = new SwingWorker<Boolean, Void>() {
-                    @Override
-                    protected Boolean doInBackground() throws Exception {
-                        return currentCase.hasData();
-                    }
-
-                    @Override
-                    protected void done() {
-                        super.done();
-                    }
-                }.get();
-            } catch (ExecutionException | InterruptedException ex) {
-                hasData = false;
-                LOGGER.log(Level.SEVERE, "Error while checking current case for data", ex); //NON-NLS
-            }
+            hasData = currentCase.hasData();
         }
         return hasData;
     }
