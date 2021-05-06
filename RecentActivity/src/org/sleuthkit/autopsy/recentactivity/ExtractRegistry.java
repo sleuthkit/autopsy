@@ -745,8 +745,8 @@ class ExtractRegistry extends Extract {
                             for (Map.Entry<String, String> userMap : userNameMap.entrySet()) { 
                                 String sid = "";
                                 try{
-                                    sid = (String)userMap.getKey();
-                                    String userName = (String)userMap.getValue();
+                                    sid = userMap.getKey();
+                                    String userName = userMap.getValue();
                                     createOrUpdateOsAccount(regFile, sid, userName, null);
                                 } catch(TskCoreException | TskDataException | NotUserSIDException ex) {
                                     logger.log(Level.WARNING, String.format("Failed to update Domain for existing OsAccount: %s, sid: %s", regFile.getId(), sid), ex);

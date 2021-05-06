@@ -211,7 +211,7 @@ class GPXParserFileIngestModule(FileIngestModule):
                     attributes.add(BlackboardAttribute(
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), self.moduleName, "GPXParser"))
 
-                    artifact = abstractFile.newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK), attributes)
+                    art = file.newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK), attributes)
 
                     self.blackboard.postArtifact(art, self.moduleName)
 

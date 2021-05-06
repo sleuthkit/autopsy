@@ -130,7 +130,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                     current_case = Case.getCurrentCase().getSleuthkitCase()
                     attributes = ArrayList()
                     attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), self._PARSER_NAME, contacts_parser.get_contact_name()))
-                    artifact = abstractFile.newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), attributes)
+                    artifact = contacts_db.getDBFile().newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), attributes)
                     
                     # Post the artifact to blackboard
                     current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME)
