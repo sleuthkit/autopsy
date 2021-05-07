@@ -929,21 +929,24 @@ def normalize_tsk_files_path(guid_util: TskGuidUtils, row: Dict[str, any]) -> Di
     return row_copy
 
 
-def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
+def normalize_tsk_objects_path(guid_util: TskGuidUtils, objid: int,
+                               no_path_placeholder: Union[str, None]) -> Union[str, None]:
     """
-    Normalizes object table rows.
+    Returns a normalized path to be used in a tsk_objects table row.
     Args:
-        guid_util: Provides guids for ids that may change from run to run.
-        row: A dictionary mapping column names to values.
+        guid_util: The utility for fetching guids.
+        objid: The object id of the item.
+        no_path_placeholder: text to return if no path value found.
 
-    Returns: The normalized object table row.
+    Returns: The 'no_path_placeholder' text if no path.  Otherwise, the normalized path.
+
     """
-    parent_id = row['par_obj_id']
-    path = guid_util.get_guid_for_objid(row['obj_id'], omitted_value=None)
-    row_copy = row.copy()
+    path = guid_util.get_guid_for_objid(objid, omitted_value=None)
 
-    # remove host name (for multi-user) and dates/times from path for reports
-    if path is not None:
+    if not path:
+        return no_path_placeholder
+    else:
+        # remove host name (for multi-user) and dates/times from path for reports
         path_parts = get_path_segs(path)
         module_output_idx = index_of(path_parts, 'ModuleOutput')
         if module_output_idx >= 0:
@@ -955,30 +958,27 @@ def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[
                 path_parts = path_parts[:-1]
 
         for idx in range(0, len(path_parts) - 1):
-            if path_parts[idx] == "Reports" and path_parts[idx + 1] == "AutopsyTestCase HTML Report":
+            if path_parts[idx].lower() == "reports" and \
+                    path_parts[idx + 1].lower().startswith("autopsytestcase html report"):
                 path_parts = ["Reports", "AutopsyTestCase HTML Report"]
 
         path = os.path.join(*path_parts) if len(path_parts) > 0 else '/'
 
-    parent_path = guid_util.get_guid_for_objid(parent_id, omitted_value=None)
+        return normalize_regripper_files(normalize_unalloc_files(path))
 
-    # Remove host name (for multi-user) from parent_path
-    if parent_path is not None:
-        parent_path_parts = get_path_segs(parent_path)
-        module_output_idx = index_of(parent_path_parts, 'ModuleOutput')
-        if module_output_idx >= 0:
-            parent_path_parts = parent_path_parts[module_output_idx:]
 
-        parent_path = os.path.join(*parent_path_parts) if len(parent_path_parts) > 0 else '/'
+def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
+    """
+    Normalizes object table rows.
+    Args:
+        guid_util: Provides guids for ids that may change from run to run.
+        row: A dictionary mapping column names to values.
 
-    # handle regripper and unalloc file replacements
-    if path and parent_path:
-        row_copy['obj_id'] = normalize_regripper_files(normalize_unalloc_files(path))
-        row_copy['par_obj_id'] = normalize_regripper_files(normalize_unalloc_files(parent_path))
-    else:
-        row_copy['obj_id'] = MASKED_OBJ_ID
-        row_copy['par_obj_id'] = "MASKED_PARENT_OBJ_ID"
-
+    Returns: The normalized object table row.
+    """
+    row_copy = row.copy()
+    row_copy['obj_id'] = normalize_tsk_objects_path(guid_util, row['obj_id'], MASKED_OBJ_ID)
+    row_copy['par_obj_id'] = normalize_tsk_objects_path(guid_util, row['par_obj_id'], 'MASKED_PARENT_OBJ_ID')
     return row_copy
 
 
