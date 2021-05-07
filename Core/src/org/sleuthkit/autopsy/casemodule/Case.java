@@ -463,7 +463,7 @@ public class Case {
          */
         PERSONS_UPDATED,
         /**
-         * One or more hosts persons been deleted from the case.
+         * One or more persons been deleted from the case.
          */
         PERSONS_DELETED,
         /**

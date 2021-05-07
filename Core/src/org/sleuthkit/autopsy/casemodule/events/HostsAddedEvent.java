@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Host;
 
 /**
- * An application event published when hosts have been added to the Sleuth Kit
+ * Application events published when hosts have been added to the Sleuth Kit
  * data model for a case.
  */
 public final class HostsAddedEvent extends HostsEvent {
@@ -39,5 +39,5 @@ public final class HostsAddedEvent extends HostsEvent {
     public HostsAddedEvent(List<Host> hosts) {
         super(Case.Events.HOSTS_ADDED.name(), hosts);
     }
-    
+
 }

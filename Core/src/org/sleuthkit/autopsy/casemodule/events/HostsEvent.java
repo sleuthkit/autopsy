@@ -41,7 +41,7 @@ public class HostsEvent extends TskDataModelChangedEvent<Host, Host> {
      *                  type.
      * @param hosts     The hosts.
      */
-    protected HostsEvent(String eventName, List<Host> hosts) {
+    HostsEvent(String eventName, List<Host> hosts) {
         super(eventName, null, null, hosts, Host::getHostId);
     }
 
