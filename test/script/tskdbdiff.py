@@ -443,6 +443,7 @@ class TskGuidUtils:
         """
         guid_files = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, parent_path, name FROM tsk_files")
         guid_vs_parts = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, addr, start FROM tsk_vs_parts", "_")
+        guid_vs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, vs_type, img_offset FROM tsk_vs_info", "_")
         guid_fs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, img_offset, fs_type FROM tsk_fs_info", "_")
         guid_image_names = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, name FROM tsk_image_names "
                                                                 "WHERE sequence=0")
@@ -450,12 +451,20 @@ class TskGuidUtils:
         guid_reports = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, path FROM reports")
 
         objid_artifacts = TskGuidUtils._get_guid_dict(db_conn,
-                                                      "SELECT "
-                                                      "blackboard_artifacts.artifact_obj_id, "
-                                                      "blackboard_artifact_types.type_name FROM "
-                                                      "blackboard_artifacts INNER JOIN blackboard_artifact_types "
+                                                      "SELECT blackboard_artifacts.artifact_obj_id, "
+                                                      "blackboard_artifact_types.type_name "
+                                                      "FROM blackboard_artifacts "
+                                                      "INNER JOIN blackboard_artifact_types "
                                                       "ON blackboard_artifact_types.artifact_type_id = "
                                                       "blackboard_artifacts.artifact_type_id")
+
+        artifact_objid_artifacts = TskGuidUtils._get_guid_dict(db_conn,
+                                                               "SELECT blackboard_artifacts.artifact_id, "
+                                                               "blackboard_artifact_types.type_name "
+                                                               "FROM blackboard_artifacts "
+                                                               "INNER JOIN blackboard_artifact_types "
+                                                               "ON blackboard_artifact_types.artifact_type_id = "
+                                                               "blackboard_artifacts.artifact_type_id")
 
         cursor = db_conn.cursor()
         cursor.execute("SELECT obj_id, par_obj_id FROM tsk_objects")
@@ -476,9 +485,10 @@ class TskGuidUtils:
                 guid_artifacts[k] = "/".join([path, v])
 
         return TskGuidUtils(
-            obj_id_guids={**guid_files, **guid_reports, **guid_os_accounts, **guid_vs_parts,
+            # aggregate all the object id dictionaries together
+            obj_id_guids={**guid_files, **guid_reports, **guid_os_accounts, **guid_vs_parts, **guid_vs_info,
                           **guid_fs_info, **guid_fs_info, **guid_image_names, **guid_artifacts},
-            artifact_types=objid_artifacts)
+            artifact_types=artifact_objid_artifacts)
 
     artifact_types: Dict[int, str]
     obj_id_guids: Dict[int, any]
@@ -506,11 +516,11 @@ class TskGuidUtils:
         return self.obj_id_guids[obj_id] if obj_id in self.obj_id_guids else omitted_value
 
     def get_guid_for_file_objid(self, obj_id, omitted_value: Union[str, None] = 'Object ID Omitted'):
-        # TODO this is just an alias; could probably be removed
+        # this method is just an alias for get_guid_for_objid
         return self.get_guid_for_objid(obj_id, omitted_value)
 
     def get_guid_for_accountid(self, account_id, omitted_value: Union[str, None] = 'Account ID Omitted'):
-        # TODO this is just an alias; could probably be removed
+        # this method is just an alias for get_guid_for_objid
         return self.get_guid_for_objid(account_id, omitted_value)
 
     def get_guid_for_artifactid(self, artifact_id, omitted_value: Union[str, None] = 'Artifact ID Omitted'):
@@ -859,7 +869,7 @@ def normalize_regripper_files(path_str: Union[str, None]) -> Union[str, None]:
 
     """
     # takes a file name like "regripper-12345-full" and removes the id to become "regripper-full"
-    return re.sub(r'regripper\-[0-9]+\-full', 'regripper-full', path_str) if path_str else None
+    return re.sub(r'regripper-[0-9]+-full', 'regripper-full', path_str) if path_str else None
 
 
 def normalize_tsk_files(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
@@ -1088,19 +1098,19 @@ def write_normalized(guid_utils: TskGuidUtils, output_file, db_conn, table: str,
             output_file.write(insert_statement)
 
 
-def db_connect(db_file, isMultiUser, pgSettings=None):
-    if isMultiUser: # use PostgreSQL
+def db_connect(db_file, is_multi_user, pg_settings=None):
+    if is_multi_user:  # use PostgreSQL
         try:
-            return psycopg2.connect("dbname=" + db_file + " user=" + pgSettings.username + " host=" +
-                                    pgSettings.pgHost + " password=" + pgSettings.password), None
+            return psycopg2.connect("dbname=" + db_file + " user=" + pg_settings.username + " host=" +
+                                    pg_settings.pgHost + " password=" + pg_settings.password), None
         except:
             print("Failed to connect to the database: " + db_file)
-    else: # Sqlite
+    else:  # Sqlite
         # Make a copy that we can modify
         backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
         shutil.copy(db_file, backup_db_file)
         # We sometimes get situations with messed up permissions
-        os.chmod (backup_db_file, 0o777)
+        os.chmod(backup_db_file, 0o777)
         return sqlite3.connect(backup_db_file), backup_db_file
 
 
@@ -1113,7 +1123,7 @@ def main():
         print("usage: tskdbdiff [OUTPUT DB PATH] [GOLD DB PATH]")
         sys.exit(1)
 
-    db_diff = TskDbDiff(output_db, gold_db, output_dir=".") 
+    db_diff = TskDbDiff(output_db, gold_db, output_dir=".")
     dump_passed, bb_dump_passed = db_diff.run_diff()
 
     if dump_passed and bb_dump_passed:
