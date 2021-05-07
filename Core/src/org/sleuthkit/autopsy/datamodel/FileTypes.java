@@ -397,8 +397,8 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
         
         @Override
-        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, OsAccount osAccount) throws TskCoreException {
-            return content.newDataArtifact(artifactType, attributesList, osAccount);
+        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, Long osAccountId) throws TskCoreException {
+            return content.newDataArtifact(artifactType, attributesList, osAccountId);
         }
 
         @Override
