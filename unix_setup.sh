@@ -28,15 +28,15 @@ fi
 
 # Verify Java was installed and configured
 echo -n "Checking for Java..."
-if [ -n "$JAVA_HOME" ];  then
-    if [ -x "$JAVA_HOME/bin/java" ]; then
-	echo "found in $JAVA_HOME"
+if [ -n "$jdkhome" ];  then
+    if [ -x "$jdkhome/bin/java" ]; then
+	echo "found in $jdkhome"
     else
-	echo "ERROR: Java was not found in $JAVA_HOME."
+	echo "ERROR: Java was not found in $jdkhome."
 	exit 1
     fi
 else
-    echo "ERROR: JAVA_HOME environment variable must be defined."
+    echo "ERROR: jdkhome environment variable must be defined in etc/autopsy.conf."
     exit 1
 fi
 
