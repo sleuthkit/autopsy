@@ -53,8 +53,6 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(FileSize.FileSizeFilter fsf);
 
-    T visit(ExtractedContent ec);
-
     T visit(KeywordHits kh);
 
     T visit(HashsetHits hh);
@@ -62,8 +60,6 @@ public interface AutopsyItemVisitor<T> {
     T visit(EmailExtracted ee);
 
     T visit(InterestingHits ih);
-
-    T visit(Results r);
 
     T visit(Tags tagsNodeKey);
 
@@ -85,14 +81,14 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(DataSourcesByType aThis);
 
+    T visit(AnalysisResults aThis);
+
+    T visit(DataArtifacts aThis);
+    
+
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
-
-        @Override
-        public T visit(ExtractedContent ec) {
-            return defaultVisit(ec);
-        }
 
         @Override
         public T visit(FileTypesByExtension sf) {
@@ -200,11 +196,6 @@ public interface AutopsyItemVisitor<T> {
         }
 
         @Override
-        public T visit(Results r) {
-            return defaultVisit(r);
-        }
-
-        @Override
         public T visit(FileTypes ft) {
             return defaultVisit(ft);
         }
@@ -232,6 +223,16 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(DataSourcesByType dataSourceHosts) {
             return defaultVisit(dataSourceHosts);
+        }
+        
+        @Override
+        public T visit(DataArtifacts aThis) {
+            return defaultVisit(aThis);
+        }
+
+        @Override
+        public T visit(AnalysisResults aThis) {
+            return defaultVisit(aThis);
         }
     }
 }
