@@ -46,7 +46,7 @@ The following need to be done at least once. They do not need to be repeated for
 
      % sudo ldconfig  
 
-- Install the BellSoft Java 8 JRE and JavaFX 8 distribution and set JAVA_HOME.
+- Install the BellSoft Java 8 JRE and JavaFX 8 distribution and set jdkhome.
   * The BellSoft distribution bundles OpenJDK and OpenJFX. Other distributions we have tried either don't
     bundle OpenJFX (AdoptOpenJDK) or don't include all necessary binaries (Amazon Corretto).
 -- Linux:
@@ -55,10 +55,10 @@ The following need to be done at least once. They do not need to be repeated for
        % echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
        % sudo apt-get update
        % sudo apt-get install bellsoft-java8-full
-    2. Set JAVA_HOME
-       % export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-full-amd64
+    2. Set jdkhome
+       Uncomment 'jdkhome=/usr/lib/jvm/bellsoft-java8-full-amd64' in etc/autopsy.conf
 
-    NOTE: You may need to log out and back in again after setting JAVA_HOME before the Autopsy
+    NOTE: You may need to log out and back in again after setting jdkhome before the Autopsy
           unix_setup.sh script can see the value.
 
 -- OS X:
@@ -68,9 +68,8 @@ The following need to be done at least once. They do not need to be repeated for
              % brew install --cask liberica-jdk8-full
         for macOS versions before BigSur:
              % brew cask install liberica-jdk8-full
-    2. Set JAVA_HOME environment variable to location of JRE installation.
-       e.g. add the following to ~/.bashrc
-           export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
+    2. Set jdkhome environment variable to location of JRE installation.
+       Uncomment 'jdkhome=$(/usr/libexec/java_home -v 1.8)' in etc/autopsy.conf
 
 - Confirm your version of Java by running
   % java -version
@@ -108,7 +107,7 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
 
 - If you see something like "Cannot create case: javafx/scene/paint/Color" it is an indication that Java FX
   is not being found.
-  Confirm that the file $JAVA_HOME/jre/lib/ext/jfxrt.jar exists. If it does not exist, return to the Java
+  Confirm that the file $jdkhome/jre/lib/ext/jfxrt.jar exists. If it does not exist, return to the Java
   setup steps above.
 - If you see something like "An illegal reflective access operation has occurred" it is an indication that
   the wrong version of Java is being used to run Autopsy.
@@ -119,8 +118,8 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
 
   If your messages.log file indicates that Java 8 is not being used:
   (a) confirm that you have a version of Java 8 installed and
-  (b) confirm that your JAVA_HOME environment variable is set correctly:
-      % echo $JAVA_HOME
+  (b) confirm that your jdkhome environment variable is set correctly:
+      % echo $jdkhome
       
 - If you see something like "cannot be opened because the developer cannot be verified." it is an indication 
   that Gatekeeper is running and is stopping a file from being executed.  To fix this open a new terminal window
