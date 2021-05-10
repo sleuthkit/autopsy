@@ -178,7 +178,7 @@ public class HostNode extends DisplayableItemNode {
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
             if (hostId != null && eventType.equals(Case.Events.HOSTS_UPDATED.toString()) && evt instanceof HostsUpdatedEvent) {
-                ((HostsUpdatedEvent) evt).getNewValue().stream()
+                ((HostsUpdatedEvent) evt).getHosts().stream()
                         .filter(h -> h != null && h.getHostId() == hostId)
                         .findFirst()
                         .ifPresent((newHost) -> {

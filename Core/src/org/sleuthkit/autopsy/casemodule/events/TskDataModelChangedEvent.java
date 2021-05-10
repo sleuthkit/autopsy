@@ -103,7 +103,7 @@ public abstract class TskDataModelChangedEvent<T, U> extends AutopsyEvent {
         }
         newValueIds = new ArrayList<>();
         this.newValueObjects = new ArrayList<>();
-        if (oldValueObjects != null) {
+        if (newValueObjects != null) {
             hasNewValue = true;
             newValueIds.addAll(newValueObjects.stream()
                     .map(o -> newValueGetIdMethod.apply(o))

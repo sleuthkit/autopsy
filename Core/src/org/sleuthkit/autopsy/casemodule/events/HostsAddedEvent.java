@@ -34,7 +34,7 @@ public final class HostsAddedEvent extends HostsEvent {
      * Constructs an application event published when hosts have been added to
      * the Sleuth Kit data model for a case.
      *
-     * @param persons The hosts that have been added.
+     * @param hosts The hosts that have been added.
      */
     public HostsAddedEvent(List<Host> hosts) {
         super(Case.Events.HOSTS_ADDED.name(), hosts);
