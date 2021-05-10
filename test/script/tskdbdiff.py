@@ -987,8 +987,9 @@ def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[
     Returns: The normalized object table row.
     """
     row_copy = row.copy()
-    row_copy['obj_id'] = normalize_tsk_objects_path(guid_util, row['obj_id'], MASKED_OBJ_ID)
-    row_copy['par_obj_id'] = normalize_tsk_objects_path(guid_util, row['par_obj_id'], 'MASKED_PARENT_OBJ_ID')
+    row_copy['obj_id'] = normalize_tsk_objects_path(guid_util, row['obj_id'], MASKED_OBJ_ID) if row['obj_id'] else None
+    row_copy['par_obj_id'] = normalize_tsk_objects_path(guid_util, row['par_obj_id'], 'MASKED_PARENT_OBJ_ID') \
+        if row['par_obj_id'] else None
     return row_copy
 
 
