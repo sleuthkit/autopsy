@@ -287,7 +287,7 @@ public class DataSourceInfoUtilitiesTest {
     @Test
     public void getArtifacts_failOnBytes() throws TskCoreException {
         testFailOnBadAttrType(
-                new BlackboardArtifact.Type(999, "BYTE_ARRAY_TYPE", "Byte Array Type"),
+                new BlackboardArtifact.Type(999, "BYTE_ARRAY_TYPE", "Byte Array Type", BlackboardArtifact.Category.DATA_ARTIFACT),
                 new BlackboardAttribute.Type(999, "BYTE_ARR_ATTR_TYPE", "Byte Array Attribute Type", TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE),
                 new byte[]{0x0, 0x1, 0x2},
                 BlackboardAttribute::new);
