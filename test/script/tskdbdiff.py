@@ -723,16 +723,24 @@ def sanitize_schema(original: str) -> str:
         if (not line or
                 line.startswith('--') or
                 lower_line.startswith('set') or
-                lower_line.startswith('alter') or
-                "pg_catalog" in line or
-                "idle_in_transaction_session_timeout" in line):
+                " set default nextval" in lower_line or
+                " owner to " in lower_line or
+                " owned by " in lower_line or
+                "pg_catalog" in lower_line or
+                "idle_in_transaction_session_timeout" in lower_line):
             continue
-        elif line.endswith(';'):  # Statement not finished
-            dump_line += line
+
+        # if there is no white space or parenthesis delimiter, add a space
+        if re.match(r'^.+?[^\s()]$', dump_line) and re.match(r'^[^\s()]', line):
+            dump_line += ' '
+
+        # append the line to the outputted line
+        dump_line += line
+
+        # if line ends with ';' then this will be one statement in diff
+        if line.endswith(';'):
             sanitized_lines.append(dump_line)
             dump_line = ''
-        else:
-            dump_line += line
 
     if len(dump_line.strip()) > 0:
         sanitized_lines.append(dump_line)
@@ -740,7 +748,7 @@ def sanitize_schema(original: str) -> str:
     return "\n".join(sanitized_lines)
 
 
-def get_pg_schema(dbname: str, pg_username: str, pg_pword: str, pg_host: str, pg_port: str):
+def get_pg_schema(dbname: str, pg_username: str, pg_pword: str, pg_host: str, pg_port: Union[str, int]):
     """
     Gets the schema to be added to the dump text from the postgres database.
     Args:
@@ -754,7 +762,7 @@ def get_pg_schema(dbname: str, pg_username: str, pg_pword: str, pg_host: str, pg
 
     """
     os.environ['PGPASSWORD'] = pg_pword
-    pg_dump = ["pg_dump", "-U", pg_username, "-h", pg_host, "-p", pg_port,
+    pg_dump = ["pg_dump", "-U", pg_username, "-h", pg_host, "-p", str(pg_port),
                "--schema-only", "-d", dbname, "-t", "public.*"]
     output = subprocess.check_output(pg_dump)
     output_str = output.decode('UTF-8')
@@ -957,10 +965,12 @@ def normalize_tsk_objects_path(guid_util: TskGuidUtils, objid: int,
                 # chop off the last folder (which contains a date/time)
                 path_parts = path_parts[:-1]
 
-        for idx in range(0, len(path_parts) - 1):
-            if path_parts[idx].lower() == "reports" and \
-                    path_parts[idx + 1].lower().startswith("autopsytestcase html report"):
-                path_parts = ["Reports", "AutopsyTestCase HTML Report"]
+        if path_parts and len(path_parts) >= 2:
+            for idx in range(0, len(path_parts) - 1):
+                if path_parts[idx].lower() == "reports" and \
+                        path_parts[idx + 1].lower().startswith("autopsytestcase html report"):
+                    path_parts = ["Reports", "AutopsyTestCase HTML Report"]
+                    break
 
         path = os.path.join(*path_parts) if len(path_parts) > 0 else '/'
 
