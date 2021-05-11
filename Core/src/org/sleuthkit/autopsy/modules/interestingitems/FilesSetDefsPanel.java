@@ -126,12 +126,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             this.exportSetButton.setVisible(false);
             this.mimeTypeComboBox.setVisible(false);
             this.mimeTypeLabel.setVisible(false);
-            this.fileSizeUnitComboBox.setVisible(false);
-            this.fileSizeSpinner.setVisible(false);
+            // ELTODO this.fileSizeUnitComboBox.setVisible(false);
+            // ELTODO this.fileSizeSpinner.setVisible(false);
             this.filterDialogTitle = "FilesSetPanel.filter.title";
             this.ruleDialogTitle = "FilesSetPanel.rule.title";
-            this.fileSizeLabel.setVisible(false);
-            this.equalitySignComboBox.setVisible(false);
+            // ELTODO this.fileSizeLabel.setVisible(false);
+            // ELTODO this.equalitySignComboBox.setVisible(false);
             this.ignoreKnownFilesCheckbox.setVisible(false);
             this.fileTypeLabel.setVisible(false);
             this.filesRadioButton.setVisible(false);
@@ -192,7 +192,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         }
 
         this.fileSizeUnitComboBox.setSelectedIndex(1);
-        this.equalitySignComboBox.setSelectedIndex(2);
+        this.equalitySignComboBox.setSelectedIndex(0);
     }
 
     @Override
@@ -292,7 +292,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.daysIncludedTextField.setText("");
         this.rulePathConditionRegexCheckBox.setSelected(false);
         this.mimeTypeComboBox.setSelectedIndex(0);
-        this.equalitySignComboBox.setSelectedIndex(2);
+        this.equalitySignComboBox.setSelectedIndex(0);
         this.fileSizeUnitComboBox.setSelectedIndex(1);
         this.fileSizeSpinner.setValue(0);
         enableButtons();
@@ -405,7 +405,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     FilesSetDefsPanel.this.fileSizeSpinner.setValue(fileSizeCondition.getSizeValue());
                 } else {
                     FilesSetDefsPanel.this.fileSizeUnitComboBox.setSelectedIndex(1);
-                    FilesSetDefsPanel.this.equalitySignComboBox.setSelectedIndex(2);
+                    FilesSetDefsPanel.this.equalitySignComboBox.setSelectedIndex(0);
                     FilesSetDefsPanel.this.fileSizeSpinner.setValue(0);
                 }
                 if (dateCondition != null) {
@@ -810,7 +810,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         org.openide.awt.Mnemonics.setLocalizedText(fileSizeLabel, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.fileSizeLabel.text")); // NOI18N
 
-        equalitySignComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "=", ">", "≥", "<", "≤" }));
+        equalitySignComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { ">", "<" }));
         equalitySignComboBox.setEnabled(false);
 
         fileSizeSpinner.setEnabled(false);
