@@ -1221,9 +1221,7 @@ public final class LeappFileProcessor {
         try {
             switch (artType.getCategory()) {
                 case DATA_ARTIFACT:
-                    return (dataSource instanceof AbstractFile) 
-                            ? ((AbstractFile) dataSource).newDataArtifact(artType, bbattributes)
-                            : dataSource.newDataArtifact(artType, bbattributes, null);
+                    return dataSource.newDataArtifact(artType, bbattributes);
                 case ANALYSIS_RESULT:
                     return dataSource.newAnalysisResult(artType, Score.SCORE_UNKNOWN, null, null, null, bbattributes).getAnalysisResult();
                 default:

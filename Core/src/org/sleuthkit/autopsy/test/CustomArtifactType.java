@@ -123,9 +123,7 @@ final class CustomArtifactType {
         
         switch (artifactType.getCategory()) {
             case DATA_ARTIFACT:
-                artifact = (source instanceof AbstractFile) 
-                        ? ((AbstractFile) source).newDataArtifact(artifactType, attributes)
-                        : source.newDataArtifact(artifactType, attributes, null);
+                artifact = source.newDataArtifact(artifactType, attributes);
                 break;
                 
             case ANALYSIS_RESULT:
