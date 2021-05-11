@@ -69,8 +69,11 @@ public class PersonGroupingNode extends DisplayableItemNode {
         private static final Logger logger = Logger.getLogger(PersonChildren.class.getName());
 
         private static final Set<Case.Events> CHILD_EVENTS = EnumSet.of(Case.Events.HOSTS_ADDED, 
+                Case.Events.HOSTS_ADDED, 
                 Case.Events.HOSTS_DELETED, 
-                Case.Events.PERSONS_UPDATED);
+                Case.Events.PERSONS_UPDATED,
+                Case.Events.HOSTS_ADDED_TO_PERSON,
+                Case.Events.HOSTS_REMOVED_FROM_PERSON);
         
         private static final Set<String> CHILD_EVENTS_STR = CHILD_EVENTS.stream()
                 .map(ev -> ev.name())
