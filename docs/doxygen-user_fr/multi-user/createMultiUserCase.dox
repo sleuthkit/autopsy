@@ -1,30 +1,30 @@
 /*! \page multiuser_page Utilisation de cas multi-utilisateurs
 
-\section creating_multi_user_cases Créer des cas multi-utilisateurs
+\section creating_multi_user_cases CrÃ©er des cas multi-utilisateurs
 
-Les cas multi-utilisateurs permettent à plusieurs instances d'Autopsy d'avoir le même cas ouvert en même temps. Lors de la création d'un cas, les utilisateurs ont le choix entre un cas mono-utilisateur ou multi-utilisateurs, comme indiqué dans la capture d'écran ci-dessous.
+Les cas multi-utilisateurs permettent Ã  plusieurs instances d'Autopsy d'avoir le mÃªme cas ouvert en mÃªme temps. Lors de la crÃ©ation d'un cas, les utilisateurs ont le choix entre un cas mono-utilisateur ou multi-utilisateurs, comme indiquÃ© dans la capture d'Ã©cran ci-dessous.
 
 \image html case-newcase.PNG
 
-Pour créer un cas multi-utilisateurs, les opérations suivantes doivent avoir été réalisées:
-- Les services réseau doivent être installés, configurés et en cours d'exécution. Voir \ref multiuser_install_install.
-- Le dossier "Case" doit se trouver dans un dossier partagé auquel tous les autres clients peuvent également accéder via le même chemin (UNC ou lettre de lecteur).
-- Les sources de données ajoutées avec l'assistant "Add Data Source" doivent se trouver dans un dossier partagé auquel tous les clients peuvent accéder via le même chemin.
+Pour crÃ©er un cas multi-utilisateurs, les opÃ©rations suivantes doivent avoir Ã©tÃ© rÃ©alisÃ©es:
+- Les services rÃ©seau doivent Ãªtre installÃ©s, configurÃ©s et en cours d'exÃ©cution. Voir \ref multiuser_install_install.
+- Le dossier "Case" doit se trouver dans un dossier partagÃ© auquel tous les autres clients peuvent Ã©galement accÃ©der via le mÃªme chemin (UNC ou lettre de lecteur).
+- Les sources de donnÃ©es ajoutÃ©es avec l'assistant "Add Data Source" doivent se trouver dans un dossier partagÃ© auquel tous les clients peuvent accÃ©der via le mÃªme chemin.
 
 \section multi_user_other Autres informations multi-utilisateurs
 
-- Lors de l'utilisation d'un cas multi-utilisateurs, d'autres nœuds peuvent exécuter une acquisition de données sur le même cas. Pendant ce temps, vous verrez une barre de progression étiquetée avec le nom d'hôte de la machine effectuant l'acquisition en bas à droite d'Autopsy. La barre de progression continuera à se déplacer d'avant en arrière jusqu'à ce que l'acquisition soit terminée ou annulée. Vous pouvez toujours exécuter une acquisition sur votre ordinateur local pendant que cela est en cours. Ceci est montré dans la capture d'écran ci-dessous.
+- Lors de l'utilisation d'un cas multi-utilisateurs, d'autres nÅ“uds peuvent exÃ©cuter une acquisition de donnÃ©es sur le mÃªme cas. Pendant ce temps, vous verrez une barre de progression Ã©tiquetÃ©e avec le nom d'hÃ´te de la machine effectuant l'acquisition en bas Ã  droite d'Autopsy. La barre de progression continuera Ã  se dÃ©placer d'avant en arriÃ¨re jusqu'Ã  ce que l'acquisition soit terminÃ©e ou annulÃ©e. Vous pouvez toujours exÃ©cuter une acquisition sur votre ordinateur local pendant que cela est en cours. Ceci est montrÃ© dans la capture d'Ã©cran ci-dessous.
 
 \image html othernodeingesting.PNG
 
-- Lorsque des problèmes surviennent, une "info-bulle" apparait en bas à droite de l'écran. Il a un "i" à l'intérieur d'un cercle, avec une couleur de cercle différente en fonction du message. Rouge pour signaler un problème et bleue pour une information. Voir la capture d'écran ci-dessous.
+- Lorsque des problÃ¨mes surviennent, une "info-bulle" apparait en bas Ã  droite de l'Ã©cran. Il a un "i" Ã  l'intÃ©rieur d'un cercle, avec une couleur de cercle diffÃ©rente en fonction du message. Rouge pour signaler un problÃ¨me et bleue pour une information. Voir la capture d'Ã©cran ci-dessous.
 
 \image html messagebubbles.PNG
 
-- Cliquer sur cette "info-bulle" fait apparaître la liste des notifications précédentes qui n'ont pas été rejetées en cliquant sur le "x". Comme vous pouvez le voir dans la capture d'écran ci-dessous, le câble réseau a été débranché de la machine et elle a perdu toute connexion aux trois services. Lorsque le câble a été reconnecté, les services ont été retrouvés.
+- Cliquer sur cette "info-bulle" fait apparaÃ®tre la liste des notifications prÃ©cÃ©dentes qui n'ont pas Ã©tÃ© rejetÃ©es en cliquant sur le "x". Comme vous pouvez le voir dans la capture d'Ã©cran ci-dessous, le cÃ¢ble rÃ©seau a Ã©tÃ© dÃ©branchÃ© de la machine et elle a perdu toute connexion aux trois services. Lorsque le cÃ¢ble a Ã©tÃ© reconnectÃ©, les services ont Ã©tÃ© retrouvÃ©s.
 
 \image html messagebubblesbigger.PNG
 
-- Lors de la création de cas multi-utilisateurs, nous vous recommandons d'utiliser des chemins UNC pour spécifier les noms des lecteurs. Le mappage de lecteur fonctionnera, mais il est parfois difficile de faire correspondre toutes les machines participant à un cas aux mêmes lettres de lecteur pour les mêmes ressources. Il est beaucoup plus simple d'utiliser des chemins UNC entièrement spécifiés sous la forme <i>\\\\nom-hote\\nom-partage\\dossier</i>.
+- Lors de la crÃ©ation de cas multi-utilisateurs, nous vous recommandons d'utiliser des chemins UNC pour spÃ©cifier les noms des lecteurs. Le mappage de lecteur fonctionnera, mais il est parfois difficile de faire correspondre toutes les machines participant Ã  un cas aux mÃªmes lettres de lecteur pour les mÃªmes ressources. Il est beaucoup plus simple d'utiliser des chemins UNC entiÃ¨rement spÃ©cifiÃ©s sous la forme <i>\\\\nom-hote\\nom-partage\\dossier</i>.
 
 */

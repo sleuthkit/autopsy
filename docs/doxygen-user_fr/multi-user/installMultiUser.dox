@@ -1,22 +1,22 @@
 /*! \page install_multiuser_page Configuration d'un cluster multi-utilisateur
 
-\section multiuser_install_overview Aperçu
+\section multiuser_install_overview AperÃ§u
 
-Autopsy peut être configuré pour fonctionner dans un environnement où plusieurs utilisateurs sur différents ordinateurs peuvent ouvrir le même cas en même temps. Pour configurer ce type d'environnement, vous devrez configurer des services réseau supplémentaires (gratuits et open source).
+Autopsy peut Ãªtre configurÃ© pour fonctionner dans un environnement oÃ¹ plusieurs utilisateurs sur diffÃ©rents ordinateurs peuvent ouvrir le mÃªme cas en mÃªme temps. Pour configurer ce type d'environnement, vous devrez configurer des services rÃ©seau supplÃ©mentaires (gratuits et open source).
 
 Le concept de base est que vous aurez:
-- une base de données centrale
-- un index central de recherche par mots-clés
+- une base de donnÃ©es centrale
+- un index central de recherche par mots-clÃ©s
 - un stockage central
 
-Chaque client Autopsy utilisera ensuite ces ressources partagées au lieu des versions intégrées qui sont utilisées pour les cas mono-utilisateur.
+Chaque client Autopsy utilisera ensuite ces ressources partagÃ©es au lieu des versions intÃ©grÃ©es qui sont utilisÃ©es pour les cas mono-utilisateur.
 
 \image html multi-user-network.png
 
 
 \section multiuser_install_install Installation et configuration du cluster
 
-Passons maintenant au processus de configuration d'un cluster Autopsy. Lorsque vous configurez les services réseau, notez les adresses, les noms d'utilisateurs et les mots de passe afin de pouvoir configurer plus facilement chacun des systèmes clients par la suite.
+Passons maintenant au processus de configuration d'un cluster Autopsy. Lorsque vous configurez les services rÃ©seau, notez les adresses, les noms d'utilisateurs et les mots de passe afin de pouvoir configurer plus facilement chacun des systÃ¨mes clients par la suite.
 
 Etape 1: \ref install_multiuser_systems_page
 
