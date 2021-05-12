@@ -29,6 +29,7 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -1214,9 +1215,7 @@ public class Case {
     /**
      * Update the GUI to to reflect the current case.
      */
-    private static void updateGUIForCaseOpened(Case newCurrentCase) {
-        if (RuntimeProperties.runningWithGUI()) {
-            SwingUtilities.invokeLater(() -> {
+    private static void updateGUIForCaseOpened(Case newCurrentCase) {                  
                 /*
                  * If the case database was upgraded for a new schema and a
                  * backup database was created, notify the user.
@@ -1242,17 +1241,31 @@ public class Case {
                     String path = entry.getValue();
                     boolean fileExists = (new File(path).isFile() || DriveUtils.driveExists(path));
                     if (!fileExists) {
-                        int response = JOptionPane.showConfirmDialog(
-                                mainFrame,
-                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", path),
-                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
-                                JOptionPane.YES_NO_OPTION);
-                        if (response == JOptionPane.YES_OPTION) {
-                            MissingImageDialog.makeDialog(obj_id, caseDb);
-                        } else {
-                            logger.log(Level.SEVERE, "User proceeding with missing image files"); //NON-NLS
+                        try {
+                            // Using invokeAndWait means that the dialog will
+                            // open on the EDT but this thread will wait for an 
+                            // answer. Using invokeLater would cause this loop to
+                            // end before all of the dialogs appeared.  
+                            SwingUtilities.invokeAndWait(new Runnable() {
+                                @Override
+                                public void run() {
+                                    int response = JOptionPane.showConfirmDialog(
+                                    mainFrame,
+                                    NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", path),
+                                    NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
+                                    JOptionPane.YES_NO_OPTION);
+                                    if (response == JOptionPane.YES_OPTION) {
+                                        MissingImageDialog.makeDialog(obj_id, caseDb);
+                                    } else {
+                                        logger.log(Level.SEVERE, "User proceeding with missing image files"); //NON-NLS
 
-                        }
+                                    }
+                                }
+                                
+                            });
+                        } catch (InterruptedException | InvocationTargetException ex) {
+                           logger.log(Level.SEVERE, "Failed to show missing image confirmation dialog", ex); //NON-NLS 
+                        } 
                     }
                 }
 
@@ -1270,14 +1283,16 @@ public class Case {
                 CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenDiscoveryAction.class).setEnabled(true);
-
-                /*
-                 * Add the case to the recent cases tracker that supplies a list
-                 * of recent cases to the recent cases menu item and the
-                 * open/create case dialog.
-                 */
-                RecentCases.getInstance().addRecentCase(newCurrentCase.getDisplayName(), newCurrentCase.getMetadata().getFilePath().toString());
-
+            
+            /*
+             * Add the case to the recent cases tracker that supplies a list
+             * of recent cases to the recent cases menu item and the
+             * open/create case dialog.
+             */
+            RecentCases.getInstance().addRecentCase(newCurrentCase.getDisplayName(), newCurrentCase.getMetadata().getFilePath().toString());
+            final boolean hasData = newCurrentCase.hasData();
+            
+            SwingUtilities.invokeLater(() -> {
                 /*
                  * Open the top components (windows within the main application
                  * window).
@@ -1286,7 +1301,7 @@ public class Case {
                  * opened via the DirectoryTreeTopComponent 'propertyChange()'
                  * method on a DATA_SOURCE_ADDED event.
                  */
-                if (newCurrentCase.hasData()) {
+                if (hasData) {
                     CoreComponentControl.openCoreWindows();
                 } else {
                     //ensure that the DirectoryTreeTopComponent is open so that it's listener can open the core windows including making it visible.
@@ -1300,7 +1315,6 @@ public class Case {
                  */
                 mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + getNameForTitle());
             });
-        }
     }
 
     /*
