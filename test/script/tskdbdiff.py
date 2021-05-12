@@ -427,7 +427,8 @@ class TskGuidUtils:
         cursor.execute(select_statement)
         ret_dict = {}
         for row in cursor:
-            ret_dict[row[0]] = delim.join([str(col) if col else '' for col in row[1:]])
+            # concatenate value rows with delimiter filtering out any null values.
+            ret_dict[row[0]] = delim.join(filter(lambda col: col is not None, [str(col) for col in row[1:]]))
 
         return ret_dict
 
@@ -864,7 +865,7 @@ def normalize_unalloc_files(path_str: Union[str, None]) -> Union[str, None]:
 
     # takes a file name like "Unalloc_30580_7466496_2980941312" and removes the object id to become
     # "Unalloc_7466496_2980941312"
-    return re.sub('Unalloc_[0-9]+_', 'Unalloc_', path_str) if path_str else None
+    return None if path_str is None else re.sub('Unalloc_[0-9]+_', 'Unalloc_', path_str)
 
 
 def normalize_regripper_files(path_str: Union[str, None]) -> Union[str, None]:
@@ -877,7 +878,7 @@ def normalize_regripper_files(path_str: Union[str, None]) -> Union[str, None]:
 
     """
     # takes a file name like "regripper-12345-full" and removes the id to become "regripper-full"
-    return re.sub(r'regripper-[0-9]+-full', 'regripper-full', path_str) if path_str else None
+    return None if path_str is None else re.sub(r'regripper-[0-9]+-full', 'regripper-full', path_str)
 
 
 def normalize_tsk_files(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
@@ -893,8 +894,8 @@ def normalize_tsk_files(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[st
     # Ignore TIFF size and hash if extracted from PDFs.
     # See JIRA-6951 for more details.
     row_copy = row.copy()
-    if row['extension'] and row['extension'].strip().lower() == 'tif' and \
-            row['parent_path'] and row['parent_path'].strip().lower().endswith('.pdf/'):
+    if row['extension'] is not None and row['extension'].strip().lower() == 'tif' and \
+            row['parent_path'] is not None and row['parent_path'].strip().lower().endswith('.pdf/'):
         row_copy['size'] = "SIZE_IGNORED"
         row_copy['md5'] = "MD5_IGNORED"
         row_copy['sha256'] = "SHA256_IGNORED"
@@ -917,7 +918,7 @@ def normalize_tsk_files_path(guid_util: TskGuidUtils, row: Dict[str, any]) -> Di
     """
     row_copy = row.copy()
     path = row['path']
-    if path:
+    if path is not None:
         path_parts = get_path_segs(path)
         module_output_idx = index_of(path_parts, 'ModuleOutput')
         if module_output_idx >= 0:
@@ -951,7 +952,7 @@ def normalize_tsk_objects_path(guid_util: TskGuidUtils, objid: int,
     """
     path = guid_util.get_guid_for_objid(objid, omitted_value=None)
 
-    if not path:
+    if path is None:
         return no_path_placeholder
     else:
         # remove host name (for multi-user) and dates/times from path for reports
@@ -987,9 +988,12 @@ def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[
     Returns: The normalized object table row.
     """
     row_copy = row.copy()
-    row_copy['obj_id'] = normalize_tsk_objects_path(guid_util, row['obj_id'], MASKED_OBJ_ID) if row['obj_id'] else None
-    row_copy['par_obj_id'] = normalize_tsk_objects_path(guid_util, row['par_obj_id'], 'MASKED_PARENT_OBJ_ID') \
-        if row['par_obj_id'] else None
+    row_copy['obj_id'] = None if row['obj_id'] is None else \
+        normalize_tsk_objects_path(guid_util, row['obj_id'], MASKED_OBJ_ID)
+
+    row_copy['par_obj_id'] = None if row['par_obj_id'] is None else \
+        normalize_tsk_objects_path(guid_util, row['par_obj_id'], 'MASKED_PARENT_OBJ_ID')
+
     return row_copy
 
 
