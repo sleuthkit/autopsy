@@ -54,6 +54,7 @@ import org.joda.time.LocalDateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.contentviewer.OtherOccurrencesWorker.OtherOccurrencesData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -408,14 +409,14 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 for (OtherOccurrenceNodeInstanceData nodeData : nodeDataMap.values()) {
                     if (nodeData.isCentralRepoNode()) {
                         try {
-                            dataSources.add(makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                            dataSources.add(OtherOccurrenceUtilities.makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                             caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
                         } catch (CentralRepoException ex) {
                             logger.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
                         }
                     } else {
                         try {
-                            dataSources.add(makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                            dataSources.add(OtherOccurrenceUtilities.makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                             caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
                         } catch (NoCurrentCaseException ex) {
                             logger.log(Level.WARNING, "No current case open for other occurrences", ex);
@@ -458,37 +459,12 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     @NbBundle.Messages({
         "OtherOccurrencesPanel.foundIn.text=Found %d instances in %d cases and %d data sources."
     })
-    void populateTable(Collection<CorrelationAttributeInstance> correlationAttrs, String dataSourceName, String deviceId, AbstractFile abstractFile) {
-        this.file = abstractFile;
-        this.dataSourceName = dataSourceName;
-        this.deviceId = deviceId;
-
-        // get the attributes we can correlate on
-        correlationAttributes.addAll(correlationAttrs);
-        Map<String, CorrelationCase> caseNames = new HashMap<>();
-        int totalCount = 0;
-        Set<String> dataSources = new HashSet<>();
-        for (CorrelationAttributeInstance corAttr : correlationAttributes) {
-            for (OtherOccurrenceNodeInstanceData nodeData : getCorrelatedInstances(corAttr).values()) {
-                if (nodeData.isCentralRepoNode()) {
-                    try {
-                        dataSources.add(makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
-                        caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
-                    } catch (CentralRepoException ex) {
-                        logger.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
-                    }
-                } else {
-                    try {
-                        dataSources.add(makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
-                        caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
-                    } catch (NoCurrentCaseException ex) {
-                        logger.log(Level.WARNING, "No current case open for other occurrences", ex);
-                    }
-                }
-                totalCount++;
-            }
-        }
-        for (CorrelationCase corCase : caseNames.values()) {
+    void populateTable(OtherOccurrencesData data) {
+        this.file = data.getFile();
+        this.dataSourceName = data.getDataSourceName();
+        this.deviceId = data.getDeviceId();
+        
+        for (CorrelationCase corCase : data.getCaseMap().values()) {
             casesTableModel.addCorrelationCase(new CorrelationCaseWrapper(corCase));
         }
         int caseCount = casesTableModel.getRowCount();
@@ -498,7 +474,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
         }
         setEarliestCaseDate();
-        foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), totalCount, caseCount, dataSources.size()));
+        foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getInstanceDataCount(), caseCount, data.getDataSourceCount()));
         if (caseCount > 0) {
             casesTable.setRowSelectionInterval(0, 0);
         }
@@ -543,10 +519,10 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     nodeDataMap.put(uniquePathKey, newNode);
                 }
                 if (file != null && corAttr.getCorrelationType().getDisplayName().equals("Files")) {
-                    List<AbstractFile> caseDbFiles = getCaseDbMatches(corAttr, openCase, file);
+                    List<AbstractFile> caseDbFiles = OtherOccurrenceUtilities.getCaseDbMatches(corAttr, openCase, file);
 
                     for (AbstractFile caseDbFile : caseDbFiles) {
-                        addOrUpdateNodeData(openCase, nodeDataMap, caseDbFile);
+                        OtherOccurrenceUtilities.addOrUpdateNodeData(openCase, nodeDataMap, caseDbFile);
                     }
                 }
             }
@@ -568,90 +544,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Adds the file to the nodeDataMap map if it does not already exist
-     *
-     * @param autopsyCase
-     * @param nodeDataMap
-     * @param newFile
-     *
-     * @throws TskCoreException
-     * @throws CentralRepoException
-     */
-    private void addOrUpdateNodeData(final Case autopsyCase, Map<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap, AbstractFile newFile) throws TskCoreException, CentralRepoException {
-
-        OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(newFile, autopsyCase);
-
-        // If the caseDB object has a notable tag associated with it, update
-        // the known status to BAD
-        if (newNode.getKnown() != TskData.FileKnown.BAD) {
-            List<ContentTag> fileMatchTags = autopsyCase.getServices().getTagsManager().getContentTagsByContent(newFile);
-            for (ContentTag tag : fileMatchTags) {
-                TskData.FileKnown tagKnownStatus = tag.getName().getKnownStatus();
-                if (tagKnownStatus.equals(TskData.FileKnown.BAD)) {
-                    newNode.updateKnown(TskData.FileKnown.BAD);
-                    break;
-                }
-            }
-        }
-
-        // Make a key to see if the file is already in the map
-        UniquePathKey uniquePathKey = new UniquePathKey(newNode);
-
-        // If this node is already in the list, the only thing we need to do is
-        // update the known status to BAD if the caseDB version had known status BAD.
-        // Otherwise this is a new node so add the new node to the map.
-        if (nodeDataMap.containsKey(uniquePathKey)) {
-            if (newNode.getKnown() == TskData.FileKnown.BAD) {
-                OtherOccurrenceNodeInstanceData prevInstance = nodeDataMap.get(uniquePathKey);
-                prevInstance.updateKnown(newNode.getKnown());
-            }
-        } else {
-            nodeDataMap.put(uniquePathKey, newNode);
-        }
-    }
-
-    /**
-     * Get all other abstract files in the current case with the same MD5 as the
-     * selected node.
-     *
-     * @param corAttr  The CorrelationAttribute containing the MD5 to search for
-     * @param openCase The current case
-     * @param file     The current file.
-     *
-     * @return List of matching AbstractFile objects
-     *
-     * @throws NoCurrentCaseException
-     * @throws TskCoreException
-     * @throws CentralRepoException
-     */
-    private List<AbstractFile> getCaseDbMatches(CorrelationAttributeInstance corAttr, Case openCase, AbstractFile file) throws NoCurrentCaseException, TskCoreException, CentralRepoException {
-        List<AbstractFile> caseDbArtifactInstances = new ArrayList<>();
-        if (file != null) {
-            String md5 = corAttr.getCorrelationValue();
-            SleuthkitCase tsk = openCase.getSleuthkitCase();
-            List<AbstractFile> matches = tsk.findAllFilesWhere(String.format("md5 = '%s'", new Object[]{md5}));
-
-            for (AbstractFile fileMatch : matches) {
-                if (file.equals(fileMatch)) {
-                    continue; // If this is the file the user clicked on
-                }
-                caseDbArtifactInstances.add(fileMatch);
-            }
-        }
-        return caseDbArtifactInstances;
-
-    }
-
-    /**
-     * Create a unique string to be used as a key for deduping data sources as
-     * best as possible
-     */
-    private String makeDataSourceString(String caseUUID, String deviceId, String dataSourceName) {
-        return caseUUID + deviceId + dataSourceName;
-    }
-
-    /**
-     * Updates diplayed information to be correct for the current case selection
+     * Updates displayed information to be correct for the current case selection
      */
     private void updateOnCaseSelection() {
         int[] selectedCaseIndexes = casesTable.getSelectedRows();
@@ -699,7 +592,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Updates diplayed information to be correct for the current data source
+     * Updates displayed information to be correct for the current data source
      * selection
      */
     private void updateOnDataSourceSelection() {
