@@ -1,23 +1,23 @@
-/*! \page yara_page YARA Analyzer
+﻿/*! \page yara_page YARA Analyzer (Analyseur YARA)
 
 [TOC]
 
 
-\section yara_overview Overview
+\section yara_overview Aperçu
 
-The YARA Analyzer module uses a set of rules to search files for textual or binary patterns. YARA was designed for malware analysis but can be used to search for any type of files. For more information on YARA see <a href="https://virustotal.github.io/yara/">https://virustotal.github.io/yara/</a>.
+Le module "YARA Analyzer" utilise un ensemble de règles pour rechercher dans les fichiers des modèles textuels ou binaires. YARA a été conçu pour l'analyse des logiciels malveillants, mais peut être utilisé pour rechercher tout type de fichiers. Pour plus d'informations sur YARA, voir <a href="https://virustotal.github.io/yara/">https://virustotal.github.io/yara/</a>.
 
 \section yara_config Configuration
 
-To create and edit your rule sets, go to "Tools", "Options" and then select the "YARA" tab. 
+Pour créer et modifier vos ensembles de règles, allez dans "Tools", "Options" puis sélectionnez l'onglet "Yara Rule Sets". 
 
 \image html yara_options.png
 
-YARA rule sets are stored in folders in the user's Autopsy folder. To create a new rule set, click the "New Set" button in the lower left and enter the name for your new set.
+Les ensembles de règles YARA sont stockés dans les répertoires du dossier Autopsy de l'utilisateur. Pour créer un nouvel ensemble de règles, cliquez sur le bouton "New Set" en bas à gauche et saisissez le nom de votre nouvel ensemble.
 
 \image html yara_new_rule_set.png
 
-With your new rule set selected, click the "Open Folder" button to go to the newly created rules folder. You can now copy existing YARA files into this folder to include them in the rule set. Information on writing YARA rules can be found <a href="https://yara.readthedocs.io/en/stable/writingrules.html">here</a> and many existing YARA rules can be found through a web search. As a very simple example, we will add this rule to the sample rule set to find files that contain the words "hello" and "world":
+Une fois votre nouvel ensemble de règles sélectionné, cliquez sur le bouton "Open Folder" pour accéder au dossier de règles nouvellement créé. Vous pouvez désormais copier les fichiers YARA existants dans ce dossier pour les inclure dans l'ensemble de règles. Vous trouverez des informations sur la rédaction des règles YARA <a href="https://yara.readthedocs.io/en/stable/writingrules.html">ici</a> et de nombreuses règles YARA existantes peuvent être trouvées grâce à une recherche sur le Web. À titre d'exemple très simple, nous ajouterons cette règle à un ensemble de règles pour rechercher les fichiers contenant les mots "hello" et "world":
 
 \verbatim
 rule HelloWorldRule
@@ -31,19 +31,19 @@ rule HelloWorldRule
 }
 \endverbatim
 
-Once you've added your rules to the folder, click the "Refresh File List" button to show them in the options panel.
+Une fois que vous avez ajouté vos règles au dossier, cliquez sur le bouton "Refresh File List" pour les afficher dans le panneau d'options.
 
-\section yara_running Running the Module
+\section yara_running Exécution du module
 
-To enable the YARA Analyzer ingest module select the checkbox in the \ref ingest_configure "Ingest Modules configuration screen". 
+Pour activer le module d'acquisition YARA Analyzer, cochez la case dans l'\ref ingest_configure "écran de configuration des modules d'acquisition (Configure Ingest Modules)". 
 
 \image html yara_ingest_settings.png
 
-Make sure all rule sets you want to run are checked. You can also choose between running on all files or only running on executable files. 
+Assurez-vous que tous les ensembles de règles que vous souhaitez exécuter sont cochés. Vous pouvez également choisir de les appliquer sur tous les fichiers ou uniquement sur des fichiers exécutables.
 
-\section yara_results Viewing Results
+\section yara_results Affichage des résultats
 
-Results are show in the Results tree under "Extracted Content". 
+Les résultats sont affichés dans l'arborescence sous "Extracted Content". 
 
 \image html yara_results.png
 
