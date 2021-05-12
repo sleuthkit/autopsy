@@ -1,0 +1,27 @@
+/*! \page ui_quick_search UI Quick Search
+
+[TOC]
+
+
+The user interface quick search feature allows you to search within the data on a panel for a given string, it will not search data in hidden columns or collapsed nodes.
+
+How to use it
+-----
+In order to use the search you need to select any item in the area you wish to search, and start typing. If user interface quick search is available in the area you have selected a search field will appear in the bottom left hand corner of the area. As you type the string you are searching for it will auto-update to select one of the results which matches your string. You can switch between the results which match the string you have typed with the up and down keys. The search does not support the use of regular expressions but will match against any sub-sting in the fields it searches, not just at the beginning of the field.
+\image html quick_search_result.png 
+
+Configuration
+-----
+By default the search will match against the data in all fields which are in the currently selected area. The search will also ignore case by default. If you want to change either of these default behaviors you can click the magnifying glass with the down arrow icon and configure which columns will be searched as well as if the search should ignore case. 
+\image html quick_search_configuration.png 
+
+Where it can be used
+-----
+- The \ref tree_viewer_page "tree viewer"
+- The \ref result_viewer_page "table view" 
+- The \ref case_open "open multi-user case panel"
+- The \ref timeline_page tool’s table view
+- The \ref communications_page "Communication Visualization Tool's" browse panel
+- The \ref communications_page "Communication Visualization Tool's" message panel
+
+*/

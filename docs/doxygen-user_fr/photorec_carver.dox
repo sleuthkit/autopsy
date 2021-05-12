@@ -1,0 +1,96 @@
+/*! \page photorec_carver_page PhotoRec Carver Module
+
+[TOC]
+
+
+\section photorec_overview Overview
+
+The PhotoRec Carver module carves files from unallocated space in the data source and sends the files found through the ingest processing chain.
+
+This can help a reviewer discover more information about files that used to be on the device and were subsequently deleted. These are simply extra files that were found in "empty" portions of the device storage.
+
+
+\section photorec_usage Using the Module
+
+Select the checkbox in the Ingest Modules settings screen to enable the PhotoRec Carver. Ensure that "Process Unallocated Space" is selected.
+
+\subsection photorec_settings Ingest Settings
+
+The run-time setting for this module allows you to choose whether to keep corrupted files and to include or exclude certain file types.
+
+\image html photo_rec_settings.PNG
+
+For the "Focus on certain file types" option, you will enter a comma separated list of file types. Depending on which option you choose, PhotoRec will either carve only files of those types or all files except those types. You will see an error if an invalid type is entered. Note that file types are case-sensitive.
+
+\image html photo_rec_extensions.png
+
+The list of \ref photorec_extensions "valid file types" for the current version of Autopsy is at the bottom of this page.
+
+\subsection photorec_results Seeing Results
+
+The results of carving show up on the tree under the appropriate data source with the heading "$CarvedFiles".
+
+\image html photorec_output.PNG
+
+Applicable types also show up in the "Views", "File Types" portion of the the tree, depending upon the file type.
+
+\section photorec_custom Custom File Signatures
+To add custom file signatures, create a file (if it does not exist) photorec.sig in the user home directory (for example - /home/john/photorec.sig, or C:\\Users\john\photorec.sig). The photorec.sig file should contain one expression per line.
+For example, to detect a file foo.bar which has header signature - 0x4141414141414141, add an expression
+
+	bar 0 0x4141414141414141
+in photorec.sig where *bar* is the file extension, *0* is the signature offset, and *0x4141414141414141* is the signature. Add another expression on a new line to detect another custom file based on its signature. Note that custom signatures can not be used with the "Carve only the specified types" option. 
+
+\image html photo_rec_custom.png
+
+\section photorec_extensions Valid File Types
+
+The following is the list of valid file types for the version of PhotoRec currently used by Autopsy:
+
+\verbatim
+1cd          caf          dwg          gp2          max          pdb          rw2          vfb
+3dm          cam          dxf          gp5          mb           pdf          rx2          vib
+7z           catdrawing   e01          gpg          mcd          pds          sav          vmdk
+a            cdt          eCryptfs     gpx          mdb          pf           save         vmg
+ab           che          edb          gsm          mdf          pfx          ses          wallet
+abr          chm          elf          gz           mfa          plist        sgcta        wdp
+acb          class        emf          hdf          mfg          plr          shn          wee
+accdb        comicdoc     ess          hdr          mft          plt          sib          wim
+ace          cow          evt          hds          mid          png          sit          win
+ado          cp_          evtx         hfsp         mig          pnm          skd          wks
+afdesign     cpi          exe          hm           mk5          prc          skp          wld
+ahn          crw          exs          hr9          mkv          prd          snag         wmf
+aif          csh          ext          http         mlv          prt          snz          wnk
+all          ctg          fat          ibd          mobi         ps           sp3          woff
+als          cwk          fbf          icc          mov          psb          sparseimage  wpb
+amd          d2s          fbk          icns         mov/mdat     psd          spe          wpd
+amr          dad          fcp          ico          mp3          psf          spf          wtv
+apa          dar          fcs          idx          mpg          psp          sqlite       wv
+ape          dat          fdb          ifo          mpl          pst          sqm          x3f
+apple        DB           fds          imb          mrw          ptb          steuer2014   x3i
+ari          db           fh10         indd         msa          ptf          stl          x4a
+arj          dbf          fh5          info         mus          pyc          studio       xar
+asf          dbn          fit          iso          mxf          pzf          swf          xcf
+asl          dcm          fits         it           MYI          pzh          tar          xfi
+asm          ddf          flac         itu          myo          qbb          tax          xfs
+atd          dex          flp          jks          nd2          qdf          tg           xm
+au           diskimage    flv          jpg          nds          qkt          tib          xml
+axp          djv          fm           jsonlz4      nes          qxd          tif          xpt
+axx          dmp          fob          kdb          njx          r3d          TiVo         xsv
+bac          doc          fos          kdbx         nk2          ra           torrent      xv
+bdm          dpx          fp5          key          nsf          raf          tph          xz
+bim          drw          fp7          ldf          oci          rar          tpl          z2d
+bin          ds2          freeway      lit          ogg          raw          ts           zcode
+binvox       DS_Store     frm          lnk          one          rdc          ttf          zip
+bkf          dsc          fs           logic        orf          reg          tx?          zpr
+blend        dss          fwd          lso          paf          res          txt
+bmp          dst          gam          luks         pap          rfp          tz
+bpg          dta          gct          lxo          par2         riff         v2i
+bvr          dump         gho          lzh          pcap         rlv          vault
+bz2          dv           gi           lzo          pcb          rm           vdi
+c4d          dvi          gif          m2ts         pct          rns          vdj
+cab          dvr          gm*          mat          pcx          rpm          veg
+
+\endverbatim
+
+*/

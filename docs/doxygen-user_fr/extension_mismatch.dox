@@ -1,0 +1,42 @@
+/*! \page extension_mismatch_detector_page Extension Mismatch Detector Module
+
+[TOC]
+
+
+What Does It Do
+========
+
+Extension Mismatch Detector module uses the results from the File Type Identification and flags files that have an extension not traditionally associated with the file's detected type. It ignores 'known' (NSRL) files. You can customize the MIME types and file extensions per MIME type in "Tools", "Options", "File Extension Mismatch".
+
+This detects files that someone may be trying to hide.
+
+Configuration
+=======
+One can add and remove MIME types in the "Tools", "Options", "File Extension Mismatch" dialog box, as well as add and remove extensions to particular MIME types.
+<br>
+\image html extension-mismatch-detected-configuration.PNG
+<br>
+
+If you'd like to contribute your changes back to the community, then you'll need to upload your updated %APPDATA%\\autopsy\\dev\\config\\mismatch_config.xml file by either:
+- Make a fork of the Github Autopsy repository, copy the new file into the src\\org\\sleuthkit\\autopsy\\fileextmismatch folder and submit a pull request
+- Attach the entire mismatch_config.xml file to a github issue.
+
+Using the Module
+======
+Note that you can get a lot of false positives with this module. You can add your own rules to Autopsy to reduce unwanted hits.
+
+Ingest Settings
+------
+
+In the ingest settings, the user can choose whether to run on all files, all files except text files, or only multimedia or executable files. Additionally, the user can choose to skip all files without an extension, and to skip any known files identified by the hash lookup module, if it is enabled.
+
+\image html extension-mismatch-detected-ingest-settings.PNG
+
+
+Seeing Results
+------
+Results are shown in the Results tree under "Extension Mismatch Detected".
+
+\image html extension-mismatch-detected.PNG
+
+*/

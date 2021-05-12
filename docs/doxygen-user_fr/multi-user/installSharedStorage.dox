@@ -1,0 +1,42 @@
+/*! \page install_multiuser_storage_page Set Up Shared Storage
+
+\section multiuser_storage Overview
+
+The cluster will need shared storage that can be accessed from:
+- Autopsy clients
+- Solr server (depending on configuration)
+
+This shared storage will be used for both data sources and case outputs, so you will need lots of space. 
+
+Specific configuration of the shared storage will depend on what type of file share you have.  Examples include Windows file sharing, Linux Samba, or a NAS using FibreChannel.  
+
+Below are some general guidelines to use during the setup and configuration.
+
+\subsection multiuser_storage_req Requirements
+- All computers will need to access the shared storage at the exact same path.  So, all must have the same drive letters or be able to resolve the same host names (for UNC paths). 
+- If Solr is running as a Windows service, you will likely need to use UNC paths.  The service will not have access to drive letters for network mounted drives (such as Windows file sharing). If you have a hardware-based NAS, then you may be able to use drive letters.
+- The user accounts that Autopsy and Solr are running as will need permissions to read and write to the shared storage. See \ref multiuser_users for tips on picking user accounts and saving credentials. 
+
+
+\subsection multiuser_storage_con Considerations
+- You will probably get better performance by having different drives for inputs (disk images) and outputs (case folders).
+- If you separate the shares, the "inputs" share can be provided as read-only if you do not want clients to modify the data sources. 
+
+
+\subsection multiuser_storage_ex Example 
+- Windows Server
+- Dedicated SSD drives for inputs (data sources) and outputs (case folder). 
+- Each drive is shared with names "DataSources" and "Cases". 
+- If the server is not part of a domain, local accounts are created on it for each user that will be running Autopsy or Solr.  Each account will have the same password on all systems. 
+- If Solr will be running as the NetworkService account, grant access to the shares for the computer running Solr (i.e. not just a specific user). 
+
+
+\subsection multiuser_storage_test Testing
+- Before you proceed to setup any other services, you should test that the computers can access the share.  Permission problems with the shares are the most common configuration challenge. 
+- Log into a computer that will eventually be an Autopsy client using an account that Autopsy will run as.  
+- Access the share, such as \\\\autopsy_storage\\Cases.
+- If you get prompted for a password, then either:
+ - Store the credentials, as outlined in \ref multiuser_users_store.  You'll need to repeat this on all of the clients and Solr server. 
+ - Reconfigure the shared storage server if the prompt was because of an error. This may include ensuring that they both have the same password. 
+
+*/

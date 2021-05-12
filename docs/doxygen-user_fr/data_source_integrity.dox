@@ -1,0 +1,54 @@
+/*! \page data_source_integrity_page Data Source Integrity Module
+
+[TOC]
+
+
+\section data_source_integrity_overview Overview
+
+The Data Source Integrity module has two purposes:
+<ul>
+<li>If the data source has any hashes associated with it (either user-entered or contained in an E01 file), it will verify these hashes
+<li>If the data source has no associated hashes, it will calculate the hashes and store them in the database
+</ul>
+
+\section data_source_integrity_running Running the module
+
+If you wish to verify hashes, the first step is to enter hashes for your disk image (unless you have an E01 file - the hash is included in the data source).
+You can do this in the Add Data Source wizard where you select your disk image.
+
+\image html data_source_integrity_add_ds.png
+
+You can enter any combination of hashes to be verified.
+
+You'll next need to configure the ingest module.
+
+\image html data_source_integrity_ingest_settings.png 
+
+Note that this is simply enabling one or both behaviors, not choosing which one to run (compute vs. verify). That is determined solely by whether the data source
+has associated hashes. Unchecking both boxes but leaving the module enabled will lead to an ingest module startup error
+
+\section data_source_integrity_results Viewing results
+
+\subsection data_source_integrity_verification Hash verification
+
+When verifying, if the check succeeds you'll see an inbox message confirming it. If you open the message you'll see the stored and computed hash values.
+
+\image html data_source_integrity_pass1.png
+<br>
+\image html data_source_integrity_pass2.png
+
+If the verification fails, you'll see an inbox message in yellow and the same message in a pop-up warning bubble.
+
+\image html data_source_integrity_failed_inbox.png
+
+The inbox messages will disappear after the case is closed, so the module also adds a "Verification Failed" artifact added to the case. 
+
+\image html data_source_integrity_failed_artifact.png
+
+\subsection data_source_integrity_computation Hash computation
+
+To view the calculated hashes, select "Data Sources" in the tree, select your data source in the result viewer, and then open the "File Metadata" tab. If you're in "Group by data source" mode (see \ref view_options_page), select "Data Source Files" under the data source you want to examine.
+
+\image html data_source_integrity_metadata.png
+
+*/

@@ -1,0 +1,91 @@
+/*! \page view_options_page View Options
+
+[TOC]
+
+
+The View options allow you to configure how data is displayed in the Autopsy user interface.
+
+There are two ways to access the options. The first way is through the gear icon above the directory tree:
+
+\image html view_options_gear.png
+
+The second way is through Tools->Options and then selecting the "Views" tab:
+
+\image html view_options_options_panel.png
+
+
+\section view_options_global Global Settings
+
+The settings in this section persist through closing the application.
+
+\subsection view_options_hide_known Hide known files
+
+This option allows you to hide files marked as "known" by the hash_db_page. The option to hide known files in the data sources area will prevent these files from being displayed in the results view. Similarly, the option to hide slack in the views area will prevent slack files from appearing under the Views section of the tree.
+
+\subsection view_options_hide_slack Hide slack files
+
+Autopsy creates slack files (with the "-slack" extension) from any extra space at the end of a file. These files can be displayed or hidden from the data sources area and/or the views area. The following shows a slack file in the results view:
+
+\image html view_options_show_slack.png
+
+Checking the option to hide slack in the data sources area will prevent the slack file from being displayed:
+
+\image html view_options_hide_slack.png
+
+Similarly, the option to hide slack in the views area will prevent slack files from appearing under the Views section of the tree.
+
+\subsection view_options_hide_tags Hide tags from other users
+
+This option allows you to hide tags from other users in the Tagging section of the tree. See \ref user_tags for more details.
+
+\subsection view_options_cr_columns Do not add columns for S(core), C(omments) and (O)ccurrences
+
+By default, the first three columns in the result viewer after the file name in the results viewer are named "S", "C" and "O". Populating these columns can increase loading times. See the \ref result_viewer_sco section for additional information.
+
+\subsection view_options_paging Paging
+
+By default, only 10,000 results will be show in the Result Viewer. You can change that threshold here. Setting it to zero will disable paging.
+
+\subsection view_options_content_viewer Content viewer selection
+
+By default, the \ref content_viewer_page attempts to select the most relevant tab to display when choosing a node. If you would like to change this behavior to instead stay on the same content viewer when changing nodes, switch to the "Stay on the same file viewer" option.
+
+\subsection view_options_time Time format
+
+Timestamps can be viewed in either local time or in a time zone selected in the drop down list.
+
+\image html view_options_local_time.png
+<br>
+\image html view_options_gmt.png
+
+\subsection view_options_translate Translate text
+
+If you have a \ref machine_translation_page module installed, this option will add a column to the \ref result_viewer_page to show the translated name of files and folders. 
+
+\section view_options_case Current Case Settings
+
+The settings in this section only apply to the current case.
+
+\subsection view_options_group Data Source Grouping
+
+The options here allow you to choose how to display data in the \ref ui_tree. The top option ("Group by Data Type") displays combined results for all data sources. All nodes on the tree will contain combined results for all data sources in the case.
+
+\image html views_standard_tree.png
+
+The second option ("Group by Person/Host") separates the results for each data source, and organizes the data sources by \ref ui_tree_persons "person" and \ref ui_tree_hosts "host". 
+
+\image html views_grouped_tree.png
+
+\section view_options_session Current Session Settings
+
+The settings for the current session will be in effect until you close the application.
+
+\subsection view_options_rejected Hide rejected results
+
+Accounts can be approved or rejected by the user, as shown in the screenshot below. 
+
+\image html view_options_reject_account.png
+
+Rejected accounts will not be included in the report, and by default will be hidden in the UI. If you accidentally reject an account and need to change its status, or simply want to view the the rejected accounts, you can uncheck the "hide rejected results" option.
+
+*/

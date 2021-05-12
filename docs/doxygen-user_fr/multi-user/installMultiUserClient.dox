@@ -1,0 +1,21 @@
+/*! \page install_multiuserclient_page Install Autopsy Clients
+
+
+\section multiuser_install_clients Overview
+
+Once the infrastructure is in place, you can configure Autopsy clients to use them.
+<ol>
+<li>Install Autopsy on each client system. Use the normal installer and pick the defaults.
+<li>Test that the user has access to the shared storage by opening the shared storage folders using Windows Explorer. If a password prompt is given, then enter the password and store the credentials (see \ref multiuser_users_store).
+<li>Start Autopsy and open the multi-user settings panel from "Tools", "Options", "Multi-user". As shown in the screenshot below, you can then enter all of the address and authentication information for the network-based services. Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct.
+
+\image html solr_autopsy.png
+
+<li>For each setting, press the "Test Connection" button to ensure that Autopsy can communicate with each service. If any fail, then refer to the specific setup page for testing options. Also check that a firewall is not blocking the communications.
+<ul><li>NOTE: None of these tests are for permissions on the shared storage because Autopsy does not know about the shared storage. It can't test that until you make a case.</ul>
+<li>Make a test case (see \ref creating_multi_user_cases). You can add a single file in as a logical data source. The key concept is to look for errors.
+<ul>
+<li>If you find errors, look for errors in the log file on the Autopsy client.
+<li>If you followed all of the previous steps in all of the previous pages, then a common error at this point is that Solr cannot access the shared storage and it is running as a Service account. When this happens, you'll see an error message about Solr not being able to create or access a "core". If this happens, review what user Solr should be running as (see the \ref multiuser_users_solr section) and change the shared storage configuration or ensure that credentials are stored.</ul>
+</ol>
+*/

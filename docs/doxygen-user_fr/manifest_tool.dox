@@ -1,0 +1,65 @@
+/*! \page manifest_tool_page Manifest Tool
+
+[TOC]
+
+
+\section manifest_tool_overview Overview
+
+Manifest Tool is an executable designed to assist in the automated creation of manifest files 	which are necessary to run Auto Ingest on a data source. There is no installation necessary. To 	use the tool double click on Manifest Tool executable, when it opens select the option with the  	algorithm you 	wish to run from the combo box, and fill in all the available settings before 	clicking the Run button. A log with the success or failure of each manifest file it attempts to 	create will appear in the progress area.
+
+\section manifest_tool_output Output
+
+The output of the Manifest Tool will be XML files ending in _Manifest.xml. 
+
+\subsection manifest_tool_one_ds_per_folder One Data Source Per Folder
+
+The One Data Source Per Folder algorithm is designed for a specific use case when the case folder contains multiple subfolders, with each generally containing one data data source of a short list of types. Please see \ref manifest_tool_algorithm_specifics for details on this algorithm. 
+
+To use this algorithm, use the Browse button to select a root folder as the case directory. Then select the Run button to generate manifest files for each of the data sources detected. A manifest file will be generated for each subfolder of the selected root folder, the manifest files will be placed inside the selected root folder.  
+
+\subsection manifest_tool_single_ds Single Data Source
+
+The Single Data Source algorithm is for creating a manifest file for a single image or logical file with a user specified case name. 
+
+To use this algorithm, use the Browse button to select a file to use as your data source, and enter a case name in the case name field. Then select the Run button to generate a manifest file. The manifest file will be created in the same folder as your selected data source.
+
+\subsection manifest_tool_logical_file_folder Folder of Logical Files
+
+The Folder of Logical Files algorithm is for creating a single manifest file for an entire folder of files which will all be ingested as logical files. 
+
+To use this algorithm, use the Browse button to select a folder to add as a folder of logical files, and enter a case name in the case name field. Then select the Run button to generate a manifest file. The manifest file will be created in the parent folder of your selected folder of logical files.
+
+\section manifest_tol_example Example
+
+Given a root folder that looks like this:
+
+\image html AutoIngest/manifest_tool_root_folder.png
+
+A user having selected the One Data Source Per Folder algorithm will get output that looks like the following, where a manifest now exists for each non-empty subfolder. The root folder's name will be used as the case name in the manifest files (in this example the case name will be TestCaseFolder.) 
+
+\image html AutoIngest/manifest_tool_ui.png
+
+The contents of an XML file will have the following format:
+
+\verbatim
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<AutopsyManifest>
+<CaseName>TestCaseFolder</CaseName>
+<DataSource>interestingL01\interesting_files2.L01</DataSource>
+</AutopsyManifest>
+\endverbatim
+
+\section manifest_tool_algorithm_specifics One Data Source Per Folder Algorithm Specifics 
+<ul>
+<li>The only configuration setting the user needs to choose is a root folder.
+<li>The name of the specified root folder will become the case name used in the manifest files.
+<li>Each non-empty subfolder in the root folder will have a manifest file created for it.
+<li>All manifest files will be created in the root folder.
+<li>Files directly in the root folder will be ignored and remain unprocessed. 
+<li>Subfolders which contain an .E01, .L01, .001, or .AD1 file, will have the first file of this type used as the data source in the manifest file.  
+<li>Subfolders which have more than one .E01, .L01, .001, or .AD1 file will have the additional files ignored and they will remain unprocessed. 
+<li>Subfolders without an .E01, .L01, .001, or .AD1 file will have the entire subfolder added as the data source.  
+<li>If the root folder already contains a specific _Manifest.xml file then it will not be replaced or modified.
+</ul>
+
+*/

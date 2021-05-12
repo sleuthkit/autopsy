@@ -1,0 +1,89 @@
+/*! \page data_source_summary_page Data Source Summary
+
+[TOC]
+
+\section ds_summary_overview Overview
+
+The Data Source Summary viewer allows you to see an overview of file types, results, and other information for a particular data source. 
+
+\section ds_summary_opening Opening the Data Source Summary
+
+There are two ways to view the data source summary. The first is to go to Case->Data Source Summary. This will open the summary in a new window.
+
+\image html ds_summary_window.png
+
+The second way to view the summary is to select the data source in the \ref tree_viewer_page and then select the "Summary" tab in the \ref result_viewer_page. 
+
+\image html ds_summary_result_viewer.png
+
+\section ds_summary_main Sections
+
+Each tab of the data source summary displays different types of information about the selected data source. If ingest is ongoing, the summary will be updated periodically as new data is available.
+
+If the ingest module(s) required for a data type have not been run, you will see a note about why there is no data. For example, "Recent Programs" results are created by the \ref recent_activity_page, so you will see a message about running that module if you have not.
+
+\image html DataSourceSummary/ds_summary_noRA.png
+
+\subsection ds_summary_types Types
+
+The Types tab shows counts of different file types found in the data source.
+
+\image html ds_summary_types.png
+
+\subsection ds_summary_user_activity User Activity
+
+The User Activity tab shows the most recent results found in the data source. You can right click on a row to navigate directly to the corresponding result.
+
+\image html ds_summary_user_activity.png
+
+\subsection ds_summary_analysis Analysis
+
+The Analysis tab shows the sets with the most results from the \ref hash_db_page, the \ref keyword_search_page, and the \ref interesting_files_identifier_page.
+
+\image html ds_summary_analysis.png
+
+\subsection ds_summary_recent_files Recent Files
+
+The Recent Files tab shows information on the most recent files opened and downloaded. You can right click on a row to navigate directly to the corresponding file or result.
+
+\image html ds_summary_recent_files.png
+
+\subsection ds_summary_past_cases Past Cases
+
+The Past Cases tab shows which cases had results or notable files in common with the current data source. This is based on the results in the "Interesting Items" section of the Results section in the \ref tree_viewer_page. The \ref central_repo_page ingest module must have been run with the options to "Flag items previously tagged as notable" and "Flag devices previously seen in other cases" enabled.
+
+\image html ds_summary_past_cases.png
+
+Note that because these entries are based on the Interesting Items results created during ingest and not querying the central repository, they will not reflect any matches in cases processed after this case. For example, suppose we create Case A and ingest a data source with Device Z. If we make a new case Case B afterward and ingest a data source that also has Device Z, we would see Case A listed in this tab for Case B, but if we reopened Case A we would not see Case B listed unless ingest was run again. 
+
+\subsection ds_summary_geo Geolocation
+
+The Geolocation tab uses the coordinates from geolocation results to find the nearest city for each and displays the most recent cities and most common cities. If the location is more than 150 km from a city then it will be displayed as "Unknown". The "View in Map" button under the recent cities table will open the \ref geolocation_page "Geolocation window" showing all waypoints for this data source with timestamps in the last 30 days. The "View in Map" button under the most common cities will show all waypoints for this data source. 
+
+\image html ds_summary_geo.png
+
+\subsection ds_summary_timeline Timeline
+
+The Timeline tab shows a simplified version of the \ref timeline_page "Timeline Viewer" for the selected data source. It will show events for the last 30 days of activity in the data source and give the first and last dates of activity. "File events" represent file creation, modification, access, and change. "Result events" represent the results from running ingest, such as the time a message was sent or when a URL was accessed. The "View in Timeline" button will open the main \ref timeline_page "Timeline Viewer".
+
+\image html ds_summary_timeline.png
+
+\subsection ds_summary_ingest_history Ingest History
+
+The Ingest History tab shows which ingest modules have been run on the data source and the version of each module.
+
+\image html ds_summary_ingest.png
+
+\subsection ds_summary_container Container
+
+The Container tab displays information on the data source itself, such as the size and image paths.
+
+\image html ds_summary_container.png
+
+\subsection ds_summary_export Export
+
+The Export tab allows you to export the contents of the other data source summary tabs to an Excel-formatted file.
+
+\image html ds_summary_export.png
+
+*/

@@ -1,0 +1,104 @@
+/*! \page triage_page Triage
+
+[TOC]
+
+
+\section triage_overview Overview
+
+Sometimes you need to make a quick decision about a system or systems and don't have the time or resources to make full images. For example, during a knock and talk you want to know if there is notable data on their system. Or you are at a location with many systems and want to know which should be analyzed first. Autopsy has features that will allow you to quickly find the data of interest without making full images of the devices. Those features will be described below, followed by some example scenarios that show how to put everything together.
+
+\section triage_features Triage-related Features
+
+There are many features of Autopsy that can come into play in a triage situation. Some help you process the files most likely to be relevant earlier, and others allow you to continue analyzing the data after disconnecting from the target system.
+
+\subsection triage_prioritization Prioritization
+
+The goal is to find the most important files first when there is limited time to analyze a system. Autopsy always runs on the user folders first (if present), since in many situations they are the most likely folders to contain data of interest.
+
+\image html triage/pipelineFolders.png
+
+\subsection triage_file_filter File Filters
+
+For a particular scenario, you may know specific file types that you are interested in. For example, if you are only concerned with finding images, you could save time by not analyzing any non-image files. This will allow a system to be processed far faster than if you analyzed every file.
+
+\image html triage/fileFilterImage.png
+
+File filters allow you to limit which types of files will be processed. The \ref file_filters section of \ref ingest_page page shows how to create a file filter. You can filter on file name/extension, path, or how recently the file was modified. Once saved, your new file filter can be selected when configuring ingest modules.
+
+\image html triage/fileFilter.png
+
+\subsection triage_profile Ingest Profiles
+
+Another way to speed up analysis is to only run some of the ingest modules. For example, if we're only interested in images, there may be no point in running the \ref keyword_search_page or the \ref encryption_page. You can manually select and configure the modules you want to run each time, but since many sessions are similar it may be easier to set up an ingest profile. An ingest profile allows you to store which file filter you want to run, which ingest modules should be enabled, and your configuration for each ingest module.
+
+\image html triage/ingestProfile.png
+
+Once you have at least one ingest profile configured, a new screen will appear before the normal ingest module configuration panel. If you choose your user-defined profile, that ingest module configuration panel will be skipped entirely and the ingest modules from that profile will be run on the data source.
+
+\image html triage/profileSelect.png
+
+See the \ref ingest_profiles section of the \ref ingest_page page for additional information on how to set up and use an ingest profile.
+
+\subsection triage_no_image Running on Live Systems and Devices
+
+In a triage situation, there is generally not time to make a full image of the system in question. There are a few ways to process live systems and devices with Autopsy:
+
+<ul>
+<li> Devices such as USB drives can be analyzed as local disks without needing to create an image file. See the \ref ds_local section for more details.
+<li> A live triage drive can be created that will allow you to run Autopsy from a USB drive on a live system. All case data will be saved to the USB drive with minimal changes to the system being analyzed. See \ref live_triage_page for more details.
+<li> The target computer can be booted from a trusted Linux or Windows USB and Autopsy can be run from it. <a href="https://sumuri.com/software/paladin/">Paladin</a> includes Autopsy in its bootable Linux USB and a Windows FE image can be created as well. 
+</ul>
+
+\subsubsection triage_vhd Making a Sparse Image
+
+With any of the above methods for analyzing live systems and devices there is still the problem that your Autopsy case won't be very useful after you disconnect from the drive. It will refer to a device that no longer exists and, more importantly, you may not have a copy of any files of interest that you observed during the triage. 
+
+To solve this problem you can choose to make a "sparse VHD" as Autopsy is processing the device. This will save a copy of every sector that Autopsy reads, which will include file system structures (such as Master File Tables) and files that passed the ingest filters (such as all pictures). 
+
+VHD is a file format used by Microsoft Virtual Machines that is readable by Windows and other forensic tools.  The VHD will grow in size as Autopsy reads more data from the target drive. 
+
+To create a sparse VHD, check the box for "Make a VHD image..." when selecting the disk to analyze.
+
+\image html triage/createVHD.png
+
+\section triage_scenarios Scenarios
+
+\subsection triage_scen1 Scenario: Previewing computer for child exploitation material
+
+In this scenario, you are trying to answer whether child exploitation images exist in a knock and talk type situation where you will have a limited amount of time with the target system.
+
+<b>Preparation at the office:</b>
+<ul>
+<li> Create a \ref live_triage_page "live triage drive" on your USB drive
+<li> Launch Autopsy from that USB drive and create an \ref ingest_profiles "ingest profile" that:
+<ul>
+<li> Uses a \ref file_filters "file filter" that runs on only picture and ZIP extensions
+<li> Runs only the \ref hash_db_page "Hash Lookup Module", \ref EXIF_parser_page \ref file_type_identification_page, and \ref embedded_file_extractor_page 
+<li> Uses known child exploitation hash sets, following the instructions in \ref live_triage_hash_db to copy them to the USB drive
+</ul>
+</ul>
+
+<b>At the house:</b>
+<ul>
+<li>Start the analysis:
+<ul>
+ <li>Plug the live triage drive you made at the office into their laptop
+ <li>Launch Autopsy from the .bat file
+ <li>\ref cases_page "Create a case" (saving to your USB drive)
+ <li>Add a \ref ds_local "local drive data source"
+ <ul>
+  <li>"C:"
+  <li>Choose to make VHD and keep default location
+ </ul>
+</ul>
+<li>As the automated analysis continues:
+<ul>
+ <li>Choose View->File Types->Images in the \ref tree_viewer_page "tree viewer" and review the thumbnails
+ <li>Wait for hash set hits
+ <li>Review EXIF files
+ <li>\ref tagging_page "Tag" any notable files found
+</ul>
+<li>You can stop the analysis at any time. All data read so far will be in the VHD file.
+</ul>
+
+*/

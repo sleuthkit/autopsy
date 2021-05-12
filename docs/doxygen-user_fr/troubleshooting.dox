@@ -1,0 +1,136 @@
+/*! \page troubleshooting_page Troubleshooting
+
+[TOC]
+
+
+If you are experiencing an error, we encourage you to post on the forum (https://sleuthkit.discourse.group/), including as much information as possible: 
+<ul>
+<li>Your operating system and version of Autopsy
+<li>What led to the error. For example:
+<ul>
+<li>What type of data source was being processed?
+<li>Which ingest modules were running? You can generate an \ref ingest_monitoring "ingest snapshot" to view the current ingest state.
+<li>Which specialized viewer were you using?
+</ul>
+<li>The error being displayed on screen (if applicable)
+<li>A \ref troubleshooting_stack "thread dump" or screenshot of the \ref ingest_monitoring "ingest snapshot" if Autopsy seems stuck
+<li>If there were any errors in the \ref troubleshooting_logs "logs"
+</ul>
+
+\section troubleshooting_specific_issues Specific Issues
+
+\subsection troubleshooting_fond_size Font Size Too Small
+
+In Windows, you can make the following changes if the application is hard to navigate in High DPI systems:
+
+<ol>
+<li>Right-click on the application icon on your Desktop, Start Menu, etc.
+<li>Choose Properties.
+<li>Go to Compatibility tab.
+<li>Click "Change high DPI settings" button.
+<li>Select "Override high DPI scaling behavior".
+<li>Change the "Scaling performed by:" drop down box to "System".
+<li>Restart Autopsy.
+</ol>
+
+In Linux, you can supply the font size with "--fontsize XX" command line argument, but not all of the dialogs are correctly responsive and some of the text will get cut off.
+
+\section troubleshooting_general General Troubleshooting
+
+\subsection troubleshooting_reset_ui Resetting the UI
+
+If the Autopsy window no longer looks like the default \ref uilayout_page (for example, if a viewer has disappeared or there is a strange empty space), you can reset it. To do this, go to Window->Reset Windows. This will cause Autopsy to restart. If you have a case open, it will reopen after the reset.
+
+\image html reset_windows.png
+
+If resetting the windows does not fix the problem, you may need to delete your user folder as described in the next section.
+
+\subsection troubleshooting_user_folder Deleting the Autopsy User Folder
+
+If Autopsy starts behaving strangely, stops loading entirely, or menu items go missing, you probably need to delete your user folder. Doing so essenitally gives you a fresh installation. On Windows the user folder is located in "C:\Users\(user name)\AppData\Roaming\autopsy". 
+
+Note that if you delete this folder you will lose all your Autopsy settings including keyword lists, interesting file sets, and general configuration. If you have settings you want to keep you can try the following:
+<ul>
+<li>Make a copy of the autopsy folder.
+<li>Delete the autopsy folder.
+<li>Open Autopsy to regenerate the folder with default settings.
+<li>Close Autopsy and copy over the old configuration files that look relevant. For example, if you're trying to restore your hash sets, you will want to copy back the "HashDatabases" folder and the "hashLookup.settings" file.
+</ul>
+
+Alternately, you could copy the fresh user folder somewhere, move your old version back, and replace folders until it works again. 
+
+\subsection troubleshooting_logs Viewing the Logs
+
+The logs are generally the most helpful in figuring out why an error is occurring. There are two sets of logs - the system logs and the case logs. There is an option in the UI to open the log folder:
+
+\image html troubleshooting_log_menu.png
+
+If you have a case open, clicking this will open the folder containing the case logs. If not, it will open the system log folder. You can also browse to these folders normally:
+<ul>
+<li> Case logs: (case folder)\\Logs
+<li>System logs: C:\\Users\\(user name)\\AppData\\Roaming\\autopsy\\var\\log (on Windows)
+</ul>
+
+In either case, the log of interest is most likely "autopsy.log.0", although it could be one of the older versions if you've closed and reopened Autopsy since the error occurred. You're looking for entries starting with "SEVERE" and possibly "WARNING" if there are no severe errors. Note that it's not unusual to have many warnings in the log. This is an example of a severe error with a stack trace:
+
+\verbatim
+Sep 23, 2020 9:48:24 AM org.sleuthkit.autopsy.casemodule.services.TagNameDefinition saveToCase
+SEVERE: Error saving tag name definition
+org.sleuthkit.datamodel.TskCoreException: Error adding row for Follow Up tag name to tag_names table
+	at org.sleuthkit.datamodel.SleuthkitCase.addOrUpdateTagName(SleuthkitCase.java:9846)
+	at org.sleuthkit.autopsy.casemodule.services.TagNameDefinition.saveToCase(TagNameDefinition.java:239)
+	at org.sleuthkit.autopsy.casemodule.services.TagsManager.<init>(TagsManager.java:288)
+	at org.sleuthkit.autopsy.casemodule.services.Services.<init>(Services.java:50)
+	at org.sleuthkit.autopsy.casemodule.Case.openCaseLevelServices(Case.java:2480)
+	at org.sleuthkit.autopsy.casemodule.Case.open(Case.java:1993)
+	at org.sleuthkit.autopsy.casemodule.Case.lambda$doOpenCaseAction$6(Case.java:1863)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: java.sql.SQLException: ResultSet closed
+	at org.sqlite.core.CoreResultSet.checkOpen(CoreResultSet.java:76)
+	at org.sqlite.jdbc3.JDBC3ResultSet.findColumn(JDBC3ResultSet.java:39)
+	at org.sqlite.jdbc3.JDBC3ResultSet.getLong(JDBC3ResultSet.java:422)
+	at com.mchange.v2.c3p0.impl.NewProxyResultSet.getLong(NewProxyResultSet.java:424)
+	at org.sleuthkit.datamodel.SleuthkitCase.addOrUpdateTagName(SleuthkitCase.java:9843)
+	... 10 more
+\endverbatim
+
+If the error message doesn't help you solve the problem yourself, please post to the <a href="https://sleuthkit.discourse.group/">forum</a> including the full stack trace (if available).
+
+\subsection troubleshooting_stack Creating a Thread Dump
+
+You can also generate a thread dump of the current state. This is useful if an ingest module or other process seems to be stuck. To generate a thread dump, go to "Help" then "Thread Dump" in the UI. 
+
+\image html troubleshooting_thread.png
+
+You'll then see a file similar to this in a text viewer:
+
+\verbatim"Module-Actions" Id=222 RUNNABLE
+	at sun.management.ThreadImpl.getThreadInfo1(Native Method)
+	at sun.management.ThreadImpl.getThreadInfo(ThreadImpl.java:178)
+	at org.sleuthkit.autopsy.actions.ThreadDumpAction$ThreadDumper.createThreadDump(ThreadDumpAction.java:120)
+	at org.sleuthkit.autopsy.actions.ThreadDumpAction$ThreadDumper.doInBackground(ThreadDumpAction.java:91)
+	at org.sleuthkit.autopsy.actions.ThreadDumpAction$ThreadDumper.doInBackground(ThreadDumpAction.java:87)
+	at javax.swing.SwingWorker$1.call(SwingWorker.java:295)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at javax.swing.SwingWorker.run(SwingWorker.java:334)
+	...
+
+
+"IM-start-ingest-jobs-0" Id=218 WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@7ceb341e
+	at sun.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@7ceb341e
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+\endverbatim
+
+If the thread dump says anything about a deadlock then that's the problem. Please make sure to post any deadlocks to the <a href="https://sleuthkit.discourse.group/">forum</a>. Even if not the thread dump could help diagnose your problem so consider including in your post.
+
+*/

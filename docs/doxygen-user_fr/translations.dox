@@ -1,0 +1,157 @@
+/*! \page translations_page Translating Documentation and the UI
+
+[TOC]
+
+
+The Autopsy user base is global. You can help out by translating the UI and this documentation. 
+
+\section translations_doc Translating Documentation
+
+This section outlines how to translate this user documentation. To translate, you will need:
+- A git account
+- Basic familiarity with git
+- Text editor
+
+The Autopsy documentation is created by [Doxygen](http://www.doxygen.nl/) from ".dox" text files in the [docs/doxygen-user](https://github.com/sleuthkit/autopsy/tree/develop/docs/doxygen-user) folder in the Github repository.  
+
+The first step is to fork the [Autopsy Repository](https://github.com/sleuthkit/autopsy) into your Git account and make a clone of it into your environment so that you can make edits to the files.  
+
+As you are editing, you can review your documentation by installing Doxygen and running 'doxygen' from within the translations folder.   It will save the HTML to the 'user-docs' folder. 
+
+\subsection translations_doc_start Translating To a New Language
+
+If there is not already documentation in a language, then you need to make a copy of the entire English 'doxygen-user' folder and name it 'doxygen-user_AB' where AB is replaced by the 2 character [country code] (http://www.lingoes.net/en/translator/langcode.htm).  For example, 'doxygen-user_fr' for French and 'doxygen-user_ja' for Japanese. 
+
+Edit the Doxyfile to update the OUTPUT_LANGUAGE field.  For English it has:
+
+\code
+OUTPUT_LANGUAGE        = English
+\endcode
+
+Now, simply start translating the English documents. 
+
+\subsection translations_doc_update Updating The Documentation
+
+When new releases are made and the English documentation is updated, the other languages should be updated as well. To determine what has changed:
+- First, determine when the last time the documentation was changed.  From a command line, you can change into the translated documentation folder and type:
+
+\code
+    $ cd docs/doxygen-user_fr
+    $ git log -n 1 .
+    commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1111
+    Author: John Doe <jdoe@sleuthkit.org>
+    Date:   Tue Jan 1 22:56:09 2019 -0500
+    
+        update to quick start
+\endcode    
+
+This shows you that commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1111 was the last translation update to occur for the French version. 
+
+- Next, determine what changed in the English version since then:
+
+\code
+    $ git diff 94e4b1042af47908dd4a0b2959b3f6c3d4af1111 ../doxygen-user
+    diff --git a/docs/doxygen-user/central_repo.dox b/docs/doxygen-user/central_repo.dox
+index 83d3407e8..e8cd01c1b 100644
+    --- a/docs/doxygen-user/central_repo.dox
+    +++ b/docs/doxygen-user/central_repo.dox
+    @@ -79,6 +79,16 @@ Descriptions of the property types:
+      - Phone numbers are currently only extracted from call logs, contact lists and message, which come from the Android Analyzer module.
+      - <b>USB Devices</b>
+      - USB device properties come from the registry parsing in the Recent Activity Module.
+     +- <b>Wireless Networks</b>
+     + - Wireless networks are correlated on SSIDs, and come from the registry par
+\endcode
+
+- Update the translated documentation accordingly based on what changed in the English version.
+
+- If you do not get to complete all of the changes, you should create a TODO.txt file that lists what was not updated so that other people know that not everything was updated. 
+
+\subsection translations_doc_commit Committing the Documentation
+
+You should submit a Github Pull Request when:
+- You complete a language.
+- You don't have time to do more work, but want to submit what you did.
+
+To get the code committed, send a [pull request](https://help.github.com/articles/about-pull-requests/) to the main Autopsy repository. 
+
+\section translations_ui Translating The UI
+This section outlines how to translate the UI. To do this, you will need:
+
+- A git account
+- Basic familiarity with git
+- A full Autopsy development environment. 
+
+\subsection translations_ui_autopsy Autopsy Development Environment
+
+You will need to have a full Autopsy development environment setup so that you can launch Autopsy with your translations and verify it is in the correct location and doesn't get cropped.   
+
+You can find instructions for doing this in [BUILDING.txt](https://github.com/sleuthkit/autopsy/blob/develop/BUILDING.txt). 
+
+\subsection translations_ui_strings Where The English Strings Are Stored
+
+Autopsy uses two different methods for storing the English versions of the UI strings.  Some are stored in Bundle.properties files and others are stored in the code as \@Message annotations.  The annotations make it harder for the code to be translated because translators would need to look in two places, but makes development easier. 
+
+To make translations easier, we've added some logic into our build process to merge the various strings together into a single place. When the Autopsy code is compiled, it merges the contents of the annotations and the Bundle.properties files into a single file named Bundle.properties-MERGED.  One of these files exists for each Java package. 
+
+Let's look at an example in the corecomponents package. Note that some of these links may not be exactly correct once these files are updated and the documentation is not updated, but they serve as a basic reference): 
+- There is a [Bundle.properties](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle.properties) file.  At the time of this writing, there are 230 lines in that file.
+- In that same package, the [AutopsyOptionsPanel.java](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/AutopsyOptionsPanel.java#L53) class has some strings defined as \@Message annotations. 
+- There is a [Bundle.properties-MERGED](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle.properties-MERGED) file that contains the strings from both Bundle.properties and the annotations. At this time of this writing, that file has 277 lines. 
+
+\subsection translations_ui_translation Where The Translated Strings Are Stored
+
+Each Java package should have a Bundle_AB.properties file that stores the translated text.  The AB is replaced by the 2 character [country code] (http://www.lingoes.net/en/translator/langcode.htm).  Such as Bundle_fr.properties for French or Bundle_ja.properties for Japanese. 
+
+As an example, you can see the Japanese translation of the previous corecomponents package in [Bundle_ja.properties](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle_ja.properties). 
+
+This file needs to contain all of the strings for that language.  It needs to be based off of the Bundle.properties-MERGED file, not the Bundle.properties file (which does not contain all of the strings). 
+
+
+
+\subsection translations_ui_start Translating To a New Language
+
+If there is not already documentation in a language, then you need to:
+- Go into each package
+- Copy the Bundle.properties-MERGED file to Bundle_XX.properties file where XX is replaced by the language code. 
+- Edit the Bundle_XX.properties file and translate the English strings. 
+
+
+\subsection translations_ui_update Updating The Translations
+
+When new releases are made and the English UI is updated, the other languages should be updated as well. To determine what has changed:
+
+- First, determine when the last time the translated file was changed.  From a command line, you can change into the package folder and type:
+
+\code
+    $ cd Core/src/org/sleuthkit/autopsy/corecomponents
+    $ git log -n 1 Bundle_ja.properties
+    commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1333
+    Author: John Doe <jdoe@sleuthkit.org>
+    Date:   Tue Jan 1 22:56:09 2019 -0500
+\endcode    
+
+This shows you that commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1333 was the last translation update to occur for the Japanese version. 
+
+- Next, determine what changed in the English version since then:
+
+\code
+    $ git diff 94e4b1042af47908dd4a0b2959b3f6c3d4af1333 Bundle.properties-MERGED
+    -AutopsyOptionsPanel.restartNecessaryWarning.text=A restart is necessary for any changes to max memory to take effect.
+    +AutopsyOptionsPanel.restartNecessaryWarning.text=A restart is necessary for any memory changes to take effect.
+\endcode
+
+- Update the strings in Bundle_ja.properties appropriately based on what was added, removed, or changed. 
+
+- If you do not get to complete all of the changes, you should create a TODO_xx.txt file that lists what was not updated so that other people know that not everything was updated. 
+
+\subsection translations_ui_commit Committing the Documentation
+
+You should submit a Github Pull Request when:
+- You complete a language.
+- You don't have time to do more work, but want to submit what you did.
+
+To get the code committed, send a [pull request](https://help.github.com/articles/about-pull-requests/) to the main Autopsy repository. 
+
+
+*/

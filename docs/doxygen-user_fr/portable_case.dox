@@ -1,0 +1,81 @@
+/*! \page portable_case_page Portable Cases
+
+[TOC]
+
+
+\section portable_case_overview Overview
+
+A portable case is a partial copy of a normal Autopsy case that can be opened from anywhere. It contains a subset of the data from its original case and has been designed to make it easy to share relevant data with other examiners. Portable cases will contain a \ref report_case_uco report detailing the contents of the portable case.
+
+
+The general use case is as follows:
+<ol>
+<li>Alice is analyzing one or more data sources using Autopsy. She tags files and results that are of particular interest.
+<li>Alice wants to share her findings with Bob but is unable to send him the original data sources because he shouldn't see them or the originals are too big.
+<li>Alice creates a portable case which will contain only her tagged files and results, plus any files associated with those results, and sends it to Bob. She could also choose to include \ref interesting_files_identifier_page "interesting files" or results.
+<li>Bob can open the portable case in Autopsy and view all files and results Alice tagged, and run any of the normal Autopsy features.
+</ol>
+
+For example, Alice's original case could look like this:
+
+\image html portable_case_original_version.png
+
+The portable version could like this:
+
+\image html portable_case_portable_version.png
+
+Alice only tagged eight files and results and her case had no interesting items, so most of the original content is no longer in the case. Some of the data sources had no tagged items so they're not included at all. The file structure of any tagged files is preserved - you can see that the tagged image in the screenshot is still in the same location, but the non-tagged files are gone. Note that although the original images (such as "image1.vhd") appear in the tree, their contents are not included in the portable case.
+
+\section portable_case_creation Creating a Portable Case
+
+A portable case can contain tagged files and results and data from the Interesting Items section of the \ref tree_viewer_page. You'll be able to choose which of the Interesting Item sets you want to include in the portable case.
+
+\image html portable_case_interesting_items.png
+
+You can tag any additional files you want to include in the portable case. See the \ref tagging_page page for details on how to create tags. Note that the outlines from \ref image_tagging "image tags" will also be visible in the portable case. You can see what tags you've added in the \ref tree_viewer_page.
+
+\image html portable_case_tags.png
+
+Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags and interesting file sets that are in use in the current case and you can choose which ones you would like to include. At the bottom you can choose to optionally package the case or to include the Autopsy application. Choosing to package the case without chunking will simply compress the portable case in a single archive that can be extracted with common compression programs. If you choose split the packaged case into multiple files, you will need to use the "Unpack and Open Portable Case" option to open it. You can not include the application if you use this option. Unpacking a portable case will be discussed in the next section. 
+
+If the recipient of the portable case does not have Autopsy, you can choose to include the Autopsy application in the portable case. This will allow the recipient to open the portable case without installing any other software. You may choose to package the case without chunking. If you do, the recipient will have to decompress it before opening Autopsy. 
+
+The portable case will be placed in the "Reports" folder in the current case.
+
+\image html portable_case_report_panel.png
+
+Here you can see an unpackaged portable case. It will be named with the original case name plus "(Portable)". The portable case is initially missing many of the normal Autopsy folders - these will be created the first time a user opens it. It will however start with a "Reports" folder that contains an automatically generated \ref report_case_uco report.
+
+\image html portable_case_folder.png
+
+If you packaged the portable case but did not choose to split it into chunks, you'll have a single .zip file. If you chose to split the packaged case, you'll have one or more files starting with extension .zip.001.
+
+\image html portable_case_chunks.png
+
+\section portable_case_usage Using a Portable Case
+
+If the Autopsy application was included in the portable case, it can be opened by double-clicking on the "open.bat" file.
+
+\image html portable_case_open_bat.png
+
+Otherwise, you'll start by opening the Autopsy application. Unpackaged portable cases can be opened like any other case through Case->Open Case. If your portable case was packaged, you'll need to use the unpack option to open it. Open the "Case" menu and then select "Unpack and Open Portable Case" option. This will bring up a dialog where you can browse to your packaged case and select where to extract it to. The case will also open. Note that any changes made to the case at this point will be saved to the unpacked location, and next time you open it you will need to browse to the unpacked folder.
+
+\image html portable_case_unpackage.png
+
+Portable cases generally behave like any other Autopsy case. You can run ingest, do keyword searches, use the timeline viewer, etc. One point to note is that while the original data source names appear in the case, the data sources themselves were not copied into the portable case.
+
+\image html portable_case_empty_image.png
+
+This may cause warning or error messages when using ingest modules that run on the full image, such as the \ref data_source_integrity_page. You will also not be able to view the data sources in the content viewer.
+
+You can also add additional data sources to the portable case if you wish. The case will no longer be portable, but if desired you could generate a new portable case that will include tagged files and results from the new data sources as well as the original case. 
+
+\section portable_case_inside Inside a Portable Case
+
+A portable case is a folder, just like any other Autopsy case. It contains a SQLite database (just like a normal Autopsy case) with rows for only the items that the user selected to be in the portable case.  For example, if a user tagged a file and included that in the portable case, the database will have a row for the tag, a row for the file, a row for the file system the file was in, a row for the volume system, a row for the image etc. Everything assocated with the tag is in there and you should see those items in Autopsy. 
+
+A copy of any tagged file is made into the case folder and the SQLite database will refer to it.  This allows you to examine the file contents without the original data source. 
+
+Because a portable case is really just a subset of the original case, nearly all other Autopsy operations work as normal. 
+
+*/

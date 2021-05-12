@@ -1,0 +1,43 @@
+/*! \page recent_activity_page Recent Activity Module
+
+[TOC]
+
+
+What Does It Do
+========
+
+The Recent Activity module extracts user activity as saved by web browsers (including web searches), installed programs, and the operating system. It also runs Regripper on the Registry hive.
+
+This allows you to see what activity has occured in the last seven days of usage, what web sites were vistied, what the machine did, and what it connected to.
+
+Configuration
+=======
+
+Configuring Custom Web Categories
+------
+
+The Recent Activity module will create "Web Categories" results for domains that match a list of categories. There are some built-in categories, but custom categories can also be entered through the "Custom Web Categories" tab on the main options panel. These custom categories will override any matching built-in category.
+
+\image html custom_web_categories.png
+
+The buttons below the list of categories allow you to enter new categories, edit existing categories, and delete categories. You can also export your list of categories and import a set of categories that was previously exported from this panel. Importing a set will add its categories to the current list (existing categories will not be deleted).
+
+The category match for each domain will be listed in the "Name" column in the result viewer.
+\image html custom_web_categories_results.png
+
+
+Using the Module
+======
+
+Ingest Settings
+------
+There are no run-time settings for this module.
+
+
+Seeing Results
+------
+Results show up in the tree under "Extracted Content".
+
+\image html extracted_content.PNG
+
+*/

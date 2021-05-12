@@ -1,0 +1,37 @@
+/*! \page volatility_dsp_page Volatility Data Source Processor
+
+[TOC]
+
+
+\section Overview
+
+The Volatility data source processor runs Volatility on a memory image and saves the individual Volatility module results. If the disk image associated with the memory image is also available, it will create Interesting Item artifacts linking the Volatility results to files in the disk image.
+
+The \ref experimental_page must be enabled to run this module.
+
+\section Usage
+
+If you have a disk image associated with your memory image, ingest the disk image into the case first. Then go to "Add Data Source" and select "Memory Image File". 
+
+\image html volatility_dsp_select.png
+
+On the next screen, you can select your memory image and then adjust the settings to choose a profile and which Volatility plugins to run.
+
+\image html volatility_dsp_config.PNG
+
+Next you'll see the ingest module configuration panel. No ingest modules will be run when using the Volatility data source processor, so simply hit the "Next" button. When it finishes, you may have some non-critical errors. These frequently come from the data source processor being unable to find files in the original disk image. If you did not add the associated disk image before running the Volatility data source processor on the memory image, there will be a large number of these errors but the Volatility module output will still be available.
+
+\section Results
+
+There are two types of results that come from running the Volatility data source processor: Module Output and Interesting Items (if the disk image was added). The Module Output section is found under the memory image in the tree.
+
+\image html volatility_dsp_module_output.PNG
+
+You can also view the Volatility output under "ModuleOutput/Volatility" in the Autopsy case folder. The Interesting Items link file paths found by Volatility with files in the disk image. If a disk image was not added, there will not be any Interesting Items.
+
+\image html volatility_dsp_interesting_items.PNG
+
+
+
+
+*/

@@ -1,0 +1,24 @@
+/*! \page search_all_cases_page Search All Cases
+
+[TOC]
+
+
+\section search_all_cases_overview Overview
+
+The Search All Cases feature allows you to search the \ref central_repo_page for arbitrary properties. You must have the Central Repository enabled to run 
+this search, and you must have a case open (though the open case has no effect on the search results).
+
+\section search_all_cases_usage Usage
+
+Go to Tools->Search Other Cases to open the search dialog. Here you can select the property type and value to search for. An example of what the value should look
+like will be displayed in light grey in the Correlation Property Value box. If the entered value is invalid for that property type a red error message will be displayed.
+
+\image html search_all_cases_dialog.png
+
+Once you hit the Search button, any results will be displayed in the Result Viewer. The tab title will display what was 
+searched for ("Email Addresses" and "sample@gmail.com" in the example).
+
+\image html search_all_cases_results.png
+
+
+*/

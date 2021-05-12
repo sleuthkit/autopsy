@@ -1,0 +1,62 @@
+/*! \page machine_translation_page Machine Translation
+
+[TOC]
+
+
+You can configure a machine translation service to use with Autopsy. If one is configured, you will be able to translate text in the \ref content_viewer_page and file names in the \ref result_viewer_page and \ref tree_viewer_page.
+
+\section mt_config Configuration
+
+To set up a machine translation service, go to Options->Tools and then select the Machine Translation tab. Select the service you want to use from the drop down menu at the top. You will have to set up an account with either Bing or Google and then enter account information.
+<ul>
+<li> Bing Translate: <a href="https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-text-how-to-signup">https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-text-how-to-signup</a>
+<li> Google Translate: <a href="https://cloud.google.com/iam/docs/creating-managing-service-account-keys">https://cloud.google.com/iam/docs/creating-managing-service-account-keys</a>
+</ul>
+
+\image html mt_config.png
+
+Each service will require slightly different configuration steps. After setting everything up, you can run a quick check that the service is set up correctly using the "Test" button.
+
+The checkbox at the bottom allows you to enable or disable optical character recognition (OCR). When enabled, if you select an image in the \ref mt_content_viewer "content viewer" Autopsy will use OCR to attempt to extract text to be translated. Instructions for installing OCR packages for different languages can be found on the \ref keyword_search_ocr_config "Keyword Search page".
+
+\section mt_file_names Translating File Names
+
+You can use machine translation to automatically translate file and folder names, such as the ones seen below:
+
+\image html mt_file_name_original.png
+
+To enable file name translation, go to the \ref view_options_page and check the box under "Translate Text".
+
+\image html mt_file_name_enable.png
+
+Once enabled, the translated versions of the file and folder names will be shown in the \ref tree_viewer_page and in the first column of the \ref result_viewer_page. The original name will be displayed in the new "Original Name" column.
+
+\image html mt_file_names_translated.png
+
+\section mt_content_viewer Translating File and Message Content
+
+After you set up a machine translation service, the Translation tab under the Text tab in the Content Viewer will be active. The Translation tab allows you to use your service to translate the beginning of a file. For example, you might see the following in the default Indexed Text tab:
+
+\image html mt_content_viewer_untranslated_text.png
+
+Switching to the Translation tab will display the results of running the text through the machine translation service.  
+
+\image html mt_content_viewer_translated.png
+
+Machine translation also works for messages. To translate a message, select the "Text" tab above the message content.
+
+\image html mt_message_orig.png
+
+Then use the drop-down menu on the right to change from "Original Text" to "Translated Text".
+
+\image html mt_message_translated.png
+
+If you've enabled OCR as described in the \ref mt_config section above, you can extract and translate text from images. Here is an image containing the beginning of a French poem:
+
+\image html mt_ocr_image.png
+
+If you go to the Text tab and then the Translation viewer it will use OCR to read text from the image and then display the translation. 
+
+\image html mt_ocr_result.png
+
+*/

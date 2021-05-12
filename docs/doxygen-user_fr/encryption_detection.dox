@@ -1,0 +1,43 @@
+/*! \page encryption_page Encryption Detection Module
+
+[TOC]
+
+
+\section encrypt_overview Overview
+
+The Encryption Detection Module searches for files that could be encrypted using both a general entropy calculation and more specialized tests for certain file types. 
+
+\section encrypt_running Running the module
+
+The module's settings can be configured at runtime. These settings only effect the tests that are based on entropy.
+
+\image html encrypt_module.png
+
+Minimum entropy can be set higher or lower, depending on how many false hits are being produced. There is also an option to only run the test on files whose size is a multiple of 512, which is useful for finding certain encryption algorithms.
+
+The module looks for the following types of encryption:
+<ul>
+<li> Any file that has an entropy equal to or greater than the threshold in the module settings and that fits the file size constraints
+<li> Password protected Office files, PDF files, and Access database files
+<li> BitLocker volumes
+<li> SQLCipher (uses the minimum entropy from the module settings)
+<li> VeraCrypt (uses the minimum entropy from the module settings)
+</ul>
+
+\section encrypt_results Viewing results
+
+Files that pass the tests are shown in the Results tree under "Encryption Detected" or "Encryption Suspected". Generally, if the test used involved looking for a 
+specific header/file structure, the result will be "Encryption Detected" and the type of encryption will be displayed in the Comment field. If the test was based on the entropy of the file,
+the result will be "Encryption Suspected" and the calculated entropy will be displayed in the Comment field.
+
+\image html encrypt_tree.png
+
+Each hit also generates an inbox message. These are viewed through the warning triangle near the top of the screen.
+
+\image html encrypt_inbox.png
+
+Selecting one of the encryption detection hits displays the calculated entropy of the file.
+
+\image html encrypt_entropy.png
+
+*/

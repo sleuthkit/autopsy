@@ -1,0 +1,28 @@
+/*! \page EXIF_parser_page Picture Analyzer Module
+
+[TOC]
+
+
+\section exif_overview Overview
+
+The Picture Analyzer module extracts EXIF (Exchangeable Image File Format) information from ingested pictures. This information can contain geolocation data for the picture, time, date, camera model and settings (exposure values, resolution, etc) and other information. The discovered attributes are added to the Blackboard. This can tell you where and when a picture was taken, and give clues to the camera that took it.
+
+The module also converts HEIC/HEIF images to JPG while maintaining their EXIF information, which will be processed and saved as it would for normal JPG images.
+
+
+\section exif_usage Using the Module
+
+Select the checkbox in the Ingest Modules settings screen to enable the Picture Analyzer module.
+
+
+\section exif_results Seeing Results
+
+Results are shown in the Results tree.
+
+\image html EXIF-tree.PNG
+
+For HEIC files, the converted JPGs will appear in the data source tree as children of the original file.
+
+\image html EXIF-heic.png
+
+*/

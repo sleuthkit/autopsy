@@ -1,0 +1,119 @@
+/*! \page install_postgresql_page Install and Configure PostgreSQL
+
+
+\section install_post_over Overview
+
+In a multi-user case, a central PostgreSQL database server is used instead of the embedded SQLite databases.  
+
+A new database will be created for each case and the database will be stored in a location you choose during installation. It is recommended that you choose a drive that is local to the machine and is not the system drive.
+
+You should ensure that the database folder is backed up. 
+
+\section install_post_install Installation 
+
+To install PostgreSQL, perform the following steps:
+
+1. Download a 64-bit PostgreSQL installer from  https://www.enterprisedb.com/downloads/postgres-postgresql-downloads  Choose one under Windows x86-64. Autopsy has been tested with PostgreSQL version 9.5.
+
+2. Run the installer. The name will be similar to _postgresql-9.5.3-1-windows-x64.exe_.
+
+3. You may accept defaults for all items except for the password and the database storage location as you work through the wizard. Do not lose the password you enter in. This is the PostgreSQL administrator login password.
+
+4. You do not need to launch the StackBuilder nor acquire any more software from it. Uncheck the option to use StackBuilder and press _Finish_.
+
+
+\section install_post_config Configuration 
+
+1. Create a regular database user account that Autopsy will use. You can do this with either of two methods, graphically, or command line. We cover graphically here.
+	
+
+- Use the pgAdmin III  tool and login with the PostgreSQL administrator login. 
+- Right click on <i>"Login Roles"</i> and select <i>"New Login Role..."</i> as shown below:
+<br><br>
+\image html pgAdmin.PNG
+<br><br>
+- Enter the user name you would like to use in the <i>"Role name"</i> field.
+<br><br>
+\image html newLoginRole.PNG
+<br><br>
+- Enter the password on the <i>"Definition"</i> tab.
+<br><br>
+\image html newPassword.PNG
+<br><br>
+- Check <i>"Can create databases"</i> on the <i>"Role Privileges"</i> tab.
+<br><br>
+\image html newRights.PNG
+<br><br>
+- Click <i>"OK"</i>.
+
+2. Edit  <i>C:\\Program Files\\PostgreSQL\\9.5\\data\\pg_hba.conf</i> to add an entry to allow external computers to connect via the network. 
+<br><br>
+First, find your machine's IPv4 address and Subnet Mask (Press _Start_, type _cmd_, type _ipconfig_ and parse the results. The IP address is shown in yellow below.
+<br>
+\image html postgresqlinstall3.PNG
+<br>
+The following is an example rule that allows all clients on the 10.10.192.x  subnet to connect using md5 authentication.
+<br>
+> host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;all&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;all&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.10.192.0/24&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;md5
+<br>
+__Subnet Mask Rules of thumb:__
+    - If your Subnet Mask is 255.255.0.0, your rule should look like this: A.B.0.0/16, where A is the first octet in your IP address and B is the second octet.
+<br>
+    - If your Subnet Mask is 255.255.255.0, your rule should look like this: A.B.C.0/24, where A is the first octet in your IP address, B is the second octet, and C is the third octet. 
+<br><br>
+Add the line highlighted in yellow below, formatted with spaces between the entries, adjusting the IP address to an appropriate value as described above.
+<br><br>
+\image html postgresqlinstall4.PNG
+<br>
+<br><br>
+If you intend to use PostgreSQL from machines on a different subnet, you need an entry in the _pg_hba.conf_ file for each subnet. 
+<br><br>
+
+3. Uncomment the following entires in the configuration file located at <i>C:\\Program Files\\PostgreSQL\\9.5\\data\\postgresql.conf</i> by removing the leading "#", and change their values <i>"off"</i> as shown below.
+<br>
+>	fsync = off<br>
+>	synchronous_commit = off<br>
+>	full_page_writes = off<br>
+<br>
+Pictorially, change the following, from this:
+<br><br>
+\image html postgresqlinstall5.PNG
+<br><br>
+To this:
+<br><br>
+\image html postgresqlinstall6.PNG
+<br><br>
+Note the removal of the leading number symbol-this uncomments that entry.
+<br><br>
+
+4. Still in <i id="max_connections">"C:\Program Files\PostgreSQL\9.5\data\postgresql.conf"</i>, find the entry named _max_connections_ and set it to the number of suggested connections for your configuration. A rule of thumb is add 100 connections for each Automated Ingest Node and 100 connections for each Reviewer node you plan to have in the network.  See the screenshot below.
+<br><br>
+\image html maxConnections.PNG
+<br><br>
+
+
+
+5. Restart the service via the Services panel by pressing _Start_, type _services.msc_, and press _Enter_.  Select _postgresql-x64-9.5_ in the services list and click the link that says _Stop the service_.  If you want PostgreSQL to run as a different user (you don't need to), then make that change now.  When done, click the link that says _Start the service_ as shown in the screenshot below.
+<br><br>
+\image html postgresqlinstall7.PNG
+<br><br>
+
+
+\section install_post_test Testing
+
+You can verify that PostgreSQL is running by using either the _pgAdmin_ tool or the _psql_ tool to connect to the database server from another machine on the network.
+
+Common problems are typically the result of:
+- Firewall blocking the port (default: 5432) on the PostgreSQL server.
+- Incorrectly configured database user account or incorrect credentials.
+- Incorrectly configured IP address range in pg_hba.conf file.
+
+
+\section install_post_backup Backing Up
+
+The databases and configuration files are stored at the location you chose during PostgreSQL installation (not shared storage).  So, you should backup that directory periodically. 
+
+For an installation where the default options were chosen, the directory can be found at C:\\Program Files\\PostgreSQL\\9.5\\data. 
+
+
+*/

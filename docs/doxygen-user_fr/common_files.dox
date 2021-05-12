@@ -1,0 +1,72 @@
+/*! \page common_properties_page Common Properties Search
+
+[TOC]
+
+
+\section common_properties_overview Overview
+
+The Common Properties Search feature allows you to search for multiple copies of a property within the current case or within the \ref central_repo_page.
+
+To start a search, go to Tools->Find Common Properties to bring up the main dialog. Searching requires at least one of the following to be true:
+<ul>
+<li> The current case has more than one data source
+<li> The Central Repository contains at least two cases
+</ul>
+
+If both conditions are false, then the menu item will be disabled. If only one is false then part of the search dialog will be disabled.
+
+\section common_properties_search_types Common Properties Search Scope
+
+Different parameters are needed for setting up the two types of searches. These will be described below.
+
+\subsection common_properties_intra_case Scope - between data sources in the current case
+
+This type of search looks for files that are in multiple data sources within the current case. It does not require the Central Repository to be enabled, and currently only searches for common files. You must run the \ref hash_db_page to compute MD5 hashes on each data source prior to performing the search. The search results will not include any files that have been marked as "known" by the hash module (ex: files that are in the NSRL).
+
+\image html common_properties_intra_case.png
+
+By default, the search will find matching files in any data sources. If desired, you can change the search to only show matches where one of the files is in a certain data source by selecting it from the list:
+
+\image html common_properties_select_ds.png
+
+You can also choose to show any type of matching files or restrict the search to pictures and videos and/or documents.
+
+Finally, if you have the Central Repository enabled you can choose to hide matches that appear with a high frequency in the Central Repository. 
+
+\subsection common_properties_central_repo Scope - between current case and cases in the Central Repository
+
+This type of search looks for files that contain common properties between the current case and other cases in the Central Repository. You must run the Central Repository ingest module on each case with the property you want to search for enabled, along with the ingest modules that produce that property type (see \ref cr_manage_properties). 
+
+\image html common_properties_cr.png
+
+You can restrict the search to only include results where at least one of the matches was in a specific case.
+
+\image html common_properties_cr_case_select.png
+
+In the example above, any matching properties would have to exist in the current case and in Case 2. Note that matches in other cases will also be included in the results, as long as the property exists in the current case and selected case.
+
+You can select the type of property to search for in the menu below:
+
+\image html common_properties_cr_property.png
+
+Restricting a file search to only return images or documents is currently disabled. 
+
+You can choose to hide matches that appear with a high frequency in the Central Repository. Finally you can choose how to display the results, which will be described below.
+
+\section common_properties_results Search Results
+
+Each search displays its results in a new tab. The title of the tab will include the search parameters.
+
+\subsection common_properties_sort_by_count Sort by number of data sources
+
+\image html common_properties_result.png
+
+This is how all results from searches within the current case are displayed, and an option for displaying the results of a search between the current case and the Central Repository. The top tree level of the results shows the number of matching properties. The results are grouped by how many matching properties were found and then grouped by the property itself.
+
+\subsection common_properties_sort_by_case Sort by case
+
+This option is only available when searching between the current case and the Central Repository. The top level shows each case with matching properties, then you can select which data source to view. Every matching property will be displayed under the data source.
+
+\image html common_properties_result_case_sort.png
+
+*/

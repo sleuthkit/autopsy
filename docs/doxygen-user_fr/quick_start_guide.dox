@@ -1,0 +1,150 @@
+/*! \page quick_start_guide Quick Start Guide
+
+[TOC]
+
+
+\section s1 Cases and Data Sources
+
+Autopsy organizes data by <strong>case</strong>.  Each case can have one or more <strong>data sources</strong>, which can be a disk image, a set of logical files, a USB-connected device, etc.  
+
+Cases can either be single-user or multi-user.  Multi-user cases allow several examiners to review the data at the same time and collaborate, but require some additional open source servers to be configured. 
+
+When you have several data sources and are deciding about creating creating a case, consider:
+- You can have only one case open at a time
+- Reports are generated at a case-level
+- The application can slow down when there are many large data sources in the same case
+
+\subsection s1a Creating a Case
+To create a case, use either the "Create New Case" option on the Welcome screen or from the "Case" menu. This will start the <strong>New Case Wizard</strong>. You will need to supply it with the name of the case and a directory to store the case results into. You can optionally provide case numbers and reviewer names.
+
+\subsection s1b Adding a Data Source
+The next step is to add an input data source to the case. The <strong>Add Data Source Wizard</strong> will start automatically after the case is created or you can manually start it from the &quot;Case&quot; menu or toolbar. You will need to choose the type of input data source to add (image, local disk, or logical files and folders).  Next, supply it with the location of the source to add. 
+        
+
+- For a disk image, browse to the first file in the set (Autopsy will find the rest of the files). Autopsy currently supports E01 and raw (dd) files.
+- For local disk, select one of the detected disks. Autopsy will add the current view of the disk to the case (i.e. snapshot of the meta-data). However, the individual file content (not meta-data) does get updated with the changes made to the disk.  You can optionally create a copy of all data read from the local disk to a VHD file, which can be useful for triage situations.  Note, you may need run Autopsy as an Administrator to detect all disks.
+- For logical files (a single file or folder of files), use the "Add" button to add one or more files or folders on your system to the case.  Folders will be recursively added to the case.
+
+Next it will prompt you to configure the Ingest Modules.
+
+
+\subsection s1c Ingest Modules
+
+Ingest modules are responsible for analyzing the data source contents and will run in the background. The Ingest Modules analyze files in a prioritized order so that files in a user's directory are analyzed before files in other folders. Ingest modules can be developed by third-parties. 
+
+The standard ingest modules included with Autopsy are:
+
+- <strong>\subpage recent_activity_page</strong> extracts user activity as saved by web browsers and the OS.  Also runs Regripper on the registry hive. 
+- <strong>\subpage hash_db_page</strong> uses hash sets to ignore known files from the NIST NSRL and flag known bad files. Use the "Advanced" button to add and configure the hash sets to use during this process. You will get updates on known bad file hits as the ingest occurs.  You can later add hash sets via the Tools -&gt; Options menu in the main UI.  You can download an index of the NIST NSRL from http://sourceforge.net/projects/autopsy/files/NSRL/
+- <strong>\subpage file_type_identification_page</strong> determines file types based on signatures and reports them based on MIME type. It stores the results in the Blackboard and many modules depend on this. It uses the Tika open source library. You can define your own custom file types in Tools, Options, File Types.
+- <strong>\subpage extension_mismatch_detector_page</strong> uses the results from the File Type Identification and flags files that have an extension not traditionally associated with the file's detected type. Ignores 'known' (NSRL) files. You can customize the MIME types and file extensions per MIME type in Tools, Options, File Extension Mismatch.
+- <strong>\subpage embedded_file_extractor_page</strong> opens ZIP, RAR, other archive formats, Doc, Docx, PPT, PPTX, XLS, and XLSX and sends the derived files from those files back through the ingest pipeline for analysis.
+- <strong>\subpage EXIF_parser_page</strong> extracts EXIF information from JPEG files and posts the results into the tree in the main UI. Also converts HEIC/HEIF files to JPEG format and extracts EXIF data from those JPEGs.
+- <strong>\subpage keyword_search_page</strong> uses keyword lists to identify files with specific words in them. You can select the keyword lists to search for automatically and you can create new lists using the "Advanced" button. Note that with keyword search, you can always conduct searches after ingest has finished. The keyword lists that you select during ingest will be searched for at periodic intervals and you will get the results in real-time. You do not need to wait for all files to be indexed before performing a keyword search, however you will only get results from files that have already been indexed when you perform your search.
+- <strong>\subpage email_parser_page</strong> identifies Thunderbird MBOX files and PST format files based on file signatures, extracting the e-mails from them, adding the results to the Blackboard.
+- <strong>\subpage encryption_page</strong> looks for encrypted files.
+- <strong>\subpage interesting_files_identifier_page</strong> searches for files and directories based on user-specified rules in Tools, Options, Interesting Files. It works as a "File Alerting Module". It generates messages in the inbox when specified files are found.
+- <strong>\subpage cr_ingest_module</strong> adds file hashes and other extracted properties to a central repository for future correlation and to flag previously notable files.
+- <strong>\subpage photorec_carver_page</strong> carves files from unallocated space and sends them through the file processing chain.
+- <strong>\subpage vm_extractor_page</strong> extracts data from virtual machine files
+- <strong>\subpage data_source_integrity_page</strong> computes a checksum on E01 files and compares with the E01 file's internal checksum to ensure they match.
+- <strong>\subpage drone_page</strong> extracts data from drone files.
+- <strong>\subpage plaso_page</strong> uses Plaso to create \ref timeline_page "timeline" events.
+- <strong>\subpage android_analyzer_page</strong> allows you to parse common items from Android devices.  Places artifacts into the BlackBoard.
+- <strong>\subpage gpx_page</strong> extracts geolocation data from .gpx files.
+- <strong>\subpage ileapp_page</strong> extracts data from iOS data sources.
+
+When you select a module, you will have the option to change its settings.  For example, you can configure which keyword search lists to use during ingest and which hash sets to use. Refer to the individual module help for details on configuring each module.
+
+While ingest modules are running in the background, you will see a progress bar in the lower right. You can use the GUI to review incoming results and perform other tasks while ingesting at the same time.
+
+\section s2 Analysis Basics
+
+After the ingest modules start to analyze the data source, you'll see the main analysis interface.  You can choose to search for specific items, browse to specific folders, or review ingest module results. 
+
+\image html screenshot.PNG
+
+You will start all of your analysis techniques from the tree on the left.
+
+- The Data Sources root node shows all data in the case.
+ - The individual image nodes show the file system structure of the disk images or local disks in the case.
+ - The LogicalFileSet nodes show the logical files in the case.
+- The Views node shows the same data from a different perspective, such as organized by file type. 
+- The Results node shows the output from the ingest modules.
+
+When you select a node from the tree on the left, a list of files will be shown in the upper right.  You can use the Thumbnail view in the upper right to view the pictures. When you select a file from the upper right, its contents will be shown in the lower right. You can use the tabs in the lower right to view the text of the file, an image, or the hex data.
+
+If you are viewing files from the Views and Results nodes, you can right-click on a file to go to its file system location. This feature is useful to see what else the user stored in the same folder as the file that you are currently looking at. You can also right click on a file to extract it to the local system.
+
+If you want to search for single keywords, then you can use the search box in the upper right of the program. The results will be shown in a table in the upper right.
+
+The tree on the left as well as the table on the right have a \ref ui_quick_search feature which can be used to quickly find a visible node. 
+
+You can tag (bookmark) arbitrary files so that you can more quickly find them later or so that you can include them specifically in a report.
+
+
+\section s3 Other Analysis Interfaces
+
+In addition to the 3-panel UI with the tree on the left, there are other interfaces that are more specialized. 
+
+\subsection s3a Timeline
+
+The Timeline feature can be opened from the "Tools" menu or the toolbar or though the "Timeline" button.  This will show you file system and other events organized by time using various display techniques.  See the \subpage timeline_page section for more details. 
+
+
+\subsection s3b Image Gallery
+
+The Image Gallery focuses on showing the pictures and videos from the data source organized by folder. It will show you files as soon as they have been hashed and EXIF data extracted.  You can open it from the "Tools" menu or through the "Image Gallery" button.  See the \subpage image_gallery_page section for more details. 
+
+\subsection s3c Communications
+
+The Communications interface focuses on showing which accounts were communicated with the most and what messages were sent. It allows you to focus on certain relationships or communications within a certain date rage.  You can open it from the "Tools" menu or through the "Communications" button.  See the \subpage communications_page section for more details. 
+
+\subsection s3d Geolocation
+
+The Geolocation panel shows a map with markers for all geolocation results found in the case. You can open it from the "Tools" menu or through the "Geolocation" button.  See the \subpage geolocation_page section for more details. 
+
+\subsection s3e Discovery
+
+The Discovery panel allows you to search for different types of data within a case and display it in an easily reviewable form. You can open it from the "Tools" menu or through the "Discovery" button.  See the \subpage discovery_page section for more details. 
+
+\subsection s3f Personas
+
+The Personas panel is for creating and managing personas. Creating a persona allows you to associate one or more accounts with a name and other data. You can open it from the "Tools" menu or through the "Personas" button.  See the \subpage personas_page section for more details. 
+
+\section s5 Example Use Cases
+In this section, we will provide examples of how to do common analysis tasks.
+
+\subsection s5a Web Artifacts
+
+If you want to view the user's recent web activity, make sure that the Recent Activity ingest module was enabled.
+You can then go to the &quot;Results &quot; node in the tree on the left and then into the &quot;Extracted Data&quot; node.
+There, you can find bookmarks, cookies, downloads, and history.
+
+\subsection s5b Known Bad Hash Files
+
+If you want to see if the data source had known bad files, make sure that the Hash Lookup ingest module was enabled.
+You can then view the &quot;Hashset Hits&quot; section in the &quot;Results&quot; area of the tree on the left.
+Note that hash lookup can take a long time, so this section will be updated as long as the ingest process is ongoing.
+Use the Ingest Inbox to keep track of what known bad files were recently found.
+
+When you find a known bad file in this interface, you may want to right click on the file to also view the file's original location.
+You may find additional files that are relevant and stored in the same folder as this file.
+
+\subsection s5c Media: Images and Videos
+
+If you want to see all images and video on the disk image, then go to the &quot;Views&quot; section in the tree on the left and then &quot;File Types&quot;.
+Select either &quot;Images&quot; or &quot;Videos&quot;.
+You can use the thumbnail option in the upper right to view thumbnails of all images.
+
+
+You can select an image or video from the upper right and view the video or image in the lower right. Video will be played with sound.
+
+\section s6 Reporting
+
+A final report can be generated that will include all analysis results using the &quot;Generate Report&quot; toolbar button. Reports can be generated in HTML, XLS, KML, and other formats. 
+
+You can later find your generated reports by going to the tree and opening the Reports node at the bottom. 
+ 
+
+*/

@@ -1,0 +1,11 @@
+/*! \page logs_and_output_page Viewing Case Logs and Output
+
+There are several shortcuts for getting to the case and log folders.
+
+- To open the Case output folder, use "Tools", "Open Output Folder" as shown below:
+\image html open_output_folder.PNG
+
+- To open the Case log folder, use "Help", "Open Log Folder" as shown below:
+\image html open_log_folder.PNG
+
+*/

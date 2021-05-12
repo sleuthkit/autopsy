@@ -1,0 +1,30 @@
+/*! \page object_detection_page Object Detection
+
+[TOC]
+
+
+\section object_overview Overview
+
+The Object Detection module uses OpenCV to try to detect objects in images.
+
+The \ref experimental_page must be enabled to run this module.
+
+\section object_setup Setup
+
+To start, you will need some classifiers, which are xml files. Autopsy can not create classifiers - do a web search for "train OpenCV classifiers" to find information on how to make classifiers, or visit the <a href="https://docs.opencv.org/2.4/doc/user_guide/ug_traincascade.html">OpenCV page</a>.
+
+Once you have your set of classifiers, copy them into the folder "object_detection_classifiers" in your Autopsy user directory. On Windows, this will normally be found in "C:\Users\<uesr name>\AppData\Roaming\Autopsy". If you can't find the directory, try to run the module as described in the next section. The warning message will tell you where the module expects the classifiers to be.
+
+\image html object_detection_classifier_dir.PNG
+
+\section object_running Running the Ingest Module
+
+You can run the object detection module by enabling it when running ingest. There is no further configuration needed. If you have not added any classifiers, or have put the classifiers in the wrong place, you'll see a warning bubble.
+
+\image html object_detection_warning.PNG
+
+Any files that had objects detected in them will appear in under "Objects Detected". The result tree will show which classifiers matched each image.
+
+\image html object_detection_results.PNG
+
+*/

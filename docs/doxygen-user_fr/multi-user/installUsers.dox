@@ -1,0 +1,87 @@
+/*! \page install_multiuseruser_page Pick Your User Accounts
+
+\section multiuser_users Overview
+
+Before you get into configuring any computers, you should have an understanding about what user accounts will be used.  User account permissions are one of the most common challenges people have when setting up a cluster. 
+
+There are two major decisions to make about users:
+- The user for Autopsy. 
+- The user for the Solr service.
+
+These users are important because they will need access to the shared storage without needing to be prompted for a password.  Other services, such as PostgreSQL and ActiveMQ, can run as the default service account because they use only local storage. 
+
+The choice you make here will depend on what type of shared storage platform you are using and what kind of Windows-based infrastructure you have. 
+
+
+\subsection multiuser_users_autopsy Autopsy User
+
+The user account that Autopsy runs as will need access to the shared storage. There are three general options:
+
+- <b>Domain Accounts</b>: If the cluster is on a Windows domain, then Autopsy can be run with a domain account. 
+ - If your shared storage is a Windows file share, then users should be able to access it without needing a password. 
+ - If your shared storage is another platform, then you'll likely need to force Windows to store the shared storage credentials (as described below).
+- <b>Unique Local Accounts</b>: Some clusters are not on a Windows domain and have unique accounts for each analyst / user. 
+ - If your shared storage is a Windows file share, then users will not need to enter their password IF the same user name and password exists on the file share server. 
+ - Otherwise, you'll need to force Windows to store the credentials. 
+- <b>Shared Local Account</b>: Lastly, some clusters use a single local account, such as one named "autopsy" for all users.  This is not recommended because Autopsy uses the login name to track who did certain actions, such as tagging files. 
+ - The same password rules apply here as with the previous scenario.  Either have the same password on all systems or force Windows to store the passwords. 
+
+
+\subsection multiuser_users_solr Solr Service
+
+Solr will run as a Windows service and may need access to shared storage if it does not have enough local storage.  Solr performs best when it has fast access to storage, so keeping the indexes on local SSD drives is best. But, some clusters will need to store the indexes on the same shared storage that are used for images and other case outputs. 
+
+NOTE: Autopsy 4.17.0 and prior required that indexes were stored on the shared storage drives.  Autopsy 4.18.0 and beyond (which now use Solr 8) can use either local or shared storage. 
+
+If you are using local storage for Solr, then you can run the Solr service as "LocalService".  
+
+If you are going to use network storage for Solr, then you have three options: 
+- <b>NetworkService</b>: If you are on a domain, you may be able to run Solr as the "NetworkService" account.  This account has access to the network, but the challenge can be granting access for this account to the shared storage.  
+ - If your shared storage is a Windows file share, you'll need to grant access to the computer account running Solr as follows:
+<ol> <li> Right click on the shared storage folder choose "Properties" and select the "Security" tab.
+ <li> Click the "Edit..." button and then click the "Add..." button.
+ <li> Click on the "Object Types" button and confirm that the "Computers" object type has a check mark.
+ \image html objectTypesComputers.PNG
+ <li> Enter the name of the computer and click the "Check Names" button to confirm that it is correct.
+ \image html grantAccessToComputer.PNG
+ <li> Ensure that the computer account has both read and write access to shared storage.
+ \image html sharedStoragePermissions.PNG </ol>
+ - For other shared storage, you may not be able to access the data from the NetworkService account.  
+- <b>Normal User</b>: If you are not on a domain or cannot grant access to the computer for shared storage, then run Solr as a normal user (local or domain).  
+ - If you do this, refer to the scenarios as outlined above for picking an Autopsy user.  The same rules will apply with respect to passwords and saving credentials. 
+ - The main downside of this is that the service needs to be updated when the account password changes and it may require letting others know about the password.
+- <b>LocalService</b>: Lastly, if you are using the same server for both Solr and shared storage, then it is possible to run Solr as the default "LocalService" because it doesn't need network access.  
+
+
+
+
+\section multiuser_users_store Storing Credentials
+
+Based on your shared storage and your above choice for user accounts, you may need to force each Windows computer to store credentials for the shared storage. For example, if your shared storage is a Linux-based system. 
+
+
+To store the credentials on a given computer, we simply access the shared storage. Windows will prompt us for a password and we choose the option to save the credentials. We will repeat this on each computer for each user account and using both the hostname and IP address of the storage.  If two examiners will be using the same Autopsy client computer and they have their own accounts, you'll need to do this for both users. 
+
+- Launch Windows Explorer and type the UNC path of the shared storage using the IP address, such as "\\10.10.152.211\Cases".  Press Enter. 
+<br><br>
+\image html urlInAddressbar.PNG
+<br><br>
+
+- If the folder opens up without prompting for a password, then you are OK.  If your credentials are needed, you will see a dialog similar to the following: 
+
+<br><br>
+\image html credentialsWithDomain.PNG
+<br><br>
+
+- If your account is part of a Windows domain, add the domain in the top box before the "\". Follow the slash with your username. If you have no domain name, just use your username with no slashes. Add your password in the next box down and place a check mark in <i>"Remember my credentials"</i>, then click <i>"OK"</i>.
+
+
+Next, repeat with the hostname of the shared storage.  For example "\\autopsy_storage\Cases".  Again enter your credentials and choose "Remember my credentials". 
+
+
+Do these steps for <b>each machine</b> that will be accessing the shared drive.  
+
+
+Also note that you will need to repeat this process when the password for the shared storage changes. 
+
+*/

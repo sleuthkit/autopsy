@@ -1,0 +1,19 @@
+/*! \page performance_page Optimiser les performances
+
+Après avoir installé Autopsy, nous vous suggérons de faire plusieurs paramétrages en fonction de votre matériel pour optimiser les performances:
+
+1.	Nombre de threads: modifiez le nombre de pipelines parallèles utilisés au moment de l'exécution. La valeur par défaut est de deux pipelines, mais cela peut être augmenté si vous utilisez un système avec plusieurs cœurs. Pour faire ça:
+    - Exécutez Autopsy à partir du menu Démarrer ou du bureau
+    - Lorsque l'écran de démarrage de création de cas est présenté, annulez/fermez la fenêtre
+    - Sélectionnez "Tools", "Options"
+    - Dans le panneau "Ingest" et dans l'onglet "Settings", il y a une liste déroulante "Number of threads to use for file ingest". La valeur maximale est la même que le nombre de processeurs sur votre système (jusqu'à quatre). Le nombre de threads d'acquisition ne peut pas être défini au-dessus de quatre. Les tests ont révélé que, pour la plupart des systèmes et des configurations, après quatre threads, la machine est de toute façon liée aux E/S, et augmenter ce nombre au-delà de quatre peut en fait réduire les performances.
+    - Après chaque modification, redémarrez Autopsy pour que ce paramètre prenne effet.
+
+<br><br>
+\image html threadcount.PNG
+<br><br>
+
+2.	Lorsque vous créez un cas, utilisez différents lecteurs pour stocker le cas et les images. Cela permet de lire et d'écrire simultanément un maximum de données. 
+
+3.	Nous avons obtenu de meilleures performances en utilisant des disques SSD ou un stockage SAN fibré. 
+*/

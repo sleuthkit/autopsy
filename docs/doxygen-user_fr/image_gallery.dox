@@ -1,0 +1,125 @@
+/*! \page image_gallery_page Image Gallery Module
+
+[TOC]
+
+
+Overview
+========
+This document outlines the use of the Image Gallery feature of Autopsy.  This feature was funded by DHS S&T to help provide free and open source digital forensics tools to law enforcement. 
+
+The Image Gallery feature has been designed specifically with child-exploitation cases in mind, but can be used for a variety of other investigation types that involve images and videos. It offers the following features beyond the traditional long list of thumbnails that Autopsy and other tools currently provide. 
+- Groups images by folder (and other attributes) to help examiner break the large set of images into smaller groups and to help focus on areas with images of interest.
+- Allows examiner to start viewing images immediately upon adding them to the case.  As images are hashed, they are updated in the interface.  You do not need to wait until the entire image is ingested.
+
+This document assumes basic familiarity with Autopsy. 
+Quick Start 
+===========
+1. The Image Gallery tool can be configured to collect data about images/videos as ingest runs or all at once after ingest.  To change this setting go to "Tools", "Options", "Image /Video Gallery".  This setting is saved per case, but cannot be changed during ingest. See the Options window for more details
+2. Create a case as normal and add a disk image (or folder of files) as a data source.  Ensure that you have the hash lookup module enabled with NSRL and known bad hashsets, the Picture Analyzer module enabled, and the File Type module enabled. 
+3. Click the "View Images/Videos" button or select "View Images/Videos" in the "Tools" menu.  This will open the  Autopsy Image/Video Analysis tool in a new window.
+4. Groups of images will be presented as they are analyzed by the background ingest modules.  You can later resort and regroup, but it is required to keep it grouped by folder while ingest is still ongoing. 
+5. As each group is reviewed, the next highest priority group is presented, according to a sorting criteria (the default is the density of hash set hits).
+6. Images that were hits from hashsets, will have a dashed border around them.
+7. You can use the menu bar on the top of the group to categorize the entire group.
+8. You can right click on an image to categorize or tag the individual image.
+9. Tag files with customizable tags. A ‘Follow Up’ tag is already built into the tool and integrated into the filter options.  Tags can be applied in addition to categorization.  An image can only have one categorization, but can have many tags to support your work-flow.
+10. Create a report containing the details of every tagged and/or categorized file, via the standard Autopsy report generation feature.
+
+Use Case Details
+===============
+In addition to the basic ideas presented in the previous section, here are some hints on use cases that were designed into the tool.
+- When you are viewing the groups, they are presented in an order based on density of hash hits(by default).  If you find a group that has lots of interesting files and you want to see what is in the parent folder or nearby folders, use the navigation tree on the left. 
+- At any time, you can use the list on the left-hand side to see the groups with the largest hashset hits. 
+- To see which folders have the most images in them, sort the groups by group size (descending). 
+- Files that have hashset hits are not automatically tagged or categorized.  You need to do that after reviewing them.  The easiest way to do that is to wait until ingest is over and then group by hashsets.  You can then review each group and categorize the entire group at a time using the group header. 
+
+Categories
+==========
+The tool has been designed specifically with child-exploitation cases in mind and has a notion of categorizes.  We will be changing this in the future to be more flexible with custom category names, but currently it is hard coded to use the names that Project Vic  (and other international groups) use.  We have assigned colors to each category to highlight each image. 
+
+
+Name|Description|Color
+----|-----------------|------
+CAT-0|Uncategorized|![gray](ImageGallery/gray.PNG)
+CAT-1|Child Abuse Material  |![red](ImageGallery/red.PNG)
+CAT-2|Child Exploitative / Age Difficult|![orange](ImageGallery/orange.PNG)
+CAT-3|CGI / Animation|![yellow](ImageGallery/yellow.PNG)
+CAT-4|Comparison Images |![bisque](ImageGallery/bisque.PNG)
+CAT-5|Non-pertinent|![green](ImageGallery/green.PNG)
+
+GUI controls
+=================
+You can do your entire investigation using the mouse, but many examiners like to use keyboard shortcuts to quickly process large amounts of images. 
+
+Keyboard Shortcuts
+-----------------
+shortcut | action
+-----------|------
+digits 0-5 | assign the correspondingly numbered category to the selected file(s)
+alt + 0-5  | assign the correspondingly numbered category to all files in the focused group
+arrows | select the next file in the direction pressed
+page up/down | scroll the list of files
+
+Additional Mouse Controls
+-------------------------
+mouse gesture| action
+----------|----------
+ctrl + left click|toggle selection of clicked file, select multiple files
+right click on file|bring up context menu allowing per file actions (tag, categorize, extract to local file, view in external viewer, view in Autopsy content viewer, add file to HashDB)
+right click empty space of group|bring up context menu allowing per group actions (tag, categorize, extract to local file(s), add file(s) to HashDB)
+double click on file|open selected file in slide show mode
+
+UI Details
+==========
+Group Display Area
+-------------------
+The central display area contains the list of files in the current group.  Images in the group can be displayed in either thumbnail mode or slide show mode.  Slide show mode provides larger images and playback of video files. At the right of the group header is a toggle for changing the viewing mode  of the group (tiles  vs slide-show ).
+
+Image/Video Tiles
+-----------------
+
+Each file is represented in the main display area via a small tile.  The tile shows:
+- Thumbnail of the image/video
+- Name of the file
+- Indicators of other important details:
+
+| image | description | meaning|
+|----|----|-----|
+| | solid colored border | file’s assigned category.|
+| ![](ImageGallery/purpledash.PNG) "" | purple dashed border |   file  has a known bad hashset hit, but has not yet been categorized. |
+| ![](ImageGallery/hashset_hits.PNG) ""|pushpin |  file  has a known bad hashset hit|
+| ![](ImageGallery/video-file.PNG) ""| clapboard on document | video file|
+| ![](ImageGallery/flag_red.PNG) ""| a red flag | file has been 'flagged' as with the follow up tag|
+
+
+Slide Show Mode
+---------------
+In slide show mode a group shows only one file at a time at an increased size.  Per file tag/category controls above the top right corner of the image, and large left and right buttons allow cycling through the files in the group.  If the active file is an Autopsy supported video format, video playback controls appear below the video. 
+
+Table/Tree of contents
+----------------------
+The section in the top left with tabs labelled “Contents” and “Hash Hits” provides an overview of the groups of files in the case.  It changes to reflect the current Group By setting: for hierarchical groupings (path) it shows a tree of folders (folders containing images/videos (groups) are marked with a distinctive icon ), and for other groupings it shows only a flat list.  
+
+Each group shows the number of files that hit against configured Hash DBs during ingest (hash hits) and the total number of image/video files as a ratio (hash hits / total) after its name.  By selecting groups in the tree/list you can navigate directly to them in the main display area.  If the Hash Hits tab is selected only groups containing files that have hash hits are shown.    
+
+
+Listening for Changes
+======================
+The Image Gallery maintains its own database, which needs to be updated as files are analyzed by Autopsy. For example, it needs to know when a file has been hashed or had EXIF data extracted.  By default, the Image Gallery is always listening in single-user cases for these changes and keeps its database up to date. If this is causing a performance impact, you can disable this feature in the Options panel. 
+
+You can turn the listening off for the current case and you can change the default behavior for future cases. 
+
+
+
+Multi-User Cases
+=================
+If a case was created in a multi-user environment, then it becomes much harder to keep the Image Gallery database in sync because many other examiners could be analyzing data from that case.  Therefore, Image Gallery has different update behaviors in a multi-user case than it does for a single-user case.  Notably:
+- If your system is running ingest on the data source, then you will continue to get real-time updates just like in a single-user case. So, as soon as a folder of files has been hashed and had EXIF data extracted, it will be possible for you to view it. 
+- If another system in the cluster is running ingest on a data source,  you may not see its results until the ingest has completed.  You will not get real-time updates and instead you will get updates only after you have closed Image Gallery and opened it again. 
+- Each time you open Image Gallery, it will check the local database to see if it is in sync with the case database.  If it is not, it will ask you to rebuild it. This is because additional data may have been added to the case database by another system and your Image Gallery database is no longer accurate. 
+
+You also have the option to see groups (or folders) that are new to you or new to everyone. When you press “Show Next Unseen Group”, the default behavior is to show you the highest priority group that you have not seen yet.  But, you can also choose to see groups that no one else has seen. This choice can be made using the check box next to the “Show Next Unseen Group” button. 
+
+
+
+*/

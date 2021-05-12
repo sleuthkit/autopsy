@@ -1,0 +1,63 @@
+/*! \page android_analyzer_page Android Analyzer Module
+
+[TOC]
+
+What Does It Do
+========
+
+The Android Analyzer module allows you to analyze SQLite and other files from an Android device.  It works on Physical dumps from most Android devices (note that we do not provide an acquisition method).  Autopsy will not support older Android devices that do not have a volume system.  These devices will often have a single physical image file for them and there is no information in the image that describes the layout of the file systems.  Autopsy will therefore not be able to detect what it is.
+
+
+The module should be able to extract the following:
+
+- Text messages / SMS / MMS
+- Call Logs
+- Contacts
+- GPS from the browser and Google Maps
+- GPS from cache.wifi and cache.cell files
+
+The module may also extract data from the following apps:
+- Facebook Messenger
+- IMO
+- Line
+- Opera Browser
+- Orux Maps
+- S-Browser
+- ShareIt
+- Skype
+- Tango
+- TextNow
+- Viber
+- WhatsApp
+- Words with Friends
+- Xender
+- Zapya
+
+NOTE: These database formats vary by version of OS and different vendors can place the databases in different places. Autopsy may not support all versions and vendors. 
+
+NOTE: This module is not exhaustive with its support for Android.  It was created as a starting point for others to contribute plug-ins for 3rd party apps.  See the <a href="http://sleuthkit.org/autopsy/docs/api-docs/latest/mod_mobile_page.html">Developer docs</a>  for information on writing modules. 
+
+
+Configuration
+=======
+
+There is no configuration required.
+
+Using the Module
+======
+
+Simply add your physical images or file system dumps as data sources and enable the Android Analyzer module.
+
+Ingest Settings
+------
+There are no runtime ingest settings required.
+
+Seeing Results
+------
+The results show up in the tree under "Results", "Extracted Content". The exact data extracted will vary but can include contacts, call logs, messages, and GPS entries.
+
+\image html android_analyzer_output.PNG
+
+
+
+*/

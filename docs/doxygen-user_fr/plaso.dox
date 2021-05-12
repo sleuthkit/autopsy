@@ -1,0 +1,22 @@
+/*! \page plaso_page Plaso
+
+[TOC]
+
+
+Plaso is a framework for running modules to extract timestamps for various types of files. The Plaso ingest module runs Plaso to generate events that are displayed in the Autopsy \ref timeline_page. For more information on Plaso, see <a href="https://plaso.readthedocs.io/en/latest/"> the documentation</a>.
+
+\section plaso_config Running the Module
+
+The Plaso ingest module runs dozens of individual parsers and can take a long time to run. In testing, the slowest parsers by far were <tt>winreg</tt>, <tt>pe</tt>, and <tt>chrome_cache</tt>. <tt>chrome_cache</tt> is always disabled as it duplicates events created by the \ref recent_activity_page. You can choose to enable the <tt>winreg</tt> and <tt>pe</tt> modules on the ingest module configuration panel.
+
+\image html plaso_config.png
+
+Plaso will only run on \ref ds_img "disk image data sources".
+
+\section plaso_results Viewing Results
+
+The Plaso events will be shown in the \ref timeline_page Timeline. Note that events created by Plaso are not displayed in the \ref tree_viewer_page.
+
+\image html plaso_timeline.png
+
+*/

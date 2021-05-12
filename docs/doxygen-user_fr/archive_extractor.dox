@@ -1,0 +1,47 @@
+/*! \page embedded_file_extractor_page Embedded File Extraction Module
+
+[TOC]
+
+\section embedded_files_overview What Does It Do
+
+
+The Embedded File Extractor module opens ZIP, RAR, other archive formats, Doc, Docx, PPT, PPTX, XLS, and XLSX and sends the derived files from those files back through the ingest pipeline for analysis.
+
+This module expands archive files to enable Autopsy to analyze all files on the system. It enables keyword search and hash lookup to analyze files inside of archives
+
+NOTE: Certain media content embedded inside Doc, Docx, PPT, PPTX, XLS, and XLSX might not be extracted.
+
+\section embedded_files_config Configuration
+
+There is no configuration required.
+
+\section embedded_files_usage Using the Module
+Select the checkbox in the Ingest Modules settings screen to enable the Archive Extractor.
+
+\subsection embedded_files_settings Ingest Settings
+There are no runtime ingest settings required.
+
+\subsection embedded_files_results Seeing Results
+Each file extracted shows up in the data source tree view as a child of the archive containing it, 
+
+\image html zipped_children_1.PNG
+<br>
+<br>
+and as an archive under "Views", "File Types", "Archives".
+\image html zipped_children_2.PNG
+
+\subsection embedded_files_encryption Encrypted Archives
+
+When the Embedded File Extractor module encounters an encrypted archive, it will generate a warning bubble in the bottom right of the main screen:
+
+\image html zipped_encryption_detected.png
+
+After ingest, you can attempt to decrypt these archives if you know the password. Find the archive (either in the \ref tree_viewer_page "tree view" or \ref result_viewer_page "result view") and right-click on it, then select "Unzip contents with password".
+
+\image html zipped_context_menu.png
+
+After entering the password, you can select which ingest modules to run on the newly extracted files. When finished, you can browse to the encrypted archive in the tree view to see the newly extracted files. If the archive was already open in the tree, you may have to close and open the case in order to see the new data.
+
+\image html zipped_tree.png
+
+*/
