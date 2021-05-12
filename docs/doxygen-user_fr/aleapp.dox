@@ -1,18 +1,18 @@
-/*! \page aleapp_page Android Analyzer (aLEAPP)
+﻿/*! \page aleapp_page Android Analyzer (aLEAPP) (Analyseur Android - aLEAPP)
 
 [TOC]
 
-\section aleapp_overview Overview
+\section aleapp_overview Aperçu
 
-The Android Analyzer ingest module runs aLEAPP (https://github.com/abrignoni/aLEAPP) and converts the results into results that can be viewed in Autopsy.
+Le module "Android Analyzer" exécute aLEAPP (https://github.com/abrignoni/aLEAPP) et convertit les retours en résultats qui peuvent être visualisés dans Autopsy.
 
-\section aleapp_config Using the Module
+\section aleapp_config Utilisation du module
 
-Select the checkbox in the Ingest Modules settings screen to enable the Android Analzyer (ALEAPP) module. The module will run on .tar/.zip files found in a \ref ds_log "logical files data source" or a \ref ds_img "disk image".
+Cochez la case dans l'écran de paramétrage des modules d'acquisition ("Configure Ingest Modules") pour activer le module Android Analyzer (aLEAPP). Le module fonctionnera sur les fichiers .tar/.zip trouvés dans des sources de données de type \ref ds_log "fichiers logiques" ou \ref ds_img "image disque".
 
-\section aleapp_results Seeing Results
+\section aleapp_results Voir les résultats
 
-Results from the Android Analyzer module will appear in the \ref tree_viewer_page under Results->Extracted Content.
+Les résultats du module Android Analyzer apparaîtront dans l'\ref tree_viewer_page sous Results->Extracted Content.
 
 \image html aleapp_main.jpg
 
