@@ -1,41 +1,41 @@
-/*! \page extension_mismatch_detector_page Extension Mismatch Detector Module
+﻿/*! \page extension_mismatch_detector_page Extension Mismatch Detector (Détecteur de discordance d'extension)
 
 [TOC]
 
 
-What Does It Do
+Qu'est ce que ça fait
 ========
 
-Extension Mismatch Detector module uses the results from the File Type Identification and flags files that have an extension not traditionally associated with the file's detected type. It ignores 'known' (NSRL) files. You can customize the MIME types and file extensions per MIME type in "Tools", "Options", "File Extension Mismatch".
+Le module "Extension Mismatch Detector" utilise les résultats de l'identification du type de fichier et marque les fichiers dont l'extension n'est pas traditionnellement associée au type de fichier détecté. Il ignore les fichiers "connus" (NSRL). Vous pouvez personnaliser les types MIME et les extensions de fichier par type MIME dans "Tools", "Options", "File Extension Mismatch".
 
-This detects files that someone may be trying to hide.
+Cela détecte les fichiers que quelqu'un tente peut-être de cacher.
 
 Configuration
 =======
-One can add and remove MIME types in the "Tools", "Options", "File Extension Mismatch" dialog box, as well as add and remove extensions to particular MIME types.
+On peut ajouter et supprimer des types MIME dans la boîte de dialogue "Tools", "Options", "File Extension Mismatch", ainsi qu'ajouter et supprimer des extensions à des types MIME particuliers.
 <br>
 \image html extension-mismatch-detected-configuration.PNG
 <br>
 
-If you'd like to contribute your changes back to the community, then you'll need to upload your updated %APPDATA%\\autopsy\\dev\\config\\mismatch_config.xml file by either:
-- Make a fork of the Github Autopsy repository, copy the new file into the src\\org\\sleuthkit\\autopsy\\fileextmismatch folder and submit a pull request
-- Attach the entire mismatch_config.xml file to a github issue.
+Si vous souhaitez apporter votre contribution à la communauté, vous devrez télécharger votre fichier %APPDATA%\\autopsy\\dev\\config\\mismatch_config.xml mis à jour puis, au choix:
+- Créer un "Fork" du dépôt Github d'Autopsy et copier le nouveau fichier dans le dossier src\\org\\sleuthkit\\autopsy\\fileextmismatch, avant de soumettre une "Pull Request"
+- Attacher l'intégralité du fichier mismatch_config.xml à une "Issue" (problème relevé) sur Github.
 
-Using the Module
+Utilisation du module
 ======
-Note that you can get a lot of false positives with this module. You can add your own rules to Autopsy to reduce unwanted hits.
+Notez que vous pouvez obtenir beaucoup de faux positifs avec ce module. Vous pouvez ajouter vos propres règles à Autopsy pour réduire les retours indésirables.
 
-Ingest Settings
+Paramètres d'intégration
 ------
 
-In the ingest settings, the user can choose whether to run on all files, all files except text files, or only multimedia or executable files. Additionally, the user can choose to skip all files without an extension, and to skip any known files identified by the hash lookup module, if it is enabled.
+Dans les paramètres des modules d'acquisition ("Configure Ingest Modules"), l'utilisateur peut choisir d'exécuter ce module sur tous les fichiers, tous les fichiers sauf les fichiers texte, ou uniquement les fichiers multimédias ou exécutables. En outre, l'utilisateur peut choisir d'ignorer tous les fichiers sans extension et d'ignorer tous les fichiers connus identifiés par le module "Hash Lookup" (module de recherche de hachage), s'il est activé.
 
 \image html extension-mismatch-detected-ingest-settings.PNG
 
 
-Seeing Results
+Voir les résultats
 ------
-Results are shown in the Results tree under "Extension Mismatch Detected".
+Les résultats apparaissent dans la zone Results de l'arborescence sous "Extension Mismatch Detected".
 
 \image html extension-mismatch-detected.PNG
 

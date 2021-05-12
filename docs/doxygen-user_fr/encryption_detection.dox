@@ -1,42 +1,42 @@
-/*! \page encryption_page Encryption Detection Module
+﻿/*! \page encryption_page Encryption Detection (Détection de chiffrement)
 
 [TOC]
 
 
-\section encrypt_overview Overview
+\section encrypt_overview Aperçu
 
-The Encryption Detection Module searches for files that could be encrypted using both a general entropy calculation and more specialized tests for certain file types. 
+Le module "Encryption Detection" recherche les fichiers qui pourraient être chiffrés en utilisant à la fois un calcul général d'entropie et des tests plus spécialisés pour certains types de fichiers.
 
-\section encrypt_running Running the module
+\section encrypt_running Lancement du module
 
-The module's settings can be configured at runtime. These settings only effect the tests that are based on entropy.
+Les paramètres du module peuvent être configurés lors de l'exécution. Ces paramètres n'affectent que les tests basés sur l'entropie.
 
 \image html encrypt_module.png
 
-Minimum entropy can be set higher or lower, depending on how many false hits are being produced. There is also an option to only run the test on files whose size is a multiple of 512, which is useful for finding certain encryption algorithms.
+L'entropie minimale peut être réglée à une valeur supérieure ou inférieure, en fonction du nombre de faux positifs produits. Il existe également une option permettant d'exécuter le test uniquement sur des fichiers dont la taille est un multiple de 512, ce qui est utile pour trouver certains algorithmes de chiffrement.
 
-The module looks for the following types of encryption:
+Le module recherche les types de chiffrement suivants:
 <ul>
-<li> Any file that has an entropy equal to or greater than the threshold in the module settings and that fits the file size constraints
-<li> Password protected Office files, PDF files, and Access database files
-<li> BitLocker volumes
-<li> SQLCipher (uses the minimum entropy from the module settings)
-<li> VeraCrypt (uses the minimum entropy from the module settings)
+<li> Tout fichier qui a une entropie égale ou supérieure au seuil fixé dans les paramètres du module et qui correspond aux contraintes de taille de fichier
+<li> Fichiers Office, PDF et fichiers de base de données Access protégés par mot de passe
+<li> Volumes BitLocker
+<li> SQLCipher (utilise l'entropie minimale des paramètres du module)
+<li> VeraCrypt (utilise l'entropie minimale des paramètres du module)
 </ul>
 
-\section encrypt_results Viewing results
+\section encrypt_results Voir les résultats
 
-Files that pass the tests are shown in the Results tree under "Encryption Detected" or "Encryption Suspected". Generally, if the test used involved looking for a 
-specific header/file structure, the result will be "Encryption Detected" and the type of encryption will be displayed in the Comment field. If the test was based on the entropy of the file,
-the result will be "Encryption Suspected" and the calculated entropy will be displayed in the Comment field.
+Les fichiers qui réussissent les tests de détection de chiffrement sont affichés dans la zone "Results" de l'arborescence sous "Encryption Detected" ou "Encryption Suspected". Généralement, si le test utilisé impliquait la recherche d'une
+structure d'en-tête/fichier spécifique, le résultat sera "Encryption Detected" et le type de chiffrement sera affiché dans la colonne "Comment". Si le test était basé sur l'entropie du fichier,
+le résultat sera "Encryption Suspected" et l'entropie calculée sera affichée dans la colonne "Comment".
 
 \image html encrypt_tree.png
 
-Each hit also generates an inbox message. These are viewed through the warning triangle near the top of the screen.
+Chaque découverte de suspicion de chiffrement génère également un message dans la boîte de notification. Ceux-ci sont indiqués grâce à un triangle d'avertissement près du haut de l'écran.
 
 \image html encrypt_inbox.png
 
-Selecting one of the encryption detection hits displays the calculated entropy of the file.
+La sélection de l'un des résultats de détection de chiffrement affiche l'entropie calculée du fichier.
 
 \image html encrypt_entropy.png
 
