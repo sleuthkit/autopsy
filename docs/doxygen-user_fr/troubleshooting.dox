@@ -1,77 +1,75 @@
-/*! \page troubleshooting_page Troubleshooting
+﻿/*! \page troubleshooting_page Dépannage
 
 [TOC]
 
 
-If you are experiencing an error, we encourage you to post on the forum (https://sleuthkit.discourse.group/), including as much information as possible: 
+Si vous rencontrez une erreur, nous vous encourageons à publier sur le forum (https://sleuthkit.discourse.group/), en précisant autant d'informations que possible: 
 <ul>
-<li>Your operating system and version of Autopsy
-<li>What led to the error. For example:
+<li>Votre système d'exploitation et la version d'Autopsy
+<li>Qu'est-ce qui a conduit à l'erreur. Par exemple:
 <ul>
-<li>What type of data source was being processed?
-<li>Which ingest modules were running? You can generate an \ref ingest_monitoring "ingest snapshot" to view the current ingest state.
-<li>Which specialized viewer were you using?
+<li>Quel type de source de données était en cours de traitement?
+<li>Quels modules d'acquisition étaient en cours d'exécution? Vous pouvez générer un \ref ingest_monitoring "instantané de la progression de l'acquisition" pour afficher l'état actuel de l'acquisition.
+<li>Quelle visionneuse spécialisée utilisiez-vous?
 </ul>
-<li>The error being displayed on screen (if applicable)
-<li>A \ref troubleshooting_stack "thread dump" or screenshot of the \ref ingest_monitoring "ingest snapshot" if Autopsy seems stuck
-<li>If there were any errors in the \ref troubleshooting_logs "logs"
+<li>L'erreur affichée à l'écran (le cas échéant)
+<li>Une \ref troubleshooting_stack "capture du thread d'activité" ou une capture écran de l'\ref ingest_monitoring "instantané de la progression de l'acquisition" si Autopsy semble bloqué
+<li>S'il y avait des erreurs dans les \ref troubleshooting_logs "logs"
 </ul>
 
-\section troubleshooting_specific_issues Specific Issues
+\section troubleshooting_specific_issues Problèmes spécifiques
+\subsection troubleshooting_fond_size Taille de police trop petite
 
-\subsection troubleshooting_fond_size Font Size Too Small
-
-In Windows, you can make the following changes if the application is hard to navigate in High DPI systems:
+Sous Windows, vous pouvez apporter les modifications suivantes s'il est difficile de naviguer dans l'application dans les systèmes à haute résolution d'écran:
 
 <ol>
-<li>Right-click on the application icon on your Desktop, Start Menu, etc.
-<li>Choose Properties.
-<li>Go to Compatibility tab.
-<li>Click "Change high DPI settings" button.
-<li>Select "Override high DPI scaling behavior".
-<li>Change the "Scaling performed by:" drop down box to "System".
-<li>Restart Autopsy.
+<li>Faites un clic droit sur l'icône de l'application sur votre bureau, menu Démarrer, etc...
+<li>Choisissez Propriétés.
+<li>Accédez à l'onglet Compatibilité.
+<li>Cliquez sur le bouton "Modifier les paramètres PPP élevés".
+<li>Sélectionnez "Remplacer le comportement de mise à l'échelle PPP élevé".
+<li>Modifiez dans la liste déroulante "Mise à l'échelle effectuée par:" sur "Système".
+<li>Redémarrez Autopsy.
 </ol>
 
-In Linux, you can supply the font size with "--fontsize XX" command line argument, but not all of the dialogs are correctly responsive and some of the text will get cut off.
+Sous Linux, vous pouvez fournir la taille de la police avec l'argument de ligne de commande "--fontsize XX", mais toutes les boîtes de dialogue ne répondent pas correctement et une partie du texte risque d'être coupée.
 
-\section troubleshooting_general General Troubleshooting
+\section troubleshooting_general Dépannage général
 
-\subsection troubleshooting_reset_ui Resetting the UI
+\subsection troubleshooting_reset_ui Réinitialiser l'interface utilisateur
 
-If the Autopsy window no longer looks like the default \ref uilayout_page (for example, if a viewer has disappeared or there is a strange empty space), you can reset it. To do this, go to Window->Reset Windows. This will cause Autopsy to restart. If you have a case open, it will reopen after the reset.
+Si la fenêtre d'Autopsy ne ressemble plus à la fenêtre par défaut : \ref uilayout_page (par exemple, si une visionneuse a disparu ou s'il y a un espace vide étrange), vous pouvez la réinitialiser. Pour ce faire, allez dans Window->Reset Windows. Cela entraînera le redémarrage d'Autopsy. Si vous avez un cas ouvert, il se rouvrira après la réinitialisation.
 
 \image html reset_windows.png
 
-If resetting the windows does not fix the problem, you may need to delete your user folder as described in the next section.
+Si la réinitialisation des fenêtres ne résout pas le problème, vous devrez peut-être supprimer votre dossier utilisateur comme décrit dans la section suivante.
 
-\subsection troubleshooting_user_folder Deleting the Autopsy User Folder
+\subsection troubleshooting_user_folder Suppression du dossier utilisateur dAutopsy
 
-If Autopsy starts behaving strangely, stops loading entirely, or menu items go missing, you probably need to delete your user folder. Doing so essenitally gives you a fresh installation. On Windows the user folder is located in "C:\Users\(user name)\AppData\Roaming\autopsy". 
-
-Note that if you delete this folder you will lose all your Autopsy settings including keyword lists, interesting file sets, and general configuration. If you have settings you want to keep you can try the following:
+Si Autopsy commence à se comporter de manière étrange, arrête complètement de se charger ou si des éléments de menu disparaissent, vous devrez probablement supprimer votre dossier utilisateur. Cela entrainera essentiellement une nouvelle installation. Sous Windows, le dossier utilisateur se trouve dans "C:\Users\(nom d'utilisateur)\AppData\Roaming\autopsy".
+Notez que si vous supprimez ce dossier, vous perdrez tous vos paramètres d'Autopsy, y compris les listes de mots clés, les ensembles de fichiers intéressants et la configuration générale. Si vous souhaitez conserver ces paramètres, vous pouvez faire ce qui suit:
 <ul>
-<li>Make a copy of the autopsy folder.
-<li>Delete the autopsy folder.
-<li>Open Autopsy to regenerate the folder with default settings.
-<li>Close Autopsy and copy over the old configuration files that look relevant. For example, if you're trying to restore your hash sets, you will want to copy back the "HashDatabases" folder and the "hashLookup.settings" file.
+<li>Faites une copie du dossier d'Autopsy.
+<li>Supprimer le dossier d'Autopsy.
+<li>Ouvrez Autopsy pour régénérer le dossier avec les paramètres par défaut.
+<li>Fermez Autopsy et copiez les anciens fichiers de configuration qui semblent pertinents. Par exemple, si vous souhaitez restaurer vos ensembles de hachage, vous pourrez recopier le dossier "HashDatabases" et le fichier "hashLookup.settings".
 </ul>
 
-Alternately, you could copy the fresh user folder somewhere, move your old version back, and replace folders until it works again. 
+Vous pouvez également copier le nouveau dossier utilisateur quelque part, déplacer votre ancienne version et remplacer les dossiers jusqu'à ce qu'il fonctionne à nouveau.
 
-\subsection troubleshooting_logs Viewing the Logs
+\subsection troubleshooting_logs Affichage des journaux (logs)
 
-The logs are generally the most helpful in figuring out why an error is occurring. There are two sets of logs - the system logs and the case logs. There is an option in the UI to open the log folder:
+Les journaux sont généralement les plus utiles pour déterminer pourquoi une erreur s'est produite. Il existe deux ensembles de journaux: les journaux système et les journaux de cas. Il existe une option dans l'interface utilisateur pour ouvrir le dossier des journaux:
 
 \image html troubleshooting_log_menu.png
 
-If you have a case open, clicking this will open the folder containing the case logs. If not, it will open the system log folder. You can also browse to these folders normally:
+Si vous avez un cas ouvert, cliquez sur "Help" puis "Open Log Folder" pour ouvrir le dossier contenant les journaux de cas. Sinon, ce sera le dossier des journaux système qui s'ouvrira. Vous pouvez également accéder à ces dossiers de manière classique:
 <ul>
-<li> Case logs: (case folder)\\Logs
-<li>System logs: C:\\Users\\(user name)\\AppData\\Roaming\\autopsy\\var\\log (on Windows)
+<li> Journaux de cas: (dossier du cas)\\Logs
+<li>Journaux système: C:\\Users\\(nom d'utilisateur)\\AppData\\Roaming\\autopsy\\var\\log (pour Windows)
 </ul>
 
-In either case, the log of interest is most likely "autopsy.log.0", although it could be one of the older versions if you've closed and reopened Autopsy since the error occurred. You're looking for entries starting with "SEVERE" and possibly "WARNING" if there are no severe errors. Note that it's not unusual to have many warnings in the log. This is an example of a severe error with a stack trace:
+Dans les deux cas, le journal probablement le plus intéressante est "autopsy.log.0", bien qu'il puisse s'agir de l'une des anciennes versions si vous avez fermé et réouvert Autopsy depuis que l'erreur s'est produite. Vous rechercherez des entrées commençant par "SEVERE" et éventuellement "WARNING" s'il n'y a pas d'erreurs graves. Notez qu'il n'est pas inhabituel d'avoir de nombreux avertissements dans le journal. Voici un exemple d'erreur grave avec une trace de pile:
 
 \verbatim
 Sep 23, 2020 9:48:24 AM org.sleuthkit.autopsy.casemodule.services.TagNameDefinition saveToCase
@@ -97,15 +95,15 @@ Caused by: java.sql.SQLException: ResultSet closed
 	... 10 more
 \endverbatim
 
-If the error message doesn't help you solve the problem yourself, please post to the <a href="https://sleuthkit.discourse.group/">forum</a> including the full stack trace (if available).
+Si le message d'erreur ne vous aide pas à résoudre le problème vous-même, veuillez poster sur le <a href="https://sleuthkit.discourse.group/">forum</a> y compris la trace de pile complète (si disponible).
 
-\subsection troubleshooting_stack Creating a Thread Dump
+\subsection troubleshooting_stack Création d'une capture du thread d'activité
 
-You can also generate a thread dump of the current state. This is useful if an ingest module or other process seems to be stuck. To generate a thread dump, go to "Help" then "Thread Dump" in the UI. 
+Vous pouvez également générer une capture du thread de l'état actuel. Ceci est utile si un module d'acquisition ou un autre processus semble être bloqué. Pour générer une capture de thread, allez sur "Help" puis "Thread Dump" dans l'interface utilisateur. 
 
 \image html troubleshooting_thread.png
 
-You'll then see a file similar to this in a text viewer:
+Vous verrez alors un fichier similaire à celui-ci dans une visionneuse de texte:
 
 \verbatim"Module-Actions" Id=222 RUNNABLE
 	at sun.management.ThreadImpl.getThreadInfo1(Native Method)
@@ -131,6 +129,6 @@ You'll then see a file similar to this in a text viewer:
 	at java.lang.Thread.run(Thread.java:748)
 \endverbatim
 
-If the thread dump says anything about a deadlock then that's the problem. Please make sure to post any deadlocks to the <a href="https://sleuthkit.discourse.group/">forum</a>. Even if not the thread dump could help diagnose your problem so consider including in your post.
+Si la capture de thread indique quelque chose à propos d'un blocage, cela vous indiquera d'où vient le problème. Veuillez signaler tout blocage sur le <a href="https://sleuthkit.discourse.group/">forum</a>. Même si cela ne vous semble pas être le cas, la capture de thread pourra vous aider à diagnostiquer votre problème, alors pensez à l'inclure dans votre message.
 
 */

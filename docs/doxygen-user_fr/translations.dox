@@ -1,39 +1,39 @@
-/*! \page translations_page Translating Documentation and the UI
+﻿/*! \page translations_page Traduire la documentation et l'interface utilisateur
 
 [TOC]
 
 
-The Autopsy user base is global. You can help out by translating the UI and this documentation. 
+La base d'utilisateurs d'Autopsy est globale. Vous pouvez contribuer en traduisant l'interface utilisateur et cette documentation.
 
-\section translations_doc Translating Documentation
+\section translations_doc Traduire la documentation
 
-This section outlines how to translate this user documentation. To translate, you will need:
-- A git account
-- Basic familiarity with git
-- Text editor
+Cette section explique comment traduire cette documentation utilisateur. Pour traduire, vous aurez besoin de:
+- Un compte Github
+- Des connaissances de base de Git
+- Un éditeur de texte
 
-The Autopsy documentation is created by [Doxygen](http://www.doxygen.nl/) from ".dox" text files in the [docs/doxygen-user](https://github.com/sleuthkit/autopsy/tree/develop/docs/doxygen-user) folder in the Github repository.  
+La documentation Autopsy est créée avec [Doxygen](http://www.doxygen.nl/) à partir de fichiers textes ".dox" dans le dossier [docs/doxygen-user](https://github.com/sleuthkit/autopsy/tree/develop/docs/doxygen-user) du dépôt Github.  
 
-The first step is to fork the [Autopsy Repository](https://github.com/sleuthkit/autopsy) into your Git account and make a clone of it into your environment so that you can make edits to the files.  
+La première étape consiste à créer un "Fork" du [dépôt Autopsy](https://github.com/sleuthkit/autopsy) dans votre compte Github et à en faire un clone dans votre environnement afin que vous puissiez apporter des modifications aux fichiers.
 
-As you are editing, you can review your documentation by installing Doxygen and running 'doxygen' from within the translations folder.   It will save the HTML to the 'user-docs' folder. 
+Lors de vos modifications, vous pouvez consulter votre documentation en installant Doxygen et en exécutant 'doxygen' à partir du dossier des traductions. Il enregistrera les pages HTML dans un dossier 'user-docs'.
 
-\subsection translations_doc_start Translating To a New Language
+\subsection translations_doc_start Traduire dans une nouvelle langue
 
-If there is not already documentation in a language, then you need to make a copy of the entire English 'doxygen-user' folder and name it 'doxygen-user_AB' where AB is replaced by the 2 character [country code] (http://www.lingoes.net/en/translator/langcode.htm).  For example, 'doxygen-user_fr' for French and 'doxygen-user_ja' for Japanese. 
+S'il n'y a pas encore de documentation dans une langue, vous devez faire une copie du dossier anglais entier 'doxygen-user' et le nommer 'doxygen-user_AB' où AB est remplacé par les deux caratères du [code pays] (http://www.lingoes.net/en/translator/langcode.htm).  Par exemple, 'doxygen-user_fr' pour le français et 'doxygen-user_ja' pour le japonnais. 
 
-Edit the Doxyfile to update the OUTPUT_LANGUAGE field.  For English it has:
+Modifiez le fichier Doxyfile pour mettre à jour le champ OUTPUT_LANGUAGE. Pour l'anglais, ce sera:
 
 \code
 OUTPUT_LANGUAGE        = English
 \endcode
 
-Now, simply start translating the English documents. 
+Maintenant, commencez simplement à traduire les documents en anglais.
 
-\subsection translations_doc_update Updating The Documentation
+\subsection translations_doc_update Mise à jour de la documentation
 
-When new releases are made and the English documentation is updated, the other languages should be updated as well. To determine what has changed:
-- First, determine when the last time the documentation was changed.  From a command line, you can change into the translated documentation folder and type:
+Lorsque de nouvelles versions sont publiées et que la documentation en anglais est mise à jour, les autres langues doivent également être mises à jour. Pour déterminer ce qui a changé:
+- Tout d'abord, déterminez la date de la dernière modification de la documentation. À partir d'une ligne de commande, vous pouvez accéder au dossier de documentation traduite et saisir:
 
 \code
     $ cd docs/doxygen-user_fr
@@ -45,9 +45,9 @@ When new releases are made and the English documentation is updated, the other l
         update to quick start
 \endcode    
 
-This shows you that commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1111 was the last translation update to occur for the French version. 
+Cela vous montre que le commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1111 était la dernière mise à jour de traduction pour la version française.
 
-- Next, determine what changed in the English version since then:
+- Ensuite, déterminez ce qui a changé dans la version anglaise depuis lors:
 
 \code
     $ git diff 94e4b1042af47908dd4a0b2959b3f6c3d4af1111 ../doxygen-user
@@ -63,65 +63,65 @@ index 83d3407e8..e8cd01c1b 100644
      + - Wireless networks are correlated on SSIDs, and come from the registry par
 \endcode
 
-- Update the translated documentation accordingly based on what changed in the English version.
+- Mettez à jour la documentation traduite en fonction de ce qui a changé dans la version anglaise.
 
-- If you do not get to complete all of the changes, you should create a TODO.txt file that lists what was not updated so that other people know that not everything was updated. 
+- Si vous ne parvenez pas à effectuer toutes les modifications, vous devez créer un fichier TODO.txt qui répertorie ce qui n'a pas été mis à jour afin que d'autres personnes sachent que tout n'a pas été réactualisé.
 
-\subsection translations_doc_commit Committing the Documentation
+\subsection translations_doc_commit Validation de la documentation
 
-You should submit a Github Pull Request when:
-- You complete a language.
-- You don't have time to do more work, but want to submit what you did.
+Vous devez soumettre une "Pull Request" sur Github lorsque:
+- Vous avez complété une langue.
+- Vous n'avez pas eu le temps de faire plus de travail, mais souhaitez soumettre ce que vous avez fait.
 
-To get the code committed, send a [pull request](https://help.github.com/articles/about-pull-requests/) to the main Autopsy repository. 
+Pour que le code soit validé, envoyez une [Pull Request](https://help.github.com/articles/about-pull-requests/) sur le dépôt principal d'Autopsy. 
 
-\section translations_ui Translating The UI
-This section outlines how to translate the UI. To do this, you will need:
+\section translations_ui Traduire l'interface utilisateur
+Cette section explique comment traduire l'interface utilisateur. Pour ce faire, vous aurez besoin de:
 
-- A git account
-- Basic familiarity with git
-- A full Autopsy development environment. 
+- Un compte Github
+- Des connaissances de base de Git
+- Un environnement complet de développement d'Autopsy.
 
-\subsection translations_ui_autopsy Autopsy Development Environment
+\subsection translations_ui_autopsy Environnement de développement d'Autopsy
 
-You will need to have a full Autopsy development environment setup so that you can launch Autopsy with your translations and verify it is in the correct location and doesn't get cropped.   
+Vous aurez besoin d'une configuration complète de l'environnement de développement d’Autopsy afin de pouvoir lancer le logiciel avec vos traductions et vérifier qu'elles se trouvent au bon emplacement et qu'elles ne sont pas rognées.  
 
-You can find instructions for doing this in [BUILDING.txt](https://github.com/sleuthkit/autopsy/blob/develop/BUILDING.txt). 
+Vous pourrez trouver des instructions pour ce faire dans le fichier [BUILDING.txt](https://github.com/sleuthkit/autopsy/blob/develop/BUILDING.txt). 
 
-\subsection translations_ui_strings Where The English Strings Are Stored
+\subsection translations_ui_strings Où sont stockées les chaînes de caractères anglaises
 
-Autopsy uses two different methods for storing the English versions of the UI strings.  Some are stored in Bundle.properties files and others are stored in the code as \@Message annotations.  The annotations make it harder for the code to be translated because translators would need to look in two places, but makes development easier. 
+Autopsy utilise deux méthodes différentes pour stocker les chaînes de caractères anglaises de l'interface utilisateur. Certaines sont stockées dans des fichiers Bundle.properties et d'autres sont stockées dans le code sous forme d'annotations \@Message. Les annotations compliquent la traduction du code car les traducteurs doivent chercher à deux endroits, mais cela facilite le développement.
 
-To make translations easier, we've added some logic into our build process to merge the various strings together into a single place. When the Autopsy code is compiled, it merges the contents of the annotations and the Bundle.properties files into a single file named Bundle.properties-MERGED.  One of these files exists for each Java package. 
+Pour faciliter les traductions, nous avons ajouté une logique dans notre processus de construction en fusionnant les différentes chaînes en un seul endroit. Lorsque le code d'Autopsy est compilé, il fusionne le contenu des annotations et des fichiers Bundle.properties dans un seul fichier nommé Bundle.properties-MERGED. Un de ces fichiers existe pour chaque package Java. 
 
-Let's look at an example in the corecomponents package. Note that some of these links may not be exactly correct once these files are updated and the documentation is not updated, but they serve as a basic reference): 
-- There is a [Bundle.properties](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle.properties) file.  At the time of this writing, there are 230 lines in that file.
-- In that same package, the [AutopsyOptionsPanel.java](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/AutopsyOptionsPanel.java#L53) class has some strings defined as \@Message annotations. 
-- There is a [Bundle.properties-MERGED](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle.properties-MERGED) file that contains the strings from both Bundle.properties and the annotations. At this time of this writing, that file has 277 lines. 
+Voici un exemple dans le package corecomponents (Notez que certains de ces liens peuvent ne pas être tout à fait corrects si ces fichiers ont été mis à jour et que la documentation ne l’a pas été, mais ils servent de référence de base):
+- Il existe un fichier [Bundle.properties](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle.properties).  Au moment où cette documentation a été écrite, il y avait 230 lignes dans ce fichier.
+- Dans ce même package, la classe [AutopsyOptionsPanel.java](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/AutopsyOptionsPanel.java#L53) contient des chaînes de caractères définies au niveau des annotations \@Message. 
+- Il existe un fichier [Bundle.properties-MERGED](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle.properties-MERGED) qui contient les chaînes de caractères de Bundle.properties ainsi que les annotations. Au moment de la rédaction de cet article, ce fichier comportait 277 lignes.
 
-\subsection translations_ui_translation Where The Translated Strings Are Stored
+\subsection translations_ui_translation Où les chaînes de caractères traduites sont stockées
 
-Each Java package should have a Bundle_AB.properties file that stores the translated text.  The AB is replaced by the 2 character [country code] (http://www.lingoes.net/en/translator/langcode.htm).  Such as Bundle_fr.properties for French or Bundle_ja.properties for Japanese. 
+Chaque package Java doit avoir un fichier Bundle_AB.properties qui stocke le texte traduit. AB doit être remplacé par les deux caractères du [code pays] (http://www.lingoes.net/en/translator/langcode.htm), comme Bundle_fr.properties pour le français ou Bundle_ja.properties pour le japonnais. 
 
-As an example, you can see the Japanese translation of the previous corecomponents package in [Bundle_ja.properties](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle_ja.properties). 
+À titre d'exemple, vous pouvez voir la traduction japonaise du package corecomponents précédemment cité dans [Bundle_ja.properties](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle_ja.properties). 
 
-This file needs to contain all of the strings for that language.  It needs to be based off of the Bundle.properties-MERGED file, not the Bundle.properties file (which does not contain all of the strings). 
-
-
-
-\subsection translations_ui_start Translating To a New Language
-
-If there is not already documentation in a language, then you need to:
-- Go into each package
-- Copy the Bundle.properties-MERGED file to Bundle_XX.properties file where XX is replaced by the language code. 
-- Edit the Bundle_XX.properties file and translate the English strings. 
+Ce fichier doit contenir toutes les chaînes de caractères de cette langue. Il doit être basé sur le fichier Bundle.properties-MERGED, et non sur le fichier Bundle.properties (qui ne contient pas toutes les chaînes).
 
 
-\subsection translations_ui_update Updating The Translations
 
-When new releases are made and the English UI is updated, the other languages should be updated as well. To determine what has changed:
+\subsection translations_ui_start Traduire dans une nouvelle langue
 
-- First, determine when the last time the translated file was changed.  From a command line, you can change into the package folder and type:
+S'il n'y a pas déjà de traduction dans une langue, vous devez:
+- aller dans chaque paquet
+- copier le fichier Bundle.properties-MERGED dans le fichier Bundle_XX.properties où XX est remplacé par le code de langue.
+- modifier le fichier Bundle_XX.properties et traduire les chaînes de caractères en anglais.
+
+
+\subsection translations_ui_update Mise à jour des traductions
+
+Lorsque de nouvelles versions sont publiées et que l'interface utilisateur anglaise est mise à jour, les autres langues doivent également être mises à jour. Pour déterminer ce qui a changé:
+
+- Tout d'abord, déterminez la date de la dernière modification du fichier traduit. À partir d'une ligne de commande, vous pouvez accéder au dossier du package et taper:
 
 \code
     $ cd Core/src/org/sleuthkit/autopsy/corecomponents
@@ -131,9 +131,9 @@ When new releases are made and the English UI is updated, the other languages sh
     Date:   Tue Jan 1 22:56:09 2019 -0500
 \endcode    
 
-This shows you that commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1333 was the last translation update to occur for the Japanese version. 
+Cela vous montre que le commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1333 était la dernière mise à jour de traduction pour la version japonaise.
 
-- Next, determine what changed in the English version since then:
+- Ensuite, déterminez ce qui a changé dans la version anglaise depuis lors:
 
 \code
     $ git diff 94e4b1042af47908dd4a0b2959b3f6c3d4af1333 Bundle.properties-MERGED
@@ -141,17 +141,17 @@ This shows you that commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1333 was the last
     +AutopsyOptionsPanel.restartNecessaryWarning.text=A restart is necessary for any memory changes to take effect.
 \endcode
 
-- Update the strings in Bundle_ja.properties appropriately based on what was added, removed, or changed. 
+- Mettez à jour les chaînes de caractères de Bundle_ja.properties de manière appropriée, en fonction de ce qui a été ajouté, supprimé ou modifié.
 
-- If you do not get to complete all of the changes, you should create a TODO_xx.txt file that lists what was not updated so that other people know that not everything was updated. 
+- Si vous ne parvenez pas à effectuer toutes les modifications, vous devez créer un fichier TODO_xx.txt qui répertorie ce qui n'a pas été mis à jour afin que d'autres personnes sachent que tout n'a pas été réactualisé.
 
-\subsection translations_ui_commit Committing the Documentation
+\subsection translations_ui_commit Validation de la documentation
 
-You should submit a Github Pull Request when:
-- You complete a language.
-- You don't have time to do more work, but want to submit what you did.
+Vous devez soumettre une "Pull Request" sur Github lorsque:
+- Vous avez complété une langue.
+- Vous n'avez pas eu le temps de faire plus de travail, mais souhaitez soumettre ce que vous avez fait.
 
-To get the code committed, send a [pull request](https://help.github.com/articles/about-pull-requests/) to the main Autopsy repository. 
+Pour que le code soit validé, envoyez une [Pull Request](https://help.github.com/articles/about-pull-requests/) sur le dépôt principal d'Autopsy. 
 
 
 */
