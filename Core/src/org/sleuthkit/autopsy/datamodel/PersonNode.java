@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,16 +45,21 @@ import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A node to be displayed in the UI tree for a person and persons grouped in
- * this host.
+ * A main tree view node that represents a person in a case. Its child nodes, if
+ * any, represent hosts in the case. There must be at least one person in a case
+ * for the person nodes layer to appear. If the persons layer is present, any
+ * hosts that are not associated with a person are grouped under an "Unknown
+ * Persons" person node.
  */
 @NbBundle.Messages(value = {"PersonNode_unknownPersonNode_title=Unknown Persons"})
-public class PersonGroupingNode extends DisplayableItemNode {
+public class PersonNode extends DisplayableItemNode {
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/person.png";
-    
+
     /**
-     * Returns the id of an unknown persons node.  This can be used with a node lookup.
+     * Returns the id of an unknown persons node. This can be used with a node
+     * lookup.
+     *
      * @return The id of an unknown persons node.
      */
     public static String getUnknownPersonId() {
@@ -68,14 +73,13 @@ public class PersonGroupingNode extends DisplayableItemNode {
 
         private static final Logger logger = Logger.getLogger(PersonChildren.class.getName());
 
-        private static final Set<Case.Events> CHILD_EVENTS = EnumSet.of(Case.Events.HOSTS_ADDED, 
-                Case.Events.HOSTS_ADDED, 
-                Case.Events.HOSTS_DELETED, 
-                Case.Events.PERSONS_UPDATED,
+        private static final Set<Case.Events> HOST_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.HOSTS_ADDED,
+                Case.Events.HOSTS_ADDED,
+                Case.Events.HOSTS_DELETED,
                 Case.Events.HOSTS_ADDED_TO_PERSON,
                 Case.Events.HOSTS_REMOVED_FROM_PERSON);
-        
-        private static final Set<String> CHILD_EVENTS_STR = CHILD_EVENTS.stream()
+
+        private static final Set<String> HOST_EVENTS_OF_INTEREST_NAMES = HOST_EVENTS_OF_INTEREST.stream()
                 .map(ev -> ev.name())
                 .collect(Collectors.toSet());
 
@@ -91,13 +95,18 @@ public class PersonGroupingNode extends DisplayableItemNode {
         }
 
         /**
-         * Listener for handling adding and removing host events.
+         * Listener for application events that are published when hosts are
+         * added to or deleted from a case, and for events published when the
+         * associations between persons and hosts change. If the user has
+         * selected the group by person/host option for the main tree view,
+         * these events mean that person nodes in the tree need to be refreshed
+         * to reflect the structural changes.
          */
         private final PropertyChangeListener hostAddedDeletedPcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType != null && CHILD_EVENTS_STR.contains(eventType)) {
+                if (eventType != null && HOST_EVENTS_OF_INTEREST_NAMES.contains(eventType)) {
                     refresh(true);
                 }
             }
@@ -105,12 +114,12 @@ public class PersonGroupingNode extends DisplayableItemNode {
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(CHILD_EVENTS, hostAddedDeletedPcl);
+            Case.addEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, hostAddedDeletedPcl);
         }
 
         @Override
         protected void removeNotify() {
-            Case.removeEventTypeSubscriber(CHILD_EVENTS, hostAddedDeletedPcl);
+            Case.removeEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, hostAddedDeletedPcl);
         }
 
         @Override
@@ -141,7 +150,8 @@ public class PersonGroupingNode extends DisplayableItemNode {
     private final Long personId;
 
     /**
-     * Listener for handling person change events.
+     * Listener for application events that are published when the properties of
+     * persons in the case change.
      */
     private final PropertyChangeListener personChangePcl = new PropertyChangeListener() {
         @Override
@@ -163,6 +173,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
      * Gets the display name for this person or "Unknown Persons".
      *
      * @param person The person.
+     *
      * @return The non-empty string for the display name.
      */
     private static String getDisplayName(Person person) {
@@ -176,17 +187,17 @@ public class PersonGroupingNode extends DisplayableItemNode {
      *
      * @param person The person record to be represented.
      */
-    PersonGroupingNode(Person person) {
+    PersonNode(Person person) {
         this(person, getDisplayName(person));
     }
 
     /**
      * Constructor.
      *
-     * @param person The person.
+     * @param person      The person.
      * @param displayName The display name for the person.
      */
-    private PersonGroupingNode(Person person, String displayName) {
+    private PersonNode(Person person, String displayName) {
         super(Children.create(new PersonChildren(person), false),
                 person == null ? Lookups.fixed(displayName) : Lookups.fixed(person, displayName));
         super.setName(displayName);

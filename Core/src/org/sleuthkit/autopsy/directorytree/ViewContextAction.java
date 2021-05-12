@@ -49,7 +49,7 @@ import org.sleuthkit.autopsy.datamodel.ContentNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.DataSourcesByTypeNode;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.datamodel.PersonGroupingNode;
+import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -330,7 +330,7 @@ public class ViewContextAction extends AbstractAction {
         } else if (node.getLookup().lookup(Host.class) != null || 
                 node.getLookup().lookup(Person.class) != null || 
                 DataSourcesByTypeNode.getNameIdentifier().equals(node.getLookup().lookup(String.class)) || 
-                PersonGroupingNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+                PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
             Children children = node.getChildren();
             Node[] childNodes = children == null ? null : children.getNodes();
             if (childNodes == null) {

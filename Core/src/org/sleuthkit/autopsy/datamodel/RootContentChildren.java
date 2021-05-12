@@ -187,7 +187,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(PersonGrouping personGrouping) {
-            return new PersonGroupingNode(personGrouping.getPerson());
+            return new PersonNode(personGrouping.getPerson());
         }
 
         @Override

@@ -596,7 +596,7 @@ public class Case {
         
         @Subscribe 
         public void publisHostsRemovedFromPersonEvent(TskEvent.HostsRemovedFromPersonTskEvent event) {
-            eventPublisher.publish(new HostsRemovedFromPersonEvent(event.getPerson(), event.getHosts()));            
+            eventPublisher.publish(new HostsRemovedFromPersonEvent(event.getPerson(), event.getHostIds()));            
         }
         
     }
