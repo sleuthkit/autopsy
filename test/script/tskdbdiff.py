@@ -428,7 +428,7 @@ class TskGuidUtils:
         ret_dict = {}
         for row in cursor:
             # concatenate value rows with delimiter filtering out any null values.
-            ret_dict[row[0]] = delim.join(filter(lambda col: col is not None, [str(col) for col in row[1:]]))
+            ret_dict[row[0]] = delim.join([str(col) for col in filter(lambda col: col is not None, row[1:])])
 
         return ret_dict
 
