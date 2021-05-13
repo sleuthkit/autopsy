@@ -380,13 +380,12 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         int totalCount = 0;
         Set<String> dataSources = new HashSet<>();
         if (CentralRepository.isEnabled()) {
-
             try {
-                List<CorrelationAttributeInstance> instances;
-                instances = CentralRepository.getInstance().getArtifactInstancesByTypeValue(aType, value);
+                correlationAttributes.addAll(CentralRepository.getInstance().getArtifactInstancesByTypeValue(aType, value));
                 HashMap<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap = new HashMap<>();
                 String caseUUID = Case.getCurrentCase().getName();
-                for (CorrelationAttributeInstance artifactInstance : instances) {
+                // get the attributes we can correlate on
+                for (CorrelationAttributeInstance artifactInstance : correlationAttributes) {
 
                     // Only add the attribute if it isn't the object the user selected.
                     // We consider it to be a different object if at least one of the following is true:
@@ -395,10 +394,9 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     // - the data source device ID is different
                     // - the file path is different
                     if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
-                            || (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
-                            || (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                            || (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
-                        correlationAttributes.add(artifactInstance);
+                            && (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
+                            && (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
+                            && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {                     
                         continue;
                     }
                     OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, aType, value);
@@ -510,7 +508,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      * artifact. If the central repo is not enabled, this will only return files
      * from the current case with matching MD5 hashes.
      *
-     * @param corAttr        CorrelationAttribute to query for
+     * @param corAttr CorrelationAttribute to query for
      *
      * @return A collection of correlated artifact instances
      */
@@ -533,9 +531,9 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     // - the data source device ID is different
                     // - the file path is different
                     if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
-                            || (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
-                            || (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                            || (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
+                            && (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
+                            && (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
+                            && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
                         continue;
                     }
                     OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
