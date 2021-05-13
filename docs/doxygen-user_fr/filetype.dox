@@ -1,14 +1,14 @@
-/*! \page file_type_identification_page File Type Identification Module
+/*! \page file_type_identification_page File Type Identification (Identification du type de fichier)
 
 [TOC]
 
 
-What Does It Do
+Qu'est ce que ça fait
 ========
 
-The File Type ID module identifies files based on their internal signatures and does not rely on file extensions.  Autopsy uses the <a href="http://tika.apache.org/">Tika</a> library to do its primary file ID detection and that can be customized with user-defined rules.
+Le module "File Type Identification" identifie les fichiers en fonction de leurs signatures internes et ne repose pas sur les extensions de fichier. Autopsy utilise la bibliothèque <a href="http://tika.apache.org/">Tika</a> pour faire la principale détection d'identification de fichier, et ceci peut être personnalisable avec des règles définies par l'utilisateur.
 
-You should enable this module because many other modules depend on its results to determine if they should analyze a file.  Some examples include:
+Vous devez activer ce module car de nombreux autres modules dépendent de ses résultats pour déterminer s'ils doivent analyser un fichier. Voici quelques exemples de modules dépendant de ce dernier:
 
 - \subpage extension_mismatch_detector_page
 - \subpage keyword_search_page
@@ -17,30 +17,30 @@ You should enable this module because many other modules depend on its results t
 Configuration
 =======
 
-You do not need to configure anything with this module unless you want to define your own types.  To define your own types, go to "Tools", "Options", "File Type Id" panel. 
+Vous n'avez pas besoin de configurer quoi que ce soit pour ce module, sauf si vous souhaitez définir vos propres types. Pour définir vos propres types, allez dans le panneau "Tools", "Options", "File Types". 
 
-From there, you can define rules based on the offset of the signature and if the signature is a byte sequence of an ASCII string.
+À partir de là, vous pouvez définir des règles basées sur l'offset de la signature et si la signature est une séquence d'octets d'une chaîne ASCII.
 
 \image html filetype.PNG
 
-Using the Module
+Utilisation du module
 ======
 
-Ingest Settings
+Paramètres d'intégration
 ------
-There are no run-time settings for this module when you run it on
-a data source.  All user-defined and Tika rules are always applied.
+Il n'y a pas de paramètres d'exécution pour ce module lorsque vous l'exécutez sur
+une source de données.  Toutes les règles définies par l'utilisateur et celles de Tika sont toujours appliquées.
 
 
-Seeing Results
+Voir les résultats
 ------
 
-The results can be seen in the views area of the tree, under Views->File Types->By MIME Type.
+Les résultats apparaissent dans l'arborescence, sous Views->File Types->By MIME Type.
 
 \image html mime-type-tree.PNG
 
-Note that only user-defined MIME types of the form  (media type)/(media subtype) will be displayed in the tree.
+Notez que seuls les types MIME définis par l'utilisateur sous la forme (type de fichier)/(sous-type de fichier) seront affichés dans l'arborescence.
 
-To see the file type of an individual file, view the "Results" tab in the lower right when you navigate to the file. You should see a page in there that mentions the file type.
+Pour voir le type d'un fichier particulier, affichez l'onglet "File Metadata" en bas à droite lorsque vous accédez au fichier. Vous devriez voir une page qui mentionne le type de ce fichier.
 
 */

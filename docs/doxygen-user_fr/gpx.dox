@@ -1,11 +1,11 @@
-/*! \page gpx_page GPX Analyzer
+/*! \page gpx_page GPX Parser (Analyseur GPX)
 
 [TOC]
 
 
-\section gpx_overview Overview
+\section gpx_overview Aperçu
 
-The GPX Analyzer modules allows you to import GPS data from a GPX file. Information on the GPX format can be found <a href="https://www.topografix.com/gpx.asp">here</a>. The following is a short sample of a GPX file:
+Le module "GPX Parser" vous permettent d'importer des données GPS à partir d'un fichier GPX. Vous trouverez <a href="https://www.topografix.com/gpx.asp">ici</a> des informations sur le format GPX. Voici un court exemple de fichier GPX:
 
 \verbatim
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
@@ -37,16 +37,16 @@ The GPX Analyzer modules allows you to import GPS data from a GPX file. Informat
 </gpx>
 \endverbatim
 
-\section gpx_config Running the Module
+\section gpx_config Exécution du module
 
-To enable the GPX Analyzer ingest module select the checkbox in the \ref ingest_configure "Ingest Modules configuration screen". 
+Pour activer le module d'acquisition "GPX Parser", cochez la case dans \ref ingest_configure "l'écran de configuration des modules d'acquisition" ("Configure Ingest Modules"). 
 
-\section gpx_results Viewing Results
+\section gpx_results Affichage des résultats
 
-Results are show in the Results tree under "Extracted Content". The GPX data types "wptType", "rteType", and "trkType" produce results of type GPS Bookmark, GPS Route, and GPS Track, respectively.
+Les résultats sont affichés dans l'arborescence sous "Extracted Content". Les types de données GPX "wptType", "rteType" et "trkType" produisent respectivement des résultats de type GPS Bookmarks (signet), GPS Route (route) et GPS Track (traces).
 
 \image html gpx_results.png
 
-GPS results can also be seen in the \ref geolocation_page window and the KML Report.
+Les résultats GPS peuvent également être consultés dans la fenêtre \ref geolocation_page et dans le rapport KML.
 
 */
