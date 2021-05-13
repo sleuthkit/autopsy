@@ -742,7 +742,7 @@ class ExtractRegistry extends Extract {
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
-                            for (Map.Entry<String, String> userMap : userNameMap.entrySet()) { 
+                            for (Map.Entry<String, String> userMap : getUserNameMap().entrySet()) { 
                                 String sid = "";
                                 try{
                                     sid = userMap.getKey();
@@ -1112,17 +1112,6 @@ class ExtractRegistry extends Extract {
                 accountMgr.newOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
                 updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
             }
-            
-            // Get a mapping of user sids to user names and save globally so it can be used for other areas
-            // of the registry, ie: BAM key
-            try {
-                userNameMap = makeUserNameMap(dataSource);
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to create OS Account user name map", ex);
-                // This is not the end of the world we will just continue without 
-                // user names
-                userNameMap = new HashMap<>();
-            }
             return true;
         } catch (FileNotFoundException ex) {
             logger.log(Level.WARNING, "Error finding the registry file.", ex); //NON-NLS
@@ -1257,7 +1246,7 @@ class ExtractRegistry extends Extract {
             // We can add the S- back to the string that we split on since S- is a valid beginning of a User SID
             String fileNameSid[] = tokens[4].split("\\s+\\(S-");
             String userSid = "S-" + fileNameSid[1].substring(0, fileNameSid[1].length() - 1);
-            String userName = userNameMap.get(userSid);
+            String userName = getUserNameMap().get(userSid);
             if (userName == null) {
                 userName = userSid;
             }
@@ -1733,6 +1722,28 @@ class ExtractRegistry extends Extract {
         }
 
         return map;
+    }
+    
+    /**
+     * Returns a mapping of user sids to user names.
+     * 
+     * @return username man or empty list if none where found.
+     */
+    private Map<String, String> getUserNameMap() {
+        if(userNameMap == null) {
+            // Get a mapping of user sids to user names and save globally so it can be used for other areas
+            // of the registry, ie: BAM key
+            try {
+                userNameMap = makeUserNameMap(dataSource);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to create OS Account user name map", ex);
+                // This is not the end of the world we will just continue without 
+                // user names
+                userNameMap = new HashMap<>();
+            }
+        }
+        
+        return userNameMap;
     }
 
     /**
