@@ -147,7 +147,6 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                                 new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
                                 .getAnalysisResult();
 
-                        artifact.addAttributes(attributes);
                         try {
 
                             // Post thet artifact to the blackboard.
