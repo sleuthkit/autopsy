@@ -397,11 +397,10 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
                             && (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
                             && (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                            && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {   
-                            //because we are only correlating on one type we can add that only when everything is the same
-                            correlationAttributes.add(artifactInstance);
+                            && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
                         continue;
                     }
+                    correlationAttributes.add(artifactInstance);
                     OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, aType, value);
                     UniquePathKey uniquePathKey = new UniquePathKey(newNode);
                     nodeDataMap.put(uniquePathKey, newNode);
