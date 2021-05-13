@@ -381,11 +381,12 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         Set<String> dataSources = new HashSet<>();
         if (CentralRepository.isEnabled()) {
             try {
-                correlationAttributes.addAll(CentralRepository.getInstance().getArtifactInstancesByTypeValue(aType, value));
+                List<CorrelationAttributeInstance> instances;
+                instances = CentralRepository.getInstance().getArtifactInstancesByTypeValue(aType, value);
                 HashMap<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap = new HashMap<>();
                 String caseUUID = Case.getCurrentCase().getName();
                 // get the attributes we can correlate on
-                for (CorrelationAttributeInstance artifactInstance : correlationAttributes) {
+                for (CorrelationAttributeInstance artifactInstance : instances) {
 
                     // Only add the attribute if it isn't the object the user selected.
                     // We consider it to be a different object if at least one of the following is true:
@@ -396,7 +397,9 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
                             && (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
                             && (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                            && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {                     
+                            && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {   
+                            //because we are only correlating on one type we can add that only when everything is the same
+                            correlationAttributes.add(artifactInstance);
                         continue;
                     }
                     OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, aType, value);
