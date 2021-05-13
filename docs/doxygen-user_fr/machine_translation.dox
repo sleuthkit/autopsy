@@ -1,13 +1,13 @@
-/*! \page machine_translation_page Machine Translation
+﻿/*! \page machine_translation_page Traduction automatique
 
 [TOC]
 
 
-You can configure a machine translation service to use with Autopsy. If one is configured, you will be able to translate text in the \ref content_viewer_page and file names in the \ref result_viewer_page and \ref tree_viewer_page.
+Vous pouvez configurer un service de traduction automatique à utiliser avec Autopsy. Si un service est configuré, vous pourrez traduire du texte dans la \ref content_viewer_page ainsi que les noms de fichiers dans la \ref result_viewer_page et l'\ref tree_viewer_page.
 
 \section mt_config Configuration
 
-To set up a machine translation service, go to Options->Tools and then select the Machine Translation tab. Select the service you want to use from the drop down menu at the top. You will have to set up an account with either Bing or Google and then enter account information.
+Pour configurer un service de traduction automatique, accédez à Options->Tools puis sélectionnez l'onglet "Machine Translation". Sélectionnez le service que vous souhaitez utiliser dans le menu déroulant en haut. Vous devrez créer un compte avec Bing ou Google, puis entrer les informations de compte.
 <ul>
 <li> Bing Translate: <a href="https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-text-how-to-signup">https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-text-how-to-signup</a>
 <li> Google Translate: <a href="https://cloud.google.com/iam/docs/creating-managing-service-account-keys">https://cloud.google.com/iam/docs/creating-managing-service-account-keys</a>
@@ -15,47 +15,47 @@ To set up a machine translation service, go to Options->Tools and then select th
 
 \image html mt_config.png
 
-Each service will require slightly different configuration steps. After setting everything up, you can run a quick check that the service is set up correctly using the "Test" button.
+Chaque service nécessitera des étapes de configuration légèrement différentes. Après avoir tout configuré, vous pouvez exécuter une vérification rapide pour contrôler si le service est correctement configuré en utilisant le bouton "Test".
 
-The checkbox at the bottom allows you to enable or disable optical character recognition (OCR). When enabled, if you select an image in the \ref mt_content_viewer "content viewer" Autopsy will use OCR to attempt to extract text to be translated. Instructions for installing OCR packages for different languages can be found on the \ref keyword_search_ocr_config "Keyword Search page".
+La case à cocher en bas vous permet d'activer ou de désactiver la reconnaissance optique de caractères (OCR). Lorsqu'elle est activée, si vous sélectionnez une image dans la \ref mt_content_viewer "visionneuse de contenu", Autopsy utilisera l'OCR pour tenter d'extraire le texte à traduire. Les instructions d'installation des packages OCR pour différentes langues se trouvent sur la page \ref keyword_search_ocr_config "Recherches par mots clés (Keyword Search)".
 
-\section mt_file_names Translating File Names
+\section mt_file_names Traduction des noms de fichiers
 
-You can use machine translation to automatically translate file and folder names, such as the ones seen below:
+Vous pouvez utiliser la traduction automatique pour traduire automatiquement les noms de fichiers et de dossiers, tels que ceux présentés ci-dessous:
 
 \image html mt_file_name_original.png
 
-To enable file name translation, go to the \ref view_options_page and check the box under "Translate Text".
+Pour activer la traduction des noms de fichiers, accédez à la page \ref view_options_page et cochez la case sous "Translate Text".
 
 \image html mt_file_name_enable.png
 
-Once enabled, the translated versions of the file and folder names will be shown in the \ref tree_viewer_page and in the first column of the \ref result_viewer_page. The original name will be displayed in the new "Original Name" column.
+Une fois activée, les versions traduites des noms de fichier et de dossier seront affichées dans l'\ref tree_viewer_page et dans la première colonne de la \ref result_viewer_page. Le nom d'origine sera affiché dans la nouvelle colonne "Original Name".
 
 \image html mt_file_names_translated.png
 
-\section mt_content_viewer Translating File and Message Content
+\section mt_content_viewer Traduction du contenu des fichiers et des messages
 
-After you set up a machine translation service, the Translation tab under the Text tab in the Content Viewer will be active. The Translation tab allows you to use your service to translate the beginning of a file. For example, you might see the following in the default Indexed Text tab:
+Une fois que vous avez configuré un service de traduction automatique, le sous-onglet "Translation" sous l'onglet "Text" de la visionneuse de contenu sera activé. L'onglet "Translation" vous permet d'utiliser votre service pour traduire le début d'un fichier. Par exemple, vous pouvez voir par défaut ce qui suit dans l'onglet "Indexed Text":
 
 \image html mt_content_viewer_untranslated_text.png
 
-Switching to the Translation tab will display the results of running the text through the machine translation service.  
+Passer à l'onglet "Translation" affichera le texte traduit via le service de traduction automatique. 
 
 \image html mt_content_viewer_translated.png
 
-Machine translation also works for messages. To translate a message, select the "Text" tab above the message content.
+La traduction automatique fonctionne également pour les messages. Pour traduire un message, sélectionnez l'onglet "Text" au-dessus du contenu du message.
 
 \image html mt_message_orig.png
 
-Then use the drop-down menu on the right to change from "Original Text" to "Translated Text".
+Ensuite, utilisez le menu déroulant sur la droite pour passer de "Original Text" à "Translated Text".
 
 \image html mt_message_translated.png
 
-If you've enabled OCR as described in the \ref mt_config section above, you can extract and translate text from images. Here is an image containing the beginning of a French poem:
+Si vous avez activé l'OCR comme décrit dans la section \ref mt_config ci-dessus, vous pouvez extraire et traduire du texte à partir d'images. Voici une image contenant le début d'un poème français:
 
 \image html mt_ocr_image.png
 
-If you go to the Text tab and then the Translation viewer it will use OCR to read text from the image and then display the translation. 
+Si vous allez sur l'onglet "Text" puis l'onglet "Translation", l'OCR sera utilisé pour lire le texte de l'image, puis afficher la traduction. 
 
 \image html mt_ocr_result.png
 

@@ -1,51 +1,51 @@
-/*! \page photorec_carver_page PhotoRec Carver Module
+﻿/*! \page photorec_carver_page PhotoRec Carver (Carving PhotoRec)
 
 [TOC]
 
 
-\section photorec_overview Overview
+\section photorec_overview Aperçu
 
-The PhotoRec Carver module carves files from unallocated space in the data source and sends the files found through the ingest processing chain.
+Le module "PhotoRec Carver" effectue des recherches par carving de fichiers à partir de l'espace non alloué dans la source de données et envoie les fichiers trouvés dans la chaîne de traitement des modules d'acquisition.
 
-This can help a reviewer discover more information about files that used to be on the device and were subsequently deleted. These are simply extra files that were found in "empty" portions of the device storage.
+Cela peut aider un analyste à découvrir plus d'informations sur les fichiers qui se trouvaient auparavant sur l'appareil et qui ont été supprimés par la suite. Ce sont simplement des fichiers supplémentaires qui ont été trouvés dans des parties "vides" du stockage de l'appareil.
 
 
-\section photorec_usage Using the Module
+\section photorec_usage Utilisation du module
 
-Select the checkbox in the Ingest Modules settings screen to enable the PhotoRec Carver. Ensure that "Process Unallocated Space" is selected.
+Cochez la case dans l'écran des paramètres des modules d'acquisition ("Configure Ingest Modules") pour activer PhotoRec Carver. Assurez-vous que "All Files, Directories and Unallocated Space" est sélectionné.
 
-\subsection photorec_settings Ingest Settings
+\subsection photorec_settings Paramètres d'intégration
 
-The run-time setting for this module allows you to choose whether to keep corrupted files and to include or exclude certain file types.
+Les paramètres d'exécution de ce module vous permettent de choisir "Keep corrupted files"(conserver les fichiers corrompus) et "Focus on certain file types" (inclure ou d'exclure certains types de fichiers).
 
 \image html photo_rec_settings.PNG
 
-For the "Focus on certain file types" option, you will enter a comma separated list of file types. Depending on which option you choose, PhotoRec will either carve only files of those types or all files except those types. You will see an error if an invalid type is entered. Note that file types are case-sensitive.
+Pour l'option "Focus on certain file types", vous entrerez une liste de types de fichiers séparés par des virgules. Selon l'option que vous choisissez, PhotoRec n'effectuera des recherches par carving que sur les fichiers de ces types ("Include only the specified types") ou sur tous les fichiers à l'exception de ces types ("Exclude the specified types"). Vous verrez une erreur si un type non valide est entré. Notez que les types de fichiers sont sensibles à la casse.
 
 \image html photo_rec_extensions.png
 
-The list of \ref photorec_extensions "valid file types" for the current version of Autopsy is at the bottom of this page.
+La liste des \ref photorec_extensions "types de fichiers valides" pour la version actuelle d'Autopsy se trouve au bas de cette page.
 
-\subsection photorec_results Seeing Results
+\subsection photorec_results Voir les résultats
 
-The results of carving show up on the tree under the appropriate data source with the heading "$CarvedFiles".
+Les résultats de la recherche par carving apparaissent dans l'arborescence de la source de données appropriée avec l'en-tête "$CarvedFiles".
 
 \image html photorec_output.PNG
 
-Applicable types also show up in the "Views", "File Types" portion of the the tree, depending upon the file type.
+Les types sélectionnés apparaissent également dans la section "Views", "File Types" de l'arborescence, selon le type de fichier.
 
-\section photorec_custom Custom File Signatures
-To add custom file signatures, create a file (if it does not exist) photorec.sig in the user home directory (for example - /home/john/photorec.sig, or C:\\Users\john\photorec.sig). The photorec.sig file should contain one expression per line.
-For example, to detect a file foo.bar which has header signature - 0x4141414141414141, add an expression
+\section photorec_custom Signatures de fichier personnalisées
+Pour ajouter des signatures de fichier personnalisées, créez un fichier (s'il n'existe pas) photorec.sig dans le répertoire de base de l'utilisateur (par exemple - /home/john/photorec.sig, ou C:\\Users\john\photorec.sig). Le fichier photorec.sig doit contenir une expression par ligne.
+Par exemple, pour détecter le fichier foo.bar qui a pour signature d'en-tête - 0x4141414141414141, ajouter une expression
 
 	bar 0 0x4141414141414141
-in photorec.sig where *bar* is the file extension, *0* is the signature offset, and *0x4141414141414141* is the signature. Add another expression on a new line to detect another custom file based on its signature. Note that custom signatures can not be used with the "Carve only the specified types" option. 
+dans le fichier photorec.sig où *bar* est l'extension du fichier, *0* est l'offset de la signature, et *0x4141414141414141* est la signature. Ajoutez une autre expression sur une nouvelle ligne pour détecter un autre type personnalisé de fichier en fonction de sa signature. Notez que les signatures personnalisées ne peuvent pas être utilisées avec l'option "Focus on certain file types". 
 
 \image html photo_rec_custom.png
 
-\section photorec_extensions Valid File Types
+\section photorec_extensions Types de fichiers valides
 
-The following is the list of valid file types for the version of PhotoRec currently used by Autopsy:
+Voici la liste des types de fichiers valides pour la version de PhotoRec actuellement utilisée par Autopsy:
 
 \verbatim
 1cd          caf          dwg          gp2          max          pdb          rw2          vfb

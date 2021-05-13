@@ -1,11 +1,11 @@
-/*! \page logs_and_output_page Viewing Case Logs and Output
+﻿/*! \page logs_and_output_page Affichage des sorties des cas et des journaux
 
-There are several shortcuts for getting to the case and log folders.
+Il existe plusieurs raccourcis pour accéder aux dossiers et journaux des cas.
 
-- To open the Case output folder, use "Tools", "Open Output Folder" as shown below:
+- Pour ouvrir le dossier contenant les sorties du cas, utilisez "Tools", "Open Output Folder" comme indiqué ci-dessous:
 \image html open_output_folder.PNG
 
-- To open the Case log folder, use "Help", "Open Log Folder" as shown below:
+- Pour ouvrir le dossier contenant les journaux du cas, utilisez "Help", "Open Log Folder" comme indiqué ci-dessous:
 \image html open_log_folder.PNG
 
 */

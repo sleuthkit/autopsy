@@ -1,21 +1,21 @@
-/*! \page plaso_page Plaso
+﻿/*! \page plaso_page Plaso
 
 [TOC]
 
 
-Plaso is a framework for running modules to extract timestamps for various types of files. The Plaso ingest module runs Plaso to generate events that are displayed in the Autopsy \ref timeline_page. For more information on Plaso, see <a href="https://plaso.readthedocs.io/en/latest/"> the documentation</a>.
+Plaso est un framework pour l'exécution de modules ayant pour but d'extraire les horodatages de différents types de fichiers. Le module d'acquisition Plaso exécute Plaso pour générer des événements qui sont affichés dans la \ref timeline_page d'Autopsy. Pour plus d'informations sur Plaso, voir <a href="https://plaso.readthedocs.io/en/latest/"> la documentation</a>.
 
-\section plaso_config Running the Module
+\section plaso_config Exécution du module
 
-The Plaso ingest module runs dozens of individual parsers and can take a long time to run. In testing, the slowest parsers by far were <tt>winreg</tt>, <tt>pe</tt>, and <tt>chrome_cache</tt>. <tt>chrome_cache</tt> is always disabled as it duplicates events created by the \ref recent_activity_page. You can choose to enable the <tt>winreg</tt> and <tt>pe</tt> modules on the ingest module configuration panel.
+Le module d'acquisition Plaso exécute des dizaines d'analyseurs individuels et peut prendre beaucoup de temps à s'exécuter. Lors des tests, les analyseurs les plus lents étaient de loin <tt>winreg</tt>, <tt>pe</tt>, et <tt>chrome_cache</tt>. <tt>chrome_cache</tt> est toujours désactivé car il duplique les événements créés par le module \ref recent_activity_page. Vous pouvez choisir d'activer les modules <tt>winreg</tt> et <tt>pe</tt> sur le panneau de configuration des modules d'acquisition ("Configure Ingest Modules").
 
 \image html plaso_config.png
 
-Plaso will only run on \ref ds_img "disk image data sources".
+Plaso ne fonctionnera que sur des sources de données de type \ref ds_img "image disque".
 
-\section plaso_results Viewing Results
+\section plaso_results Voir les résultats
 
-The Plaso events will be shown in the \ref timeline_page Timeline. Note that events created by Plaso are not displayed in the \ref tree_viewer_page.
+Les événements Plaso seront présentés dans la \ref timeline_page. Notez que les événements créés par Plaso ne sont pas affichés dans l'\ref tree_viewer_page.
 
 \image html plaso_timeline.png
 
