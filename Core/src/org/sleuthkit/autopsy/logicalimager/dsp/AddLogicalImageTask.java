@@ -102,8 +102,6 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
-    private final static BlackboardArtifact.Type INTERESTING_FILE_TYPE = new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-
     private final static Logger LOGGER = Logger.getLogger(AddLogicalImageTask.class.getName());
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS
     private final static String USERS_TXT = "_users.txt"; //NON-NLS
@@ -447,7 +445,7 @@ final class AddLogicalImageTask implements Runnable {
         BlackboardArtifact artifact;
         try {
             artifact = this.blackboard.newAnalysisResult(
-                    INTERESTING_FILE_TYPE,
+                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT,
                     fileId,
                     dataSourceId,
                     Score.SCORE_UNKNOWN,
