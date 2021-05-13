@@ -129,9 +129,8 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 elif (not(not contacts_parser.get_contact_name() or contacts_parser.get_contact_name().isspace())):
                     current_case = Case.getCurrentCase().getSleuthkitCase()
                     attributes = ArrayList()
-                    artifact = contacts_db.getDBFile().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
                     attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), self._PARSER_NAME, contacts_parser.get_contact_name()))
-                    artifact.addAttributes(attributes)
+                    artifact = contacts_db.getDBFile().newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), attributes)
                     
                     # Post the artifact to blackboard
                     current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME)

@@ -378,19 +378,23 @@ public final class FileTypes implements AutopsyVisitableItem {
             return content.getChildrenIds();
         }
 
+        @Deprecated
+        @SuppressWarnings("Deprecated")
         @Override
         public BlackboardArtifact newArtifact(int artifactTypeID) throws TskCoreException {
             return content.newArtifact(artifactTypeID);
         }
 
+        @Deprecated
+        @SuppressWarnings("Deprecated")
         @Override
         public BlackboardArtifact newArtifact(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
             return content.newArtifact(type);
         }
         
         @Override
-        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, OsAccount osAccount) throws TskCoreException {
-            return content.newDataArtifact(artifactType, attributesList, osAccount);
+        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, Long osAccountId) throws TskCoreException {
+            return content.newDataArtifact(artifactType, attributesList, osAccountId);
         }
 
         @Override

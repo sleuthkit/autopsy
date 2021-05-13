@@ -23,10 +23,13 @@ import java.util.List;
 import javax.xml.bind.DatatypeConverter;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -93,7 +96,6 @@ final class CustomArtifactType {
      *                                        artifact to the blackboard.
      */
     static BlackboardArtifact createAndPostInstance(Content source) throws TskCoreException, Blackboard.BlackboardException {
-        BlackboardArtifact artifact = source.newArtifact(artifactType.getTypeID());
         List<BlackboardAttribute> attributes = new ArrayList<>();
         attributes.add(new BlackboardAttribute(intAttrType, MODULE_NAME, 0));
         attributes.add(new BlackboardAttribute(doubleAttrType, MODULE_NAME, 0.0));
@@ -102,7 +104,6 @@ final class CustomArtifactType {
         attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, DatatypeConverter.parseHexBinary("ABCD")));
         attributes.add(new BlackboardAttribute(stringAttrType, MODULE_NAME, "Zero"));
         attributes.add(new BlackboardAttribute(jsonAttrType, MODULE_NAME, "{\"fruit\": \"Apple\",\"size\": \"Large\",\"color\": \"Red\"}"));
-        artifact.addAttributes(attributes);
 
         /*
          * Add a second source module to the attributes. Try to do it twice. The
@@ -113,6 +114,28 @@ final class CustomArtifactType {
             attr.addSource(ADDITIONAL_MODULE_NAME);
         }
 
+        BlackboardArtifact artifact;
+        
+        if (artifactType.getCategory() == null) {
+            throw new TskCoreException(String.format("Artifact type: %s has no category.", 
+                        artifactType.getDisplayName(), artifactType.getCategory().getDisplayName()));
+        }
+        
+        switch (artifactType.getCategory()) {
+            case DATA_ARTIFACT:
+                artifact = source.newDataArtifact(artifactType, attributes);
+                break;
+                
+            case ANALYSIS_RESULT:
+                artifact = source.newAnalysisResult(artifactType, Score.SCORE_UNKNOWN, null, null, null, attributes)
+                        .getAnalysisResult();
+                break;
+                
+            default:
+                throw new TskCoreException(String.format("Artifact type: %s has no known category: %s", 
+                        artifactType.getDisplayName(), artifactType.getCategory().getDisplayName()));
+        }
+                
         Blackboard blackboard = Case.getCurrentCase().getServices().getArtifactsBlackboard();
         blackboard.postArtifact(artifact, MODULE_NAME);
 
