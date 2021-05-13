@@ -1,95 +1,95 @@
-/*! \page content_viewer_page Content Viewer
+/*! \page content_viewer_page Visionneuse de contenu
 
 [TOC]
 
 
-The Content Viewer lives in the lower right-hand side of the Autopsy main screen and shows pictures, video, hex, text, extracted strings, metadata, etc. The Content Viewer is populated when you select an entry in the \ref ui_results.
+La visionneuse de contenu se trouve dans le coin inférieur droit de l'écran principal d'Autopsy et affiche des images, des vidéos, de l'hexadécimal, du texte, des chaînes de caractères extraites, des métadonnées, etc... La visionneuse de contenu est activée lorsque vous sélectionnez une entrée dans la \ref ui_results "visionneuse de résultats".
 
-The Content Viewer is context-aware, meaning different tabs will be enabled depending on the type of content selected and which ingest modules have been run. It will default to what it considers the "most specific" tab. For example, selecting a JPG will cause the Content Viewer to automatically select the "Application" tab and will display the image there. If you instead would like the Content Viewer to stay on the previously selected tab when you change to a different content object, go to the \ref view_options_page panel through Tools->Options->Application Tab and select the "Stay on the same file viewer" option.
+La visionneuse de contenu est sensible au contexte, ce qui signifie que les différents onglets seront activés en fonction du type de contenu sélectionné et des modules d'acquisition exécutés. Elle adoptera par défaut ce qu'elle considère comme l'onglet "le plus représentatif". Par exemple, en sélectionnant un JPG, la visionneuse de contenu sélectionnera automatiquement l'onglet "Application" et y affichera l'image. Si vous souhaitez plutôt que la visionneuse de contenu reste sur l'onglet précédemment sélectionné lorsque vous passez à un autre objet, accédez aux \ref view_options_page en allant sur Tools->Options->Application Tab et en sélectionnant l'option "Stay on the same file viewer".
 
 \image html content_viewer_options_panel.png
 
-When a result item is selected in the Result Viewer (as opposed to a file), most of the tabs will correspond to the file associated with the result and not the result itself. For example, when selecting a keyword hit, the "Hex", "Strings", and "File Metadata" tabs will show data from the file where the keyword was found. The descriptions below will generally assume a file has been selected, but most also apply when we have a file associated with a selected result.
+Lorsqu'un élément de résultat (et non un fichier) est sélectionné dans la visionneuse de résultats, la plupart des onglets correspondront au fichier associé au résultat et non au résultat lui-même. Par exemple, lors de la sélection d'un hit de mot-clé, les onglets "Hex", "Strings" et "File Metadata" afficheront les données du fichier dans lequel le mot-clé a été trouvé. Les descriptions ci-dessous supposeront généralement qu'un fichier a été sélectionné, mais la plupart s'appliquent également lorsqu'un fichier est associé à un résultat sélectionné.
 
 \section cv_hex Hex
 
-The Hex tab is nearly always available and shows you the raw and exact contents of a file.  In this tab, the data of the file is represented as hexadecimal values grouped in 2 groups of 8 bytes, followed by one group of 16 ASCII characters which are derived from each pair of hex values (each byte). Non-printable ASCII characters and characters that would take more than one character space are typically represented by a dot (".") in the following ASCII field.
+L'onglet "Hex" est presque toujours disponible et vous montre le contenu brut et exact d'un fichier. Dans cet onglet, les données du fichier sont représentées sous forme de valeurs hexadécimales regroupées en 2 groupes de 8 octets, suivis d'un groupe de 16 caractères ASCII qui sont dérivés de chaque paire de valeurs hexadécimales (chaque octet). Les caractères ASCII non imprimables et les caractères qui prendraient plus d'un espace de caractère sont généralement représentés par un point (".") dans le champ ASCII suivant.
 
 \image html content_viewer_hex.png
 
-If desired, you can open the file in an external hex editor. This is configured through the \ref config_ext_viewer tab on the options panel. HxD has been verified to work with Autopsy, but alternate hex editors may also be compatible. 
+Si vous le souhaitez, vous pouvez ouvrir le fichier dans un éditeur hexadécimal externe. Ceci est configurable via l'onglet \ref config_ext_viewer du panneau des options. HxD a été vérifié pour fonctionner avec Autopsy, mais d'autres éditeurs hexadécimaux peuvent également être compatibles.
 
-Note that this process saves the file to disk before launching the hex editor. A progress indicator will be displayed in the lower right corner of the application. If you wish to cancel the file export, click the 'X' to the right of the progress bar.
+Notez que ce processus enregistre le fichier sur le disque avant de lancer l'éditeur hexadécimal. Un indicateur de progression sera affiché dans le coin inférieur droit de l'application. Si vous souhaitez annuler l'exportation du fichier, cliquez sur le 'X' à droite de la barre de progression.
 
 \image html content_viewer_hxd_progress.png
 
 \section cv_text Text
 
-The Text tab has three sub tabs for displaying the text contained in the selected item.
+L'onglet "Text" comporte trois sous-onglets pour afficher le texte contenu dans l'élément sélectionné.
 
 \subsection cv_strings Strings
 
-The Strings tab shows all text strings found in the file for the given script selected in the upper right. By default Latin text is used.
+Le sous-onglet "Strings" affiche toutes les chaînes de caractères trouvées dans le fichier avec le script donné sélectionné en haut à droite. Par défaut, le "Latin" est utilisé.
 
 \image html content_viewer_strings_latin.png
 
-Different scripts can be chosen from the drop-down menu to display results for non-Latin alphabets. 
+Différents scripts peuvent être choisis dans le menu déroulant pour afficher les résultats pour les alphabets non latins.
 
 \image html content_viewer_strings_cyrillic.png
 
 \subsection cv_indexed_text Indexed Text
 
-The Indexed Text tab shows the text that has been indexed by the \ref keyword_search_page. You can switch the "Text Source" field to "Result Text" to see the text that has been indexed for the results associated with a file.
+Le sous-onglet "Indexed Text" affiche le texte qui a été indexé par le module \ref keyword_search_page. Vous pouvez basculer le champ "Text Source" sur "Result Text" pour afficher le texte qui a été indexé pour les résultats associés à un fichier.
 
 \image html content_viewer_indexed_text.png
 
 \subsection cv_translation Translation
 
-If you have a translation service enabled, the Translation tab allows you to translate the text. See the \ref machine_translation_page page for more information.
+Si un service de traduction est activé, le sous-onglet "Translation" vous permet de traduire le texte. Voir la page \ref machine_translation_page pour plus d'informations.
 
 \section cv_app Application
 
-For certain file types, the Application tab can display the contents in a user friendly format. The following screenshots show some examples of what the Application tab will display.
+Pour certains types de fichiers, l'onglet "Application" peut afficher le contenu dans un format convivial. Les captures d'écran suivantes montrent quelques exemples de ce que l'onglet "Application" va afficher.
 
-It will display most image types, which can be scaled and rotated:
+Il affichera la plupart des types d'images, qui peuvent être mises à l'échelle et pivotées:
 
 \image html content_viewer_app_image.png
 
-It displays video files, allowing you to move play/pause, move forward or backward 30 seconds, adjust the volume, and change the playback speed.
+Il affiche les fichiers vidéo, vous permettant de mettre en lecture/pause, d'avancer ou de reculer de 30 secondes, de régler le volume et de modifier la vitesse de lecture.
 
 \image html content_viewer_video.png
 
-It also allows you to browse SQLite tables and export their contents as CSV:
+Il vous permet également de parcourir les tables SQLite et d'exporter leur contenu au format CSV:
 
 \image html content_viewer_app_sqlite.png 
 
-And plist file data will be shown and can be exported:
+Et les données de fichiers plist seront affichées et peuvent être exportées:
 
 \image html content_viewer_app_plist.png
 
-HTML files can be displayed closer to their original form:
+Les fichiers HTML peuvent être affichés au plus près de leur forme d'origine:
 
 \image html content_viewer_html.png
 
-Registry hive files can be viewed in a format similar to a registry editor.
+Les fichiers des ruches de la Base de registre peuvent être affichés dans un format similaire à celui d'un éditeur de registre.
 
 \image html content_viewer_registry.png
 
 \section cv_metadata File Metadata
 
-The File Metadata tab displays basic information about the file, such as type, size, and hash. It also displays the output of the Sleuth Kit istat tool.
+L'onglet "File Metadata" affiche des informations de base sur le fichier, telles que le type, la taille et le hachage. Il affiche également la sortie de l'outil istat du Sleuth Kit.
 
 \image html content_viewer_metadata.png
 
 \section cv_os_account OS Accounts
 
-The OS Accounts tab displays information on the OS account associated with a given result, if present. It is also used to give details on accounts listed under the OS Accounts node in the tree.
+L'onglet "OS Accounts" affiche des informations sur le compte du système d'exploitation associé à un résultat donné, le cas échéant. Il est également utilisé pour donner des détails sur les comptes répertoriés sous le nœud "OS Accounts" dans l'arborescence.
 
 \image html content_viewer_os_account.png
 
 \section cv_results Results
 
-The Results tab is active when selecting items with associated results such as keyword hits, call logs, and messages. The exact fields displayed depend on the type of result. The two images below show the Results tab for a call log and a web bookmark.
+L'onglet "Results" est activé lors de la sélection d'éléments avec des résultats associés tels que des hits sur des mots clés, des journaux d'appels et des messages. Les champs exacts affichés dépendent du type de résultat. Les deux images ci-dessous montrent l'onglet "Results" pour un journal d'appels et un signet Web.
 
 \image html content_viewer_results_call.png
 <br>
@@ -97,19 +97,19 @@ The Results tab is active when selecting items with associated results such as k
 
 \section cv_context Context
 
-The Context tab shows information on where a file came from and allows you to navigate to the original result. For example, it can show the the URL for downloaded files and the email message a file was attached to. In the image below you can see the context for an image that was sent as an email attachment.
+L'onglet "Context" affiche des informations sur l'origine d'un fichier et vous permet d'accéder au résultat d'origine. Par exemple, il peut afficher l'URL des fichiers téléchargés et le message électronique auquel un fichier était joint. Dans l'image ci-dessous, vous pouvez voir le contexte d'une image qui a été envoyée en tant que pièce jointe à un e-mail.
 
 \image html content_viewer_context.png
 
 \section cv_annotations Annotations
 
-The Annotations tab shows information added by an analyst about a file or result. It displays any tags and comments associated with the file or result, and if the \ref central_repo_page is enabled it will also display any comments saved to the Central Repository.
+L'onglet "Annotations" affiche les informations ajoutées par un analyste sur un fichier ou un résultat. Il affiche toutes les balises et commentaires associés au fichier ou au résultat, et si le \ref central_repo_page est activé, il affichera également tous les commentaires enregistrés dans le référentiel central.
 
 \image html content_viewer_annotations.png
 
 \section cv_other_occurrences Other Occurrences
 
-The Other Occurrences tab shows other instances of this file or result. Enabling the \ref central_repo_page adds additional functionality to this tab. See the \ref cr_content_viewer section for more information.
+L'onglet "Other Occurrences" affiche d'autres instances de ce fichier ou résultat. L'activation du \ref central_repo_page ajoute des fonctionnalités supplémentaires à cet onglet. Voir la section \ref cr_content_viewer pour plus d'informations.
 
 \image html content_viewer_other_occurrences.png
 

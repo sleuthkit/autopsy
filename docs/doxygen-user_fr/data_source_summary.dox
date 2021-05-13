@@ -1,88 +1,88 @@
-/*! \page data_source_summary_page Data Source Summary
+/*! \page data_source_summary_page Résumé de la source de données
 
 [TOC]
 
-\section ds_summary_overview Overview
+\section ds_summary_overview Aperçu
 
-The Data Source Summary viewer allows you to see an overview of file types, results, and other information for a particular data source. 
+La visionneuse "Data Source Summary" vous permet d'afficher une vue d'ensemble des types de fichiers, des résultats et d'autres informations pour une source de données particulière. 
 
-\section ds_summary_opening Opening the Data Source Summary
+\section ds_summary_opening Ouverture du résumé de la source de données
 
-There are two ways to view the data source summary. The first is to go to Case->Data Source Summary. This will open the summary in a new window.
+Il existe deux façons d'afficher le résumé de la source de données. Le premier est d'aller sur Case->Data Source Summary. Cela ouvrira le résumé dans une nouvelle fenêtre.
 
 \image html ds_summary_window.png
 
-The second way to view the summary is to select the data source in the \ref tree_viewer_page and then select the "Summary" tab in the \ref result_viewer_page. 
+La deuxième façon d'afficher le résumé consiste à sélectionner la source de données dans l'\ref tree_viewer_page puis sélectionner l'onglet "Summary" dans la \ref result_viewer_page. 
 
 \image html ds_summary_result_viewer.png
 
 \section ds_summary_main Sections
 
-Each tab of the data source summary displays different types of information about the selected data source. If ingest is ongoing, the summary will be updated periodically as new data is available.
+Chaque onglet du résumé de la source de données affiche différents types d'informations sur la source de données sélectionnée. Si l'acquisition est en cours, le résumé sera mis à jour périodiquement au fur et à mesure que de nouvelles données seront disponibles.
 
-If the ingest module(s) required for a data type have not been run, you will see a note about why there is no data. For example, "Recent Programs" results are created by the \ref recent_activity_page, so you will see a message about running that module if you have not.
+Si le ou les module(s) d'acquisition requis pour un type de données n'ont pas été exécutés, vous verrez une note expliquant pourquoi il n'y a pas de données. Par exemple, les résultats "Recent Programs" sont créés par le module \ref recent_activity_page, vous verrez donc un message sur l'exécution de ce module si vous ne l'avez pas fait.
 
 \image html DataSourceSummary/ds_summary_noRA.png
 
 \subsection ds_summary_types Types
 
-The Types tab shows counts of different file types found in the data source.
+L'onglet "Types" affiche le nombre de types de fichiers différents trouvés dans la source de données.
 
 \image html ds_summary_types.png
 
 \subsection ds_summary_user_activity User Activity
 
-The User Activity tab shows the most recent results found in the data source. You can right click on a row to navigate directly to the corresponding result.
+L'onglet "User Activity" affiche les résultats les plus récents trouvés dans la source de données. Vous pouvez faire un clic droit sur une ligne pour accéder directement au résultat correspondant.
 
 \image html ds_summary_user_activity.png
 
 \subsection ds_summary_analysis Analysis
 
-The Analysis tab shows the sets with the most results from the \ref hash_db_page, the \ref keyword_search_page, and the \ref interesting_files_identifier_page.
+L'onglet "Analysis" montre les ensembles avec le plus grand nombre de résultats concernant les modules \ref hash_db_page, \ref keyword_search_page, et \ref interesting_files_identifier_page.
 
 \image html ds_summary_analysis.png
 
 \subsection ds_summary_recent_files Recent Files
 
-The Recent Files tab shows information on the most recent files opened and downloaded. You can right click on a row to navigate directly to the corresponding file or result.
+L'onglet "Recent Files" affiche des informations sur les fichiers les plus récents ouverts et téléchargés. Vous pouvez faire un clic droit sur une ligne pour accéder directement au fichier ou au résultat correspondant.
 
 \image html ds_summary_recent_files.png
 
 \subsection ds_summary_past_cases Past Cases
 
-The Past Cases tab shows which cases had results or notable files in common with the current data source. This is based on the results in the "Interesting Items" section of the Results section in the \ref tree_viewer_page. The \ref central_repo_page ingest module must have been run with the options to "Flag items previously tagged as notable" and "Flag devices previously seen in other cases" enabled.
+L'onglet "Past Cases" montre quels cas avaient des résultats ou des fichiers notables en commun avec la source de données actuelle. Ceci est basé sur les résultats de la zone "Interesting Items" de la section "Results" de l'\ref tree_viewer_page. Le module d'acquisition \ref central_repo_page "Central Repository" doit avoir été exécuté avec les options "Flag items previously tagged as notable" et "Flag devices previously seen in other cases" activées.
 
 \image html ds_summary_past_cases.png
 
-Note that because these entries are based on the Interesting Items results created during ingest and not querying the central repository, they will not reflect any matches in cases processed after this case. For example, suppose we create Case A and ingest a data source with Device Z. If we make a new case Case B afterward and ingest a data source that also has Device Z, we would see Case A listed in this tab for Case B, but if we reopened Case A we would not see Case B listed unless ingest was run again. 
+Notez que, comme ces entrées sont basées sur les résultats des éléments intéressants créés lors de l'acquisition et n'interrogent pas le référentiel central, elles ne refléteront aucune correspondance dans les cas traités après ce dernier. Par exemple, supposons que nous créons le cas A et procédons à l'acquisition d'une source de données avec le périphérique Z. Si nous créons un nouveau cas B par la suite et procédons à l'acquisition d'une source de données qui a également le périphérique Z, nous verrons le cas A répertorié dans cet onglet pour le cas B, mais si nous rouvrions le cas A, nous ne verrions pas le cas B répertorié à moins que l'acquisition ne soit exécutée à nouveau.
 
 \subsection ds_summary_geo Geolocation
 
-The Geolocation tab uses the coordinates from geolocation results to find the nearest city for each and displays the most recent cities and most common cities. If the location is more than 150 km from a city then it will be displayed as "Unknown". The "View in Map" button under the recent cities table will open the \ref geolocation_page "Geolocation window" showing all waypoints for this data source with timestamps in the last 30 days. The "View in Map" button under the most common cities will show all waypoints for this data source. 
+L'onglet "Geolocation" utilise les coordonnées des résultats de géolocalisation pour trouver la ville la plus proche pour chacune et affiche les villes les plus récentes et les villes les plus courantes. Si l'emplacement est à plus de 150 km d'une ville, il sera affiché comme "Unknown" (inconnu). Le bouton "View in Map" sous le tableau des villes récentes ouvrira la fenêtre \ref geolocation_page "Geolocation" affichant tous les points de cheminement de cette source de données avec des horodatages au cours des 30 derniers jours. Le bouton "View in Map" sous les villes les plus courantes affichera tous les points de cheminement pour cette source de données. 
 
 \image html ds_summary_geo.png
 
 \subsection ds_summary_timeline Timeline
 
-The Timeline tab shows a simplified version of the \ref timeline_page "Timeline Viewer" for the selected data source. It will show events for the last 30 days of activity in the data source and give the first and last dates of activity. "File events" represent file creation, modification, access, and change. "Result events" represent the results from running ingest, such as the time a message was sent or when a URL was accessed. The "View in Timeline" button will open the main \ref timeline_page "Timeline Viewer".
+L'onglet "Timeline" montre une version simplifiée de la visionneuse \ref timeline_page "Timeline" pour la source de données sélectionnée. Il affichera les événements des 30 derniers jours d'activité dans la source de données et donnera les première et dernière dates d'activité. "File events" représente les dates de création, de modification, d'accès et de changement des fichiers. "Result events" représente les résultats de l'exécution de l'acquisition, tels que l'heure d'envoi d'un message ou l'accès à une URL. Le bouton "View in Timeline" ouvrira la visionneuse \ref timeline_page "Timeline".
 
 \image html ds_summary_timeline.png
 
 \subsection ds_summary_ingest_history Ingest History
 
-The Ingest History tab shows which ingest modules have been run on the data source and the version of each module.
+L'onglet "Ingest History" indique quels modules d'acquisition ont été exécutés sur la source de données et la version de chaque module.
 
 \image html ds_summary_ingest.png
 
 \subsection ds_summary_container Container
 
-The Container tab displays information on the data source itself, such as the size and image paths.
+L'onglet "Container" affiche des informations sur la source de données elle-même, telles que la taille et les chemins de l'image.
 
 \image html ds_summary_container.png
 
 \subsection ds_summary_export Export
 
-The Export tab allows you to export the contents of the other data source summary tabs to an Excel-formatted file.
+L'onglet "Export" vous permet d'exporter le contenu des autres onglets de résumé de la source de données vers un fichier au format Excel.
 
 \image html ds_summary_export.png
 
