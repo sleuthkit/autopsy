@@ -445,15 +445,21 @@ final class AddLogicalImageTask implements Runnable {
 
     private void addInterestingFileToArtifacts(long fileId, long dataSourceId, String ruleSetName, String ruleName, List<BlackboardArtifact> artifacts) throws TskCoreException {
         BlackboardArtifact artifact;
+
+
+        String conclusion = TBD;
+        String configuration = TBD;
+        String justification = TBD;
+
         try {
             artifact = this.blackboard.newAnalysisResult(
-                    INTERESTING_FILE_TYPE,
+                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT,
                     fileId,
                     dataSourceId,
-                    Score.SCORE_UNKNOWN,
-                    null,
-                    null,
-                    null,
+                    INTERESTING_HIT_SCORE,
+                    conclusion,
+                    configuration,
+                    justification,
                     Arrays.asList(
                             new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName),
                             new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName)

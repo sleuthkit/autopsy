@@ -268,9 +268,14 @@ public class IngestEventsListener {
             Blackboard blackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_ARTIFACT_HIT, attributesForNewArtifact)) {
+                String conclusion = TBD;
+                String configuration = TBD;
+                String justification = TBD;
+
                 BlackboardArtifact newInterestingArtifact = abstractFile.newAnalysisResult(
-                        new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT),
-                        Score.SCORE_UNKNOWN, null, null, null, attributesForNewArtifact)
+                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, INTERESTING_HIT_SCORE, 
+                        conclusion, configuration, justification, 
+                        attributesForNewArtifact)
                         .getAnalysisResult();
 
                 try {

@@ -49,10 +49,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.Score;
-<<<<<<< HEAD
 import org.sleuthkit.datamodel.Score.Significance;
-=======
->>>>>>> 7317-dataArtifacts
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -537,16 +534,23 @@ public class HashDbIngestModule implements FileIngestModule {
         try {
             String moduleName = HashLookupModuleFactory.getModuleName();
             
-            Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            //TODO Revisit usage of deprecated constructor as per TSK-583
-            //BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, moduleName, hashSetName));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, moduleName, md5Hash));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, comment));
+            List<BlackboardAttribute> attributes = Arrays.asList(
+                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, moduleName, db.getDisplayName()),
+                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, moduleName, md5Hash),
+                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, comment)
+            );
+            
+            String conclusion = TBD;
+            String configuration = TBD;
+            String justification = TBD;
 
+            // BlackboardArtifact.Type artifactType, Score score, String conclusion, String configuration, String justification, Collection<BlackboardAttribute> attributesList
             BlackboardArtifact badFile = abstractFile.newAnalysisResult(
-                    new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_HASHSET_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
-                    .getAnalysisResult();
+                    BlackboardArtifact.Type.TSK_HASHSET_HIT, getScore(db.getKnownFilesType()), 
+                    conclusion, configuration, justification,
+                    attributes
+            ).getAnalysisResult();
+
             try {
                 /*
                  * post the artifact which will index the artifact for keyword

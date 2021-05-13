@@ -315,9 +315,16 @@ class SevenZipExtractor {
                             details));
 
             if (!blackboard.artifactExists(archiveFile, TSK_INTERESTING_FILE_HIT, attributes)) {
-                BlackboardArtifact artifact = rootArchive.getArchiveFile().newAnalysisResult(
-                        new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
+                String conclusion = TBD;
+                String configuration = TBD;
+                String justification = TBD;
+
+                BlackboardArtifact artifact = rootArchive.newAnalysisResult(
+                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, INTERESTING_HIT_SCORE, 
+                        conclusion, configuration, justification, 
+                        attributes)
                         .getAnalysisResult();
+
                 try {
                     /*
                      * post the artifact which will index the artifact for

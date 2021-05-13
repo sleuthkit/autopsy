@@ -143,11 +143,15 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
 
                     // Create artifact if it doesn't already exist.
                     if (!blackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
-                        BlackboardArtifact artifact = file.newAnalysisResult(
-                                new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
-                                .getAnalysisResult();
+                        String conclusion = TBD;
+                        String configuration = TBD;
+                        String justification = TBD;
 
-                        artifact.addAttributes(attributes);
+                        BlackboardArtifact artifact = file.newAnalysisResult(
+                                BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, INTERESTING_HIT_SCORE, 
+                                conclusion, configuration, justification, 
+                                attributes)
+                                .getAnalysisResult();
                         try {
 
                             // Post thet artifact to the blackboard.

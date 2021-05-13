@@ -346,9 +346,14 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_FILE_HIT, attributes)) {
+                String conclusion = TBD;
+                String configuration = TBD;
+                String justification = TBD;
+
                 BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
-                        new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT), 
-                        Score.SCORE_UNKNOWN, null, null, null, attributes)
+                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, INTERESTING_HIT_SCORE, 
+                        conclusion, configuration, justification, 
+                        attributes)
                         .getAnalysisResult();
                 try {
                     // index the artifact for keyword search

@@ -61,6 +61,7 @@ class LuceneQuery implements KeywordSearchQuery {
     static final int SNIPPET_LENGTH = 50;
     static final String HIGHLIGHT_FIELD = Server.Schema.TEXT.toString();
 
+    private static final Score KEYWORD_SEARCH_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     /**
@@ -261,9 +262,16 @@ class LuceneQuery implements KeywordSearchQuery {
         hit.getArtifactID().ifPresent(artifactID
                 -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
+        
+        String conclusion = TBD;
+        String configuration = TBD;
+        String justification = TBD;
 
         try {
-            return content.newAnalysisResult(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_KEYWORD_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
+            return content.newAnalysisResult(
+                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, KEYWORD_SEARCH_SCORE, 
+                    conclusion, configuration, justification, 
+                    attributes)
                     .getAnalysisResult();
         } catch (TskCoreException e) {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
