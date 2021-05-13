@@ -15,6 +15,7 @@ RejTreeKeyView.columns.type=Type
 RejTreeKeyView.columns.value=Value
 RejTreeKeyView.failedToParse.keyName=FAILED TO PARSE KEY NAME
 RejTreeKeyView.metadataBorder.title=Metadata
+RejTreeKeyView.template.dateTime=Modification Time:
 RejTreeKeyView.template.name=Name:
 RejTreeKeyView.template.numberOfSubkeys=Number of subkeys:
 RejTreeKeyView.template.numberOfValues=Number of values:
