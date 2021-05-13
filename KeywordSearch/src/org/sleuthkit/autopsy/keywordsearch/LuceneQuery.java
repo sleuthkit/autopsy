@@ -262,15 +262,11 @@ class LuceneQuery implements KeywordSearchQuery {
         hit.getArtifactID().ifPresent(artifactID
                 -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
-        
-        String conclusion = TBD;
-        String configuration = TBD;
-        String justification = TBD;
 
         try {
             return content.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_KEYWORD_HIT, KEYWORD_SEARCH_SCORE, 
-                    conclusion, configuration, justification, 
+                    null, listName, null, 
                     attributes)
                     .getAnalysisResult();
         } catch (TskCoreException e) {

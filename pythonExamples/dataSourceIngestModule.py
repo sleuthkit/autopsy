@@ -37,6 +37,7 @@ from java.lang import System
 from java.util.logging import Level
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
+from org.sleuthkit.datamodel import Score
 from org.sleuthkit.datamodel import ReadContentInputStream
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
@@ -85,6 +86,7 @@ class SampleJythonDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 # Data Source-level ingest module.  One gets created per data source.
 # TODO: Rename this to something more specific. Could just remove "Factory" from above name.
 class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
+    LIKELY_NOTABLE_SCORE = Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO)
 
     _logger = Logger.getLogger(SampleJythonDataSourceIngestModuleFactory.moduleName)
 
@@ -142,7 +144,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             # artfiact.  Refer to the developer docs for other examples.
             attrs = ArrayList()
             attrs.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, SampleJythonDataSourceIngestModuleFactory.moduleName, "Test file"))
-            art = file.newAnalysisResult(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Score.SCORE_UNKNOWN, None, None, None, attrs)
+            art = file.newAnalysisResult(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, self.LIKELY_NOTABLE_SCORE, None, "Test file", None, attrs)
 
             try:
                 # index the artifact for keyword search

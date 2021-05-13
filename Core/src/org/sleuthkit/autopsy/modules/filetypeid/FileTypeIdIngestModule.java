@@ -49,7 +49,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @NbBundle.Messages({"CannotRunFileTypeDetection=Unable to run file type detection."})
 public class FileTypeIdIngestModule implements FileIngestModule {
-
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -163,13 +164,9 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
             // Create artifact if it doesn't already exist.
             if (!tskBlackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
-                String conclusion = TBD;
-                String configuration = TBD;
-                String justification = TBD;
-
                 BlackboardArtifact artifact = file.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, INTERESTING_HIT_SCORE, 
-                        conclusion, configuration, justification, 
+                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, LIKELY_NOTABLE_SCORE, 
+                        null, fileType.getInterestingFilesSetName(), null, 
                         attributes)
                         .getAnalysisResult();
                 try {

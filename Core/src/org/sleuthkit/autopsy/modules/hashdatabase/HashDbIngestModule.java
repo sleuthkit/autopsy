@@ -539,15 +539,11 @@ public class HashDbIngestModule implements FileIngestModule {
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, moduleName, md5Hash),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, comment)
             );
-            
-            String conclusion = TBD;
-            String configuration = TBD;
-            String justification = TBD;
 
             // BlackboardArtifact.Type artifactType, Score score, String conclusion, String configuration, String justification, Collection<BlackboardAttribute> attributesList
             BlackboardArtifact badFile = abstractFile.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_HASHSET_HIT, getScore(db.getKnownFilesType()), 
-                    conclusion, configuration, justification,
+                    null, db.getDisplayName(), null,
                     attributes
             ).getAnalysisResult();
 

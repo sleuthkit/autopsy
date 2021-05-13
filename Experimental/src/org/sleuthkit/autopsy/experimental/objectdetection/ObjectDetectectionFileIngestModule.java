@@ -171,7 +171,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                         );
                         
                         BlackboardArtifact artifact = file.newAnalysisResult(
-                                new BlackboardArtifact.Type(TSK_OBJECT_DETECTED), Score.SCORE_UNKNOWN, null, null, null, attributes)
+                                BlackboardArtifact.Type.TSK_OBJECT_DETECTED, Score.SCORE_UNKNOWN, null, null, null, attributes)
                                 .getAnalysisResult();
                         
                         try {

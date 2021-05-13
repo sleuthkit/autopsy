@@ -52,7 +52,8 @@ import org.sleuthkit.datamodel.TskException;
     "FileExtMismatchIngestModule.readError.message=Could not read settings."
 })
 public class FileExtMismatchIngestModule implements FileIngestModule {
-
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private final FileExtMismatchDetectorModuleSettings settings;
@@ -143,7 +144,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
             if (mismatchDetected) {
                 // add artifact               
                 BlackboardArtifact bart = abstractFile.newAnalysisResult(
-                        new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED), Score.SCORE_UNKNOWN, null, null, null, Collections.emptyList())
+                        BlackboardArtifact.Type.TSK_EXT_MISMATCH_DETECTED, LIKELY_NOTABLE_SCORE, null, null, null, Collections.emptyList())
                         .getAnalysisResult();
 
                 try {

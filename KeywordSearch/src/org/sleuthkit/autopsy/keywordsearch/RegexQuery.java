@@ -48,13 +48,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
-import org.sleuthkit.datamodel.Score.MethodCategory;
-import org.sleuthkit.datamodel.Score.Significance;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -75,8 +72,8 @@ import org.sleuthkit.datamodel.TskData;
 final class RegexQuery implements KeywordSearchQuery {
 
     public static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
-    private static final Score KEYWORD_SEARCH_SCORE = new Score(Significance.LIKELY_NOTABLE, MethodCategory.AUTO);
-
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    
     /**
      * Lucene regular expressions do not support the following Java predefined
      * and POSIX character classes. There are other valid Java character classes
@@ -616,14 +613,10 @@ final class RegexQuery implements KeywordSearchQuery {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
         }
 
-        String conclusion = TBD;
-        String configuration = TBD;
-        String justification = TBD;
-            
         try {
             return content.newAnalysisResult(
-                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, KEYWORD_SEARCH_SCORE, 
-                    conclusion, configuration, justification, attributes)
+                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, LIKELY_NOTABLE_SCORE, 
+                    null, listName, null, attributes)
                     .getAnalysisResult();
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS

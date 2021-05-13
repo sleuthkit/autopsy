@@ -53,7 +53,8 @@ import org.sleuthkit.datamodel.TskData;
  */
 @NbBundle.Messages({"FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file."})
 final class FilesIdentifierIngestModule implements FileIngestModule {
-
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    
     private static final Object sharedResourcesLock = new Object();
     private static final Logger logger = Logger.getLogger(FilesIdentifierIngestModule.class.getName());
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -143,13 +144,9 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
 
                     // Create artifact if it doesn't already exist.
                     if (!blackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
-                        String conclusion = TBD;
-                        String configuration = TBD;
-                        String justification = TBD;
-
                         BlackboardArtifact artifact = file.newAnalysisResult(
-                                BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, INTERESTING_HIT_SCORE, 
-                                conclusion, configuration, justification, 
+                                BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, LIKELY_NOTABLE_SCORE, 
+                                null, filesSet.getName(), null, 
                                 attributes)
                                 .getAnalysisResult();
                         try {
