@@ -385,7 +385,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 instances = CentralRepository.getInstance().getArtifactInstancesByTypeValue(aType, value);
                 HashMap<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap = new HashMap<>();
                 String caseUUID = Case.getCurrentCase().getName();
-                // get the attributes we can correlate on
                 for (CorrelationAttributeInstance artifactInstance : instances) {
 
                     // Only add the attribute if it isn't the object the user selected.
