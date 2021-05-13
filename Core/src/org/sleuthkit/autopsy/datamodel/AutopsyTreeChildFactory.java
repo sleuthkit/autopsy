@@ -126,7 +126,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                             .sorted()
                             .forEach(keys::add);
 
-                    if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
+                    if (CollectionUtils.isNotEmpty(personManager.getHostsWithoutPersons())) {
                         keys.add(new PersonGrouping(null));
                     }
 
