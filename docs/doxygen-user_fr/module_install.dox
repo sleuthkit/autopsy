@@ -1,23 +1,26 @@
-/*! \page module_install_page Installing 3rd-Party Modules
+﻿/*! \page module_install_page Installation de modules tiers
 
-There are various places in Autopsy that developers can write custom plug-in modules. This page covers how to install them.  
+[TOC]
 
-There are two types of modules:
-- Modules written in Java that are shipped in NBM (NetBeans Module) files.
-- Modules written in Python that are shipped as a folder in a ZIP file.
 
-\section module_install_nbm Installing NetBeans Modules
-If you have an NBM file, then it may contain one or more Autopsy modules. To install it, use the plugin manager at "Tools", "Plugins". 
+Il existe différents endroits dans Autopsy où les développeurs peuvent écrire des modules d'extension personnalisés. Cette page explique comment les installer.
+
+Il existe deux types de modules:
+- Modules écrits en Java livrés dans des fichiers NBM (NetBeans Module).
+- Modules écrits en Python livrés sous forme de dossier dans un fichier ZIP.
+
+\section module_install_nbm Installation des modules NetBeans
+Si vous disposez d'un fichier NBM, il peut contenir un ou plusieurs modules Autopsy. Pour l'installer, utilisez le gestionnaire de plugins dans "Tools", "Plugins". 
 
 \image html module_install_netbeans.png
 
-Choose the "Downloaded" tab and then choose "Add Plugins".  Browse to the NBM file.  It may require you to restart Autopsy. 
+Choisissez l'onglet "Downloaded" puis "Add Plugins".  Accédez au fichier NBM. Vous devrez peut-être redémarrer Autopsy. 
 
-\section module_install_python Installing Python Modules
-If you have a ZIP file with a Python module in it, then unzip the file and you should get a folder.  Open the Python module library folder through Autopsy using "Tools", "Python Plugins".  
+\section module_install_python Installation des modules Python
+Si vous avez un fichier ZIP contenant un module Python, décompressez le fichier et vous devriez obtenir un dossier. Ouvrez le dossier de la bibliothèque des modules Python via Autopsy en utilisant "Tools", "Python Plugins".  
 
 \image html module_install_python.png
 
-On Windows this will be under your user directory in "AppData\Roaming\autopsy\python_modules". Copy the module folder into there and Autopsy should identify and use it next time it loads modules. 
+Sous Windows, ce sera sous votre répertoire utilisateur, dans "AppData\Roaming\autopsy\python_modules". Collez à cet emplacement le dossier du module et Autopsy devrait l'identifier et l'utiliser la prochaine fois qu'il chargera les modules.
 
 */
