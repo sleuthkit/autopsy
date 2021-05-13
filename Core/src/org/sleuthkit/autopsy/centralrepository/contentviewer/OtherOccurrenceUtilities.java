@@ -18,14 +18,25 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
@@ -46,7 +57,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
+ * Contains most of the methods for gathering data from the DB and CR for the
+ * OtherOccurrencesPanel.
  */
 class OtherOccurrenceUtilities {
 
@@ -187,14 +199,14 @@ class OtherOccurrenceUtilities {
 
         return null;
     }
-    
+
     /**
      * Query the central repo database (if enabled) and the case database to
      * find all artifact instances correlated to the given central repository
      * artifact. If the central repo is not enabled, this will only return files
      * from the current case with matching MD5 hashes.
      *
-     * @param corAttr        CorrelationAttribute to query for
+     * @param corAttr CorrelationAttribute to query for
      *
      * @return A collection of correlated artifact instances
      */
@@ -217,9 +229,9 @@ class OtherOccurrenceUtilities {
                     // - the data source device ID is different
                     // - the file path is different
                     if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
-                            || (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
-                            || (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                            || (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
+                            && (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
+                            && (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
+                            && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
                         continue;
                     }
                     OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
@@ -250,8 +262,8 @@ class OtherOccurrenceUtilities {
         return new HashMap<>(
                 0);
     }
-    
-        /**
+
+    /**
      * Get all other abstract files in the current case with the same MD5 as the
      * selected node.
      *
@@ -282,8 +294,7 @@ class OtherOccurrenceUtilities {
         return caseDbArtifactInstances;
 
     }
-    
-    
+
     /**
      * Adds the file to the nodeDataMap map if it does not already exist
      *
@@ -326,12 +337,79 @@ class OtherOccurrenceUtilities {
             nodeDataMap.put(uniquePathKey, newNode);
         }
     }
-    
-        /**
+
+    /**
      * Create a unique string to be used as a key for deduping data sources as
      * best as possible
      */
     static String makeDataSourceString(String caseUUID, String deviceId, String dataSourceName) {
         return caseUUID + deviceId + dataSourceName;
+    }
+
+    @NbBundle.Messages({"OtherOccurrencesPanel.earliestCaseNotAvailable= Not Enabled."})
+    /**
+     * Gets the list of Eam Cases and determines the earliest case creation
+     * date. Sets the label to display the earliest date string to the user.
+     */
+    static String getEarliestCaseDate() throws CentralRepoException {
+        String dateStringDisplay = Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable();
+
+        if (CentralRepository.isEnabled()) {
+            LocalDateTime earliestDate = LocalDateTime.now(DateTimeZone.UTC);
+            DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
+            CentralRepository dbManager = CentralRepository.getInstance();
+            List<CorrelationCase> cases = dbManager.getCases();
+            for (CorrelationCase aCase : cases) {
+                LocalDateTime caseDate;
+                try {
+                    caseDate = LocalDateTime.fromDateFields(datetimeFormat.parse(aCase.getCreationDate()));
+
+                    if (caseDate.isBefore(earliestDate)) {
+                        earliestDate = caseDate;
+                        dateStringDisplay = aCase.getCreationDate();
+                    }
+                } catch (ParseException ex) {
+                    throw new CentralRepoException("Failed to format case creation date " + aCase.getCreationDate(), ex);
+                }
+            }
+        }
+
+        return dateStringDisplay;
+    }
+
+    /**
+     * Create a cvs file of occurrences for the given parameters.
+     *
+     * @param destFile Output file for the csv data.
+     * @param abstractFile Source file. 
+     * @param correlationAttList List of correclationAttributeInstances, should not be null.
+     * @param dataSourceName Name of the data source.
+     * @param deviceId Device id.
+     *
+     * @throws IOException
+     */
+    static void writeOtherOccurrencesToFileAsCSV(File destFile, AbstractFile abstractFile, Collection<CorrelationAttributeInstance> correlationAttList, String dataSourceName, String deviceId) throws IOException {
+        try (BufferedWriter writer = Files.newBufferedWriter(destFile.toPath())) {
+            //write headers 
+            StringBuilder headers = new StringBuilder("\"");
+            headers.append(Bundle.OtherOccurrencesPanel_csvHeader_case())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_dataSource())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_attribute())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_value())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_known())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_path())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_comment())
+                    .append('"').append(System.getProperty("line.separator"));
+            writer.write(headers.toString());
+            //write content
+            for (CorrelationAttributeInstance corAttr : correlationAttList) {
+                Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
+                // get correlation and reference set instances from DB
+                correlatedNodeDataMap.putAll(getCorrelatedInstances(abstractFile, deviceId, dataSourceName, corAttr));
+                for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
+                    writer.write(nodeData.toCsvString());
+                }
+            }
+        }
     }
 }

@@ -52,3 +52,4 @@ OtherOccurrencesPanel.showCommonalityMenuItem.text=Show Frequency
 OtherOccurrencesPanel.showCaseDetailsMenuItem.text=Show Case Details
 OtherOccurrencesPanel.table.noArtifacts=Item has no attributes with which to search.
 OtherOccurrencesPanel.table.noResultsFound=No results found.
+OtherOccurrencesPanel_table_loadingResults=Loading results

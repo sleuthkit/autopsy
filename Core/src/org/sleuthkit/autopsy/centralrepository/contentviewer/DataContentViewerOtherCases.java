@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -42,8 +43,8 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
     private static final long serialVersionUID = -1L;
     private static final Logger logger = Logger.getLogger(DataContentViewerOtherCases.class.getName());
     private final OtherOccurrencesPanel otherOccurrencesPanel = new OtherOccurrencesPanel();
-    
-    private OtherOccurrencesWorker worker = null;
+
+    private OtherOccurrencesNodeWorker worker = null;
 
     /**
      * Creates new form DataContentViewerOtherCases
@@ -104,48 +105,33 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
     @Override
     public void setNode(Node node) {
         otherOccurrencesPanel.reset(); // reset the table to empty.
+        otherOccurrencesPanel.showPanelLoadingMessage();
+
         if (node == null) {
             return;
         }
-        
-        if(worker != null) {
+
+        if (worker != null) {
             worker.cancel(true);
         }
-        worker = new OtherOccurrencesWorker(node) {
+        worker = new OtherOccurrencesNodeWorker(node) {
             @Override
             public void done() {
                 try {
-                    if(!isCancelled()) {
+                    if (!isCancelled()) {
                         OtherOccurrencesData data = get();
                         otherOccurrencesPanel.populateTable(data);
+                        otherOccurrencesPanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     DataContentViewerOtherCases.logger.log(Level.SEVERE, "Failed to update OtherOccurrencesPanel", ex);
                 }
             }
         };
-        
+        otherOccurrencesPanel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         worker.execute();
-        
-        
-//        //could be null
-//        AbstractFile file = OtherOccurrenceUtilities.getAbstractFileFromNode(node);
-//        String dataSourceName = "";
-//        String deviceId = "";
-//        try {
-//            if (file != null) {
-//                Content dataSource = file.getDataSource();
-//                dataSourceName = dataSource.getName();
-//                deviceId = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
-//            }
-//        } catch (TskException | NoCurrentCaseException ex) {
-//            // do nothing. 
-//            // @@@ Review this behavior
-//        }
-//        otherOccurrencesPanel.populateTable(OtherOccurrenceUtilities.getCorrelationAttributesFromNode(node, file), dataSourceName, deviceId, file);
-
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

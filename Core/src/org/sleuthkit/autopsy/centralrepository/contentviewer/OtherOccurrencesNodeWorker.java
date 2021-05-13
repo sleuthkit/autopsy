@@ -28,7 +28,7 @@ import javax.swing.SwingWorker;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.contentviewer.OtherOccurrencesWorker.OtherOccurrencesData;
+import org.sleuthkit.autopsy.centralrepository.contentviewer.OtherOccurrencesNodeWorker.OtherOccurrencesData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
@@ -38,16 +38,21 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- *
- *
+ * A SwingWorker that gathers data for the OtherOccurencesPanel which appears in
+ * the dataContentViewerOtherCases panel.
  */
-class OtherOccurrencesWorker extends SwingWorker<OtherOccurrencesData, Void> {
+class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void> {
 
-    private static final Logger logger = Logger.getLogger(OtherOccurrencesWorker.class.getName());
+    private static final Logger logger = Logger.getLogger(OtherOccurrencesNodeWorker.class.getName());
 
     private final Node node;
 
-    OtherOccurrencesWorker(Node node) {
+    /**
+     * Constructs a new instance for the given node.
+     *
+     * @param node
+     */
+    OtherOccurrencesNodeWorker(Node node) {
         this.node = node;
     }
 
@@ -57,13 +62,15 @@ class OtherOccurrencesWorker extends SwingWorker<OtherOccurrencesData, Void> {
         String deviceId = "";
         String dataSourceName = "";
         Map<String, CorrelationCase> caseNames = new HashMap<>();
+        Case currentCase = Case.getCurrentCaseThrows();
+        OtherOccurrencesData data = null;
         try {
             if (file != null) {
                 Content dataSource = file.getDataSource();
-                deviceId = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
+                deviceId = currentCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
                 dataSourceName = dataSource.getName();
             }
-        } catch (TskException | NoCurrentCaseException ex) {
+        } catch (TskException ex) {
             // do nothing. 
             // @@@ Review this behavior
             return null;
@@ -90,29 +97,46 @@ class OtherOccurrencesWorker extends SwingWorker<OtherOccurrencesData, Void> {
                     }
                 }
                 totalCount++;
+
+                if (isCancelled()) {
+                    break;
+                }
             }
         }
 
-        return new OtherOccurrencesData(file, dataSourceName, deviceId, caseNames, totalCount, dataSources.size());
+        if (!isCancelled()) {
+            data = new OtherOccurrencesData(correlationAttributes, file, dataSourceName, deviceId, caseNames, totalCount, dataSources.size(), OtherOccurrenceUtilities.getEarliestCaseDate());
+        }
+
+        return data;
     }
 
+    /**
+     * Object to store all of the data gathered in the OtherOccurrencesWorker
+     * doInBackground method.
+     */
     static class OtherOccurrencesData {
+
         private final String deviceId;
         private final AbstractFile file;
         private final String dataSourceName;
         private final Map<String, CorrelationCase> caseMap;
         private final int instanceDataCount;
         private final int dataSourceCount;
+        private final String earliestCaseDate;
+        private final Collection<CorrelationAttributeInstance> correlationAttributes;
 
-        private OtherOccurrencesData(AbstractFile file, String dataSourceName, String deviceId, Map<String, CorrelationCase> caseMap, int instanceCount, int dataSourceCount) {
+        private OtherOccurrencesData(Collection<CorrelationAttributeInstance> correlationAttributes, AbstractFile file, String dataSourceName, String deviceId, Map<String, CorrelationCase> caseMap, int instanceCount, int dataSourceCount, String earliestCaseDate) {
             this.file = file;
             this.deviceId = deviceId;
             this.dataSourceName = dataSourceName;
             this.caseMap = caseMap;
             this.instanceDataCount = instanceCount;
             this.dataSourceCount = dataSourceCount;
+            this.earliestCaseDate = earliestCaseDate;
+            this.correlationAttributes = correlationAttributes;
         }
-        
+
         public String getDeviceId() {
             return deviceId;
         }
@@ -137,5 +161,17 @@ class OtherOccurrencesWorker extends SwingWorker<OtherOccurrencesData, Void> {
             return dataSourceCount;
         }
 
+        /**
+         * Returns the earliest date in the case.
+         *
+         * @return Formatted date string, or message that one was not found.
+         */
+        public String getEarliestCaseDate() {
+            return earliestCaseDate;
+        }
+
+        public Collection<CorrelationAttributeInstance> getCorrelationAttributes() {
+            return correlationAttributes;
+        }
     }
 }
