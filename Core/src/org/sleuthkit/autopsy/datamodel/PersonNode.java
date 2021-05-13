@@ -131,7 +131,12 @@ public class PersonNode extends DisplayableItemNode {
         protected boolean createKeys(List<HostGrouping> toPopulate) {
             List<Host> hosts = Collections.emptyList();
             try {
-                hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getHostsForPerson(this.person);
+                if (person != null) {
+                    hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getHostsForPerson(person);
+                } else {
+                    // This is the "Unknown Persons" node, get the hosts that are not associated with a person.
+                    hosts = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getHostsWithoutPersons();
+                }
             } catch (NoCurrentCaseException | TskCoreException ex) {
                 String personName = person == null || person.getName() == null ? "<unknown>" : person.getName();
                 logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", personName), ex);
