@@ -1098,18 +1098,14 @@ def write_normalized(guid_utils: TskGuidUtils, output_file, db_conn, table: str,
             row_dict = row_masker.normalize(guid_utils, row_dict)
 
         if row_dict is not None:
-            # NOTE: This is an alternate approach to representing values as json-like lines
-            # entries = []
-            # for column in column_names:
-            #     value = get_sql_insert_value(row_dict[column] if column in row_dict and row_dict[column] else None)
-            #     if value:
-            #         entries.append((column, value))
-            # insert_values = ", ".join([f"{pr[0]}: {pr[1]}" for pr in entries])
-            # insert_statement = f"{table}: {{{insert_values}}}\n"
-            # output_file.write(insert_statement)
-
-            values_statement = ",".join(get_sql_insert_value(row_dict[col]) for col in column_names)
-            insert_statement = f'INSERT INTO "{table}" VALUES({values_statement});\n'
+            # show row as json-like value
+            entries = []
+            for column in column_names:
+                value = get_sql_insert_value(row_dict[column] if column in row_dict and row_dict[column] else None)
+                if value is not None:
+                    entries.append((column, value))
+            insert_values = ", ".join([f"{pr[0]}: {pr[1]}" for pr in entries])
+            insert_statement = f"{table}: {{{insert_values}}}\n"
             output_file.write(insert_statement)
 
 
