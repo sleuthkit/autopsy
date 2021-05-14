@@ -24,7 +24,9 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.TimeZone;
+import java.util.Set;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JList;
@@ -171,7 +173,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
         "DomainSummaryPanel.downloads.text=Files downloaded: ",
         "DomainSummaryPanel.notability.text=Previously tagged as notable: ",
         "DomainSummaryPanel.userRole.text=Account type: ",
-        "DomainSummaryPanel.category.text=Category: ",
+        "DomainSummaryPanel.category.text=Categories: ",
         "DomainSummaryPanel.loadingImages.text=Loading thumbnail...",
         "DomainSummaryPanel.no.text=No",
         "DomainSummaryPanel.yes.text=Yes"})
@@ -188,7 +190,9 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
             notability += Bundle.DomainSummaryPanel_no_text();
         }
         domainNotabilityLabel.setText(notability);
-        categoryLabel.setText(Bundle.DomainSummaryPanel_category_text() + value.getResultDomain().getWebCategory());
+        Set<String> webCategories = new HashSet<>();
+        webCategories.addAll(value.getResultDomain().getWebCategories());
+        categoryLabel.setText(Bundle.DomainSummaryPanel_category_text() + String.join(",", webCategories));
         activityLabel.setText(Bundle.DomainSummaryPanel_activity_text(startDate, endDate));
         totalVisitsLabel.setText(Bundle.DomainSummaryPanel_totalPages_text() + value.getResultDomain().getTotalPageViews());
         pagesLabel.setText(Bundle.DomainSummaryPanel_pages_text() + value.getResultDomain().getPageViewsInLast60Days());

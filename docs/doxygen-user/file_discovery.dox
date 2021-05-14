@@ -13,7 +13,7 @@ We suggest running all \ref ingest_page "ingest modules" before launching discov
 Required ingest modules:
 <ul>
 <li>\ref file_type_identification_page for image, video, and document searches
-<li>\ref recent_activity_page or \ref ileapp_page for domain searches
+<li>\ref recent_activity_page or one of the mobile parsers (\ref android_analyzer_page, \ref ileapp_page, \ref aleapp_page) for domain searches
 </ul>
 
 Optional ingest modules:
@@ -50,7 +50,7 @@ The first step is choosing whether you want to display images, videos, documents
 
 \subsection file_disc_filtering Filtering
 
-The second step is to select and configure your filters. The available filters will vary depending on the result type. For most filters, you enable them using the checkbox on the left and then select your options. Multiple options can be selected by using CTRL + left click. Results must pass all enabled filters to be displayed.
+The second step is to select and configure your filters. The available filters will vary depending on the result type. For most filters, you enable them using the checkbox on the left and then select the checkboxes next to the options you want to be enabled. The "Check All" and "Uncheck All" buttons can be used to check or uncheck all options in the list. Results must pass all enabled filters to be displayed.
 
 \subsubsection file_disc_size_filter File Size Filter
 
@@ -132,7 +132,7 @@ The previously notable filter is for domain searches only and is used to restric
 
 \subsubsection file_disc_known_account_filter Known Account Type Filter
 
-The previously notable filter is for domain searches only and is used to restrict results to only those domains that have a known account type.
+The known account type filter is for domain searches only and is used to restrict results to only those domains that have a known account type.
 
 \image html FileDiscovery/fd_knownAccountFilter.png
 

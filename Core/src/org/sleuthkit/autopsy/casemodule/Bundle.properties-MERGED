@@ -128,6 +128,7 @@ CTL_CaseCloseAct=Close Case
 CTL_CaseNewAction=New Case
 CTL_CaseDetailsAction=Case Details
 CTL_CaseDeleteAction=Delete Case
+CTL_CaseDeleteAction=Delete Case
 CTL_CaseOpenAction=Open Case
 CTL_UnpackagePortableCaseAction=Unpack and Open Portable Case
 DeleteDataSourceAction.confirmationDialog.message=Are you sure you want to remove the selected data source from the case?\nNote that the case will be closed and re-opened during the removal.
@@ -186,8 +187,6 @@ LogicalEvidenceFilePanel.pathValidation.getOpenCase.Error=Warning: Exception whi
 LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01 file extension are supported here.
 LogicalFilesDspPanel.subTypeComboBox.l01FileOption.text=Logical evidence file (L01)
 LogicalFilesDspPanel.subTypeComboBox.localFilesOption.text=Local files and folders
-Menu/Case/OpenRecentCase=Open Recent Case
-CTL_CaseDeleteAction=Delete Case
 OpenIDE-Module-Name=Case
 NewCaseVisualPanel1.caseNameLabel.text_1=Case Name:
 NewCaseVisualPanel1.caseDirLabel.text=Base Directory:
@@ -346,6 +345,12 @@ RecentCases.getName.text=Clear Recent Cases
 RecentItems.openRecentCase.msgDlg.text=Case {0} no longer exists.
 SelectDataSourceProcessorPanel.name.text=Select Data Source Type
 StartupWindow.title.text=Welcome
+# {0} - autFilePath
+StartupWindowProvider.openCase.cantOpen=Unable to open previously open case with metadata file: {0}
+# {0} - reOpenFilePath
+StartupWindowProvider.openCase.deleteOpenFailure=Unable to open or delete file containing path {0} to previously open case. The previous case will not be opened.
+# {0} - autFilePath
+StartupWindowProvider.openCase.noFile=Unable to open previously open case because metadata file not found at: {0}
 UnpackagePortableCaseDialog.title.text=Unpackage Portable Case
 UnpackagePortableCaseDialog.UnpackagePortableCaseDialog.extensions=Portable case package (.zip, .zip.001)
 UnpackagePortableCaseDialog.validatePaths.badExtension=File extension must be .zip or .zip.001

@@ -33,6 +33,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class HostsEvent extends TskDataModelChangeEvent<Host> {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Retrieves a list of ids from a list of hosts.
      *
@@ -42,7 +44,7 @@ public class HostsEvent extends TskDataModelChangeEvent<Host> {
     private static List<Long> getIds(List<Host> hosts) {
         return getSafeList(hosts).stream()
                 .filter(h -> h != null)
-                .map(h -> h.getId()).collect(Collectors.toList());
+                .map(h -> h.getHostId()).collect(Collectors.toList());
     }
 
     /**
@@ -76,7 +78,7 @@ public class HostsEvent extends TskDataModelChangeEvent<Host> {
                     continue;
                 }
 
-                Optional<Host> thisHostOpt = hostManager.getHost(id);
+                Optional<Host> thisHostOpt = hostManager.getHostById(id);
                 thisHostOpt.ifPresent((h) -> toRet.add(h));
             }
         }

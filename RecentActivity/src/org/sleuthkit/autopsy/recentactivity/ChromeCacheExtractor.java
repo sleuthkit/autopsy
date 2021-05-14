@@ -55,9 +55,11 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -173,8 +175,8 @@ final class ChromeCacheExtractor {
             fileManager = currentCase.getServices().getFileManager();
              
             // Create an output folder to save any derived files
-            absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName);
-            relOutputFolderName = Paths.get( RAImageIngestModule.getRelModuleOutputPath(), moduleName).normalize().toString();
+            absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName, context.getJobId());
+            relOutputFolderName = Paths.get(RAImageIngestModule.getRelModuleOutputPath(currentCase, moduleName, context.getJobId())).normalize().toString();
             
             File dir = new File(absOutputFolderName);
             if (dir.exists() == false) {
@@ -204,7 +206,7 @@ final class ChromeCacheExtractor {
             outDir.mkdirs();
         }
         
-        String cacheTempPath = RAImageIngestModule.getRATempPath(currentCase, moduleName) + cachePath;
+        String cacheTempPath = RAImageIngestModule.getRATempPath(currentCase, moduleName, context.getJobId()) + cachePath;
         File tempDir = new File(cacheTempPath);
         if (tempDir.exists() == false) {
             tempDir.mkdirs();
@@ -220,7 +222,7 @@ final class ChromeCacheExtractor {
     private void cleanup () {
         
         for (Entry<String, FileWrapper> entry : this.fileCopyCache.entrySet()) {
-            Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(currentCase, moduleName), entry.getKey() ); 
+            Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(currentCase, moduleName, context.getJobId()), entry.getKey() ); 
             try {
                 entry.getValue().getFileCopy().getChannel().close();
                 entry.getValue().getFileCopy().close();
@@ -281,7 +283,9 @@ final class ChromeCacheExtractor {
                     return;
                 }
                 
-                processCacheFolder(indexFile);
+                if (indexFile.getSize() > 0) {
+                    processCacheFolder(indexFile);
+                }
             }
         
         } catch (TskCoreException ex) {
@@ -521,33 +525,31 @@ final class ChromeCacheExtractor {
     private void addArtifacts(CacheEntry cacheEntry, AbstractFile cacheEntryFile, AbstractFile cachedItemFile, Collection<BlackboardArtifact> artifactsAdded) throws TskCoreException {
   
         // Create a TSK_WEB_CACHE entry with the parent as data_X file that had the cache entry
-        BlackboardArtifact webCacheArtifact = cacheEntryFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
-        if (webCacheArtifact != null) {
-            Collection<BlackboardAttribute> webAttr = new ArrayList<>();
-            String url = cacheEntry.getKey() != null ? cacheEntry.getKey() : "";
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                    moduleName, url));
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
-                    moduleName, NetworkUtils.extractDomain(url)));
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    moduleName, cacheEntry.getCreationTime()));
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS,
-                    moduleName, cacheEntry.getHTTPHeaders()));  
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
-                    moduleName, cachedItemFile.getUniquePath()));
-            webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
-                    moduleName, cachedItemFile.getId()));
-            webCacheArtifact.addAttributes(webAttr);
-            artifactsAdded.add(webCacheArtifact);
+        Collection<BlackboardAttribute> webAttr = new ArrayList<>();
+        String url = cacheEntry.getKey() != null ? cacheEntry.getKey() : "";
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                moduleName, url));
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                moduleName, NetworkUtils.extractDomain(url)));
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                moduleName, cacheEntry.getCreationTime()));
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS,
+                moduleName, cacheEntry.getHTTPHeaders()));  
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
+                moduleName, cachedItemFile.getUniquePath()));
+        webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                moduleName, cachedItemFile.getId()));
 
-            // Create a TSK_ASSOCIATED_OBJECT on the f_XXX or derived file file back to the CACHE entry
-            BlackboardArtifact associatedObjectArtifact = cachedItemFile.newArtifact(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
-            if (associatedObjectArtifact != null) {
-                associatedObjectArtifact.addAttribute(
-                            new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
-                                    moduleName, webCacheArtifact.getArtifactID()));
-                artifactsAdded.add(associatedObjectArtifact);
-            }
+        BlackboardArtifact webCacheArtifact = cacheEntryFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_CACHE), webAttr);
+        artifactsAdded.add(webCacheArtifact);
+
+        // Create a TSK_ASSOCIATED_OBJECT on the f_XXX or derived file file back to the CACHE entry
+        BlackboardArtifact associatedObjectArtifact = cachedItemFile.newArtifact(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+        if (associatedObjectArtifact != null) {
+            associatedObjectArtifact.addAttribute(
+                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
+                                moduleName, webCacheArtifact.getArtifactID()));
+            artifactsAdded.add(associatedObjectArtifact);
         }
     }
     
@@ -647,7 +649,7 @@ final class ChromeCacheExtractor {
         // write the file to disk so that we can have a memory-mapped ByteBuffer
         AbstractFile cacheFile = abstractFileOptional.get();
         RandomAccessFile randomAccessFile = null;
-        String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName) + cacheFolderName + cacheFile.getName(); //NON-NLS
+        String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName, context.getJobId()) + cacheFolderName + cacheFile.getName(); //NON-NLS
         try {
             File newFile = new File(tempFilePathname);
             ContentUtils.writeToFile(cacheFile, newFile, context::dataSourceIngestIsCancelled);
@@ -1034,6 +1036,9 @@ final class ChromeCacheExtractor {
                 this.data = new byte [length];
                 ByteBuffer buf = cacheFileCopy.getByteBuffer();
                 int dataOffset = DATAFILE_HDR_SIZE + cacheAddress.getStartBlock() * cacheAddress.getBlockSize();
+                if (dataOffset > buf.capacity()) {
+                    return;
+                }
                 buf.position(dataOffset);
                 buf.get(data, 0, length);
                 

@@ -14,7 +14,7 @@ ExportCSV.saveNodesToCSV.empty=No data to export
 # {0} - Output file
 ExportCSV.saveNodesToCSV.fileExists=File {0} already exists
 ExportCSV.saveNodesToCSV.noCurrentCase=No open case available
-ExportCSV.title.text=Export selected rows to CSV
+ExportCSV.title.text=Export Selected Rows to CSV
 ExternalViewerAction.actionPerformed.failure.exe.message=The file is an executable and will not be opened.
 ExternalViewerAction.actionPerformed.failure.IO.message=There is no associated editor for files of this type or the associated application failed to launch.
 ExternalViewerAction.actionPerformed.failure.missingFile.message=The file no longer exists.
@@ -59,6 +59,7 @@ SelectionContext.views=Views
 ViewContextAction.errorMessage.cannotFindDirectory=Failed to locate directory.
 ViewContextAction.errorMessage.cannotFindNode=Failed to locate data source node in tree.
 ViewContextAction.errorMessage.cannotSelectDirectory=Failed to select directory in tree.
+ViewContextAction.errorMessage.unsupportedParent=Unable to navigate to content not supported in this release.
 VolumeDetailsPanel.volumeIDLabel.text=Volume ID:
 VolumeDetailsPanel.volumeIDValue.text=...
 VolumeDetailsPanel.startValue.text=...

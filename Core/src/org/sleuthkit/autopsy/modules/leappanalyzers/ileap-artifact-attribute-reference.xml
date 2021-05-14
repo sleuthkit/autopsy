@@ -50,9 +50,9 @@
         <FileName filename="App Snapshots.tsv" description="App Snapshots (screenshots)">
             <ArtifactName artifactname="TSK_SCREEN_SHOTS" comment="null">
                 <AttributeName attributename="TSK_PROG_NAME" columnName="App Name" required="yes" />
-                <AttributeName attributename="TSK_PATH" columnName="SOurce Path" required="yes" />
+                <AttributeName attributename="TSK_PATH" columnName="Source Path" required="yes" />
                 <AttributeName attributename="TSK_DATETIME" columnName="Date Modified" required="yes" />
-                <AttributeName attributename="null" columnName="Source File Located" required="no" />
+                <AttributeName attributename="null" columnName="Png Path" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -72,7 +72,7 @@
                 <AttributeName attributename="null" columnName="Name Origin" required="no" />
                 <AttributeName attributename="null" columnName="Address" required="no" />
                 <AttributeName attributename="null" columnName="Resolved Address" required="no" />			
-                <AttributeName attributename="TSK_DATETIME" columnName="Last Seen TIme" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Last Seen Time" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Connection Time" required="yes" />			
             </ArtifactName>
         </FileName>
@@ -101,6 +101,7 @@
                 <AttributeName attributename="null" columnName="ISO County Code" required="no" />
                 <AttributeName attributename="null" columnName="Location" required="no" />
                 <AttributeName attributename="null" columnName="Service Provider" required="no" />
+                <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
             </ArtifactName>
         </FileName>
 
@@ -237,8 +238,8 @@
 
         <FileName filename="KnowledgeC Bluetooth Connections.tsv" description="KnowledgeC Bluetooth Connections">
             <ArtifactName artifactname="TSK_BLUETOOTH_PAIRING" comment="KnowledgeC Bluetooth Connections">
-                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
-                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Start" required="yes" />
+                <AttributeName attributename="null" columnName="End" required="no" />
                 <AttributeName attributename="TSK_MAC_ADDRESS" columnName="Bluetooth Address" required="yes" />
                 <AttributeName attributename="TSK_DEVICE_NAME" columnName="Bluetooth Name" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
@@ -252,17 +253,15 @@
         </FileName>
 
         <FileName filename="KnowledgeC Car Play Connections.tsv" description="KnowledgeC Car Play Connections">
-            <ArtifactName artifactname="TSK_DEVICE_INFO" comment="KnowledgeC Car Play Connections">
-                <AttributeName attributename="TSK_DATETIME" columnName="Start" required="yes" />
-                <AttributeName attributename="null" columnName="End" required="no" />
-                <AttributeName attributename="null" columnName="Car Play Connected" required="yes" />
+            <ArtifactName artifactname="TSK_USER_DEVICE_EVENT" comment="KnowledgeC Car Play Connections">
+                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="yes" />
+                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="yes" />
+                <AttributeName attributename="null" columnName="Car Play Connected" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
                 <AttributeName attributename="null" columnName="GMT Offset" required="no" />
                 <AttributeName attributename="null" columnName="Entry Creation" required="no" />
-                <AttributeName attributename="TSK_DEVICE_ID" columnName="UUID" required="yes" />
-                <AttributeName attributename="null" columnName="Zobject Table ID" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -314,9 +313,9 @@
 
         <FileName filename="KnowledgeC Application in Focus.tsv" description="KnowledgeC Application In Focus">
             <ArtifactName artifactname="TSK_PROG_RUN" comment="KnowledgeC Application In Focus">
-                <AttributeName attributename="TSK_DATETIME_START" columnName="Start" required="no" />
-                <AttributeName attributename="TSK_DATETIME_END" columnName="End" required="no" />
-                <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="no" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Start" required="yes" />
+                <AttributeName attributename="null" columnName="End" required="no" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="yes" />
                 <AttributeName attributename="null" columnName="Usage in Seconds" required="no" />
                 <AttributeName attributename="null" columnName="Usage in Minutes" required="no" />
                 <AttributeName attributename="null" columnName="Day of Week" required="no" />
@@ -357,7 +356,7 @@
             <ArtifactName artifactname="TSK_RECENT_OBJ" comment="KnowledgeC Media Playing">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Start" required="yes" />
                 <AttributeName attributename="null" columnName="End" required="no" />
-                <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="yes" />
+                <AttributeName attributename="TSK_PATH" columnName="Bundle ID" required="yes" />
                 <AttributeName attributename="null" columnName="Now Playing Album" required="no" />
                 <AttributeName attributename="null" columnName="Now Playing Artists" required="no" />
                 <AttributeName attributename="null" columnName="Playing Genre" required="no" />
@@ -377,7 +376,7 @@
             <ArtifactName artifactname="TSK_RECENT_OBJ" comment="KnowledgeC Notes - Activity">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Start" required="yes" />
                 <AttributeName attributename="null" columnName="End" required="no" />
-                <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="yes" />
+                <AttributeName attributename="TSK_PATH" columnName="Bundle ID" required="yes" />
                 <AttributeName attributename="null" columnName="Activity Type" required="no" />
                 <AttributeName attributename="null" columnName="User Activity Required String" required="no" />
                 <AttributeName attributename="null" columnName="ID" required="no" />
@@ -495,13 +494,6 @@
             </ArtifactName>
         </FileName>
 
-        <FileName filename="Last Build.tsv" description="iOS Build">
-            <ArtifactName artifactname="TSK_OS_INFO" comment="iOS Build">
-                <AttributeName attributename="TSK_NAME" columnName="Key" required="yes" />
-                <AttributeName attributename="TSK_VALUE" columnName="Values" required="yes" />
-            </ArtifactName>
-        </FileName>
-
         <FileName filename="LocationD LTE Location.tsv" description="LocationD LTE Location">
             <ArtifactName artifactname="TSK_GPS_LAST_KNOWN_LOCATION" comment="LocationD LTE Location">
                 <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
@@ -524,7 +516,7 @@
 
         <FileName filename="RoutineD Vehicle Location.tsv" description="RoutineD Vehicle Location">
             <ArtifactName artifactname="TSK_GPS_LAST_KNOWN_LOCATION" comment="RoutineD Vehicle Location">
-                <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
                 <AttributeName attributename="null" columnName="Location Date" required="no" />
                 <AttributeName attributename="null" columnName="Coordinates" required="no" />
                 <AttributeName attributename="null" columnName="Vehicle Identifier" required="no" />
@@ -543,14 +535,12 @@
 
         <FileName filename="RoutineD Parked Vehicle Historical.tsv" description="RoutineD Parked Vehicle Historical">
             <ArtifactName artifactname="TSK_GPS_LAST_KNOWN_LOCATION" comment="RoutineD Parked Vehicle Historical">
-                <AttributeName attributename="TSK_DATETIME" columnName="Date" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
                 <AttributeName attributename="null" columnName="Location Date" required="no" />
-                <AttributeName attributename="null" columnName="Coordinates" required="no" />
                 <AttributeName attributename="null" columnName="Location Uncertainty" required="no" />
                 <AttributeName attributename="null" columnName="Identifier" required="no" />
                 <AttributeName attributename="TSK_GEO_LATITUDE" columnName="Latitude" required="yes" />
                 <AttributeName attributename="TSK_GEO_LONGITUDE" columnName="Longitude" required="yes" />
-                <AttributeName attributename="null" columnName="Table ID" required="no" />
             </ArtifactName>
         </FileName>
 
@@ -714,13 +704,14 @@
         </FileName>
 
         <FileName filename="Powerlog Paired Device Conf.tsv" description="Powerlog Paired Device Configuration">
-            <ArtifactName artifactname="TSK_DEVICE_INFO" comment="Powerlog Paired Device Configuration">
+            <ArtifactName artifactname="TSK_DEVICE_ATTACHED" comment="Powerlog Paired Device Configuration">
                 <AttributeName attributename="TSK_DATETIME" columnName="Timestamp" required="yes" />
                 <AttributeName attributename="TSK_DEVICE_ID" columnName="Build" required="yes" />
                 <AttributeName attributename="TSK_DEVICE_MAKE" columnName="Device" required="yes" />
-                <AttributeName attributename="TSK_DEVICE_MODEL" columnName="PairedDeviceConfig Table ID" required="yes" />
+                <AttributeName attributename="TSK_DEVICE_MODEL" columnName="HW Model" required="yes" />
+                <AttributeName attributename="null" columnName="Pairing ID" required="no" />                
             </ArtifactName>
-        </FileName>
+        </FileName>   
                
         <FileName filename="Safari Browser History.tsv" description="Safari Browser">
             <ArtifactName artifactname="TSK_WEB_HISTORY" comment="null">
@@ -741,28 +732,26 @@
             <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="null">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Visit Time" required="yes" />
                 <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes" />
-                <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
+                <AttributeName attributename="null" columnName="URL" required="yes" />
                 <AttributeName attributename="null" columnName="Visit Count" required="no" />
-                <AttributeName attributename="TSK_TITLE" columnName="Title" required="yes" />
+                <AttributeName attributename="null" columnName="Title" required="no" />
                 <AttributeName attributename="null" columnName="iCloud Sync" required="no" />			
                 <AttributeName attributename="null" columnName="Load Successful" required="no" />
                 <AttributeName attributename="null" columnName="Visit ID" required="no" />			
-                <AttributeName attributename="TSK_REFERRER" columnName="Redirect Source" required="yes" />
+                <AttributeName attributename="null" columnName="Redirect Source" required="no" />
                 <AttributeName attributename="null" columnName="Redirect Destination" required="no" />			
                 <AttributeName attributename="null" columnName="History Item ID"	 required="no" />
             </ArtifactName>
         </FileName>
 
-<!-- This section is commented out as the iLeapp program needs to be changed in order to properly process the mail.  It appears that the 
-     TSK_TEXT can contain carriage/line returns and this messes reading the tsv file line by line
         <FileName filename="SMS - iMessage.tsv" description="SMS - iMessage">
-            <ArtifactName artifactname="TSK_MESSAGE" comment="null">
+            <ArtifactName artifactname="TSK_MESSAGE" comment="SMS - iMessage">
                 <AttributeName attributename="TSK_DATETIME" columnName="Message Date" required="yes" />
-                <AttributeName attributename="TSK_DATETIME_RCVD" columnName="Date Delivered" required="yes" />
-                <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Date Read" required="yes" />
+                <AttributeName attributename="null" columnName="Date Delivered" required="no" />
+                <AttributeName attributename="null" columnName="Date Read" required="no" />
                 <AttributeName attributename="TSK_TEXT" columnName="Message" required="yes" />
                 <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="Contact ID" required="yes" />
-                <AttributeName attributename="TSK_MESSAGE_TYPE" columnName="Service" required="yes" />
+                <AttributeName attributename="null" columnName="Service" required="no" />
                 <AttributeName attributename="TSK_PHONE_NUMBER_TO" columnName="Account" required="yes" />
                 <AttributeName attributename="null" columnName="Is Delivered" required="no" />
                 <AttributeName attributename="null" columnName="Is from Me" required="no" />
@@ -770,9 +759,9 @@
                 <AttributeName attributename="null" columnName="MIME Type" required="no" />
                 <AttributeName attributename="null" columnName="Transfer Type" required="no" />
                 <AttributeName attributename="null" columnName="Total Bytes" required="no" />
+                <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>            
             </ArtifactName>
         </FileName>
--->
 
         <FileName filename="Wifi.tsv" description="Wifi">
             <ArtifactName artifactname="TSK_WIFI_NETWORK" comment="Wifi">

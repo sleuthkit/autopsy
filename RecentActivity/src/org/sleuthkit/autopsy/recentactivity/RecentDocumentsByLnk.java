@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -23,7 +23,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
@@ -44,8 +43,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -126,13 +123,17 @@ class RecentDocumentsByLnk extends Extract {
                     NbBundle.getMessage(this.getClass(),
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
                     recentFile.getCrtime()));
-            BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
-            if(bba != null) {
-                bbartifacts.add(bba);
-                bba = createAssociatedArtifact(path, bba);
-                if (bba != null) {
+            try{
+                BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
+                if(bba != null) {
                     bbartifacts.add(bba);
+                    bba = createAssociatedArtifact(path, bba);
+                    if (bba != null) {
+                        bbartifacts.add(bba);
+                    }
                 }
+            } catch(TskCoreException ex) {
+               logger.log(Level.SEVERE, String.format("Failed to create TSK_RECENT_OBJECT artifact for file %d", recentFile.getId()), ex); 
             }
         }
         
@@ -160,19 +161,11 @@ class RecentDocumentsByLnk extends Extract {
             sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
             for (AbstractFile sourceFile : sourceFiles) {
                 if (sourceFile.getParentPath().endsWith(filePath)) {
-                    Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
-                    bbattributes2.addAll(Arrays.asList(
-                         new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
-                         bba.getArtifactID())));
-
-                    BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
-                    if (associatedObjectBba != null) {
-                        return associatedObjectBba;
-                    }
+                    return createAssociatedArtifact(sourceFile, bba);
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, String.format("Error finding actual file %s. file may not exist", filePathName)); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error finding actual file %s. file may not exist", filePathName), ex); //NON-NLS
         }
        
         return null;

@@ -61,7 +61,7 @@ import org.jsoup.nodes.Element;
  * Annotations view of file contents.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-@ServiceProvider(service = DataContentViewer.class, position = 8)
+@ServiceProvider(service = DataContentViewer.class, position = 9)
 @Messages({
     "AnnotationsContentViewer.title=Annotations",
     "AnnotationsContentViewer.toolTip=Displays tags and comments associated with the selected content.",

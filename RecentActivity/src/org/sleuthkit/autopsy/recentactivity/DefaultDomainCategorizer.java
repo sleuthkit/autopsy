@@ -128,18 +128,33 @@ public class DefaultDomainCategorizer implements DomainCategorizer {
     private Map<String, String> mapping = null;
 
     @Override
-    public void initialize() throws DomainCategorizerException {
-        if (this.mapping == null) {
-            try {
-                this.mapping = loadMapping();
-            } catch (IOException ex) {
-                throw new DomainCategorizerException("Unable to load domain type csv for domain category analysis", ex);
-            }
+    public synchronized void initialize() throws DomainCategorizerException {
+        if (isInitialized()) {
+            return;
+        }
+
+        try {
+            this.mapping = loadMapping();
+        } catch (IOException ex) {
+            throw new DomainCategorizerException("Unable to load domain type csv for domain category analysis", ex);
         }
     }
 
+    /**
+     * Returns true if this categorizer is properly initialized.
+     *
+     * @return True if this categorizer is properly initialized.
+     */
+    private synchronized boolean isInitialized() {
+        return this.mapping != null;
+    }
+
     @Override
-    public DomainCategory getCategory(String domain, String host) throws DomainCategorizerException {
+    public synchronized DomainCategory getCategory(String domain, String host) throws DomainCategorizerException {
+        if (!isInitialized()) {
+            initialize();
+        }
+
         // use host; use domain as fallback if no host provided
         String hostToUse = StringUtils.isBlank(host) ? domain : host;
 
@@ -162,7 +177,7 @@ public class DefaultDomainCategorizer implements DomainCategorizer {
     }
 
     @Override
-    public void close() throws Exception {
+    public synchronized void close() throws Exception {
         // clear out the mapping to release resources
         mapping = null;
     }

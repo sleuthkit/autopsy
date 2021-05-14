@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -47,11 +48,12 @@ import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 
 
 abstract class Extract {
@@ -61,10 +63,16 @@ abstract class Extract {
     protected Blackboard blackboard;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
-    String moduleName = "";
+    private String moduleName = "";
     boolean dataFound = false;
+    private RAOsAccountCache osAccountCache = null;
 
-    Extract() {        
+    Extract() {
+        this("");
+    }
+    
+    Extract(String moduleName) {
+        this.moduleName = moduleName;
     }
 
     final void init() throws IngestModuleException {
@@ -86,6 +94,21 @@ abstract class Extract {
     void configExtractor() throws IngestModuleException  {        
     }
 
+    /**
+     * Extractor process method intended to mirror the Ingest process method.
+     * 
+     *  Subclasses should overload just the abstract version of the method.
+     * 
+     * @param dataSource The data source object to ingest.
+     * @param context   The the context for the current job.
+     * @param progressBar A handle to the progressBar for the module to update with status.
+     * @param osAccountCache The OsAccountCache.
+     */
+    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar, RAOsAccountCache osAccountCache) {
+        this.osAccountCache = osAccountCache;
+        process(dataSource, context, progressBar);
+    }
+    
     abstract void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar);
 
     void complete() {
@@ -108,28 +131,58 @@ abstract class Extract {
     protected void addErrorMessage(String message) {
         errorMessages.add(message);
     }
+    
+    /**
+     * Generic method for creating artifacts.
+     *
+     * @param type       The type of artifact.
+     * @param file       The file the artifact originated from.
+     * @param attributes A list of the attributes to associate with the
+     *                   artifact.
+     *
+     * @return The newly created artifact.
+     */
+    BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
+       return createArtifactWithAttributes(new BlackboardArtifact.Type(type), content, attributes);
+    }
+    
+    /**
+     * Generic method for creating artifacts.
+     *
+     * @param type       The type of artifact.
+     * @param content    The file the artifact originated from.
+     * @param attributes A list of the attributes to associate with the
+     *                   artifact.
+     *
+     * @return The newly created artifact.
+     *
+     * @throws TskCoreException
+     */
+    BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
+        if (type.getCategory() == BlackboardArtifact.Category.DATA_ARTIFACT) {
+            return (content instanceof AbstractFile) 
+                    ? ((AbstractFile) content).newDataArtifact(type, attributes) 
+                    : content.newDataArtifact(type, attributes, null);
+        } else {
+            BlackboardArtifact bbart = content.newArtifact(type.getTypeID());
+            bbart.addAttributes(attributes);
+            return bbart;
+        }
+    }
 
     /**
-     * Generic method for creating a blackboard artifact with attributes
+     * Returns and associated artifact for the given artifact.
      *
-     * @param type         is a blackboard.artifact_type enum to determine which
-     *                     type the artifact should be
-     * @param content      is the Content object that needs to have the
-     *                     artifact added for it
-     * @param bbattributes is the collection of blackboard attributes that need
-     *                     to be added to the artifact after the artifact has
-     *                     been created
-     * @return The newly-created artifact, or null on error
+     * @param content  The content to create the artifact from.
+     * @param artifact The artifact to associate the new artifact with.
+     *
+     * @return The newly created artifact.
+     *
+     * @throws TskCoreException
      */
-    protected BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE type, Content content, Collection<BlackboardAttribute> bbattributes) {
-        try {
-            BlackboardArtifact bbart = content.newArtifact(type);
-            bbart.addAttributes(bbattributes);
-            return bbart;
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error while trying to add an artifact", ex); //NON-NLS
-        }
-        return null;
+    BlackboardArtifact createAssociatedArtifact(Content content, BlackboardArtifact artifact) throws TskCoreException {
+        return createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, content, Collections.singletonList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
+                RecentActivityExtracterModuleFactory.getModuleName(), artifact.getArtifactID())));
     }
     
     /**
@@ -468,12 +521,13 @@ abstract class Extract {
      * 
      * @param context
      * @param file
+     * @param IngestJobId The ingest job id.
      * @return Newly created copy of the AbstractFile
      * @throws IOException 
      */
-    protected File createTemporaryFile(IngestJobContext context, AbstractFile file) throws IOException{
+    protected File createTemporaryFile(IngestJobContext context, AbstractFile file, long ingestJobId) throws IOException{
         Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(
-                getCurrentCase(), getName()), file.getName() + file.getId() + file.getNameExtension());
+                getCurrentCase(), getName(), ingestJobId), file.getName() + file.getId() + file.getNameExtension());
         java.io.File tempFile = tempFilePath.toFile();
         
         try {

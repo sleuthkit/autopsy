@@ -88,16 +88,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(RecentFilesFilterNode rffn);
 
-    /*
-     * Extracted Results Area
-     */
-    T visit(ResultsNode rn);
-
     T visit(BlackboardArtifactNode ban);
 
-    T visit(ExtractedContent.TypeNode atn);
+    T visit(Artifacts.TypeNode atn);
 
-    T visit(ExtractedContent.RootNode ecn);
+    T visit(Artifacts.BaseArtifactNode ecn);
 
     T visit(KeywordHits.RootNode khrn);
 
@@ -202,6 +197,11 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(HostNode node);
 
     T visit(DataSourcesByTypeNode node);
+    
+    /*
+     * Unsupported node
+     */
+    T visit(UnsupportedContentNode ucn);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -296,12 +296,12 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(ExtractedContent.TypeNode atn) {
+        public T visit(Artifacts.TypeNode atn) {
             return defaultVisit(atn);
         }
 
         @Override
-        public T visit(ExtractedContent.RootNode ecn) {
+        public T visit(Artifacts.BaseArtifactNode ecn) {
             return defaultVisit(ecn);
         }
 
@@ -398,11 +398,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
             return defaultVisit(dataSourceGroupingNode);
-        }
-
-        @Override
-        public T visit(ResultsNode rn) {
-            return defaultVisit(rn);
         }
 
         @Override
@@ -572,6 +567,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(PersonGroupingNode node) {
+            return defaultVisit(node);
+        }
+        
+        @Override
+        public T visit(UnsupportedContentNode node) {
             return defaultVisit(node);
         }
     }

@@ -85,7 +85,7 @@ public final class ExportCSVAction extends AbstractAction {
     /**
      * Private constructor for the action.
      */
-    @NbBundle.Messages({"ExportCSV.title.text=Export selected rows to CSV"})
+    @NbBundle.Messages({"ExportCSV.title.text=Export Selected Rows to CSV"})
     private ExportCSVAction() {
         super(Bundle.ExportCSV_title_text());
     }

@@ -31,6 +31,17 @@
     </target>
 
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
+        <!--
+            Copy netbeans localization jars: 
+            This contains jars provided in Netbeans 8 RCP that provide localization bundles.  
+            They do not appear to be included in Netbeans >= 9.  
+            See VIK-7434 for more information.
+        -->
+        <mkdir dir="${modules.dir}/locale"/>
+        <copy todir="${modules.dir}/locale" >
+            <fileset dir="${thirdparty.dir}/NetbeansLocalization"/>
+        </copy>
+
         <!--Copy photorec to release-->
         <copy todir="${basedir}/release/photorec_exec" >
             <fileset dir="${thirdparty.dir}/photorec_exec"/>
@@ -87,6 +98,11 @@
         <!--Copy ImageMagick to release-->
         <copy todir="${basedir}/release/ImageMagick-7.0.10-27-portable-Q16-x64" >
             <fileset dir="${thirdparty.dir}/ImageMagick-7.0.10-27-portable-Q16-x64"/>
+        </copy>
+
+        <!--Copy DomainCategorization to release-->
+        <copy todir="${basedir}/release/DomainCategorization" >
+            <fileset dir="${thirdparty.dir}/DomainCategorization"/>
         </copy>
 
         <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we

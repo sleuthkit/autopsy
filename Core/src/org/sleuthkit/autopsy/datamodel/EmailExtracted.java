@@ -44,10 +44,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_EMAIL_MSG;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 
 /**
  * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree.
@@ -57,8 +59,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class EmailExtracted implements AutopsyVisitableItem {
 
-    private static final String LABEL_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getLabel();
-    private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName();
+    private static final String LABEL_NAME = BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeName();
     private static final Logger logger = Logger.getLogger(EmailExtracted.class.getName());
     private static final String MAIL_ACCOUNT = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailAccount.text");
     private static final String MAIL_FOLDER = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailFolder.text");
@@ -77,7 +78,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
      */
     public static final Map<String, String> parsePath(String path) {
         Map<String, String> parsed = new HashMap<>();
-        String[] split = path.split(MAIL_PATH_SEPARATOR);
+        String[] split = path == null ? new String[0] : path.split(MAIL_PATH_SEPARATOR);
         if (split.length < 4) {
             parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
             parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
@@ -147,50 +148,52 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @SuppressWarnings("deprecation")
         public void update() {
-            synchronized (accounts) {
-                accounts.clear();
-            }
+            // clear cache if no case
             if (skCase == null) {
+                synchronized (accounts) {
+                    accounts.clear();
+                }
                 return;
             }
 
-            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID();
+            // get artifact id and path (if present) of all email artifacts
+            int emailArtifactId = BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID();
             int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
-                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                    + "attribute_type_id=" + pathAttrId //NON-NLS
-                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-            if (filteringDSObjId > 0) {
-                query += "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
-            }
+
+            String query = "SELECT \n"
+                    + "	art.artifact_id AS artifact_id,\n"
+                    + "	(SELECT value_text FROM blackboard_attributes attr\n"
+                    + "	WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + pathAttrId + "\n"
+                    + "	LIMIT 1) AS value_text\n"
+                    + "FROM \n"
+                    + "	blackboard_artifacts art\n"
+                    + "	WHERE art.artifact_type_id = " + emailArtifactId + "\n"
+                    + ((filteringDSObjId > 0) ? "	AND art.data_source_obj_id = " + filteringDSObjId : "");
+
+            // form hierarchy of account -> folder -> account id
+            Map<String, Map<String, List<Long>>> newMapping = new HashMap<>();
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
-                synchronized (accounts) {
-                    while (resultSet.next()) {
-                        final String path = resultSet.getString("value_text"); //NON-NLS
-                        final long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
-                        final Map<String, String> parsedPath = parsePath(path);
-                        final String account = parsedPath.get(MAIL_ACCOUNT);
-                        final String folder = parsedPath.get(MAIL_FOLDER);
+                while (resultSet.next()) {
+                    Long artifactId = resultSet.getLong("artifact_id");
+                    Map<String, String> accountFolderMap = parsePath(resultSet.getString("value_text"));
+                    String account = accountFolderMap.get(MAIL_ACCOUNT);
+                    String folder = accountFolderMap.get(MAIL_FOLDER);
 
-                        Map<String, List<Long>> folders = accounts.get(account);
-                        if (folders == null) {
-                            folders = new LinkedHashMap<>();
-                            accounts.put(account, folders);
-                        }
-                        List<Long> messages = folders.get(folder);
-                        if (messages == null) {
-                            messages = new ArrayList<>();
-                            folders.put(folder, messages);
-                        }
-                        messages.add(artifactId);
-                    }
+                    Map<String, List<Long>> folders = newMapping.computeIfAbsent(account, (str) -> new LinkedHashMap<>());
+                    List<Long> messages = folders.computeIfAbsent(folder, (str) -> new ArrayList<>());
+                    messages.add(artifactId);
                 }
             } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
             }
+
+            synchronized (accounts) {
+                accounts.clear();
+                accounts.putAll(newMapping);
+            }
+
             setChanged();
             notifyObservers();
         }
@@ -200,12 +203,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Mail root node grouping all mail accounts, supports account-> folder
      * structure
      */
-    public class RootNode extends DisplayableItemNode {
+    public class RootNode extends UpdatableCountTypeNode {
 
         public RootNode() {
-            super(Children.create(new AccountFactory(), true), Lookups.singleton(DISPLAY_NAME));
+            super(Children.create(new AccountFactory(), true),
+                    Lookups.singleton(TSK_EMAIL_MSG.getDisplayName()),
+                    TSK_EMAIL_MSG.getDisplayName(),
+                    filteringDSObjId,
+                    TSK_EMAIL_MSG);
+            //super(Children.create(new AccountFactory(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(LABEL_NAME);
-            super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
             emailResults.update();
         }
@@ -272,7 +279,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
                             emailResults.update();
                         }
                     } catch (NoCurrentCaseException notUsed) {

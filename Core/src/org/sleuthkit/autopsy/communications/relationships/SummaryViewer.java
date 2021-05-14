@@ -216,9 +216,11 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                     
                     List<String> fileRefList = results.getPaths();
 
-                    fileRefList.forEach(value -> {
-                        fileRefListModel.addElement(value);
-                    });
+                    if (fileRefList != null) {
+                        fileRefList.forEach(value -> {
+                            fileRefListModel.addElement(value);
+                        });
+                    }
 
                     CardLayout cardLayout = (CardLayout) fileRefPane.getLayout();
                     cardLayout.show(fileRefPane, "listPanelCard");

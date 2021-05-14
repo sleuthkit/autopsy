@@ -38,11 +38,18 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.DefaultMenuItem;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
@@ -234,6 +241,12 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     protected BaseDataSourceSummaryPanel(UpdateGovernor... governors) {
         this.governors = (governors == null) ? Collections.emptyList() : Arrays.asList(governors);
         this.updateHandler = new EventUpdateHandler(this::onRefresh, updateGovernor);
+    }
+    
+    /**
+     * Initializes the class so that it listens for events.
+     */
+    void init() {
         this.updateHandler.register();
     }
 
@@ -244,12 +257,12 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param artifact The artifact.
      * @return The menu item for a go to artifact menu item.
      */
-    protected CellModelTableCellRenderer.MenuItem getArtifactNavigateItem(BlackboardArtifact artifact) {
+    protected MenuItem getArtifactNavigateItem(BlackboardArtifact artifact) {
         if (artifact == null) {
             return null;
         }
 
-        return new CellModelTableCellRenderer.DefaultMenuItem(
+        return new DefaultMenuItem(
                 Bundle.BaseDataSourceSummaryPanel_goToArtifact(),
                 () -> {
                     final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
@@ -292,7 +305,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param path The path to the file.
      * @return The menu item or null if file cannot be found in data source.
      */
-    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(String path) {
+    protected MenuItem getFileNavigateItem(String path) {
         if (StringUtils.isNotBlank(path)) {
             Path p = Paths.get(path);
             String fileName = normalizePath(p.getFileName().toString());
@@ -320,12 +333,12 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param file The file.
      * @return The menu item list for a go to artifact menu item.
      */
-    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(AbstractFile file) {
+    protected MenuItem getFileNavigateItem(AbstractFile file) {
         if (file == null) {
             return null;
         }
 
-        return new CellModelTableCellRenderer.DefaultMenuItem(
+        return new DefaultMenuItem(
                 Bundle.BaseDataSourceSummaryPanel_goToFile(),
                 () -> {
                     new ViewContextAction(Bundle.BaseDataSourceSummaryPanel_goToFile(), file)
@@ -439,6 +452,132 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param dataSource The new dataSource.
      */
     protected abstract void onNewDataSource(DataSource dataSource);
+
+    /**
+     * Returns all the excel exportable items associated with the tab.
+     *
+     * @param dataSource The data source that results should be filtered.
+     * @return The excel exportable objects.
+     */
+    abstract List<ExcelSheetExport> getExports(DataSource dataSource);
+
+    /**
+     * Runs a data fetcher and returns the result handling any possible errors
+     * with a log message.
+     *
+     * @param dataFetcher The means of fetching the data.
+     * @param sheetName The name of the sheet.
+     * @param ds The data source.
+     * @return The fetched data.
+     */
+    protected static <T> T getFetchResult(
+            DataFetcher<DataSource, T> dataFetcher,
+            String sheetName, DataSource ds) {
+
+        try {
+            return dataFetcher.runQuery(ds);
+        } catch (Exception ex) {
+            logger.log(Level.WARNING,
+                    String.format("There was an error while acquiring data for exporting worksheet(s): '%s' for dataSource: %s",
+                            sheetName == null ? "<null>" : sheetName,
+                            ds == null || ds.getName() == null ? "<null>" : ds.getName()), ex);
+            return null;
+        }
+    }
+
+    /**
+     * Function that converts data into a excel sheet data.
+     */
+    protected interface ExcelExportFunction<T> {
+
+        /**
+         * Function that converts data into an excel sheet.
+         *
+         * @param data The data.
+         * @return The excel sheet export.
+         * @throws ExcelExportException
+         */
+        ExcelSheetExport convert(T data) throws ExcelExportException;
+    }
+
+    /**
+     * Helper method that converts data into an excel sheet export handling
+     * possible excel exceptions.
+     *
+     * @param excelConverter Function to convert data to an excel sheet export.
+     * @param data The data. If data is null, null will be returned.
+     * @param sheetName The name(s) of the sheet (to be used in the error
+     * message).
+     * @return The excel sheet export.
+     */
+    protected static <T> ExcelSheetExport convertToExcel(ExcelExportFunction<T> excelConverter, T data, String sheetName) {
+        if (data == null) {
+            return null;
+        }
+
+        try {
+            return excelConverter.convert(data);
+        } catch (ExcelExportException ex) {
+            logger.log(Level.WARNING,
+                    String.format("There was an error while preparing export of worksheet(s): '%s'",
+                            sheetName == null ? "<null>" : sheetName), ex);
+            return null;
+        }
+    }
+
+    /**
+     * Returns an excel sheet export given the fetching of data or null if no
+     * export created.
+     *
+     * @param dataFetcher The means of fetching data.
+     * @param excelConverter The means of converting data to excel.
+     * @param sheetName The name of the sheet (for error handling reporting).
+     * @param ds The data source to use for fetching data.
+     * @return The excel sheet export or null if no export could be generated.
+     */
+    protected static <T> ExcelSheetExport getExport(
+            DataFetcher<DataSource, T> dataFetcher, ExcelExportFunction<T> excelConverter,
+            String sheetName, DataSource ds) {
+
+        T data = getFetchResult(dataFetcher, sheetName, ds);
+        return convertToExcel(excelConverter, data, sheetName);
+    }
+
+    /**
+     * Returns an excel table export of the data or null if no export created.
+     *
+     * @param columnsModel The model for the columns.
+     * @param sheetName The name for the sheet.
+     * @param data The data to be exported.
+     * @return The excel table export or null if no export could be generated.
+     */
+    protected static <T, C extends ExcelCellModel> ExcelSheetExport getTableExport(List<ColumnModel<T, C>> columnsModel,
+            String sheetName, List<T> data) {
+
+        return convertToExcel((dataList) -> new ExcelTableExport<T, C>(sheetName, columnsModel, dataList),
+                data,
+                sheetName);
+    }
+
+    /**
+     * Returns an excel table export of the data or null if no export created.
+     *
+     * @param dataFetcher The means of fetching data for the data source and the
+     * export.
+     * @param columnsModel The model for the columns.
+     * @param sheetName The name for the sheet.
+     * @param ds The data source.
+     * @return The excel export or null if no export created.
+     */
+    protected static <T, C extends ExcelCellModel> ExcelSheetExport getTableExport(
+            DataFetcher<DataSource, List<T>> dataFetcher, List<ColumnModel<T, C>> columnsModel,
+            String sheetName, DataSource ds) {
+
+        return getExport(dataFetcher,
+                (dataList) -> new ExcelTableExport<T, C>(sheetName, columnsModel, dataList),
+                sheetName,
+                ds);
+    }
 
     /**
      * Utility method that shows a loading screen with loadable components,

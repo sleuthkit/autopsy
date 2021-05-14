@@ -8,6 +8,8 @@ import os
 import codecs
 import datetime
 import sys
+from typing import Callable, Dict, Union, List
+
 import psycopg2
 import psycopg2.extras
 import socket
@@ -167,12 +169,29 @@ class TskDbDiff(object):
 
         # create file path for gold files inside output folder. In case of diff, both gold and current run files
         # are available in the report output folder. Prefix Gold- is added to the filename.
-        gold_file_in_output_dir = output_file[:output_file.rfind("/")] + "/Gold-" + output_file[output_file.rfind("/")+1:]
+        gold_file_in_output_dir = os.path.join(os.path.dirname(output_file), "Gold-" + os.path.basename(output_file))
         shutil.copy(gold_file, gold_file_in_output_dir)
 
         return False
 
 
+    @staticmethod
+    def _get_associated_artifact_type(cur, artifact_id, isMultiUser):
+        if isMultiUser:
+            cur.execute(
+                "SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=%s",
+                [artifact_id])
+        else:
+            cur.execute(
+                "SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=?",
+                [artifact_id])
+
+        info = cur.fetchone()
+
+        return "File path: " + info[0] + " Artifact Type: " + info[1]
+
+
+    @staticmethod
     def _dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings, id_obj_path_table):
         """Dumps sorted text results to the given output location.
 
@@ -268,7 +287,7 @@ class TskDbDiff(object):
                             elif attr["value_type"] == 5:
                                 attr_value_as_string = str(attr["value_int64"])                        
                             if attr["display_name"] == "Associated Artifact":
-                                attr_value_as_string = getAssociatedArtifactType(attribute_cursor, attr_value_as_string, isMultiUser)                            
+                                attr_value_as_string = TskDbDiff._get_associated_artifact_type(attribute_cursor, attr_value_as_string, isMultiUser)
                             patrn = re.compile("[\n\0\a\b\r\f]")
                             attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
                             if attr["source"] == "Keyword Search" and attr["display_name"] == "Keyword Preview":
@@ -308,7 +327,7 @@ class TskDbDiff(object):
         srtcmdlst = ["sort", unsorted_dump, "-o", bb_dump_file]
         subprocess.call(srtcmdlst)
 
-
+    @staticmethod
     def _dump_output_db_nonbb(db_file, dump_file, isMultiUser, pgSettings):
         """Dumps a database to a text file.
 
@@ -320,66 +339,33 @@ class TskDbDiff(object):
         """
 
         conn, backup_db_file = db_connect(db_file, isMultiUser, pgSettings)
-        id_files_table = build_id_files_table(conn.cursor(), isMultiUser)
-        id_vs_parts_table = build_id_vs_parts_table(conn.cursor(), isMultiUser)
-        id_vs_info_table = build_id_vs_info_table(conn.cursor(), isMultiUser)
-        id_fs_info_table = build_id_fs_info_table(conn.cursor(), isMultiUser)
-        id_objects_table = build_id_objects_table(conn.cursor(), isMultiUser)
-        id_artifact_types_table = build_id_artifact_types_table(conn.cursor(), isMultiUser)
-        id_legacy_artifact_types = build_id_legacy_artifact_types_table(conn.cursor(), isMultiUser)
-        id_reports_table = build_id_reports_table(conn.cursor(), isMultiUser)
-        id_images_table = build_id_image_names_table(conn.cursor(), isMultiUser)
-        id_accounts_table = build_id_accounts_table(conn.cursor(), isMultiUser)
-        id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table, id_reports_table, id_images_table, id_accounts_table)
+        guid_utils = TskGuidUtils.create(conn)
 
-        if isMultiUser: # Use PostgreSQL
-            os.environ['PGPASSWORD']=pgSettings.password
-            pgDump = ["pg_dump", "--inserts", "-U", pgSettings.username, "-h", pgSettings.pgHost, "-p", pgSettings.pgPort, "-d", db_file, "-E", "utf-8", "-T", "blackboard_artifacts", "-T", "blackboard_attributes", "-f", "postgreSQLDump.sql"]
-            subprocess.call(pgDump)
-            postgreSQL_db = codecs.open("postgreSQLDump.sql", "r", "utf-8")
-            # Write to the database dump
-            with codecs.open(dump_file, "wb", "utf_8") as db_log:
-                dump_line = ''
-                for line in postgreSQL_db:
-                    line = line.strip('\r\n ')
-                    # Deal with pg_dump result file
-                    if (line.startswith('--') or line.lower().startswith('alter') or "pg_catalog" in line or "idle_in_transaction_session_timeout" in line or not line): # It's comment or alter statement or catalog entry or set idle entry or empty line
-                        continue
-                    elif not line.endswith(';'): # Statement not finished
-                        dump_line += line
-                        continue
-                    else:
-                        dump_line += line
-                    if 'INSERT INTO image_gallery_groups_seen' in dump_line:
-                        dump_line = ''
-                        continue;
-                    dump_line = normalize_db_entry(dump_line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types, id_accounts_table)
-                    db_log.write('%s\n' % dump_line)
-                    dump_line = ''
-            postgreSQL_db.close()
-        else: # use Sqlite
-            # Delete the blackboard tables
-            conn.text_factory = lambda x: x.decode("utf-8", "ignore")
-            conn.execute("DROP TABLE blackboard_artifacts")
-            conn.execute("DROP TABLE blackboard_attributes")
-            # Write to the database dump
-            with codecs.open(dump_file, "wb", "utf_8") as db_log:
-                for line in conn.iterdump():
-                    if 'INSERT INTO "image_gallery_groups_seen"' in line:
-                        continue
-                    line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table, id_legacy_artifact_types, id_accounts_table)
-                    db_log.write('%s\n' % line)
-        # Now sort the file  
+        if isMultiUser:
+            table_cols = get_pg_table_columns(conn)
+            schema = get_pg_schema(db_file, pgSettings.username, pgSettings.password,
+                                   pgSettings.pgHost, pgSettings.pgPort)
+        else:
+            table_cols = get_sqlite_table_columns(conn)
+            schema = get_sqlite_schema(conn)
+
+        with codecs.open(dump_file, "wb", "utf_8") as output_file:
+            output_file.write(schema + "\n")
+            for table, cols in sorted(table_cols.items(), key=lambda pr: pr[0]):
+                normalizer = TABLE_NORMALIZATIONS[table] if table in TABLE_NORMALIZATIONS else None
+                write_normalized(guid_utils, output_file, conn, table, cols, normalizer)
+
+        # Now sort the file
         srtcmdlst = ["sort", dump_file, "-o", dump_file]
         subprocess.call(srtcmdlst)
 
         conn.close()
         # cleanup the backup
-        if backup_db_file:
-            os.remove(backup_db_file)
-        return id_obj_path_table
+        # if backup_db_file:
+        #    os.remove(backup_db_file)
+        return guid_utils.obj_id_guids
 
-
+    @staticmethod
     def dump_output_db(db_file, dump_file, bb_dump_file, isMultiUser, pgSettings):
         """Dumps the given database to text files for later comparison.
 
@@ -391,7 +377,7 @@ class TskDbDiff(object):
         id_obj_path_table = TskDbDiff._dump_output_db_nonbb(db_file, dump_file, isMultiUser, pgSettings)
         TskDbDiff._dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings, id_obj_path_table)
 
-
+    @staticmethod
     def _get_tmp_file(base, ext):
         time = datetime.datetime.now().time().strftime("%H%M%f")
         return os.path.join(os.environ['TMP'], base + time + ext)
@@ -407,452 +393,737 @@ class PGSettings(object):
         self.username = user
         self.password = password
 
-    def get_pgHost():
+    def get_pgHost(self):
         return self.pgHost
 
-    def get_pgPort():
+    def get_pgPort(self):
         return self.pgPort
 
-    def get_username():
+    def get_username(self):
         return self.username
 
-    def get_password():
+    def get_password(self):
         return self.password
 
 
-def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info_table, objects_table, reports_table, images_table, artifact_table, accounts_table):
-    """ Make testing more consistent and reasonable by doctoring certain db entries.
-
-    Args:
-        line: a String, the line to remove the object id from.
-        files_table: a map from object ids to file paths.
+class TskGuidUtils:
+    """
+    This class provides guids for potentially volatile data.
     """
 
-    # Sqlite statement use double quotes for table name, PostgreSQL doesn't. We check both databases results for normalization.
-    files_index = line.find('INSERT INTO "tsk_files"') > -1 or line.find('INSERT INTO tsk_files ') > -1
-    path_index = line.find('INSERT INTO "tsk_files_path"') > -1 or line.find('INSERT INTO tsk_files_path ') > -1
-    object_index = line.find('INSERT INTO "tsk_objects"') > -1 or line.find('INSERT INTO tsk_objects ') > -1
-    vs_parts_index = line.find('INSERT INTO "tsk_vs_parts"') > -1 or line.find('INSERT INTO tsk_vs_parts ') > -1
-    report_index = line.find('INSERT INTO "reports"') > -1 or line.find('INSERT INTO reports ') > -1
-    layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
-    data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
-    event_description_index = line.find('INSERT INTO "tsk_event_descriptions"') > -1 or line.find('INSERT INTO tsk_event_descriptions ') > -1
-    events_index = line.find('INSERT INTO "tsk_events"') > -1 or line.find('INSERT INTO tsk_events ') > -1
-    ingest_job_index = line.find('INSERT INTO "ingest_jobs"') > -1 or line.find('INSERT INTO ingest_jobs ') > -1
-    examiners_index = line.find('INSERT INTO "tsk_examiners"') > -1 or line.find('INSERT INTO tsk_examiners ') > -1
-    ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1
-    ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
-    os_account_index = line.find('INSERT INTO "tsk_os_accounts"') > -1 or line.find('INSERT INTO tsk_os_accounts') > -1
-    os_account_attr_index = line.find('INSERT INTO "tsk_os_account_attributes"') > -1 or line.find('INSERT INTO tsk_os_account_attributes') > -1
-    
-    parens = line[line.find('(') + 1 : line.rfind(')')]
-    no_space_parens = parens.replace(" ", "")
-    fields_list = list(csv.reader([no_space_parens], quotechar="'"))[0]
-    #Add back in the quotechar for values that were originally wrapped (csv reader consumes this character)
-    fields_list_with_quotes = []
-    ptr = 0
-    for field in fields_list:
-        if(len(field) == 0):
-            field = "'" + field + "'"
-        else:
-            start = no_space_parens.find(field, ptr)
-            if((start - 1) >= 0 and no_space_parens[start - 1] == '\''):
-                if((start + len(field)) < len(no_space_parens) and no_space_parens[start + len(field)] == '\''):
-                    field = "'" + field + "'"
-        fields_list_with_quotes.append(field)
-        if(ptr > 0):
-            #Add one for each comma that is used to separate values in the original string
-            ptr+=1
-        ptr += len(field)
+    @staticmethod
+    def _get_guid_dict(db_conn, select_statement, delim=""):
+        """
+        Retrieves a dictionary mapping the first item selected to a concatenation of the remaining values.
+        Args:
+            db_conn: The database connection.
+            select_statement: The select statement.
+            delim: The delimiter for how row data from index 1 to end shall be concatenated.
 
-    fields_list = fields_list_with_quotes
+        Returns: A dictionary mapping the key (the first item in the select statement) to a concatenation of the remaining values.
 
-    # remove object ID
-    if files_index:
-    
-        # Ignore TIFF size and hash if extracted from PDFs.
-        # See JIRA-6951 for more details.
-        # index -3 = 3rd from the end, which is extension
-        # index -5 = 5th from the end, which is the parent path.
-        if fields_list[-3] == "'tif'" and fields_list[-5].endswith(".pdf/'"):
-            fields_list[15] = "'SIZE_IGNORED'"
-            fields_list[23] = "'MD5_IGNORED'"
-            fields_list[24] = "'SHA256_IGNORED'"
-        newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:-1]) + ');') #leave off first (object id) and last (os_account_id) field 
-        # Remove object ID from Unalloc file name
-        newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
-        return newLine
-    # remove object ID
-    elif vs_parts_index:
-        newLine = ('INSERT INTO "tsk_vs_parts" VALUES(' + ', '.join(fields_list[1:]) + ');') 
-        return newLine
-    # remove group ID
-    elif ig_groups_index:
-        newLine = ('INSERT INTO "image_gallery_groups" VALUES(' + ', '.join(fields_list[1:]) + ');') 
-        return newLine
-    #remove id field
-    elif ig_groups_seen_index:
-        # Only removing the id and group_id fields for now. May need to care about examiner_id and seen fields in future.
-        newLine = ('INSERT INTO "image_gallery_groups_seen" VALUES(' + ', '.join(fields_list[2:]) + ');') 
-        return newLine    
-    # remove object ID
-    elif path_index:
-        obj_id = int(fields_list[0])
-        objValue = files_table[obj_id]
-        # remove the obj_id from ModuleOutput/EmbeddedFileExtractor directory
-        idx_pre = fields_list[1].find('EmbeddedFileExtractor') + len('EmbeddedFileExtractor')
-        if idx_pre > -1:
-            idx_pos =  fields_list[1].find('\\', idx_pre + 2)
-            dir_to_replace = fields_list[1][idx_pre + 1 : idx_pos] # +1 to skip the file seperator
-            dir_to_replace = dir_to_replace[0:dir_to_replace.rfind('_')]
-            pathValue = fields_list[1][:idx_pre+1] + dir_to_replace + fields_list[1][idx_pos:]
-        else:
-            pathValue = fields_list[1]
-        # remove localhost from postgres par_obj_name
-        multiOutput_idx = pathValue.find('ModuleOutput')
-        if multiOutput_idx > -1:
-            pathValue = "'" + pathValue[pathValue.find('ModuleOutput'):] #postgres par_obj_name include losthost 
+        """
+        cursor = db_conn.cursor()
+        cursor.execute(select_statement)
+        ret_dict = {}
+        for row in cursor:
+            # concatenate value rows with delimiter filtering out any null values.
+            ret_dict[row[0]] = delim.join([str(col) for col in filter(lambda col: col is not None, row[1:])])
 
-        newLine = ('INSERT INTO "tsk_files_path" VALUES(' + objValue + ', ' + pathValue + ', ' + ', '.join(fields_list[2:]) + ');') 
-        return newLine
-    # remove object ID
-    elif layout_index:
-        obj_id = fields_list[0]
-        path= files_table[int(obj_id)]
-        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');')
-        # Remove object ID from Unalloc file name
-        newLine = re.sub('Unalloc_[0-9]+_', 'Unalloc_', newLine)
-        return newLine
-    # remove object ID
-    elif object_index:
-        obj_id = fields_list[0]
-        parent_id = fields_list[1]
-        newLine = 'INSERT INTO "tsk_objects" VALUES('
-        path = None
-        parent_path = None
+        return ret_dict
 
-        #if obj_id or parent_id is invalid literal, we simple return the values as it is 
-        try:
-            obj_id = int(obj_id)
-            if parent_id != 'NULL':
-                parent_id = int(parent_id)
-        except Exception as e:
-            print(obj_id, parent_id)
-            return line
+    @staticmethod
+    def create(db_conn):
+        """
+        Creates an instance of this class by querying for relevant guid data.
+        Args:
+            db_conn: The database connection.
 
-        if obj_id in files_table.keys():
-            path = files_table[obj_id]
-        elif obj_id in vs_parts_table.keys():
-            path = vs_parts_table[obj_id]
-        elif obj_id in vs_info_table.keys():
-            path = vs_info_table[obj_id]
-        elif obj_id in fs_info_table.keys():
-            path = fs_info_table[obj_id]
-        elif obj_id in reports_table.keys():
-            path = reports_table[obj_id]
+        Returns: The instance of this class.
+
+        """
+        guid_files = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, parent_path, name FROM tsk_files")
+        guid_vs_parts = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, addr, start FROM tsk_vs_parts", "_")
+        guid_vs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, vs_type, img_offset FROM tsk_vs_info", "_")
+        guid_fs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, img_offset, fs_type FROM tsk_fs_info", "_")
+        guid_image_names = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, name FROM tsk_image_names "
+                                                                "WHERE sequence=0")
+        guid_os_accounts = TskGuidUtils._get_guid_dict(db_conn, "SELECT os_account_obj_id, addr FROM tsk_os_accounts")
+        guid_reports = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, path FROM reports")
+
+        objid_artifacts = TskGuidUtils._get_guid_dict(db_conn,
+                                                      "SELECT blackboard_artifacts.artifact_obj_id, "
+                                                      "blackboard_artifact_types.type_name "
+                                                      "FROM blackboard_artifacts "
+                                                      "INNER JOIN blackboard_artifact_types "
+                                                      "ON blackboard_artifact_types.artifact_type_id = "
+                                                      "blackboard_artifacts.artifact_type_id")
+
+        artifact_objid_artifacts = TskGuidUtils._get_guid_dict(db_conn,
+                                                               "SELECT blackboard_artifacts.artifact_id, "
+                                                               "blackboard_artifact_types.type_name "
+                                                               "FROM blackboard_artifacts "
+                                                               "INNER JOIN blackboard_artifact_types "
+                                                               "ON blackboard_artifact_types.artifact_type_id = "
+                                                               "blackboard_artifacts.artifact_type_id")
+
+        cursor = db_conn.cursor()
+        cursor.execute("SELECT obj_id, par_obj_id FROM tsk_objects")
+        par_obj_objects = dict([(row[0], row[1]) for row in cursor])
+
+        guid_artifacts = {}
+        for k, v in objid_artifacts.items():
+            if k in par_obj_objects:
+                par_obj_id = par_obj_objects[k]
+
+                # check for artifact parent in files, images, reports
+                path = ''
+                for artifact_parent_dict in [guid_files, guid_image_names, guid_reports]:
+                    if par_obj_id in artifact_parent_dict:
+                        path = artifact_parent_dict[par_obj_id]
+                        break
+
+                guid_artifacts[k] = "/".join([path, v])
+
+        return TskGuidUtils(
+            # aggregate all the object id dictionaries together
+            obj_id_guids={**guid_files, **guid_reports, **guid_os_accounts, **guid_vs_parts, **guid_vs_info,
+                          **guid_fs_info, **guid_fs_info, **guid_image_names, **guid_artifacts},
+            artifact_types=artifact_objid_artifacts)
+
+    artifact_types: Dict[int, str]
+    obj_id_guids: Dict[int, any]
+
+    def __init__(self, obj_id_guids: Dict[int, any], artifact_types: Dict[int, str]):
+        """
+        Main constructor.
+        Args:
+            obj_id_guids: A dictionary mapping object ids to their guids.
+            artifact_types: A dictionary mapping artifact ids to their types.
+        """
+        self.artifact_types = artifact_types
+        self.obj_id_guids = obj_id_guids
+
+    def get_guid_for_objid(self, obj_id, omitted_value: Union[str, None] = 'Object ID Omitted'):
+        """
+        Returns the guid for the specified object id or returns omitted value if the object id is not found.
+        Args:
+            obj_id: The object id.
+            omitted_value: The value if no object id mapping is found.
+
+        Returns: The relevant guid or the omitted_value.
+
+        """
+        return self.obj_id_guids[obj_id] if obj_id in self.obj_id_guids else omitted_value
+
+    def get_guid_for_file_objid(self, obj_id, omitted_value: Union[str, None] = 'Object ID Omitted'):
+        # this method is just an alias for get_guid_for_objid
+        return self.get_guid_for_objid(obj_id, omitted_value)
+
+    def get_guid_for_accountid(self, account_id, omitted_value: Union[str, None] = 'Account ID Omitted'):
+        # this method is just an alias for get_guid_for_objid
+        return self.get_guid_for_objid(account_id, omitted_value)
+
+    def get_guid_for_artifactid(self, artifact_id, omitted_value: Union[str, None] = 'Artifact ID Omitted'):
+        """
+        Returns the guid for the specified artifact id or returns omitted value if the artifact id is not found.
+        Args:
+            artifact_id: The artifact id.
+            omitted_value: The value if no object id mapping is found.
+
+        Returns: The relevant guid or the omitted_value.
+        """
+        return self.artifact_types[artifact_id] if artifact_id in self.artifact_types else omitted_value
+
+
+class NormalizeRow:
+    """
+    Given a dictionary representing a row (i.e. column name mapped to value), returns a normalized representation of
+    that row such that the values should be less volatile from run to run.
+    """
+    row_masker: Callable[[TskGuidUtils, Dict[str, any]], Dict[str, any]]
+
+    def __init__(self, row_masker: Callable[[TskGuidUtils, Dict[str, any]], Union[Dict[str, any], None]]):
+        """
+        Main constructor.
+        Args:
+            row_masker: The function to be called to mask the specified row.
+        """
+        self.row_masker = row_masker
+
+    def normalize(self, guid_util: TskGuidUtils, row: Dict[str, any]) -> Union[Dict[str, any], None]:
+        """
+        Normalizes a row such that the values should be less volatile from run to run.
+        Args:
+            guid_util: The TskGuidUtils instance providing guids for volatile ids.
+            row: The row values mapping column name to value.
+
+        Returns: The normalized row or None if the row should be ignored.
+
+        """
+        return self.row_masker(guid_util, row)
+
+
+class NormalizeColumns(NormalizeRow):
+    """
+    Utility for normalizing specific column values of a row so they are not volatile values that will change from run
+    to run.
+    """
+
+    @classmethod
+    def _normalize_col_vals(cls,
+                            col_mask: Dict[str, Union[any, Callable[[TskGuidUtils, any], any]]],
+                            guid_util: TskGuidUtils,
+                            row: Dict[str, any]):
+        """
+        Normalizes column values for each column rule provided.
+        Args:
+            col_mask: A dictionary mapping columns to either the replacement value or a function to retrieve the
+            replacement value given the TskGuidUtils instance and original value as arguments.
+            guid_util: The TskGuidUtil used to provide guids for volatile values.
+            row: The dictionary representing the row mapping column names to values.
+
+        Returns: The new row representation.
+
+        """
+        row_copy = row.copy()
+        for key, val in col_mask.items():
+            # only replace values if present in row
+            if key in row_copy:
+                # if a column replacing function, call with original value
+                if isinstance(val, Callable):
+                    row_copy[key] = val(guid_util, row[key])
+                # otherwise, just replace with mask value
+                else:
+                    row_copy[key] = val
+
+        return row_copy
+
+    def __init__(self, col_mask: Dict[str, Union[any, Callable[[any], any]]]):
+        super().__init__(lambda guid_util, row: NormalizeColumns._normalize_col_vals(col_mask, guid_util, row))
+
+
+def get_path_segs(path: Union[str, None]) -> Union[List[str], None]:
+    """
+    Breaks a path string into its folders and filenames.
+    Args:
+        path: The path string or None.
+
+    Returns: The path segments or None.
+
+    """
+    if path:
+        # split on backslash or forward slash
+        return list(filter(lambda x: len(x.strip()) > 0, [s for s in re.split(r"[\\/]", path)]))
+    else:
+        return None
+
+
+def index_of(lst, search_item) -> int:
+    """
+    Returns the index of the item in the list or -1.
+    Args:
+        lst: The list.
+        search_item: The item to search for.
+
+    Returns: The index in the list of the item or -1.
+
+    """
+    for idx, item in enumerate(lst):
+        if item == search_item:
+            return idx
+
+    return -1
+
+
+def get_sql_insert_value(val) -> str:
+    """
+    Returns the value that would appear in a sql insert statement (i.e. string becomes 'string', None becomes NULL)
+    Args:
+        val: The original value.
+
+    Returns: The sql insert equivalent value.
+
+    """
+    if val is None:
+        return "NULL"
+
+    if isinstance(val, str):
+        escaped_val = val.replace('\n', '\\n').replace("'", "''")
+        return f"'{escaped_val}'"
+
+    return str(val)
+
+
+def get_sqlite_table_columns(conn) -> Dict[str, List[str]]:
+    """
+    Retrieves a dictionary mapping table names to a list of all the columns for that table
+    where the columns are in ordinal value.
+    Args:
+        conn: The database connection.
+
+    Returns: A dictionary of the form { table_name: [col_name1, col_name2...col_nameN] }
+
+    """
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM sqlite_master tables WHERE tables.type='table'")
+    tables = list([table[0] for table in cur.fetchall()])
+    cur.close()
+
+    to_ret = {}
+    for table in tables:
+        cur = conn.cursor()
+        cur.execute('SELECT name FROM pragma_table_info(?) ORDER BY cid', [table])
+        to_ret[table] = list([col[0] for col in cur.fetchall()])
+
+    return to_ret
+
+
+def get_pg_table_columns(conn) -> Dict[str, List[str]]:
+    """
+    Returns a dictionary mapping table names to the list of their columns in ordinal order.
+    Args:
+        conn: The pg database connection.
+
+    Returns: The dictionary of tables mapped to a list of their ordinal-orderd column names.
+    """
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT cols.table_name, cols.column_name
+      FROM information_schema.columns cols
+      WHERE cols.column_name IS NOT NULL
+      AND cols.table_name IS NOT NULL
+      AND cols.table_name IN (
+        SELECT tables.tablename FROM pg_catalog.pg_tables tables
+        WHERE LOWER(schemaname) = 'public'
+      )
+    ORDER by cols.table_name, cols.ordinal_position;
+    """)
+    mapping = {}
+    for row in cursor:
+        mapping.setdefault(row[0], []).append(row[1])
+
+    cursor.close()
+    return mapping
+
+
+def sanitize_schema(original: str) -> str:
+    """
+    Sanitizes sql script representing table/index creations.
+    Args:
+        original: The original sql schema creation script.
+
+    Returns: The sanitized schema.
+    """
+    sanitized_lines = []
+    dump_line = ''
+    for line in original.splitlines():
+        line = line.strip('\r\n ')
+        lower_line = line.lower()
+        # It's comment or alter statement or catalog entry or set idle entry or empty line
+        if (not line or
+                line.startswith('--') or
+                lower_line.startswith('set') or
+                " set default nextval" in lower_line or
+                " owner to " in lower_line or
+                " owned by " in lower_line or
+                "pg_catalog" in lower_line or
+                "idle_in_transaction_session_timeout" in lower_line):
+            continue
+
+        # if there is no white space or parenthesis delimiter, add a space
+        if re.match(r'^.+?[^\s()]$', dump_line) and re.match(r'^[^\s()]', line):
+            dump_line += ' '
+
+        # append the line to the outputted line
+        dump_line += line
+
+        # if line ends with ';' then this will be one statement in diff
+        if line.endswith(';'):
+            sanitized_lines.append(dump_line)
+            dump_line = ''
+
+    if len(dump_line.strip()) > 0:
+        sanitized_lines.append(dump_line)
+
+    return "\n".join(sanitized_lines)
+
+
+def get_pg_schema(dbname: str, pg_username: str, pg_pword: str, pg_host: str, pg_port: Union[str, int]):
+    """
+    Gets the schema to be added to the dump text from the postgres database.
+    Args:
+        dbname: The name of the database.
+        pg_username: The postgres user name.
+        pg_pword: The postgres password.
+        pg_host: The postgres host.
+        pg_port: The postgres port.
+
+    Returns: The normalized schema.
+
+    """
+    os.environ['PGPASSWORD'] = pg_pword
+    pg_dump = ["pg_dump", "-U", pg_username, "-h", pg_host, "-p", str(pg_port),
+               "--schema-only", "-d", dbname, "-t", "public.*"]
+    output = subprocess.check_output(pg_dump)
+    output_str = output.decode('UTF-8')
+    return sanitize_schema(output_str)
+
+
+def get_sqlite_schema(db_conn):
+    """
+    Gets the schema to be added to the dump text from the sqlite database.
+    Args:
+        db_conn: The database connection.
+
+    Returns: The normalized schema.
+
+    """
+    cursor = db_conn.cursor()
+    query = "SELECT sql FROM sqlite_master " \
+            "WHERE type IN ('table', 'index') AND sql IS NOT NULL " \
+            "ORDER BY type DESC, tbl_name ASC"
+
+    cursor.execute(query)
+    schema = '\n'.join([str(row[0]) + ';' for row in cursor])
+    return sanitize_schema(schema)
+
+
+def _mask_event_desc(desc: str) -> str:
+    """
+    Masks dynamic event descriptions of the form "<artifact_type_name>:<artifact id>" so the artifact id is no longer
+    present.
+    Args:
+        desc: The original description.
+
+    Returns: The normalized description.
+
+    """
+
+    # Takes a string like "Shell Bags: 30840" and replaces with "ShellBags:<artifact_id>"
+    match = re.search(r"^\s*(.+?)\s*:\s*\d+\s*$", desc.strip())
+    if match:
+        return f"{match.group(1)}:<artifact_id>"
+
+    return desc
+
+
+def normalize_tsk_event_descriptions(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
+    """
+    Normalizes event description rows masking possibly changing column values.
+    Args:
+        guid_util: Provides guids for ids that may change from run to run.
+        row: A dictionary mapping column names to values.
+
+    Returns: The normalized event description row.
+    """
+    row_copy = row.copy()
+    # replace object ids with information that is deterministic
+    row_copy['event_description_id'] = MASKED_ID
+    row_copy['content_obj_id'] = guid_util.get_guid_for_file_objid(row['content_obj_id'])
+    row_copy['artifact_id'] = guid_util.get_guid_for_artifactid(row['artifact_id']) if row['artifact_id'] else None
+
+    if row['full_description'] == row['med_description'] == row['short_description']:
+        row_copy['full_description'] = _mask_event_desc(row['full_description'])
+        row_copy['med_description'] = _mask_event_desc(row['med_description'])
+        row_copy['short_description'] = _mask_event_desc(row['short_description'])
+
+    return row_copy
+
+
+def normalize_ingest_jobs(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
+    """
+    Normalizes ingest jobs table rows.
+    Args:
+        guid_util: Provides guids for ids that may change from run to run.
+        row: A dictionary mapping column names to values.
+
+    Returns: The normalized ingest job row.
+
+    """
+    row_copy = row.copy()
+    row_copy['host_name'] = "{host_name}"
+
+    start_time = row['start_date_time']
+    end_time = row['end_date_time']
+    if start_time <= end_time:
+        row_copy['start_date_time'] = 0
+        row_copy['end_date_time'] = 0
+
+    return row_copy
+
+
+def normalize_unalloc_files(path_str: Union[str, None]) -> Union[str, None]:
+    """
+    Normalizes a path string removing timestamps from unalloc files.
+    Args:
+        path_str: The original path string.
+
+    Returns: The path string where timestamps are removed from unalloc strings.
+
+    """
+
+    # takes a file name like "Unalloc_30580_7466496_2980941312" and removes the object id to become
+    # "Unalloc_7466496_2980941312"
+    return None if path_str is None else re.sub('Unalloc_[0-9]+_', 'Unalloc_', path_str)
+
+
+def normalize_regripper_files(path_str: Union[str, None]) -> Union[str, None]:
+    """
+    Normalizes a path string removing timestamps from regripper files.
+    Args:
+        path_str: The original path string.
+
+    Returns: The path string where timestamps are removed from regripper paths.
+
+    """
+    # takes a file name like "regripper-12345-full" and removes the id to become "regripper-full"
+    return None if path_str is None else re.sub(r'regripper-[0-9]+-full', 'regripper-full', path_str)
+
+
+def normalize_tsk_files(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
+    """
+    Normalizes files table rows.
+    Args:
+        guid_util: Provides guids for ids that may change from run to run.
+        row: A dictionary mapping column names to values.
+
+    Returns: The normalized files table row.
+
+    """
+    # Ignore TIFF size and hash if extracted from PDFs.
+    # See JIRA-6951 for more details.
+    row_copy = row.copy()
+    if row['extension'] is not None and row['extension'].strip().lower() == 'tif' and \
+            row['parent_path'] is not None and row['parent_path'].strip().lower().endswith('.pdf/'):
+        row_copy['size'] = "SIZE_IGNORED"
+        row_copy['md5'] = "MD5_IGNORED"
+        row_copy['sha256'] = "SHA256_IGNORED"
+
+    row_copy['obj_id'] = MASKED_OBJ_ID
+    row_copy['os_account_obj_id'] = 'MASKED_OS_ACCOUNT_OBJ_ID'
+    row_copy['parent_path'] = normalize_unalloc_files(row['parent_path'])
+    row_copy['name'] = normalize_unalloc_files(row['name'])
+    return row_copy
+
+
+def normalize_tsk_files_path(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
+    """
+    Normalizes file path table rows.
+    Args:
+        guid_util: Provides guids for ids that may change from run to run.
+        row: A dictionary mapping column names to values.
+
+    Returns: The normalized file path table row.
+    """
+    row_copy = row.copy()
+    path = row['path']
+    if path is not None:
+        path_parts = get_path_segs(path)
+        module_output_idx = index_of(path_parts, 'ModuleOutput')
+        if module_output_idx >= 0:
+            # remove everything up to and including ModuleOutput if ModuleOutput present
+            path_parts = path_parts[module_output_idx:]
+            if len(path_parts) > 1 and path_parts[1] == 'Embedded File Extractor':
+                # Takes a folder like ModuleOutput\Embedded File Extractor/f_000168_4435\f_000168
+                # and fixes the folder after 'Embedded File Extractor', 'f_000168_4435' to remove the last number
+                # to become 'f_000168'
+                match = re.match(r'^(.+?)_\d*$', path_parts[2])
+                if match:
+                    path_parts[2] = match.group(1)
+
+        row_copy['path'] = os.path.join(*path_parts) if len(path_parts) > 0 else '/'
+
+    row_copy['obj_id'] = guid_util.get_guid_for_file_objid(row['obj_id'])
+    return row_copy
+
+
+def normalize_tsk_objects_path(guid_util: TskGuidUtils, objid: int,
+                               no_path_placeholder: Union[str, None]) -> Union[str, None]:
+    """
+    Returns a normalized path to be used in a tsk_objects table row.
+    Args:
+        guid_util: The utility for fetching guids.
+        objid: The object id of the item.
+        no_path_placeholder: text to return if no path value found.
+
+    Returns: The 'no_path_placeholder' text if no path.  Otherwise, the normalized path.
+
+    """
+    path = guid_util.get_guid_for_objid(objid, omitted_value=None)
+
+    if path is None:
+        return no_path_placeholder
+    else:
         # remove host name (for multi-user) and dates/times from path for reports
-        if path is not None:
-            if 'ModuleOutput' in path:
-                # skip past the host name (if any)
-                path = path[path.find('ModuleOutput'):]
-                if 'BulkExtractor' in path or 'Smirk' in path:
-                    # chop off the last folder (which contains a date/time)
-                    path = path[:path.rfind('\\')]
-            if 'Reports\\AutopsyTestCase HTML Report' in path:
-                path = 'Reports\\AutopsyTestCase HTML Report'
+        path_parts = get_path_segs(path)
+        module_output_idx = index_of(path_parts, 'ModuleOutput')
+        if module_output_idx >= 0:
+            # remove everything up to and including ModuleOutput if ModuleOutput present
+            path_parts = path_parts[module_output_idx:]
 
-        if parent_id in files_table.keys():
-            parent_path = files_table[parent_id]
-        elif parent_id in vs_parts_table.keys():
-            parent_path = vs_parts_table[parent_id]
-        elif parent_id in vs_info_table.keys():
-            parent_path = vs_info_table[parent_id]
-        elif parent_id in fs_info_table.keys():
-            parent_path = fs_info_table[parent_id]
-        elif parent_id in images_table.keys():
-            parent_path = images_table[parent_id]
-        elif parent_id in accounts_table.keys():
-            parent_path = accounts_table[parent_id]
-        elif parent_id == 'NULL':
-            parent_path = "NULL"
-        
-        # Remove host name (for multi-user) from parent_path
-        if parent_path is not None:
-            if 'ModuleOutput' in parent_path:
-                # skip past the host name (if any)
-                parent_path = parent_path[parent_path.find('ModuleOutput'):]
+            if "BulkExtractor" in path_parts or "Smirk" in path_parts:
+                # chop off the last folder (which contains a date/time)
+                path_parts = path_parts[:-1]
 
-        if path and parent_path:
-            # Remove object ID from Unalloc file names and regripper output
-            path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', path)
-            path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', path)
-            parent_path = re.sub('Unalloc_[0-9]+_', 'Unalloc_', parent_path)
-            parent_path = re.sub('regripper\-[0-9]+\-full', 'regripper-full', parent_path)
-            return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
-        else:
-            return newLine + '"OBJECT IDS OMITTED", ' + ', '.join(fields_list[2:]) + ');'  #omit parent object id and object id when we cant annonymize them
-    # remove time-based information, ie Test_6/11/14 -> Test    
-    elif report_index:
-        fields_list[1] = "AutopsyTestCase"
-        fields_list[2] = "0"
-        newLine = ('INSERT INTO "reports" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
-        return newLine
-    elif data_source_info_index:
-        fields_list[1] = "{device id}"
-        fields_list[4] = "{dateTime}"
-        newLine = ('INSERT INTO "data_source_info" VALUES(' + ','.join(fields_list) + ');')
-        return newLine
-    elif ingest_job_index:
-        fields_list[2] = "{host_name}"
-        start_time = int(fields_list[3])
-        end_time = int(fields_list[4])
-        if (start_time <= end_time):
-            fields_list[3] = "0"
-            fields_list[4] = "0"
-        newLine = ('INSERT INTO "ingest_jobs" VALUES(' + ','.join(fields_list) + ');')
-        return newLine
-    elif examiners_index:
-        fields_list[1] = "{examiner_name}"
-        newLine = ('INSERT INTO "tsk_examiners" VALUES(' + ','.join(fields_list) + ');')
-        return newLine
-    # remove all timing dependent columns from events table
-    elif events_index:
-        newLine = ('INSERT INTO "tsk_events" VALUES(' + ','.join(fields_list[1:2]) + ');') 
-        return newLine
-    # remove object ids from event description table
-    elif event_description_index:
-        # replace object ids with information that is deterministic 
-        file_obj_id = int(fields_list[5])
-        object_id = int(fields_list[4])
-        legacy_artifact_id = 'NULL'
-        if (fields_list[6] != 'NULL'):
-            legacy_artifact_id = int(fields_list[6])
-        if file_obj_id != 'NULL' and file_obj_id in files_table.keys():
-            fields_list[5] = files_table[file_obj_id]
-        if object_id != 'NULL' and object_id in files_table.keys():
-            fields_list[4] = files_table[object_id]
-        if legacy_artifact_id != 'NULL' and legacy_artifact_id in artifact_table.keys():
-            fields_list[6] = artifact_table[legacy_artifact_id]
-        if fields_list[1] == fields_list[2] and fields_list[1] == fields_list[3]:	
-            fields_list[1] = cleanupEventDescription(fields_list[1])
-            fields_list[2] = cleanupEventDescription(fields_list[2])
-            fields_list[3] = cleanupEventDescription(fields_list[3])
-        newLine = ('INSERT INTO "tsk_event_descriptions" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
-        return newLine
-    elif os_account_index:
-        newLine = ('INSERT INTO "tsk_os_accounts" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id since value that would be substituted is in diff line already
-        return newLine
-    elif os_account_attr_index:
-        #substitue the account object id for a non changing value
-        os_account_id = int(fields_list[1])
-        fields_list[1] = accounts_table[os_account_id]
-        #substitue the source object id for a non changing value
-        source_obj_id = int(fields_list[3])
-        if source_obj_id in files_table.keys():
-            fields_list[3] = files_table[source_obj_id]
-        elif source_obj_id in vs_parts_table.keys():
-            fields_list[3] = vs_parts_table[source_obj_id]
-        elif source_obj_id in vs_info_table.keys():
-            fields_list[3] = vs_info_table[source_obj_id]
-        elif source_obj_id in fs_info_table.keys():
-            fields_list[3] = fs_info_table[source_obj_id]
-        elif source_obj_id in images_table.keys():
-            fields_list[3] = images_table[source_obj_id]
-        elif source_obj_id in accounts_table.keys():
-            fields_list[3] = accounts_table[source_obj_id]
-        elif source_obj_id == 'NULL':
-            fields_list[3] = "NULL"
-        newLine = ('INSERT INTO "tsk_os_account_attributes" VALUES(' + ','.join(fields_list[1:]) + ');') # remove id
-        return newLine
-    else:
-        return line
-        
-def cleanupEventDescription(description):
-    test = re.search("^'\D+:\d+'$", description)
-    if test is not None:
-        return re.sub(":\d+", ":<artifact_id>", description)
-    else:
-        return description
+        if path_parts and len(path_parts) >= 2:
+            for idx in range(0, len(path_parts) - 1):
+                if path_parts[idx].lower() == "reports" and \
+                        path_parts[idx + 1].lower().startswith("autopsytestcase html report"):
+                    path_parts = ["Reports", "AutopsyTestCase HTML Report"]
+                    break
 
-def getAssociatedArtifactType(cur, artifact_id, isMultiUser):
-    if isMultiUser:
-        cur.execute("SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=%s",[artifact_id])
-    else:
-        cur.execute("SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=?",[artifact_id])
+        path = os.path.join(*path_parts) if len(path_parts) > 0 else '/'
 
-    info = cur.fetchone()
-    
-    return "File path: " + info[0] + " Artifact Type: " + info[1]
+        return normalize_regripper_files(normalize_unalloc_files(path))
 
-def build_id_files_table(db_cursor, isPostgreSQL):
-    """Build the map of object ids to file paths.
 
-    Args:
-        db_cursor: the database cursor
+def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
     """
-    # for each row in the db, take the object id, parent path, and name, then create a tuple in the dictionary
-    # with the object id as the key and the full file path (parent + name) as the value
-    mapping = dict([(row[0], str(row[1]) + str(row[2])) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, parent_path, name FROM tsk_files")])
-    return mapping
-
-def build_id_vs_parts_table(db_cursor, isPostgreSQL):
-    """Build the map of object ids to vs_parts.
-
+    Normalizes object table rows.
     Args:
-        db_cursor: the database cursor
+        guid_util: Provides guids for ids that may change from run to run.
+        row: A dictionary mapping column names to values.
+
+    Returns: The normalized object table row.
     """
-    # for each row in the db, take the object id, addr, and start, then create a tuple in the dictionary
-    # with the object id as the key and (addr + start) as the value
-    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, addr, start FROM tsk_vs_parts")])
-    return mapping
+    row_copy = row.copy()
+    row_copy['obj_id'] = None if row['obj_id'] is None else \
+        normalize_tsk_objects_path(guid_util, row['obj_id'], MASKED_OBJ_ID)
 
-def build_id_vs_info_table(db_cursor, isPostgreSQL):
-    """Build the map of object ids to vs_info.
+    row_copy['par_obj_id'] = None if row['par_obj_id'] is None else \
+        normalize_tsk_objects_path(guid_util, row['par_obj_id'], 'MASKED_PARENT_OBJ_ID')
 
+    return row_copy
+
+
+MASKED_OBJ_ID = "MASKED_OBJ_ID"
+MASKED_ID = "MASKED_ID"
+
+IGNORE_TABLE = "IGNORE_TABLE"
+
+TableNormalization = Union[IGNORE_TABLE, NormalizeRow]
+
+"""
+This dictionary maps tables where data should be specially handled to how they should be handled.
+"""
+TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
+    "image_gallery_groups_seen": IGNORE_TABLE,
+    "blackboard_artifacts": IGNORE_TABLE,
+    "blackboard_attributes": IGNORE_TABLE,
+    "tsk_files": NormalizeRow(normalize_tsk_files),
+    "tsk_vs_parts": NormalizeColumns({
+        "obj_id": MASKED_OBJ_ID
+    }),
+    "image_gallery_groups": NormalizeColumns({
+        "group_id": MASKED_ID
+    }),
+    "tsk_files_path": NormalizeRow(normalize_tsk_files_path),
+    "tsk_file_layout": NormalizeColumns({
+        "obj_id": lambda guid_util, col: normalize_unalloc_files(guid_util.get_guid_for_file_objid(col))
+    }),
+    "tsk_objects": NormalizeRow(normalize_tsk_objects),
+    "reports": NormalizeColumns({
+        "obj_id": MASKED_OBJ_ID,
+        "path": "AutopsyTestCase",
+        "crtime": 0
+    }),
+    "data_source_info": NormalizeColumns({
+        "device_id": "{device id}",
+        "added_date_time": "{dateTime}"
+    }),
+    "ingest_jobs": NormalizeRow(normalize_ingest_jobs),
+    "tsk_examiners": NormalizeColumns({
+        "login_name": "{examiner_name}"
+    }),
+    "tsk_events": NormalizeColumns({
+        "event_id": "MASKED_EVENT_ID",
+        "event_description_id": None,
+        "time": None,
+    }),
+    "tsk_event_descriptions": NormalizeRow(normalize_tsk_event_descriptions),
+    "tsk_os_accounts": NormalizeColumns({
+        "os_account_obj_id": MASKED_OBJ_ID
+    }),
+    "tsk_os_account_attributes": NormalizeColumns({
+        "id": MASKED_ID,
+        "os_account_obj_id": lambda guid_util, col: guid_util.get_guid_for_accountid(col),
+        "source_obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col)
+    }),
+    "tsk_os_account_instances": NormalizeColumns({
+        "id": MASKED_ID,
+        "os_account_obj_id": lambda guid_util, col: guid_util.get_guid_for_accountid(col)
+    }),
+    "tsk_data_artifacts": NormalizeColumns({
+        "artifact_obj_id":
+            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Artifact Object ID Omitted"),
+        "os_account_obj_id":
+            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Account Object ID Omitted"),
+    })
+}
+
+
+def write_normalized(guid_utils: TskGuidUtils, output_file, db_conn, table: str, column_names: List[str],
+                     normalizer: Union[TableNormalization, None] = None):
+    """
+    Outputs rows of a file as their normalized values (where values should not change from run to run).
     Args:
-        db_cursor: the database cursor
+        guid_utils: Provides guids to replace values that would potentially change from run to run.
+        output_file: The file where the normalized dump will be written.
+        db_conn: The database connection.
+        table: The name of the table.
+        column_names: The name of the columns in the table in ordinal order.
+        normalizer: The normalizer (if any) to use so that data is properly normalized.
     """
-    # for each row in the db, take the object id, vs_type, and img_offset, then create a tuple in the dictionary
-    # with the object id as the key and (vs_type + img_offset) as the value
-    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, vs_type, img_offset FROM tsk_vs_info")])
-    return mapping
+    if normalizer == IGNORE_TABLE:
+        return
 
-     
-def build_id_fs_info_table(db_cursor, isPostgreSQL):
-    """Build the map of object ids to fs_info.
+    cursor = db_conn.cursor()
 
-    Args:
-        db_cursor: the database cursor
-    """
-    # for each row in the db, take the object id, img_offset, and fs_type, then create a tuple in the dictionary
-    # with the object id as the key and (img_offset + fs_type) as the value
-    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, img_offset, fs_type FROM tsk_fs_info")])
-    return mapping
+    joined_columns = ",".join([col for col in column_names])
+    cursor.execute(f"SELECT {joined_columns} FROM {table}")
+    for row in cursor:
+        if len(row) != len(column_names):
+            print(
+                f"ERROR: in {table}, number of columns retrieved: {len(row)} but columns are"
+                f" {len(column_names)} with {str(column_names)}")
+            continue
 
-def build_id_objects_table(db_cursor, isPostgreSQL):
-    """Build the map of object ids to par_id.
+        row_dict = {}
+        for col_idx in range(0, len(column_names)):
+            row_dict[column_names[col_idx]] = row[col_idx]
 
-    Args:
-        db_cursor: the database cursor
-    """
-    # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
-    # with the object id as the key and par_obj_id, type as the value
-    mapping = dict([(row[0], [row[1], row[2]]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT * FROM tsk_objects")])
-    return mapping
+        if normalizer and isinstance(normalizer, NormalizeRow):
+            row_masker: NormalizeRow = normalizer
+            row_dict = row_masker.normalize(guid_utils, row_dict)
 
-def build_id_image_names_table(db_cursor, isPostgreSQL):
-    """Build the map of object ids to name.
+        if row_dict is not None:
+            # show row as json-like value
+            entries = []
+            for column in column_names:
+                value = get_sql_insert_value(row_dict[column] if column in row_dict and row_dict[column] else None)
+                if value is not None:
+                    entries.append((column, value))
+            insert_values = ", ".join([f"{pr[0]}: {pr[1]}" for pr in entries])
+            insert_statement = f"{table}: {{{insert_values}}}\n"
+            output_file.write(insert_statement)
 
-    Args:
-        db_cursor: the database cursor
-    """
-    # for each row in the db, take the object id and name then create a tuple in the dictionary
-    # with the object id as the key and name, type as the value
-    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, name FROM tsk_image_names WHERE sequence=0")])
-    #data_sources which are logical file sets will be found in the files table
-    return mapping
 
-def build_id_artifact_types_table(db_cursor, isPostgreSQL):
-    """Build the map of object ids to artifact ids.
-
-    Args:
-        db_cursor: the database cursor
-    """
-    # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
-    # with the object id as the key and artifact type as the value
-    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT blackboard_artifacts.artifact_obj_id, blackboard_artifact_types.type_name FROM blackboard_artifacts INNER JOIN blackboard_artifact_types ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id ")])
-    return mapping
-
-def build_id_legacy_artifact_types_table(db_cursor, isPostgreSQL):
-    """Build the map of legacy artifact ids to artifact type.
-
-    Args:
-        db_cursor: the database cursor
-    """
-    # for each row in the db, take the legacy artifact id then create a tuple in the dictionary
-    # with the artifact id as the key and artifact type as the value
-    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT blackboard_artifacts.artifact_id, blackboard_artifact_types.type_name FROM blackboard_artifacts INNER JOIN blackboard_artifact_types ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id ")])
-    return mapping
-
-def build_id_reports_table(db_cursor, isPostgreSQL):
-    """Build the map of report object ids to report path.
-
-    Args:
-        db_cursor: the database cursor
-    """
-    # for each row in the reports table in the db, create an obj_id -> path map
-    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, path FROM reports")])
-    return mapping
-
-def build_id_accounts_table(db_cursor, isPostgreSQL):
-    """Build the map of object ids to OS account SIDs.
-
-    Args:
-        db_cursor: the database cursor
-    """
-    # for each row in the db, take the object id and account SID then creates a tuple in the dictionary
-    # with the object id as the key and the OS Account's SID as the value
-    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT os_account_obj_id, unique_id FROM tsk_os_accounts")])
-    return mapping
-
-def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports_table, images_table, accounts_table):
-    """Build the map of object ids to artifact ids.
-
-    Args:
-        files_table: obj_id, path
-        objects_table: obj_id, par_obj_id, type
-        artifacts_table: obj_id, artifact_type_name
-        reports_table: obj_id, path
-        images_table: obj_id, name
-        accounts_table: obj_id, unique_id 
-    """
-    # make a copy of files_table and update it with new data from artifacts_table and reports_table
-    mapping = files_table.copy()
-    for k, v in objects_table.items():
-        path = ""
-        if k not in mapping.keys(): # If the mapping table doesn't have data for obj_id
-            if k in reports_table.keys(): # For a report we use the report path
-                par_obj_id = v[0]
-                if par_obj_id is not None:
-                    mapping[k] = reports_table[k]
-            elif k in artifacts_table.keys(): # For an artifact we use it's par_obj_id's path+name plus it's artifact_type name
-                par_obj_id = v[0] # The parent of an artifact can be a file or a report
-                if par_obj_id in mapping.keys():
-                    path = mapping[par_obj_id]
-                elif par_obj_id in reports_table.keys():
-                    path = reports_table[par_obj_id]
-                elif par_obj_id in images_table.keys():
-                    path = images_table[par_obj_id]
-                mapping[k] = path + "/" + artifacts_table[k]
-            elif k in accounts_table.keys(): # For an OS Account object ID we use its unique_id field which is the account SID
-                mapping[k] = accounts_table[k]
-        elif v[0] not in mapping.keys():
-            if v[0] in artifacts_table.keys():
-                par_obj_id = objects_table[v[0]]
-                path = mapping[par_obj_id] 
-                mapping[k] = path + "/" + artifacts_table[v[0]]
-    return mapping
-
-def db_connect(db_file, isMultiUser, pgSettings=None):
-    if isMultiUser: # use PostgreSQL
+def db_connect(db_file, is_multi_user, pg_settings=None):
+    if is_multi_user:  # use PostgreSQL
         try:
-            return psycopg2.connect("dbname=" + db_file + " user=" + pgSettings.username + " host=" + pgSettings.pgHost + " password=" + pgSettings.password), None
+            return psycopg2.connect("dbname=" + db_file + " user=" + pg_settings.username + " host=" +
+                                    pg_settings.pgHost + " password=" + pg_settings.password), None
         except:
             print("Failed to connect to the database: " + db_file)
-    else: # Sqlite
+    else:  # Sqlite
         # Make a copy that we can modify
         backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
         shutil.copy(db_file, backup_db_file)
         # We sometimes get situations with messed up permissions
-        os.chmod (backup_db_file, 0o777)
+        os.chmod(backup_db_file, 0o777)
         return sqlite3.connect(backup_db_file), backup_db_file
 
-def sql_select_execute(cursor, isPostgreSQL, sql_stmt):
-    if isPostgreSQL: 
-        cursor.execute(sql_stmt)
-        return cursor.fetchall()
-    else:
-        return cursor.execute(sql_stmt)
 
 def main():
     try:
@@ -863,7 +1134,7 @@ def main():
         print("usage: tskdbdiff [OUTPUT DB PATH] [GOLD DB PATH]")
         sys.exit(1)
 
-    db_diff = TskDbDiff(output_db, gold_db, output_dir=".") 
+    db_diff = TskDbDiff(output_db, gold_db, output_dir=".")
     dump_passed, bb_dump_passed = db_diff.run_diff()
 
     if dump_passed and bb_dump_passed:
@@ -882,4 +1153,3 @@ if __name__ == "__main__":
         sys.exit(1)
 
     main()
-

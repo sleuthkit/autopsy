@@ -1,3 +1,4 @@
+OsAccountDataPanel_administrator_title=Administrator
 OsAccountDataPanel_basic_address=Address
 OsAccountDataPanel_basic_admin=Administrator
 OsAccountDataPanel_basic_creationDate=Creation Date
@@ -5,11 +6,16 @@ OsAccountDataPanel_basic_fullname=Full Name
 OsAccountDataPanel_basic_login=Login
 OsAccountDataPanel_basic_title=Basic Properties
 OsAccountDataPanel_basic_type=Type
+OsAccountDataPanel_data_accessed_title=Last Login
+OsAccountDataPanel_host_count_title=Login Count
+# {0} - hostName
+OsAccountDataPanel_host_section_title={0} Details
 OsAccountDataPanel_realm_address=Address
 OsAccountDataPanel_realm_confidence=Confidence
 OsAccountDataPanel_realm_name=Name
+OsAccountDataPanel_realm_scope=Scope
 OsAccountDataPanel_realm_title=Realm Properties
 OsAccountDataPanel_realm_unknown=Unknown
-OsAccountViewer_title=Os Account
-OsAccountViewer_tooltip=Viewer for OS accounts related to the selected node.
+OsAccountViewer_title=OS Account
+OsAccountViewer_tooltip=Viewer for Operating System accounts related to the selected node.
 TableDataPanel.titleLabel.text=Title

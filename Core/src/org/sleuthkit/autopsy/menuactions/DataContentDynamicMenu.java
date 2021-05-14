@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,65 +23,63 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 
 /**
- *
- * @author jantonius
+ * Class to provide menu access to the various instances of the content viewer
+ * suite.
  */
 class DataContentDynamicMenu extends JMenuItem implements DynamicMenuContent {
 
+    private static final long serialVersionUID = 1L;
+
+    @NbBundle.Messages({"DataContentDynamicMenu.mainContentViewer.name=Main",
+        "DataContentDynamicMenu.contentViewers.text=Content Viewers"})
     @Override
     public JComponent[] getMenuPresenters() {
-        List<DataContentTopComponent> newWindowLists = DataContentTopComponent.getNewWindowList();
+        JMenu submenu = new JMenu(Bundle.DataContentDynamicMenu_contentViewers_text());
+        if (Case.isCaseOpen()) {
 
-        // Get DataContent provider to include in the menu
-        int totalItems = newWindowLists.size() > 0 ? 2 : 1;
-        JComponent[] comps = new JComponent[totalItems];
-        int counter = 0;
+            List<DataContentTopComponent> newWindowLists = DataContentTopComponent.getNewWindowList();
 
-        TopComponent contentWin = DataContentTopComponent.findInstance();
-        JMenuItem defaultItem = new JMenuItem(contentWin.getName()); // set the main name
-
-        defaultItem.addActionListener(new OpenTopComponentAction(contentWin));
-
-        try {
-            Case currentCase = Case.getCurrentCaseThrows();
-            defaultItem.setEnabled(currentCase.hasData());
-        } catch (NoCurrentCaseException ex) {
-            defaultItem.setEnabled(false); // disable the menu when no case is opened
-        }
-
-        comps[counter++] = defaultItem;
-
-        // add the submenu
-        if (newWindowLists != null) {
-            if (newWindowLists.size() > 0) {
-
-                JMenu submenu = new JMenu(
-                        NbBundle.getMessage(this.getClass(), "DataContentDynamicMenu.menu.dataContentWin.text"));
+            TopComponent contentWin = DataContentTopComponent.findInstance();
+            JMenuItem defaultItem = new JMenuItem(Bundle.DataContentDynamicMenu_mainContentViewer_name()); // set the main name
+            defaultItem.addActionListener(new OpenTopComponentAction(contentWin));
+            try {
+                Case currentCase = Case.getCurrentCaseThrows();
+                defaultItem.setEnabled(currentCase.hasData());
+            } catch (NoCurrentCaseException ex) {
+                defaultItem.setEnabled(false); // disable the menu when no case is opened
+            }
+            submenu.add(defaultItem);
+            // add the submenu
+            if (!newWindowLists.isEmpty()) {
                 for (int i = 0; i < newWindowLists.size(); i++) {
                     DataContentTopComponent dctc = newWindowLists.get(i);
                     JMenuItem item = new JMenuItem(dctc.getName());
                     item.addActionListener(new OpenTopComponentAction(dctc));
                     submenu.add(item);
                 }
-
-                comps[counter++] = submenu;
             }
-        }
 
+        }
+        submenu.setEnabled(submenu.getItemCount() > 0);
+        JComponent[] comps = new JComponent[1];
+        comps[0] = submenu;
         return comps;
     }
 
     @Override
     public JComponent[] synchMenuPresenters(JComponent[] jcs) {
         return getMenuPresenters();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return Case.isCaseOpen();
     }
 }

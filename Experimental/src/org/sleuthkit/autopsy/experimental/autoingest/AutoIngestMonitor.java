@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,15 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.awt.Desktop;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -41,6 +48,8 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus;
@@ -74,7 +83,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         AutoIngestManager.Event.STARTING_UP.toString(),
         AutoIngestManager.Event.SHUTTING_DOWN.toString(),
         AutoIngestManager.Event.SHUTDOWN.toString(),
-        AutoIngestManager.Event.RESUMED.toString()}));
+        AutoIngestManager.Event.RESUMED.toString(),
+        AutoIngestManager.Event.GENERATE_THREAD_DUMP_RESPONSE.toString()}));
     private final AutopsyEventPublisher eventPublisher;
     private CoordinationService coordinationService;
     private final ScheduledThreadPoolExecutor coordSvcQueryExecutor;
@@ -154,6 +164,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             handleCaseDeletedEvent((AutoIngestCaseDeletedEvent) event);
         } else if (event instanceof AutoIngestNodeStateEvent) {
             handleAutoIngestNodeStateEvent((AutoIngestNodeStateEvent) event);
+        } else if (event instanceof ThreadDumpResponseEvent) {
+            handleRemoteThreadDumpResponseEvent((ThreadDumpResponseEvent) event);
         }
     }
 
@@ -252,6 +264,41 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         setChanged();
         // Trigger a dashboard refresh.
         notifyObservers(oldNodeState == null ? nodeStates.get(event.getNodeName()) : oldNodeState);
+    }
+    
+    /**
+     * Handles thread dump response event.
+     *
+     * @param event ThreadDumpResponseEvent
+     */
+    private void handleRemoteThreadDumpResponseEvent(ThreadDumpResponseEvent event) {
+        if (event.getTargetNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+            LOGGER.log(Level.INFO, "Received thread dump response event from machine {0}", event.getOriginalNodeName());
+            File dumpFile = createFilePath(event.getOriginalNodeName()).toFile();
+            try {
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(dumpFile, true))) {
+                    writer.write(event.getThreadDump());
+                }
+
+                Desktop.getDesktop().open(dumpFile);
+            } catch (IOException ex) {
+                if (dumpFile != null) {
+                    LOGGER.log(Level.WARNING, "Failed to open thread dump file in external viewer: " + dumpFile.getAbsolutePath(), ex);
+                } else {
+                    LOGGER.log(Level.SEVERE, "Failed to create thread dump file.", ex);
+                }
+            }
+        }
+    }
+
+    /**
+     * Create the thread dump file path.
+     *
+     * @return Path for dump file.
+     */
+    private Path createFilePath(String nodeName) {
+        String fileName = "ThreadDumpFromNode_" + nodeName + "_" + TimeStampUtils.createTimeStamp() + ".txt";
+        return Paths.get(PlatformUtil.getLogDirectory(), fileName);
     }
 
     /**
@@ -694,6 +741,15 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     void shutdownAutoIngestNode(String nodeName) {
         sendControlEventToNode(ControlEventType.SHUTDOWN, nodeName);
     }
+    
+    /**
+     * Tell the specified node to generate a thread dump.
+     *
+     * @param job
+     */
+    void generateThreadDump(String nodeName) {
+        sendControlEventToNode(ControlEventType.GENERATE_THREAD_DUMP_REQUEST, nodeName);
+    }    
 
     /**
      * A task that updates the state maintained by the monitor. At present this

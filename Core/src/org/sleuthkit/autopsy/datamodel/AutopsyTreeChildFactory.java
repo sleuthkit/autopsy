@@ -111,24 +111,27 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                     if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
                         list.add(new PersonGrouping(null));
                     }
-
-                    return true;
                 } else {
                     // otherwise, just show host level
-                    tskCase.getHostManager().getHosts().stream()
+                    tskCase.getHostManager().getAllHosts().stream()
                             .map(HostGrouping::new)
                             .sorted()
                             .forEach(list::add);
-                    return true;
+                    
                 }
+                list.add(new Reports());
+                return true;
             } else {
                 // data source by type view
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
                         new DataSourcesByType(),
-                        new Views(tskCase),
-                        new Results(tskCase),
+                        new Views(Case.getCurrentCaseThrows().getSleuthkitCase()),
+                        new DataArtifacts(),
+                        new AnalysisResults(),
+                        new OsAccounts(Case.getCurrentCaseThrows().getSleuthkitCase()),
                         new Tags(),
-                        new Reports()));
+                        new Reports()
+                ));
 
                 list.addAll(keys);
             }

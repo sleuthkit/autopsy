@@ -24,7 +24,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation similar to Junit's @Test for outputing results as a part of an
+ * Annotation similar to Junit's \@Test for outputting results as a part of an
  * integration test.
  */
 @Retention(RetentionPolicy.RUNTIME)

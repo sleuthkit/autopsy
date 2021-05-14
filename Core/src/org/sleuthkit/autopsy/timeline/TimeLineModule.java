@@ -49,19 +49,19 @@ public class TimeLineModule {
     }
 
     /**
-     * Get instance of the controller for the current case
+     * Get instance of the controller for the current case.
+     * The controller instance is initialized from a case open event.
      *
      * @return the controller for the current case.
      *
-     * @throws NoCurrentCaseException If there is no case open.
      * @throws TskCoreException       If there was a problem accessing the case
      *                                database.
      *
      */
-    public static TimeLineController getController() throws NoCurrentCaseException, TskCoreException {
+    public static TimeLineController getController() throws TskCoreException {
         synchronized (controllerLock) {
             if (controller == null) {
-                controller = new TimeLineController(Case.getCurrentCaseThrows());
+                throw new TskCoreException("Timeline controller not initialized");
             }
             return controller;
         }
@@ -100,13 +100,22 @@ public class TimeLineModule {
                         }
                         controller = null;
                     }
+                } else {
+                    // Case is opening - create the controller now
+                    synchronized (controllerLock) {
+                        try {
+                            controller = new TimeLineController(Case.getCurrentCaseThrows());
+                        } catch (TskCoreException | NoCurrentCaseException ex) {
+                            logger.log(Level.SEVERE, "Error creating Timeline controller", ex);
+                        }
+                    }
                 }
             } else {
                 try {
                     getController().handleCaseEvent(evt);
-                } catch (NoCurrentCaseException ignored) {
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error handling application event", ex);
+                    // The call to getController() will only fail due to case closing, so do 
+                    // not record the error.
                 }
             }
         }
@@ -121,12 +130,9 @@ public class TimeLineModule {
         public void propertyChange(PropertyChangeEvent evt) {
             try {
                 getController().handleIngestModuleEvent(evt);
-            } catch (NoCurrentCaseException ex) {
-                // ignore
-                return;
             } catch (TskCoreException ex) {
-                MessageNotifyUtil.Message.error("Error creating timeline controller.");
-                logger.log(Level.SEVERE, "Error creating timeline controller", ex);
+                // The call to getController() will only fail due to case closing, so do 
+                // not record the error.
             }
         }
     }

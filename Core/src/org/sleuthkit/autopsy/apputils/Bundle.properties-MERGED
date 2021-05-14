@@ -1,0 +1,4 @@
+CTL_ResetWindowsAction=Reset Windows
+ResetWindowAction.caseCloseFailure.text=Unable to close the current case, the software will restart and the windows locations will reset the next time the software is closed.
+ResetWindowAction.caseSaveMetadata.text=Unable to save current case path, the software will restart and the windows locations will reset but the current case will not be opened upon restart.
+ResetWindowAction.confirm.text=In order to perform the resetting of window locations the software will close and restart. If a case is currently open, it will be closed. If ingest or a search is currently running, it will be terminated. Are you sure you want to restart the software to reset all window locations?

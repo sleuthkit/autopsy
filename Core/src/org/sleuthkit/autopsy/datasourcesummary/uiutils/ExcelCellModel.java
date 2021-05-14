@@ -16,24 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.events;
-
-import java.util.List;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.Person;
+package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 /**
- * Event fired when persons are removed.
+ * Basic interface for a cell model.
  */
-public class PersonsRemovedEvent extends PersonsEvent {
-    
-    private static final long serialVersionUID = 1L;
-    
+public interface ExcelCellModel extends CellModel {
+
     /**
-     * Main constructor.
-     * @param dataModelObjects The list of persons that have been deleted.
+     * @return The format string to be used with Apache POI during excel
+     * export or null if none necessary.
      */
-    public PersonsRemovedEvent(List<Person> dataModelObjects) {
-        super(Case.Events.PERSONS_DELETED.name(), dataModelObjects);
-    }
+    String getExcelFormatString();
+    
 }

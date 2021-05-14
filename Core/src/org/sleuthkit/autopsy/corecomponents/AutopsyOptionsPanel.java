@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,8 +29,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.StringJoiner;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
@@ -38,6 +41,9 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.tools.ant.types.Commandline;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -47,9 +53,9 @@ import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences.TempDirChoice;
 import org.sleuthkit.autopsy.report.ReportBranding;
 
 /**
@@ -75,9 +81,9 @@ import org.sleuthkit.autopsy.report.ReportBranding;
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final String DEFAULT_HEAP_DUMP_FILE_FIELD = "";
     private final JFileChooser logoFileChooser;
     private final JFileChooser tempDirChooser;
-    private final TextFieldListener textFieldListener;
     private static final String ETC_FOLDER_NAME = "etc";
     private static final String CONFIG_FILE_EXTENSION = ".conf";
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
@@ -86,6 +92,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final int MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
     private static final Logger logger = Logger.getLogger(AutopsyOptionsPanel.class.getName());
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
+    
+    private final ReportBranding reportBranding;
+    private final JFileChooser heapFileChooser;
 
     /**
      * Instantiate the Autopsy options panel.
@@ -101,13 +110,19 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         tempDirChooser = new JFileChooser();
         tempDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         tempDirChooser.setMultiSelectionEnabled(false);
+        
+        heapFileChooser = new JFileChooser();
+        heapFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        heapFileChooser.setMultiSelectionEnabled(false);
 
-        if (!PlatformUtil.is64BitJVM() || Version.getBuildType() == Version.Type.DEVELOPMENT) {
+        if (!isJVMHeapSettingsCapable()) {
             //32 bit JVM has a max heap size of 1.4 gb to 4 gb depending on OS
             //So disabling the setting of heap size when the JVM is not 64 bit 
             //Is the safest course of action
             //And the file won't exist in the install folder when running through netbeans
             memField.setEnabled(false);
+            heapDumpFileField.setEnabled(false);
+            heapDumpBrowseButton.setEnabled(false);
             solrMaxHeapSpinner.setEnabled(false);
         }
         systemMemoryTotal.setText(Long.toString(getSystemMemoryInGB()));
@@ -116,10 +131,20 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         solrMaxHeapSpinner.setModel(new javax.swing.SpinnerNumberModel(UserPreferences.getMaxSolrVMSize(),
                 JVM_MEMORY_STEP_SIZE_MB, ((int) getSystemMemoryInGB()) * MEGA_IN_GIGA, JVM_MEMORY_STEP_SIZE_MB));
 
-        textFieldListener = new TextFieldListener();
-        agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
-        tempDirectoryField.getDocument().addDocumentListener(textFieldListener);
+        agencyLogoPathField.getDocument().addDocumentListener(new TextFieldListener(null));
+        heapDumpFileField.getDocument().addDocumentListener(new TextFieldListener(this::isHeapPathValid));
+        tempCustomField.getDocument().addDocumentListener(new TextFieldListener(this::evaluateTempDirState));
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
+        
+        reportBranding = new ReportBranding();
+    }
+    
+    /**
+     * Returns whether or not the jvm runtime heap settings can effectively be changed.
+     * @return Whether or not the jvm runtime heap settings can effectively be changed.
+     */
+    private static boolean isJVMHeapSettingsCapable() {
+        return PlatformUtil.is64BitJVM() && Version.getBuildType() != Version.Type.DEVELOPMENT;
     }
 
     /**
@@ -136,18 +161,23 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     /**
      * Gets the currently saved max java heap space in gigabytes.
+     * @param The conf file memory value (i.e. 4G).
      *
-     * @return @throws IOException when unable to get a valid setting
+     * @return The value in gigabytes.
+     * @throws IOException when unable to get a valid setting
      */
-    private long getCurrentJvmMaxMemoryInGB() throws IOException {
-        String currentXmx = getCurrentXmxValue();
+    private long getCurrentJvmMaxMemoryInGB(String confFileMemValue) throws IOException {
         char units = '-';
         Long value = 0L;
-        if (currentXmx.length() > 1) {
-            units = currentXmx.charAt(currentXmx.length() - 1);
-            value = Long.parseLong(currentXmx.substring(0, currentXmx.length() - 1));
+        if (confFileMemValue.length() > 1) {
+            units = confFileMemValue.charAt(confFileMemValue.length() - 1);
+            try {
+                value = Long.parseLong(confFileMemValue.substring(0, confFileMemValue.length() - 1));
+            } catch (NumberFormatException ex) {
+                throw new IOException("Unable to properly parse memory number.", ex);
+            }
         } else {
-            throw new IOException("No memory setting found in String: " + currentXmx);
+            throw new IOException("No memory setting found in String: " + confFileMemValue);
         }
         //some older .conf files might have the units as megabytes instead of gigabytes
         switch (units) {
@@ -162,33 +192,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }
 
-    /*
-     * The value currently saved in the conf file as the max java heap space
-     * available to this application. Form will be an integer followed by a
-     * character indicating units. Helper method for
-     * getCurrentJvmMaxMemoryInGB()
-     *
-     * @return the saved value for the max java heap space
-     *
-     * @throws IOException if the conf file does not exist in either the user
-     * directory or the install directory
-     */
-    private String getCurrentXmxValue() throws IOException {
-        String[] settings;
-        String currentSetting = "";
-        File userConfFile = getUserFolderConfFile();
-        if (!userConfFile.exists()) {
-            settings = getDefaultsFromFileContents(readConfFile(getInstallFolderConfFile()));
-        } else {
-            settings = getDefaultsFromFileContents(readConfFile(userConfFile));
-        }
-        for (String option : settings) {
-            if (option.startsWith("-J-Xmx")) {
-                currentSetting = option.replace("-J-Xmx", "").trim();
-            }
-        }
-        return currentSetting;
-    }
 
     /**
      * Get the conf file from the install directory which stores the default
@@ -225,7 +228,61 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
         return new File(userEtcFolder, confFileName);
     }
-
+    
+    private static final String JVM_SETTINGS_REGEX_PARAM = "options";
+    private static final String JVM_SETTINGS_REGEX_STR = "^\\s*default_options\\s*=\\s*\"?(?<" + JVM_SETTINGS_REGEX_PARAM + ">.+?)\"?\\s*$";
+    private static final Pattern JVM_SETTINGS_REGEX = Pattern.compile(JVM_SETTINGS_REGEX_STR);
+    private static final String XMX_REGEX_PARAM = "mem";
+    private static final String XMX_REGEX_STR = "^\\s*\\-J\\-Xmx(?<" + XMX_REGEX_PARAM + ">.+?)\\s*$";
+    private static final Pattern XMX_REGEX = Pattern.compile(XMX_REGEX_STR);
+    private static final String HEAP_DUMP_REGEX_PARAM = "path";
+    private static final String HEAP_DUMP_REGEX_STR = "^\\s*\\-J\\-XX:HeapDumpPath=(\\\")?\\s*(?<" + HEAP_DUMP_REGEX_PARAM + ">.+?)\\s*(\\\")?$";
+    private static final Pattern HEAP_DUMP_REGEX = Pattern.compile(HEAP_DUMP_REGEX_STR);
+    
+    /**
+     * Parse the autopsy conf file line.  If the line is the default_options line, 
+     * then replaces with current memory and heap path value.  Otherwise, returns 
+     * the line provided as parameter.
+     * 
+     * @param line The line.
+     * @param memText The text to add as an argument to be used as memory with -J-Xmx.
+     * @param heapText The text to add as an argument to be used as the heap dump path with
+     * -J-XX:HeapDumpPath.
+     * @return The line modified to contain memory and heap arguments.
+     */
+    private static String updateConfLine(String line, String memText, String heapText) {
+        Matcher match = JVM_SETTINGS_REGEX.matcher(line);
+        if (match.find()) {
+            // split on command line arguments
+            String[] parsedArgs = Commandline.translateCommandline(match.group(JVM_SETTINGS_REGEX_PARAM));
+            
+            String memString = "-J-Xmx" + memText.replaceAll("[^\\d]", "") + "g";
+            
+            // only add in heap path argument if a heap path is specified
+            String heapString = null;
+            if (StringUtils.isNotBlank(heapText)) {
+                while (heapText.endsWith("\\") && heapText.length() > 0) {
+                    heapText = heapText.substring(0, heapText.length() - 1);
+                }
+                
+                heapString = String.format("-J-XX:HeapDumpPath=\"%s\"", heapText);
+            }
+            
+            Stream<String> argsNoMemHeap = Stream.of(parsedArgs)
+                    // remove saved version of memory and heap dump path
+                    .filter(s -> !s.matches(XMX_REGEX_STR) && !s.matches(HEAP_DUMP_REGEX_STR));
+                    
+            String newArgs = Stream.concat(argsNoMemHeap, Stream.of(memString, heapString))
+                    .filter(s -> s != null)
+                    .collect(Collectors.joining(" "));
+            
+            return String.format("default_options=\"%s\"", newArgs);
+        };
+            
+        return line;
+    }
+    
+    
     /**
      * Take the conf file in the install directory and save a copy of it to the
      * user directory. The copy will be modified to include the current memory
@@ -235,25 +292,124 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      *                     install folders conf file
      */
     private void writeEtcConfFile() throws IOException {
-        StringBuilder content = new StringBuilder();
-        List<String> confFile = readConfFile(getInstallFolderConfFile());
-        for (String line : confFile) {
-            if (line.contains("-J-Xmx")) {
-                String[] splitLine = line.split(" ");
-                StringJoiner modifiedLine = new StringJoiner(" ");
-                for (String piece : splitLine) {
-                    if (piece.contains("-J-Xmx")) {
-                        piece = "-J-Xmx" + memField.getText() + "g";
-                    }
-                    modifiedLine.add(piece);
-                }
-                content.append(modifiedLine.toString());
-            } else {
-                content.append(line);
-            }
-            content.append("\n");
+        String fileText = readConfFile(getInstallFolderConfFile()).stream()
+                .map((line) -> updateConfLine(line, memField.getText(), heapDumpFileField.getText()))
+                .collect(Collectors.joining("\n"));
+        
+        FileUtils.writeStringToFile(getUserFolderConfFile(), fileText, "UTF-8");
+    }
+    
+    
+    /**
+     * Values for configuration located in the /etc/\*.conf file.
+     */
+    private static class ConfValues {
+        private final String XmxVal;
+        private final String heapDumpPath;
+
+        /**
+         * Main constructor.
+         * @param XmxVal The heap memory size.
+         * @param heapDumpPath The heap dump path.
+         */
+        ConfValues(String XmxVal, String heapDumpPath) {
+            this.XmxVal = XmxVal;
+            this.heapDumpPath = heapDumpPath;
         }
-        Files.write(getUserFolderConfFile().toPath(), content.toString().getBytes());
+
+        /**
+         * Returns the heap memory value specified in the conf file.
+         * @return The heap memory value specified in the conf file.
+         */
+        String getXmxVal() {
+            return XmxVal;
+        }
+
+        /**
+         * Returns path to the heap dump specified in the conf file.
+         * @return Path to the heap dump specified in the conf file.
+         */
+        String getHeapDumpPath() {
+            return heapDumpPath;
+        }
+    }
+    
+    /**
+     * Retrieve the /etc/\*.conf file values pertinent to settings.
+     * @return The conf file values.
+     * @throws IOException 
+     */
+    private ConfValues getEtcConfValues() throws IOException {
+        File userConfFile = getUserFolderConfFile();
+        String[] args = userConfFile.exists() ? 
+                getDefaultsFromFileContents(readConfFile(userConfFile)) : 
+                getDefaultsFromFileContents(readConfFile(getInstallFolderConfFile()));
+        
+        String heapFile = "";
+        String memSize = "";
+
+        for (String arg : args) {
+            Matcher memMatch = XMX_REGEX.matcher(arg);
+            if (memMatch.find()) {
+                memSize = memMatch.group(XMX_REGEX_PARAM);
+                continue;
+            }
+
+            Matcher heapFileMatch = HEAP_DUMP_REGEX.matcher(arg);
+            if (heapFileMatch.find()) {
+                heapFile = heapFileMatch.group(HEAP_DUMP_REGEX_PARAM);
+                continue;
+            }
+        }
+        
+        return new ConfValues(memSize, heapFile);
+    }
+    
+    
+    
+    /**
+     * Checks current heap path value to see if it is valid, and displays an error message if invalid.
+     * @return True if the heap path is valid.
+     */
+    @Messages({
+        "AutopsyOptionsPanel_isHeapPathValid_selectValidDirectory=Please select an existing directory.",
+        "AutopsyOptionsPanel_isHeapPathValid_developerMode=Cannot change heap dump path while in developer mode.",
+        "AutopsyOptionsPanel_isHeapPathValid_not64BitMachine=Changing heap dump path settings only enabled for 64 bit version.",
+        "AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters=Please select a path with no quotes."
+    })
+    private boolean isHeapPathValid() {
+        if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+            heapFieldValidationLabel.setVisible(true);
+            heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_developerMode());
+            return true;
+        } 
+        
+        if (!PlatformUtil.is64BitJVM()) {
+            heapFieldValidationLabel.setVisible(true);
+            heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_not64BitMachine());
+            return true;
+        }
+        
+        //allow blank field as the default will be used
+        if (StringUtils.isNotBlank(heapDumpFileField.getText())) { 
+            String heapText = heapDumpFileField.getText().trim();
+            if (heapText.contains("\"") || heapText.contains("'")) {
+                heapFieldValidationLabel.setVisible(true);
+                heapFieldValidationLabel.setText(Bundle.AutopsyOPtionsPanel_isHeapPathValid_illegalCharacters());
+                return false;
+            }
+            
+            File curHeapFile = new File(heapText);
+            if (!curHeapFile.exists() || !curHeapFile.isDirectory()) {
+                heapFieldValidationLabel.setVisible(true);
+                heapFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_isHeapPathValid_selectValidDirectory());
+                return false;
+            }
+        }
+            
+        heapFieldValidationLabel.setVisible(false);
+        heapFieldValidationLabel.setText("");
+        return true;
     }
 
     /**
@@ -291,51 +447,96 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      *         options is not present.
      */
     private static String[] getDefaultsFromFileContents(List<String> list) {
-        Optional<String> defaultSettings = list.stream().filter(line -> line.startsWith("default_options=")).findFirst();
+        Optional<String> defaultSettings = list.stream()
+                .filter(line -> line.matches(JVM_SETTINGS_REGEX_STR))
+                .findFirst();
 
         if (defaultSettings.isPresent()) {
-            return defaultSettings.get().replace("default_options=", "").replaceAll("\"", "").split(" ");
+            Matcher match = JVM_SETTINGS_REGEX.matcher(defaultSettings.get());
+            if (match.find()) {
+                return Commandline.translateCommandline(match.group(JVM_SETTINGS_REGEX_PARAM));
+            }
         }
+        
         return new String[]{};
+    }
+    
+    private void evaluateTempDirState() {
+        boolean caseOpen = Case.isCaseOpen();
+        boolean customSelected = tempCustomRadio.isSelected();
+        
+        tempDirectoryBrowseButton.setEnabled(!caseOpen && customSelected);
+        tempCustomField.setEnabled(!caseOpen && customSelected);
+        
+        tempOnCustomNoPath.setVisible(customSelected && StringUtils.isBlank(tempCustomField.getText()));
     }
 
     /**
      * Load the saved user preferences.
      */
     void load() {
-        String path = ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP);
+        String path = reportBranding.getAgencyLogoPath();
         boolean useDefault = (path == null || path.isEmpty());
         defaultLogoRB.setSelected(useDefault);
         specifyLogoRB.setSelected(!useDefault);
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
-        tempDirectoryField.setText(UserMachinePreferences.getBaseTempDirectory());
+        
+        tempCustomField.setText(UserMachinePreferences.getCustomTempDirectory());
+        switch (UserMachinePreferences.getTempDirChoice()) {
+            case CASE: 
+                tempCaseRadio.setSelected(true);
+                break;
+            case CUSTOM: 
+                tempCustomRadio.setSelected(true);
+                break;
+            default:
+            case SYSTEM: 
+                tempLocalRadio.setSelected(true);
+                break;
+        }
+        
+        evaluateTempDirState();
+        
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         solrMaxHeapSpinner.setValue(UserPreferences.getMaxSolrVMSize());
-        tempDirectoryField.setText(UserMachinePreferences.getBaseTempDirectory());
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex);
         }
-        if (memField.isEnabled()) {
+        
+        boolean confLoaded = false;
+        if (isJVMHeapSettingsCapable()) {
             try {
-                initialMemValue = Long.toString(getCurrentJvmMaxMemoryInGB());
+                ConfValues confValues = getEtcConfValues();
+                heapDumpFileField.setText(confValues.getHeapDumpPath());
+                initialMemValue = Long.toString(getCurrentJvmMaxMemoryInGB(confValues.getXmxVal()));
+                confLoaded = true;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Can't read current Jvm max memory setting from file", ex);
                 memField.setEnabled(false);
+                heapDumpFileField.setText(DEFAULT_HEAP_DUMP_FILE_FIELD);
             }
             memField.setText(initialMemValue);
         }
+        
+        heapDumpBrowseButton.setEnabled(confLoaded);
+        heapDumpFileField.setEnabled(confLoaded);
+        
         setTempDirEnabled();
         valid(); //ensure the error messages are up to date
     }
 
     private void setTempDirEnabled() {
         boolean enabled = !Case.isCaseOpen();
-        this.tempDirectoryBrowseButton.setEnabled(enabled);
-        this.tempDirectoryField.setEnabled(enabled);
+        
+        this.tempCaseRadio.setEnabled(enabled);
+        this.tempCustomRadio.setEnabled(enabled);
+        this.tempLocalRadio.setEnabled(enabled);
+        
         this.tempDirectoryWarningLabel.setVisible(!enabled);
+        evaluateTempDirState();
     }
 
     /**
@@ -367,18 +568,43 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     @Messages({
         "AutopsyOptionsPanel_storeTempDir_onError_title=Error Saving Temporary Directory",
         "# {0} - path",
-        "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",})
+        "AutopsyOptionsPanel_storeTempDir_onError_description=There was an error creating the temporary directory on the filesystem at: {0}.",
+        "AutopsyOptionsPanel_storeTempDir_onChoiceError_title=Error Saving Temporary Directory Choice",
+        "AutopsyOptionsPanel_storeTempDir_onChoiceError_description=There was an error updating temporary directory choice selection.",})
     private void storeTempDir() {
-        String tempDirectoryPath = tempDirectoryField.getText();
-        if (!UserMachinePreferences.getBaseTempDirectory().equals(tempDirectoryPath)) {
+        String tempDirectoryPath = tempCustomField.getText();
+        if (!UserMachinePreferences.getCustomTempDirectory().equals(tempDirectoryPath)) {
             try {
-                UserMachinePreferences.setBaseTempDirectory(tempDirectoryPath);
+                UserMachinePreferences.setCustomTempDirectory(tempDirectoryPath);
             } catch (UserMachinePreferencesException ex) {
                 logger.log(Level.WARNING, "There was an error creating the temporary directory defined by the user: " + tempDirectoryPath, ex);
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(this,
                             String.format("<html>%s</html>", Bundle.AutopsyOptionsPanel_storeTempDir_onError_description(tempDirectoryPath)),
                             Bundle.AutopsyOptionsPanel_storeTempDir_onError_title(),
+                            JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }
+        
+        TempDirChoice choice;
+        if (tempCaseRadio.isSelected()) {
+            choice = TempDirChoice.CASE;
+        } else if (tempCustomRadio.isSelected()) {
+            choice = TempDirChoice.CUSTOM;
+        } else {
+            choice = TempDirChoice.SYSTEM;
+        }
+        
+        if (!choice.equals(UserMachinePreferences.getTempDirChoice())) {
+            try {
+                UserMachinePreferences.setTempDirChoice(choice);
+            } catch (UserMachinePreferencesException ex) {
+                logger.log(Level.WARNING, "There was an error updating choice to: " + choice.name(), ex);
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this,
+                            String.format("<html>%s</html>", Bundle.AutopsyOptionsPanel_storeTempDir_onChoiceError_description()),
+                            Bundle.AutopsyOptionsPanel_storeTempDir_onChoiceError_title(),
                             JOptionPane.ERROR_MESSAGE);
                 });
             }
@@ -395,13 +621,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
-                ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, agencyLogoPathField.getText());
+                reportBranding.setAgencyLogoPath(agencyLogoPathField.getText());
             }
         } else {
-            ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, "");
+            reportBranding.setAgencyLogoPath("");
         }
         UserPreferences.setMaxSolrVMSize((int) solrMaxHeapSpinner.getValue());
-        if (memField.isEnabled()) {  //if the field could of been changed we need to try and save it
+        if (isJVMHeapSettingsCapable()) {  //if the field could of been changed we need to try and save it
             try {
                 writeEtcConfFile();
             } catch (IOException ex) {
@@ -416,18 +642,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      * @return True if valid; false otherwise.
      */
     boolean valid() {
-        boolean valid = true;
-        if (!isAgencyLogoPathValid()) {
-            valid = false;
-        }
-        if (!isMemFieldValid()) {
-            valid = false;
-        }
-        if (!isLogNumFieldValid()) {
-            valid = false;
-        }
-
-        return valid;
+        boolean agencyValid = isAgencyLogoPathValid();
+        boolean memFieldValid = isMemFieldValid();
+        boolean logNumValid = isLogNumFieldValid();
+        boolean heapPathValid = isHeapPathValid();
+        
+        return agencyValid && memFieldValid && logNumValid && heapPathValid;
     }
 
     /**
@@ -531,24 +751,44 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     /**
      * Listens for registered text fields that have changed and fires a
-     * PropertyChangeEvent accordingly.
+     * PropertyChangeEvent accordingly as well as firing an optional additional listener.
      */
     private class TextFieldListener implements DocumentListener {
+        private final Runnable onChange;
 
-        @Override
-        public void insertUpdate(DocumentEvent e) {
+        
+        /**
+         * Main constructor.
+         * @param onChange Additional listener for change events.
+         */
+        TextFieldListener(Runnable onChange) {
+            this.onChange = onChange;
+        }
+        
+        private void baseOnChange() {
+            if (onChange != null) {
+                onChange.run();    
+            }
+            
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+        
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            baseOnChange();
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            baseOnChange();
         }
 
         @Override
-        public void changedUpdate(DocumentEvent e) {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        public void insertUpdate(DocumentEvent e) {
+            baseOnChange();
         }
+        
+        
     }
 
     /**
@@ -563,6 +803,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         fileSelectionButtonGroup = new javax.swing.ButtonGroup();
         displayTimesButtonGroup = new javax.swing.ButtonGroup();
         logoSourceButtonGroup = new javax.swing.ButtonGroup();
+        tempDirChoiceGroup = new javax.swing.ButtonGroup();
         jScrollPane1 = new javax.swing.JScrollPane();
         javax.swing.JPanel mainPanel = new javax.swing.JPanel();
         logoPanel = new javax.swing.JPanel();
@@ -588,10 +829,18 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         maxMemoryUnitsLabel2 = new javax.swing.JLabel();
         solrMaxHeapSpinner = new javax.swing.JSpinner();
         solrJVMHeapWarning = new javax.swing.JLabel();
+        heapFileLabel = new javax.swing.JLabel();
+        heapDumpFileField = new javax.swing.JTextField();
+        heapDumpBrowseButton = new javax.swing.JButton();
+        heapFieldValidationLabel = new javax.swing.JLabel();
         tempDirectoryPanel = new javax.swing.JPanel();
-        tempDirectoryField = new javax.swing.JTextField();
+        tempCustomField = new javax.swing.JTextField();
         tempDirectoryBrowseButton = new javax.swing.JButton();
         tempDirectoryWarningLabel = new javax.swing.JLabel();
+        tempLocalRadio = new javax.swing.JRadioButton();
+        tempCaseRadio = new javax.swing.JRadioButton();
+        tempCustomRadio = new javax.swing.JRadioButton();
+        tempOnCustomNoPath = new javax.swing.JLabel();
         rdpPanel = new javax.swing.JPanel();
         javax.swing.JScrollPane sizingScrollPane = new javax.swing.JScrollPane();
         javax.swing.JTextPane sizingTextPane = new javax.swing.JTextPane();
@@ -734,6 +983,20 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(solrJVMHeapWarning, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.solrJVMHeapWarning.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(heapFileLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.heapFileLabel.text")); // NOI18N
+
+        heapDumpFileField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.heapDumpFileField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(heapDumpBrowseButton, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.heapDumpBrowseButton.text")); // NOI18N
+        heapDumpBrowseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                heapDumpBrowseButtonActionPerformed(evt);
+            }
+        });
+
+        heapFieldValidationLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(heapFieldValidationLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.heapFieldValidationLabel.text")); // NOI18N
+
         javax.swing.GroupLayout runtimePanelLayout = new javax.swing.GroupLayout(runtimePanel);
         runtimePanel.setLayout(runtimePanelLayout);
         runtimePanelLayout.setHorizontalGroup(
@@ -762,14 +1025,26 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addGap(23, 23, 23)
                                 .addComponent(memFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 478, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap(12, Short.MAX_VALUE))
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addGap(18, 18, 18)
                                 .addComponent(solrJVMHeapWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 331, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(44, 44, 44)
                                 .addComponent(logNumAlert)
                                 .addContainerGap())))
-                    .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(runtimePanelLayout.createSequentialGroup()
+                        .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(runtimePanelLayout.createSequentialGroup()
+                                .addComponent(heapFileLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(heapFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 478, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(runtimePanelLayout.createSequentialGroup()
+                                        .addComponent(heapDumpFileField, javax.swing.GroupLayout.PREFERRED_SIZE, 415, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(heapDumpBrowseButton)))))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
 
         runtimePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {maxLogFileCount, maxMemoryLabel, totalMemoryLabel});
@@ -803,7 +1078,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(maxLogFileCount)
                     .addComponent(logFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(heapFileLabel)
+                    .addComponent(heapDumpFileField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(heapDumpBrowseButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(heapFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(restartNecessaryWarning)
                 .addContainerGap())
         );
@@ -818,7 +1100,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         tempDirectoryPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryPanel.border.title"))); // NOI18N
         tempDirectoryPanel.setName(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryPanel.name")); // NOI18N
 
-        tempDirectoryField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryField.text")); // NOI18N
+        tempCustomField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempCustomField.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(tempDirectoryBrowseButton, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryBrowseButton.text")); // NOI18N
         tempDirectoryBrowseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -830,6 +1112,33 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         tempDirectoryWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(tempDirectoryWarningLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryWarningLabel.text")); // NOI18N
 
+        tempDirChoiceGroup.add(tempLocalRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(tempLocalRadio, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempLocalRadio.text")); // NOI18N
+        tempLocalRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tempLocalRadioActionPerformed(evt);
+            }
+        });
+
+        tempDirChoiceGroup.add(tempCaseRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(tempCaseRadio, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempCaseRadio.text")); // NOI18N
+        tempCaseRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tempCaseRadioActionPerformed(evt);
+            }
+        });
+
+        tempDirChoiceGroup.add(tempCustomRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(tempCustomRadio, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempCustomRadio.text")); // NOI18N
+        tempCustomRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tempCustomRadioActionPerformed(evt);
+            }
+        });
+
+        tempOnCustomNoPath.setForeground(java.awt.Color.RED);
+        org.openide.awt.Mnemonics.setLocalizedText(tempOnCustomNoPath, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempOnCustomNoPath.text")); // NOI18N
+
         javax.swing.GroupLayout tempDirectoryPanelLayout = new javax.swing.GroupLayout(tempDirectoryPanel);
         tempDirectoryPanel.setLayout(tempDirectoryPanelLayout);
         tempDirectoryPanelLayout.setHorizontalGroup(
@@ -837,23 +1146,37 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(tempLocalRadio)
+                    .addComponent(tempCaseRadio)
                     .addComponent(tempDirectoryWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 615, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
-                        .addComponent(tempDirectoryField, javax.swing.GroupLayout.PREFERRED_SIZE, 367, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(tempCustomRadio)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tempDirectoryBrowseButton)))
-                .addGap(0, 0, Short.MAX_VALUE))
+                        .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(tempOnCustomNoPath)
+                            .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
+                                .addComponent(tempCustomField, javax.swing.GroupLayout.PREFERRED_SIZE, 459, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(tempDirectoryBrowseButton)))))
+                .addContainerGap(164, Short.MAX_VALUE))
         );
         tempDirectoryPanelLayout.setVerticalGroup(
             tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(tempDirectoryPanelLayout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(tempLocalRadio)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tempCaseRadio)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tempDirectoryField)
+                    .addComponent(tempCustomRadio)
+                    .addComponent(tempCustomField)
                     .addComponent(tempDirectoryBrowseButton))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tempOnCustomNoPath)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(tempDirectoryWarningLabel)
-                .addContainerGap())
+                .addGap(14, 14, 14))
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -906,11 +1229,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 648, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 382, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -927,7 +1250,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 if (!f.exists() && !f.mkdirs()) {
                     throw new InvalidPathException(specifiedPath, "Unable to create parent directories leading to " + specifiedPath);
                 }
-                tempDirectoryField.setText(specifiedPath);
+                tempCustomField.setText(specifiedPath);
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } catch (InvalidPathException ex) {
                 logger.log(Level.WARNING, "Unable to create temporary directory in " + specifiedPath, ex);
@@ -971,7 +1294,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         browseLogosButton.setEnabled(true);
         try {
             if (agencyLogoPathField.getText().isEmpty()) {
-                String path = ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP);
+                String path = reportBranding.getAgencyLogoPath();
                 if (path != null && !path.isEmpty()) {
                     updateAgencyLogo(path);
                 }
@@ -1017,6 +1340,39 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseLogosButtonActionPerformed
 
+    private void tempLocalRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempLocalRadioActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        evaluateTempDirState();
+    }//GEN-LAST:event_tempLocalRadioActionPerformed
+
+    private void tempCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempCaseRadioActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        evaluateTempDirState();
+    }//GEN-LAST:event_tempCaseRadioActionPerformed
+
+    private void tempCustomRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempCustomRadioActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        evaluateTempDirState();
+    }//GEN-LAST:event_tempCustomRadioActionPerformed
+
+    @Messages({
+        "AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsTitle=File Already Exists",
+        "AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsMessage=File already exists.  Please select a new location."
+    })
+    private void heapDumpBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_heapDumpBrowseButtonActionPerformed
+        String oldHeapPath = heapDumpFileField.getText();
+        if (!StringUtils.isBlank(oldHeapPath)) {
+            heapFileChooser.setCurrentDirectory(new File(oldHeapPath));
+        }
+        
+        int returnState = heapFileChooser.showOpenDialog(this);
+        if (returnState == JFileChooser.APPROVE_OPTION) {
+            File selectedDirectory = heapFileChooser.getSelectedFile();
+            heapDumpFileField.setText(selectedDirectory.getAbsolutePath());
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_heapDumpBrowseButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField agencyLogoPathField;
     private javax.swing.JLabel agencyLogoPathFieldValidationLabel;
@@ -1025,6 +1381,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton defaultLogoRB;
     private javax.swing.ButtonGroup displayTimesButtonGroup;
     private javax.swing.ButtonGroup fileSelectionButtonGroup;
+    private javax.swing.JButton heapDumpBrowseButton;
+    private javax.swing.JTextField heapDumpFileField;
+    private javax.swing.JLabel heapFieldValidationLabel;
+    private javax.swing.JLabel heapFileLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField logFileCount;
     private javax.swing.JTextField logNumAlert;
@@ -1045,10 +1405,15 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JSpinner solrMaxHeapSpinner;
     private javax.swing.JRadioButton specifyLogoRB;
     private javax.swing.JLabel systemMemoryTotal;
+    private javax.swing.JRadioButton tempCaseRadio;
+    private javax.swing.JTextField tempCustomField;
+    private javax.swing.JRadioButton tempCustomRadio;
+    private javax.swing.ButtonGroup tempDirChoiceGroup;
     private javax.swing.JButton tempDirectoryBrowseButton;
-    private javax.swing.JTextField tempDirectoryField;
     private javax.swing.JPanel tempDirectoryPanel;
     private javax.swing.JLabel tempDirectoryWarningLabel;
+    private javax.swing.JRadioButton tempLocalRadio;
+    private javax.swing.JLabel tempOnCustomNoPath;
     private javax.swing.JLabel totalMemoryLabel;
     // End of variables declaration//GEN-END:variables
 

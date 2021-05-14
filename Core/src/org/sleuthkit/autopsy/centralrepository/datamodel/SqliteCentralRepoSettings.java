@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -41,7 +43,15 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
 
     public final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
     private final static Logger LOGGER = Logger.getLogger(SqliteCentralRepoSettings.class.getName());
+    private final Path userConfigDir = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath());
     private final static String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
+    
+    //property names
+    private static final String PROFILE_NAME = "CentralRepository";
+    private static final String DATABASE_NAME = "db.sqlite.dbName"; //NON-NLS
+    private static final String DATABASE_PATH = "db.sqlite.dbDirectory"; //NON-NLS
+    private static final String BULK_THRESHOLD = "db.sqlite.bulkThreshold"; //NON-NLS
+    
     private final static String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
     private final static String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
     private final static String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
@@ -56,18 +66,18 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
     }
 
     public void loadSettings() {
-        dbName = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbName"); // NON-NLS
+        dbName = ModuleSettings.getConfigSetting(PROFILE_NAME, DATABASE_NAME); // NON-NLS
         if (dbName == null || dbName.isEmpty()) {
             dbName = DEFAULT_DBNAME;
         }
 
-        dbDirectory = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbDirectory"); // NON-NLS
+        dbDirectory = readDbPath(); // NON-NLS
         if (dbDirectory == null || dbDirectory.isEmpty()) {
             dbDirectory = DEFAULT_DBDIRECTORY;
         }
 
         try {
-            String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.bulkThreshold"); // NON-NLS
+            String bulkThresholdString = ModuleSettings.getConfigSetting(PROFILE_NAME, BULK_THRESHOLD); // NON-NLS
             if (bulkThresholdString == null || bulkThresholdString.isEmpty()) {
                 this.bulkThreshold = RdbmsCentralRepo.DEFAULT_BULK_THRESHHOLD;
             } else {
@@ -96,9 +106,64 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
     public void saveSettings() {
         createDbDirectory();
 
-        ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.dbName", getDbName()); // NON-NLS
-        ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.dbDirectory", getDbDirectory()); // NON-NLS
-        ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
+        ModuleSettings.setConfigSetting(PROFILE_NAME, DATABASE_NAME, getDbName()); // NON-NLS
+        saveDbPath(getDbDirectory()); // NON-NLS
+        ModuleSettings.setConfigSetting(PROFILE_NAME, BULK_THRESHOLD, Integer.toString(getBulkThreshold())); // NON-NLS
+    }
+
+    /**
+     * Save CR database path. If the path is inside user directory (e.g.
+     * "C:\Users\USER_NAME\AppData\Roaming\autopsy"), trim that off and save it
+     * as a relative path (i.e it will not start with a “/” or drive letter). Otherwise,
+     * full path is saved. See JIRA-7348.
+     *
+     * @param fullPath Full path to the SQLite db file.
+     */    
+    private void saveDbPath(String fullPath) {
+        Path relativePath = Paths.get(fullPath);
+        // check if the path is within user directory
+        if (Paths.get(fullPath).startsWith(userConfigDir)) {
+            // relativize the path
+            relativePath = userConfigDir.relativize(relativePath);
+        }
+        // Use properties to persist the logo to use.
+        ModuleSettings.setConfigSetting(PROFILE_NAME, DATABASE_PATH, relativePath.toString());        
+    }
+    
+     /**
+     * Read CD database path from preferences file. Reverses the path relativization performed 
+     * in saveDbPath(). If the stored path starts with either “/” or drive letter, 
+     * it is a full path, and is returned to the caller. Otherwise, append current user 
+     * directory to the saved relative path. See JIRA-7348.
+     *
+     * @return Full path to the SQLite CR database file.
+     */
+    private String readDbPath() {
+
+        String curPath = ModuleSettings.getConfigSetting(PROFILE_NAME, DATABASE_PATH);
+        
+
+        //if has been set, validate it's correct, if not set, return null
+        if (curPath != null && !curPath.isEmpty()) {
+            
+            // check if the path is an absolute path (starts with either drive letter or "/")            
+            Path driveLetterOrNetwork = Paths.get(curPath).getRoot();            
+            if (driveLetterOrNetwork != null) {
+                // absolute path
+                return curPath;
+            }
+            
+            // Path is a relative path. Reverse path relativization performed in saveDbPath() 
+            Path absolutePath = userConfigDir.resolve(curPath);
+            curPath = absolutePath.toString();
+            if (new File(curPath).canRead() == false) {
+                //use default
+                LOGGER.log(Level.INFO, "Path to SQLite Central Repository database is not valid: {0}", curPath); //NON-NLS
+                curPath = null;
+            }
+        }
+
+        return curPath;        
     }
 
     /**
@@ -252,9 +317,9 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
     }
 
     boolean isChanged() {
-        String dbNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbName"); // NON-NLS
-        String dbDirectoryString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbDirectory"); // NON-NLS
-        String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.bulkThreshold"); // NON-NLS
+        String dbNameString = ModuleSettings.getConfigSetting(PROFILE_NAME, DATABASE_NAME); // NON-NLS
+        String dbDirectoryString = readDbPath(); // NON-NLS
+        String bulkThresholdString = ModuleSettings.getConfigSetting(PROFILE_NAME, BULK_THRESHOLD); // NON-NLS
 
         return !dbName.equals(dbNameString)
                 || !dbDirectory.equals(dbDirectoryString)

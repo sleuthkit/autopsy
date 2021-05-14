@@ -192,11 +192,14 @@ public final class ImageGalleryController {
      * @param theCase The case.
      */
     static void shutDownController(Case theCase) {
+        ImageGalleryController controller = null;
         synchronized (controllersByCaseLock) {
             if (controllersByCase.containsKey(theCase.getName())) {
-                ImageGalleryController controller = controllersByCase.remove(theCase.getName());
-                controller.shutDown();
+                controller = controllersByCase.remove(theCase.getName());
             }
+        }
+        if (controller != null) {
+            controller.shutDown();
         }
     }
 
@@ -483,8 +486,7 @@ public final class ImageGalleryController {
      *
      */
     public void rebuildDrawablesDb() {
-        // queue a rebuild task for each stale data source
-        getStaleDataSourceIds().forEach(dataSourceObjId -> queueDBTask(new AddDrawableFilesTask(dataSourceObjId, this)));
+        queueDBTask(new DrawableFileUpdateTask(this));
     }
 
     /**
@@ -667,7 +669,7 @@ public final class ImageGalleryController {
      *
      * @param bgTask
      */
-    public synchronized void queueDBTask(DrawableDbTask bgTask) {
+    public synchronized void queueDBTask(Runnable bgTask) {
         if (!dbExecutor.isShutdown()) {
             incrementQueueSize();
             dbExecutor.submit(bgTask).addListener(this::decrementQueueSize, MoreExecutors.directExecutor());
@@ -963,19 +965,7 @@ public final class ImageGalleryController {
              * of the local drawables database.
              */
             if (isListeningEnabled()) {
-                groupManager.resetCurrentPathGroup();
-                if (drawableDB.getDataSourceDbBuildStatus(dataSourceObjId) == DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS) {
-
-                    // If at least one file in CaseDB has mime type, then set to COMPLETE
-                    // Otherwise, back to UNKNOWN since we assume file type module was not run        
-                    DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus
-                            = hasFilesWithMimeType(dataSourceObjId)
-                            ? DrawableDB.DrawableDbBuildStatusEnum.COMPLETE
-                            : DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN;
-
-                    drawableDB.insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
-                }
-                drawableDB.freeFileMetaDataCache();
+                queueDBTask(new HandleDataSourceAnalysisCompleteTask(dataSourceObjId, this));
             }
         } else if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
             /*

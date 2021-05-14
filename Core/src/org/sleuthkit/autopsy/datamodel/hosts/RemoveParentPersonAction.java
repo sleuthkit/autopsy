@@ -64,7 +64,7 @@ public class RemoveParentPersonAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().setPerson(host, null);
+            Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().setPerson(host, null);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             String hostName = this.host == null || this.host.getName() == null ? "" : this.host.getName();
             logger.log(Level.WARNING, String.format("Unable to remove parent from host: %s", hostName), ex);

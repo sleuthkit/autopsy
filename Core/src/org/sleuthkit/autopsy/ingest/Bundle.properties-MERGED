@@ -1,4 +1,5 @@
 CTL_RunIngestAction=Run Ingest
+FileIngestPipeline_SaveResults_Activity=Saving Results
 IngestJobSettingsPanel.IngestModulesTableRenderer.info.message=A previous version of this ingest module has been run before on this data source.
 IngestJobSettingsPanel.IngestModulesTableRenderer.warning.message=This ingest module has been run before on this data source.
 IngestJobSettingsPanel.noPerRunSettings=The selected module has no per-run settings.

@@ -49,6 +49,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
@@ -146,14 +147,23 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        currentSelectionInfo = info;
+        if(currentSelectionInfo != null && currentSelectionInfo.equals(info)) {
+            try {
+                // Clear the currently selected thread so that clicks can 
+                // be registered.
+                rootTablePane.getExplorerManager().setSelectedNodes(new Node[0]);
+            } catch (PropertyVetoException ex) {
+                logger.log(Level.WARNING, "Error clearing the selected node", ex);
+            }
+        } else {
+            currentSelectionInfo = info;
+            rootMessageFactory.refresh(info);
+        }
 
         currentPanel = rootTablePane;
 
         CardLayout layout = (CardLayout) this.getLayout();
-        layout.show(this, "threads");
-
-        rootMessageFactory.refresh(info);
+        layout.show(this, "threads"); 
     }
 
     @Override
@@ -192,8 +202,8 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         if (isDescendingFrom(newFocusOwner, rootTablePane)) {
             proxyLookup.setNewLookups(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
         } else if (isDescendingFrom(newFocusOwner, this)) {
-            proxyLookup.setNewLookups(createLookup(currentPanel.getExplorerManager(), getActionMap()));
-        }
+            proxyLookup.setNewLookups(createLookup(threadMessagesPanel.getExplorerManager(), getActionMap()));
+        } 
     }
 
     @Override

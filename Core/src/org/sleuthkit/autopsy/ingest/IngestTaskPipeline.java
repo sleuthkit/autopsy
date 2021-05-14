@@ -150,10 +150,11 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      *         not been started yet.
      */
     Date getStartTime() {
-        if (startTime == null) {
-            throw new IllegalStateException("startUp() was not called"); //NON-NLS
+        Date reportedStartTime = null;
+        if (startTime != null) {
+            reportedStartTime = new Date(startTime.getTime());
         }
-        return new Date(startTime.getTime());
+        return reportedStartTime;
     }
 
     /**

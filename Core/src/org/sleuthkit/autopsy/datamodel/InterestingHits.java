@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 
 public class InterestingHits implements AutopsyVisitableItem {
 
@@ -110,8 +111,8 @@ public class InterestingHits implements AutopsyVisitableItem {
             synchronized (interestingItemsMap) {
                 interestingItemsMap.clear();
             }
-            loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+            loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT);
+            loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT);
             setChanged();
             notifyObservers();
         }
@@ -121,7 +122,7 @@ public class InterestingHits implements AutopsyVisitableItem {
          * the interestingItemsMap
          */
         @SuppressWarnings("deprecation")
-        private void loadArtifacts(BlackboardArtifact.ARTIFACT_TYPE artType) {
+        private void loadArtifacts(BlackboardArtifact.Type artType) {
             if (skCase == null) {
                 return;
             }
@@ -145,8 +146,8 @@ public class InterestingHits implements AutopsyVisitableItem {
                         long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                         if (!interestingItemsMap.containsKey(value)) {
                             interestingItemsMap.put(value, new LinkedHashMap<>());
-                            interestingItemsMap.get(value).put(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName(), new HashSet<>());
-                            interestingItemsMap.get(value).put(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName(), new HashSet<>());
+                            interestingItemsMap.get(value).put(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName(), new HashSet<>());
+                            interestingItemsMap.get(value).put(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName(), new HashSet<>());
                         }
                         interestingItemsMap.get(value).get(artType.getDisplayName()).add(artifactId);
                     }
@@ -165,12 +166,16 @@ public class InterestingHits implements AutopsyVisitableItem {
     /**
      * Node for the interesting items
      */
-    public class RootNode extends DisplayableItemNode {
+    public class RootNode extends UpdatableCountTypeNode {
 
         public RootNode() {
-            super(Children.create(new SetNameFactory(), true), Lookups.singleton(DISPLAY_NAME));
+            super(Children.create(new SetNameFactory(), true),
+                    Lookups.singleton(DISPLAY_NAME),
+                    DISPLAY_NAME,
+                    filteringDSObjId,
+                    BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT,
+                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT);
             super.setName(INTERESTING_ITEMS);
-            super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
         }
 
@@ -232,8 +237,8 @@ public class InterestingHits implements AutopsyVisitableItem {
                      * event to have a null oldValue.
                      */
                     ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                    if (null != eventData && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-                            || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())) {
+                    if (null != eventData && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
+                            || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID())) {
                         interestingResults.update();
                     }
                 } catch (NoCurrentCaseException notUsed) {
@@ -314,8 +319,8 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         private void updateDisplayName() {
-            int sizeOfSet = interestingResults.getArtifactIds(setName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName()).size()
-                    + interestingResults.getArtifactIds(setName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName()).size();
+            int sizeOfSet = interestingResults.getArtifactIds(setName, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName()).size()
+                    + interestingResults.getArtifactIds(setName, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName()).size();
             super.setDisplayName(setName + " (" + sizeOfSet + ")");
         }
 
@@ -374,8 +379,8 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<String> list) {
-            list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName());
-            list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName());
+            list.add(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName());
+            list.add(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName());
             return true;
         }
 
@@ -400,8 +405,8 @@ public class InterestingHits implements AutopsyVisitableItem {
             this.typeName = typeName;
             this.setName = setName;
             /**
-             * We use the combination of setName and typeName as the name of
-             * the node to ensure that nodes have a unique name. This comes into
+             * We use the combination of setName and typeName as the name of the
+             * node to ensure that nodes have a unique name. This comes into
              * play when associating paging state with the node.
              */
             super.setName(setName + "_" + typeName);
@@ -462,9 +467,9 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         private HitFactory(String setName, String typeName) {
             /**
-             * The node name passed to the parent constructor must be the
-             * same as the name set in the InterestingItemTypeNode constructor,
-             * i.e. setName underscore typeName
+             * The node name passed to the parent constructor must be the same
+             * as the name set in the InterestingItemTypeNode constructor, i.e.
+             * setName underscore typeName
              */
             super(setName + "_" + typeName);
             this.setName = setName;
