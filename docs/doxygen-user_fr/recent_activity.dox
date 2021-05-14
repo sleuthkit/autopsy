@@ -1,42 +1,42 @@
-/*! \page recent_activity_page Recent Activity Module
+/*! \page recent_activity_page Recent Activity (Activités récentes)
 
 [TOC]
 
 
-What Does It Do
+Qu'est ce que ça fait
 ========
 
-The Recent Activity module extracts user activity as saved by web browsers (including web searches), installed programs, and the operating system. It also runs Regripper on the Registry hive.
+Le module "Recent Activity" extrait l'activité de l'utilisateur telle qu'elle est enregistrée par les navigateurs Web (y compris les recherches Web), les programmes installés et le système d'exploitation. Il exécute également Regripper sur les ruches de la base de registre.
 
-This allows you to see what activity has occured in the last seven days of usage, what web sites were vistied, what the machine did, and what it connected to.
+Cela vous permet de voir quelle activité s'est produite au cours des sept derniers jours d'utilisation, quels sites Web ont été consultés, ce que la machine a fait et à quoi elle s'est connectée.
 
 Configuration
 =======
 
-Configuring Custom Web Categories
+Configuration de la personnalisation des catégories Web
 ------
 
-The Recent Activity module will create "Web Categories" results for domains that match a list of categories. There are some built-in categories, but custom categories can also be entered through the "Custom Web Categories" tab on the main options panel. These custom categories will override any matching built-in category.
+Le module "Recent Activity" créera des résultats "Web Categories" pour les domaines qui correspondent à une liste de catégories. Il existe des catégories intégrées, mais des catégories personnalisées peuvent également être saisies via l'onglet "Custom Web Categories" du panneau d'options principal. Ces catégories personnalisées remplaceront toute catégorie intégrée correspondante.
 
 \image html custom_web_categories.png
 
-The buttons below the list of categories allow you to enter new categories, edit existing categories, and delete categories. You can also export your list of categories and import a set of categories that was previously exported from this panel. Importing a set will add its categories to the current list (existing categories will not be deleted).
+Les boutons situés sous la liste des catégories vous permettent de saisir de nouvelles catégories, de modifier des catégories existantes et de supprimer des catégories. Vous pouvez également exporter votre liste de catégories et importer un ensemble de catégories précédemment exportées à partir de ce panneau. L'importation d'un ensemble ajoutera ces catégories à la liste actuelle (les catégories existantes ne seront pas supprimées).
 
-The category match for each domain will be listed in the "Name" column in the result viewer.
+La catégorie correspondante pour chaque domaine sera répertoriée dans la colonne "Name" dans la visionneuse de résultats.
 \image html custom_web_categories_results.png
 
 
-Using the Module
+Utilisation du module
 ======
 
-Ingest Settings
+Paramètres d'intégration
 ------
-There are no run-time settings for this module.
+Il n'y a pas de paramètre à l'exécution pour ce module.
 
 
-Seeing Results
+Voir les résultats
 ------
-Results show up in the tree under "Extracted Content".
+Les résultats s'affichent dans l'arborescence sous "Extracted Content".
 
 \image html extracted_content.PNG
 
