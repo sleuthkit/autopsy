@@ -1,21 +1,21 @@
-/*! \page install_multiuserclient_page Install Autopsy Clients
+﻿/*! \page install_multiuserclient_page Installer les clients Autopsy
 
 
-\section multiuser_install_clients Overview
+\section multiuser_install_clients Aperçu
 
-Once the infrastructure is in place, you can configure Autopsy clients to use them.
+Une fois l'infrastructure en place, vous pouvez configurer les clients Autopsy pour les utiliser.
 <ol>
-<li>Install Autopsy on each client system. Use the normal installer and pick the defaults.
-<li>Test that the user has access to the shared storage by opening the shared storage folders using Windows Explorer. If a password prompt is given, then enter the password and store the credentials (see \ref multiuser_users_store).
-<li>Start Autopsy and open the multi-user settings panel from "Tools", "Options", "Multi-user". As shown in the screenshot below, you can then enter all of the address and authentication information for the network-based services. Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct.
+<li>Installez Autopsy sur chaque système client. Utilisez le programme d'installation normal et choisissez les valeurs par défaut.
+<li>Vérifiez que l'utilisateur a accès au stockage partagé en ouvrant les dossiers de stockage partagés à l'aide de l'Explorateur Windows. Si une invite de mot de passe s'affiche, entrez le mot de passe et stockez les informations d'identification (Voir \ref multiuser_users_store).
+<li>Démarrez Autopsy et ouvrez le panneau des paramètres multi-utilisateurs à partir de "Tools", "Options", "Multi-user". Comme le montre la capture d'écran ci-dessous, vous pouvez ensuite saisir toutes les informations d'adresse et d'authentification pour les services réseau. Notez que pour créer ou ouvrir des cas multi-utilisateurs, "Enable Multi-user cases"  doit être coché et les paramètres ci-dessous doivent être corrects.
 
 \image html solr_autopsy.png
 
-<li>For each setting, press the "Test Connection" button to ensure that Autopsy can communicate with each service. If any fail, then refer to the specific setup page for testing options. Also check that a firewall is not blocking the communications.
-<ul><li>NOTE: None of these tests are for permissions on the shared storage because Autopsy does not know about the shared storage. It can't test that until you make a case.</ul>
-<li>Make a test case (see \ref creating_multi_user_cases). You can add a single file in as a logical data source. The key concept is to look for errors.
+<li>Pour chaque réglage, cliquez sur le bouton "Test Connection" pour vous assurer qu'Autopsy peut communiquer avec chaque service. En cas d'échec, reportez-vous à la page de configuration spécifique pour les options de test. Vérifiez également qu'un pare-feu ne bloque pas les communications.
+<ul><li>REMARQUE: aucun de ces tests ne concerne les autorisations sur le stockage partagé car Autopsy ne connaît pas le stockage partagé. Il ne peut pas le tester tant que vous ne présentez pas de cas.</ul>
+<li>Créez un cas test (voir \ref creating_multi_user_cases). Vous pouvez ajouter un seul fichier en tant que source de données logique. Le concept clé est de rechercher les erreurs.
 <ul>
-<li>If you find errors, look for errors in the log file on the Autopsy client.
-<li>If you followed all of the previous steps in all of the previous pages, then a common error at this point is that Solr cannot access the shared storage and it is running as a Service account. When this happens, you'll see an error message about Solr not being able to create or access a "core". If this happens, review what user Solr should be running as (see the \ref multiuser_users_solr section) and change the shared storage configuration or ensure that credentials are stored.</ul>
+<li>Si vous trouvez des erreurs, recherchez les erreurs dans le fichier journal sur le client Autopsy.
+<li>Si vous avez suivi toutes les étapes précédentes dans toutes les pages précédentes, une erreur courante à ce stade est que Solr ne peut pas accéder au stockage partagé et qu'il s'exécute en tant que compte de Service. Lorsque cela se produit, vous verrez un message d'erreur indiquant que Solr ne peut pas créer ou accéder à un "noyau". Si cela se produit, vérifiez sous quel utilisateur Solr doit être exécuté (voir la section \ref multiuser_users_solr) et modifiez la configuration du stockage partagé ou assurez-vous que les informations d'identification sont stockées.</ul>
 </ol>
 */

@@ -1,87 +1,87 @@
-/*! \page install_multiuseruser_page Pick Your User Accounts
+﻿/*! \page install_multiuseruser_page Choisissez vos comptes utilisateurs
 
-\section multiuser_users Overview
+\section multiuser_users Aperçu
 
-Before you get into configuring any computers, you should have an understanding about what user accounts will be used.  User account permissions are one of the most common challenges people have when setting up a cluster. 
+Avant de vous lancer dans la configuration des ordinateurs, vous devez savoir quels comptes d’utilisateurs seront utilisés. Les autorisations de compte utilisateur sont l'un des défis les plus courants que les gens rencontrent lors de la configuration d'un cluster.
 
-There are two major decisions to make about users:
-- The user for Autopsy. 
-- The user for the Solr service.
+Il y a deux profils majeures à prendre en compte concernant les utilisateurs:
+- L'utilisateur pour Autopsy.
+- L'utilisateur du service Solr.
 
-These users are important because they will need access to the shared storage without needing to be prompted for a password.  Other services, such as PostgreSQL and ActiveMQ, can run as the default service account because they use only local storage. 
+Ces utilisateurs sont importants car ils auront besoin d'accéder au stockage partagé sans devoir être invité à entrer un mot de passe. D'autres services, tels que PostgreSQL et ActiveMQ, peuvent s'exécuter en tant que compte de service par défaut car ils n'utilisent que le stockage local.
 
-The choice you make here will depend on what type of shared storage platform you are using and what kind of Windows-based infrastructure you have. 
-
-
-\subsection multiuser_users_autopsy Autopsy User
-
-The user account that Autopsy runs as will need access to the shared storage. There are three general options:
-
-- <b>Domain Accounts</b>: If the cluster is on a Windows domain, then Autopsy can be run with a domain account. 
- - If your shared storage is a Windows file share, then users should be able to access it without needing a password. 
- - If your shared storage is another platform, then you'll likely need to force Windows to store the shared storage credentials (as described below).
-- <b>Unique Local Accounts</b>: Some clusters are not on a Windows domain and have unique accounts for each analyst / user. 
- - If your shared storage is a Windows file share, then users will not need to enter their password IF the same user name and password exists on the file share server. 
- - Otherwise, you'll need to force Windows to store the credentials. 
-- <b>Shared Local Account</b>: Lastly, some clusters use a single local account, such as one named "autopsy" for all users.  This is not recommended because Autopsy uses the login name to track who did certain actions, such as tagging files. 
- - The same password rules apply here as with the previous scenario.  Either have the same password on all systems or force Windows to store the passwords. 
+Le choix que vous faites ici dépendra du type de plate-forme de stockage partagé que vous utilisez et du type d'infrastructure Windows dont vous disposez.
 
 
-\subsection multiuser_users_solr Solr Service
+\subsection multiuser_users_autopsy Utilisateur d'Autopsy
 
-Solr will run as a Windows service and may need access to shared storage if it does not have enough local storage.  Solr performs best when it has fast access to storage, so keeping the indexes on local SSD drives is best. But, some clusters will need to store the indexes on the same shared storage that are used for images and other case outputs. 
+Le compte d'utilisateur sous lequel Autopsy s'exécute devra accéder au stockage partagé. Il existe trois options générales:
 
-NOTE: Autopsy 4.17.0 and prior required that indexes were stored on the shared storage drives.  Autopsy 4.18.0 and beyond (which now use Solr 8) can use either local or shared storage. 
+- <b>Comptes de domaine</b>: Si le cluster se trouve sur un domaine Windows, Autopsy peut être exécuté avec un compte de domaine.
+  - Si votre stockage partagé est un partage de fichiers Windows, les utilisateurs devraient pouvoir y accéder sans avoir besoin d'un mot de passe.
+  - Si votre stockage partagé est une autre plate-forme, vous devrez probablement forcer Windows à stocker les informations d'identification de stockage partagé (comme décrit ci-dessous).
+- <b>Comptes locaux uniques</b>: Certains clusters ne sont pas sur un domaine Windows et ont des comptes uniques pour chaque analyste/utilisateur.
+  - Si votre stockage partagé est un partage de fichiers Windows, les utilisateurs n'auront pas besoin de saisir leur mot de passe SI le même nom d'utilisateur et le même mot de passe existent sur le serveur de partage de fichiers.
+  - Sinon, vous devrez forcer Windows à stocker les informations d'identification.
+- <b>Compte local partagé</b>: Enfin, certains clusters utilisent un seul compte local, comme celui nommé "autopsy" pour tous les utilisateurs. Cela n'est pas recommandé car Autopsy utilise le nom de connexion pour savoir qui a effectué certaines actions, telles que le marquage de fichiers.
+  - Les mêmes règles de mot de passe s'appliquent ici que dans le scénario précédent. Soit avoir le même mot de passe sur tous les systèmes, soit forcer Windows à stocker les mots de passe.
 
-If you are using local storage for Solr, then you can run the Solr service as "LocalService".  
 
-If you are going to use network storage for Solr, then you have three options: 
-- <b>NetworkService</b>: If you are on a domain, you may be able to run Solr as the "NetworkService" account.  This account has access to the network, but the challenge can be granting access for this account to the shared storage.  
- - If your shared storage is a Windows file share, you'll need to grant access to the computer account running Solr as follows:
-<ol> <li> Right click on the shared storage folder choose "Properties" and select the "Security" tab.
- <li> Click the "Edit..." button and then click the "Add..." button.
- <li> Click on the "Object Types" button and confirm that the "Computers" object type has a check mark.
+\subsection multiuser_users_solr Service Solr
+
+Solr fonctionnera en tant que service Windows et peut avoir besoin d'accéder au stockage partagé s'il ne dispose pas de suffisamment de stockage local. Solr fonctionne mieux lorsqu'il dispose d'un accès rapide au stockage, il est donc préférable de conserver les index sur les disques SSD locaux. Cependant, certains clusters devront stocker les index sur le même stockage partagé que celui utilisé pour les images et autres sorties de cas.
+
+REMARQUE: Autopsy 4.17.0 (ainsi que les versions précédentes) exigeait que les index soient stockés sur les lecteurs de stockage partagés. A partir de la version 4.18.0 (qui utilise maintenant Solr 8) Autopsy peut utiliser le stockage local ou partagé.
+
+Si vous utilisez le stockage local pour Solr, vous pouvez exécuter le service Solr en tant que "LocalService". 
+
+Si vous envisagez d'utiliser le stockage réseau pour Solr, vous avez trois options: 
+- <b>NetworkService</b>: Si vous êtes sur un domaine, vous pourrez peut-être exécuter Solr en tant que compte "NetworkService". Ce compte a accès au réseau, mais le défi peut être d'accorder l'accès de ce compte au stockage partagé.
+  - Si votre stockage partagé est un partage de fichiers Windows, vous devrez accorder l'accès au compte de l'ordinateur exécutant Solr comme suit:
+<ol> <li> Faites un clic droit sur le dossier de stockage partagé, choisissez "Propriétés" et sélectionnez l'onglet "Sécurité".
+ <li> Cliquez sur le bouton "Modifier ..." puis sur le bouton "Ajouter ...".
+ <li> Cliquez sur le bouton "Types d'objets" et confirmez que le type d'objet "Ordinateurs" est coché.
  \image html objectTypesComputers.PNG
- <li> Enter the name of the computer and click the "Check Names" button to confirm that it is correct.
+ <li> Entrez le nom de l'ordinateur et cliquez sur le bouton "Vérifier les noms" pour confirmer qu'il est correct.
  \image html grantAccessToComputer.PNG
- <li> Ensure that the computer account has both read and write access to shared storage.
+ <li> Assurez-vous que le compte de l'ordinateur dispose à la fois d'un accès en lecture et en écriture au stockage partagé.
  \image html sharedStoragePermissions.PNG </ol>
- - For other shared storage, you may not be able to access the data from the NetworkService account.  
-- <b>Normal User</b>: If you are not on a domain or cannot grant access to the computer for shared storage, then run Solr as a normal user (local or domain).  
- - If you do this, refer to the scenarios as outlined above for picking an Autopsy user.  The same rules will apply with respect to passwords and saving credentials. 
- - The main downside of this is that the service needs to be updated when the account password changes and it may require letting others know about the password.
-- <b>LocalService</b>: Lastly, if you are using the same server for both Solr and shared storage, then it is possible to run Solr as the default "LocalService" because it doesn't need network access.  
+ - Pour un autre stockage partagé, vous ne pourrez peut-être pas accéder aux données du compte NetworkService.
+- <b>Utilisateur normal</b>: Si vous n'êtes pas sur un domaine ou ne pouvez pas accorder l'accès à l'ordinateur pour le stockage partagé, exécutez Solr en tant qu'utilisateur normal (local ou domaine).
+  - Si vous faites cela, reportez-vous aux scénarios décrits ci-dessus pour choisir un utilisateur Autopsy. Les mêmes règles s'appliqueront en ce qui concerne les mots de passe et l'enregistrement des informations d'identification.
+  - Le principal inconvénient est que le service doit être mis à jour lorsque le mot de passe du compte change et qu'il peut être nécessaire d'informer les autres clients sur le nouveau mot de passe.
+- <b>LocalService</b>: Enfin, si vous utilisez le même serveur pour Solr et le stockage partagé, il est possible d'exécuter Solr en tant que "LocalService" par défaut car il n'a pas besoin d'un accès réseau. 
 
 
 
 
-\section multiuser_users_store Storing Credentials
+\section multiuser_users_store Stockage des informations d'identification
 
-Based on your shared storage and your above choice for user accounts, you may need to force each Windows computer to store credentials for the shared storage. For example, if your shared storage is a Linux-based system. 
+En fonction de votre stockage partagé et de votre choix ci-dessus pour les comptes d'utilisateurs, vous devrez peut-être forcer chaque ordinateur Windows à stocker les informations d'identification pour le stockage partagé. Par exemple, si votre stockage partagé est un système basé sur Linux.
 
 
-To store the credentials on a given computer, we simply access the shared storage. Windows will prompt us for a password and we choose the option to save the credentials. We will repeat this on each computer for each user account and using both the hostname and IP address of the storage.  If two examiners will be using the same Autopsy client computer and they have their own accounts, you'll need to do this for both users. 
+Pour stocker les informations d'identification sur un ordinateur donné, nous accédons simplement au stockage partagé. Windows nous demandera un mot de passe et nous choisissons l'option pour enregistrer les informations d'identification. Nous allons répéter cela sur chaque ordinateur pour chaque compte utilisateur et en utilisant à la fois le nom d'hôte et l'adresse IP du stockage. Si deux analystes utilisent le même ordinateur client Autopsy et qu'ils ont leurs propres comptes, vous devrez le faire pour les deux utilisateurs.
 
-- Launch Windows Explorer and type the UNC path of the shared storage using the IP address, such as "\\10.10.152.211\Cases".  Press Enter. 
+- Lancez l'Explorateur Windows et saisissez le chemin UNC du stockage partagé à l'aide de l'adresse IP, telle que "\\10.10.152.211\Cases".  Appuyez sur Entrée. 
 <br><br>
 \image html urlInAddressbar.PNG
 <br><br>
 
-- If the folder opens up without prompting for a password, then you are OK.  If your credentials are needed, you will see a dialog similar to the following: 
+- Si le dossier s'ouvre sans vous demander de mot de passe, tout est OK. Si vos informations d'identification sont nécessaires, vous verrez une boîte de dialogue semblable à la suivante:
 
 <br><br>
 \image html credentialsWithDomain.PNG
 <br><br>
 
-- If your account is part of a Windows domain, add the domain in the top box before the "\". Follow the slash with your username. If you have no domain name, just use your username with no slashes. Add your password in the next box down and place a check mark in <i>"Remember my credentials"</i>, then click <i>"OK"</i>.
+- Si votre compte fait partie d'un domaine Windows, ajoutez le domaine dans la case du haut avant le "\". Entrez à la suite votre nom d'utilisateur. Si vous n'avez pas de nom de domaine, utilisez simplement votre nom d'utilisateur sans barres obliques. Ajoutez votre mot de passe dans la case suivante et cochez <i>"Mémoriser mes identifiants"</i>, puis cliquez sur <i>"OK"</i>.
 
 
-Next, repeat with the hostname of the shared storage.  For example "\\autopsy_storage\Cases".  Again enter your credentials and choose "Remember my credentials". 
+Ensuite, répétez avec le nom d'hôte du stockage partagé. Par example "\\autopsy_storage\Cases".  Saisissez à nouveau vos identifiants et choisissez "Mémoriser mes identifiants".
 
 
-Do these steps for <b>each machine</b> that will be accessing the shared drive.  
+Suivez ces étapes pour <b>chaque machine</b> qui accédera au disque partagé.
 
 
-Also note that you will need to repeat this process when the password for the shared storage changes. 
+Notez également que vous devrez répéter ce processus lorsque le mot de passe du stockage partagé change.
 
 */

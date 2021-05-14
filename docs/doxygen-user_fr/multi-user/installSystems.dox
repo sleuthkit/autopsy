@@ -1,46 +1,46 @@
-/*! \page install_multiuser_systems_page Pick Your Hardware / VM Configuration
+﻿/*! \page install_multiuser_systems_page Choisissez votre configuration matérielle / VM
 
-\section multiuser_system Overview
+\section multiuser_system Aperçu
 
-The first step in setting up a multi-user cluster is picking how many computers or VMs you'll use to run the various services. 
+La première étape de la configuration d'un cluster multi-utilisateur consiste à choisir le nombre d'ordinateurs ou de machines virtuelles que vous utiliserez pour exécuter les différents services.
 
-From a service perspective, you'll need to run:
-- PostgeSQL database server
-- Apache Solr text indexing server
-- ActiveMQ messaging server
-- Network storage
+Du point de vue des services, vous devrez exécuter:
+- Serveur de base de données PostgeSQL
+- Serveur d'indexation de texte Apache Solr
+- Serveur de messagerie ActiveMQ
+- Stockage en réseau
 
-You can run each of these on their own dedicated VM, but that is not necessary.  
+Vous pouvez exécuter chacun d'entre eux sur leur propre machine virtuelle dédiée, mais ce n'est pas nécessaire.
 
-Apache Solr uses a lot of memory, so we recommend keeping it by itself. The exception is if you are using Windows File Sharing for shared storage.  You can get better Solr performance if it is writing to local storage instead of over the network.  So, you can consider using the same computer for both Solr and shared storage. 
+Apache Solr utilise beaucoup de mémoire, nous vous recommandons donc de la conserver seule, sauf si vous utilisez le partage de fichiers Windows pour le stockage partagé. Vous pouvez obtenir de meilleures performances avec Solr s'il écrit sur le stockage local plutôt que sur le réseau. Vous pouvez donc envisager d'utiliser le même ordinateur pour Solr et le stockage partagé.
 
-Also note that because all computers need to access the shared storage at the same path, you cannot mix operating systems. 
-
-
-We recommend:
-
-- Server 1: PostgreSQL and ActiveMQ 
- - Both of these are low overhead services. 
-- Server 2: Apache Solr and Shared Storage (if you are using Windows File Sharing).
+Notez également que, étant donné que tous les ordinateurs doivent accéder au stockage partagé par le même chemin, vous ne pouvez pas mélanger les systèmes d'exploitation.
 
 
-\subsection multiuser_system_hw Suggested Hardware
+Nous recommandons:
 
-TODO
+- Serveur 1: PostgreSQL et ActiveMQ
+  - Ces deux services sont relativement faibles consommateurs de ressources.
+- Serveur 2: Apache Solr et Stockage partagé (si vous utilisez le partage de fichiers Windows).
 
-- PostgreSQL/ActiveMQ (server 1):
- - RAM: 
- - Local Storage: Enough for databases
-- Solr (server 2):
- - RAM: 
- - Local Storage: Minimal 
 
-\subsection multiuser_system_back Backups
+\subsection multiuser_system_hw Matériel suggéré
 
-You will have lots of important data on the system.  Ensure that the following are regularly backed up:
-- Shared storage (which contains case data and text indexes)
-- Databases on the PostgreSQL server  (see \ref install_post_backup)
-- Zookeeper data on the Solr server (see \ref install_solr_backup)
+A COMPLETER
+
+- PostgreSQL/ActiveMQ (serveur 1):
+  - RAM:
+  - Stockage local: assez pour les bases de données
+- Solr (serveur 2):
+  - RAM:
+  - Stockage local: minimal
+
+\subsection multiuser_system_back Sauvegardes
+
+Vous aurez beaucoup de données importantes sur le système. Assurez-vous que les éléments suivants soient régulièrement sauvegardés:
+- Stockage partagé (qui contient les données des cas et les index de texte)
+- Bases de données sur le serveur PostgreSQL  (voir \ref install_post_backup)
+- Données Zookeeper sur le serveur Solr (voir \ref install_solr_backup)
 
 
 */
