@@ -1,67 +1,67 @@
-/*! \page tree_viewer_page Tree Viewer
+﻿/*! \page tree_viewer_page Arborescence
 
 [TOC]
 
 
-The tree on the left-hand side of the main window is where you can browse the files in the data sources in the case and find saved results from automated analyis (ingest). The tree has five main areas:
-- <b>Persons / Hosts / Data Sources:</b> This shows the directory tree hierarchy of the data sources. You can navigate to a specific file or directory here. Each data source added to the case is represented as a distinct sub tree. If you add a data source multiple times, it shows up multiple times.
-- <b>Views:</b> Specific types of files from the data sources are shown here, aggregated by type or other properties. Files here can come from more than one data source.
-- <b>Results:</b> This is where you can see the results from both the automated analysis (ingest) running in the background and your search results.
-- <b>Tags:</b> This is where files and results that have been \ref tagging_page "tagged" are shown.
-- <b>Reports:</b> Reports that you have generated, or that ingest modules have created, show up here.
+L'arborescence sur le côté gauche de la fenêtre principale est l'endroit où vous pouvez parcourir les fichiers dans les sources de données du cas et trouver les résultats enregistrés à partir des analyses automatisées (Ingest). L'arborescence a cinq zones principales:
+- <b>Persons / Hosts / Data Sources:</b> Cela montre la hiérarchie arborescente de répertoires des sources de données. Vous pouvez accéder à un fichier ou à un répertoire spécifique ici. Chaque source de données ajoutée au cas est représentée sous la forme d'une sous-arborescence distincte. Si vous ajoutez une source de données plusieurs fois, elle apparaît plusieurs fois.
+- <b>Views:</b> Des types spécifiques de fichiers provenant des sources de données sont affichés ici, agrégés par type ou par d'autres propriétés. Les fichiers ici peuvent provenir de plusieurs sources de données.
+- <b>Results:</b> C'est ici que vous pouvez voir les résultats des analyses automatisées (Ingest) exécutée en arrière-plan ainsi que vos résultats de recherche.
+- <b>Tags:</b> C'est là que les fichiers et les résultats qui ont été \ref tagging_page "marqués" sont affichés.
+- <b>Reports:</b> Les rapports que vous avez générés ou que les modules d'acquisition ont créés s'affichent ici.
 
-You can also use the "Group by Person/Host" option available through the \ref view_options_page to move the Views, Results, and Tags tree nodes under their corresponding person and host. This can be helpful on very large cases to reduce the size of each sub tree.
+Vous pouvez également utiliser l'option "Group by Person/Host" disponible via la page \ref view_options_page pour déplacer les nœuds d'arborescence Views, Results, et Tags  sous les catégories "Persons" et "Hosts" correspondantes. Cela peut être utile dans les cas très volumineux pour réduire la taille de chaque sous-arborescence.
 
-\section ui_tree_ds Persons / Hosts / Data Sources
-By default, the top node of the tree viewer will contain all data sources in the case. The Data Sources node is organized by host and then the data source itself. Right clicking on the various nodes in the Data Sources area of the tree will allow you to get more options for each data source and its contents. 
+\section ui_tree_ds Persons / Hosts / Data Sources (Personnes / Hôtes / Sources de données)
+Par défaut, le nœud supérieur de l'arborescence contiendra toutes les sources de données du cas. Le nœud "Data Sources" est organisé par hôte, puis par source de données elle-même. Un clic droit sur les différents nœuds dans la zone "Data Sources" de l'arborescence vous permettra d'obtenir plus d'options pour chaque source de données et son contenu. 
 
 \image html ui_tree_top_ds.png
 
-If the "Group by Person/Host" option has been selected in the \ref view_options_group "View Options", the hosts and data sources will be organized under any persons that have been associated with the hosts. Additionally, the rest of the nodes (Views, Results, etc) will be found under each data source.
+Si l'option "Group by Person/Host" a été sélectionnée dans le panneau \ref view_options_group "Options", les hôtes et les sources de données seront organisés par rapport à toutes les personnes ayant été associées aux hôtes. De plus, le reste des nœuds (Views, Results, etc...) se trouve sous chaque source de données.
 
 \image html ui_tree_top_persons.png
 
-\subsection ui_tree_persons Persons
+\subsection ui_tree_persons Persons (Personnes)
 
-If the "Group by Person/Host" option in the \ref view_options_group "View Options" has been set, the top level nodes will display persons. Persons are manually created and can be associated with one or more hosts. To add or remove a person from a host, right-click on the host and select the appropriate option.
+Si l'option "Group by Person/Host" a été sélectionnée dans le panneau \ref view_options_group "Options", les nœuds de niveau supérieur afficheront les personnes. Les personnes sont créées manuellement et peuvent être associées à un ou plusieurs hôtes. Pour ajouter ou supprimer une personne d'un hôte, cliquez avec le bouton droit sur l'hôte et sélectionnez l'option appropriée.
 
 \image html ui_person_select.png
 
-You can edit and delete persons by right-clicking on the node.
+Vous pouvez modifier et supprimer des personnes en faisant un clic droit sur le nœud.
 
-\subsection ui_tree_hosts Hosts
+\subsection ui_tree_hosts Hosts (Hôtes)
 
-All data sources are organized under host nodes. See the \ref host_page "hosts page" for more information on using hosts.
+Toutes les sources de données sont organisées sous des nœuds "Hosts" (Hôtes). Voir la page \ref host_page "Hôtes" pour plus d'informations sur l'utilisation des hôtes.
 
-\subsection ui_tree_ds_node Data Sources
-Under the hosts are the nodes for each data source. 
+\subsection ui_tree_ds_node Data Sources (Sources de données)
+Sous les hôtes se trouvent les nœuds de chaque source de données. 
 
-Unallocated space is the chunks of a file system that are currently not being used for anything. Unallocated space can hold deleted files and other interesting artifacts. In an image data source, unallocated space is stored in blocks with distinct locations in the file system. However, because of the way carving tools work, it is better to feed these tools a single, large unallocated space file. Autopsy provides access to both methods of looking at unallocated space.
-\li <b>Individual blocks in a volume</b>  For each volume, there is a "virtual" folder named "$Unalloc". This folder contains all the individual unallocated blocks in contiguous runs (unallocated space files) as the image is storing them. You can right click and extract any unallocated space file the same way you can extract any other type of file in the Data Sources area.
-\li <b>Single files</b>  Right click on a volume and select "Extract Unallocated Space as Single File" to concatenate all of the unallocated space files in the volume into a single, continuous file. (If desired, you can right click on an image, and select "Extract Unallocated Space to Single Files" which will do the same thing, but once for each volume in the image).
+L'espace non alloué (Unallocated space) représente les parties d'un système de fichiers qui ne sont actuellement utilisées pour rien. L'espace non alloué peut contenir des fichiers supprimés et d'autres artefacts intéressants. Dans une source de données d'image disque, l'espace non alloué est stocké dans des blocs situés à des emplacements distincts dans le système de fichiers. Cependant, en raison du fonctionnement des outils de carving, il est préférable d'alimenter ces outils avec un seul et grand fichier d'espace non alloué. Autopsy permet d'accéder aux deux méthodes d'examen de l'espace non alloué.
+\li <b>Blocs individuels dans un volume</b> - Pour chaque volume, il y a un dossier "virtuel" nommé "$Unalloc". Ce dossier contient tous les blocs non alloués individuels situés de façon contiguës (fichiers d'espace non alloué) à la manière dont l'image les stocke. Vous pouvez faire un clic droit et extraire tout fichier d'espace non alloué de la même manière que vous pouvez extraire tout autre type de fichier dans la zone "Data Sources".
+\li <b>Fichiers uniques</b> - Faites un clic droit sur un volume et sélectionnez "Extract Unallocated Space as Single File" pour concaténer tous les fichiers d'espace non alloués du volume en un seul fichier continu. (Si vous le souhaitez, vous pouvez faire un clic droit sur une image et sélectionner "Extract Unallocated Space to Single Files", ce qui fera la même chose mais une fois pour chaque volume de l'image).
 
-An example of the single file extraction option is shown below.
+Un exemple de l'option d'extraction de fichier unique est illustré ci-dessous.
 \image html extracting-unallocated-space.PNG
 
-\section ui_tree_views Views
+\section ui_tree_views Views (Vues)
 
-Views filter all the files in the case by some property of the file. 
-- <b>File Types</b>  Sorts files by file extension or by MIME type, and shows them in the appropriate group. For example, files with .mp3 and .wav extensions end up in the "Audio" group. 
-- <b>Deleted Files</b>  Displays files that have been deleted, but the names have been recovered.
-- <b>File Size</b>  Sorts files based on size.
+La zone "Views" filtre tous les fichiers du cas en fonction de certaines propriétés du fichier. 
+- <b>File Types</b> - Trie les fichiers par extension ou par type MIME et les affiche dans le groupe approprié. Par exemple, les fichiers avec les extensions .mp3 et .wav se retrouvent dans le groupe "Audio".
+- <b>Deleted Files</b> - Affiche les fichiers qui ont été supprimés, mais dont les noms ont été récupérés.
+- <b>File Size</b> - Trie les fichiers en fonction de leur taille.
 
 
-\section ui_tree_results Results
-- <b>Extracted Content:</b> Many ingest modules will place results here; EXIF metadata, GPS locations, or Web history for example.
-- <b>Keyword Hits:</b> Keyword search hits show up here.
-- <b>Hashset Hits:</b> Hashset hits show up here. 
-- <b>E-Mail Messages:</b> Email messages show up here.
-- <b>Interesting Items:</b> Things deemed interesting show up here.
-- <b>Accounts:</b> Credit card accounts show up here.
-- <b>Tags:</b> Any item you tag shows up here so you can find it again easily.
+\section ui_tree_results Results (Résultats)
+- <b>Extracted Content:</b> De nombreux modules d'acquisition placeront les résultats ici: métadonnées EXIF, emplacements GPS ou historiques Web par exemple.
+- <b>Keyword Hits:</b> Les résultats de la recherche par mot-clé s'affichent ici.
+- <b>Hashset Hits:</b> Les résultats de la recherche de hachage s'affichent ici. 
+- <b>E-Mail Messages:</b> Les e-mails s'affichent ici.
+- <b>Interesting Items:</b> Les éléments jugés intéressants apparaissent ici.
+- <b>Accounts:</b> Les comptes de carte de crédit s'affichent ici.
+- <b>Tags:</b> Tout élément que vous avez marqué apparaît ici pour que vous puissiez le retrouver facilement.
 
-\section ui_tree_reports Reports
+\section ui_tree_reports Reports (Rapports)
 
-Reports can be added by \subpage ingest_page or created using the \subpage reporting_page tool.
+Les rapports peuvent être ajoutés par les \subpage ingest_page ou créés en utilisant l'outil \subpage reporting_page.
 
 */

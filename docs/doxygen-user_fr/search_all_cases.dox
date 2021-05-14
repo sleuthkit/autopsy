@@ -1,22 +1,22 @@
-/*! \page search_all_cases_page Search All Cases
+﻿/*! \page search_all_cases_page Rechercher dans tous les cas
 
 [TOC]
 
 
-\section search_all_cases_overview Overview
+\section search_all_cases_overview Aperçu
 
-The Search All Cases feature allows you to search the \ref central_repo_page for arbitrary properties. You must have the Central Repository enabled to run 
-this search, and you must have a case open (though the open case has no effect on the search results).
+La fonction de recherche dans tous les cas vous permet de rechercher dans le \ref central_repo_page avec des propriétés arbitraires. Vous devez avoir activé le référentiel central pour exécuter
+cette recherche, et vous devez avoir un cas ouvert (bien que le cas ouvert n'ait aucun effet sur les résultats de la recherche).
 
 \section search_all_cases_usage Usage
 
-Go to Tools->Search Other Cases to open the search dialog. Here you can select the property type and value to search for. An example of what the value should look
-like will be displayed in light grey in the Correlation Property Value box. If the entered value is invalid for that property type a red error message will be displayed.
+Allez sur Tools->Search All Cases pour ouvrir la boîte de dialogue de recherche. Ici, vous pouvez sélectionner le type de propriété et la valeur à rechercher. Un exemple de ce à quoi la valeur devrait ressembler
+sera affiché en gris clair dans la zone "Correlation Property Value". Si la valeur saisie n'est pas valide pour ce type de propriété, un message d'erreur rouge s'affiche.
 
 \image html search_all_cases_dialog.png
 
-Once you hit the Search button, any results will be displayed in the Result Viewer. The tab title will display what was 
-searched for ("Email Addresses" and "sample@gmail.com" in the example).
+Une fois que vous avez cliqué sur le bouton Search, tous les résultats seront affichés dans la visionneuse de résultats. Le titre de l'onglet affichera ce qui était
+recherché ("Email Addresses" et "sample@gmail.com" dans l'exemple).
 
 \image html search_all_cases_results.png
 
