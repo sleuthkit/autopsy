@@ -122,7 +122,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         exportToCSVMenuItem.addActionListener(actList);
         showCaseDetailsMenuItem.addActionListener(actList);
         showCommonalityMenuItem.addActionListener(actList);
-
+        filesTable.setComponentPopupMenu(rightClickPopupMenu);
         // Configure column sorting.
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(filesTable.getModel());
         filesTable.setRowSorter(sorter);

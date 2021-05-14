@@ -97,12 +97,13 @@ class OtherOccurrenceOneTypeWorker extends SwingWorker<OneTypeData, Void> {
                 // - the data source device ID is different
                 // - the file path is different
                 if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
-                        || (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
-                        || (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                        || (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
-                    correlationAttributesToAdd.add(artifactInstance);
+                        && (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
+                        && (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
+                        && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
+                    
                     continue;
                 }
+                correlationAttributesToAdd.add(artifactInstance);
                 OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, aType, value);
                 UniquePathKey uniquePathKey = new UniquePathKey(newNode);
                 nodeDataMap.put(uniquePathKey, newNode);
