@@ -100,7 +100,7 @@ class OtherOccurrenceOneTypeWorker extends SwingWorker<OneTypeData, Void> {
                         && (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
                         && (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
                         && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
-                    
+
                     continue;
                 }
                 correlationAttributesToAdd.add(artifactInstance);

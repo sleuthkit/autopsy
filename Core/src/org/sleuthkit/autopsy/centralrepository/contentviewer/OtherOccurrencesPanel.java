@@ -174,7 +174,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      */
     private void showCommonalityDetails() {
         if (correlationAttributes.isEmpty()) {
-            JOptionPane.showConfirmDialog(showCommonalityMenuItem,
+            JOptionPane.showConfirmDialog(OtherOccurrencesPanel.this,
                     Bundle.OtherOccurrencesPanel_correlatedArtifacts_isEmpty(),
                     Bundle.OtherOccurrencesPanel_correlatedArtifacts_title(),
                     DEFAULT_OPTION, PLAIN_MESSAGE);
@@ -196,14 +196,14 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     }
                 }
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                JOptionPane.showConfirmDialog(showCommonalityMenuItem,
+                JOptionPane.showConfirmDialog(OtherOccurrencesPanel.this,
                         msg.toString(),
                         Bundle.OtherOccurrencesPanel_correlatedArtifacts_title(),
                         DEFAULT_OPTION, PLAIN_MESSAGE);
             } catch (CentralRepoException ex) {
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 logger.log(Level.SEVERE, "Error getting commonality details.", ex);
-                JOptionPane.showConfirmDialog(showCommonalityMenuItem,
+                JOptionPane.showConfirmDialog(OtherOccurrencesPanel.this,
                         Bundle.OtherOccurrencesPanel_correlatedArtifacts_failed(),
                         Bundle.OtherOccurrencesPanel_correlatedArtifacts_title(),
                         DEFAULT_OPTION, ERROR_MESSAGE);
@@ -245,7 +245,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error loading case details", ex);
         } finally {
-            JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
+            JOptionPane.showConfirmDialog(OtherOccurrencesPanel.this,
                     details,
                     caseDisplayName,
                     DEFAULT_OPTION, PLAIN_MESSAGE);
@@ -392,7 +392,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      */
     private void updateOnCaseSelection() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try{
+        try {
             int[] selectedCaseIndexes = casesTable.getSelectedRows();
             dataSourcesTableModel.clearTable();
             filesTableModel.clearTable();
@@ -446,7 +446,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      */
     private void updateOnDataSourceSelection() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try{
+        try {
             int[] selectedDataSources = dataSourcesTable.getSelectedRows();
             filesTableModel.clearTable();
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
@@ -477,7 +477,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 filesTable.setRowSelectionInterval(0, 0);
             }
         } finally {
-           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)); 
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
     }
 
@@ -487,7 +487,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      */
     private void updateOnFileSelection() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try{
+        try {
             if (filesTable.getSelectedRowCount() == 1) {
                 //if there is one file selected update the deatils to show the data for that file
                 occurrencePanel = new OccurrencePanel(filesTableModel.getListOfNodesForFile(filesTable.convertRowIndexToModel(filesTable.getSelectedRow())));

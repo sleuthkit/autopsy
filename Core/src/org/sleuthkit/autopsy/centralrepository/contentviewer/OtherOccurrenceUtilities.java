@@ -380,11 +380,12 @@ class OtherOccurrenceUtilities {
     /**
      * Create a cvs file of occurrences for the given parameters.
      *
-     * @param destFile Output file for the csv data.
-     * @param abstractFile Source file. 
-     * @param correlationAttList List of correclationAttributeInstances, should not be null.
-     * @param dataSourceName Name of the data source.
-     * @param deviceId Device id.
+     * @param destFile           Output file for the csv data.
+     * @param abstractFile       Source file.
+     * @param correlationAttList List of correclationAttributeInstances, should
+     *                           not be null.
+     * @param dataSourceName     Name of the data source.
+     * @param deviceId           Device id.
      *
      * @throws IOException
      */
