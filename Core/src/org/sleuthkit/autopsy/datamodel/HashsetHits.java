@@ -179,7 +179,6 @@ public class HashsetHits implements AutopsyVisitableItem {
                     TSK_HASHSET_HIT);
 
             super.setName(HASHSET_HITS);
-            super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
         }
 
