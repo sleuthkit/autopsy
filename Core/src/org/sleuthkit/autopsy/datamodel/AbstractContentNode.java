@@ -340,15 +340,16 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      *
      * @return Score property for the underlying content of the node.
      */
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-        Score score = null;
+    protected Pair<Score, String> getScorePropertyAndDescription(List<Tag> tags) {
+        Score score = Score.SCORE_UNKNOWN;
         try {
             score = this.content.getAggregateScore();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to get aggregate score for content with id: " + this.content.getId(), ex);
         }
         
-        
+        score.getSignificance().getDisplayName();
+        return Pair.of(score, );
     }
 
     /**
