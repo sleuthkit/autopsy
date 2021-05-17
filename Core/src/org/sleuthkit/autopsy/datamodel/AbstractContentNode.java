@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -57,7 +58,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     /**
      * Underlying Sleuth Kit Content object
      */
-    T content;
+    protected final T content;
     private static final Logger logger = Logger.getLogger(AbstractContentNode.class.getName());
 
     /**
@@ -339,7 +340,16 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      *
      * @return Score property for the underlying content of the node.
      */
-    abstract protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags);
+    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
+        Score score = null;
+        try {
+            score = this.content.getAggregateScore();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to get aggregate score for content with id: " + this.content.getId(), ex);
+        }
+        
+        
+    }
 
     /**
      * Returns comment property for the node.
