@@ -27,6 +27,7 @@ import javax.swing.JPanel;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -92,9 +93,9 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
         // - The central repo is enabled and the node has correlatable content
         //   (either through the MD5 hash of the associated file or through a BlackboardArtifact)
         // - The central repo is disabled and the backing file has a valid MD5 hash
-        AbstractFile file = OtherOccurrenceUtilities.getAbstractFileFromNode(node);
+        AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
         if (CentralRepository.isEnabled()) {
-            return !OtherOccurrenceUtilities.getCorrelationAttributesFromNode(node, file).isEmpty();
+            return !OtherOccurrences.getCorrelationAttributesFromNode(node, file).isEmpty();
         } else {
             return file != null
                     && file.getSize() > 0

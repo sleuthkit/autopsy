@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.centralrepository.contentviewer;
+package org.sleuthkit.autopsy.centralrepository.application;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -60,11 +60,13 @@ import org.sleuthkit.datamodel.TskData;
  * Contains most of the methods for gathering data from the DB and CR for the
  * OtherOccurrencesPanel.
  */
-class OtherOccurrenceUtilities {
+public final class OtherOccurrences {
 
-    private static final Logger logger = Logger.getLogger(OtherOccurrenceUtilities.class.getName());
+    private static final Logger logger = Logger.getLogger(OtherOccurrences.class.getName());
+    
+    private static final String UUID_PLACEHOLDER_STRING = "NoCorrelationAttributeInstance";
 
-    private OtherOccurrenceUtilities() {
+    private OtherOccurrences() {
     }
 
     /**
@@ -75,7 +77,7 @@ class OtherOccurrenceUtilities {
      *
      * @return A list of attributes that can be used for correlation
      */
-    static Collection<CorrelationAttributeInstance> getCorrelationAttributesFromNode(Node node, AbstractFile file) {
+    public static Collection<CorrelationAttributeInstance> getCorrelationAttributesFromNode(Node node, AbstractFile file) {
         Collection<CorrelationAttributeInstance> ret = new ArrayList<>();
 
         // correlate on blackboard artifact attributes if they exist and supported
@@ -144,7 +146,7 @@ class OtherOccurrenceUtilities {
      *
      * @return The associated BlackboardArtifact, or null
      */
-    static BlackboardArtifact getBlackboardArtifactFromNode(Node node) {
+    public static BlackboardArtifact getBlackboardArtifactFromNode(Node node) {
         BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
         BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class);
 
@@ -165,7 +167,7 @@ class OtherOccurrenceUtilities {
      *
      * @return The associated AbstractFile, or null
      */
-    static AbstractFile getAbstractFileFromNode(Node node) {
+    public static AbstractFile getAbstractFileFromNode(Node node) {
         BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
         ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class);
         BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class);
@@ -210,12 +212,12 @@ class OtherOccurrenceUtilities {
      *
      * @return A collection of correlated artifact instances
      */
-    static Map<UniquePathKey, OtherOccurrenceNodeInstanceData> getCorrelatedInstances(AbstractFile file, String deviceId, String dataSourceName, CorrelationAttributeInstance corAttr) {
+    public static Map<UniquePathKey, NodeData> getCorrelatedInstances(AbstractFile file, String deviceId, String dataSourceName, CorrelationAttributeInstance corAttr) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCaseThrows();
             String caseUUID = openCase.getName();
-            HashMap<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap = new HashMap<>();
+            HashMap<UniquePathKey, NodeData> nodeDataMap = new HashMap<>();
 
             if (CentralRepository.isEnabled()) {
                 List<CorrelationAttributeInstance> instances = CentralRepository.getInstance().getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue());
@@ -234,7 +236,7 @@ class OtherOccurrenceUtilities {
                             && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
                         continue;
                     }
-                    OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
+                    NodeData newNode = new NodeData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
                     UniquePathKey uniquePathKey = new UniquePathKey(newNode);
                     nodeDataMap.put(uniquePathKey, newNode);
                 }
@@ -277,7 +279,7 @@ class OtherOccurrenceUtilities {
      * @throws TskCoreException
      * @throws CentralRepoException
      */
-    static List<AbstractFile> getCaseDbMatches(CorrelationAttributeInstance corAttr, Case openCase, AbstractFile file) throws NoCurrentCaseException, TskCoreException, CentralRepoException {
+    public static List<AbstractFile> getCaseDbMatches(CorrelationAttributeInstance corAttr, Case openCase, AbstractFile file) throws NoCurrentCaseException, TskCoreException, CentralRepoException {
         List<AbstractFile> caseDbArtifactInstances = new ArrayList<>();
         if (file != null) {
             String md5 = corAttr.getCorrelationValue();
@@ -305,9 +307,9 @@ class OtherOccurrenceUtilities {
      * @throws TskCoreException
      * @throws CentralRepoException
      */
-    static void addOrUpdateNodeData(final Case autopsyCase, Map<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap, AbstractFile newFile) throws TskCoreException, CentralRepoException {
+    public static void addOrUpdateNodeData(final Case autopsyCase, Map<UniquePathKey, NodeData> nodeDataMap, AbstractFile newFile) throws TskCoreException, CentralRepoException {
 
-        OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(newFile, autopsyCase);
+        NodeData newNode = new NodeData(newFile, autopsyCase);
 
         // If the caseDB object has a notable tag associated with it, update
         // the known status to BAD
@@ -330,7 +332,7 @@ class OtherOccurrenceUtilities {
         // Otherwise this is a new node so add the new node to the map.
         if (nodeDataMap.containsKey(uniquePathKey)) {
             if (newNode.getKnown() == TskData.FileKnown.BAD) {
-                OtherOccurrenceNodeInstanceData prevInstance = nodeDataMap.get(uniquePathKey);
+                NodeData prevInstance = nodeDataMap.get(uniquePathKey);
                 prevInstance.updateKnown(newNode.getKnown());
             }
         } else {
@@ -342,17 +344,16 @@ class OtherOccurrenceUtilities {
      * Create a unique string to be used as a key for deduping data sources as
      * best as possible
      */
-    static String makeDataSourceString(String caseUUID, String deviceId, String dataSourceName) {
+    public static String makeDataSourceString(String caseUUID, String deviceId, String dataSourceName) {
         return caseUUID + deviceId + dataSourceName;
     }
-
-    @NbBundle.Messages({"OtherOccurrencesPanel.earliestCaseNotAvailable= Not Enabled."})
+    
     /**
      * Gets the list of Eam Cases and determines the earliest case creation
      * date. Sets the label to display the earliest date string to the user.
      */
-    static String getEarliestCaseDate() throws CentralRepoException {
-        String dateStringDisplay = Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable();
+    public static String getEarliestCaseDate() throws CentralRepoException {
+        String dateStringDisplay = "";
 
         if (CentralRepository.isEnabled()) {
             LocalDateTime earliestDate = LocalDateTime.now(DateTimeZone.UTC);
@@ -376,6 +377,17 @@ class OtherOccurrenceUtilities {
 
         return dateStringDisplay;
     }
+    
+       @NbBundle.Messages({
+        "OtherOccurrences.csvHeader.case=Case",
+        "OtherOccurrences.csvHeader.device=Device",
+        "OtherOccurrences.csvHeader.dataSource=Data Source",
+        "OtherOccurrences.csvHeader.attribute=Matched Attribute",
+        "OtherOccurrences.csvHeader.value=Attribute Value",
+        "OtherOccurrences.csvHeader.known=Known",
+        "OtherOccurrences.csvHeader.path=Path",
+        "OtherOccurrences.csvHeader.comment=Comment"
+    })
 
     /**
      * Create a cvs file of occurrences for the given parameters.
@@ -389,28 +401,38 @@ class OtherOccurrenceUtilities {
      *
      * @throws IOException
      */
-    static void writeOtherOccurrencesToFileAsCSV(File destFile, AbstractFile abstractFile, Collection<CorrelationAttributeInstance> correlationAttList, String dataSourceName, String deviceId) throws IOException {
+    public static void writeOtherOccurrencesToFileAsCSV(File destFile, AbstractFile abstractFile, Collection<CorrelationAttributeInstance> correlationAttList, String dataSourceName, String deviceId) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(destFile.toPath())) {
             //write headers 
             StringBuilder headers = new StringBuilder("\"");
-            headers.append(Bundle.OtherOccurrencesPanel_csvHeader_case())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_dataSource())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_attribute())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_value())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_known())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_path())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.OtherOccurrencesPanel_csvHeader_comment())
+            headers.append(Bundle.OtherOccurrences_csvHeader_case())
+                    .append(NodeData.getCsvItemSeparator()).append(Bundle.OtherOccurrences_csvHeader_dataSource())
+                    .append(NodeData.getCsvItemSeparator()).append(Bundle.OtherOccurrences_csvHeader_attribute())
+                    .append(NodeData.getCsvItemSeparator()).append(Bundle.OtherOccurrences_csvHeader_value())
+                    .append(NodeData.getCsvItemSeparator()).append(Bundle.OtherOccurrences_csvHeader_known())
+                    .append(NodeData.getCsvItemSeparator()).append(Bundle.OtherOccurrences_csvHeader_path())
+                    .append(NodeData.getCsvItemSeparator()).append(Bundle.OtherOccurrences_csvHeader_comment())
                     .append('"').append(System.getProperty("line.separator"));
             writer.write(headers.toString());
             //write content
             for (CorrelationAttributeInstance corAttr : correlationAttList) {
-                Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
+                Map<UniquePathKey, NodeData> correlatedNodeDataMap = new HashMap<>(0);
                 // get correlation and reference set instances from DB
                 correlatedNodeDataMap.putAll(getCorrelatedInstances(abstractFile, deviceId, dataSourceName, corAttr));
-                for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
+                for (NodeData nodeData : correlatedNodeDataMap.values()) {
                     writer.write(nodeData.toCsvString());
                 }
             }
         }
+    }
+
+    /**
+     * Get a placeholder string to use in place of case uuid when it isn't
+     * available
+     *
+     * @return UUID_PLACEHOLDER_STRING
+     */
+    public static String getPlaceholderUUID() {
+        return UUID_PLACEHOLDER_STRING;
     }
 }

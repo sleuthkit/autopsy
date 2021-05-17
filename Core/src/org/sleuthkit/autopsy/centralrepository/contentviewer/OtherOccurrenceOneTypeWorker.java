@@ -30,6 +30,9 @@ import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.application.NodeData;
+import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
+import org.sleuthkit.autopsy.centralrepository.application.UniquePathKey;
 import org.sleuthkit.autopsy.centralrepository.contentviewer.OtherOccurrenceOneTypeWorker.OneTypeData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -77,13 +80,13 @@ class OtherOccurrenceOneTypeWorker extends SwingWorker<OneTypeData, Void> {
         int totalCount = 0;
         Set<String> dataSources = new HashSet<>();
         Collection<CorrelationAttributeInstance> correlationAttributesToAdd = new ArrayList<>();
-        String earliestDate = OtherOccurrenceUtilities.getEarliestCaseDate();
+        String earliestDate = OtherOccurrences.getEarliestCaseDate();
         OneTypeData results = null;
 
         if (CentralRepository.isEnabled()) {
             List<CorrelationAttributeInstance> instances;
             instances = CentralRepository.getInstance().getArtifactInstancesByTypeValue(aType, value);
-            HashMap<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap = new HashMap<>();
+            HashMap<UniquePathKey, NodeData> nodeDataMap = new HashMap<>();
             String caseUUID = Case.getCurrentCase().getName();
             for (CorrelationAttributeInstance artifactInstance : instances) {
                 if (isCancelled()) {
@@ -104,26 +107,26 @@ class OtherOccurrenceOneTypeWorker extends SwingWorker<OneTypeData, Void> {
                     continue;
                 }
                 correlationAttributesToAdd.add(artifactInstance);
-                OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, aType, value);
+                NodeData newNode = new NodeData(artifactInstance, aType, value);
                 UniquePathKey uniquePathKey = new UniquePathKey(newNode);
                 nodeDataMap.put(uniquePathKey, newNode);
             }
 
-            for (OtherOccurrenceNodeInstanceData nodeData : nodeDataMap.values()) {
+            for (NodeData nodeData : nodeDataMap.values()) {
                 if (isCancelled()) {
                     break;
                 }
 
                 if (nodeData.isCentralRepoNode()) {
                     try {
-                        dataSources.add(OtherOccurrenceUtilities.makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                        dataSources.add(OtherOccurrences.makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                         caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
                     } catch (CentralRepoException ex) {
                         logger.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
                     }
                 } else {
                     try {
-                        dataSources.add(OtherOccurrenceUtilities.makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                        dataSources.add(OtherOccurrences.makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                         caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
                     } catch (NoCurrentCaseException ex) {
                         logger.log(Level.WARNING, "No current case open for other occurrences", ex);
