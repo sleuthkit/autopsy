@@ -34,6 +34,7 @@ DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or al
 DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database
 DataContentViewerHex.copyingFile=Copying file to open in HxD...
 DataContentViewerHex.launchError=Unable to launch HxD Editor. Please specify the HxD install location in Tools -> Options -> External Viewer
+DataContentViewerHex_loading_text=Loading hex from file...
 DataResultViewerTable.commentRender.name=C
 DataResultViewerTable.commentRender.toolTip=C(omments) indicates whether the item has a comment
 DataResultViewerTable.commentRenderer.crAndTagComment.toolTip=Comments exist both in Central Repository and on associated tag(s)
