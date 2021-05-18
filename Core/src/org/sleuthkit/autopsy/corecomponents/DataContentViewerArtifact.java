@@ -365,11 +365,10 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         BlackboardArtifact.Type artifactType = null;
         if (artifact != null) {
             try {
-                artifactType = Case.getCurrentCaseThrows().getSleuthkitCase().getArtifactType(artifact.getArtifactTypeName());
-            } catch (NoCurrentCaseException | TskCoreException ex) {
+                artifactType = artifact.getType();
+            } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, 
-                        String.format("There was an error getting the artifact type for artifact with id: %d and artifact type name: %s",
-                                artifact.getId(), artifact.getArtifactTypeName()), 
+                        String.format("There was an error getting the artifact type for artifact with id: %d", artifact.getId()), 
                         ex);
             }
         }
