@@ -27,13 +27,11 @@ import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -136,9 +134,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     private final BlackboardArtifact artifact;
     private Content srcContent;
-    
-    // The artifact type of this artifact type.
-    private BlackboardArtifact.Type artifactType = null;
     private volatile String translatedSourceName;
 
     /*
@@ -326,21 +321,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
     }
-    
-    /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
-     *
-     * @param artifact The artifact to represent.
-     * @param artifactType The BlackboardArtifact.Type of this artifact.  This 
-     * provides some caching to prevent unnecessary database reads.  If the 
-     * artifactType is not provided, the type may be fetched from the database 
-     * when getCategory() or related methods are called.
-     */
-    BlackboardArtifactNode(BlackboardArtifact artifact, BlackboardArtifact.Type artifactType) {
-        this(artifact);
-        this.artifactType = artifactType;
-    }
 
     /**
      * Creates a Lookup object for this node and populates it with both the
@@ -506,27 +486,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public String getSourceName() {
         return srcContent.getName();
     }
-    
-    
-    /**
-     * Returns the category of the artifact type of the artifact.
-     * @return The category of the artifact type of the artifact.
-     */
-    protected Category getCategory() {
-        // if artifact type is not present, fetch it from the case.
-        if (artifactType == null) {
-            try {
-                artifactType = Case.getCurrentCaseThrows().getSleuthkitCase()
-                        .getArtifactType(this.getArtifact().getArtifactTypeName());
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.WARNING, "", ex);
-            }
-        }
-        
-        // if artifact type is null, just return null.  Otherwise, return category.
-        return artifactType == null ? null : artifactType.getCategory();
-    }
-    
 
     @Override
     protected Sheet createSheet() {
@@ -541,12 +500,20 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         
         List<NodeProperty<?>> nodeProperties;
-        Category category = getCategory();
+        BlackboardArtifact.Type type = null;
+        
+        try {
+            type = this.getArtifact().getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "There was an error while fetching artifact type for: " + artifact.getId(), ex);
+        }
+        
+        Category category = type == null ? null : type.getCategory();
         if (category == null) {
             // if no category, default to base sheet properties.
             nodeProperties = getBaseSheetProperties();
         } else {
-            switch (getCategory()) {
+            switch (category) {
                 case ANALYSIS_RESULT: 
                     nodeProperties = getAnalysisResultSheetProperties();
                     break;

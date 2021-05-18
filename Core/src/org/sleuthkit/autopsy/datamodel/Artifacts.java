@@ -638,7 +638,7 @@ public class Artifacts {
 
         @Override
         protected Node createNodeForKey(BlackboardArtifact key) {
-            return new BlackboardArtifactNode(key, type);
+            return new BlackboardArtifactNode(key);
         }
 
         @Override
