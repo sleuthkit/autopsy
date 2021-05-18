@@ -87,7 +87,6 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
-import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.Score.Significance;
 
 /**

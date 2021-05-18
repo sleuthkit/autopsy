@@ -32,6 +32,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -340,6 +341,10 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      *
      * @return Score property for the underlying content of the node.
      */
+    @Messages({
+        "# {0} - significanceDisplayName",
+        "AbstractContentNode_getScorePropertyAndDescription_description=Has an {0} analysis result score"
+    })
     protected Pair<Score, String> getScorePropertyAndDescription(List<Tag> tags) {
         Score score = Score.SCORE_UNKNOWN;
         try {
@@ -348,8 +353,9 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
             logger.log(Level.WARNING, "Unable to get aggregate score for content with id: " + this.content.getId(), ex);
         }
         
-        score.getSignificance().getDisplayName();
-        return Pair.of(score, );
+        String significanceDisplay = score.getSignificance().getDisplayName();
+        String description = Bundle.AbstractContentNode_getScorePropertyAndDescription_description(significanceDisplay);
+        return Pair.of(score, description);
     }
 
     /**
