@@ -31,6 +31,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -365,6 +366,10 @@ public class StringsContentPanel extends javax.swing.JPanel {
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
+    @Messages({
+        "StringContentPanel_Loading_String=Loading text..."
+    })
+
     /**
      * Sets the DataView (The tabbed panel)
      *
@@ -383,7 +388,7 @@ public class StringsContentPanel extends javax.swing.JPanel {
         }
 
         worker = new ContentWorker(dataSource, offset);
-
+        outputViewPane.setText(Bundle.StringContentPanel_Loading_String());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         worker.execute();
     }
@@ -399,7 +404,7 @@ public class StringsContentPanel extends javax.swing.JPanel {
         }
 
         worker = new StringContentWorker(dataSource);
-
+        outputViewPane.setText(Bundle.StringContentPanel_Loading_String());
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         worker.execute();
     }
@@ -423,12 +428,20 @@ public class StringsContentPanel extends javax.swing.JPanel {
         languageLabel.setVisible(isVisible);
     }
 
-    // Swingworker for getting the text from a content object.
+    /**
+     * Swingworker for getting the text from a content object.
+     */
     private final class ContentWorker extends SwingWorker<String, Void> {
 
         private final Content content;
         private final long offset;
 
+        /**
+         * ContentWorker constructor
+         *
+         * @param content Content to get text from.
+         * @param offset  The starting offset.
+         */
         ContentWorker(Content content, long offset) {
             this.content = content;
             this.offset = offset;
@@ -478,7 +491,6 @@ public class StringsContentPanel extends javax.swing.JPanel {
                     return;
                 }
                 String text = get();
-
                 dataSource = content;
 
                 // disable or enable the next button
@@ -517,6 +529,11 @@ public class StringsContentPanel extends javax.swing.JPanel {
 
         private final StringContent content;
 
+        /**
+         * Constructor to pulling the text out of a string content object.
+         *
+         * @param content
+         */
         StringContentWorker(StringContent content) {
             this.content = content;
         }
@@ -551,7 +568,5 @@ public class StringsContentPanel extends javax.swing.JPanel {
                 logger.log(Level.SEVERE, String.format("Failed to get text from StringContent"), ex);
             }
         }
-
     }
-
 }
