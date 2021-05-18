@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.util.ArrayList;
@@ -33,15 +35,17 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.concurrent.TimeUnit;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultTableArtifactContentViewer;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
@@ -63,6 +67,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
     private final static String WAIT_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.waitText");
     private final static String ERROR_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.errorText");
+    
+    private final Cache<String, BlackboardArtifact.Type> artifactTypeCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
 
     private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
     private int currentPage = 1;
@@ -278,6 +284,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         currentNode = null;
 
         artifactContentPanel.removeAll();
+        
+        // reset the cache
+        artifactTypeCache.invalidateAll();
     }
 
     @Override
@@ -345,24 +354,40 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         return false;
     }
 
+    private static final int LESS_PREFERRED = 3;
+    private static final int MORE_PREFERRED = 6;
+    
+      
     @Override
     public int isPreferred(Node node) {
+        // get the artifact from the lookup
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        // low priority if node doesn't have an artifact (meaning it was found from normal directory
-        // browsing, or if the artifact is something that means the user really wants to see the original
-        // file and not more details about the artifact
-        if ((artifact == null)
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())) {
-            return 3;
-        } else {
-            return 6;
+        
+        // if there is an artifact, get the type
+        BlackboardArtifact.Type artifactType = null;
+        if (artifact != null) {
+            try {
+                artifactType = artifactTypeCache.get(artifact.getArtifactTypeName(), 
+                        () -> Case.getCurrentCaseThrows().getSleuthkitCase().getArtifactType(artifact.getArtifactTypeName()));
+            } catch (ExecutionException ex) {
+                
+            }
+        }
+             
+        // if there is a type, get the category 
+        Category category = artifactType == null ? null : artifactType.getCategory();
+        
+        // return more preferred if analysis result
+        if (category == null) {
+            return LESS_PREFERRED;
+        }
+        
+        switch (category) {
+            case ANALYSIS_RESULT:
+                return MORE_PREFERRED;
+            case DATA_ARTIFACT:
+            default:
+                return LESS_PREFERRED;
         }
     }
 
