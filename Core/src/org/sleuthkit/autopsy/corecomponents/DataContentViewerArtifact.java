@@ -358,13 +358,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         }
 
         // get the type of the artifact
-        BlackboardArtifact.Type artifactType = null;
+        BlackboardArtifact.Type artifactType;
         try {
             artifactType = artifact.getType();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE,
                     String.format("There was an error getting the artifact type for artifact with id: %d", artifact.getId()),
                     ex);
+            return LESS_PREFERRED;
         }
 
         // if no artifact type/category, treat as less preferred.
