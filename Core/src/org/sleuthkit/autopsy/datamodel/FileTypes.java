@@ -396,6 +396,11 @@ public final class FileTypes implements AutopsyVisitableItem {
         public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, Long osAccountId) throws TskCoreException {
             return content.newDataArtifact(artifactType, attributesList, osAccountId);
         }
+        
+        @Override
+        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList) throws TskCoreException {
+            return content.newDataArtifact(artifactType, attributesList);
+        }
 
         @Override
         public ArrayList<BlackboardArtifact> getArtifacts(String artifactTypeName) throws TskCoreException {
