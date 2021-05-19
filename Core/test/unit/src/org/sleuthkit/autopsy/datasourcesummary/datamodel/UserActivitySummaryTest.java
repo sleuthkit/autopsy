@@ -353,7 +353,7 @@ public class UserActivitySummaryTest {
         List<TopDeviceAttachedResult> results = summary.getRecentDevices(dataSource, 10);
 
         Assert.assertEquals(1, results.size());
-        Assert.assertEquals((long) (DAY_SECONDS + 2), results.get(0).getLastAccessed().getTime() / 1000);
+        Assert.assertEquals((DAY_SECONDS + 2), results.get(0).getLastAccessed().getTime() / 1000);
         Assert.assertTrue("ID1".equalsIgnoreCase(results.get(0).getDeviceId()));
         Assert.assertTrue("MAKE1".equalsIgnoreCase(results.get(0).getDeviceMake()));
         Assert.assertTrue("MODEL1".equalsIgnoreCase(results.get(0).getDeviceModel()));
