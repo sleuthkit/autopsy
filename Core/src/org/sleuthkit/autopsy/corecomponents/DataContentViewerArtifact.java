@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.util.ArrayList;
@@ -41,12 +39,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.concurrent.TimeUnit;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultTableArtifactContentViewer;
-import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
@@ -68,7 +62,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
     private final static String WAIT_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.waitText");
     private final static String ERROR_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.errorText");
-    
+
     // Value to return in isPreferred if this viewer is less preferred.
     private static final int LESS_PREFERRED = 3;
     // Value to return in isPreferred if this viewer is more preferred.
@@ -354,42 +348,35 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         }
         return false;
     }
-    
-      
+
     @Override
     public int isPreferred(Node node) {
         // get the artifact from the lookup
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        
-        // if there is an artifact, get the type
+        if (artifact == null) {
+            return LESS_PREFERRED;
+        }
+
+        // get the type of the artifact
         BlackboardArtifact.Type artifactType = null;
-        if (artifact != null) {
-            try {
-                artifactType = artifact.getType();
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, 
-                        String.format("There was an error getting the artifact type for artifact with id: %d", artifact.getId()), 
-                        ex);
-            }
+        try {
+            artifactType = artifact.getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE,
+                    String.format("There was an error getting the artifact type for artifact with id: %d", artifact.getId()),
+                    ex);
         }
-        
-        // if web download or web cache, less preferred.
-        if (artifactType != null && 
-                (artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_DOWNLOAD.getTypeID() || 
-                artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_CACHE.getTypeID())) {
-            
+
+        // if no artifact type/category, treat as less preferred.
+        // if web download or web cache, less preferred since the content is important and not the artifact itself.
+        if (artifactType == null
+                || artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_DOWNLOAD.getTypeID()
+                || artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_CACHE.getTypeID()) {
+
             return LESS_PREFERRED;
         }
-             
-        // if there is a type, get the category 
-        Category category = artifactType == null ? null : artifactType.getCategory();
-        
-        // if no category, treat as less preferred.
-        if (category == null) {
-            return LESS_PREFERRED;
-        }
-        
-        switch (category) {
+
+        switch (artifactType.getCategory()) {
             // data artifacts should be more preferred
             case DATA_ARTIFACT:
                 return MORE_PREFERRED;
