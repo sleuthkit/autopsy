@@ -368,10 +368,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             return LESS_PREFERRED;
         }
 
-        // if no artifact type/category, treat as less preferred.
         // if web download or web cache, less preferred since the content is important and not the artifact itself.
-        if (artifactType == null
-                || artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_DOWNLOAD.getTypeID()
+        if (artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_DOWNLOAD.getTypeID()
                 || artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_CACHE.getTypeID()) {
 
             return LESS_PREFERRED;
