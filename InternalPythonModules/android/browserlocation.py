@@ -103,7 +103,6 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                 # artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy))
                 # NOTE: originally commented out
 
-                artifact.addAttributes(attributes);
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
