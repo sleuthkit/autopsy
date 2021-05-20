@@ -79,10 +79,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS) { //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
             mimeTypeComboBox.setVisible(false);
             mimeCheck.setVisible(false);
-            // ELTODO fileSizeComboBox.setVisible(false);
-            // ELTODO fileSizeCheck.setVisible(false);
-            // ELTODO equalitySymbolComboBox.setVisible(false);
-            // ELTODO fileSizeSpinner.setVisible(false);
             jLabel1.setVisible(false);
             filesRadioButton.setVisible(false);
             dirsRadioButton.setVisible(false);
@@ -109,10 +105,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS) { //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
             mimeTypeComboBox.setVisible(false);
             mimeCheck.setVisible(false);
-            fileSizeComboBox.setVisible(false);
-            fileSizeCheck.setVisible(false);
-            equalitySymbolComboBox.setVisible(false);
-            fileSizeSpinner.setVisible(false);
             jLabel1.setVisible(false);
             filesRadioButton.setVisible(false);
             dirsRadioButton.setVisible(false);
@@ -120,8 +112,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         } else {
             populateMimeTypesComboBox();
             populateMimeConditionComponents(rule);
-            populateSizeConditionComponents(rule);
-
         }
         populateMimeTypesComboBox();
         populateRuleNameComponent(rule);
@@ -129,6 +119,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         populateNameConditionComponents(rule);
         populatePathConditionComponents(rule);
         populateDateConditionComponents(rule);
+        populateSizeConditionComponents(rule);
         this.setButtons(okButton, cancelButton);
         
         updateNameTextFieldPrompt();

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -126,12 +126,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             this.exportSetButton.setVisible(false);
             this.mimeTypeComboBox.setVisible(false);
             this.mimeTypeLabel.setVisible(false);
-            // ELTODO this.fileSizeUnitComboBox.setVisible(false);
-            // ELTODO this.fileSizeSpinner.setVisible(false);
             this.filterDialogTitle = "FilesSetPanel.filter.title";
             this.ruleDialogTitle = "FilesSetPanel.rule.title";
-            // ELTODO this.fileSizeLabel.setVisible(false);
-            // ELTODO this.equalitySignComboBox.setVisible(false);
             this.ignoreKnownFilesCheckbox.setVisible(false);
             this.fileTypeLabel.setVisible(false);
             this.filesRadioButton.setVisible(false);
