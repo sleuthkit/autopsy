@@ -345,8 +345,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                                 eventType.getTypeID()));
 
                 try {
-                    BlackboardArtifact bbart = resolvedFile.newArtifact(TSK_TL_EVENT);
-                    bbart.addAttributes(bbattributes);
+                    BlackboardArtifact bbart = resolvedFile.newDataArtifact(new BlackboardArtifact.Type(TSK_TL_EVENT), bbattributes);
                     try {
                         /*
                          * Post the artifact which will index the artifact for

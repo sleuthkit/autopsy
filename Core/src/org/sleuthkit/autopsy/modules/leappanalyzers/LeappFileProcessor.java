@@ -71,6 +71,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.blackboardutils.CommunicationArtifactsHelper;
@@ -392,7 +393,7 @@ public final class LeappFileProcessor {
                                 geoAbstractFile = createTrackpoint(bbattributes, dataSource, fileName, trackpointSegmentName, pointList);
                                 break;
                             default: // There is no relationship defined so just process the artifact normally
-                                BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType.getTypeID(), dataSource, bbattributes);
+                                BlackboardArtifact bbartifact = createArtifactWithAttributes(artifactType, dataSource, bbattributes);
                                 if (bbartifact != null) {
                                     bbartifacts.add(bbartifact);
                                 }
@@ -1208,8 +1209,7 @@ public final class LeappFileProcessor {
     /**
      * Generic method for creating a blackboard artifact with attributes
      *
-     * @param type is a blackboard.artifact_type enum to determine which type
-     * the artifact should be
+     * @param artType The artifact type.
      * @param dataSource is the Content object that needs to have the artifact
      * added for it
      * @param bbattributes is the collection of blackboard attributes that need
@@ -1217,11 +1217,17 @@ public final class LeappFileProcessor {
      *
      * @return The newly-created artifact, or null on error
      */
-    private BlackboardArtifact createArtifactWithAttributes(int type, Content dataSource, Collection<BlackboardAttribute> bbattributes) {
+    private BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type artType, Content dataSource, Collection<BlackboardAttribute> bbattributes) {
         try {
-            BlackboardArtifact bbart = dataSource.newArtifact(type);
-            bbart.addAttributes(bbattributes);
-            return bbart;
+            switch (artType.getCategory()) {
+                case DATA_ARTIFACT:
+                    return dataSource.newDataArtifact(artType, bbattributes);
+                case ANALYSIS_RESULT:
+                    return dataSource.newAnalysisResult(artType, Score.SCORE_UNKNOWN, null, null, null, bbattributes).getAnalysisResult();
+                default:
+                    logger.log(Level.SEVERE, "Unknown category type: " + artType.getCategory().getDisplayName());
+                    return null;
+            }
         } catch (TskException ex) {
             logger.log(Level.WARNING, Bundle.LeappFileProcessor_error_creating_new_artifacts(), ex); //NON-NLS
         }

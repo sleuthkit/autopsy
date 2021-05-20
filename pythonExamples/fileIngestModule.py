@@ -54,6 +54,8 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
+from org.sleuthkit.datamodel import Score
+from java.util import ArrayList
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the anlaysis.
@@ -125,10 +127,11 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artifact.  Refer to the developer docs for other examples.
-            art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
-                  SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
-            art.addAttribute(att)
+            attrs = ArrayList()
+            attrs.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
+                  SampleJythonFileIngestModuleFactory.moduleName, "Text Files"))
+            art = file.newAnalysisResult(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Score.SCORE_UNKNOWN, None, None, None, attrs)
+
 
             try:
                 # index the artifact for keyword search

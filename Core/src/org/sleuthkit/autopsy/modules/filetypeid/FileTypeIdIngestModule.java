@@ -40,6 +40,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTER
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -162,8 +163,10 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
             // Create artifact if it doesn't already exist.
             if (!tskBlackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
-                BlackboardArtifact artifact = file.newArtifact(TSK_INTERESTING_FILE_HIT);
-                artifact.addAttributes(attributes);
+                BlackboardArtifact artifact = file.newAnalysisResult(
+                        new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
+                        .getAnalysisResult();
+                
                 try {
                     /*
                      * post the artifact which will index the artifact for

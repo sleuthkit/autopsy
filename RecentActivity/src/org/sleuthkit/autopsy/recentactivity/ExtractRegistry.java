@@ -631,7 +631,7 @@ class ExtractRegistry extends Extract {
                                     case "InstallDate": //NON-NLS
                                         if (value != null && !value.isEmpty()) {
                                             try {
-                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", US).parse(value).getTime();
+                                                installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyyZ", US).parse(value+"+0000").getTime();
                                                 String Tempdate = installtime.toString();
                                                 installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                                             } catch (ParseException e) {
@@ -742,11 +742,11 @@ class ExtractRegistry extends Extract {
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
-                            for (Map.Entry userMap : getUserNameMap().entrySet()) { 
+                            for (Map.Entry<String, String> userMap : getUserNameMap().entrySet()) { 
                                 String sid = "";
                                 try{
-                                    sid = (String)userMap.getKey();
-                                    String userName = (String)userMap.getValue();
+                                    sid = userMap.getKey();
+                                    String userName = userMap.getValue();
                                     createOrUpdateOsAccount(regFile, sid, userName, null);
                                 } catch(TskCoreException | TskDataException | NotUserSIDException ex) {
                                     logger.log(Level.WARNING, String.format("Failed to update Domain for existing OsAccount: %s, sid: %s", regFile.getId(), sid), ex);
@@ -815,9 +815,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, value));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, itemMtime));
-                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_DELETED_PROG);
-                                            bbart.addAttributes(bbattributes);
-
+                                            BlackboardArtifact bbart = regFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DELETED_PROG), bbattributes);
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.", ex); //NON-NLS
@@ -827,7 +825,6 @@ class ExtractRegistry extends Extract {
                                         String officeName = artnode.getAttribute("name"); //NON-NLS
 
                                         try {
-                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                                             // @@@ BC: Consider removing this after some more testing. It looks like an Mtime associated with the root key and not the individual item
                                             if (mtime != null) {
                                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, parentModuleName, mtime));
@@ -835,8 +832,8 @@ class ExtractRegistry extends Extract {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, parentModuleName, officeName));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE, parentModuleName, value));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, artnode.getNodeName()));
-                                            bbart.addAttributes(bbattributes);
-
+                                            BlackboardArtifact bbart = regFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_RECENT_OBJECT), bbattributes);
+                                            
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.", ex); //NON-NLS
@@ -874,12 +871,12 @@ class ExtractRegistry extends Extract {
                                         try {
                                         String localPath = artnode.getAttribute("localPath"); //NON-NLS
                                         String remoteName = value;
-                                        BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_REMOTE_DRIVE);
+                                        
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCAL_PATH,
                                                 parentModuleName, localPath));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REMOTE_PATH,
                                                 parentModuleName, remoteName));
-                                        bbart.addAttributes(bbattributes);
+                                        BlackboardArtifact bbart = regFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_REMOTE_DRIVE), bbattributes);
                                         newArtifacts.add(bbart);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error adding network artifact to blackboard.", ex); //NON-NLS
@@ -893,8 +890,7 @@ class ExtractRegistry extends Extract {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SSID, parentModuleName, value));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, lastWriteTime));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, adapter));
-                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_WIFI_NETWORK);
-                                            bbart.addAttributes(bbattributes);
+                                            BlackboardArtifact bbart = regFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WIFI_NETWORK), bbattributes);
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding SSID artifact to blackboard.", ex); //NON-NLS
