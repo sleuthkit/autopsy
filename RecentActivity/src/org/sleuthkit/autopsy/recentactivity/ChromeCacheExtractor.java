@@ -31,6 +31,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -544,13 +545,12 @@ final class ChromeCacheExtractor {
         artifactsAdded.add(webCacheArtifact);
 
         // Create a TSK_ASSOCIATED_OBJECT on the f_XXX or derived file file back to the CACHE entry
-        BlackboardArtifact associatedObjectArtifact = cachedItemFile.newArtifact(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
-        if (associatedObjectArtifact != null) {
-            associatedObjectArtifact.addAttribute(
-                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
-                                moduleName, webCacheArtifact.getArtifactID()));
-            artifactsAdded.add(associatedObjectArtifact);
-        }
+        BlackboardArtifact associatedObjectArtifact = cachedItemFile.newDataArtifact(
+                new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT), 
+                Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, 
+                        moduleName, webCacheArtifact.getArtifactID())));
+        
+        artifactsAdded.add(associatedObjectArtifact);
     }
     
     /**

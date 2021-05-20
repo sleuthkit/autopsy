@@ -39,6 +39,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_YARA_
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_RULE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -112,7 +113,7 @@ final class YaraIngestHelper {
      * Scan the given AbstractFile for yara rule matches from the rule sets in
      * the given directory creating a blackboard artifact for each matching
      * rule.
-     * 
+     *
      * @param file                 The Abstract File being processed.
      * @param baseRuleSetDirectory Base directory of the compiled rule sets.
      * @param localFile            Local copy of file.
@@ -141,7 +142,7 @@ final class YaraIngestHelper {
      * Scan the given file byte array for rule matches using the YaraJNIWrapper
      * API.
      *
-     * @param fileBytes An array of the file data.
+     * @param fileBytes        An array of the file data.
      * @param ruleSetDirectory Base directory of the compiled rule sets.
      *
      * @return List of rules that match from the given file from the given rule
@@ -162,15 +163,17 @@ final class YaraIngestHelper {
     }
 
     /**
-     * Scan the given file for rules that match from the given rule set directory.
-     * 
-     * @param scanFile Locally stored file to scan.
+     * Scan the given file for rules that match from the given rule set
+     * directory.
+     *
+     * @param scanFile         Locally stored file to scan.
      * @param ruleSetDirectory Base directory of the compiled rule sets.
-     * @param timeout YARA Scanner timeout value.
-     * 
-     * @return List of matching rules, if none were found the list will be empty.
-     * 
-     * @throws YaraWrapperException 
+     * @param timeout          YARA Scanner timeout value.
+     *
+     * @return List of matching rules, if none were found the list will be
+     *         empty.
+     *
+     * @throws YaraWrapperException
      */
     private static List<String> scanFileForMatch(File scanFile, File ruleSetDirectory, int timeout) throws YaraWrapperException {
         List<String> matchingRules = new ArrayList<>();
@@ -198,13 +201,15 @@ final class YaraIngestHelper {
     private static List<BlackboardArtifact> createArtifact(AbstractFile abstractFile, String ruleSetName, List<String> matchingRules) throws TskCoreException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         for (String rule : matchingRules) {
-            BlackboardArtifact artifact = abstractFile.newArtifact(TSK_YARA_HIT);
+
             List<BlackboardAttribute> attributes = new ArrayList<>();
 
             attributes.add(new BlackboardAttribute(TSK_SET_NAME, MODULE_NAME, ruleSetName));
             attributes.add(new BlackboardAttribute(TSK_RULE, MODULE_NAME, rule));
 
-            artifact.addAttributes(attributes);
+            BlackboardArtifact artifact = abstractFile.newAnalysisResult(new BlackboardArtifact.Type(TSK_YARA_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
+                    .getAnalysisResult();
+
             artifacts.add(artifact);
         }
         return artifacts;
