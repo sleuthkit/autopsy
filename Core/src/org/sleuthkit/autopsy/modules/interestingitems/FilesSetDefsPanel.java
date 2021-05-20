@@ -217,7 +217,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         boolean ruleSelected = (FilesSetDefsPanel.this.rulesList.getSelectedValue() != null);
 
-        newRuleButton.setEnabled(canBeEnabled && !isStandardSet);
+        newRuleButton.setEnabled(canBeEnabled && setSelected && !isStandardSet);
         copySetButton.setEnabled(canBeEnabled && setSelected);
         newSetButton.setEnabled(canBeEnabled);
         editRuleButton.setEnabled(canBeEnabled && ruleSelected && !isStandardSet);
