@@ -110,7 +110,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
      * @param newNodeData data to add to the table
      */
     void addNodeData(NodeData newNodeData) {
-        String newNodeKey = createNodeKey((NodeData) newNodeData);//FilenameUtils.getName(((OtherOccurrenceNodeInstanceData)newNodeData).getFilePath());
+        String newNodeKey = createNodeKey(newNodeData);
         List<NodeData> nodeList = nodeMap.get(newNodeKey);
         if (nodeList == null) {
             nodeKeys.add(newNodeKey);
