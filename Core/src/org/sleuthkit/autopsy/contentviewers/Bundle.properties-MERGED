@@ -85,6 +85,7 @@ MediaViewVideoPanel.progressLabel.text=00:00
 MediaViewVideoPanel.infoLabel.text=info
 MediaViewImagePanel.imgFileTooLarge.msg=Could not load image file (too large): {0}
 
+Metadata.nodeText.loading=Metadata loading...
 Metadata.nodeText.none=None
 Metadata.nodeText.truncated=(results truncated)
 Metadata.nodeText.unknown=Unknown
