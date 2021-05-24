@@ -461,7 +461,7 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
         return this;
     }
 
-    private void resetComponent() {
+    public void resetComponent() {
         // reset all fields
         fromText.setText("");
         fromLabel.setEnabled(false);
