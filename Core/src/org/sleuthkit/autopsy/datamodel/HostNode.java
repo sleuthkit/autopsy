@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 
@@ -119,11 +120,11 @@ public class HostNode extends DisplayableItemNode {
             }
 
             if (dataSources != null) {
-                dataSources.stream()
+                toPopulate.addAll(dataSources.stream()
                         .filter(ds -> ds != null)
                         .map(DataSourceGrouping::new)
                         .sorted((a, b) -> getNameOrEmpty(a).compareToIgnoreCase(getNameOrEmpty(b)))
-                        .forEach(toPopulate::add);
+                        .collect(Collectors.toList()));
             }
 
             return true;
