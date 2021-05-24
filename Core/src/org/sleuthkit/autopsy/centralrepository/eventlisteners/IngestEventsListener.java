@@ -68,6 +68,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.datamodel.Account;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT;
 import org.sleuthkit.datamodel.CommunicationsUtils;
+import org.sleuthkit.datamodel.Score;
 
 /**
  * Listen for ingest events and update entries in the Central Repository
@@ -205,17 +206,20 @@ public class IngestEventsListener {
     }
 
     /**
-     * Make an Interesting Item artifact based on a new artifact being previously seen.
+     * Make an Interesting Item artifact based on a new artifact being
+     * previously seen.
+     *
      * @param originalArtifact Original artifact that we want to flag
-     * @param caseDisplayNames List of case names artifact was previously seen in
+     * @param caseDisplayNames List of case names artifact was previously seen
+     *                         in
      */
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
         "IngestEventsListener.prevCaseComment.text=Previous Case: "})
     static private void makeAndPostPreviousNotableArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames) {
 
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
-                        TSK_SET_NAME, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevTaggedSet_text()),
+                TSK_SET_NAME, MODULE_NAME,
+                Bundle.IngestEventsListener_prevTaggedSet_text()),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
                         Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
@@ -230,7 +234,8 @@ public class IngestEventsListener {
      * in the central repository.
      *
      * @param originalArtifact the artifact to create the interesting item for
-     * @param caseDisplayNames the case names the artifact was previously seen in
+     * @param caseDisplayNames the case names the artifact was previously seen
+     *                         in
      */
     @NbBundle.Messages({"IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)",
         "# {0} - typeName",
@@ -238,8 +243,8 @@ public class IngestEventsListener {
         "IngestEventsListener.prevCount.text=Number of previous {0}: {1}"})
     static private void makeAndPostPreviousSeenArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames) {
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
-                        TSK_SET_NAME, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevExists_text()),
+                TSK_SET_NAME, MODULE_NAME,
+                Bundle.IngestEventsListener_prevExists_text()),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
                         Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
@@ -250,9 +255,11 @@ public class IngestEventsListener {
     }
 
     /**
-     * Make an interesting item artifact to flag the passed in artifact. 
-     * @param originalArtifact Artifact in current case we want to flag
-     * @param attributesForNewArtifact Attributes to assign to the new Interesting items artifact
+     * Make an interesting item artifact to flag the passed in artifact.
+     *
+     * @param originalArtifact         Artifact in current case we want to flag
+     * @param attributesForNewArtifact Attributes to assign to the new
+     *                                 Interesting items artifact
      */
     private static void makeAndPostInterestingArtifact(BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact) {
         try {
@@ -261,8 +268,10 @@ public class IngestEventsListener {
             Blackboard blackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_ARTIFACT_HIT, attributesForNewArtifact)) {
-                BlackboardArtifact newInterestingArtifact = abstractFile.newArtifact(TSK_INTERESTING_ARTIFACT_HIT);
-                newInterestingArtifact.addAttributes(attributesForNewArtifact);
+                BlackboardArtifact newInterestingArtifact = abstractFile.newAnalysisResult(
+                        new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT),
+                        Score.SCORE_UNKNOWN, null, null, null, attributesForNewArtifact)
+                        .getAnalysisResult();
 
                 try {
                     // index the artifact for keyword search
@@ -320,7 +329,7 @@ public class IngestEventsListener {
                 LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
                 return;
             }
-            
+
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED: {
                     jobProcessingExecutor.submit(new AnalysisCompleteTask(dbManager, evt));
@@ -334,15 +343,15 @@ public class IngestEventsListener {
     }
 
     private final class AnalysisCompleteTask implements Runnable {
-        
+
         private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
-        
+
         private AnalysisCompleteTask(CentralRepository db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
         }
-           
+
         @Override
         public void run() {
             // clear the tracker to reduce memory usage
@@ -370,7 +379,7 @@ public class IngestEventsListener {
                 if (!(dataSource instanceof Image)) {
                     return;
                 }
-                
+
                 dataSourceName = dataSource.getName();
                 dataSourceObjectId = dataSource.getId();
 
@@ -398,7 +407,7 @@ public class IngestEventsListener {
                         if (StringUtils.equals(imageMd5Hash, crMd5Hash) == false) {
                             correlationDataSource.setMd5(imageMd5Hash);
                         }
-                        
+
                         String imageSha1Hash = image.getSha1();
                         if (imageSha1Hash == null) {
                             imageSha1Hash = "";
@@ -407,7 +416,7 @@ public class IngestEventsListener {
                         if (StringUtils.equals(imageSha1Hash, crSha1Hash) == false) {
                             correlationDataSource.setSha1(imageSha1Hash);
                         }
-                        
+
                         String imageSha256Hash = image.getSha256();
                         if (imageSha256Hash == null) {
                             imageSha256Hash = "";
@@ -484,7 +493,7 @@ public class IngestEventsListener {
                                 }
                             }
                             if (flagPreviousItemsEnabled
-                                && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.USBID_TYPE_ID
+                                    && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.USBID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.ICCID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMEI_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMSI_TYPE_ID

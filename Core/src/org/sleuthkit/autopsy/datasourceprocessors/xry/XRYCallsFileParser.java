@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -313,9 +314,8 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             }
 
             if (!otherAttributes.isEmpty()) {
-                BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG);
-                artifact.addAttributes(otherAttributes);
-
+                BlackboardArtifact artifact = parent.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG), otherAttributes);
+                        
                 currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
             }
         } else {

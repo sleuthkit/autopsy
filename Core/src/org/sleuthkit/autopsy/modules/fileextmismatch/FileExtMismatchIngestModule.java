@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.logging.Level;
@@ -38,6 +39,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
@@ -119,15 +121,15 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-            || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-            || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
-            || (abstractFile.isFile() == false)) {
+                || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
+                || (abstractFile.isFile() == false)) {
             return ProcessResult.OK;
         }
 
         // deleted files often have content that was not theirs and therefor causes mismatch
         if ((abstractFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC))
-            || (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC))) {
+                || (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC))) {
             return ProcessResult.OK;
         }
 
@@ -140,7 +142,9 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
             if (mismatchDetected) {
                 // add artifact               
-                BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED);
+                BlackboardArtifact bart = abstractFile.newAnalysisResult(
+                        new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED), Score.SCORE_UNKNOWN, null, null, null, Collections.emptyList())
+                        .getAnalysisResult();
 
                 try {
                     /*
