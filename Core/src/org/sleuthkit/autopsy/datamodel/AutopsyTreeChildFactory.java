@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
@@ -96,6 +97,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      */
     @Override
     protected boolean createKeys(List<Object> list) {
+        List<Object> nodes = Collections.emptyList();
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
@@ -103,27 +105,28 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                 List<Person> persons = personManager.getPersons();
                 // show persons level if there are persons to be shown
                 if (!CollectionUtils.isEmpty(persons)) {
-                    persons.stream()
+                    nodes = persons.stream()
                             .map(PersonGrouping::new)
                             .sorted()
-                            .forEach(list::add);
+                            .collect(Collectors.toList());
 
                     if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
-                        list.add(new PersonGrouping(null));
+                        nodes.add(new PersonGrouping(null));
                     }
                 } else {
                     // otherwise, just show host level
-                    tskCase.getHostManager().getAllHosts().stream()
+                    nodes = tskCase.getHostManager().getAllHosts().stream()
                             .map(HostGrouping::new)
                             .sorted()
-                            .forEach(list::add);
+                            .collect(Collectors.toList());
                     
                 }
-                list.add(new Reports());
-                return true;
+                
+                // either way, add in reports node
+                nodes.add(new Reports());
             } else {
                 // data source by type view
-                List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
+                nodes = Arrays.asList(
                         new DataSourcesByType(),
                         new Views(Case.getCurrentCaseThrows().getSleuthkitCase()),
                         new DataArtifacts(),
@@ -131,15 +134,16 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                         new OsAccounts(Case.getCurrentCaseThrows().getSleuthkitCase()),
                         new Tags(),
                         new Reports()
-                ));
-
-                list.addAll(keys);
+                );
             }
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Exception while getting data from case.", ex); //NON-NLS
         }
+        
+        // add all nodes to the netbeans node list
+        list.addAll(nodes);
         return true;
     }
 

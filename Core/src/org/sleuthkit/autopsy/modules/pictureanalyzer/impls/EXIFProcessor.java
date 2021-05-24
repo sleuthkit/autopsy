@@ -29,7 +29,9 @@ import com.drew.metadata.exif.GpsDirectory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 import java.util.HashSet;
@@ -59,6 +61,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.Score;
 
 /**
  * Extracts EXIF metadata from JPEG, TIFF, and WAV files. Currently only date,
@@ -151,28 +154,17 @@ public class EXIFProcessor implements PictureProcessor {
             final Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
             if (!attributes.isEmpty() && !blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
-                /*
-                 * Create a TSK_METADATA_EXIF data artifact.
-                 */
-                final List<BlackboardArtifact> newArtifacts = new ArrayList<>();
-                final List<DataArtifact> newDataArtifacts = new ArrayList<>();
-                final DataArtifact exifArtifact = file.newDataArtifact(EXIF_METADATA, attributes, null);
-                newArtifacts.add(exifArtifact);
-                newDataArtifacts.add(exifArtifact);
+                final DataArtifact exifArtifact = file.newDataArtifact(new BlackboardArtifact.Type(TSK_METADATA_EXIF), attributes);
 
-                /*
-                 * Create a TSK_USER_CONTENT_SUSPECTED analysis result.
-                 */
-                final BlackboardArtifact userSuspectedArtifact = file.newArtifact(TSK_USER_CONTENT_SUSPECTED);
-                userSuspectedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
-                        MODULE_NAME, Bundle.ExifProcessor_userContent_description()));
-                newArtifacts.add(userSuspectedArtifact);
+                final AnalysisResult userSuspectedArtifact = file.newAnalysisResult(
+                        new BlackboardArtifact.Type(TSK_USER_CONTENT_SUSPECTED), Score.SCORE_UNKNOWN, null, null, null,
+                        Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, Bundle.ExifProcessor_userContent_description())))
+                        .getAnalysisResult();
 
-                /*
-                 * Post all of the artifacts to the blackboard.
-                 */
                 try {
-                    blackboard.postArtifacts(newArtifacts, MODULE_NAME);
+                    // index the artifact for keyword search
+                    blackboard.postArtifact(exifArtifact, MODULE_NAME);
+                    blackboard.postArtifact(userSuspectedArtifact, MODULE_NAME);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, String.format("Error posting TSK_METADATA_EXIF and TSK_USER_CONTENT_SUSPECTED artifacts for %s (object ID = %d)", file.getName(), file.getId()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
@@ -183,7 +175,7 @@ public class EXIFProcessor implements PictureProcessor {
                  * Add the data artifact to the ingest job for processing by the
                  * data artifact ingest modules.
                  */
-                context.addDataArtifactsToJob(newDataArtifacts);
+                context.addDataArtifactsToJob(Collections.singletonList(exifArtifact));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for " //NON-NLS

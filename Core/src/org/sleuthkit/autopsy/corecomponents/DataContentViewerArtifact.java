@@ -33,7 +33,6 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -63,6 +62,11 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
     private final static String WAIT_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.waitText");
     private final static String ERROR_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.errorText");
+
+    // Value to return in isPreferred if this viewer is less preferred.
+    private static final int LESS_PREFERRED = 3;
+    // Value to return in isPreferred if this viewer is more preferred.
+    private static final int MORE_PREFERRED = 6;
 
     private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
     private int currentPage = 1;
@@ -347,22 +351,38 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public int isPreferred(Node node) {
+        // get the artifact from the lookup
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        // low priority if node doesn't have an artifact (meaning it was found from normal directory
-        // browsing, or if the artifact is something that means the user really wants to see the original
-        // file and not more details about the artifact
-        if ((artifact == null)
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())) {
-            return 3;
-        } else {
-            return 6;
+        if (artifact == null) {
+            return LESS_PREFERRED;
+        }
+
+        // get the type of the artifact
+        BlackboardArtifact.Type artifactType;
+        try {
+            artifactType = artifact.getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE,
+                    String.format("There was an error getting the artifact type for artifact with id: %d", artifact.getId()),
+                    ex);
+            return LESS_PREFERRED;
+        }
+
+        // if web download or web cache, less preferred since the content is important and not the artifact itself.
+        if (artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_DOWNLOAD.getTypeID()
+                || artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_CACHE.getTypeID()) {
+
+            return LESS_PREFERRED;
+        }
+
+        switch (artifactType.getCategory()) {
+            // data artifacts should be more preferred
+            case DATA_ARTIFACT:
+                return MORE_PREFERRED;
+            // everything else is less preferred
+            case ANALYSIS_RESULT:
+            default:
+                return LESS_PREFERRED;
         }
     }
 

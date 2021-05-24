@@ -21,21 +21,25 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane5" alignment="0" pref="907" max="32767" attributes="0"/>
+          <Component id="scrollPane" alignment="0" pref="907" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane5" alignment="1" pref="435" max="32767" attributes="0"/>
+          <Component id="scrollPane" alignment="1" pref="435" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Container class="javax.swing.JScrollPane" name="jScrollPane5">
+    <Container class="javax.swing.JScrollPane" name="scrollPane">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
+        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
+      </AuxValues>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
       <SubComponents>
-        <Component class="javax.swing.JTextPane" name="jTextPane1">
+        <Component class="javax.swing.JTextPane" name="textPanel">
           <Properties>
             <Property name="editable" type="boolean" value="false"/>
             <Property name="name" type="java.lang.String" value="" noResource="true"/>

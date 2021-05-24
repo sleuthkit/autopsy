@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -590,18 +591,10 @@ final class RegexQuery implements KeywordSearchQuery {
          * Create a "plain vanilla" keyword hit artifact with keyword and regex
          * attributes
          */
-        BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
 
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
-
-        try {
-            newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
-            return null;
-        }
 
         if (StringUtils.isNotBlank(listName)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
@@ -621,8 +614,8 @@ final class RegexQuery implements KeywordSearchQuery {
         }
 
         try {
-            newArtifact.addAttributes(attributes);
-            return newArtifact;
+            return content.newAnalysisResult(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_KEYWORD_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
+                    .getAnalysisResult();
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;
