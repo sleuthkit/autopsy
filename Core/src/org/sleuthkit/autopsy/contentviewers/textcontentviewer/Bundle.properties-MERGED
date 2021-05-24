@@ -1,3 +1,4 @@
+StringContentPanel_Loading_String=Loading text...
 StringsTextViewer.goToPageTextField.msgDlg=Please enter a valid page number between 1 and {0}
 StringsTextViewer.goToPageTextField.err=Invalid page number
 StringsTextViewer.setDataView.errorText=(offset {0}-{1} could not be read)
