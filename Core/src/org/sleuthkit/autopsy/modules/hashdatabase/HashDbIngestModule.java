@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -516,7 +517,7 @@ public class HashDbIngestModule implements FileIngestModule {
     private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, String comment, boolean showInboxMessage) {
         try {
             String moduleName = HashLookupModuleFactory.getModuleName();
-            BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
+            
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             //TODO Revisit usage of deprecated constructor as per TSK-583
             //BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
@@ -524,8 +525,9 @@ public class HashDbIngestModule implements FileIngestModule {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, moduleName, md5Hash));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, comment));
 
-            badFile.addAttributes(attributes);
-
+            BlackboardArtifact badFile = abstractFile.newAnalysisResult(
+                    new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_HASHSET_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
+                    .getAnalysisResult();
             try {
                 /*
                  * post the artifact which will index the artifact for keyword

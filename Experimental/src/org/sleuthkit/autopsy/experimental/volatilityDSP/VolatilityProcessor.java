@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.EncodingType;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -384,8 +385,10 @@ class VolatilityProcessor {
 
                         // Create artifact if it doesn't already exist.
                         if (!blackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
-                            BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                            volArtifact.addAttributes(attributes);
+                            BlackboardArtifact volArtifact = resolvedFile.newAnalysisResult(
+                                    new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT), 
+                                    Score.SCORE_UNKNOWN, null, null, null, attributes)
+                                    .getAnalysisResult();
 
                             try {
                                 // index the artifact for keyword search

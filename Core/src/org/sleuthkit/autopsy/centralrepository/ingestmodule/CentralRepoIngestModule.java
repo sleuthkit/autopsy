@@ -56,6 +56,7 @@ import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.datamodel.Score;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -345,8 +346,10 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_FILE_HIT, attributes)) {
-                BlackboardArtifact tifArtifact = abstractFile.newArtifact(TSK_INTERESTING_FILE_HIT);
-                tifArtifact.addAttributes(attributes);
+                BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
+                        new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT), 
+                        Score.SCORE_UNKNOWN, null, null, null, attributes)
+                        .getAnalysisResult();
                 try {
                     // index the artifact for keyword search
                     blackboard.postArtifact(tifArtifact, MODULE_NAME);
