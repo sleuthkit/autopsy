@@ -20,13 +20,13 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DataSource;
@@ -229,8 +230,31 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     @Override
     public String getTitle() {
+        return getTitle(null);
+    }
+
+    @Messages({
+        "Metadata_dataArtifactTitle=Source File Metadata"
+    })
+    @Override
+    public String getTitle(Node node) {
+        if (node != null) {
+            Collection<? extends BlackboardArtifact> artifacts = node.getLookup().lookupAll(BlackboardArtifact.class);
+            for (BlackboardArtifact art : artifacts) {
+                try {
+                    if (art != null && art.getType().getCategory() == Category.DATA_ARTIFACT) {
+                        return Bundle.Metadata_dataArtifactTitle();
+                    }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Unable to get artifact type for artifact with id: " + art.getArtifactID(), ex);
+                }
+            }
+        }
+
         return NbBundle.getMessage(this.getClass(), "Metadata.title");
     }
+    
+    
 
     @Override
     public String getToolTip() {
