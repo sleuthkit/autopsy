@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.python.google.common.collect.Sets;
+import org.sleuthkit.datamodel.Blackboard;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_EMAIL_MSG;
@@ -644,17 +645,31 @@ public class Artifacts {
         @Override
         protected List<BlackboardArtifact> makeKeys() {
             try {
-                List<BlackboardArtifact> arts;
-                arts = (filteringDSObjId > 0)
-                        ? Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(type.getTypeID(), filteringDSObjId)
-                        : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifacts(type.getTypeID());
+                List<? extends BlackboardArtifact> arts;
+                Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
+                switch (this.type.getCategory()) {
+
+                    case ANALYSIS_RESULT:
+                        arts = (filteringDSObjId > 0)
+                            ? blackboard.getAnalysisResultsByType(type.getTypeID(), filteringDSObjId)
+                            : blackboard.getAnalysisResultsByType(type.getTypeID());
+                    case DATA_ARTIFACT:
+                    default:
+                        arts = (filteringDSObjId > 0)
+                            ? blackboard.getDataArtifacts(type.getTypeID(), filteringDSObjId)
+                            : blackboard.getDataArtifacts(type.getTypeID());
+                }
+
 
                 for (BlackboardArtifact art : arts) {
                     //Cache attributes while we are off the EDT.
                     //See JIRA-5969
                     art.getAttributes();
                 }
-                return arts;
+                
+                @SuppressWarnings("unchecked")
+                List<BlackboardArtifact> toRet = (List<BlackboardArtifact>)(List<?>)arts;    
+                return toRet;
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Trying to access case when no case is open.", ex); //NON-NLS
             } catch (TskCoreException ex) {

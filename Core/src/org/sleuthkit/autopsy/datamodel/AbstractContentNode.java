@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
@@ -348,7 +349,11 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     protected Pair<Score, String> getScorePropertyAndDescription(List<Tag> tags) {
         Score score = Score.SCORE_UNKNOWN;
         try {
-            score = this.content.getAggregateScore();
+            if (content instanceof AnalysisResult) {
+                score = ((AnalysisResult) content).getScore();
+            } else {
+                score = this.content.getAggregateScore();    
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to get aggregate score for content with id: " + this.content.getId(), ex);
         }
