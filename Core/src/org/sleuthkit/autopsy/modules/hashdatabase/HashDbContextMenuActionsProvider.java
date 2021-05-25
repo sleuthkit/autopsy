@@ -26,6 +26,7 @@ import org.openide.util.Utilities;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.DataArtifact;
 
 @ServiceProvider(service = ContextMenuActionsProvider.class)
 public class HashDbContextMenuActionsProvider implements ContextMenuActionsProvider {
@@ -34,7 +35,9 @@ public class HashDbContextMenuActionsProvider implements ContextMenuActionsProvi
     public List<Action> getActions() {
         ArrayList<Action> actions = new ArrayList<>();
         Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
-        if (!selectedFiles.isEmpty()) {
+        Collection<? extends DataArtifact> dataArtifacts = Utilities.actionsGlobalContext().lookupAll(DataArtifact.class);
+        // don't show AddContentToHashDbAction for data artifacts but do if related abstract file
+        if (!selectedFiles.isEmpty() && dataArtifacts.isEmpty()) {
             actions.add(AddContentToHashDbAction.getInstance());
         }
         return actions;

@@ -45,6 +45,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -81,6 +82,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * A BlackboardArtifactNode is an AbstractNode implementation that can be used
@@ -438,7 +440,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * action to view it in the timeline.
          */
         try {
-            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact) &&
+                    // don't show ViewArtifactInTimelineAction for data artifacts.
+                    (!(this.artifact instanceof DataArtifact))) {
+                
                 actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
         } catch (TskCoreException ex) {
