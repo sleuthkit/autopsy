@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -49,13 +50,15 @@ import org.jsoup.nodes.Document;
 })
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
+    private static final String DEFAULT_FONT_FAMILY = new JLabel().getFont().getFamily();
     private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
+    private static final Color DEFAULT_BACKGROUND = new JLabel().getBackground();
 
     // how big the subheader should be
-    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 12 / 11;
+    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE + 1;
 
     // how big the header should be
-    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 14 / 11;
+    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE + 2;
 
     // the subsection indent
     private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
@@ -67,12 +70,16 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     // additional styling for components
     private static final String STYLE_SHEET_RULE
-            = String.format(" .%s { font-size: %dpx;font-style:italic; margin: 0px; padding: 0px; } ", Annotations.MESSAGE_CLASSNAME, DEFAULT_FONT_SIZE)
-            + String.format(" .%s {font-size:%dpx;font-weight:bold; margin: 0px; margin-top: %dpx; padding: 0px; } ",
-                    Annotations.SUBHEADER_CLASSNAME, SUBHEADER_FONT_SIZE, DEFAULT_SUBSECTION_SPACING)
-            + String.format(" .%s { font-size:%dpx;font-weight:bold; margin: 0px; padding: 0px; } ", Annotations.HEADER_CLASSNAME, HEADER_FONT_SIZE)
-            + String.format(" td { vertical-align: top; font-size:%dpx; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px;} ", DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" th { vertical-align: top; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px} ", DEFAULT_FONT_SIZE, CELL_SPACING)
+            = String.format(" .%s { font-family: %s; font-size: %dpt; font-style:italic; margin: 0px; padding: 0px; } ", 
+                    Annotations.MESSAGE_CLASSNAME, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE)
+            + String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; margin-top: %dpx; padding: 0px; } ",
+                    Annotations.SUBHEADER_CLASSNAME, DEFAULT_FONT_FAMILY, SUBHEADER_FONT_SIZE, DEFAULT_SUBSECTION_SPACING)
+            + String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; padding: 0px; } ", 
+                    Annotations.HEADER_CLASSNAME, DEFAULT_FONT_FAMILY, HEADER_FONT_SIZE)
+            + String.format(" td { vertical-align: top; font-family: %s; font-size:%dpt; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px;} ", 
+                    DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, CELL_SPACING)
+            + String.format(" th { vertical-align: top; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px} ", 
+                    DEFAULT_FONT_SIZE, CELL_SPACING)
             + String.format(" .%s { margin: %dpx 0px; padding-left: %dpx; } ", Annotations.SUBSECTION_CLASSNAME, DEFAULT_SUBSECTION_SPACING, DEFAULT_SUBSECTION_LEFT_PAD)
             + String.format(" .%s { margin-bottom: %dpx; } ", Annotations.SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
     
@@ -87,6 +94,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     public AnnotationsContentViewer() {
         initComponents();
         Utilities.configureTextPaneAsHtml(textPanel);
+        textPanel.setBackground(DEFAULT_BACKGROUND);
         // get html editor kit and apply additional style rules
         EditorKit editorKit = textPanel.getEditorKit();
         if (editorKit instanceof HTMLEditorKit) {
