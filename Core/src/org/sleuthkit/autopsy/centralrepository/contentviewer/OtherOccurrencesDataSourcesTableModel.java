@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
+import org.sleuthkit.autopsy.centralrepository.application.NodeData;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -26,6 +27,7 @@ import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -139,11 +141,10 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
      *
      * @param newNodeData data to add to the table
      */
-    void addNodeData(OtherOccurrenceNodeData newNodeData) {
-        OtherOccurrenceNodeInstanceData nodeData = (OtherOccurrenceNodeInstanceData) newNodeData;
+    void addNodeData(NodeData newNodeData) {
         String caseUUID;
         try {
-            caseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
+            caseUUID = newNodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
         } catch (CentralRepoException ignored) {
             //non central repo nodeData won't have a correlation case
             try {
@@ -151,10 +152,10 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
                 //place holder value will be used since correlation attribute was unavailble
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Unable to get current case", ex);
-                caseUUID = OtherOccurrencesPanel.getPlaceholderUUID();
+                caseUUID = OtherOccurrences.getPlaceholderUUID();
             }
         }
-        dataSourceSet.add(new DataSourceColumnItem(nodeData.getCaseName(), nodeData.getDeviceID(), nodeData.getDataSourceName(), caseUUID));
+        dataSourceSet.add(new DataSourceColumnItem(newNodeData.getCaseName(), newNodeData.getDeviceID(), newNodeData.getDataSourceName(), caseUUID));
         fireTableDataChanged();
     }
 
