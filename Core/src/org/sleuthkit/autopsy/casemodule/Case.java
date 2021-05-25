@@ -65,6 +65,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -507,6 +508,7 @@ public class Case {
 
         @Subscribe
         public void publishOsAccountAddedEvent(TskEvent.OsAccountsAddedTskEvent event) {
+            hasData = true;
             for (OsAccount account : event.getOsAcounts()) {
                 eventPublisher.publish(new OsAccountAddedEvent(account));
             }
@@ -521,6 +523,12 @@ public class Case {
 
         @Subscribe
         public void publishOsAccountDeletedEvent(TskEvent.OsAccountsDeletedTskEvent event) {
+            try {
+                hasData = dbHasData();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Unable to retrieve the hasData status from the db", ex);
+            }
+            
             for (Long accountId : event.getOsAcountObjectIds()) {
                 eventPublisher.publish(new OsAccountDeletedEvent(accountId));
             }
@@ -534,6 +542,7 @@ public class Case {
          */
         @Subscribe
         public void publishHostsAddedEvent(TskEvent.HostsAddedTskEvent event) {
+            hasData = true;
             eventPublisher.publish(new HostsAddedEvent(
                     event == null ? Collections.emptyList() : event.getHosts()));
         }
@@ -558,6 +567,12 @@ public class Case {
          */
         @Subscribe
         public void publishHostsDeletedEvent(TskEvent.HostsDeletedTskEvent event) {
+            try {
+                hasData = dbHasData();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Unable to retrieve the hasData status from the db", ex);
+            }
+            
             eventPublisher.publish(new HostsRemovedEvent(
                     event == null ? Collections.emptyList() : event.getHosts()));
         }
@@ -1036,7 +1051,6 @@ public class Case {
                     progressIndicatorTitle = Bundle.Case_progressIndicatorTitle_openingCase();
                     openCaseAction = newCurrentCase::open;
                 }
-                newCurrentCase.initializeDataListners();
                 newCurrentCase.doOpenCaseAction(progressIndicatorTitle, openCaseAction, CaseLockType.SHARED, true, null);
                 currentCase = newCurrentCase;
                 logger.log(Level.INFO, "Opened {0} ({1}) in {2} as the current case", new Object[]{newCurrentCase.getDisplayName(), newCurrentCase.getName(), newCurrentCase.getCaseDirectory()}); //NON-NLS
@@ -1671,16 +1685,20 @@ public class Case {
     }
 
     /**
-     * Queries whether or not the case has data, i.e., whether or not at least
-     * one data source has been added to the case.
-     *
+     * Returns true if there is any data in the case.
+     * 
      * @return True or false.
      */
     public boolean hasData() {
         return hasData;
     }
     
-    public boolean hasDataSources() {
+    /**
+     * Returns true if there is one or more data sources in the case.
+     * 
+     * @return True or false.
+     */
+    public boolean hasDataSource() {
         return hasDataSource;
     }
 
@@ -1695,6 +1713,8 @@ public class Case {
      *                notifyNewDataSource after the data source is added.
      */
     public void notifyAddingDataSource(UUID eventId) {
+        hasDataSource = true;
+        hasData = true;
         eventPublisher.publish(new AddingDataSourceEvent(eventId));
     }
 
@@ -1947,6 +1967,8 @@ public class Case {
             String errorMsg = "Invalid local path provided: " + localPath; // NON-NLS
             throw new TskCoreException(errorMsg, ex);
         }
+        hasData = true;
+        
         Report report = this.caseDb.addReport(normalizedLocalPath, srcModuleName, reportName, parent);
         eventPublisher.publish(new ReportAddedEvent(report));
         return report;
@@ -1975,8 +1997,17 @@ public class Case {
     public void deleteReports(Collection<? extends Report> reports) throws TskCoreException {
         for (Report report : reports) {
             this.caseDb.deleteReport(report);
-            eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), report, null));
         }
+        
+        try {
+            hasData = dbHasData();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to retrieve the hasData status from the db", ex);
+        }
+        
+        for (Report report : reports) {
+            eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), report, null));
+        } 
     }
 
     /**
@@ -2727,13 +2758,12 @@ public class Case {
             String databaseName = metadata.getCaseDatabaseName();
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 caseDb = SleuthkitCase.openCase(Paths.get(metadata.getCaseDirectory(), databaseName).toString());
-                initializeDataParameters();
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());
-                initializeDataParameters();
             } else {
                 throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }
+            updateDataParameters();
         } catch (TskUnsupportedSchemaVersionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_unsupportedSchemaVersionMessage(ex.getLocalizedMessage()), ex);
         } catch (UserPreferencesException ex) {
@@ -3511,22 +3541,6 @@ public class Case {
         }
     }
     
-    private long getDataSourceCount() throws TskCoreException {
-        long numDataSources = 0;
-        String query = "SELECT count(*) AS count FROM data_source_info";
-        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
-            ResultSet resultSet = dbQuery.getResultSet();
-            if (resultSet.next()) {
-                numDataSources = resultSet.getLong("count");
-            }
-        } catch ( SQLException ex) {
-            logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
-            throw new TskCoreException("Error accessing case databse", ex);
-        }
-        
-        return numDataSources;
-    }
-    
     /**
      * Initialize the hasData and hasDataSource parameters by checking the 
      * database.
@@ -3538,67 +3552,65 @@ public class Case {
      * 
      * @throws TskCoreException 
      */
-    private void initializeDataParameters() throws TskCoreException {
-        hasDataSource = getDataSourceCount() > 0;
-        
-        if(!hasDataSource) {
-            // Check to see if there are objects like os accounts or reports
-            // which both have object ids assocated with them.
-            String query = "SELECT count(*) AS count FROM tsk_objects";
-            try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
-                ResultSet resultSet = dbQuery.getResultSet();
-                if (resultSet.next()) {
-                    hasData = resultSet.getLong("count") > 0; 
-                }
-            } catch ( SQLException ex) {
-                logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
-                throw new TskCoreException("Error accessing case databse", ex);
-            }
+    private void updateDataParameters() throws TskCoreException {
+        hasDataSource = dbHasDataSource();
+
+        if (!hasDataSource) {
+            hasData = dbHasData();
         } else {
             hasData = true;
         }
-        
-        if(!hasData) {
-            // No object, but check to see if there are any hosts.
-            String query = "SELECT count(*) AS count FROM tsk_hosts";
-            try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
-                ResultSet resultSet = dbQuery.getResultSet();
-                if (resultSet.next()) {
-                    hasData = resultSet.getLong("count") > 0; 
-                }
-            } catch ( SQLException ex) {
-                logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
-                throw new TskCoreException("Error accessing case databse", ex);
-            }
-        }
-    } 
+    }
     
     /**
-     * Create the listeners, if needed, to update hasDataSource and hasData.
+     * Returns true of there are any data sources in the case database.
+     * 
+     * @return True if this case as a data source.
+     * 
+     * @throws TskCoreException 
      */
-    private void initializeDataListners() {
-        if(!hasDataSource) {
-            addEventTypeSubscriber(Collections.singleton(Case.Events.DATA_SOURCE_ADDED), new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    hasDataSource = true;
-                    hasData = true;
-                }
-            });
+    private boolean dbHasDataSource() throws TskCoreException {
+        String query = "SELECT count(*) AS count FROM (SELECT * FROM data_source_info LIMIT 1)t";
+        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            if (resultSet.next()) {
+                return resultSet.getLong("count") > 0;
+            }
+            return false;
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
+            throw new TskCoreException("Error accessing case databse", ex);
         }
-        
-        if(!hasData) {
-            PropertyChangeListener listener = new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    hasData = true;
-                }                
-            };
-            
-            addEventTypeSubscriber(Collections.singleton(Case.Events.HOSTS_ADDED),listener);
-            addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED),listener);
-            addEventTypeSubscriber(Collections.singleton(Case.Events.REPORT_ADDED),listener);
-        }
+    }
+    
+    /**
+     * Returns true if the case has data. A case has data if there is at least
+     * one row in either the tsk_objects or tsk_hosts table.
+     * 
+     * @return True if there is data in this case.
+     * 
+     * @throws TskCoreException 
+     */
+    private boolean dbHasData() throws TskCoreException {
+        // The LIMIT 1 in the subquery should limit the data returned and 
+        // make the overall query more efficent.
+        String query = "SELECT SUM(cnt) total FROM "
+                + "(SELECT COUNT(*) AS cnt FROM "
+                + "(SELECT * FROM tsk_objects LIMIT 1)t " 
+                + "UNION ALL "
+                + "SELECT COUNT(*) AS cnt FROM "
+                + "(SELECT * FROM tsk_hosts LIMIT 1)r) s";
+        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            if (resultSet.next()) {
+                return resultSet.getLong("total") > 0; 
+            } else {
+                return false;
+            }
+        } catch ( SQLException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
+            throw new TskCoreException("Error accessing case databse", ex);
+        }  
     }
 
     /**
