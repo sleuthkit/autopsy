@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.modules.fileextmismatch;
 
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.python.icu.text.MessageFormat;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -143,8 +143,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
             addToTotals(jobId, System.currentTimeMillis() - startTime);
 
             if (mismatchDetected) {
-                String justification = MessageFormat.format("File has an extension of {0} but mime type is {1}", 
-                        abstractFile.getNameExtension(), detector.getMIMEType(abstractFile));
+                String justification = MessageFormat.format("File has MIME type of {0}", detector.getMIMEType(abstractFile));
                 
                 // add artifact               
                 BlackboardArtifact bart = abstractFile.newAnalysisResult(
