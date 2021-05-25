@@ -77,6 +77,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -782,8 +783,13 @@ class SevenZipExtractor {
 
             // add them to the DB. We wait until the end so that we have the metadata on all of the
             // intermediate nodes since the order is not guaranteed
+            CaseDbTransaction trans = null;
             try {
-                unpackedTree.updateOrAddFileToCaseRec(statusMap, archiveFilePath);
+                trans = Case.getCurrentCaseThrows().getSleuthkitCase().beginTransaction();
+                unpackedTree.updateOrAddFileToCaseRec(statusMap, archiveFilePath, trans);
+                trans.commit();
+                trans = null;
+                
                 if (checkForIngestCancellation(archiveFile)) {
                     return false;
                 }
@@ -809,6 +815,14 @@ class SevenZipExtractor {
             } catch (TskCoreException | NoCurrentCaseException e) {
                 logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure", e); //NON-NLS
                 //TODO decide if anything to cleanup, for now bailing
+                
+                if (trans != null) {
+                    try {
+                        trans.rollback();
+                    } catch (Exception ignored) {
+                        // Ignore exception
+                    }
+                }
             }
 
         } catch (SevenZipException | IllegalArgumentException ex) {
@@ -1390,10 +1404,10 @@ class SevenZipExtractor {
          * Traverse the tree top-down after unzipping is done and create derived
          * files for the entire hierarchy
          */
-        void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
+        void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath, CaseDbTransaction trans) throws TskCoreException, NoCurrentCaseException {
             final FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
             for (UnpackedNode child : rootNode.getChildren()) {
-                updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
+                updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath, trans);
             }
         }
 
@@ -1411,7 +1425,7 @@ class SevenZipExtractor {
          *
          * @throws TskCoreException
          */
-        private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException {
+        private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath, CaseDbTransaction trans) throws TskCoreException {
             DerivedFile df;
             progress.progress(String.format("%s: Adding/updating files in case database (%d of %d)", currentArchiveName, ++nodesProcessed, numItems));
             try {
@@ -1421,7 +1435,7 @@ class SevenZipExtractor {
                     df = fileManager.addDerivedFile(node.getFileName(), node.getLocalRelPath(), node.getSize(),
                             node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
                             node.isIsFile(), node.getParent().getFile(), "", MODULE_NAME,
-                            "", "", TskData.EncodingType.XOR1);
+                            "", "", TskData.EncodingType.XOR1, trans);
                     statusMap.put(getKeyAbstractFile(df), new ZipFileStatusWrapper(df, ZipFileStatus.EXISTS));
                 } else {
                     String key = getKeyAbstractFile(existingFile.getFile());
