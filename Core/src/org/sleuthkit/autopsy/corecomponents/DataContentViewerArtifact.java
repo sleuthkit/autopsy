@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import java.util.Collections;
 import java.util.HashSet;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultTableArtifactContentViewer;
 
@@ -115,8 +116,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
         totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.totalPageLabel.text")); // NOI18N
-        totalPageLabel.setMaximumSize(new java.awt.Dimension(40, 16));
-        totalPageLabel.setPreferredSize(new java.awt.Dimension(25, 16));
+        totalPageLabel.setMaximumSize(null);
+        totalPageLabel.setPreferredSize(null);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 0;
@@ -135,15 +136,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         jPanel1.add(ofLabel, gridBagConstraints);
 
         currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.currentPageLabel.text")); // NOI18N
-        currentPageLabel.setMaximumSize(new java.awt.Dimension(38, 14));
-        currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
-        currentPageLabel.setPreferredSize(new java.awt.Dimension(20, 14));
+        currentPageLabel.setMaximumSize(null);
+        currentPageLabel.setPreferredSize(null);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(4, 7, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(3, 7, 0, 0);
         jPanel1.add(currentPageLabel, gridBagConstraints);
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.pageLabel.text")); // NOI18N
@@ -227,7 +227,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 738, Short.MAX_VALUE)
             .addComponent(artifactContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -235,7 +235,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(artifactContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE))
+                .addComponent(artifactContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 351, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
