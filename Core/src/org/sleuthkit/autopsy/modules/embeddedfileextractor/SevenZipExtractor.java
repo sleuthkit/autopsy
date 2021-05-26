@@ -1432,7 +1432,7 @@ class SevenZipExtractor {
                 String nameInDatabase = getKeyFromUnpackedNode(node, archiveFilePath);
                 ZipFileStatusWrapper existingFile = nameInDatabase == null ? null : statusMap.get(nameInDatabase);
                 if (existingFile == null) {
-                    df = fileManager.addDerivedFile(node.getFileName(), node.getLocalRelPath(), node.getSize(),
+                    df = Case.getCurrentCaseThrows().getSleuthkitCase().addDerivedFile(node.getFileName(), node.getLocalRelPath(), node.getSize(),
                             node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
                             node.isIsFile(), node.getParent().getFile(), "", MODULE_NAME,
                             "", "", TskData.EncodingType.XOR1, trans);
@@ -1457,7 +1457,7 @@ class SevenZipExtractor {
                     }
                 }
                 node.setFile(df);
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Error adding a derived file to db:" + node.getFileName(), ex); //NON-NLS
                 throw new TskCoreException(
                         NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackedTree.exception.msg",
@@ -1491,7 +1491,7 @@ class SevenZipExtractor {
 
             //recurse adding the children if this file was incomplete the children presumably need to be added
             for (UnpackedNode child : node.getChildren()) {
-                updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath));
+                updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath), trans);
             }
         }
 
