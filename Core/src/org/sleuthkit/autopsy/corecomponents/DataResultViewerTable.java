@@ -87,6 +87,7 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
+import org.sleuthkit.datamodel.Score.Significance;
 
 /**
  * A tabular result viewer that displays the children of the given root node
@@ -1263,6 +1264,29 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         private static final long serialVersionUID = 1L;
 
+        /**
+         * Returns the icon denoted by the Score's Significance.
+         * @param significance The Score's Significance.
+         * @return The icon (or null) related to that significance.
+         */
+        private ImageIcon getIcon(Significance significance) {
+            if (significance == null) {
+                return null;
+            }
+            
+            switch (significance) {
+                case NOTABLE:
+                    return NOTABLE_ICON_SCORE;
+                case LIKELY_NOTABLE: 
+                    return INTERESTING_SCORE_ICON;
+                case LIKELY_NONE:
+                case NONE:
+                case UNKNOWN:
+                default:
+                    return null;
+            }
+        }
+        
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -1283,19 +1307,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 switchValue = value;
             }
             setText("");
-            if ((switchValue instanceof Score)) {
-
-                switch ((Score) switchValue) {
-                    case INTERESTING_SCORE:
-                        setIcon(INTERESTING_SCORE_ICON);
-                        break;
-                    case NOTABLE_SCORE:
-                        setIcon(NOTABLE_ICON_SCORE);
-                        break;
-                    case NO_SCORE:
-                    default:
-                        setIcon(null);
-                }
+            if ((switchValue instanceof org.sleuthkit.datamodel.Score)) {
+                setIcon(getIcon(((org.sleuthkit.datamodel.Score) switchValue).getSignificance()));
             } else {
                 setIcon(null);
             }

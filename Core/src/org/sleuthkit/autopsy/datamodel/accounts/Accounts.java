@@ -81,6 +81,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.Type;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -569,7 +570,7 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<Long> list) {
             String query
-                    = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
+                    = "SELECT blackboard_artifacts.artifact_obj_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
@@ -581,7 +582,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     ResultSet rs = results.getResultSet();) {
                 List<Long> tempList = new ArrayList<>();
                 while (rs.next()) {
-                    tempList.add(rs.getLong("artifact_id")); // NON-NLS
+                    tempList.add(rs.getLong("artifact_obj_id")); // NON-NLS
                 }
                 list.addAll(tempList);
             } catch (TskCoreException | SQLException ex) {
@@ -594,7 +595,7 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         protected Node[] createNodesForKey(Long t) {
             try {
-                return new Node[]{new BlackboardArtifactNode(skCase.getBlackboardArtifact(t))};
+                return new Node[]{new BlackboardArtifactNode(skCase.getBlackboard().getDataArtifactById(t))};
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error get black board artifact with id " + t, ex);
                 return new Node[0];
@@ -1520,7 +1521,7 @@ final public class Accounts implements AutopsyVisitableItem {
             }
 
             try {
-                BlackboardArtifact art = skCase.getBlackboardArtifact(artifactID);
+                DataArtifact art = skCase.getBlackboard().getDataArtifactById(artifactID);
                 return new Node[]{new AccountArtifactNode(art)};
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
