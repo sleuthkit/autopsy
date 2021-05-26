@@ -486,10 +486,5 @@ public final class FileTypes implements AutopsyVisitableItem {
         public List<DataArtifact> getAllDataArtifacts() throws TskCoreException {
             return content.getAllDataArtifacts();
         }
-
-        @Override
-        public boolean hasDataArtifacts() throws TskCoreException {
-            return content.hasDataArtifacts();
-        }
     }
 }

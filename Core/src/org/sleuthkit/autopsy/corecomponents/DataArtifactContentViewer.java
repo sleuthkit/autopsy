@@ -38,12 +38,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import java.util.Collections;
 import java.util.HashSet;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultTableArtifactContentViewer;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.Category.ANALYSIS_RESULT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.Category.DATA_ARTIFACT;
 import org.sleuthkit.datamodel.DataArtifact;
 
 /**
@@ -347,12 +347,13 @@ public class DataArtifactContentViewer extends javax.swing.JPanel implements Dat
         for (Content content : node.getLookup().lookupAll(Content.class)) {
             if ((content != null) && (!(content instanceof DataArtifact)) && (!(content instanceof AnalysisResult))) {
                 try {
-                    return content.hasDataArtifacts();
-                } catch (TskException ex) {
+                    return Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().hasDataArtifacts(content.getId());
+                } catch (NoCurrentCaseException | TskException ex) {
                     logger.log(Level.SEVERE, "Couldn't get count of DataArtifacts for content", ex); //NON-NLS
                 }
             }
         }
+        
         return false;
     }
 
@@ -382,7 +383,15 @@ public class DataArtifactContentViewer extends javax.swing.JPanel implements Dat
             return LESS_PREFERRED;
         }
 
-        return MORE_PREFERRED;
+        switch (artifactType.getCategory()) {
+            // data artifacts should be more preferred
+            case DATA_ARTIFACT:
+                return MORE_PREFERRED;
+            // everything else is less preferred
+            case ANALYSIS_RESULT:
+            default:
+                return LESS_PREFERRED;
+        }
     }
 
     private ArtifactContentViewer getSupportingViewer(DataArtifact artifact) {
