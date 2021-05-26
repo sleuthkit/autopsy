@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.centralrepository.contentviewer;
+package org.sleuthkit.autopsy.centralrepository.application;
 
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskDataException;
 /**
  * Class for populating the Other Occurrences tab
  */
-class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
+public class NodeData {
 
     // For now hard code the string for the central repo files type, since 
     // getting it dynamically can fail.
@@ -56,7 +56,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      * @param type     The type of the instance
      * @param value    The value of the instance
      */
-    OtherOccurrenceNodeInstanceData(CorrelationAttributeInstance instance, CorrelationAttributeInstance.Type type, String value) {
+    public NodeData(CorrelationAttributeInstance instance, CorrelationAttributeInstance.Type type, String value) {
         caseName = instance.getCorrelationCase().getDisplayName();
         deviceID = instance.getCorrelationDataSource().getDeviceID();
         dataSourceName = instance.getCorrelationDataSource().getName();
@@ -77,7 +77,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @throws CentralRepoException
      */
-    OtherOccurrenceNodeInstanceData(AbstractFile newFile, Case autopsyCase) throws CentralRepoException {
+    NodeData(AbstractFile newFile, Case autopsyCase) throws CentralRepoException {
         caseName = autopsyCase.getDisplayName();
         try {
             DataSource dataSource = autopsyCase.getSleuthkitCase().getDataSource(newFile.getDataSource().getId());
@@ -119,7 +119,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @param newComment The new comment
      */
-    void updateComment(String newComment) {
+    public void updateComment(String newComment) {
         comment = newComment;
     }
 
@@ -129,7 +129,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      * @return true if this node was created from a central repo instance, false
      *         otherwise
      */
-    boolean isCentralRepoNode() {
+    public boolean isCentralRepoNode() {
         return (originalCorrelationInstance != null);
     }
 
@@ -138,7 +138,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the case name
      */
-    String getCaseName() {
+    public String getCaseName() {
         return caseName;
     }
 
@@ -147,7 +147,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the device ID
      */
-    String getDeviceID() {
+    public String getDeviceID() {
         return deviceID;
     }
 
@@ -156,7 +156,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the data source name
      */
-    String getDataSourceName() {
+    public String getDataSourceName() {
         return dataSourceName;
     }
 
@@ -165,7 +165,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the file path
      */
-    String getFilePath() {
+    public String getFilePath() {
         return filePath;
     }
 
@@ -174,7 +174,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the type
      */
-    String getType() {
+    public String getType() {
         return typeStr;
     }
 
@@ -183,7 +183,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the value
      */
-    String getValue() {
+    public String getValue() {
         return value;
     }
 
@@ -192,7 +192,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the known status
      */
-    TskData.FileKnown getKnown() {
+    public TskData.FileKnown getKnown() {
         return known;
     }
 
@@ -201,7 +201,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the comment
      */
-    String getComment() {
+    public String getComment() {
         return comment;
     }
 
@@ -211,7 +211,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the original abstract file
      */
-    AbstractFile getAbstractFile() throws CentralRepoException {
+    public AbstractFile getAbstractFile() throws CentralRepoException {
         if (originalAbstractFile == null) {
             throw new CentralRepoException("AbstractFile is null");
         }
@@ -226,7 +226,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @throws CentralRepoException
      */
-    CorrelationAttributeInstance getCorrelationAttributeInstance() throws CentralRepoException {
+    public CorrelationAttributeInstance getCorrelationAttributeInstance() throws CentralRepoException {
         if (originalCorrelationInstance == null) {
             throw new CentralRepoException("CorrelationAttributeInstance is null");
         }
@@ -239,7 +239,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      *
      * @return the CSV_ITEM_SEPARATOR string
      */
-    static String getCsvItemSeparator() {
+    public static String getCsvItemSeparator() {
         return CSV_ITEM_SEPARATOR;
     }
 
