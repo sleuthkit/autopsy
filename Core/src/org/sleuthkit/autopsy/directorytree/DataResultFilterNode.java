@@ -359,14 +359,16 @@ public class DataResultFilterNode extends FilterNode {
                 actionsList.add(ExtractAction.getInstance());
                 actionsList.add(ExportCSVAction.getInstance());
                 actionsList.add(null); // creates a menu separator
-                actionsList.add(AddContentTagAction.getInstance());
                 
-                // don't show AddBlackboardArtifactTagAction for data artifacts.
-                if (n.getLookup().lookupAll(DataArtifact.class).isEmpty()) {
-                    actionsList.add(AddBlackboardArtifactTagAction.getInstance());
+                // don't show AddContentTagAction for data artifacts.
+                if (!(ban.getArtifact() instanceof DataArtifact)) {
+                    actionsList.add(AddContentTagAction.getInstance());
                 }
                 
-                if (selectedFilesList.size() == 1) {
+                actionsList.add(AddBlackboardArtifactTagAction.getInstance());
+
+                // don't show DeleteFileContentTagAction for data artifacts.
+                if ((!(ban.getArtifact() instanceof DataArtifact)) && (selectedFilesList.size() == 1)) {
                     actionsList.add(DeleteFileContentTagAction.getInstance());
                 }
             } else {
