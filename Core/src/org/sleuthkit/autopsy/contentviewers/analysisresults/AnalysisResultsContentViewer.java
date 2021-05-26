@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.contentviewers.analysisresults;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,10 +32,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.JLabel;
+import javax.swing.text.EditorKit;
+import javax.swing.text.html.HTMLEditorKit;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.contentviewers.Utilities;
+import org.sleuthkit.autopsy.contentviewers.application.Annotations;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
@@ -47,7 +57,48 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
     private static Logger logger = Logger.getLogger(AnalysisResultsContentViewer.class.getName());
     private static final int PREFERRED_VALUE = 6;
-    
+    private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
+
+    private static final String DEFAULT_FONT_FAMILY = new JLabel().getFont().getFamily();
+    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
+    private static final Color DEFAULT_BACKGROUND = new JLabel().getBackground();
+
+    // html stylesheet classnames for components
+    public static final String MESSAGE_CLASSNAME = "message";
+    public static final String SUBSECTION_CLASSNAME = "subsection";
+    public static final String SUBHEADER_CLASSNAME = "subheader";
+    public static final String SECTION_CLASSNAME = "section";
+    public static final String HEADER_CLASSNAME = "header";
+
+    // how big the subheader should be
+    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 12 / 11;
+
+    // how big the header should be
+    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 14 / 11;
+
+    // the subsection indent
+    private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
+
+    // spacing occurring after an item
+    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE * 2;
+    private static final int DEFAULT_SUBSECTION_SPACING = DEFAULT_FONT_SIZE / 2;
+    private static final int CELL_SPACING = DEFAULT_FONT_SIZE / 2;
+
+    // additional styling for components
+    private static final String STYLE_SHEET_RULE
+            = String.format(" .%s { font-family: %s; font-size: %dpt; font-style:italic; margin: 0px; padding: 0px; } ",
+                    Annotations.MESSAGE_CLASSNAME, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE)
+            + String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; margin-top: %dpx; padding: 0px; } ",
+                    Annotations.SUBHEADER_CLASSNAME, DEFAULT_FONT_FAMILY, SUBHEADER_FONT_SIZE, DEFAULT_SUBSECTION_SPACING)
+            + String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; padding: 0px; } ",
+                    Annotations.HEADER_CLASSNAME, DEFAULT_FONT_FAMILY, HEADER_FONT_SIZE)
+            + String.format(" td { vertical-align: top; font-family: %s; font-size:%dpt; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px;} ",
+                    DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, CELL_SPACING)
+            + String.format(" th { vertical-align: top; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px} ",
+                    DEFAULT_FONT_SIZE, CELL_SPACING)
+            + String.format(" .%s { margin: %dpx 0px; padding-left: %dpx; } ", Annotations.SUBSECTION_CLASSNAME, DEFAULT_SUBSECTION_SPACING, DEFAULT_SUBSECTION_LEFT_PAD)
+            + String.format(" .%s { margin-bottom: %dpx; } ", Annotations.SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
+
     private static Optional<Score> getAggregateScore(Collection<AnalysisResult> analysisResults) {
         return analysisResults.stream()
                 .map(AnalysisResult::getScore)
@@ -57,7 +108,6 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
     private static String normalizeAttr(String originalAttrStr) {
         return (originalAttrStr == null) ? "" : originalAttrStr.trim();
     }
-    
 
     private static class ResultDisplayAttributes {
 
@@ -161,7 +211,7 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
         Map<Long, AnalysisResult> allAnalysisResults = new HashMap<>();
         Optional<AnalysisResult> selectedResult = Optional.empty();
-        
+
         AbstractFile abstractFile = node.getLookup().lookup(AbstractFile.class);
         if (abstractFile != null) {
             try {
@@ -175,41 +225,109 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
         Collection<? extends AnalysisResult> analysisResults = node.getLookup().lookupAll(AnalysisResult.class);
         if (analysisResults.size() > 0) {
-            
-            List<AnalysisResult> filteredResults =  analysisResults.stream()
+
+            List<AnalysisResult> filteredResults = analysisResults.stream()
                     .filter(ar -> ar != null && ar.getScore() != null)
                     .collect(Collectors.toList());
-            
+
             filteredResults.forEach((ar) -> allAnalysisResults.put(ar.getArtifactID(), ar));
-            
+
             selectedResult = filteredResults.stream()
-                    .max((a,b) -> a.getScore().compareTo(b.getScore()));
+                    .max((a, b) -> a.getScore().compareTo(b.getScore()));
         }
-        
+
         return new NodeAnalysisResults(allAnalysisResults.values(), selectedResult);
     }
-    
-    private static void render(Node node) {
+
+    private static void refresh(Node node) {
         NodeAnalysisResults nodeResults = getAnalysisResults(node);
         List<AnalysisResult> orderedAnalysisResults = getScoreOrderedResults(nodeResults.getAnalysisResults());
         List<ResultDisplayAttributes> displayAttributes = getDisplayAttributes(orderedAnalysisResults);
-        
-        // GVDTODO
-        
+
+        Optional<Score> aggregateScore = displayAttributes.stream()
+                .findFirst()
+                .flatMap(dispAttrs -> Optional.ofNullable(dispAttrs.getAnalysisResult().getScore()));
+
+        render(displayAttributes, aggregateScore);
+
         Optional<AnalysisResult> selectedResult = nodeResults.getSelectedResult();
         if (selectedResult.isPresent()) {
             // GVDTODO
         }
     }
 
+    private static Document render(List<ResultDisplayAttributes> displayAttributes, Optional<Score> aggregateScore) {
+        Document html = Jsoup.parse(EMPTY_HTML);
+        Element body = html.getElementsByTag("body").first();
+
+        if (aggregateScore.isPresent()) {
+            appendAggregateScore(body, aggregateScore.get());
+        }
+
+        for (int idx = 0; idx < displayAttributes.size(); idx++) {
+            ResultDisplayAttributes resultAttrs = displayAttributes.get(idx);
+            appendResult(body, idx, resultAttrs);
+        }
+
+        return html;
+    }
+
+    @Messages("AnalysisResultsContentViewer_appendAggregateScore_displayKey=Aggregate Score")
+    private static void appendAggregateScore(Element body, Score score) {
+        appendSection(body, MessageFormat.format("{0}: {1}",
+                Bundle.AnalysisResultsContentViewer_appendAggregateScore_displayKey(),
+                score.getSignificance().getDisplayName()));
+    }
+
+    @Messages({"# {0} - analysisResultsNumber",
+        "AnalysisResultsContentViewer_appendResult_headerKey=Analysis Result {0}"
+    })
+    private static void appendResult(Element parent, int index, ResultDisplayAttributes attrs) {
+        Element sectionElement = appendSection(parent, Bundle.AnalysisResultsContentViewer_appendResult_headerKey(index + 1));
+
+        Element table = parent.appendElement("table");
+        Element tableBody = table.appendElement("tbody");
+
+        for (Pair<String, String> keyVal : attrs.getAttributesToDisplay()) {
+            Element row = tableBody.appendElement("tr");
+            String keyString = keyVal.getKey() == null ? "" : keyVal.getKey() + ":";
+            row.appendElement("td").text(keyString);
+            String valueString = keyVal.getValue() == null ? "" : keyVal.getValue();
+            row.appendElement("td").text(valueString);
+        }
+    }
+
+    /**
+     * Appends a new section with a section header to the parent element.
+     *
+     * @param parent     The element to append this section to.
+     * @param headerText The text for the section.
+     *
+     * @return The div for the new section.
+     */
+    private static Element appendSection(Element parent, String headerText) {
+        Element sectionDiv = parent.appendElement("div");
+        sectionDiv.attr("class", SECTION_CLASSNAME);
+        Element header = sectionDiv.appendElement("h1");
+        header.text(headerText);
+        header.attr("class", HEADER_CLASSNAME);
+        return sectionDiv;
+    }
+
     private Node selectedNode;
-    
-    
+
     /**
      * Creates new form AnalysisResultsContentViewer
      */
     public AnalysisResultsContentViewer() {
         initComponents();
+        Utilities.configureTextPaneAsHtml(textPane);
+        // get html editor kit and apply additional style rules
+        EditorKit editorKit = textPane.getEditorKit();
+        if (editorKit instanceof HTMLEditorKit) {
+            HTMLEditorKit htmlKit = (HTMLEditorKit) editorKit;
+            htmlKit.getStyleSheet().addRule(STYLE_SHEET_RULE);
+        }
     }
 
     @NbBundle.Messages({
@@ -250,7 +368,23 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
     @Override
     public boolean isSupported(Node node) {
-        return getAnalysisResults(node).getAnalysisResults().size() > 0;
+        if (node == null) {
+            return false;
+        }
+
+        AbstractFile abstractFile = node.getLookup().lookup(AbstractFile.class);
+        if (abstractFile != null) {
+            try {
+                if (abstractFile.hasAnalysisResults()) {
+                    return true;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Unable to get analysis results for file with obj id " + abstractFile.getId(), ex);
+            }
+        }
+
+        Collection<? extends AnalysisResult> analysisResults = node.getLookup().lookupAll(AnalysisResult.class);
+        return (!analysisResults.isEmpty());
     }
 
     @Override
@@ -267,19 +401,36 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane();
+        textPane = new javax.swing.JTextPane();
+
+        setMaximumSize(null);
+        setMinimumSize(new java.awt.Dimension(250, 250));
+        setPreferredSize(null);
+
+        scrollPane.setMaximumSize(null);
+        scrollPane.setMinimumSize(null);
+        scrollPane.setPreferredSize(null);
+
+        textPane.setMaximumSize(null);
+        textPane.setMinimumSize(null);
+        textPane.setPreferredSize(null);
+        scrollPane.setViewportView(textPane);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextPane textPane;
     // End of variables declaration//GEN-END:variables
 }
