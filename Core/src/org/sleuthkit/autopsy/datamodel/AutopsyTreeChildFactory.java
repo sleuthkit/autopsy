@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -75,17 +76,17 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             }
         }
     };
-
-    @Override
-    protected void addNotify() {
-        super.addNotify();
-        Case.addEventTypeSubscriber(LISTENING_EVENTS, pcl);
+    
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+    
+    public AutopsyTreeChildFactory() {
+        Case.addEventTypeSubscriber(LISTENING_EVENTS, weakPcl);
     }
 
     @Override
-    protected void removeNotify() {
-        super.removeNotify();
-        Case.removeEventTypeSubscriber(LISTENING_EVENTS, pcl);
+    protected void finalize() throws Throwable {
+        super.finalize();
+        Case.removeEventTypeSubscriber(LISTENING_EVENTS, weakPcl);
     }
 
     /**

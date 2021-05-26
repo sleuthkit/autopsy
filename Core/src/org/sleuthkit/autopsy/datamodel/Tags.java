@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -213,6 +214,8 @@ public class Tags implements AutopsyVisitableItem {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         /**
          * Constructor
@@ -221,21 +224,17 @@ public class Tags implements AutopsyVisitableItem {
          */
         TagNameNodeFactory(long objId) {
             this.filteringDSObjId = objId;
-
-        }
-
-        @Override
-        protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
             tagResults.update();
             tagResults.addObserver(this);
         }
 
         @Override
-        protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
+        protected void finalize() throws Throwable {
+            super.finalize();
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
             tagResults.deleteObserver(this);
         }
 

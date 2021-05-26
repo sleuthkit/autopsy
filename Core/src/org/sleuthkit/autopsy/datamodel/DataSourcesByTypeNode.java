@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.openide.util.WeakListeners;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -71,15 +72,17 @@ public class DataSourcesByTypeNode extends DisplayableItemNode {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
-        @Override
-        protected void addNotify() {
-            Case.addEventTypeSubscriber(UPDATE_EVTS, pcl);
+        public DataSourcesByTypeChildren() {
+            Case.addEventTypeSubscriber(UPDATE_EVTS, weakPcl);
         }
 
         @Override
-        protected void removeNotify() {
-            Case.removeEventTypeSubscriber(UPDATE_EVTS, pcl);
+        public void finalize() throws Throwable {
+            super.finalize();
+            Case.removeEventTypeSubscriber(UPDATE_EVTS, weakPcl);
         }
 
         @Override

@@ -86,6 +86,7 @@ public class PersonGroupingNode extends DisplayableItemNode {
          */
         PersonChildren(Person person) {
             this.person = person;
+            Case.addEventTypeSubscriber(CHILD_EVENTS, weakPcl);
         }
 
         /**
@@ -100,15 +101,13 @@ public class PersonGroupingNode extends DisplayableItemNode {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(hostAddedDeletedPcl, null);
 
         @Override
-        protected void addNotify() {
-            Case.addEventTypeSubscriber(CHILD_EVENTS, hostAddedDeletedPcl);
-        }
-
-        @Override
-        protected void removeNotify() {
-            Case.removeEventTypeSubscriber(CHILD_EVENTS, hostAddedDeletedPcl);
+        protected void finalize() throws Throwable {
+            super.finalize();
+            Case.removeEventTypeSubscriber(CHILD_EVENTS, weakPcl);
         }
 
         @Override

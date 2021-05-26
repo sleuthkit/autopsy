@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -429,13 +429,13 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     private abstract class DetachableObserverChildFactory<X> extends ChildFactory.Detachable<X> implements Observer {
 
-        @Override
-        protected void addNotify() {
+        DetachableObserverChildFactory() {
             keywordResults.addObserver(this);
         }
 
         @Override
-        protected void removeNotify() {
+        protected void finalize() throws Throwable {
+            super.finalize();
             keywordResults.deleteObserver(this);
         }
 

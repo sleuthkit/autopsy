@@ -65,18 +65,7 @@ public class HostNode extends DisplayableItemNode {
 
         private final Host host;
         private final Function<DataSourceGrouping, Node> dataSourceToNode;
-
-        /**
-         * Main constructor.
-         *
-         * @param dataSourceToItem Converts a data source to a node.
-         * @param host The host.
-         */
-        HostGroupingChildren(Function<DataSourceGrouping, Node> dataSourceToNode, Host host) {
-            this.host = host;
-            this.dataSourceToNode = dataSourceToNode;
-        }
-
+        
         /**
          * Listener for handling DATA_SOURCE_ADDED / HOST_DELETED events.
          * A host may have been deleted as part of a merge, which means its data sources could
@@ -92,15 +81,25 @@ public class HostNode extends DisplayableItemNode {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(dataSourceAddedPcl, null);
 
-        @Override
-        protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceToItem Converts a data source to a node.
+         * @param host The host.
+         */
+        HostGroupingChildren(Function<DataSourceGrouping, Node> dataSourceToNode, Host host) {
+            this.host = host;
+            this.dataSourceToNode = dataSourceToNode;
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), weakPcl);
         }
 
         @Override
-        protected void removeNotify() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
+        protected void finalize() throws Throwable {
+            super.finalize();
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), weakPcl);
         }
 
         @Override
