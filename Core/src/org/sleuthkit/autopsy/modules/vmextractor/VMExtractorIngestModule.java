@@ -119,7 +119,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         try {
             // look for all VM files
             vmFiles = findVirtualMachineFiles(dataSource);
-            vmFiles = removeNonVHDFiles(vmFiles);
+            vmFiles = removeNonVMFiles(vmFiles);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error querying case database", ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -241,23 +241,35 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     }
     
     /**
-     * Check all the files and if a file is a vhd then check to make sure it is a valid vhd using the mimetype
+     * Check all the files and if a file is a vhd then check to make sure it is a valid vhd using the mimetype. We are not
+     * checking the mimetype for VMDK's at this point in time.
+     * 
      * @param vmFiles List of virtual machine abstract files to look at
+     * 
      * @return List of abstract files of virtual machine files.
      */
-    private static List<AbstractFile> removeNonVHDFiles(List<AbstractFile> vmFiles) {
+    private static List<AbstractFile> removeNonVMFiles(List<AbstractFile> vmFiles) {
         List<AbstractFile> vFile = new ArrayList<>();
 
         for (AbstractFile vmFile : vmFiles) {
             if (vmFile.getNameExtension().equalsIgnoreCase("vhd")) {
-                FileTypeDetector fileTypeDetector = null;
-                try {
-                    fileTypeDetector = new FileTypeDetector();
-                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                    logger.log(Level.WARNING, String.format("Unable to create file type detector for determining MIME type for file %s with id of %d", vmFile.getName(), vmFile.getId()));
-                }
-                String mimeType = fileTypeDetector.getMIMEType(vmFile); 
-                if (mimeType.equalsIgnoreCase("application/x-vhd")) {
+                String fileMimeType = vmFile.getMIMEType();
+                if (fileMimeType == null) {
+                    FileTypeDetector fileTypeDetector = null;
+                    try {
+                        fileTypeDetector = new FileTypeDetector();
+                    } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                        logger.log(Level.WARNING, String.format("Unable to create file type detector for determining MIME type for file %s with id of %d", vmFile.getName(), vmFile.getId()));
+                    }
+                    fileMimeType = fileTypeDetector.getMIMEType(vmFile);
+                    try {
+                        vmFile.setMIMEType(fileMimeType);
+                        vmFile.save();
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, String.format("Unable to save mimetype of %s for file %s with id of %d", fileMimeType, vmFile.getName(), vmFile.getId()));                    
+                    }
+                }               
+                if (fileMimeType.equalsIgnoreCase("application/x-vhd")) {
                     vFile.add(vmFile);
                 }
             } else {
