@@ -653,13 +653,14 @@ public class Artifacts {
                         arts = (filteringDSObjId > 0)
                             ? blackboard.getAnalysisResultsByType(type.getTypeID(), filteringDSObjId)
                             : blackboard.getAnalysisResultsByType(type.getTypeID());
+                        break;
                     case DATA_ARTIFACT:
                     default:
                         arts = (filteringDSObjId > 0)
                             ? blackboard.getDataArtifacts(type.getTypeID(), filteringDSObjId)
                             : blackboard.getDataArtifacts(type.getTypeID());
+                        break;
                 }
-
 
                 for (BlackboardArtifact art : arts) {
                     //Cache attributes while we are off the EDT.
