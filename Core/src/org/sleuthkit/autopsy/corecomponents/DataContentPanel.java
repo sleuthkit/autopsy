@@ -140,6 +140,8 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
             workerThread = null;
         }
         
+        currentNode = null;
+        
         // Reset everything
         for (int index = 0; index < jTabbedPane1.getTabCount(); index++) {
             jTabbedPane1.setEnabledAt(index, false);
@@ -299,7 +301,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
             try {
                 WorkerResults results = get();
-
+                currentNode = node;
                 if (results != null) {
                     updateTabs(results.getNode(), results.getSupportedIndices(), results.getPreferredViewerIndex());
                 }
