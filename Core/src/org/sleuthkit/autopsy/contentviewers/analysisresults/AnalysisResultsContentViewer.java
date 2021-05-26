@@ -42,6 +42,9 @@ import org.jsoup.nodes.Element;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.contentviewers.application.Annotations;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
@@ -53,6 +56,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Displays a list of analysis results as a content viewer.
  */
+@ServiceProvider(service = DataContentViewer.class, position = 7)
 public class AnalysisResultsContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static Logger logger = Logger.getLogger(AnalysisResultsContentViewer.class.getName());
@@ -239,23 +243,6 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
         return new NodeAnalysisResults(allAnalysisResults.values(), selectedResult);
     }
 
-    private static void refresh(Node node) {
-        NodeAnalysisResults nodeResults = getAnalysisResults(node);
-        List<AnalysisResult> orderedAnalysisResults = getScoreOrderedResults(nodeResults.getAnalysisResults());
-        List<ResultDisplayAttributes> displayAttributes = getDisplayAttributes(orderedAnalysisResults);
-
-        Optional<Score> aggregateScore = displayAttributes.stream()
-                .findFirst()
-                .flatMap(dispAttrs -> Optional.ofNullable(dispAttrs.getAnalysisResult().getScore()));
-
-        render(displayAttributes, aggregateScore);
-
-        Optional<AnalysisResult> selectedResult = nodeResults.getSelectedResult();
-        if (selectedResult.isPresent()) {
-            // GVDTODO
-        }
-    }
-
     private static Document render(List<ResultDisplayAttributes> displayAttributes, Optional<Score> aggregateScore) {
         Document html = Jsoup.parse(EMPTY_HTML);
         Element body = html.getElementsByTag("body").first();
@@ -358,12 +345,32 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
     @Override
     public void resetComponent() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        textPane.setText("");
     }
 
     @Override
     public void setNode(Node selectedNode) {
+        // GVDTODO comment, put in swing worker, scroll to location
+        NodeAnalysisResults nodeResults = getAnalysisResults(selectedNode);
+        List<AnalysisResult> orderedAnalysisResults = getScoreOrderedResults(nodeResults.getAnalysisResults());
+        List<ResultDisplayAttributes> displayAttributes = getDisplayAttributes(orderedAnalysisResults);
+
+        Optional<Score> aggregateScore = displayAttributes.stream()
+                .findFirst()
+                .flatMap(dispAttrs -> Optional.ofNullable(dispAttrs.getAnalysisResult().getScore()));
+
+        Document document = render(displayAttributes, aggregateScore);
+
+        Optional<AnalysisResult> selectedResult = nodeResults.getSelectedResult();
+        if (selectedResult.isPresent()) {
+            // GVDTODO
+        }
+        
+        textPane.setText(document.html());
+        textPane.setCaretPosition(0);
+                
         this.selectedNode = selectedNode;
+        
     }
 
     @Override
@@ -375,10 +382,10 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
         AbstractFile abstractFile = node.getLookup().lookup(AbstractFile.class);
         if (abstractFile != null) {
             try {
-                if (abstractFile.hasAnalysisResults()) {
+                if (Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().hasAnalysisResults(abstractFile.getId())) {
                     return true;
                 }
-            } catch (TskCoreException ex) {
+            } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Unable to get analysis results for file with obj id " + abstractFile.getId(), ex);
             }
         }
@@ -406,14 +413,12 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
         setMaximumSize(null);
         setMinimumSize(new java.awt.Dimension(250, 250));
-        setPreferredSize(null);
 
         scrollPane.setMaximumSize(null);
         scrollPane.setMinimumSize(null);
-        scrollPane.setPreferredSize(null);
 
+        textPane.setBackground(DEFAULT_BACKGROUND);
         textPane.setMaximumSize(null);
-        textPane.setMinimumSize(null);
         textPane.setPreferredSize(null);
         scrollPane.setViewportView(textPane);
 
