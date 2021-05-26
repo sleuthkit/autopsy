@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.awt.Cursor;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -36,9 +35,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.FsContent;
@@ -238,20 +237,11 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
     })
     @Override
     public String getTitle(Node node) {
-        if (node != null) {
-            Collection<? extends BlackboardArtifact> artifacts = node.getLookup().lookupAll(BlackboardArtifact.class);
-            for (BlackboardArtifact art : artifacts) {
-                try {
-                    if (art != null && art.getType().getCategory() == Category.DATA_ARTIFACT) {
-                        return Bundle.Metadata_dataArtifactTitle();
-                    }
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Unable to get artifact type for artifact with id: " + art.getArtifactID(), ex);
-                }
-            }
+        if (node != null && !node.getLookup().lookupAll(DataArtifact.class).isEmpty()) {
+            return Bundle.Metadata_dataArtifactTitle();
+        } else {
+            return NbBundle.getMessage(this.getClass(), "Metadata.title");    
         }
-
-        return NbBundle.getMessage(this.getClass(), "Metadata.title");
     }
     
     
