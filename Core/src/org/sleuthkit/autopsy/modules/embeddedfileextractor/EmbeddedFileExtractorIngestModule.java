@@ -94,8 +94,8 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          *
          */
         Case currentCase = Case.getCurrentCase();
-        String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-        String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+        String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getOutputFolderName()).toString();
+        String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getOutputFolderName()).toString();
 
         if (refCounter.incrementAndGet(jobId) == 1) {
 
