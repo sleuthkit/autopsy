@@ -58,10 +58,8 @@ FileSorter.SortingMethod.keywordlist.displayName=Keyword List Names
 FileSorter.SortingMethod.pageViews.displayName=Page Views
 ResultDomain_getDefaultCategory=Uncategorized
 ResultDomain_noAccountTypes=Unknown
-ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.
-ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.
-ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag.
-ResultFile.score.taggedFile.description=At least one instance of the file has been tagged.
+# {0} - significanceDisplayName
+ResultFile_updateScoreAndDescription_description=Has an {0} analysis result score
 SearchData.AttributeType.Domain.displayName=Domain
 SearchData.FileSize.100kbto1mb=: 100KB-1MB
 SearchData.FileSize.100mbto1gb=: 100MB-1GB
