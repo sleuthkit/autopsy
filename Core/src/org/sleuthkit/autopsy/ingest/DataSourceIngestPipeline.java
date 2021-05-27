@@ -90,15 +90,11 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
             ingestJobPipeline.switchDataSourceIngestProgressBarToIndeterminate();
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             logger.log(Level.INFO, "{0} analysis of {1} starting", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS
-            ProcessResult result = module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobPipeline));
+            module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobPipeline));
             logger.log(Level.INFO, "{0} analysis of {1} finished", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS            
             if (!ingestJobPipeline.isCancelled() && ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
                 ingestJobPipeline.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
-            }
-            // See JIRA-7449            
-//            if (result == ProcessResult.ERROR) {
-//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (data source objId = %d)", getDisplayName(), dataSource.getName(), dataSource.getId())); //NON-NLS
-//            }            
+            }           
         }
 
     }

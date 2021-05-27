@@ -139,6 +139,14 @@ public final class IngestJob {
     }
 
     /**
+     * RJCTODO
+     * @return 
+     */
+    List<AbstractFile> getFiles() {
+        return files;
+    }
+    
+    /**
      * Checks to see if this ingest job has at least one non-empty ingest module
      * pipeline (first or second stage data-source-level pipeline or file-level
      * pipeline).
@@ -183,8 +191,7 @@ public final class IngestJob {
      *
      * @return A collection of ingest module start up errors, empty on success.
      */
-    List<IngestModuleError> start() {
-
+    List<IngestModuleError> start() throws InterruptedException {
         /*
          * Set up the ingest job pipelines, one for each data source to be
          * ingested by this job.

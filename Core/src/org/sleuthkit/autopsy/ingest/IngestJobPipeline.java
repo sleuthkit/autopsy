@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
@@ -55,97 +56,84 @@ import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- * An ingest pipeline that works with the ingest tasks scheduler to coordinate
- * the creation, scheduling, and execution of ingest tasks for one of the data
- * sources in an ingest job. An ingest job pipeline has one-to-many child ingest
- * task pipelines. An ingest task pipeline is a sequence of ingest modules of a
- * given type that have been enabled and configured as part of the settings for
- * the ingest job.
+ * An ingest-job-level pipeline that works with the ingest tasks scheduler to
+ * coordinate the creation, scheduling, and execution of ingest tasks for one of
+ * the data sources in an ingest job. An ingest job pipeline is actually
+ * composed of multiple ingest task pipelines. Each ingest task pipeline is a
+ * sequence of ingest modules of a given type (e.g., data source level, file
+ * level, or artifact ingest modules) that have been enabled and configured as
+ * part of the ingest job settings.
  */
 final class IngestJobPipeline {
 
-    /*
-     * The class names of the proxy classes Jython generates for Python classes
-     * look something like:
-     * "org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory$14"
-     */
-    private static final Pattern JYTHON_REGEX = Pattern.compile("org\\.python\\.proxies\\.(.+?)\\$(.+?)(\\$[0-9]*)?$");
     private static final String AUTOPSY_MODULE_PREFIX = "org.sleuthkit.autopsy";
 
     private static final Logger logger = Logger.getLogger(IngestJobPipeline.class.getName());
+
+    /*
+     * A regular expression for identifying the proxy classes Jython generates
+     * for ingest module factories classes written using Python. For example:
+     * org.python.proxies.GPX_Parser_Module$GPXParserFileIngestModuleFactory$14
+     */
+    private static final Pattern JYTHON_MODULE_REGEX = Pattern.compile("org\\.python\\.proxies\\.(.+?)\\$(.+?)(\\$[0-9]*)?$");
+
+    /*
+     * These fields define an ingest pipeline: the parent ingest job, a pipeline
+     * ID, the user's ingest job settings, and the data source to be analyzed.
+     * Optionally, there is a set of files to be analyzed, instead of analyzing
+     * ALL of the files in the data source.
+     *
+     * The pipeline ID is used to associate the pipeline with its ingest tasks.
+     * The ingest job ID cannot be used for this purpose because the parent
+     * ingest job may have more than one data source and each data source gets
+     * its own pipeline.
+     */
     private final IngestJob job;
+    private static final AtomicLong nextPipelineId = new AtomicLong(0L);
+    private final long pipelineId;
     private final IngestJobSettings settings;
     private DataSource dataSource;
     private final List<AbstractFile> files;
-    private final long createTime;
 
     /*
-     * An ingest pipeline interacts with the ingest task scheduler to schedule
-     * initial ingest tasks, determine whether or not there are ingest tasks
-     * still to be executed, and to schedule additional tasks submitted by
-     * ingest modules. For example, a file carving module can add carved files
-     * to an ingest job and many modules will add data artifacts to an ingest
-     * job.
-     *
-     * The pipeline ID is used to associate the pipeline with its tasks. The
-     * ingest job ID cannot be used for this because an ingest job may have more
-     * than one pipeline (one pipeline per data source).
-     */
-    private static final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
-    private static final AtomicLong nextPipelineId = new AtomicLong(0L);
-    private final long pipelineId;
-
-    /*
-     * An ingest pipeline runs its child ingest task pipelines in stages.
+     * An ingest pipeline runs its ingest modules in stages.
      */
     private static enum Stages {
-
         /*
-         * The ingest pipeline is setting up its child ingest task pipelines.
+         * The pipeline is instantiating ingest modules and loading them into
+         * its ingest task pipelines.
          */
         INITIALIZATION,
         /*
-         * The ingest pipeline is only running its file and result ingest task
-         * pipelines because the data source for the job has not been supplied
-         * to it yet. This stage is only used for streaming ingest.
+         * The pipeline is running file ingest modules on files streamed to it
+         * by a data source processor. The data source has not been added to the
+         * pipeline yet.
          */
-        FIRST_STAGE_FILE_AND_RESULTS_TASKS_ONLY,
+        FIRST_STAGE_STREAMING,
         /*
-         * The ingest pipeline is running its high priority data source level
-         * ingest task pipeline, its file ingest task pipelines, and its result
-         * ingest task pipelines.
+         * The pipeline is running one or more of the following three types of
+         * ingest modules: higher priority data source level ingest modules,
+         * file ingest modules, and artifact ingest modules.
          */
-        FIRST_STAGE_ALL_TASKS,
+        FIRST_STAGE,
         /**
-         * The ingest pipeline is running its lower priority data source level
-         * ingest task pipeline and its result task pipelines.
+         * The pipeline is running lower priority, usually long-running, data
+         * source level ingest modules and artifact ingest modules.
          */
         SECOND_STAGE,
         /**
-         * The ingest pipeline is shutting down its child ingest task pipelines.
+         * The pipeline is shutting down its ingest modules.
          */
         FINALIZATION
     };
-    private volatile Stages stage = IngestJobPipeline.Stages.INITIALIZATION;
+    @GuardedBy("stageTransitionLock")
+    private Stages stage = IngestJobPipeline.Stages.INITIALIZATION;
     private final Object stageTransitionLock = new Object();
-
-    /*
-     * An ingest pipeline has at most a single data artifact ingest task
-     * pipeline.
-     *
-     * The pipeline may be empty, depending on which modules are enabled in the
-     * ingest job settings.
-     */
-    private DataArtifactIngestPipeline artifactIngestPipeline;
 
     /**
      * An ingest pipeline has separate data source level ingest task pipelines
-     * for the first and second processing stages. Longer running, lower
-     * priority modules belong in the second stage pipeline, although this
-     * cannot be enforced.
-     *
-     * Either or both pipelines may be empty, depending on which modules are
-     * enabled in the ingest job settings.
+     * for the first and second stages. Longer running, lower priority modules
+     * belong in the second stage pipeline.
      */
     private final Object dataSourceIngestPipelineLock = new Object();
     private DataSourceIngestPipeline firstStageDataSourceIngestPipeline;
@@ -154,93 +142,122 @@ final class IngestJobPipeline {
 
     /**
      * An ingest pipeline has a collection of identical file ingest task
-     * pipelines, one for each file ingest thread in the ingest manager.
-     *
-     * The ingest threads take and return task pipelines using a blocking queue.
-     * Additionally, a fixed list of all of the file pipelines is used to allow
-     * cycling through each of the individual task pipelines to check their
-     * status.
-     *
-     * The pipelines may be empty, depending on which modules are enabled in the
-     * ingest job settings.
+     * pipelines, one for each file ingest thread in the ingest manager. The
+     * ingest threads take ingest task pipelines as they need them and return
+     * the pipelines using a blocking queue. Additionally, a fixed list of all
+     * of the file pipelines is used to cycle through each of the individual
+     * task pipelines to check their status.
      */
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelinesQueue = new LinkedBlockingQueue<>();
     private final List<FileIngestPipeline> fileIngestPipelines = new ArrayList<>();
 
+    /*
+     * An ingest pipeline has a single artifact ingest task pipeline
+     */
+    private DataArtifactIngestPipeline artifactIngestPipeline;
+
     /**
-     * An ingest pipeline supports cancellation of either the currently running
-     * data source level ingest pipeline or all of its child pipelines.
-     * Cancellation works by setting flags that are checked by the ingest task
-     * pipelines every time they transition from from one module to another.
-     * Modules are also expected to check these flags and stop processing if
-     * they are set. This means that there can be a variable length delay
-     * between a cancellation request and its fulfillment.
+     * An ingest pipeline supports cancellation of just its currently running
+     * data source level ingest task pipeline or cancellation of ALL of its
+     * child ingest task pipelines. Cancellation works by setting flags that are
+     * checked by the ingest task pipelines every time they transition from one
+     * module to another. Modules are also expected to check these flags (via
+     * the ingest job context) and stop processing if they are set. This means
+     * that there can be a variable length delay between a cancellation request
+     * and its fulfillment.
      */
     private volatile boolean currentDataSourceIngestModuleCancelled;
     private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
     private volatile boolean cancelled;
     private volatile IngestJob.CancellationReason cancellationReason = IngestJob.CancellationReason.NOT_CANCELLED;
 
+    /*
+     * An ingest pipeline interacts with the ingest task scheduler to create and
+     * queue ingest tasks and to determine whether or not there are ingest tasks
+     * still to be executed so that the pipeline can transition through its
+     * stages. The ingest modules in the pipeline can schedule ingest tasks as
+     * well (via the ingest job context). For example, a file carving module can
+     * add carved files to the ingest job and most modules will add data
+     * artifacts to the ingest job.
+     */
+    private static final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
+
     /**
      * If running in a GUI, an ingest pipeline reports progress and allows a
      * user to cancel either an individual data source level ingest module or
      * all of its ingest tasks using progress bars in the lower right hand
-     * corner of the main application window. There is also support for ingest
-     * process snapshots and recording ingest job details in the case database.
+     * corner of the main application window. There is also support for taking
+     * ingest progress snapshots and for recording ingest job details in the
+     * case database.
      */
     private final boolean doUI;
-    private final Object resultsIngestProgressLock = new Object();
-    private ProgressHandle resultsIngestProgress;
     private final Object dataSourceIngestProgressLock = new Object();
-    private ProgressHandle dataSourceIngestProgress;
+    private ProgressHandle dataSourceIngestProgressBar;
     private final Object fileIngestProgressLock = new Object();
     private final List<String> filesInProgress = new ArrayList<>();
     private long estimatedFilesToProcess;
     private long processedFiles;
-    private ProgressHandle fileIngestProgress;
+    private ProgressHandle fileIngestProgressBar;
+    private final Object artifactIngestProgressLock = new Object();
+    private ProgressHandle artifactIngestProgressBar;
     private volatile IngestJobInfo ingestJobInfo;
 
     /**
-     * Constructs an ingest pipeline that works with the ingest tasks scheduler
-     * to coordinate the creation, scheduling, and execution of ingest tasks for
-     * one of the data sources in an ingest job. An ingest job pipeline has
-     * one-to-many child ingest task pipelines. An ingest task pipeline is a
-     * sequence of ingest modules of a given type that have been enabled and
-     * configured as part of the settings for the ingest job.
+     * An ingest pipeline uses this field to report its creation time.
+     */
+    private final long createTime;
+
+    /**
+     * Constructs an ingest-job-level pipeline that works with the ingest tasks
+     * scheduler to coordinate the creation, scheduling, and execution of ingest
+     * tasks for one of the data sources in an ingest job. An ingest job
+     * pipeline is actually composed of multiple ingest task pipelines. Each
+     * ingest task pipeline is a sequence of ingest modules of a given type
+     * (e.g., data source level, file level, or artifact ingest modules) that
+     * have been enabled and configured as part of the ingest job settings.
      *
      * @param job        The ingest job.
-     * @param dataSource The data source.
+     * @param dataSource One of the data sources that are the subjects of the
+     *                   ingest job.
      * @param settings   The ingest settings for the ingest job.
+     *
+     * @throws InterruptedException Exception thrown if the thread in which the
+     *                              pipeline is being created is interrupted.
      */
-    IngestJobPipeline(IngestJob job, Content dataSource, IngestJobSettings settings) {
+    IngestJobPipeline(IngestJob job, Content dataSource, IngestJobSettings settings) throws InterruptedException {
         this(job, dataSource, Collections.emptyList(), settings);
     }
 
     /**
-     * Constructs an ingest pipeline that works with the ingest tasks scheduler
-     * to coordinate the creation, scheduling, and execution of ingest tasks for
-     * one of the data sources in an ingest job. An ingest job pipeline has
-     * one-to-many child ingest task pipelines. An ingest task pipeline is a
-     * sequence of ingest modules of a given type that have been enabled and
-     * configured as part of the settings for the ingest job.
+     * Constructs an ingest-job-level pipeline that works with the ingest tasks
+     * scheduler to coordinate the creation, scheduling, and execution of ingest
+     * tasks for one of the data sources in an ingest job. An ingest job
+     * pipeline is actually composed of multiple ingest task pipelines. Each
+     * ingest task pipeline is a sequence of ingest modules of a given type
+     * (e.g., data source level, file level, or artifact ingest modules) that
+     * have been enabled and configured as part of the ingest job settings.
      *
      * @param job        The ingest job.
-     * @param dataSource The data source for the ingest job.
-     * @param files      The subset of the files for the data source. If the
-     *                   list is empty, all of the files in the data source are
-     *                   processed.
+     * @param dataSource One of the data sources that are the subjects of the
+     *                   ingest job.
+     * @param files      A subset of the files from the data source. If the list
+     *                   is empty, ALL of the files in the data source are an
+     *                   analyzed.
      * @param settings   The ingest settings for the ingest job.
+     *
+     * @throws InterruptedException Exception thrown if the thread in which the
+     *                              pipeline is being created is interrupted.
      */
-    IngestJobPipeline(IngestJob job, Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+    IngestJobPipeline(IngestJob job, Content dataSource, List<AbstractFile> files, IngestJobSettings settings) throws InterruptedException {
         if (!(dataSource instanceof DataSource)) {
             throw new IllegalArgumentException("Passed dataSource that does not implement the DataSource interface"); //NON-NLS
         }
         this.job = job;
-        this.settings = settings;
+        pipelineId = IngestJobPipeline.nextPipelineId.getAndIncrement();
         this.dataSource = (DataSource) dataSource;
         this.files = new ArrayList<>();
         this.files.addAll(files);
-        pipelineId = IngestJobPipeline.nextPipelineId.getAndIncrement();
+        this.settings = settings;
         doUI = RuntimeProperties.runningWithGUI();
         createTime = new Date().getTime();
         stage = Stages.INITIALIZATION;
@@ -278,12 +295,12 @@ final class IngestJobPipeline {
      * will be parsed to return
      * "GPX_Parser_Module.GPXParserFileIngestModuleFactory."
      *
-     * @param className The class name.
+     * @param className The canonical class name.
      *
-     * @return The jython name or null if not in jython package.
+     * @return The Jython proxu class name or null if the extraction fails.
      */
     private static String getModuleNameFromJythonClassName(String className) {
-        Matcher m = JYTHON_REGEX.matcher(className);
+        Matcher m = JYTHON_MODULE_REGEX.matcher(className);
         if (m.find()) {
             return String.format("%s.%s", m.group(1), m.group(2)); //NON-NLS
         } else {
@@ -301,7 +318,7 @@ final class IngestJobPipeline {
      * @param jythonMapping Mapping for Jython ingest module templates.
      * @param template      The ingest module template.
      */
-    private static void addIngestModuleTermplateToMaps(Map<String, IngestModuleTemplate> mapping, Map<String, IngestModuleTemplate> jythonMapping, IngestModuleTemplate template) {
+    private static void addIngestModuleTemplateToMaps(Map<String, IngestModuleTemplate> mapping, Map<String, IngestModuleTemplate> jythonMapping, IngestModuleTemplate template) {
         String className = template.getModuleFactory().getClass().getCanonicalName();
         String jythonName = getModuleNameFromJythonClassName(className);
         if (jythonName != null) {
@@ -313,31 +330,33 @@ final class IngestJobPipeline {
 
     /**
      * Creates the child ingest task pipelines for this ingest pipeline.
+     *
+     * @throws InterruptedException Exception thrown if the thread in which the
+     *                              task pipelines are being created is
+     *                              interrupted.
      */
-    private void createIngestTaskPipelines() {
+    private void createIngestTaskPipelines() throws InterruptedException {
         /*
          * Get the enabled ingest module templates from the ingest job settings.
          * An ingest module template combines an ingest module factory with job
          * level ingest module settings to support the creation of any number of
-         * fully configured instances of a given ingest module.
-         *
-         * Note that an ingest module factory may be able to create multiple
-         * tpyes of ingest modules.
+         * fully configured instances of a given ingest module. An ingest module
+         * factory may be able to create multiple types of ingest modules.
          */
         List<IngestModuleTemplate> enabledTemplates = settings.getEnabledIngestModuleTemplates();
 
         /**
-         * Separate the ingest module templates into buckets based on the module
+         * Sort the ingest module templates into buckets based on the module
          * types the ingest module factory can create. A template may go into
          * more than one bucket. The buckets are actually maps of ingest module
          * factory class names to ingest module templates. The maps are used to
          * go from an ingest module factory class name read from the pipeline
          * configuration file to the corresponding ingest module template.
          *
-         * There are also two maps for each bucket. One map is for Java modules
-         * and the other one is for Jython modules. The templates are separated
-         * this way so that Java modules that are not in the pipeline config
-         * file can be placed before Jython modules.
+         * There are actually two maps for each module type bucket. One map is
+         * for Java modules and the other one is for Jython modules. The
+         * templates are separated this way so that Java modules that are not in
+         * the pipeline config file can be placed before the Jython modules.
          */
         Map<String, IngestModuleTemplate> javaDataSourceModuleTemplates = new LinkedHashMap<>();
         Map<String, IngestModuleTemplate> jythonDataSourceModuleTemplates = new LinkedHashMap<>();
@@ -347,23 +366,22 @@ final class IngestJobPipeline {
         Map<String, IngestModuleTemplate> jythonArtifactModuleTemplates = new LinkedHashMap<>();
         for (IngestModuleTemplate template : enabledTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
-                addIngestModuleTermplateToMaps(javaDataSourceModuleTemplates, jythonDataSourceModuleTemplates, template);
+                addIngestModuleTemplateToMaps(javaDataSourceModuleTemplates, jythonDataSourceModuleTemplates, template);
             }
             if (template.isFileIngestModuleTemplate()) {
-                addIngestModuleTermplateToMaps(javaFileModuleTemplates, jythonFileModuleTemplates, template);
+                addIngestModuleTemplateToMaps(javaFileModuleTemplates, jythonFileModuleTemplates, template);
             }
             if (template.isDataArtifactIngestModuleTemplate()) {
-                addIngestModuleTermplateToMaps(javaArtifactModuleTemplates, jythonArtifactModuleTemplates, template);
+                addIngestModuleTemplateToMaps(javaArtifactModuleTemplates, jythonArtifactModuleTemplates, template);
             }
         }
 
         /**
          * Take the module templates that have pipeline configuration file
          * entries out of the buckets and put them in lists representing ingest
-         * task pipelines, in the order prescribed by the file.
-         *
-         * Note that the pipeline configuration file currently only supports
-         * specifying data source level and file ingest module pipeline layouts.
+         * task pipelines, in the order prescribed by the file. Note that the
+         * pipeline configuration file currently only supports specifying data
+         * source level and file ingest module pipeline layouts.
          */
         IngestPipelinesConfiguration pipelineConfig = IngestPipelinesConfiguration.getInstance();
         List<IngestModuleTemplate> firstStageDataSourceModuleTemplates = createPipelineFromConfigFile(javaDataSourceModuleTemplates, jythonDataSourceModuleTemplates, pipelineConfig.getStageOneDataSourceIngestPipelineConfig());
@@ -388,19 +406,11 @@ final class IngestJobPipeline {
          */
         firstStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, firstStageDataSourceModuleTemplates);
         secondStageDataSourceIngestPipeline = new DataSourceIngestPipeline(this, secondStageDataSourceModuleTemplates);
-        try {
-            int numberOfFileIngestThreads = IngestManager.getInstance().getNumberOfFileIngestThreads();
-            for (int i = 0; i < numberOfFileIngestThreads; ++i) {
-                FileIngestPipeline pipeline = new FileIngestPipeline(this, fileIngestModuleTemplates);
-                fileIngestPipelinesQueue.put(pipeline);
-                fileIngestPipelines.add(pipeline);
-            }
-        } catch (InterruptedException ex) {
-            /*
-             * RC: This is not incorrect. If this thread is interrupted, the
-             * pipeline is incomplete and should not be used. We are currently relying on  
-             */
-            Thread.currentThread().interrupt();
+        int numberOfFileIngestThreads = IngestManager.getInstance().getNumberOfFileIngestThreads();
+        for (int i = 0; i < numberOfFileIngestThreads; ++i) {
+            FileIngestPipeline pipeline = new FileIngestPipeline(this, fileIngestModuleTemplates);
+            fileIngestPipelinesQueue.put(pipeline);
+            fileIngestPipelines.add(pipeline);
         }
         artifactIngestPipeline = new DataArtifactIngestPipeline(this, artifactModuleTemplates);
     }
@@ -444,7 +454,16 @@ final class IngestJobPipeline {
      * @return The ID.
      */
     long getId() {
-        return this.pipelineId;
+        return pipelineId;
+    }
+
+    /**
+     * Gets the parent ingest job of this ingest pipeline.
+     *
+     * @return The ingest job.
+     */
+    IngestJob getIngestJob() {
+        return job;
     }
 
     /**
@@ -453,16 +472,26 @@ final class IngestJobPipeline {
      * @return The context name.
      */
     String getExecutionContext() {
-        return this.settings.getExecutionContext();
+        return settings.getExecutionContext();
     }
 
     /**
-     * Gets the data source to be ingested by this ingest pipeline.
+     * Gets the data source to be analyzed by this ingest pipeline.
      *
      * @return The data source.
      */
     DataSource getDataSource() {
         return dataSource;
+    }
+
+    /**
+     * Gets the subset of the files from the data source to be analyzed by this
+     * ingest pipeline.
+     *
+     * @return The files.
+     */
+    List<AbstractFile> getFiles() {
+        return Collections.unmodifiableList(files);
     }
 
     /**
@@ -472,7 +501,7 @@ final class IngestJobPipeline {
      * @return True or false.
      */
     boolean shouldProcessUnallocatedSpace() {
-        return this.settings.getProcessUnallocatedSpace();
+        return settings.getProcessUnallocatedSpace();
     }
 
     /**
@@ -481,7 +510,7 @@ final class IngestJobPipeline {
      * @return The filter.
      */
     FilesSet getFileIngestFilter() {
-        return this.settings.getFileFilter();
+        return settings.getFileFilter();
     }
 
     /**
@@ -491,20 +520,10 @@ final class IngestJobPipeline {
      * @return True or false.
      */
     boolean hasIngestModules() {
-        return hasArtifactIngestModules()
-                || hasFileIngestModules()
+        return hasFileIngestModules()
                 || hasFirstStageDataSourceIngestModules()
-                || hasSecondStageDataSourceIngestModules();
-    }
-
-    /**
-     * Checks to see if this ingest pipeline has at least one data artifact
-     * ingest module.
-     *
-     * @return True or false.
-     */
-    private boolean hasArtifactIngestModules() {
-        return (artifactIngestPipeline.isEmpty() == false);
+                || hasSecondStageDataSourceIngestModules()
+                || hasArtifactIngestModules();
     }
 
     /**
@@ -513,17 +532,17 @@ final class IngestJobPipeline {
      *
      * @return True or false.
      */
-    private boolean hasFirstStageDataSourceIngestModules() {
+    boolean hasFirstStageDataSourceIngestModules() {
         return (firstStageDataSourceIngestPipeline.isEmpty() == false);
     }
 
     /**
      * Checks to see if this ingest pipeline has at least one second stage data
-     * source level ingest modules.
+     * source level ingest module.
      *
      * @return True or false.
      */
-    private boolean hasSecondStageDataSourceIngestModules() {
+    boolean hasSecondStageDataSourceIngestModules() {
         return (secondStageDataSourceIngestPipeline.isEmpty() == false);
     }
 
@@ -533,7 +552,7 @@ final class IngestJobPipeline {
      *
      * @return True or false.
      */
-    private boolean hasFileIngestModules() {
+    boolean hasFileIngestModules() {
         if (!fileIngestPipelines.isEmpty()) {
             /*
              * Note that the file ingest task pipelines are identical.
@@ -544,23 +563,29 @@ final class IngestJobPipeline {
     }
 
     /**
+     * Checks to see if this ingest pipeline has at least one artifact ingest
+     * module.
+     *
+     * @return True or false.
+     */
+    boolean hasArtifactIngestModules() {
+        return (artifactIngestPipeline.isEmpty() == false);
+    }
+
+    /**
      * Starts up this ingest pipeline.
      *
      * @return A collection of ingest module startup errors, empty on success.
      */
     List<IngestModuleError> startUp() {
-        if (dataSource == null) {
-            throw new IllegalStateException("Ingest started before setting data source"); //NON-NLS
-        }
-
         List<IngestModuleError> errors = startUpIngestTaskPipelines();
         if (errors.isEmpty()) {
             recordIngestJobStartUpInfo();
-            if (hasFirstStageDataSourceIngestModules() || hasFileIngestModules()) {
-                if (job.getIngestMode() == IngestJob.Mode.BATCH) {
-                    startFirstStageInBatchMode();
-                } else {
+            if (hasFirstStageDataSourceIngestModules() || hasFileIngestModules() || hasArtifactIngestModules()) {
+                if (job.getIngestMode() == IngestJob.Mode.STREAMING) {
                     startFirstStageInStreamingMode();
+                } else {
+                    startFirstStage();
                 }
             } else if (hasSecondStageDataSourceIngestModules()) {
                 startSecondStage();
@@ -595,7 +620,7 @@ final class IngestJobPipeline {
      *
      * @param moduleTemplate The ingest module template.
      *
-     * @return The ingest module type. may be IngestModuleType.MULTIPLE.
+     * @return The ingest module type, may be IngestModuleType.MULTIPLE.
      */
     private IngestModuleType getIngestModuleTemplateType(IngestModuleTemplate moduleTemplate) {
         IngestModuleType type = null;
@@ -653,7 +678,7 @@ final class IngestJobPipeline {
 
     /**
      * Starts up an ingest task pipeline. If there are any start up errors, the
-     * pipeline is imediately shut down.
+     * pipeline is immediately shut down.
      *
      * @param pipeline The ingest task pipeline to start up.
      *
@@ -671,20 +696,21 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Schedules the first stage results, data source level, and file ingest
-     * tasks for the data source.
+     * Starts the first stage of this pipeline in batch mode. In batch mode, all
+     * of the files in the data source (excepting carved and derived files) have
+     * already been added to the case database by the data source processor.
      */
-    private void startFirstStageInBatchMode() {
-        logInfoMessage("Starting first stage analysis in batch mode"); //NON-NLS
-        stage = Stages.FIRST_STAGE_ALL_TASKS;
-
+    private void startFirstStage() {
         if (hasFileIngestModules()) {
             /*
-             * The estimated number of files remaining to be processed is used
-             * for ingest snapshots and for the file ingest progress bar.
+             * Do a count of the files the data source processor has added to
+             * the case database. This estimate will be used for ingest progress
+             * snapshots and for the file ingest progress bar if running with a
+             * GUI.
              */
+            long filesToProcess = dataSource.accept(new GetFilesCountVisitor());;
             synchronized (fileIngestProgressLock) {
-                estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
+                estimatedFilesToProcess = filesToProcess;
             }
         }
 
@@ -704,7 +730,7 @@ final class IngestJobPipeline {
             }
         }
 
-        /**
+        /*
          * Make the first stage data source level ingest pipeline the current
          * data source level pipeline.
          */
@@ -712,55 +738,39 @@ final class IngestJobPipeline {
             currentDataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
         }
 
-        /**
-         * Schedule the first stage ingest tasks.
-         */
-        if (hasArtifactIngestModules()) {
-            /*
-             * Create ingest tasks for data artifacts already in the case
-             * database. Additional tasks will be created as other ingest
-             * modules add data aritfacts.
-             */
-            taskScheduler.scheduleDataArtifactIngestTasks(this);
-        }
-        if (hasFirstStageDataSourceIngestModules() && hasFileIngestModules()) {
-            taskScheduler.scheduleDataSourceAndFileIngestTasks(this);
-        } else if (hasFirstStageDataSourceIngestModules()) {
-            taskScheduler.scheduleDataSourceIngestTask(this);
-        } else if (hasFileIngestModules() && !files.isEmpty()) {
-            taskScheduler.scheduleFileIngestTasks(this, files);
+        synchronized (stageTransitionLock) {
+            logInfoMessage("Starting first stage analysis in batch mode"); //NON-NLS        
+            stage = Stages.FIRST_STAGE;
+
             /**
-             * No data source ingest task has been scheduled for this stage, it
-             * is possible that no artifact tasks were scheduled, and it is also
-             * possible that no file ingest tasks were scheduled when the task
-             * scheduler applied the file ingest filter. In this special case in
-             * which there are no ingest tasks to do, an ingest thread will
-             * never get to check for completion of this stage of the job, so do
-             * it now so there is not a do-nothing ingest job that lives
-             * forever.
+             * Schedule the first stage ingest tasks and then immediately check
+             * for stage completion. This is necessary because it is possible
+             * that zero tasks will actually make it to task execution due to
+             * the file filter or other ingest job settings. In that case, there
+             * will never be a stage completion check in an ingest thread
+             * executing an ingest task, so such a job would run forever without
+             * the check here.
              */
+            taskScheduler.scheduleIngestTasks(this);
             checkForStageCompleted();
         }
     }
 
     /**
-     * Schedules the first stage results ingest tasks and prepares for streaming
-     * file ingest (used for streaming ingest only). Does not schedule any file
-     * tasks - those will come from calls to addStreamingIngestFiles().
+     * Starts the first stage of this pipeline in streaming mode. In streaming
+     * mode, the data source processor streams files into the pipeline as it
+     * adds them to the case database and only adds the data source to the
+     * pipeline after all of the files have been streamed in. See
+     * addStreamingIngestFiles() and addStreamingIngestDataSource().
      */
     private void startFirstStageInStreamingMode() {
-        logInfoMessage("Starting first stage analysis in streaming mode"); //NON-NLS
-        stage = Stages.FIRST_STAGE_FILE_AND_RESULTS_TASKS_ONLY;
-
         if (hasFileIngestModules()) {
-            /*
-             * The estimated number of files remaining to be processed is used
-             * for ingest snapshots and for the file ingest progress bar.
-             * However, for streaming ingest, it cannot be calculated until the
-             * data source is added to this pipeline. Start with zero to signal
-             * an unknown value.
-             */
             synchronized (fileIngestProgressLock) {
+                /*
+                 * Start with zero to signal an unknown value. This estimate
+                 * will be used for ingest progress snapshots and for the file
+                 * ingest progress bar if running with a GUI.
+                 */
                 estimatedFilesToProcess = 0;
             }
         }
@@ -770,9 +780,6 @@ final class IngestJobPipeline {
          * hand corner of the main application window.
          */
         if (doUI) {
-            if (hasArtifactIngestModules()) {
-                startArtifactIngestProgressBar();
-            }
             if (hasFileIngestModules()) {
                 /*
                  * Note that because estimated files remaining to process has
@@ -781,51 +788,49 @@ final class IngestJobPipeline {
                  */
                 startFileIngestProgressBar();
             }
+            if (hasArtifactIngestModules()) {
+                startArtifactIngestProgressBar();
+            }
         }
 
-        /**
-         * Schedule the first stage ingest tasks for streaming mode. For
-         * streaming ingest, file ingest tasks are created as the files are
-         * streamed into this pipeline, so there are no tasks to schedule yet.
-         * Also, for streaming ingest, the data source is not added to the
-         * pipeline right away, so there is no data source level task to
-         * schedule yet. So only result ingest tasks can be scheduled at this
-         * time.
-         */
-        if (hasArtifactIngestModules()) {
-            /*
-             * Create ingest tasks for data artifacts already in the case
-             * database. Additional tasks will be created as other ingest
-             * modules add data aritfacts.
-             */
-            taskScheduler.scheduleDataArtifactIngestTasks(this);
+        synchronized (stageTransitionLock) {
+            logInfoMessage("Starting first stage analysis in streaming mode"); //NON-NLS
+            stage = Stages.FIRST_STAGE_STREAMING;
+            if (hasArtifactIngestModules()) {
+                /*
+                 * Schedule artifact ingest tasks for any artifacts currently in
+                 * the case database. This needs to be done before any files or
+                 * the data source are streamed in to avoid analyzing data
+                 * artifacts added to the case database by the data source level
+                 * or file level ingest tasks.
+                 */
+                taskScheduler.scheduleDataArtifactIngestTasks(this);
+            }
         }
     }
 
     /**
-     * Starts a data source level ingest. Used for streaming ingest, in which
-     * the data source is not ready when ingest starts.
+     * Start data source ingest. Used for streaming ingest when the data source
+     * is not ready when ingest starts.
      */
-    private void startDataSourceTaskInStreamingMode() {
+    void addStreamingIngestDataSource() {
         /*
-         * Now that the data source processor analysis of the data source is
-         * complete, an estimate of the files remaining to be processed can be
-         * calculated and the file ingest progress bar in the lower right hand
-         * corner of the main application window Fcan be switched from
-         * indeterminate to determinate.
+         * Do a count of the files the data source processor has added to the
+         * case database. This estimate will be used for ingest progress
+         * snapshots and for the file ingest progress bar if running with a GUI.
+         * The count will be off by any streamed files that have already been
+         * analyzed.
          */
+        long filesToProcess = dataSource.accept(new GetFilesCountVisitor());;
         synchronized (fileIngestProgressLock) {
-            estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
-            if (doUI && fileIngestProgress != null) {
-                fileIngestProgress.switchToDeterminate((int) estimatedFilesToProcess);
-            }
+            estimatedFilesToProcess = filesToProcess;
         }
 
+        /*
+         * If running with a GUI, start ingest progress bars in the lower right
+         * hand corner of the main application window.
+         */
         if (doUI) {
-            /**
-             * Start the first stage data source ingest progress bar in the
-             * lower right hand corner of the main application window.
-             */
             if (hasFirstStageDataSourceIngestModules()) {
                 startDataSourceIngestProgressBar();
             }
@@ -839,10 +844,22 @@ final class IngestJobPipeline {
             this.currentDataSourceIngestPipeline = this.firstStageDataSourceIngestPipeline;
         }
 
-        logInfoMessage("Scheduling first stage data source level ingest task in streaming mode"); //NON-NLS
-        synchronized (this.stageTransitionLock) {
-            stage = IngestJobPipeline.Stages.FIRST_STAGE_ALL_TASKS;
-            IngestJobPipeline.taskScheduler.scheduleDataSourceIngestTask(this);
+        synchronized (stageTransitionLock) {
+            logInfoMessage("Adding the data source in streaming mode"); //NON-NLS
+            stage = IngestJobPipeline.Stages.FIRST_STAGE;
+            if (hasFirstStageDataSourceIngestModules()) {
+                IngestJobPipeline.taskScheduler.scheduleDataSourceIngestTask(this);
+            } else {
+                /*
+                 * If no data source level ingest task is scheduled at this time
+                 * and all of the file level and artifact ingest tasks scheduled
+                 * when streaming began have already executed, there will never
+                 * be a stage completion check in an ingest thread executing an
+                 * ingest task, so such a job would run forever without the
+                 * check here.
+                 */
+                checkForStageCompleted();
+            }
         }
     }
 
@@ -850,15 +867,17 @@ final class IngestJobPipeline {
      * Starts the second stage ingest task pipelines.
      */
     private void startSecondStage() {
-        logInfoMessage(String.format("Starting second stage ingest task pipelines for %s (objID=%d, jobID=%d)", dataSource.getName(), job.getId())); //NON-NLS
-        stage = IngestJobPipeline.Stages.SECOND_STAGE;
         if (doUI) {
             startDataSourceIngestProgressBar();
         }
         synchronized (dataSourceIngestPipelineLock) {
             currentDataSourceIngestPipeline = secondStageDataSourceIngestPipeline;
         }
-        taskScheduler.scheduleDataSourceIngestTask(this);
+        synchronized (stageTransitionLock) {
+            logInfoMessage(String.format("Starting second stage ingest task pipelines for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), job.getId())); //NON-NLS
+            stage = IngestJobPipeline.Stages.SECOND_STAGE;
+            taskScheduler.scheduleDataSourceIngestTask(this);
+        }
     }
 
     /**
@@ -866,17 +885,17 @@ final class IngestJobPipeline {
      */
     private void startArtifactIngestProgressBar() {
         if (doUI) {
-            synchronized (resultsIngestProgressLock) {
-                String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.resultsIngest.displayName", this.dataSource.getName());
-                resultsIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
+            synchronized (artifactIngestProgressLock) {
+                String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", this.dataSource.getName());
+                artifactIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
                         IngestJobPipeline.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         return true;
                     }
                 });
-                resultsIngestProgress.start();
-                resultsIngestProgress.switchToIndeterminate();
+                artifactIngestProgressBar.start();
+                artifactIngestProgressBar.switchToIndeterminate();
             }
         }
     }
@@ -890,7 +909,7 @@ final class IngestJobPipeline {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.dataSourceIngest.initialDisplayName",
                         this.dataSource.getName());
-                this.dataSourceIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
+                this.dataSourceIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
                         // If this method is called, the user has already pressed 
@@ -910,8 +929,8 @@ final class IngestJobPipeline {
                         return true;
                     }
                 });
-                this.dataSourceIngestProgress.start();
-                this.dataSourceIngestProgress.switchToIndeterminate();
+                this.dataSourceIngestProgressBar.start();
+                this.dataSourceIngestProgressBar.switchToIndeterminate();
             }
         }
     }
@@ -925,7 +944,7 @@ final class IngestJobPipeline {
                 String displayName = NbBundle.getMessage(this.getClass(),
                         "IngestJob.progress.fileIngest.displayName",
                         this.dataSource.getName());
-                this.fileIngestProgress = ProgressHandle.createHandle(displayName, new Cancellable() {
+                this.fileIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
                         // If this method is called, the user has already pressed 
@@ -936,8 +955,8 @@ final class IngestJobPipeline {
                         return true;
                     }
                 });
-                this.fileIngestProgress.start();
-                this.fileIngestProgress.switchToDeterminate((int) this.estimatedFilesToProcess);
+                this.fileIngestProgressBar.start();
+                this.fileIngestProgressBar.switchToDeterminate((int) this.estimatedFilesToProcess);
             }
         }
     }
@@ -948,51 +967,15 @@ final class IngestJobPipeline {
      */
     private void checkForStageCompleted() {
         synchronized (stageTransitionLock) {
-            /*
-             * Note that there is nothing to do here for the
-             * FIRST_STAGE_FILE_AND_RESULTS_TASKS_ONLY stage for streaming
-             * ingest, because we need to wait for the data source to be added
-             * to the job and the transition to FIRST_STAGE_ALL_TASKS.
-             */
-            if (stage != Stages.FIRST_STAGE_FILE_AND_RESULTS_TASKS_ONLY
-                    && IngestJobPipeline.taskScheduler.currentTasksAreCompleted(this)) {
+            if (stage == Stages.FIRST_STAGE_STREAMING) {
+                return;
+            }
+            if (taskScheduler.currentTasksAreCompleted(this)) {
                 switch (stage) {
-                    case FIRST_STAGE_FILE_AND_RESULTS_TASKS_ONLY:
-                        /*
-                         * Nothing to do here, need to wait for the data source
-                         * to be added to the job and the transition to
-                         * FIRST_STAGE_ALL_TASKS.
-                         */
-                        break;
-                    case FIRST_STAGE_ALL_TASKS:
-                        /*
-                         * Tasks completed:
-                         *
-                         * 1. The first stage data source level ingest task (if
-                         * any).
-                         *
-                         * 2. All file ingest tasks, including tasks for
-                         * carved/derived files submitted by ingest modules in
-                         * the first stage via IngestJobContext,addFilesToJob().
-                         *
-                         * 3. The results tasks for results in the case database
-                         * when the job started, plus any result tasks submitted
-                         * by the ingest modules in other tasks in the first
-                         * stage via IngestJobContext.addDataArtifactsToJob().
-                         */
+                    case FIRST_STAGE:
                         finishFirstStage();
                         break;
                     case SECOND_STAGE:
-                        /*
-                         * Tasks completed:
-                         *
-                         * 1. The second stage data source level ingest task (if
-                         * any).
-                         *
-                         * 2. The results tasks for any results added by second
-                         * stage ingest modules via
-                         * IngestJobContext.addDataArtifactsToJob().
-                         */
                         shutDown();
                         break;
                 }
@@ -1013,8 +996,8 @@ final class IngestJobPipeline {
             shutDownIngestTaskPipeline(pipeline);
         }
 
-        finishProgressBar(dataSourceIngestProgress, dataSourceIngestProgressLock);
-        finishProgressBar(fileIngestProgress, fileIngestProgressLock);
+        finishProgressBar(dataSourceIngestProgressBar, dataSourceIngestProgressLock);
+        finishProgressBar(fileIngestProgressBar, fileIngestProgressLock);
 
         if (!cancelled && hasSecondStageDataSourceIngestModules()) {
             startSecondStage();
@@ -1027,38 +1010,40 @@ final class IngestJobPipeline {
      * Shuts down the ingest pipelines and progress bars for this job.
      */
     private void shutDown() {
-        logInfoMessage("Finished all tasks"); //NON-NLS        
-        stage = IngestJobPipeline.Stages.FINALIZATION;
+        synchronized (stageTransitionLock) {
+            logInfoMessage("Finished all tasks"); //NON-NLS        
+            stage = IngestJobPipeline.Stages.FINALIZATION;
 
-        shutDownIngestTaskPipeline(currentDataSourceIngestPipeline);
-        shutDownIngestTaskPipeline(artifactIngestPipeline);
+            shutDownIngestTaskPipeline(currentDataSourceIngestPipeline);
+            shutDownIngestTaskPipeline(artifactIngestPipeline);
 
-        finishProgressBar(dataSourceIngestProgress, dataSourceIngestProgressLock);
-        finishProgressBar(fileIngestProgress, fileIngestProgressLock);
-        finishProgressBar(resultsIngestProgress, resultsIngestProgressLock);
+            finishProgressBar(dataSourceIngestProgressBar, dataSourceIngestProgressLock);
+            finishProgressBar(fileIngestProgressBar, fileIngestProgressLock);
+            finishProgressBar(artifactIngestProgressBar, artifactIngestProgressLock);
 
-        if (ingestJobInfo != null) {
-            if (cancelled) {
-                try {
-                    ingestJobInfo.setIngestJobStatus(IngestJobStatusType.CANCELLED);
-                } catch (TskCoreException ex) {
-                    logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
+            if (ingestJobInfo != null) {
+                if (cancelled) {
+                    try {
+                        ingestJobInfo.setIngestJobStatus(IngestJobStatusType.CANCELLED);
+                    } catch (TskCoreException ex) {
+                        logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
+                    }
+                } else {
+                    try {
+                        ingestJobInfo.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+                    } catch (TskCoreException ex) {
+                        logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
+                    }
                 }
-            } else {
                 try {
-                    ingestJobInfo.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+                    ingestJobInfo.setEndDateTime(new Date());
                 } catch (TskCoreException ex) {
-                    logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
+                    logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
                 }
             }
-            try {
-                ingestJobInfo.setEndDateTime(new Date());
-            } catch (TskCoreException ex) {
-                logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
-            }
+
+            job.notifyIngestPipelineShutDown(this);
         }
-
-        job.notifyIngestPipelineShutDown(this);
     }
 
     /**
@@ -1139,9 +1124,9 @@ final class IngestJobPipeline {
                  * Data source-level processing is finished for this stage.
                  */
                 synchronized (dataSourceIngestProgressLock) {
-                    if (dataSourceIngestProgress != null) {
-                        dataSourceIngestProgress.finish();
-                        dataSourceIngestProgress = null;
+                    if (dataSourceIngestProgressBar != null) {
+                        dataSourceIngestProgressBar.finish();
+                        dataSourceIngestProgressBar = null;
                     }
                 }
             }
@@ -1187,9 +1172,9 @@ final class IngestJobPipeline {
                              * right hand corner of the main application window.
                              */
                             if (processedFiles <= estimatedFilesToProcess) {
-                                fileIngestProgress.progress(file.getName(), (int) processedFiles);
+                                fileIngestProgressBar.progress(file.getName(), (int) processedFiles);
                             } else {
-                                fileIngestProgress.progress(file.getName(), (int) estimatedFilesToProcess);
+                                fileIngestProgressBar.progress(file.getName(), (int) estimatedFilesToProcess);
                             }
                             filesInProgress.add(file.getName());
                         }
@@ -1212,9 +1197,9 @@ final class IngestJobPipeline {
                              */
                             filesInProgress.remove(file.getName());
                             if (filesInProgress.size() > 0) {
-                                fileIngestProgress.progress(filesInProgress.get(0));
+                                fileIngestProgressBar.progress(filesInProgress.get(0));
                             } else {
-                                fileIngestProgress.progress("");
+                                fileIngestProgressBar.progress("");
                             }
                         }
                     }
@@ -1252,30 +1237,21 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Adds some subset of the "streamed" files for a stremaing ingest job to
+     * Adds some subset of the "streamed" files for a streaming ingest job to
      * this pipeline after startUp() has been called.
      *
      * @param fileObjIds The object IDs of the files.
      */
     void addStreamingIngestFiles(List<Long> fileObjIds) {
-        if (hasFileIngestModules()) {
-            if (stage.equals(Stages.FIRST_STAGE_FILE_AND_RESULTS_TASKS_ONLY)) {
-                IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
-            } else {
-                logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
+        synchronized (stageTransitionLock) {
+            if (hasFileIngestModules()) {
+                if (stage.equals(Stages.FIRST_STAGE_STREAMING)) {
+                    IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
+                } else {
+                    logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
+                }
             }
         }
-    }
-
-    /**
-     * Adds the data source for a streaming ingest job to this pipeline after
-     * startUp() has been called. Intended to be called after the data source
-     * processor has finished its processing (i.e., all the file system files
-     * for the data source are in the case database).
-     */
-    void addStreamingIngestDataSource() {
-        startDataSourceTaskInStreamingMode();
-        checkForStageCompleted();
     }
 
     /**
@@ -1286,21 +1262,23 @@ final class IngestJobPipeline {
      * @param files A list of the files to add.
      */
     void addFiles(List<AbstractFile> files) {
-        if (stage.equals(Stages.FIRST_STAGE_FILE_AND_RESULTS_TASKS_ONLY)
-                || stage.equals(Stages.FIRST_STAGE_ALL_TASKS)) {
-            taskScheduler.fastTrackFileIngestTasks(this, files);
-        } else {
-            logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
-        }
+        synchronized (stageTransitionLock) {
+            if (stage.equals(Stages.FIRST_STAGE_STREAMING)
+                    || stage.equals(Stages.FIRST_STAGE)) {
+                taskScheduler.fastTrackFileIngestTasks(this, files);
+            } else {
+                logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
+            }
 
-        /**
-         * The intended clients of this method are ingest modules running code
-         * in an ingest thread that is holding a reference to a "primary" ingest
-         * task that was the source of the files, in which case a completion
-         * check would not be necessary, so this is a bit of defensive
-         * programming.
-         */
-        checkForStageCompleted();
+            /**
+             * The intended clients of this method are ingest modules running
+             * code in an ingest thread that is holding a reference to a
+             * "primary" ingest task that was the source of the files, in which
+             * case a completion check would not be necessary, so this is a bit
+             * of defensive programming.
+             */
+            checkForStageCompleted();
+        }
     }
 
     /**
@@ -1310,22 +1288,24 @@ final class IngestJobPipeline {
      * @param artifacts
      */
     void addDataArtifacts(List<DataArtifact> artifacts) {
-        if (stage.equals(Stages.FIRST_STAGE_FILE_AND_RESULTS_TASKS_ONLY)
-                || stage.equals(Stages.FIRST_STAGE_ALL_TASKS)
-                || stage.equals(Stages.SECOND_STAGE)) {
-            taskScheduler.scheduleDataArtifactIngestTasks(this, artifacts);
-        } else {
-            logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
-        }
+        synchronized (stageTransitionLock) {
+            if (stage.equals(Stages.FIRST_STAGE_STREAMING)
+                    || stage.equals(Stages.FIRST_STAGE)
+                    || stage.equals(Stages.SECOND_STAGE)) {
+                taskScheduler.scheduleDataArtifactIngestTasks(this, artifacts);
+            } else {
+                logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
+            }
 
-        /**
-         * The intended clients of this method are ingest modules running code
-         * in an ingest thread that is holding a reference to a "primary" ingest
-         * task that was the source of the files, in which case a completion
-         * check would not be necessary, so this is a bit of defensive
-         * programming.
-         */
-        checkForStageCompleted();
+            /**
+             * The intended clients of this method are ingest modules running
+             * code in an ingest thread that is holding a reference to a
+             * "primary" ingest task that was the source of the files, in which
+             * case a completion check would not be necessary, so this is a bit
+             * of defensive programming.
+             */
+            checkForStageCompleted();
+        }
     }
 
     /**
@@ -1337,7 +1317,7 @@ final class IngestJobPipeline {
     void updateDataSourceIngestProgressBarDisplayName(String displayName) {
         if (this.doUI && !this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
-                this.dataSourceIngestProgress.setDisplayName(displayName);
+                this.dataSourceIngestProgressBar.setDisplayName(displayName);
             }
         }
     }
@@ -1353,8 +1333,8 @@ final class IngestJobPipeline {
     void switchDataSourceIngestProgressBarToDeterminate(int workUnits) {
         if (this.doUI && !this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
-                if (null != this.dataSourceIngestProgress) {
-                    this.dataSourceIngestProgress.switchToDeterminate(workUnits);
+                if (null != this.dataSourceIngestProgressBar) {
+                    this.dataSourceIngestProgressBar.switchToDeterminate(workUnits);
                 }
             }
         }
@@ -1368,8 +1348,8 @@ final class IngestJobPipeline {
     void switchDataSourceIngestProgressBarToIndeterminate() {
         if (this.doUI && !this.cancelled) {
             synchronized (this.dataSourceIngestProgressLock) {
-                if (null != this.dataSourceIngestProgress) {
-                    this.dataSourceIngestProgress.switchToIndeterminate();
+                if (null != this.dataSourceIngestProgressBar) {
+                    this.dataSourceIngestProgressBar.switchToIndeterminate();
                 }
             }
         }
@@ -1384,8 +1364,8 @@ final class IngestJobPipeline {
     void advanceDataSourceIngestProgressBar(int workUnits) {
         if (doUI && !cancelled) {
             synchronized (dataSourceIngestProgressLock) {
-                if (null != dataSourceIngestProgress) {
-                    dataSourceIngestProgress.progress("", workUnits);
+                if (null != dataSourceIngestProgressBar) {
+                    dataSourceIngestProgressBar.progress("", workUnits);
                 }
             }
         }
@@ -1400,8 +1380,8 @@ final class IngestJobPipeline {
     void advanceDataSourceIngestProgressBar(String currentTask) {
         if (doUI && !cancelled) {
             synchronized (dataSourceIngestProgressLock) {
-                if (null != dataSourceIngestProgress) {
-                    dataSourceIngestProgress.progress(currentTask);
+                if (null != dataSourceIngestProgressBar) {
+                    dataSourceIngestProgressBar.progress(currentTask);
                 }
             }
         }
@@ -1418,7 +1398,7 @@ final class IngestJobPipeline {
     void advanceDataSourceIngestProgressBar(String currentTask, int workUnits) {
         if (this.doUI && !this.cancelled) {
             synchronized (this.fileIngestProgressLock) {
-                this.dataSourceIngestProgress.progress(currentTask, workUnits);
+                this.dataSourceIngestProgressBar.progress(currentTask, workUnits);
             }
         }
     }
@@ -1453,8 +1433,8 @@ final class IngestJobPipeline {
              * is pressed.
              */
             synchronized (this.dataSourceIngestProgressLock) {
-                this.dataSourceIngestProgress.finish();
-                this.dataSourceIngestProgress = null;
+                this.dataSourceIngestProgressBar.finish();
+                this.dataSourceIngestProgressBar = null;
                 this.startDataSourceIngestProgressBar();
             }
         }
@@ -1494,16 +1474,16 @@ final class IngestJobPipeline {
 
         if (this.doUI) {
             synchronized (this.dataSourceIngestProgressLock) {
-                if (null != dataSourceIngestProgress) {
-                    dataSourceIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", this.dataSource.getName()));
-                    dataSourceIngestProgress.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
+                if (null != dataSourceIngestProgressBar) {
+                    dataSourceIngestProgressBar.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", this.dataSource.getName()));
+                    dataSourceIngestProgressBar.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
                 }
             }
 
             synchronized (this.fileIngestProgressLock) {
-                if (null != this.fileIngestProgress) {
-                    this.fileIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.fileIngest.displayName", this.dataSource.getName()));
-                    this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
+                if (null != this.fileIngestProgressBar) {
+                    this.fileIngestProgressBar.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.fileIngest.displayName", this.dataSource.getName()));
+                    this.fileIngestProgressBar.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
                 }
             }
         }
@@ -1620,7 +1600,7 @@ final class IngestJobPipeline {
                 estimatedFilesToProcessCount = this.estimatedFilesToProcess;
                 snapShotTime = new Date().getTime();
             }
-            tasksSnapshot = IngestJobPipeline.taskScheduler.getTasksSnapshotForJob(pipelineId);
+            tasksSnapshot = taskScheduler.getTasksSnapshotForJob(pipelineId);
 
         }
 

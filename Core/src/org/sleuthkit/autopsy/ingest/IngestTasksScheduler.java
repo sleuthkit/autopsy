@@ -125,31 +125,24 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules a data source level ingest task and the initial file and result
-     * ingest tasks for an ingest job. Note that the file filter for the job is
-     * obtained from the ingest pipeline for the job and that applying the
-     * filter may cause some or even all of the files in the data source to not
-     * be scheduled.
+     * Schedules a data source level ingest task, plus ingest tasks for any
+     * files and artifacts associated with the data source that are currently in
+     * the case database. The data source is obtained from the ingest pipeline
+     * passed in.
      *
-     * Note that task scheduling for an ingest job and checking if all of the
-     * job's tasks are completed must always be atomic operations, enforced by
-     * synchronization using the scheduler's monitor. Otherwise, the completion
-     * checks could result in false positives.
+     * Scheduling these tasks atomically means that it is valid to call
+     * currentTasksAreCompleted() immediately afterwards. Also note that the
+     * file filter for the job is obtained from the ingest pipeline and its
+     * application may cause some or even all of the file tasks to be discarded.
      *
-     * There is also a necessary convention that child tasks for products of
-     * other tasks in the job need to be scheduled before the parent tasks
-     * notify the scheduler that they are completed. This avoids false positives
-     * for completion checks by ensuring that the child tasks are queued before
-     * the parent tasks are marked as completed.
-     *
-     * @param ingestPipeline The ingest pipeline for the job. A reference to the
-     *                       pipeline is added to each task so that when the
-     *                       task is dequeued by an ingest thread and the task's
-     *                       execute() method is called, execute() can pass the
-     *                       target Content of the task to the pipeline for
-     *                       processing by the pipeline's ingest modules.
+     * @param ingestPipeline The ingest pipeline that will execute the scheduled
+     *                       tasks. A reference to the pipeline is added to each
+     *                       task so that when the task is dequeued by an ingest
+     *                       thread the task can pass the target Content of the
+     *                       task to the pipeline for processing by the
+     *                       pipeline's ingest modules.
      */
-    synchronized void scheduleDataSourceAndFileIngestTasks(IngestJobPipeline ingestPipeline) {
+    synchronized void scheduleIngestTasks(IngestJobPipeline ingestPipeline) {
         if (!ingestPipeline.isCancelled()) {
             scheduleDataSourceIngestTask(ingestPipeline);
             scheduleFileIngestTasks(ingestPipeline, Collections.emptyList());
@@ -158,25 +151,15 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules a data source level ingest task for an ingest job.
+     * Schedules a data source level ingest task for an ingest job. The data
+     * source is obtained from the ingest pipeline passed in.
      *
-     * Note that task scheduling for an ingest job and checking if all of the
-     * job's tasks are completed must always be atomic operations, enforced by
-     * synchronization using the scheduler's monitor. Otherwise, the completion
-     * checks could result in false positives.
-     *
-     * There is also a necessary convention that child tasks for products of
-     * other tasks in the job need to be scheduled before the parent tasks
-     * notify the scheduler that they are completed. This avoids false positives
-     * for completion checks by ensuring that the child tasks are queued before
-     * the parent tasks are marked as completed.
-     *
-     * @param ingestPipeline The ingest pipeline for the job. A reference to the
-     *                       pipeline is added to each task so that when the
-     *                       task is dequeued by an ingest thread and the task's
-     *                       execute() method is called, execute() can pass the
-     *                       target Content of the task to the pipeline for
-     *                       processing by the pipeline's ingest modules.
+     * @param ingestPipeline The ingest pipeline that will execute the scheduled
+     *                       task. A reference to the pipeline is added to the
+     *                       task so that when the task is dequeued by an ingest
+     *                       thread the task can pass the target Content of the
+     *                       task to the pipeline for processing by the
+     *                       pipeline's ingest modules.
      */
     synchronized void scheduleDataSourceIngestTask(IngestJobPipeline ingestPipeline) {
         if (!ingestPipeline.isCancelled()) {
@@ -192,27 +175,15 @@ final class IngestTasksScheduler {
 
     /**
      * Schedules file tasks for either all the files, or a given subset of the
-     * files, for an ingest job. Note that the file filter for the job is
-     * obtained from the ingest pipeline and its application may cause some or
-     * even all of the files to not be scheduled.
+     * files, for a data source. The data source is obtained from the ingest
+     * pipeline passed in.
      *
-     * Note that task scheduling for an ingest job and checking if all of the
-     * job's tasks are completed must always be atomic operations, enforced by
-     * synchronization using the scheduler's monitor. Otherwise, the completion
-     * checks could result in false positives.
-     *
-     * There is also a necessary convention that child tasks for products of
-     * other tasks in the job need to be scheduled before the parent tasks
-     * notify the scheduler that they are completed. This avoids false positives
-     * for completion checks by ensuring that the child tasks are queued before
-     * the parent tasks are marked as completed.
-     *
-     * @param ingestPipeline The ingest pipeline for the job. A reference to the
-     *                       pipeline is added to each task so that when the
-     *                       task is dequeued by an ingest thread and the task's
-     *                       execute() method is called, execute() can pass the
-     *                       target Content of the task to the pipeline for
-     *                       processing by the pipeline's ingest modules.
+     * @param ingestPipeline The ingest pipeline that will execute the scheduled
+     *                       tasks. A reference to the pipeline is added to each
+     *                       task so that when the task is dequeued by an ingest
+     *                       thread the task can pass the target Content of the
+     *                       task to the pipeline for processing by the
+     *                       pipeline's ingest modules.
      * @param files          A subset of the files from the data source; if
      *                       empty, then all if the files from the data source
      *                       are candidates for scheduling.
@@ -237,20 +208,7 @@ final class IngestTasksScheduler {
 
     /**
      * Schedules file tasks for a collection of "streamed" files for a streaming
-     * ingest job. Note that the file filter for the job is obtained from the
-     * ingest pipeline and its application may cause some or even all of the
-     * files to not be scheduled.
-     *
-     * Note that task scheduling for an ingest job and checking if all of the
-     * job's tasks are completed must always be atomic operations, enforced by
-     * synchronization using the scheduler's monitor. Otherwise, the completion
-     * checks could result in false positives.
-     *
-     * There is also a necessary convention that child tasks for products of
-     * other tasks in the job need to be scheduled before the parent tasks
-     * notify the scheduler that they are completed. This avoids false positives
-     * for completion checks by ensuring that the child tasks are queued before
-     * the parent tasks are marked as completed.
+     * ingest job.
      *
      * @param ingestPipeline The ingest pipeline for the job. A reference to the
      *                       pipeline is added to each task so that when the
@@ -283,17 +241,6 @@ final class IngestTasksScheduler {
      * by the ingest manager's file ingest threads. This method is intended to
      * be used to schedule files that are products of ingest module processing,
      * e.g., extracted files and carved files.
-     *
-     * Note that task scheduling for an ingest job and checking if all of the
-     * job's tasks are completed must always be atomic operations, enforced by
-     * synchronization using the scheduler's monitor. Otherwise, the completion
-     * checks could result in false positives.
-     *
-     * There is also a necessary convention that child tasks for products of
-     * other tasks in the job need to be scheduled before the parent tasks
-     * notify the scheduler that they are completed. This avoids false positives
-     * for completion checks by ensuring that the child tasks are queued before
-     * the parent tasks are marked as completed.
      *
      * @param ingestPipeline The ingest pipeline for the job. A reference to the
      *                       pipeline is added to each task so that when the
@@ -330,19 +277,9 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules data artifact ingest tasks for an ingest job for the data
-     * artifacts that have already been added to the case database.
-     *
-     * Note that task scheduling for an ingest job and checking if all of the
-     * job's tasks are completed must always be atomic operations, enforced by
-     * synchronization using the scheduler's monitor. Otherwise, the completion
-     * checks could result in false positives.
-     *
-     * There is also a necessary convention that child tasks for products of
-     * other tasks in the job need to be scheduled before the parent tasks
-     * notify the scheduler that they are completed. This avoids false positives
-     * for completion checks by ensuring that the child tasks are queued before
-     * the parent tasks are marked as completed.
+     * Schedules data artifact ingest tasks for any data artifacts that have
+     * already been added to the case database for a data source. The data
+     * source is obtained from the ingest pipeline passed in.
      *
      * @param ingestPipeline The ingest pipeline for the job. A reference to the
      *                       pipeline is added to each task so that when the
@@ -368,17 +305,6 @@ final class IngestTasksScheduler {
      * Schedules data artifact ingest tasks for an ingest job. This method is
      * intended to be used to schedule artifacts that are products of ingest
      * module processing.
-     *
-     * Note that task scheduling for an ingest job and checking if all of the
-     * job's tasks are completed must always be atomic operations, enforced by
-     * synchronization using the scheduler's monitor. Otherwise, the completion
-     * checks could result in false positives.
-     *
-     * There is also a necessary convention that child tasks for products of
-     * other tasks in the job need to be scheduled before the parent tasks
-     * notify the scheduler that they are completed. This avoids false positives
-     * for completion checks by ensuring that the child tasks are queued before
-     * the parent tasks are marked as completed.
      *
      * @param ingestPipeline The ingest pipeline for the job. A reference to the
      *                       pipeline is added to each task so that when the
@@ -619,7 +545,7 @@ final class IngestTasksScheduler {
                 for (Content child : file.getChildren()) {
                     if (child instanceof AbstractFile) {
                         AbstractFile childFile = (AbstractFile) child;
-                        FileIngestTask childTask = new FileIngestTask(nextTask.getIngestPipeline(), childFile);
+                        FileIngestTask childTask = new FileIngestTask(nextTask.getIngestJobPipeline(), childFile);
                         if (childFile.hasChildren()) {
                             batchedFileIngestTasksQueue.add(childTask);
                         } else if (shouldEnqueueFileTask(childTask)) {
@@ -738,7 +664,7 @@ final class IngestTasksScheduler {
     private static boolean shouldBeCarved(final FileIngestTask task) {
         try {
             AbstractFile file = task.getFile();
-            return task.getIngestPipeline().shouldProcessUnallocatedSpace() && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
+            return task.getIngestJobPipeline().shouldProcessUnallocatedSpace() && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
         } catch (TskCoreException ex) {
             return false;
         }
@@ -755,7 +681,7 @@ final class IngestTasksScheduler {
     private static boolean fileAcceptedByFilter(final FileIngestTask task) {
         try {
             AbstractFile file = task.getFile();
-            return !(task.getIngestPipeline().getFileIngestFilter().fileIsMemberOf(file) == null);
+            return !(task.getIngestJobPipeline().getFileIngestFilter().fileIsMemberOf(file) == null);
         } catch (TskCoreException ex) {
             return false;
         }
@@ -772,7 +698,7 @@ final class IngestTasksScheduler {
      */
     synchronized private static boolean hasTasksForJob(Collection<? extends IngestTask> tasks, long pipelineId) {
         for (IngestTask task : tasks) {
-            if (task.getIngestPipeline().getId() == pipelineId) {
+            if (task.getIngestJobPipeline().getId() == pipelineId) {
                 return true;
             }
         }
@@ -790,7 +716,7 @@ final class IngestTasksScheduler {
         Iterator<? extends IngestTask> iterator = tasks.iterator();
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
-            if (task.getIngestPipeline().getId() == pipelineId) {
+            if (task.getIngestJobPipeline().getId() == pipelineId) {
                 iterator.remove();
             }
         }
@@ -808,7 +734,7 @@ final class IngestTasksScheduler {
     private static int countTasksForJob(Collection<? extends IngestTask> tasks, long pipelineId) {
         int count = 0;
         for (IngestTask task : tasks) {
-            if (task.getIngestPipeline().getId() == pipelineId) {
+            if (task.getIngestJobPipeline().getId() == pipelineId) {
                 count++;
             }
         }

@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.NoIngestModuleIngestJobSettings;
 
 /**
- * An ingest module factory for Central Repository ingest modules.
+ * Factory for Central Repository ingest modules.
  */
 @ServiceProvider(service = org.sleuthkit.autopsy.ingest.IngestModuleFactory.class)
 @NbBundle.Messages({
@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.ingest.NoIngestModuleIngestJobSettings;
 public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     /**
-     * Gets the name of the module.
+     * Get the name of the module.
      *
      * @return The module name.
      */
@@ -64,6 +64,26 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
         return Version.getVersion();
     }
 
+   @Override
+    public boolean isFileIngestModuleFactory() {
+        return true;
+    }
+
+    @Override
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+        if (settings instanceof IngestSettings) {
+            return new CentralRepoIngestModule((IngestSettings) settings);
+        }
+        /*
+         * Earlier versions of the modules had no ingest job settings. Create a
+         * module with the default settings.
+         */
+        if (settings instanceof NoIngestModuleIngestJobSettings) {
+            return new CentralRepoIngestModule((IngestSettings) getDefaultIngestJobSettings());
+        }
+        throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
+    }
+   
     @Override
     public boolean hasGlobalSettingsPanel() {
         return true;
@@ -97,26 +117,6 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
          */
         if (settings instanceof NoIngestModuleIngestJobSettings) {
             return new IngestSettingsPanel((IngestSettings) getDefaultIngestJobSettings());
-        }
-        throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
-    }
-
-    @Override
-    public boolean isFileIngestModuleFactory() {
-        return true;
-    }
-
-    @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        if (settings instanceof IngestSettings) {
-            return new CentralRepoIngestModule((IngestSettings) settings);
-        }
-        /*
-         * Earlier versions of the modules had no ingest job settings. Create a
-         * module with the default settings.
-         */
-        if (settings instanceof NoIngestModuleIngestJobSettings) {
-            return new CentralRepoIngestModule((IngestSettings) getDefaultIngestJobSettings());
         }
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
     }

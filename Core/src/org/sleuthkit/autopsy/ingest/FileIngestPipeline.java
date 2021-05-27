@@ -106,7 +106,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     }
 
     /**
-     * Adds a file to a file cache used to update the case database with new
+     * Adds a file to a file cache used to update the case database with any new
      * properties added to the files in the cache by the ingest modules that
      * processed them. If adding the file to the cache fills the cache, a batch
      * update is done immediately.
@@ -203,11 +203,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
                 throw new IngestModuleException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
             }
             ingestManager.setIngestTaskProgress(task, getDisplayName());
-            ProcessResult result = module.process(file);
-            // See JIRA-7449
-//            if (result == ProcessResult.ERROR) {
-//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (file objId = %d)", getDisplayName(), file.getName(), file.getId())); //NON-NLS
-//            }
+            module.process(file);
         }
 
     }

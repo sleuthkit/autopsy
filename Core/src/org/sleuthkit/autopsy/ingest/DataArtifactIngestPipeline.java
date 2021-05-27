@@ -20,27 +20,21 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A pipeline of data artifact ingest modules for performing data artifact
+ * A pipeline of data artifact ingest modules for executing data artifact
  * ingest tasks for an ingest job.
  */
 final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIngestTask> {
 
-    private static final Logger logger = Logger.getLogger(IngestJobPipeline.class.getName());
-
     /**
-     * Constructs a pipeline of data artifact ingest modules for performing data
+     * Constructs a pipeline of data artifact ingest modules for executing data
      * artifact ingest tasks for an ingest job.
      *
      * @param ingestJobPipeline The ingest job pipeline that owns this pipeline.
      * @param moduleTemplates   The ingest module templates that define this
-     *                          pipeline.
+     *                          pipeline. May be an empty list.
      */
     DataArtifactIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
@@ -65,7 +59,7 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
     }
 
     /**
-     * A wrapper that adds ingest infrastructure operations to a data artifact
+     * A decorator that adds ingest infrastructure operations to a data artifact
      * ingest module.
      */
     static final class DataArtifactIngestPipelineModule extends IngestTaskPipeline.PipelineModule<DataArtifactIngestTask> {
@@ -73,7 +67,7 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
         private final DataArtifactIngestModule module;
 
         /**
-         * Constructs a wrapper that adds ingest infrastructure operations to a
+         * Constructs a decorator that adds ingest infrastructure operations to a
          * data artifact ingest module.
          *
          * @param module      The module.

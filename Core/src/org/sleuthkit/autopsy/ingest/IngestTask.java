@@ -51,7 +51,7 @@ abstract class IngestTask {
      *
      * @return The ingest job pipeline.
      */
-    IngestJobPipeline getIngestPipeline() {
+    IngestJobPipeline getIngestJobPipeline() {
         return ingestJobPipeline;
     }
 
@@ -61,7 +61,7 @@ abstract class IngestTask {
      * @return The data source.
      */
     Content getDataSource() {
-        return getIngestPipeline().getDataSource();
+        return getIngestJobPipeline().getDataSource();
     }
 
     /**

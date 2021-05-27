@@ -43,8 +43,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         IngestServices.getInstance().postMessage(IngestMessage.createMessage(
                 IngestMessage.MessageType.INFO,
                 CentralRepoIngestModuleFactory.getModuleName(),
-                "Data Artifacts Processed", //NON-NLS 
-                String.format("Count = %d", artifactCounter.get()))); //NON-NLS 
+                String.format("%d data artifacts processed", artifactCounter.get()))); //NON-NLS 
     }
 
 }
