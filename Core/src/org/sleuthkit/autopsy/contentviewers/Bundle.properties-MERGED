@@ -15,6 +15,9 @@
 # governing permissions and limitations under the License.
 #
 
+AnnotationsContentViewer.onEmpty=No annotations were found for this particular item.
+AnnotationsContentViewer.title=Annotations
+AnnotationsContentViewer.toolTip=Displays tags and comments associated with the selected content.
 ApplicationContentViewer.title=Application
 ApplicationContentViewer.toolTip=Displays file contents.
 FXVideoPanel.pauseButton.infoLabel.playbackErr=Unable to play video.
