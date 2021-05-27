@@ -23,7 +23,6 @@ import java.awt.Component;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +45,6 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.Utilities;
-import org.sleuthkit.autopsy.contentviewers.application.Annotations;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
@@ -60,7 +58,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class AnalysisResultsContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static Logger logger = Logger.getLogger(AnalysisResultsContentViewer.class.getName());
+    
+    /**
+     * isPreferred value.
+     */
     private static final int PREFERRED_VALUE = 6;
+    
     private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
 
     private static final String DEFAULT_FONT_FAMILY = new JLabel().getFont().getFamily();
@@ -68,46 +71,28 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
     private static final Color DEFAULT_BACKGROUND = new JLabel().getBackground();
 
     // html stylesheet classnames for components
-    public static final String MESSAGE_CLASSNAME = "message";
-    public static final String SUBSECTION_CLASSNAME = "subsection";
-    public static final String SUBHEADER_CLASSNAME = "subheader";
     public static final String SECTION_CLASSNAME = "section";
     public static final String HEADER_CLASSNAME = "header";
 
-    // how big the subheader should be
-    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 12 / 11;
 
     // how big the header should be
-    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 14 / 11;
+    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE + 2;
 
-    // the subsection indent
-    private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
 
     // spacing occurring after an item
-    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE * 2;
-    private static final int DEFAULT_SUBSECTION_SPACING = DEFAULT_FONT_SIZE / 2;
-    private static final int CELL_SPACING = DEFAULT_FONT_SIZE / 2;
+    private static final int DEFAULT_SECTION_SPACING = 6;
+    private static final int CELL_SPACING = 4;
 
     // additional styling for components
-    private static final String STYLE_SHEET_RULE
-            = String.format(" .%s { font-family: %s; font-size: %dpt; font-style:italic; margin: 0px; padding: 0px; } ",
-                    Annotations.MESSAGE_CLASSNAME, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE)
-            + String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; margin-top: %dpx; padding: 0px; } ",
-                    Annotations.SUBHEADER_CLASSNAME, DEFAULT_FONT_FAMILY, SUBHEADER_FONT_SIZE, DEFAULT_SUBSECTION_SPACING)
-            + String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; padding: 0px; } ",
-                    Annotations.HEADER_CLASSNAME, DEFAULT_FONT_FAMILY, HEADER_FONT_SIZE)
+    private static final String STYLE_SHEET_RULE =
+            String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; padding: 0px; } ",
+                    HEADER_CLASSNAME, DEFAULT_FONT_FAMILY, HEADER_FONT_SIZE)
             + String.format(" td { vertical-align: top; font-family: %s; font-size:%dpt; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px;} ",
                     DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, CELL_SPACING)
             + String.format(" th { vertical-align: top; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px} ",
                     DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" .%s { margin: %dpx 0px; padding-left: %dpx; } ", Annotations.SUBSECTION_CLASSNAME, DEFAULT_SUBSECTION_SPACING, DEFAULT_SUBSECTION_LEFT_PAD)
-            + String.format(" .%s { margin-bottom: %dpx; } ", Annotations.SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
+            + String.format(" .%s { margin-bottom: %dpx; } ", SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
 
-    private static Optional<Score> getAggregateScore(Collection<AnalysisResult> analysisResults) {
-        return analysisResults.stream()
-                .map(AnalysisResult::getScore)
-                .max(Comparator.naturalOrder());
-    }
 
     private static String normalizeAttr(String originalAttrStr) {
         return (originalAttrStr == null) ? "" : originalAttrStr.trim();
@@ -151,7 +136,7 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
                 Pair.of(Bundle.AnalysisResultsContentViewer_displayAttributes_score(),
                         normalizeAttr(analysisResult.getScore().getSignificance().getDisplayName())),
                 Pair.of(Bundle.AnalysisResultsContentViewer_displayAttributes_type(),
-                        normalizeAttr(analysisResult.getScore().getSignificance().getDisplayName())),
+                        normalizeAttr(type)),
                 Pair.of(Bundle.AnalysisResultsContentViewer_displayAttributes_configuration(),
                         normalizeAttr(analysisResult.getConfiguration())),
                 Pair.of(Bundle.AnalysisResultsContentViewer_displayAttributes_conclusion(),
@@ -270,9 +255,8 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
         "AnalysisResultsContentViewer_appendResult_headerKey=Analysis Result {0}"
     })
     private static void appendResult(Element parent, int index, ResultDisplayAttributes attrs) {
-        Element sectionElement = appendSection(parent, Bundle.AnalysisResultsContentViewer_appendResult_headerKey(index + 1));
-
-        Element table = parent.appendElement("table");
+        Element sectionDiv = appendSection(parent, Bundle.AnalysisResultsContentViewer_appendResult_headerKey(index + 1));
+        Element table = sectionDiv.appendElement("table");
         Element tableBody = table.appendElement("tbody");
 
         for (Pair<String, String> keyVal : attrs.getAttributesToDisplay()) {
@@ -301,16 +285,15 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
         return sectionDiv;
     }
 
-    private Node selectedNode;
 
     /**
      * Creates new form AnalysisResultsContentViewer
      */
     public AnalysisResultsContentViewer() {
         initComponents();
-        Utilities.configureTextPaneAsHtml(textPane);
+        Utilities.configureTextPaneAsHtml(textPanel);
         // get html editor kit and apply additional style rules
-        EditorKit editorKit = textPane.getEditorKit();
+        EditorKit editorKit = textPanel.getEditorKit();
         if (editorKit instanceof HTMLEditorKit) {
             HTMLEditorKit htmlKit = (HTMLEditorKit) editorKit;
             htmlKit.getStyleSheet().addRule(STYLE_SHEET_RULE);
@@ -345,7 +328,7 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
     @Override
     public void resetComponent() {
-        textPane.setText("");
+        textPanel.setText("");
     }
 
     @Override
@@ -366,11 +349,8 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
             // GVDTODO
         }
         
-        textPane.setText(document.html());
-        textPane.setCaretPosition(0);
-                
-        this.selectedNode = selectedNode;
-        
+        textPanel.setText(document.html());
+        textPanel.setCaretPosition(0);
     }
 
     @Override
@@ -409,33 +389,25 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
     private void initComponents() {
 
         javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane();
-        textPane = new javax.swing.JTextPane();
+        textPanel = new javax.swing.JTextPane();
 
-        setMaximumSize(null);
         setMinimumSize(new java.awt.Dimension(250, 250));
+        setPreferredSize(new java.awt.Dimension(250, 250));
+        setLayout(new java.awt.BorderLayout());
 
-        scrollPane.setMaximumSize(null);
-        scrollPane.setMinimumSize(null);
+        scrollPane.setPreferredSize(new java.awt.Dimension(32767, 32767));
 
-        textPane.setBackground(DEFAULT_BACKGROUND);
-        textPane.setMaximumSize(null);
-        textPane.setPreferredSize(null);
-        scrollPane.setViewportView(textPane);
+        textPanel.setEditable(false);
+        textPanel.setBackground(DEFAULT_BACKGROUND);
+        textPanel.setName(""); // NOI18N
+        textPanel.setPreferredSize(new java.awt.Dimension(600, 52));
+        scrollPane.setViewportView(textPanel);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-        );
+        add(scrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextPane textPane;
+    private javax.swing.JTextPane textPanel;
     // End of variables declaration//GEN-END:variables
 }
