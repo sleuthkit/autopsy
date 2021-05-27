@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
@@ -59,14 +58,13 @@ import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslationUtil;
+import org.sleuthkit.datamodel.Score;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -430,43 +428,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
         return Pair.of(count, description);
-    }
-
-    @NbBundle.Messages({
-        "AbstractAbstractFileNode.createSheet.score.displayName=S",
-        "AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.",
-        "AbstractAbstractFileNode.createSheet.interestingResult.description=File has interesting result associated with it.",
-        "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
-        "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag.",
-        "AbstractAbstractFileNode.createSheet.noScore.description=No score"})
-    @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-        DataResultViewerTable.Score score = DataResultViewerTable.Score.NO_SCORE;
-        String description = Bundle.AbstractAbstractFileNode_createSheet_noScore_description();
-        if (content.getKnown() == TskData.FileKnown.BAD) {
-            score = DataResultViewerTable.Score.NOTABLE_SCORE;
-            description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
-        }
-        try {
-            if (score == DataResultViewerTable.Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
-                score = DataResultViewerTable.Score.INTERESTING_SCORE;
-                description = Bundle.AbstractAbstractFileNode_createSheet_interestingResult_description();
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error getting artifacts for file: " + content.getName(), ex);
-        }
-        if (!tags.isEmpty() && (score == DataResultViewerTable.Score.NO_SCORE || score == DataResultViewerTable.Score.INTERESTING_SCORE)) {
-            score = DataResultViewerTable.Score.INTERESTING_SCORE;
-            description = Bundle.AbstractAbstractFileNode_createSheet_taggedFile_description();
-            for (Tag tag : tags) {
-                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    score = DataResultViewerTable.Score.NOTABLE_SCORE;
-                    description = Bundle.AbstractAbstractFileNode_createSheet_notableTaggedFile_description();
-                    break;
-                }
-            }
-        }
-        return Pair.of(score, description);
     }
 
     @NbBundle.Messages({
