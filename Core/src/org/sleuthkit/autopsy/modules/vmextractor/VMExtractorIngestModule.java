@@ -250,16 +250,17 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      */
     private static List<AbstractFile> removeNonVMFiles(List<AbstractFile> vmFiles) {
         List<AbstractFile> vFile = new ArrayList<>();
-
+        FileTypeDetector fileTypeDetector = null;
         for (AbstractFile vmFile : vmFiles) {
             if (vmFile.getNameExtension().equalsIgnoreCase("vhd")) {
                 String fileMimeType = vmFile.getMIMEType();
                 if (fileMimeType == null) {
-                    FileTypeDetector fileTypeDetector = null;
                     try {
                         fileTypeDetector = new FileTypeDetector();
                     } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                         logger.log(Level.WARNING, String.format("Unable to create file type detector for determining MIME type for file %s with id of %d", vmFile.getName(), vmFile.getId()));
+                        vFile.add(vmFile);
+                        continue;
                     }
                     fileMimeType = fileTypeDetector.getMIMEType(vmFile);
                     try {
