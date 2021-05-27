@@ -283,20 +283,6 @@ public class ImageNode extends AbstractContentNode<Image> {
     }
 
     /**
-     * Returns Score property for the node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @param tags list of tags.
-     *
-     * @return Score property for the underlying content of the node.
-     */
-    @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-        return Pair.of(DataResultViewerTable.Score.NO_SCORE, NO_DESCR);
-    }
-
-    /**
      * Returns comment property for the node.
      *
      * Null implementation of an abstract method.

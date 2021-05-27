@@ -334,11 +334,6 @@ public final class OsAccounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-            return null;
-        }
-
-        @Override
         protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
             return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
         }
