@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * @author gregd
+ * Creates a representation of a list of analysis results gathered from a node.
  */
 public class AnalysisResultsViewModel {
 
