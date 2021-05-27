@@ -75,6 +75,7 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
     // html stylesheet classnames for components
     private static final String SPACED_SECTION_CLASSNAME = "spacedSection";
+    private static final String SUBSECTION_CLASSNAME = "subsection";
     private static final String HEADER_CLASSNAME = "header";
     public static final String MESSAGE_CLASSNAME = "message";
 
@@ -86,15 +87,19 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
     // spacing occurring after an item
     private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE / 2;
     private static final int CELL_SPACING = DEFAULT_FONT_SIZE / 2;
+    
+        // the subsection indent
+    private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
 
     // additional styling for components
     private static final String STYLE_SHEET_RULE
-            = String.format(" .%s { font-size: %dpx;font-style:italic; margin: 0px; padding: 0px; } ", MESSAGE_CLASSNAME, DEFAULT_FONT_SIZE)
+            = String.format(" .%s { font-size: %dpt;font-style:italic; margin: 0px; padding: 0px; } ", MESSAGE_CLASSNAME, DEFAULT_FONT_SIZE)
             + String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px; } ",
                     HEADER_CLASSNAME, DEFAULT_FONT_FAMILY, HEADER_FONT_SIZE)
             + String.format(" td { vertical-align: top; font-family: %s; font-size: %dpt; text-align: left; margin: 0pt; padding: 0px %dpt 0px 0px;} ",
                     DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" .%s { margin-top: %dpt; } ", SPACED_SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
+            + String.format(" .%s { margin-top: %dpt; } ", SPACED_SECTION_CLASSNAME, DEFAULT_SECTION_SPACING)
+            + String.format(" .%s { padding-left: %dpt; }", SUBSECTION_CLASSNAME, DEFAULT_SUBSECTION_LEFT_PAD);
 
     private static String normalizeAttr(String originalAttrStr) {
         return (originalAttrStr == null) ? "" : originalAttrStr.trim();
@@ -270,7 +275,7 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
                 MessageFormat.format("{0}: {1}",
                         Bundle.AnalysisResultsContentViewer_appendAggregateScore_displayKey(),
                         score.getSignificance().getDisplayName()),
-                null);
+                Optional.empty());
     }
 
     private static String getAnchor(AnalysisResult analysisResult) {
@@ -285,6 +290,8 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
                 Bundle.AnalysisResultsContentViewer_appendResult_headerKey(index + 1),
                 Optional.ofNullable(getAnchor(attrs.getAnalysisResult())));
         Element table = sectionDiv.appendElement("table");
+        table.attr("class", SUBSECTION_CLASSNAME);
+        
         Element tableBody = table.appendElement("tbody");
 
         for (Pair<String, String> keyVal : attrs.getAttributesToDisplay()) {
