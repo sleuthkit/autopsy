@@ -23,6 +23,7 @@ import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import javax.swing.JComponent;
 import javax.swing.JLayer;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.border.Border;
 import javax.swing.plaf.LayerUI;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
@@ -56,10 +58,10 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         /**
          * Main constructor.
          *
-         * @param e The underlying mouse event.
-         * @param table The table that was the target of the mouse event.
-         * @param row The row within the table that the event occurs.
-         * @param col The column within the table that the event occurs.
+         * @param e         The underlying mouse event.
+         * @param table     The table that was the target of the mouse event.
+         * @param row       The row within the table that the event occurs.
+         * @param col       The column within the table that the event occurs.
          * @param cellValue The value within the cell.
          */
         public CellMouseEvent(MouseEvent e, JTable table, int row, int col, Object cellValue) {
@@ -115,7 +117,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
          * Handles mouse events at a cell level for the table.
          *
          * @param e The event containing information about the cell, the mouse
-         * event, and the table.
+         *          event, and the table.
          */
         void mouseClicked(CellMouseEvent e);
     }
@@ -225,7 +227,6 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         return resultTable;
     }
 
-
     private JScrollPane tableScrollPane;
     private Overlay overlayLayer;
     private ListTableModel<T> tableModel;
@@ -290,7 +291,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
 
     /**
      * @return The current listener for mouse events. The events provided to
-     * this listener will have cell and table context.
+     *         this listener will have cell and table context.
      */
     public CellMouseListener getCellListener() {
         return cellListener;
@@ -300,7 +301,8 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
      * Sets the current listener for mouse events.
      *
      * @param cellListener The event listener that will receive these events
-     * with cell and table context.
+     *                     with cell and table context.
+     *
      * @return
      */
     public JTablePanel<T> setCellListener(CellMouseListener cellListener) {
@@ -329,7 +331,8 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
 
     /**
      * @return The function for determining the key for a data row. This key is
-     * used to maintain current selection in the table despite changing rows.
+     *         used to maintain current selection in the table despite changing
+     *         rows.
      */
     public Function<T, ? extends Object> getKeyFunction() {
         return keyFunction;
@@ -351,9 +354,10 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         this.keyFunction = keyFunction;
         return this;
     }
-    
+
     /**
      * Returns the selected items or null if no item is selected.
+     *
      * @return The selected items or null if no item is selected.
      */
     public List<T> getSelectedItems() {
@@ -409,6 +413,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
     private void initComponents() {
         table = new JTable();
         table.getTableHeader().setReorderingAllowed(false);
+        table.getTableHeader().setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, table.getForeground()));
         overlayLayer = new Overlay();
         tableScrollPane = new JScrollPane(table);
         JLayer<JComponent> dualLayer = new JLayer<>(tableScrollPane, overlayLayer);

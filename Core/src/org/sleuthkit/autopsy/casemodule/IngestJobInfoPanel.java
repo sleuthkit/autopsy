@@ -64,6 +64,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     public IngestJobInfoPanel() {
         initComponents();
         customizeComponents();
+
     }
 
     @Messages({"IngestJobInfoPanel.loadIngestJob.error.text=Failed to load ingest jobs.",
@@ -76,19 +77,19 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
             this.ingestModuleTable.setModel(this.ingestModuleTableModel);
         });
 
-        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST , (PropertyChangeEvent evt) -> {
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(IngestManager.IngestJobEvent.STARTED.toString())
                     || evt.getPropertyName().equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                     || evt.getPropertyName().equals(IngestManager.IngestJobEvent.COMPLETED.toString())) {
                 refresh();
             }
         });
-        
+
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, (PropertyChangeEvent evt) -> {
             if (!(evt instanceof AutopsyEvent) || (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL)) {
                 return;
             }
-                    
+
             // Check whether we have a case open or case close event.
             if ((CURRENT_CASE == Case.Events.valueOf(evt.getPropertyName()))) {
                 if (evt.getNewValue() != null) {
@@ -100,6 +101,8 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
                 }
             }
         });
+        ingestJobTable.getTableHeader().setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, ingestJobTable.getForeground()));
+        ingestModuleTable.getTableHeader().setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, ingestModuleTable.getForeground()));
     }
 
     /**
@@ -139,13 +142,13 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
                 this.ingestJobs = new ArrayList<>();
                 setDataSource(null);
             }
-            
+
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     /**
      * Reset the panel.
      */

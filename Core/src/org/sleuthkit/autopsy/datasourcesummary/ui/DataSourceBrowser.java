@@ -85,6 +85,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
 
         dataSourceSummaryList = getDataSourceSummaryList(usageMap, fileCountsMap);
         outline.setRootVisible(false);
+        outline.getTableHeader().setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, outline.getForeground()));
         add(outlineView, java.awt.BorderLayout.CENTER);
         explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.DataSourceSummaryNode_column_dataSourceName_header());
