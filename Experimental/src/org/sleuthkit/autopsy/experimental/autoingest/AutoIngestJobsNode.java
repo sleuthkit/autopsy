@@ -364,6 +364,9 @@ final class AutoIngestJobsNode extends AbstractNode {
                         PrioritizationAction.DeprioritizeCaseAction deprioritizeCaseAction = new PrioritizationAction.DeprioritizeCaseAction(jobWrapper.getJob());
                         deprioritizeCaseAction.setEnabled(jobWrapper.getPriority() > 0);
                         actions.add(deprioritizeCaseAction);
+                        
+                        // ELTODO enable/disable based on current state
+                        actions.add(new AutoIngestAdminActions.EnableOCR(jobWrapper.getJob()));
                         break;
                     case RUNNING_JOB:
                         actions.add(new AutoIngestAdminActions.ProgressDialogAction(jobWrapper.getJob()));

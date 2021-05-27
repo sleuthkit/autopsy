@@ -470,6 +470,34 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         setChanged();
         notifyObservers(Event.CASE_PRIORITIZED);
     }
+    
+    /**
+     * Processes a case OCR enabled/disabled event from another node.
+     *
+     * @param event OCR enabled/disabled event from another auto ingest node.
+     */
+    private void handleRemoteOcrEvent(AutoIngestOcrEnabledEvent event) {
+        // ELTODO
+        switch (event.getEventType()) {
+            case OCR_ENABLED:
+                sysLogger.log(Level.INFO, "Received OCR enabled event for case {0} from user {1} on machine {2}",
+                        new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
+                break;
+            case OCR_DISABLED:
+                sysLogger.log(Level.INFO, "Received OCR disabled event for case {0} from user {1} on machine {2}",
+                        new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
+                break;
+            default:
+                sysLogger.log(Level.WARNING, "Received invalid OCR enabled/disabled event from user {0} on machine {1}",
+                        new Object[]{event.getUserName(), event.getNodeName()});
+                break;
+        }
+
+        String hostName = event.getNodeName();
+        hostNamesToLastMsgTime.put(hostName, Instant.now());
+        setChanged();
+        notifyObservers(Event.OCR_STATE_CHANGE); // ELTODO
+    }    
 
     /**
      * Processes a case deletion event from another node by triggering an
@@ -3150,7 +3178,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         REPORT_STATE,
         CANCEL_JOB,
         REPROCESS_JOB,
-        GENERATE_THREAD_DUMP_RESPONSE
+        GENERATE_THREAD_DUMP_RESPONSE,
+        OCR_STATE_CHANGE
     }
 
     /**

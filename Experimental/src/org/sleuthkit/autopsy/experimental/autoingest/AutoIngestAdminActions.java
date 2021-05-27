@@ -157,6 +157,54 @@ final class AutoIngestAdminActions {
             }
         }
     }
+    
+    @NbBundle.Messages({"AutoIngestAdminActions.enableOCR.title=Enable OCR For This Case",
+    "AutoIngestAdminActions.enableOCR.error=Failed to enable OCR for case \"%s\"."})
+    static final class EnableOCR extends AbstractAction {
+
+        private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
+
+        EnableOCR(AutoIngestJob job) {
+            super(Bundle.AutoIngestAdminActions_enableOCR_title());
+            this.job = job;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                dashboard.getPendingJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                EventQueue.invokeLater(() -> {
+                    try {
+                        dashboard.getMonitor().enableOcrForCase(job.getManifest().getCaseName());
+                        dashboard.getPendingJobsPanel().refresh(new AutoIngestNodeRefreshEvents.RefreshCaseEvent(dashboard.getMonitor(), job.getManifest().getCaseName())); // ELTODO
+                    } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                        String errorMessage = String.format(Bundle.AutoIngestAdminActions_enableOCR_error(), job.getManifest().getCaseName());
+                        logger.log(Level.SEVERE, errorMessage, ex);
+                        MessageNotifyUtil.Message.error(errorMessage);
+                    } finally {
+                        dashboard.getPendingJobsPanel().setCursor(Cursor.getDefaultCursor());
+                    }
+                });
+            }
+        }
+
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+    }    
 
     @NbBundle.Messages({"AutoIngestAdminActions.progressDialogAction.title=Ingest Progress"})
     static final class ProgressDialogAction extends AbstractAction {

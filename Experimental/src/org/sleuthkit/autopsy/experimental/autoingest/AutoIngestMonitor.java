@@ -84,7 +84,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         AutoIngestManager.Event.SHUTTING_DOWN.toString(),
         AutoIngestManager.Event.SHUTDOWN.toString(),
         AutoIngestManager.Event.RESUMED.toString(),
-        AutoIngestManager.Event.GENERATE_THREAD_DUMP_RESPONSE.toString()}));
+        AutoIngestManager.Event.GENERATE_THREAD_DUMP_RESPONSE.toString(),
+        AutoIngestManager.Event.OCR_STATE_CHANGE.toString()}));
     private final AutopsyEventPublisher eventPublisher;
     private CoordinationService coordinationService;
     private final ScheduledThreadPoolExecutor coordSvcQueryExecutor;
@@ -427,6 +428,51 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             return new JobsSnapshot();
         }
     }
+        
+    /**
+     * Enables OCR for all pending ingest jobs for a specified case.
+     *
+     * @param caseName The name of the case to enable OCR.
+     *
+     * @throws AutoIngestMonitorException If there is an error enabling OCR for the jobs for the case.
+     *
+     */
+    void enableOcrForCase(final String caseName) throws AutoIngestMonitorException {
+        List<AutoIngestJob> jobsToPrioritize = new ArrayList<>();
+        synchronized (jobsLock) {
+            for (AutoIngestJob pendingJob : getPendingJobs()) {
+                if (pendingJob.getManifest().getCaseName().equals(caseName)) {
+                    jobsToPrioritize.add(pendingJob);
+                }
+            }
+            if (!jobsToPrioritize.isEmpty()) {
+                for (AutoIngestJob job : jobsToPrioritize) {
+                    String manifestNodePath = job.getManifest().getFilePath().toString();
+                    try {
+                        AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
+                        nodeData.setOcrEnabled(true);
+                        coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
+                    } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
+                        throw new AutoIngestMonitorException("Error enabling OCR for job " + job.toString(), ex);
+                    }
+                    job.enableOcr(true); // ELTODO
+
+                    /**
+                     * Update job object in pending jobs queue
+                     */
+                    jobsSnapshot.addOrReplacePendingJob(job);
+                }
+
+                /*
+                 * Publish the OCR enabled event.
+                 */
+                new Thread(() -> {
+                    eventPublisher.publishRemotely(new AutoIngestOcrEnabledEvent(LOCAL_HOST_NAME, caseName,
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestOcrEnabledEvent.EventType.OCR_ENABLED));
+                }).start();
+            }
+        }
+    }    
 
     /**
      * Removes the priority (set to zero) of all pending ingest jobs for a
