@@ -33,7 +33,7 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
@@ -180,7 +180,7 @@ class DomainSummaryPanel extends javax.swing.JPanel implements ListCellRenderer<
     @Override
     public Component getListCellRendererComponent(JList<? extends DomainWrapper> list, DomainWrapper value, int index, boolean isSelected, boolean cellHasFocus) {
         domainNameLabel.setText(value.getResultDomain().getDomain());
-        TimeZone timeZone = ContentUtils.getTimeZone(value.getResultDomain().getDataSource());
+        TimeZone timeZone = TimeZoneUtils.getTimeZone();
         String startDate = formatDate(value.getResultDomain().getActivityStart(), timeZone);
         String endDate = formatDate(value.getResultDomain().getActivityEnd(), timeZone);
         String notability = Bundle.DomainSummaryPanel_notability_text();

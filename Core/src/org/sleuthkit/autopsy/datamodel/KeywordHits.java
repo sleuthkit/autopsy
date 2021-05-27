@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -888,17 +889,17 @@ public class KeywordHits implements AutopsyVisitableItem {
                 KeywordHits_createNodeForKey_modTime_name(),
                 KeywordHits_createNodeForKey_modTime_displayName(),
                 KeywordHits_createNodeForKey_modTime_desc(),
-                ContentUtils.getStringTime(file.getMtime(), file)));
+                TimeZoneUtils.getFormattedTime(file.getMtime())));
         n.addNodeProperty(new NodeProperty<>(
                 KeywordHits_createNodeForKey_accessTime_name(),
                 KeywordHits_createNodeForKey_accessTime_displayName(),
                 KeywordHits_createNodeForKey_accessTime_desc(),
-                ContentUtils.getStringTime(file.getAtime(), file)));
+                TimeZoneUtils.getFormattedTime(file.getAtime())));
         n.addNodeProperty(new NodeProperty<>(
                 KeywordHits_createNodeForKey_chgTime_name(),
                 KeywordHits_createNodeForKey_chgTime_displayName(),
                 KeywordHits_createNodeForKey_chgTime_desc(),
-                ContentUtils.getStringTime(file.getCtime(), file)));
+                TimeZoneUtils.getFormattedTime(file.getCtime())));
         return n;
     }
 

@@ -30,6 +30,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
@@ -389,10 +390,10 @@ class Ingester {
          */
         private Map<String, String> getCommonAndMACTimeFields(AbstractFile file) {
             Map<String, String> params = getCommonFields(file);
-            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCtime(), file));
-            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(file.getAtime(), file));
-            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTimeISO8601(file.getMtime(), file));
-            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCrtime(), file));
+            params.put(Server.Schema.CTIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getCtime()));
+            params.put(Server.Schema.ATIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getAtime()));
+            params.put(Server.Schema.MTIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getMtime()));
+            params.put(Server.Schema.CRTIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getCrtime()));
             return params;
         }
 

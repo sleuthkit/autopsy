@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,6 +66,7 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslationUtil;
 
 /**
@@ -350,10 +351,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     new WeakReference<>(this), weakPcl));
         }
 
-        properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
-        properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));
-        properties.add(new NodeProperty<>(ACCESS_TIME.toString(), ACCESS_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getAtime(), content)));
-        properties.add(new NodeProperty<>(CREATED_TIME.toString(), CREATED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCrtime(), content)));
+        properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getMtime())));
+        properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getCtime())));
+        properties.add(new NodeProperty<>(ACCESS_TIME.toString(), ACCESS_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getAtime())));
+        properties.add(new NodeProperty<>(CREATED_TIME.toString(), CREATED_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getCrtime())));
         properties.add(new NodeProperty<>(SIZE.toString(), SIZE.toString(), NO_DESCR, content.getSize()));
         properties.add(new NodeProperty<>(FLAGS_DIR.toString(), FLAGS_DIR.toString(), NO_DESCR, content.getDirFlagAsString()));
         properties.add(new NodeProperty<>(FLAGS_META.toString(), FLAGS_META.toString(), NO_DESCR, content.getMetaFlagsAsString()));
@@ -571,10 +572,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
         map.put(NAME.toString(), getContentDisplayName(content));
         map.put(LOCATION.toString(), getContentPath(content));
-        map.put(MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
-        map.put(CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
-        map.put(ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
-        map.put(CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
+        map.put(MOD_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getMtime()));
+        map.put(CHANGED_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getCtime()));
+        map.put(ACCESS_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getAtime()));
+        map.put(CREATED_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getCrtime()));
         map.put(SIZE.toString(), content.getSize());
         map.put(FLAGS_DIR.toString(), content.getDirFlagAsString());
         map.put(FLAGS_META.toString(), content.getMetaFlagsAsString());

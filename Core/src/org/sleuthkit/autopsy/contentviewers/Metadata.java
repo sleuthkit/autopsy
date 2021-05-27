@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,13 +26,12 @@ import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -299,10 +298,10 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(file.getSize()));
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), ContentUtils.getStringTime(file.getMtime(), file));
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), ContentUtils.getStringTime(file.getAtime(), file));
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), ContentUtils.getStringTime(file.getCrtime(), file));
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), ContentUtils.getStringTime(file.getCtime(), file));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), TimeZoneUtils.getFormattedTime(file.getMtime()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), TimeZoneUtils.getFormattedTime(file.getAtime()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), TimeZoneUtils.getFormattedTime(file.getCrtime()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), TimeZoneUtils.getFormattedTime(file.getCtime()));
 
                 String md5 = file.getMd5Hash();
                 if (md5 == null) {

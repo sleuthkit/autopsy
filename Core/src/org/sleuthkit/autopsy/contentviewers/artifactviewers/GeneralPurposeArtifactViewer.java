@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,11 +44,10 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.discovery.ui.AbstractArtifactDetailsPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -263,9 +262,9 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                     for (BlackboardAttribute bba : attrList) {
                         if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
                             if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
-                                addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_time(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                                addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_time(), TimeZoneUtils.getFormattedTime(bba.getValueLong()));
                             } else {
-                                addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                                addNameValueRow(bba.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(bba.getValueLong()));
                             }
                         } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID() && artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
                             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_term_label(), bba.getDisplayString());
@@ -293,7 +292,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 for (int key : attributeMap.keySet()) {
                     for (BlackboardAttribute bba : attributeMap.get(key)) {
                         if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
-                            addNameValueRow(bba.getAttributeType().getDisplayName(), TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact)));
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(bba.getValueLong()));
                         } else {
                             addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
                         }
