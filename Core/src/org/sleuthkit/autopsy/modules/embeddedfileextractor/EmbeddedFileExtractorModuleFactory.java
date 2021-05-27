@@ -45,6 +45,10 @@ public class EmbeddedFileExtractorModuleFactory extends IngestModuleFactoryAdapt
     public String getModuleDisplayName() {
         return getModuleName();
     }
+    
+    static String getOutputFolderName() {
+        return "EFE";
+    }
 
     @Override
     public String getModuleDescription() {
