@@ -1309,12 +1309,28 @@ class SevenZipExtractor {
                 }
 
                 if (tokens.size() != byteTokens.size()) {
-                    logger.log(Level.WARNING, "Could not map path bytes to path string");
+                    logger.log(Level.WARNING, "Could not map path bytes to path string (path string: \"{0}\", bytes: {1})", 
+                            new Object[]{filePath, bytesToString(filePathBytes)});
                     return addNode(rootNode, tokens, null);
                 }
             }
 
             return addNode(rootNode, tokens, byteTokens);
+        }
+        
+        /**
+         * Convert byte array to string representation.
+         * 
+         * @param bytes Byte array
+         * 
+         * @return Byte array as lower case hex string.
+         */
+        private String bytesToString(byte[] bytes) {
+            StringBuilder result = new StringBuilder();
+            for (byte b : bytes) {
+                result.append(String.format("%02x", b));
+            }
+            return result.toString();
         }
 
         /**
