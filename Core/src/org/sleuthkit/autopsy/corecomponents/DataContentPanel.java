@@ -134,43 +134,22 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
     @Override
     public void setNode(Node selectedNode) {
-        // change the cursor to "waiting cursor" for this operation
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
+        
+        if (workerThread != null) {
+            workerThread.cancel(true);
+            workerThread = null;
+        }
+        
+        currentNode = null;
+        
         // Reset everything
         for (int index = 0; index < jTabbedPane1.getTabCount(); index++) {
             jTabbedPane1.setEnabledAt(index, false);
             viewers.get(index).resetComponent();
         }
 
-        String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
-        // set the file path
-        if (selectedNode == null) {
-            setName(defaultName);
-        } else {
-            Content content = selectedNode.getLookup().lookup(Content.class);
-            if (content != null) {
-                //String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
-                String path = defaultName;
-                try {
-                    path = content.getUniquePath();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for {0}", content); //NON-NLS
-                }
-                setName(path);
-            } else {
-                setName(defaultName);
-            }
-        }
-
-        currentNode = selectedNode;
-
-        if (workerThread != null) {
-            workerThread.cancel(true);
-        }
-
         if (selectedNode != null) {
-            workerThread = new DataContentPanelWorker(currentNode);
+            workerThread = new DataContentPanelWorker(selectedNode);
             workerThread.execute();
         }
     }
@@ -287,9 +266,6 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
         @Override
         protected WorkerResults doInBackground() throws Exception {
-            if (node == null) {
-                return null;
-            }
 
             List<Integer> supportedViewers = new ArrayList<>();
             int preferredViewerIndex = 0;
@@ -312,7 +288,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
                 }
 
             }
-
+            
             return new WorkerResults(node, supportedViewers, preferredViewerIndex);
         }
 
@@ -325,7 +301,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
             try {
                 WorkerResults results = get();
-
+                currentNode = node;
                 if (results != null) {
                     updateTabs(results.getNode(), results.getSupportedIndices(), results.getPreferredViewerIndex());
                 }

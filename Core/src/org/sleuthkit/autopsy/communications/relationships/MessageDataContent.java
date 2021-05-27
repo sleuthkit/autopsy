@@ -20,9 +20,12 @@ package org.sleuthkit.autopsy.communications.relationships;
 
 import java.beans.PropertyChangeEvent;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.MessageArtifactViewer;
@@ -50,6 +53,8 @@ final class MessageDataContent extends MessageArtifactViewer implements DataCont
 
     private static final long serialVersionUID = 1L;
     final private ExplorerManager explorerManager = new ExplorerManager();
+    
+    private ArtifactFetcher worker;
 
     @Override
     public void propertyChange(final PropertyChangeEvent evt) {
@@ -63,11 +68,18 @@ final class MessageDataContent extends MessageArtifactViewer implements DataCont
 
     @Override
     public void setNode(Node node) {
-        BlackboardArtifact artifact = null;
-        if (node != null) {
-            artifact = getNodeArtifact(node);
+        if(worker != null) {
+            worker.cancel(true);
+            worker = null;
         }
-        setArtifact(artifact);
+        
+        if(node == null) {
+            resetComponent();
+            return;
+        }
+        
+        worker = new ArtifactFetcher(node);
+        worker.execute();
     }
 
     /**
@@ -108,5 +120,31 @@ final class MessageDataContent extends MessageArtifactViewer implements DataCont
         }
 
         return nodeArtifact;
+    }
+    
+    private class ArtifactFetcher extends SwingWorker<BlackboardArtifact, Void> {
+        private final Node node;
+        
+        ArtifactFetcher(Node node) {
+            this.node = node;
+        }
+        
+        @Override
+        protected BlackboardArtifact doInBackground() throws Exception {
+           return getNodeArtifact(node);
+        }
+        
+        @Override
+        public void done() {
+            if(isCancelled()) {
+                return;
+            }
+            
+            try {
+                setArtifact(get());
+            } catch (InterruptedException | ExecutionException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get node for artifact.", ex); //NON-NLS
+            }
+        }
     }
 }
