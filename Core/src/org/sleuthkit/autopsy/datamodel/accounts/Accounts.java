@@ -97,7 +97,7 @@ final public class Accounts implements AutopsyVisitableItem {
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     private static final String DISPLAY_NAME = Bundle.Accounts_RootNode_displayName();
 
-    @NbBundle.Messages("AccountsRootNode.name=Accounts")
+    @NbBundle.Messages("AccountsRootNode.name=Accounts")  //used for the viewArtifact navigation
     final public static String NAME = Bundle.AccountsRootNode_name();
 
     private SleuthkitCase skCase;
@@ -233,7 +233,7 @@ final public class Accounts implements AutopsyVisitableItem {
     /**
      * Top-level node for the accounts tree
      */
-    @NbBundle.Messages({"Accounts.RootNode.displayName=Accounts"})
+    @NbBundle.Messages({"Accounts.RootNode.displayName=Communication Accounts"})
     final public class AccountsRootNode extends UpdatableCountTypeNode {
 
         public AccountsRootNode() {
