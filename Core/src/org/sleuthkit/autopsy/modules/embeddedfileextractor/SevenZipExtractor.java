@@ -724,7 +724,7 @@ class SevenZipExtractor {
                 if (checkForIngestCancellation(archiveFile)) {
                     return false;
                 }
-                final String uniqueExtractedName = FileUtil.escapeFileName(uniqueArchiveFileName + File.separator + (inArchiveItemIndex / 1000) + File.separator + inArchiveItemIndex + "_" + new File(pathInArchive).getName());
+                final String uniqueExtractedName = FileUtil.escapeFileName(uniqueArchiveFileName + File.separator + (inArchiveItemIndex / 1000) + File.separator + inArchiveItemIndex);
                 final String localAbsPath = moduleDirAbsolute + File.separator + uniqueExtractedName;
                 final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
 

@@ -94,8 +94,8 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          *
          */
         Case currentCase = Case.getCurrentCase();
-        String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-        String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+        String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getOutputFolderName()).toString();
+        String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getOutputFolderName()).toString();
 
         if (refCounter.incrementAndGet(jobId) == 1) {
 
@@ -217,15 +217,15 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     }
 
     /**
-     * Creates a unique name for a file by concatentating the file name and the
-     * file object id.
+     * Creates a unique name for a file.
+     * Currently this is just the file object id to prevent long paths and illegal characters.
      *
      * @param file The file.
      *
      * @return The unique file name.
      */
     static String getUniqueName(AbstractFile file) {
-        return file.getName() + "_" + file.getId();
+        return Long.toString(file.getId());
     }
 
 }
