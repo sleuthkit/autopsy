@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JLabel;
+import javax.swing.SwingWorker;
 import javax.swing.text.html.HTMLEditorKit;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
@@ -44,8 +45,12 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -56,12 +61,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class AnalysisResultsContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static Logger logger = Logger.getLogger(AnalysisResultsContentViewer.class.getName());
-    
+
     /**
      * isPreferred value.
      */
     private static final int PREFERRED_VALUE = 6;
-    
+
     private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
 
     private static final String DEFAULT_FONT_FAMILY = new JLabel().getFont().getFamily();
@@ -71,24 +76,25 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
     // html stylesheet classnames for components
     private static final String SPACED_SECTION_CLASSNAME = "spacedSection";
     private static final String HEADER_CLASSNAME = "header";
+    public static final String MESSAGE_CLASSNAME = "message";
 
+    private static final String RESULT_ANCHOR_PREFIX = "AnalysisResult_";
 
     // how big the header should be
     private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE + 2;
-
 
     // spacing occurring after an item
     private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE / 2;
     private static final int CELL_SPACING = DEFAULT_FONT_SIZE / 2;
 
     // additional styling for components
-    private static final String STYLE_SHEET_RULE =
-            String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px; } ",
+    private static final String STYLE_SHEET_RULE
+            = String.format(" .%s { font-size: %dpx;font-style:italic; margin: 0px; padding: 0px; } ", MESSAGE_CLASSNAME, DEFAULT_FONT_SIZE)
+            + String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px; } ",
                     HEADER_CLASSNAME, DEFAULT_FONT_FAMILY, HEADER_FONT_SIZE)
             + String.format(" td { vertical-align: top; font-family: %s; font-size: %dpt; text-align: left; margin: 0pt; padding: 0px %dpt 0px 0px;} ",
                     DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, CELL_SPACING)
             + String.format(" .%s { margin-top: %dpt; } ", SPACED_SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
-
 
     private static String normalizeAttr(String originalAttrStr) {
         return (originalAttrStr == null) ? "" : originalAttrStr.trim();
@@ -174,37 +180,51 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
         private final Collection<AnalysisResult> analysisResults;
         private final Optional<AnalysisResult> selectedResult;
+        private final Optional<Score> aggregateScore;
 
-        NodeAnalysisResults(Collection<AnalysisResult> analysisResults, Optional<AnalysisResult> selectedResult) {
+        public NodeAnalysisResults(Collection<AnalysisResult> analysisResults, Optional<AnalysisResult> selectedResult, Optional<Score> aggregateScore) {
             this.analysisResults = analysisResults;
             this.selectedResult = selectedResult;
+            this.aggregateScore = aggregateScore;
         }
 
-        Collection<AnalysisResult> getAnalysisResults() {
+        public Collection<AnalysisResult> getAnalysisResults() {
             return analysisResults;
         }
 
-        Optional<AnalysisResult> getSelectedResult() {
+        public Optional<AnalysisResult> getSelectedResult() {
             return selectedResult;
+        }
+
+        public Optional<Score> getAggregateScore() {
+            return aggregateScore;
         }
     }
 
     private static NodeAnalysisResults getAnalysisResults(Node node) {
         if (node == null) {
-            return new NodeAnalysisResults(Collections.emptyList(), Optional.empty());
+            return new NodeAnalysisResults(Collections.emptyList(), Optional.empty(), Optional.empty());
         }
 
+        Optional<Score> aggregateScore = Optional.empty();
         Map<Long, AnalysisResult> allAnalysisResults = new HashMap<>();
         Optional<AnalysisResult> selectedResult = Optional.empty();
 
-        AbstractFile abstractFile = node.getLookup().lookup(AbstractFile.class);
-        if (abstractFile != null) {
+        for (Content content : node.getLookup().lookupAll(Content.class)) {
+            if (content == null || content instanceof BlackboardArtifact) {
+                continue;
+            }
+            
             try {
-                abstractFile.getAllAnalysisResults().stream()
+                aggregateScore = Optional.ofNullable(content.getAggregateScore());
+
+                content.getAllAnalysisResults().stream()
                         .filter(ar -> ar != null)
                         .forEach((ar) -> allAnalysisResults.put(ar.getArtifactID(), ar));
+                
+                break;
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Unable to get analysis results for file with obj id " + abstractFile.getId(), ex);
+                logger.log(Level.SEVERE, "Unable to get analysis results for content with obj id " + content.getId(), ex);
             }
         }
 
@@ -219,9 +239,13 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
             selectedResult = filteredResults.stream()
                     .max((a, b) -> a.getScore().compareTo(b.getScore()));
+
+            if (!aggregateScore.isPresent()) {
+                aggregateScore = selectedResult.flatMap(selectedRes -> Optional.ofNullable(selectedRes.getScore()));
+            }
         }
 
-        return new NodeAnalysisResults(allAnalysisResults.values(), selectedResult);
+        return new NodeAnalysisResults(getScoreOrderedResults(allAnalysisResults.values()), selectedResult, aggregateScore);
     }
 
     private static Document render(List<ResultDisplayAttributes> displayAttributes, Optional<Score> aggregateScore) {
@@ -242,16 +266,24 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
     @Messages("AnalysisResultsContentViewer_appendAggregateScore_displayKey=Aggregate Score")
     private static void appendAggregateScore(Element body, Score score) {
-        appendSection(body, MessageFormat.format("{0}: {1}",
-                Bundle.AnalysisResultsContentViewer_appendAggregateScore_displayKey(),
-                score.getSignificance().getDisplayName()));
+        appendSection(body,
+                MessageFormat.format("{0}: {1}",
+                        Bundle.AnalysisResultsContentViewer_appendAggregateScore_displayKey(),
+                        score.getSignificance().getDisplayName()),
+                null);
+    }
+
+    private static String getAnchor(AnalysisResult analysisResult) {
+        return RESULT_ANCHOR_PREFIX + analysisResult.getId();
     }
 
     @Messages({"# {0} - analysisResultsNumber",
         "AnalysisResultsContentViewer_appendResult_headerKey=Analysis Result {0}"
     })
     private static void appendResult(Element parent, int index, ResultDisplayAttributes attrs) {
-        Element sectionDiv = appendSection(parent, Bundle.AnalysisResultsContentViewer_appendResult_headerKey(index + 1));
+        Element sectionDiv = appendSection(parent,
+                Bundle.AnalysisResultsContentViewer_appendResult_headerKey(index + 1),
+                Optional.ofNullable(getAnchor(attrs.getAnalysisResult())));
         Element table = sectionDiv.appendElement("table");
         Element tableBody = table.appendElement("tbody");
 
@@ -269,11 +301,17 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
      *
      * @param parent     The element to append this section to.
      * @param headerText The text for the section.
+     * @param anchorId   The anchor id for this section.
      *
      * @return The div for the new section.
      */
-    private static Element appendSection(Element parent, String headerText) {
+    private static Element appendSection(Element parent, String headerText, Optional<String> anchorId) {
         Element sectionDiv = parent.appendElement("div");
+        if (anchorId.isPresent()) {
+            Element anchorEl = sectionDiv.appendElement("a");
+            anchorEl.attr("name", anchorId.get());
+        }
+
         sectionDiv.attr("class", SPACED_SECTION_CLASSNAME);
         Element header = sectionDiv.appendElement("h1");
         header.text(headerText);
@@ -281,13 +319,14 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
         return sectionDiv;
     }
 
+    private SwingWorker<?, ?> worker = null;
 
     /**
      * Creates new form AnalysisResultsContentViewer
      */
     public AnalysisResultsContentViewer() {
         initComponents();
-        
+
         textPanel.setContentType("text/html;charset=UTF-8"); //NON-NLS
         HTMLEditorKit kit = new HTMLEditorKit();
         textPanel.setEditorKit(kit);
@@ -326,25 +365,52 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
     }
 
     @Override
-    public void setNode(Node selectedNode) {
-        // GVDTODO comment, put in swing worker, scroll to location
-        NodeAnalysisResults nodeResults = getAnalysisResults(selectedNode);
-        List<AnalysisResult> orderedAnalysisResults = getScoreOrderedResults(nodeResults.getAnalysisResults());
-        List<ResultDisplayAttributes> displayAttributes = getDisplayAttributes(orderedAnalysisResults);
+    @Messages({
+        "AnalysisResultsContentViewer_setNode_loadingMessage=Loading...",
+        "AnalysisResultsContentViewer_setNode_errorMessage=There was an error loading results.",})
+    public synchronized void setNode(Node node) {
+        resetComponent();
 
-        Optional<Score> aggregateScore = displayAttributes.stream()
-                .findFirst()
-                .flatMap(dispAttrs -> Optional.ofNullable(dispAttrs.getAnalysisResult().getScore()));
-
-        Document document = render(displayAttributes, aggregateScore);
-
-        Optional<AnalysisResult> selectedResult = nodeResults.getSelectedResult();
-        if (selectedResult.isPresent()) {
-            // GVDTODO
+        if (worker != null) {
+            worker.cancel(true);
+            worker = null;
         }
-        
+
+        if (node == null) {
+            return;
+        }
+
+        showMessage(Bundle.AnalysisResultsContentViewer_setNode_loadingMessage());
+
+        worker = new DataFetchWorker<Node, NodeAnalysisResults>(
+                (selectedNode) -> getAnalysisResults(selectedNode),
+                (nodeAnalysisResults) -> {
+                    if (nodeAnalysisResults.getResultType() == ResultType.SUCCESS) {
+                        displayResults(nodeAnalysisResults.getData());
+                    } else {
+                        showMessage(Bundle.AnalysisResultsContentViewer_setNode_errorMessage());
+                    }
+                },
+                node);
+
+        worker.execute();
+    }
+
+    private void showMessage(String message) {
+        textPanel.setText("<html><head></head><body>"
+                + MessageFormat.format("<p class='{0}'>{1}</p>", MESSAGE_CLASSNAME, message)
+                + "</body></html>");
+    }
+
+    private void displayResults(NodeAnalysisResults nodeResults) {
+        List<ResultDisplayAttributes> displayAttributes = getDisplayAttributes(nodeResults.getAnalysisResults());
+        Document document = render(displayAttributes, nodeResults.getAggregateScore());
+        Optional<AnalysisResult> selectedResult = nodeResults.getSelectedResult();
         textPanel.setText(document.html());
-        textPanel.setCaretPosition(0);
+
+        if (selectedResult.isPresent()) {
+            textPanel.scrollToReference(getAnchor(selectedResult.get()));
+        }
     }
 
     @Override
