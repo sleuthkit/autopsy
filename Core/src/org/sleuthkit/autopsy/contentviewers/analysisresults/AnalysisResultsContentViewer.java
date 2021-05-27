@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JLabel;
-import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
@@ -44,7 +43,6 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.contentviewers.Utilities;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
@@ -71,8 +69,8 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
     private static final Color DEFAULT_BACKGROUND = new JLabel().getBackground();
 
     // html stylesheet classnames for components
-    public static final String SECTION_CLASSNAME = "section";
-    public static final String HEADER_CLASSNAME = "header";
+    private static final String SPACED_SECTION_CLASSNAME = "spacedSection";
+    private static final String HEADER_CLASSNAME = "header";
 
 
     // how big the header should be
@@ -80,18 +78,16 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
 
 
     // spacing occurring after an item
-    private static final int DEFAULT_SECTION_SPACING = 6;
-    private static final int CELL_SPACING = 4;
+    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE / 2;
+    private static final int CELL_SPACING = DEFAULT_FONT_SIZE / 2;
 
     // additional styling for components
     private static final String STYLE_SHEET_RULE =
-            String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; padding: 0px; } ",
+            String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px; } ",
                     HEADER_CLASSNAME, DEFAULT_FONT_FAMILY, HEADER_FONT_SIZE)
-            + String.format(" td { vertical-align: top; font-family: %s; font-size:%dpt; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px;} ",
+            + String.format(" td { vertical-align: top; font-family: %s; font-size: %dpt; text-align: left; margin: 0pt; padding: 0px %dpt 0px 0px;} ",
                     DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" th { vertical-align: top; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px} ",
-                    DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" .%s { margin-bottom: %dpx; } ", SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
+            + String.format(" .%s { margin-top: %dpt; } ", SPACED_SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
 
 
     private static String normalizeAttr(String originalAttrStr) {
@@ -278,7 +274,7 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
      */
     private static Element appendSection(Element parent, String headerText) {
         Element sectionDiv = parent.appendElement("div");
-        sectionDiv.attr("class", SECTION_CLASSNAME);
+        sectionDiv.attr("class", SPACED_SECTION_CLASSNAME);
         Element header = sectionDiv.appendElement("h1");
         header.text(headerText);
         header.attr("class", HEADER_CLASSNAME);
@@ -291,13 +287,11 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
      */
     public AnalysisResultsContentViewer() {
         initComponents();
-        Utilities.configureTextPaneAsHtml(textPanel);
-        // get html editor kit and apply additional style rules
-        EditorKit editorKit = textPanel.getEditorKit();
-        if (editorKit instanceof HTMLEditorKit) {
-            HTMLEditorKit htmlKit = (HTMLEditorKit) editorKit;
-            htmlKit.getStyleSheet().addRule(STYLE_SHEET_RULE);
-        }
+        
+        textPanel.setContentType("text/html;charset=UTF-8"); //NON-NLS
+        HTMLEditorKit kit = new HTMLEditorKit();
+        textPanel.setEditorKit(kit);
+        kit.getStyleSheet().addRule(STYLE_SHEET_RULE);
     }
 
     @NbBundle.Messages({
@@ -391,11 +385,7 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
         javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane();
         textPanel = new javax.swing.JTextPane();
 
-        setMinimumSize(new java.awt.Dimension(250, 250));
-        setPreferredSize(new java.awt.Dimension(250, 250));
-        setLayout(new java.awt.BorderLayout());
-
-        scrollPane.setPreferredSize(new java.awt.Dimension(32767, 32767));
+        setPreferredSize(new java.awt.Dimension(100, 58));
 
         textPanel.setEditable(false);
         textPanel.setBackground(DEFAULT_BACKGROUND);
@@ -403,7 +393,16 @@ public class AnalysisResultsContentViewer extends javax.swing.JPanel implements 
         textPanel.setPreferredSize(new java.awt.Dimension(600, 52));
         scrollPane.setViewportView(textPanel);
 
-        add(scrollPane, java.awt.BorderLayout.CENTER);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 907, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(scrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE)
+        );
     }// </editor-fold>//GEN-END:initComponents
 
 
