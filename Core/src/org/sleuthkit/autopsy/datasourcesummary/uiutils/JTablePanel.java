@@ -41,6 +41,8 @@ import javax.swing.table.TableColumnModel;
  */
 public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
 
+    private static final int EXTRA_ROW_HEIGHT = 4;
+
     /**
      * An event that wraps a swing MouseEvent also providing context within the
      * table cell.
@@ -56,10 +58,10 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         /**
          * Main constructor.
          *
-         * @param e The underlying mouse event.
-         * @param table The table that was the target of the mouse event.
-         * @param row The row within the table that the event occurs.
-         * @param col The column within the table that the event occurs.
+         * @param e         The underlying mouse event.
+         * @param table     The table that was the target of the mouse event.
+         * @param row       The row within the table that the event occurs.
+         * @param col       The column within the table that the event occurs.
          * @param cellValue The value within the cell.
          */
         public CellMouseEvent(MouseEvent e, JTable table, int row, int col, Object cellValue) {
@@ -115,15 +117,14 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
          * Handles mouse events at a cell level for the table.
          *
          * @param e The event containing information about the cell, the mouse
-         * event, and the table.
+         *          event, and the table.
          */
         void mouseClicked(CellMouseEvent e);
     }
 
     /**
-     * JTables don't allow displaying messages. So this LayerUI is used to
-     * display the contents of a child JLabel. Inspired by TableWaitLayerTest
-     * (Animating a Busy Indicator):
+     * This LayerUI is used to display the contents of a child JLabel. Inspired
+     * by TableWaitLayerTest (Animating a Busy Indicator):
      * https://docs.oracle.com/javase/tutorial/uiswing/misc/jlayer.html.
      */
     private static class Overlay extends LayerUI<JComponent> {
@@ -205,7 +206,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
                 .map((colModel) -> colModel.getCellRenderer())
                 .collect(Collectors.toList());
 
-        return new DefaultListTableModel<T>(columnRenderers);
+        return new DefaultListTableModel<>(columnRenderers);
     }
 
     /**
@@ -225,7 +226,6 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         return resultTable;
     }
 
-
     private JScrollPane tableScrollPane;
     private Overlay overlayLayer;
     private ListTableModel<T> tableModel;
@@ -241,6 +241,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
     public JTablePanel(ListTableModel<T> tableModel) {
         this();
         setModel(tableModel);
+        table.setRowHeight(table.getRowHeight() + EXTRA_ROW_HEIGHT);
     }
 
     /**
@@ -268,6 +269,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
                 }
             }
         });
+        table.setGridColor(javax.swing.UIManager.getDefaults().getColor("InternalFrame.borderColor"));
     }
 
     /**
@@ -290,7 +292,7 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
 
     /**
      * @return The current listener for mouse events. The events provided to
-     * this listener will have cell and table context.
+     *         this listener will have cell and table context.
      */
     public CellMouseListener getCellListener() {
         return cellListener;
@@ -300,7 +302,8 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
      * Sets the current listener for mouse events.
      *
      * @param cellListener The event listener that will receive these events
-     * with cell and table context.
+     *                     with cell and table context.
+     *
      * @return
      */
     public JTablePanel<T> setCellListener(CellMouseListener cellListener) {
@@ -329,7 +332,8 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
 
     /**
      * @return The function for determining the key for a data row. This key is
-     * used to maintain current selection in the table despite changing rows.
+     *         used to maintain current selection in the table despite changing
+     *         rows.
      */
     public Function<T, ? extends Object> getKeyFunction() {
         return keyFunction;
@@ -351,9 +355,10 @@ public class JTablePanel<T> extends AbstractLoadableComponent<List<T>> {
         this.keyFunction = keyFunction;
         return this;
     }
-    
+
     /**
      * Returns the selected items or null if no item is selected.
+     *
      * @return The selected items or null if no item is selected.
      */
     public List<T> getSelectedItems() {

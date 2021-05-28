@@ -26,7 +26,6 @@ import javax.swing.JLabel;
  * painting a JLabel using a java.awt.Graphics object.
  */
 public class BaseMessageOverlay {
-
     private final JLabel label;
     private boolean visible = false;
 

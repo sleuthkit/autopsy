@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.Component;
-import java.awt.Insets;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -30,7 +29,6 @@ import javax.swing.JTable;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.CellMouseEvent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.CellMouseListener;
@@ -43,7 +41,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
     private static final long serialVersionUID = 1L;
     private static final int DEFAULT_ALIGNMENT = JLabel.LEFT;
-    private static final Border DEFAULT_BORDER = BorderFactory.createEmptyBorder(1, 5, 1, 5);
+    private static final Border DEFAULT_BORDER = BorderFactory.createEmptyBorder(2, 4, 2, 4);
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
@@ -62,43 +60,21 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
      * Customizes the jlabel to match the column model and cell model provided.
      *
      * @param defaultCell The cell to customize that will be displayed in the
-     * jtable.
-     * @param cellModel The cell model for this cell.
+     *                    jtable.
+     * @param cellModel   The cell model for this cell.
      *
      * @return The provided defaultCell.
      */
     protected Component getTableCellRendererComponent(JLabel defaultCell, GuiCellModel cellModel) {
-        // sets the text for the cell or null if not present.
-        String text = cellModel.getText();
-        if (StringUtils.isNotBlank(text)) {
-            defaultCell.setText(text);
-        } else {
-            defaultCell.setText(null);
-        }
-
-        // sets the tooltip for the cell if present.
-        String tooltip = cellModel.getTooltip();
-        if (StringUtils.isNotBlank(tooltip)) {
-            defaultCell.setToolTipText(tooltip);
-        } else {
-            defaultCell.setToolTipText(null);
-        }
-
-        // sets the padding for cell text within the cell.
-        Insets insets = cellModel.getInsets();
-        if (insets != null) {
-            defaultCell.setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
-        } else {
-            defaultCell.setBorder(DEFAULT_BORDER);
-        }
-
+        defaultCell.setText(cellModel.getText());
+        defaultCell.setToolTipText(cellModel.getTooltip());
         // sets the JLabel alignment (left, center, right) or default alignment
         // if no alignment is specified
         int alignment = (cellModel.getHorizontalAlignment() == null)
                 ? DEFAULT_ALIGNMENT
                 : cellModel.getHorizontalAlignment().getJLabelAlignment();
         defaultCell.setHorizontalAlignment(alignment);
-
+        defaultCell.setBorder(DEFAULT_BORDER);
         return defaultCell;
     }
 
@@ -134,7 +110,7 @@ public class CellModelTableCellRenderer extends DefaultTableCellRenderer {
 
     /**
      * @return The default cell mouse listener that triggers popups for
-     * non-primary button events.
+     *         non-primary button events.
      */
     public static CellMouseListener getMouseListener() {
         return DEFAULT_CELL_MOUSE_LISTENER;

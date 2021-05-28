@@ -267,19 +267,17 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         javax.swing.JScrollPane ingestModulesScrollPane = new javax.swing.JScrollPane();
         ingestModuleTable = new javax.swing.JTable();
 
-        setMaximumSize(new java.awt.Dimension(32767, 32767));
         setLayout(new java.awt.BorderLayout());
 
-        contentPanel.setMaximumSize(new java.awt.Dimension(32767, 32767));
         contentPanel.setMinimumSize(new java.awt.Dimension(625, 150));
         contentPanel.setPreferredSize(new java.awt.Dimension(625, 150));
         contentPanel.setLayout(new java.awt.GridBagLayout());
 
         ingestJobsScrollPane.setBorder(null);
         ingestJobsScrollPane.setMinimumSize(new java.awt.Dimension(16, 16));
-        ingestJobsScrollPane.setPreferredSize(null);
 
         ingestJobTable.setModel(ingestJobTableModel);
+        ingestJobTable.setGridColor(javax.swing.UIManager.getDefaults().getColor("InternalFrame.borderColor"));
         ingestJobTable.getTableHeader().setReorderingAllowed(false);
         ingestJobsScrollPane.setViewportView(ingestJobTable);
         ingestJobTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -315,6 +313,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         ingestModulesScrollPane.setPreferredSize(new java.awt.Dimension(254, 16));
 
         ingestModuleTable.setModel(ingestModuleTableModel);
+        ingestModuleTable.setGridColor(javax.swing.UIManager.getDefaults().getColor("InternalFrame.borderColor"));
         ingestModulesScrollPane.setViewportView(ingestModuleTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();

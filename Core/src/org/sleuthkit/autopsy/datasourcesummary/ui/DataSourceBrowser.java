@@ -80,7 +80,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
                 Bundle.DataSourceSummaryNode_column_results_header(), Bundle.DataSourceSummaryNode_column_results_header(),
                 Bundle.DataSourceSummaryNode_column_tags_header(), Bundle.DataSourceSummaryNode_column_tags_header());
         outline = outlineView.getOutline();
-
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         dataSourceSummaryList = getDataSourceSummaryList(usageMap, fileCountsMap);
