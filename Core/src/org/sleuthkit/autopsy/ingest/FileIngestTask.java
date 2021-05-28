@@ -58,7 +58,6 @@ final class FileIngestTask extends IngestTask {
      */
     FileIngestTask(IngestJobPipeline ingestJobPipeline, long fileId) {
         super(ingestJobPipeline);
-        file = null;
         this.fileId = fileId;
     }
 

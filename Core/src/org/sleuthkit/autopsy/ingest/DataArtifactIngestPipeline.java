@@ -32,7 +32,6 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
      * Constructs a pipeline of data artifact ingest modules used to execute
      * data artifact ingest tasks for an ingest job.
      *
-     *
      * @param ingestJobPipeline The ingest job pipeline that owns this ingest
      *                          task pipeline.
      * @param moduleTemplates   The ingest module templates that define this

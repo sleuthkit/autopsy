@@ -1186,8 +1186,8 @@ final class IngestJobPipeline {
                 fileIngestPipelinesQueue.put(pipeline);
             }
         } catch (InterruptedException ex) {
-            // RJCTODO This probablly should be logged, interrupt during wait for pipeline copy
-            // Also need to reset the flag...
+            logger.log(Level.SEVERE, String.format("Unexpected interrupt of file ingest thread during execution of file ingest job (file obj ID = %d)", task.getFileId()), ex);
+            Thread.currentThread().interrupt(); // Reset thread interrupted flag
         } finally {
             taskScheduler.notifyTaskCompleted(task);
             checkForStageCompleted();

@@ -18,18 +18,14 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.ArrayList;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 
 /**
- * An ingest job context object that provides an ingest module with operations
- * specific to the ingest job of which the module is a part.
- *
- * From a coding perspective, this object provides an abstraction that hides
- * ingest infrastructure details.
+ * Provides an ingest module with services specific to the ingest job of which
+ * the module is a part.
  */
 public final class IngestJobContext {
 
@@ -37,7 +33,7 @@ public final class IngestJobContext {
 
     /**
      * Constructs an ingest job context object that provides an ingest module
-     * with operations specific to the ingest job of which the module is a part.
+     * with services specific to the ingest job of which the module is a part..
      *
      * @param ingestJobPipeline
      */
@@ -72,6 +68,20 @@ public final class IngestJobContext {
         return ingestPipeline.getId();
     }
 
+    /**
+     * Queries whether or not cancellation of the data source ingest part of the
+     * ingest job associated with this context has been requested.
+     *
+     * @return True or false.
+     *
+     * @deprecated Use dataSourceIngestIsCancelled() or fileIngestIsCancelled()
+     * instead.
+     */
+    @Deprecated
+    public boolean isJobCancelled() {
+        return dataSourceIngestIsCancelled();
+    }    
+    
     /**
      * Checks whether or not cancellation of the currently running data source
      * level ingest module for the ingest job has been requested. Data source
@@ -159,20 +169,6 @@ public final class IngestJobContext {
     @Deprecated
     public void scheduleFiles(List<AbstractFile> files) {
         addFilesToJob(files);
-    }
-
-    /**
-     * Queries whether or not cancellation of the data source ingest part of the
-     * ingest job associated with this context has been requested.
-     *
-     * @return True or false.
-     *
-     * @deprecated Use dataSourceIngestIsCancelled() or fileIngestIsCancelled()
-     * instead.
-     */
-    @Deprecated
-    public boolean isJobCancelled() {
-        return dataSourceIngestIsCancelled();
     }
 
 }
