@@ -33,7 +33,7 @@ public final class IngestJobContext {
 
     /**
      * Constructs an ingest job context object that provides an ingest module
-     * with services specific to the ingest job of which the module is a part..
+     * with services specific to the ingest job of which the module is a part.
      *
      * @param ingestJobPipeline The ingest pipeline for the job.
      */
@@ -73,7 +73,11 @@ public final class IngestJobContext {
      * requested.
      *
      * @return True or false.
+     *
+     * @deprecated Modules should call a type-specific cancellation check method
+     * instead.
      */
+    @Deprecated
     public boolean isJobCancelled() {
         return ingestJobPipeline.isCancelled();
     }
@@ -107,9 +111,9 @@ public final class IngestJobContext {
 
     /**
      * Checks whether or not cancellation of the currently running data artifact
-     * ingest module for the ingest job has been requested. File ingest modules
-     * should check this periodically and break off processing if the method
-     * returns true.
+     * ingest module for the ingest job has been requested. Data artifact ingest
+     * modules should check this periodically and break off processing if the
+     * method returns true.
      *
      * @return True or false.
      */
@@ -132,6 +136,19 @@ public final class IngestJobContext {
     }
 
     /**
+     * Adds one or more files, i.e., extracted or carved files, to the ingest
+     * job associated with this context.
+     *
+     * @param files The files to be added.
+     *
+     * @deprecated use addFilesToJob() instead.
+     */
+    @Deprecated
+    public void scheduleFiles(List<AbstractFile> files) {
+        addFilesToJob(files);
+    }    
+    
+    /**
      * Adds one or more files, e.g., extracted or carved files, to the ingest
      * job for processing by its file ingest modules.
      *
@@ -149,19 +166,6 @@ public final class IngestJobContext {
      */
     public void addDataArtifactsToJob(List<DataArtifact> artifacts) {
         ingestJobPipeline.addDataArtifacts(artifacts);
-    }
-
-    /**
-     * Adds one or more files, i.e., extracted or carved files, to the ingest
-     * job associated with this context.
-     *
-     * @param files The files to be added.
-     *
-     * @deprecated use addFilesToJob() instead.
-     */
-    @Deprecated
-    public void scheduleFiles(List<AbstractFile> files) {
-        addFilesToJob(files);
     }
 
 }
