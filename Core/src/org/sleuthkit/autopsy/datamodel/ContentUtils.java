@@ -26,8 +26,6 @@ import java.util.TimeZone;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.logging.Level;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
@@ -39,7 +37,6 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LocalDirectory;
@@ -55,20 +52,8 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public final class ContentUtils {
 
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
-    private static boolean displayTimesInLocalTime = UserPreferences.displayTimesInLocalTime();
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final SimpleDateFormat dateFormatterISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
-    static {
-        UserPreferences.addChangeListener(new PreferenceChangeListener() {
-            @Override
-            public void preferenceChange(PreferenceChangeEvent evt) {
-                if (evt.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
-                    displayTimesInLocalTime = UserPreferences.displayTimesInLocalTime();
-                }
-            }
-        });
-    }
 
     /**
      * Don't instantiate
@@ -85,6 +70,7 @@ public final class ContentUtils {
      *
      * @return The time
      */
+    @Deprecated
     public static String getStringTime(long epochSeconds, TimeZone tzone) {
         String time = "0000-00-00 00:00:00";
         if (epochSeconds != 0) {
@@ -104,6 +90,7 @@ public final class ContentUtils {
      *
      * @return The time
      */
+    @Deprecated
     public static String getStringTimeISO8601(long epochSeconds, TimeZone tzone) {
         String time = "0000-00-00T00:00:00Z"; //NON-NLS
         if (epochSeconds != 0) {
@@ -123,7 +110,10 @@ public final class ContentUtils {
      * @param content
      *
      * @return
+     * 
+     * @deprecated Use org.sleuthkit.autopsy.coreutils.TimeZoneUtils.getFormattedTime instead
      */
+    @Deprecated
     public static String getStringTime(long epochSeconds, Content content) {
         return getStringTime(epochSeconds, getTimeZone(content));
     }
@@ -136,29 +126,30 @@ public final class ContentUtils {
      * @param c
      *
      * @return
+     * 
+     * @deprecated Use org.sleuthkit.autopsy.coreutils.TimeZoneUtils.getFormattedTimeISO8601 instead 
      */
+    @Deprecated
     public static String getStringTimeISO8601(long epochSeconds, Content c) {
         return getStringTimeISO8601(epochSeconds, getTimeZone(c));
     }
 
+    /**
+     * Returns either the user selected time zone or the system time zone.
+     * 
+     * @param content
+     * 
+     * @return 
+     * 
+     * @deprecated Use org.sleuthkit.autopsy.coreutils.TimeZoneUtils.getTimeZone instead
+     */
+    @Deprecated
     public static TimeZone getTimeZone(Content content) {
-
-        try {
-            if (!shouldDisplayTimesInLocalTime()) {
-                return TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays());
-            } else {
-                final Content dataSource = content.getDataSource();
-                if ((dataSource != null) && (dataSource instanceof Image)) {
-                    Image image = (Image) dataSource;
-                    return TimeZone.getTimeZone(image.getTimeZone());
-                } else {
-                    //case such as top level VirtualDirectory
-                    return TimeZone.getDefault();
-                }
-            }
-        } catch (TskCoreException ex) {
+        if (!shouldDisplayTimesInLocalTime()) {
+            return TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays());
+        } else {
             return TimeZone.getDefault();
-        }
+        }  
     }
     private static final SystemNameVisitor systemName = new SystemNameVisitor();
 
@@ -553,9 +544,12 @@ public final class ContentUtils {
      * Indicates whether or not times should be displayed using local time.
      *
      * @return True or false.
+     * 
+     * @deprecated Call UserPreferences.displayTimesInLocalTime instead.
      */
+     @Deprecated
     public static boolean shouldDisplayTimesInLocalTime() {
-        return displayTimesInLocalTime;
+        return UserPreferences.displayTimesInLocalTime();
     }
 
 }
