@@ -50,7 +50,7 @@ public final class AutoIngestOcrEnabledEvent extends AutopsyEvent implements Ser
      * @param eventType The type of OCR enabled/disabled event
      */
     public AutoIngestOcrEnabledEvent(String nodeName, String caseName, String userName, EventType eventType) {
-        super(AutoIngestManager.Event.CASE_PRIORITIZED.toString(), null, null);
+        super(AutoIngestManager.Event.OCR_STATE_CHANGE.toString(), null, null);
         this.caseName = caseName;
         this.nodeName = nodeName;
         this.userName = userName;

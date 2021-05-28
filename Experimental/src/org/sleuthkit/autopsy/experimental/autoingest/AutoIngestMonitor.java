@@ -455,7 +455,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
                         throw new AutoIngestMonitorException("Error enabling OCR for job " + job.toString(), ex);
                     }
-                    job.enableOcr(true); // ELTODO
+                    job.setOcrEnabled(true);
 
                     /**
                      * Update job object in pending jobs queue
@@ -472,7 +472,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 }).start();
             }
         }
-    }    
+    }
 
     /**
      * Removes the priority (set to zero) of all pending ingest jobs for a

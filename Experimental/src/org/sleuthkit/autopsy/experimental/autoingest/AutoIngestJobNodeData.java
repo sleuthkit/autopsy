@@ -120,7 +120,7 @@ final class AutoIngestJobNodeData {
         setProcessingStageStartDate(job.getProcessingStageStartDate());
         setProcessingStageDetails(job.getProcessingStageDetails());
         setDataSourceSize(job.getDataSourceSize());
-        setOcrEnabled(false); // ELTODO
+        setOcrEnabled(job.getOcrEnabled());
     }
 
     /**

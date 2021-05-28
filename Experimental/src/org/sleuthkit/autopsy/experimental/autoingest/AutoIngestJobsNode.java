@@ -57,7 +57,8 @@ final class AutoIngestJobsNode extends AbstractNode {
         "AutoIngestJobsNode.jobCreated.text=Job Created",
         "AutoIngestJobsNode.jobCompleted.text=Job Completed",
         "AutoIngestJobsNode.priority.text=Prioritized",
-        "AutoIngestJobsNode.status.text=Status"
+        "AutoIngestJobsNode.status.text=Status",
+        "AutoIngestJobsNode.ocr.text=OCR Enabled"
     })
 
     /**

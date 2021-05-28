@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -179,7 +179,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Status=Status",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CaseFolder=Case Folder",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.LocalJob= Local Job?",
-        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath= Manifest File Path"
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath= Manifest File Path",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.OCR=OCR Enabled"
     })
     private enum JobsTableModelColumns {
 
@@ -195,7 +196,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CaseFolder")),
         IS_LOCAL_JOB(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.LocalJob")),
         MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath")),
-        PRIORITY(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority"));
+        PRIORITY(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority")),
+        OCR(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.OCR"));
         private final String header;
 
         private JobsTableModelColumns(String header) {
@@ -219,7 +221,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             CASE_DIRECTORY_PATH.getColumnHeader(),
             IS_LOCAL_JOB.getColumnHeader(),
             MANIFEST_FILE_PATH.getColumnHeader(),
-            PRIORITY.getColumnHeader()};
+            PRIORITY.getColumnHeader(),
+            OCR.getColumnHeader()};
     }
 
     /**
@@ -406,6 +409,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setMaxWidth(PRIORITY_COLUMN_MAX_WIDTH);
         column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
         column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
+        
+        // ELTODO
+        column = pendingTable.getColumn(JobsTableModelColumns.OCR.getColumnHeader());
+        column.setCellRenderer(new OcrIconCellRenderer());
+        column.setMaxWidth(PRIORITY_COLUMN_MAX_WIDTH);// ELTODO
+        column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);// ELTODO
+        column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);// ELTODO
 
         /**
          * Allow sorting when a column header is clicked.
@@ -457,6 +467,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.IS_LOCAL_JOB.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
+        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.OCR.getColumnHeader()));
+        
         /*
          * Set up a column to display the cases associated with the jobs.
          */
@@ -553,6 +565,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
+        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.OCR.getColumnHeader())); // ELTODO ?
+        
         /*
          * Set up a column to display the cases associated with the jobs.
          */
@@ -882,6 +896,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     });
                     break;
                 case CASE_PRIORITIZED:
+                case OCR_STATE_CHANGE:
                     updateExecutor.submit(new UpdatePendingJobsTableTask());
                     break;
                 case JOB_STATUS_UPDATED:
@@ -1193,7 +1208,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getProcessingHostName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
                     job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
-                    job.getPriority()}); // PRIORITY 
+                    job.getPriority(), // PRIORITY 
+                    job.getOcrEnabled()}); // OCR FLAG
             }
         } catch (Exception ex) {
             sysLogger.log(Level.SEVERE, "Dashboard error refreshing table", ex);

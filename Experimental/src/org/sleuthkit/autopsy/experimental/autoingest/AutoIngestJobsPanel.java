@@ -81,7 +81,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
             case PENDING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
                         Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
-                        Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text());
+                        Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text(),
+                        Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text());
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_priority_text());
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_PRIORITIZED_WIDTH);
