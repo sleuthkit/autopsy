@@ -924,13 +924,9 @@ def normalize_tsk_files_path(guid_util: TskGuidUtils, row: Dict[str, any]) -> Di
         if module_output_idx >= 0:
             # remove everything up to and including ModuleOutput if ModuleOutput present
             path_parts = path_parts[module_output_idx:]
-            if len(path_parts) > 1 and path_parts[1] == 'Embedded File Extractor':
-                # Takes a folder like ModuleOutput\Embedded File Extractor/f_000168_4435\f_000168
-                # and fixes the folder after 'Embedded File Extractor', 'f_000168_4435' to remove the last number
-                # to become 'f_000168'
-                match = re.match(r'^(.+?)_\d*$', path_parts[2])
-                if match:
-                    path_parts[2] = match.group(1)
+            if len(path_parts) > 2 and path_parts[1] == 'EFE':
+                # for embedded file extractor, the next folder is the object id and should be omitted
+                del path_parts[2]
 
         row_copy['path'] = os.path.join(*path_parts) if len(path_parts) > 0 else '/'
 
