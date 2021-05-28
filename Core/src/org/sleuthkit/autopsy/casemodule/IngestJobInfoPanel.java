@@ -50,7 +50,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE);
-
+    private static final int EXTRA_ROW_HEIGHT = 4;
     private List<IngestJobInfo> ingestJobs;
     private final List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
@@ -100,6 +100,9 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
                 }
             }
         });
+        ingestJobTable.setRowHeight(ingestJobTable.getRowHeight() + EXTRA_ROW_HEIGHT);
+        ingestModuleTable.setRowHeight(ingestModuleTable.getRowHeight() + EXTRA_ROW_HEIGHT);
+                
     }
 
     /**
@@ -278,6 +281,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
         ingestJobTable.setModel(ingestJobTableModel);
         ingestJobTable.setGridColor(javax.swing.UIManager.getDefaults().getColor("InternalFrame.borderColor"));
+        ingestJobTable.setIntercellSpacing(new java.awt.Dimension(4, 2));
         ingestJobTable.getTableHeader().setReorderingAllowed(false);
         ingestJobsScrollPane.setViewportView(ingestJobTable);
         ingestJobTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -314,6 +318,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
         ingestModuleTable.setModel(ingestModuleTableModel);
         ingestModuleTable.setGridColor(javax.swing.UIManager.getDefaults().getColor("InternalFrame.borderColor"));
+        ingestModuleTable.setIntercellSpacing(new java.awt.Dimension(4, 2));
         ingestModulesScrollPane.setViewportView(ingestModuleTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
