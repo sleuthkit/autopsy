@@ -29,16 +29,16 @@ import org.sleuthkit.datamodel.DataArtifact;
  */
 public final class IngestJobContext {
 
-    private final IngestJobPipeline ingestPipeline;
+    private final IngestJobPipeline ingestJobPipeline;
 
     /**
      * Constructs an ingest job context object that provides an ingest module
      * with services specific to the ingest job of which the module is a part..
      *
-     * @param ingestJobPipeline
+     * @param ingestJobPipeline The ingest pipeline for the job.
      */
     IngestJobContext(IngestJobPipeline ingestJobPipeline) {
-        this.ingestPipeline = ingestJobPipeline;
+        this.ingestJobPipeline = ingestJobPipeline;
     }
 
     /**
@@ -47,7 +47,7 @@ public final class IngestJobContext {
      * @return The context string.
      */
     public String getExecutionContext() {
-        return ingestPipeline.getExecutionContext();
+        return ingestJobPipeline.getExecutionContext();
     }
 
     /**
@@ -56,7 +56,7 @@ public final class IngestJobContext {
      * @return The data source.
      */
     public Content getDataSource() {
-        return ingestPipeline.getDataSource();
+        return ingestJobPipeline.getDataSource();
     }
 
     /**
@@ -65,7 +65,7 @@ public final class IngestJobContext {
      * @return The ID.
      */
     public long getJobId() {
-        return ingestPipeline.getId();
+        return ingestJobPipeline.getId();
     }
 
     /**
@@ -80,8 +80,8 @@ public final class IngestJobContext {
     @Deprecated
     public boolean isJobCancelled() {
         return dataSourceIngestIsCancelled();
-    }    
-    
+    }
+
     /**
      * Checks whether or not cancellation of the currently running data source
      * level ingest module for the ingest job has been requested. Data source
@@ -91,7 +91,7 @@ public final class IngestJobContext {
      * @return True or false.
      */
     public boolean dataSourceIngestIsCancelled() {
-        return ingestPipeline.currentDataSourceIngestModuleIsCancelled() || ingestPipeline.isCancelled();
+        return ingestJobPipeline.currentDataSourceIngestModuleIsCancelled() || ingestJobPipeline.isCancelled();
     }
 
     /**
@@ -108,7 +108,7 @@ public final class IngestJobContext {
          * modules. File ingest cancellation is equiovalent to ingest job
          * cancellation.
          */
-        return ingestPipeline.isCancelled();
+        return ingestJobPipeline.isCancelled();
     }
 
     /**
@@ -125,7 +125,7 @@ public final class IngestJobContext {
          * modules. Data artifact ingest cancellation is equivalent to ingest
          * job cancellation.
          */
-        return ingestPipeline.isCancelled();
+        return ingestJobPipeline.isCancelled();
     }
 
     /**
@@ -135,7 +135,7 @@ public final class IngestJobContext {
      * @return True or false.
      */
     public boolean processingUnallocatedSpace() {
-        return ingestPipeline.shouldProcessUnallocatedSpace();
+        return ingestJobPipeline.shouldProcessUnallocatedSpace();
     }
 
     /**
@@ -145,7 +145,7 @@ public final class IngestJobContext {
      * @param files The files.
      */
     public void addFilesToJob(List<AbstractFile> files) {
-        ingestPipeline.addFiles(files);
+        ingestJobPipeline.addFiles(files);
     }
 
     /**
@@ -155,7 +155,7 @@ public final class IngestJobContext {
      * @param artifacts The artifacts.
      */
     public void addDataArtifactsToJob(List<DataArtifact> artifacts) {
-        ingestPipeline.addDataArtifacts(artifacts);
+        ingestJobPipeline.addDataArtifacts(artifacts);
     }
 
     /**

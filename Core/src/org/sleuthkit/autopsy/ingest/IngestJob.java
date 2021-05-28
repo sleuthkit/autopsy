@@ -33,7 +33,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Analyzes one or more data sources using a set of ingest modules specified via
@@ -109,7 +108,7 @@ public final class IngestJob {
      * @param files      A subset of the files for the data source.
      * @param settings   The ingest job settings.
      */
-    IngestJob(DataSource dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+    IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
         this(Arrays.asList(dataSource), settings);
         this.files.addAll(files);
     }
