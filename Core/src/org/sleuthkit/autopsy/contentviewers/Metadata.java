@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.FsContent;
@@ -228,8 +229,22 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     @Override
     public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "Metadata.title");
+        return getTitle(null);
     }
+
+    @Messages({
+        "Metadata_dataArtifactTitle=Source File Metadata"
+    })
+    @Override
+    public String getTitle(Node node) {
+        if (node != null && !node.getLookup().lookupAll(DataArtifact.class).isEmpty()) {
+            return Bundle.Metadata_dataArtifactTitle();
+        } else {
+            return NbBundle.getMessage(this.getClass(), "Metadata.title");    
+        }
+    }
+    
+    
 
     @Override
     public String getToolTip() {
