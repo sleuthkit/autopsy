@@ -69,24 +69,20 @@ public final class IngestJobContext {
     }
 
     /**
-     * Queries whether or not cancellation of the data source ingest part of the
-     * ingest job associated with this context has been requested.
+     * Indicates whether or not cancellation of the ingest job has been
+     * requested.
      *
      * @return True or false.
-     *
-     * @deprecated Use dataSourceIngestIsCancelled() or fileIngestIsCancelled()
-     * instead.
      */
-    @Deprecated
     public boolean isJobCancelled() {
-        return dataSourceIngestIsCancelled();
+        return ingestJobPipeline.isCancelled();
     }
 
     /**
-     * Checks whether or not cancellation of the currently running data source
-     * level ingest module for the ingest job has been requested. Data source
-     * level ingest modules should check this periodically and break off
-     * processing if the method returns true.
+     * Indicates whether or not cancellation of the currently running data
+     * source level ingest module has been requested. Data source level ingest
+     * modules should check this periodically and break off processing if the
+     * method returns true.
      *
      * @return True or false.
      */
@@ -95,18 +91,16 @@ public final class IngestJobContext {
     }
 
     /**
-     * Checks whether or not cancellation of the currently running file ingest
-     * module for the ingest job has been requested. File ingest modules should
-     * check this periodically and break off processing if the method returns
-     * true.
+     * Indicates whether or not cancellation of the currently running file level
+     * ingest module has been requested. File level ingest modules should check
+     * this periodically and break off processing if the method returns true.
      *
      * @return True or false.
      */
     public boolean fileIngestIsCancelled() {
         /*
          * It is not currently possible to cancel individual file ingest
-         * modules. File ingest cancellation is equiovalent to ingest job
-         * cancellation.
+         * modules.
          */
         return ingestJobPipeline.isCancelled();
     }
@@ -121,9 +115,8 @@ public final class IngestJobContext {
      */
     public boolean dataArtifactIngestIsCancelled() {
         /*
-         * It is not currently possible to cancel individual file ingest
-         * modules. Data artifact ingest cancellation is equivalent to ingest
-         * job cancellation.
+         * It is not currently possible to cancel individual data artifact
+         * ingest modules.
          */
         return ingestJobPipeline.isCancelled();
     }
