@@ -25,8 +25,13 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.DataArtifact;
 
 /**
- * A placeholder data artifact ingest module that counts the number of data
- * artifacts it processes and posts the final count to the ingest inbox.
+ * RJCTODO
+ *
+ * NOTE TO REVIEWER:
+ *
+ * This is a placeholder data artifact ingest module that counts the number of
+ * data artifacts it processes and posts the final count to the ingest inbox.
+ * The guts of the module will be supplied by a later PR.
  */
 public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestModule {
 

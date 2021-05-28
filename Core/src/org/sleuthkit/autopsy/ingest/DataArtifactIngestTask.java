@@ -50,4 +50,10 @@ final class DataArtifactIngestTask extends IngestTask {
         return artifact;
     }
 
+    @Override
+    void execute(long threadId) {
+        super.setThreadId(threadId);
+        getIngestJobPipeline().execute(this);
+    }    
+    
 }

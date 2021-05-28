@@ -1079,34 +1079,13 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Executes an ingest task by passing the task to the appropriate ingest
-     * task pipeline.
-     *
-     * @param task The ingest task.
-     */
-    void execute(IngestTask task) {
-        /*
-         * NOTE: The following switch on task type enables elimination of code
-         * duplication in the IngestTask hierarchy. Future work may or may not
-         * be able to eliminate this switch.
-         */
-        if (task instanceof DataSourceIngestTask) {
-            executeDataSourceIngestTask((DataSourceIngestTask) task);
-        } else if (task instanceof FileIngestTask) {
-            executeFileIngestTask((FileIngestTask) task);
-        } else if (task instanceof DataArtifactIngestTask) {
-            executeDataArtifactIngestTask((DataArtifactIngestTask) task);
-        }
-    }
-
-    /**
      * Passes the data source for the ingest job through the currently active
      * data source level ingest task pipeline (first stage or second stage data
      * source ingest modules).
      *
      * @param task A data source ingest task wrapping the data source.
      */
-    private void executeDataSourceIngestTask(DataSourceIngestTask task) {
+    void execute(DataSourceIngestTask task) {
         try {
             synchronized (dataSourceIngestPipelineLock) {
                 if (!isCancelled() && !currentDataSourceIngestPipeline.isEmpty()) {
@@ -1143,7 +1122,7 @@ final class IngestJobPipeline {
      *
      * @param task A file ingest task wrapping the file.
      */
-    private void executeFileIngestTask(FileIngestTask task) {
+    void execute(FileIngestTask task) {
         try {
             if (!isCancelled()) {
                 FileIngestPipeline pipeline = fileIngestPipelinesQueue.take();
@@ -1221,7 +1200,7 @@ final class IngestJobPipeline {
      *
      * @param task A data artifact ingest task wrapping the file.
      */
-    private void executeDataArtifactIngestTask(DataArtifactIngestTask task) {
+    void execute(DataArtifactIngestTask task) {
         try {
             if (!isCancelled() && !artifactIngestPipeline.isEmpty()) {
                 List<IngestModuleError> errors = new ArrayList<>();

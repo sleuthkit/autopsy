@@ -87,6 +87,12 @@ final class FileIngestTask extends IngestTask {
     }
 
     @Override
+    void execute(long threadId) {
+        super.setThreadId(threadId);
+        getIngestJobPipeline().execute(this);
+    }        
+    
+    @Override
     public boolean equals(Object obj) {
         if (obj == null) {
             return false;

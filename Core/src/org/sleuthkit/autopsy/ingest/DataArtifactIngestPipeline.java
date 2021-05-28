@@ -23,16 +23,18 @@ import java.util.Optional;
 import org.sleuthkit.datamodel.DataArtifact;
 
 /**
- * A pipeline of data artifact ingest modules for executing data artifact
+ * A pipeline of data artifact ingest modules used to execute data artifact
  * ingest tasks for an ingest job.
  */
 final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIngestTask> {
 
     /**
-     * Constructs a pipeline of data artifact ingest modules for executing data
-     * artifact ingest tasks for an ingest job.
+     * Constructs a pipeline of data artifact ingest modules used to execute
+     * data artifact ingest tasks for an ingest job.
      *
-     * @param ingestJobPipeline The ingest job pipeline that owns this pipeline.
+     *
+     * @param ingestJobPipeline The ingest job pipeline that owns this ingest
+     *                          task pipeline.
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline. May be an empty list.
      */
@@ -67,8 +69,8 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
         private final DataArtifactIngestModule module;
 
         /**
-         * Constructs a decorator that adds ingest infrastructure operations to a
-         * data artifact ingest module.
+         * Constructs a decorator that adds ingest infrastructure operations to
+         * a data artifact ingest module.
          *
          * @param module      The module.
          * @param displayName The display name of the module.
@@ -81,10 +83,7 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
         @Override
         void executeTask(IngestJobPipeline ingestJobPipeline, DataArtifactIngestTask task) throws IngestModuleException {
             DataArtifact artifact = task.getDataArtifact();
-            ProcessResult result = module.process(artifact);
-            if (result == ProcessResult.ERROR) {
-                throw new IngestModuleException(String.format("%s experienced an error analyzing %s artifact (artifact object ID = %d, source object ID = %d)", getDisplayName(), artifact.getDisplayName(), artifact.getId(), artifact.getObjectID())); //NON-NLS
-            }
+            module.process(artifact);
         }
 
     }

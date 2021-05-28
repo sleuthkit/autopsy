@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.Content;
  * that analyze data artifacts.
  */
 abstract class IngestTask {
-    
+
     private final static long NOT_SET = Long.MIN_VALUE;
     private final IngestJobPipeline ingestJobPipeline;
     private long threadId;
@@ -74,14 +74,22 @@ abstract class IngestTask {
     }
 
     /**
+     * Sets the thread ID of the ingest thread executing this task.
+     *
+     * @param threadId The thread ID.
+     */
+    void setThreadId(long threadId) {
+        this.threadId = threadId;
+    }
+
+    /**
      * Records the ingest thread ID of the calling thread and executes this task
-     * using the ingest job pipeline specified when the task was created.
+     * using the ingest job pipeline specified when the task was created. The
+     * implementation of the method should simple call
+     * super.setThreadId(threadId) and getIngestJobPipeline().process(this).
      *
      * @param threadId The numeric ID of the ingest thread executing this task.
-=     */
-    void execute(long threadId) {
-        this.threadId = threadId;
-        ingestJobPipeline.execute(this);
-    }
-    
+     */
+    abstract void execute(long threadId);
+
 }
