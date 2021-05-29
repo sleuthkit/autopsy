@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.discovery.search.SearchData.PageViews;
 import org.sleuthkit.autopsy.discovery.ui.MonthAbbreviation;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -1217,7 +1217,7 @@ public class DiscoveryKeyUtils {
         Instant startActivityAsInsant = Instant.ofEpochSecond(epochSeconds);
         // Determines the timezone using the settings panel or value parsed from the
         // parent data source
-        TimeZone currentTimeZone = ContentUtils.getTimeZone(domainResult.getDataSource());
+        TimeZone currentTimeZone = TimeZoneUtils.getTimeZone();
         // Convert to a datetime using epoch and timezone.
         ZonedDateTime startActivityAsDateTime = ZonedDateTime.ofInstant(startActivityAsInsant, currentTimeZone.toZoneId());
         // Get the closest Sunday, which is the cut off for the current week.
