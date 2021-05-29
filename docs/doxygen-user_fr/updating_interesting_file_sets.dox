@@ -1,25 +1,25 @@
-/*! \page update_interesting_files_page Updating the Official Interesting File Sets
+﻿/*! \page update_interesting_files_page Mise à jour des ensembles officiels de fichiers intéressants
 
-The \ref interesting_files_identifier_page contains several official rule sets. You can select a rule set to display the rules it contains in the middle of the right side of the panel. 
+Le module \ref interesting_files_identifier_page contient plusieurs ensembles de règles officiels. Vous pouvez sélectionner un ensemble de règles pour afficher les règles qu'il contient au milieu de la fenêtre, sur le côté droit.
 
 \image html InterestingFiles/if_official_rule_details.png
 
-If you have one or more rules that you think should be included in an official rule set you can submit your new rules using the process below. Consult the \ref interesting_files_config section for general instructions on creating and editing interesting file sets.
+Si vous pensez qu'une ou plusieurs règles devraient être incluses dans un ensemble de règles officiel, vous pouvez soumettre vos nouvelles règles en utilisant le processus ci-dessous. Consultez la section \ref interesting_files_config pour des instructions générales sur la création et l'édition d'ensembles de fichiers intéressants.
 
 <ol>
-<li> Create a new interesting file set. Give it a name similar to the set you wish to update to make it clear which set your new rules belong to. Do not copy the existing rule set.
+<li> Créez un nouvel ensemble de fichiers intéressants. Donnez-lui un nom similaire à celui de l'ensemble que vous souhaitez mettre à jour pour indiquer clairement à quel ensemble appartiennent vos nouvelles règles. Ne copiez pas l'ensemble de règles existant.
 
 \image html InterestingFiles/if_create_set.png
 
-<li> Create your rule(s). Make sure each rule has a "Rule Name" that identifies the application it is detecting. Click the "Apply" button on the main panel when done.
+<li> Créez votre(vos) règle(s). Assurez-vous que chaque règle a un "Nom de règle" qui identifie l'application qu'elle doit détecter. Cliquez sur le bouton "Apply" sur le panneau principal lorsque vous avez terminé.
 
 \image html InterestingFiles/if_new_rule.png
 
-<li> Export the set as XML.
+<li> Exportez l'ensemble au format XML.
 
 \image html InterestingFiles/if_export.png
 
-<li> Create an Autopsy Github issue that identifes the set to update and what applications were added, and attach the XML. Go to: https://github.com/sleuthkit/autopsy/issues
+<li> Créez une "Issue" sur le Github Autopsy qui identifie l'ensemble à mettre à jour et quelles applications ont été ajoutées, puis joignez le XML. Aller sur: https://github.com/sleuthkit/autopsy/issues
 </ol>
 
 

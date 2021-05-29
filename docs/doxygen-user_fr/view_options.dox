@@ -1,91 +1,91 @@
-/*! \page view_options_page View Options
+﻿/*! \page view_options_page Options d'affichage
 
 [TOC]
 
 
-The View options allow you to configure how data is displayed in the Autopsy user interface.
+Les options "View" vous permettent de configurer la façon dont les données sont affichées dans l'interface utilisateur Autopsy.
 
-There are two ways to access the options. The first way is through the gear icon above the directory tree:
+Il existe deux façons d'accéder aux options. La première méthode consiste à utiliser l'icône "engrenage" au-dessus de l'arborescence des répertoires:
 
 \image html view_options_gear.png
 
-The second way is through Tools->Options and then selecting the "Views" tab:
+La deuxième façon consiste à aller dans Tools->Options puis sélectionner l'onglet "Views":
 
 \image html view_options_options_panel.png
 
 
-\section view_options_global Global Settings
+\section view_options_global Paramètres globaux ("Global Settings")
 
-The settings in this section persist through closing the application.
+Les paramètres de cette section persistent jusqu'à la fermeture de l'application.
 
-\subsection view_options_hide_known Hide known files
+\subsection view_options_hide_known Masquer les fichiers connus ("Hide known files")
 
-This option allows you to hide files marked as "known" by the hash_db_page. The option to hide known files in the data sources area will prevent these files from being displayed in the results view. Similarly, the option to hide slack in the views area will prevent slack files from appearing under the Views section of the tree.
+Cette option vous permet de masquer les fichiers marqués comme "known" par le module \ref hash_db_page. L'option permettant de masquer les fichiers connus dans la zone des sources de données empêchera ces fichiers d'être affichés dans la vue des résultats. De même, l'option permettant de masquer le slack dans la zone des vues empêchera les fichiers slack d'apparaître sous la section "Views" de l'arborescence.
 
-\subsection view_options_hide_slack Hide slack files
+\subsection view_options_hide_slack Masquer les fichiers slack ("Hide slack files")
 
-Autopsy creates slack files (with the "-slack" extension) from any extra space at the end of a file. These files can be displayed or hidden from the data sources area and/or the views area. The following shows a slack file in the results view:
+Autopsy cré des fichiers slack (avec l'extension "-slack") à partir de tout espace supplémentaire à la fin d'un fichier. Ces fichiers peuvent être affichés ou masqués dans la zone des sources de données et/ou dans la zone des vues. Ce qui suit montre un fichier slack dans la visionneuse de résultats:
 
 \image html view_options_show_slack.png
 
-Checking the option to hide slack in the data sources area will prevent the slack file from being displayed:
+Cochez l'option permettant de masquer le slack dans la zone des sources de données ("Data Sources area") empêchera l'affichage du fichier de slack:
 
 \image html view_options_hide_slack.png
 
-Similarly, the option to hide slack in the views area will prevent slack files from appearing under the Views section of the tree.
+De même, l'option permettant de masquer le slack dans la zone des vues ("Views area") empêchera les fichiers slack d'apparaître sous la section "Views" de l'arborescence.
 
-\subsection view_options_hide_tags Hide tags from other users
+\subsection view_options_hide_tags Masquer les balises des autres utilisateurs ("Hide other user's tags")
 
-This option allows you to hide tags from other users in the Tagging section of the tree. See \ref user_tags for more details.
+Cette option vous permet de masquer les balises des autres utilisateurs dans la section "Tags" de l'arborescence. Voir \ref user_tags pour plus de détails.
 
-\subsection view_options_cr_columns Do not add columns for S(core), C(omments) and (O)ccurrences
+\subsection view_options_cr_columns Ne pas ajouter les colonnes pour ("Do not add columns for") S(core), C(omments) et (O)ccurrences
 
-By default, the first three columns in the result viewer after the file name in the results viewer are named "S", "C" and "O". Populating these columns can increase loading times. See the \ref result_viewer_sco section for additional information.
+Par défaut, les trois premières colonnes de la visionneuse de résultats après le nom de fichier sont nommées "S", "C" et "O". Le remplissage de ces colonnes peut augmenter les temps de chargement. Voir la section \ref result_viewer_sco pour plus d'informations.
 
-\subsection view_options_paging Paging
+\subsection view_options_paging Pagination ("Maximum number of Results to show in table")
 
-By default, only 10,000 results will be show in the Result Viewer. You can change that threshold here. Setting it to zero will disable paging.
+Par défaut, seuls 10 000 résultats seront affichés dans la visionneuse de résultats. Vous pouvez modifier ce seuil ici. Le mettre à zéro désactivera la pagination.
 
-\subsection view_options_content_viewer Content viewer selection
+\subsection view_options_content_viewer Sélection de la visionneuse de contenu ("When selecting a file")
 
-By default, the \ref content_viewer_page attempts to select the most relevant tab to display when choosing a node. If you would like to change this behavior to instead stay on the same content viewer when changing nodes, switch to the "Stay on the same file viewer" option.
+Par défaut, la \ref content_viewer_page tente de sélectionner l'onglet le plus pertinent à afficher lors du choix d'un nœud. Si vous souhaitez modifier ce comportement pour rester sur la même visionneuse de contenu lors du changement de nœuds, choisissez l'option "Stay on the same file viewer".
 
-\subsection view_options_time Time format
+\subsection view_options_time Format de l'heure ("When displaying times")
 
-Timestamps can be viewed in either local time or in a time zone selected in the drop down list.
+Les horodatages peuvent être affichés en heure locale ou dans un fuseau horaire sélectionné dans la liste déroulante.
 
 \image html view_options_local_time.png
 <br>
 \image html view_options_gmt.png
 
-\subsection view_options_translate Translate text
+\subsection view_options_translate Traduire du texte ("Translate text")
 
-If you have a \ref machine_translation_page module installed, this option will add a column to the \ref result_viewer_page to show the translated name of files and folders. 
+Si vous avez une module de \ref machine_translation_page installé, cette option ajoutera une colonne à la \ref result_viewer_page pour afficher le nom traduit des fichiers et des dossiers. 
 
-\section view_options_case Current Case Settings
+\section view_options_case Paramètres de cas actuels ("Current Case Settings")
 
-The settings in this section only apply to the current case.
+Les paramètres de cette section s'appliquent uniquement au cas actuel.
 
-\subsection view_options_group Data Source Grouping
+\subsection view_options_group Regroupement des sources de données
 
-The options here allow you to choose how to display data in the \ref ui_tree. The top option ("Group by Data Type") displays combined results for all data sources. All nodes on the tree will contain combined results for all data sources in the case.
+Les options ici vous permettent de choisir comment afficher les données dans l'\ref ui_tree "Arborescence". La première option ("Group by Data Type") affiche les résultats combinés pour toutes les sources de données. Tous les nœuds de l'arborescence contiendront des résultats combinés pour toutes les sources de données du cas.
 
 \image html views_standard_tree.png
 
-The second option ("Group by Person/Host") separates the results for each data source, and organizes the data sources by \ref ui_tree_persons "person" and \ref ui_tree_hosts "host". 
+La deuxième option ("Group by Person/Host") sépare les résultats de chaque source de données et organise les sources de données en \ref ui_tree_persons "personne" et \ref ui_tree_hosts "hôte". 
 
 \image html views_grouped_tree.png
 
-\section view_options_session Current Session Settings
+\section view_options_session Paramètres de session actuels ("Current Session Settings")
 
-The settings for the current session will be in effect until you close the application.
+Les paramètres de la session en cours seront en vigueur jusqu'à ce que vous fermiez l'application.
 
-\subsection view_options_rejected Hide rejected results
+\subsection view_options_rejected Masquer les résultats rejetés ("Hide redjected results")
 
-Accounts can be approved or rejected by the user, as shown in the screenshot below. 
+Les comptes peuvent être approuvés ou rejetés par l'utilisateur, comme indiqué dans la capture d'écran ci-dessous.
 
 \image html view_options_reject_account.png
 
-Rejected accounts will not be included in the report, and by default will be hidden in the UI. If you accidentally reject an account and need to change its status, or simply want to view the the rejected accounts, you can uncheck the "hide rejected results" option.
+Les comptes rejetés ne seront pas inclus dans le rapport et seront par défaut masqués dans l'interface utilisateur. Si vous rejetez accidentellement un compte et devez changer son statut, ou si vous souhaitez simplement afficher les comptes rejetés, vous pouvez décocher l'option "Hide rejected results".
 
 */

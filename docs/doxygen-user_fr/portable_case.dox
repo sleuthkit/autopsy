@@ -1,81 +1,81 @@
-/*! \page portable_case_page Portable Cases
+/*! \page portable_case_page Cas portables
 
 [TOC]
 
 
-\section portable_case_overview Overview
+\section portable_case_overview Aperçu
 
-A portable case is a partial copy of a normal Autopsy case that can be opened from anywhere. It contains a subset of the data from its original case and has been designed to make it easy to share relevant data with other examiners. Portable cases will contain a \ref report_case_uco report detailing the contents of the portable case.
+Un cas portable est une copie partielle d'un cas d'Autopsy normal qui peut être ouvert de n'importe où. Il contient un sous-ensemble des données du cas d'origine et a été conçu pour faciliter le partage des données pertinentes avec d'autres analystes. Les cas portables contiendront un rapport \ref report_case_uco détaillant le contenu du cas portable.
 
 
-The general use case is as follows:
+Le cas d'utilisation général est le suivant:
 <ol>
-<li>Alice is analyzing one or more data sources using Autopsy. She tags files and results that are of particular interest.
-<li>Alice wants to share her findings with Bob but is unable to send him the original data sources because he shouldn't see them or the originals are too big.
-<li>Alice creates a portable case which will contain only her tagged files and results, plus any files associated with those results, and sends it to Bob. She could also choose to include \ref interesting_files_identifier_page "interesting files" or results.
-<li>Bob can open the portable case in Autopsy and view all files and results Alice tagged, and run any of the normal Autopsy features.
+<li>Alice analyse une ou plusieurs sources de données à l'aide d'Autopsy. Elle balise les fichiers et les résultats qui présentent un intérêt particulier.
+<li>Alice souhaite partager ses découvertes avec Bob mais est incapable de lui envoyer les sources de données originales car il ne doit pas les voir ou les originaux sont trop gros.
+<li>Alice crée un cas portable qui ne contiendra que ses fichiers et résultats marqués, ainsi que tous les fichiers associés à ces résultats, et l'envoie à Bob. Elle pourrait également choisir d'inclure des \ref interesting_files_identifier_page "fichiers intéressants" ou des résultats.
+<li>Bob peut ouvrir le cas portable dans Autopsy et afficher tous les fichiers et résultats marqués par Alice, et exécuter l'une des fonctionalités normales d'Autopsy.
 </ol>
 
-For example, Alice's original case could look like this:
+Par exemple, le cas original d'Alice pourrait ressembler à ceci:
 
 \image html portable_case_original_version.png
 
-The portable version could like this:
+La version portable pourrait ressembler à ceci:
 
 \image html portable_case_portable_version.png
 
-Alice only tagged eight files and results and her case had no interesting items, so most of the original content is no longer in the case. Some of the data sources had no tagged items so they're not included at all. The file structure of any tagged files is preserved - you can see that the tagged image in the screenshot is still in the same location, but the non-tagged files are gone. Note that although the original images (such as "image1.vhd") appear in the tree, their contents are not included in the portable case.
+Alice n'a marqué que huit fichiers et résultats et son cas ne contenait aucun élément intéressant, de sorte que la plupart du contenu original n'est plus dans le cas. Certaines sources de données ne comportaient aucun élément balisé, elles ne sont donc pas du tout incluses. La structure de tous les fichiers balisés est préservée - vous pouvez voir que l'image balisée dans la capture d'écran est toujours au même emplacement, mais les fichiers non marqués ont disparu. Notez que bien que même si les images originales (telles que "image1.vhd") apparaissent dans l'arborescence, leur contenu n'est pas inclus dans le cas portable.
 
-\section portable_case_creation Creating a Portable Case
+\section portable_case_creation Créer un cas portable
 
-A portable case can contain tagged files and results and data from the Interesting Items section of the \ref tree_viewer_page. You'll be able to choose which of the Interesting Item sets you want to include in the portable case.
+Un cas portable peut contenir des fichiers marqués ainsi que des résultats et des données de la section "Interesting Items" de l'\ref tree_viewer_page. Vous pourrez choisir parmi les ensembles d'éléments intéressants ceux que vous souhaitez inclure dans le cas portable.
 
 \image html portable_case_interesting_items.png
 
-You can tag any additional files you want to include in the portable case. See the \ref tagging_page page for details on how to create tags. Note that the outlines from \ref image_tagging "image tags" will also be visible in the portable case. You can see what tags you've added in the \ref tree_viewer_page.
+Vous pouvez baliser tous les fichiers supplémentaires que vous souhaitez inclure dans le cas portable. Voir la page \ref tagging_page pour plus de détails sur la création de balises. Notez que les contours des \ref image_tagging "images marquées" seront également visibles dans le cas portable. Vous pouvez voir les balises que vous avez ajoutées dans l'\ref tree_viewer_page.
 
 \image html portable_case_tags.png
 
-Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags and interesting file sets that are in use in the current case and you can choose which ones you would like to include. At the bottom you can choose to optionally package the case or to include the Autopsy application. Choosing to package the case without chunking will simply compress the portable case in a single archive that can be extracted with common compression programs. If you choose split the packaged case into multiple files, you will need to use the "Unpack and Open Portable Case" option to open it. You can not include the application if you use this option. Unpacking a portable case will be discussed in the next section. 
+Les cas portables sont créés grâce la fonctionnalité \ref reporting_page. La boîte de dialogue "Generate Report" affiche une liste de toutes les balises et ensembles de fichiers intéressants qui sont utilisés dans le cas actuel et vous pouvez choisir ceux que vous souhaitez inclure. En bas, vous pouvez choisir de compresser éventuellement le cas dans une archive et d'inclure l'application Autopsy. Choisir de compresser le cas sans segmentation compressera simplement le cas portable dans une archive unique qui peut être extraite avec des programmes de compression courants. Si vous choisissez de diviser le cas compressé en plusieurs fichiers, vous devrez utiliser l'option "Unpack and Open Portable Case" pour l'ouvrir. Vous ne pouvez pas inclure l'application si vous utilisez cette option. La décompression d'un cas portable sera abordé dans la section suivante.
 
-If the recipient of the portable case does not have Autopsy, you can choose to include the Autopsy application in the portable case. This will allow the recipient to open the portable case without installing any other software. You may choose to package the case without chunking. If you do, the recipient will have to decompress it before opening Autopsy. 
+Si le destinataire du cas portable n'a pas Autopsy, vous pouvez choisir d'inclure l'application dans le cas portable. Cela permettra au destinataire d'ouvrir le cas portable sans installer aucun autre logiciel. Vous pouvez choisir de compresser le cas sans le découper. Si vous le faites, le destinataire devra le décompresser avant d'ouvrir Autopsy.
 
-The portable case will be placed in the "Reports" folder in the current case.
+Le cas portable sera placé dans le dossier "Reports" du cas en cours.
 
 \image html portable_case_report_panel.png
 
-Here you can see an unpackaged portable case. It will be named with the original case name plus "(Portable)". The portable case is initially missing many of the normal Autopsy folders - these will be created the first time a user opens it. It will however start with a "Reports" folder that contains an automatically generated \ref report_case_uco report.
+Ici vous pouvez voir un cas portable non compressé. Il sera nommé avec le nom de cas d'origine plus "(Portable)". Il manque initialement de nombreux dossiers Autopsy normaux dans un cas portable - ceux-ci seront créés la première fois qu'un utilisateur l'ouvrira. Cela commencera cependant par un dossier "Reports" contenant un fichier de rapport \ref report_case_uco généré automatiquement.
 
 \image html portable_case_folder.png
 
-If you packaged the portable case but did not choose to split it into chunks, you'll have a single .zip file. If you chose to split the packaged case, you'll have one or more files starting with extension .zip.001.
+Si vous avez compressé le cas portable mais n'avez pas choisi de le diviser en morceaux, vous aurez un seul fichier .zip. Si vous avez choisi de fractionner le cas, vous aurez un ou plusieurs fichiers commençant par l'extension .zip.001.
 
 \image html portable_case_chunks.png
 
-\section portable_case_usage Using a Portable Case
+\section portable_case_usage Utilisation d'un cas portable
 
-If the Autopsy application was included in the portable case, it can be opened by double-clicking on the "open.bat" file.
+Si l'application Autopsy était incluse dans le cas portable, elle peut être ouverte en double-cliquant sur le fichier "open.bat".
 
 \image html portable_case_open_bat.png
 
-Otherwise, you'll start by opening the Autopsy application. Unpackaged portable cases can be opened like any other case through Case->Open Case. If your portable case was packaged, you'll need to use the unpack option to open it. Open the "Case" menu and then select "Unpack and Open Portable Case" option. This will bring up a dialog where you can browse to your packaged case and select where to extract it to. The case will also open. Note that any changes made to the case at this point will be saved to the unpacked location, and next time you open it you will need to browse to the unpacked folder.
+Sinon, vous commencerez par ouvrir l'application Autopsy. Les cas portables non compressés peuvent être ouverts comme n'importe quel autre cas via Case->Open Case. Si votre cas portable est compressé, vous devrez utiliser l'option de décompression pour l'ouvrir. Ouvrez le menu "Case", puis sélectionnez "Unpack and Open Portable Case". Cela fera apparaître une boîte de dialogue dans laquelle vous pouvez accéder à votre cas compressé et sélectionner où l'extraire. Le cas s'ouvrira également. Notez que toutes les modifications apportées au cas à ce stade seront enregistrées dans l'emplacement décompressé, et la prochaine fois que vous l'ouvrirez, vous devrez accéder au dossier décompressé.
 
 \image html portable_case_unpackage.png
 
-Portable cases generally behave like any other Autopsy case. You can run ingest, do keyword searches, use the timeline viewer, etc. One point to note is that while the original data source names appear in the case, the data sources themselves were not copied into the portable case.
+Les cas portables se comportent généralement comme n'importe quel autre cas d'Autopsy. Vous pouvez exécuter des modules d'acquisition, effectuer des recherches par mot-clé, utiliser la visionneuse "Timeline", etc... Notez bien que si les noms des sources de données d'origine apparaissent dans le cas, les sources de données elles-mêmes n'ont pas été copiées dans le cas portable.
 
 \image html portable_case_empty_image.png
 
-This may cause warning or error messages when using ingest modules that run on the full image, such as the \ref data_source_integrity_page. You will also not be able to view the data sources in the content viewer.
+Cela peut provoquer des messages d'avertissement ou d'erreur lors de l'utilisation de modules d'acquisition qui s'exécutent sur l'image complète, tels que le module \ref data_source_integrity_page. Vous ne pourrez pas non plus afficher les sources de données dans la visionneuse de contenu.
 
-You can also add additional data sources to the portable case if you wish. The case will no longer be portable, but if desired you could generate a new portable case that will include tagged files and results from the new data sources as well as the original case. 
+Vous pouvez également ajouter des sources de données supplémentaires au cas portable si vous le souhaitez. Le cas ne sera plus portable, mais si vous le souhaitez, vous pouvez générer un nouveau cas portable qui comprendra les fichiers et résultats marqués des nouvelles sources de données, comme dans le cas d'origine.
 
-\section portable_case_inside Inside a Portable Case
+\section portable_case_inside À l'intérieur d'un cas portable
 
-A portable case is a folder, just like any other Autopsy case. It contains a SQLite database (just like a normal Autopsy case) with rows for only the items that the user selected to be in the portable case.  For example, if a user tagged a file and included that in the portable case, the database will have a row for the tag, a row for the file, a row for the file system the file was in, a row for the volume system, a row for the image etc. Everything assocated with the tag is in there and you should see those items in Autopsy. 
+Un cas portable est un dossier, comme n'importe quel autre cas d'Autopsy. Il contient une base de données SQLite (tout comme un cas d'Autopsy normal) avec des lignes uniquement pour les éléments que l'utilisateur a sélectionné pour apparaître dans le cas portable. Par exemple, si un utilisateur a marqué un fichier et l'a inclus dans le cas portable, la base de données aura une ligne pour la balise, une ligne pour le fichier, une ligne pour le système de fichiers dans lequel se trouvait ce fichier, une ligne pour le système de volume , une ligne pour l'image, etc... Tout ce qui est associé à la balise est là et vous devriez voir ces éléments dans Autopsy.
 
-A copy of any tagged file is made into the case folder and the SQLite database will refer to it.  This allows you to examine the file contents without the original data source. 
+Une copie de tout fichier balisé est faite dans le dossier de cas et la base de données SQLite y fait référence. Cela vous permet d'examiner le contenu du fichier sans la source de données d'origine.
 
-Because a portable case is really just a subset of the original case, nearly all other Autopsy operations work as normal. 
+Étant donné qu'un cas portable n'est en réalité qu'un sous-ensemble du cas d'origine, presque toutes les autres opérations d'Autopsy fonctionnent normalement.
 
 */
