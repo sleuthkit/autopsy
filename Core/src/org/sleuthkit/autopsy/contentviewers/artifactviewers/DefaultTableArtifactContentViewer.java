@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,6 @@ import javax.swing.text.View;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -54,6 +53,7 @@ import com.google.gson.JsonArray;
 import java.util.Locale;
 import java.util.Map;
 import javax.swing.SwingUtilities;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.discovery.ui.AbstractArtifactDetailsPanel;
 //import org.sleuthkit.autopsy.contentviewers.Bundle;
 
@@ -343,7 +343,7 @@ public class DefaultTableArtifactContentViewer extends AbstractArtifactDetailsPa
 
                         // Use Autopsy date formatting settings, not TSK defaults
                         case DATETIME:
-                            value = epochTimeToString(attr.getValueLong());
+                            value = TimeZoneUtils.getFormattedTime(attr.getValueLong());
                             break;
                         case JSON:
                             // Get the attribute's JSON value and convert to indented multiline display string
@@ -454,7 +454,7 @@ public class DefaultTableArtifactContentViewer extends AbstractArtifactDetailsPa
                 String attributeName = jsonKey;
                 String attributeValue;
                 if (attributeName.toUpperCase().contains("DATETIME")) {
-                    attributeValue = epochTimeToString(Long.parseLong(jsonElement.getAsString()));
+                    attributeValue = TimeZoneUtils.getFormattedTime(Long.parseLong(jsonElement.getAsString()));
                 } else {
                     attributeValue = jsonElement.getAsString();
                 }
@@ -463,23 +463,6 @@ public class DefaultTableArtifactContentViewer extends AbstractArtifactDetailsPa
                 sb.append(NEW_LINE).append(String.format("%s%s = null", startIndent, jsonKey));
             }
         }
-
-        /**
-         * Converts epoch time to readable string.
-         *
-         * @param epochTime epoch time value to be converted to string.
-         *
-         * @return String with human readable time.
-         */
-        private String epochTimeToString(long epochTime) {
-            String dateTimeString = "0000-00-00 00:00:00";
-            if (null != content && 0 != epochTime) {
-                dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
-                dateTimeString = dateFormatter.format(new java.util.Date(epochTime * 1000));
-            }
-            return dateTimeString;
-        }
-
     }
 
     /**

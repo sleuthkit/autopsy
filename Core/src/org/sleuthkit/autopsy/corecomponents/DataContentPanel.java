@@ -145,6 +145,12 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         // Reset everything
         for (int index = 0; index < jTabbedPane1.getTabCount(); index++) {
             jTabbedPane1.setEnabledAt(index, false);
+            String tabTitle = viewers.get(index).getTitle(selectedNode);
+            tabTitle = tabTitle == null ? "" : tabTitle;
+            if (!tabTitle.equals(jTabbedPane1.getTitleAt(index))) {
+                jTabbedPane1.setTitleAt(index, tabTitle);
+            }
+                
             viewers.get(index).resetComponent();
         }
 
@@ -244,6 +250,10 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
         int isPreferred(Node node) {
             return this.wrapped.isPreferred(node);
+        }
+        
+        String getTitle(Node node) {
+            return this.wrapped.getTitle(node);
         }
     }
 
