@@ -1,71 +1,71 @@
-/*! \page common_properties_page Common Properties Search
+﻿/*! \page common_properties_page Recherche de propriétés communes
 
 [TOC]
 
 
-\section common_properties_overview Overview
+\section common_properties_overview Aperçu
 
-The Common Properties Search feature allows you to search for multiple copies of a property within the current case or within the \ref central_repo_page.
+La fonction de recherche de propriétés communes vous permet de rechercher plusieurs copies d'une propriété dans le cas actuel ou dans le \ref central_repo_page.
 
-To start a search, go to Tools->Find Common Properties to bring up the main dialog. Searching requires at least one of the following to be true:
+Pour lancer une recherche, accédez à Tools->Find Common Properties pour afficher la boîte de dialogue principale. La recherche nécessite au moins l'une des conditions suivantes pour aboutir:
 <ul>
-<li> The current case has more than one data source
-<li> The Central Repository contains at least two cases
+<li> Le cas actuel a plus d'une source de données
+<li> Le référentiel central contient au moins deux cas
 </ul>
 
-If both conditions are false, then the menu item will be disabled. If only one is false then part of the search dialog will be disabled.
+S'il n'existe aucune de ces deux conditions, l'élément de menu sera désactivé. Si une seul n'est pas remplie, une partie de la boîte de dialogue de recherche sera désactivée.
 
-\section common_properties_search_types Common Properties Search Scope
+\section common_properties_search_types Portée de la recherche de propriétés communes
 
-Different parameters are needed for setting up the two types of searches. These will be described below.
+Différents paramètres sont nécessaires pour configurer les deux types de recherche. Ceux-ci seront décrits ci-dessous.
 
-\subsection common_properties_intra_case Scope - between data sources in the current case
+\subsection common_properties_intra_case Portée "Between data sources in the current case" (entre les sources de données dans le cas actuel)
 
-This type of search looks for files that are in multiple data sources within the current case. It does not require the Central Repository to be enabled, and currently only searches for common files. You must run the \ref hash_db_page to compute MD5 hashes on each data source prior to performing the search. The search results will not include any files that have been marked as "known" by the hash module (ex: files that are in the NSRL).
+Ce type de recherche analyse les fichiers qui se trouvent dans plusieurs sources de données dans le cas actuel. Il ne nécessite pas l'activation du référentiel central et ne recherche actuellement que les fichiers communs. Vous devez exécuter le module \ref hash_db_page pour calculer les hachages MD5 sur chaque source de données avant d'effectuer cette recherche. Les résultats de la recherche n'incluront aucun fichier marqué comme "known" (connus) par le module de hachage (ex: fichiers qui sont dans le NSRL).
 
 \image html common_properties_intra_case.png
 
-By default, the search will find matching files in any data sources. If desired, you can change the search to only show matches where one of the files is in a certain data source by selecting it from the list:
+Par défaut, la recherche trouvera les fichiers correspondants dans toutes les sources de données. Si vous le souhaitez, vous pouvez modifier cette recherche pour n'afficher que les correspondances où l'un des fichiers se trouve dans une certaine source de données en la sélectionnant dans la liste:
 
 \image html common_properties_select_ds.png
 
-You can also choose to show any type of matching files or restrict the search to pictures and videos and/or documents.
+Vous pouvez également choisir d'afficher n'importe quel type de fichiers correspondants ou restreindre la recherche aux images et vidéos et/ou documents.
 
-Finally, if you have the Central Repository enabled you can choose to hide matches that appear with a high frequency in the Central Repository. 
+Enfin, si le référentiel central est activé, vous pouvez choisir de masquer les correspondances qui apparaissent avec une fréquence élevée dans le référentiel central.
 
-\subsection common_properties_central_repo Scope - between current case and cases in the Central Repository
+\subsection common_properties_central_repo Portée "Between current case and cases in the Central Repository" (entre le cas actuel et les cas dans le référentiel central)
 
-This type of search looks for files that contain common properties between the current case and other cases in the Central Repository. You must run the Central Repository ingest module on each case with the property you want to search for enabled, along with the ingest modules that produce that property type (see \ref cr_manage_properties). 
+Ce type de recherche analyse les fichiers contenant des propriétés communes entre le cas actuel et les autres cas dans le référentiel central. Vous devez exécuter le module d'acquisition "Central Repository" sur chaque cas en ayant activé la propriété que vous souhaitez rechercher, ainsi que les modules d'acquisition qui produisent ce type de propriété (voir la \ref cr_manage_properties "gestion des propriétés de corrélation"). 
 
 \image html common_properties_cr.png
 
-You can restrict the search to only include results where at least one of the matches was in a specific case.
+Vous pouvez restreindre la recherche pour inclure uniquement les résultats où au moins une des correspondances était dans un cas spécifique.
 
 \image html common_properties_cr_case_select.png
 
-In the example above, any matching properties would have to exist in the current case and in Case 2. Note that matches in other cases will also be included in the results, as long as the property exists in the current case and selected case.
+Dans l'exemple ci-dessus, toutes les propriétés correspondantes devraient exister dans le cas actuel et dans le cas 2. Notez que les correspondances dans d'autres cas seront également incluses dans les résultats, tant que la propriété existe dans le cas actuel et le cas sélectionné.
 
-You can select the type of property to search for in the menu below:
+Vous pouvez sélectionner le type de propriété à rechercher dans le menu ci-dessous:
 
 \image html common_properties_cr_property.png
 
-Restricting a file search to only return images or documents is currently disabled. 
+La restriction d'une recherche de fichier pour ne renvoyer que des images ou des documents est actuellement désactivée.
 
-You can choose to hide matches that appear with a high frequency in the Central Repository. Finally you can choose how to display the results, which will be described below.
+Vous pouvez choisir de masquer les correspondances qui apparaissent avec une fréquence élevée dans le référentiel central. Enfin, vous pouvez choisir comment afficher les résultats, ce qui sera décrit ci-dessous.
 
-\section common_properties_results Search Results
+\section common_properties_results Résultats de recherche
 
-Each search displays its results in a new tab. The title of the tab will include the search parameters.
+Chaque recherche affiche ses résultats dans un nouvel onglet. Le titre de l'onglet inclura les paramètres de recherche.
 
-\subsection common_properties_sort_by_count Sort by number of data sources
+\subsection common_properties_sort_by_count Trier par nombre de sources de données
 
 \image html common_properties_result.png
 
-This is how all results from searches within the current case are displayed, and an option for displaying the results of a search between the current case and the Central Repository. The top tree level of the results shows the number of matching properties. The results are grouped by how many matching properties were found and then grouped by the property itself.
+C'est ainsi que sont affichés tous les résultats des recherches dans le cas actuel, avec une option pour afficher les résultats d'une recherche entre le cas actuel et le référentiel central. Le niveau supérieur de l'arborescence des résultats indique le nombre de propriétés correspondantes. Les résultats sont regroupés en fonction du nombre de propriétés correspondantes trouvées, puis regroupés en fonction de la propriété elle-même.
 
-\subsection common_properties_sort_by_case Sort by case
+\subsection common_properties_sort_by_case Trier par cas
 
-This option is only available when searching between the current case and the Central Repository. The top level shows each case with matching properties, then you can select which data source to view. Every matching property will be displayed under the data source.
+Cette option n'est disponible que lors d'une recherche entre le cas actuel et le référentiel central. Le niveau supérieur montre chaque cas avec des propriétés correspondantes, puis vous pouvez sélectionner la source de données à afficher. Chaque propriété correspondante sera affichée sous la source de données.
 
 \image html common_properties_result_case_sort.png
 

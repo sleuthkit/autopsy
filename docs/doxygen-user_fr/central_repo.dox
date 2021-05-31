@@ -1,241 +1,229 @@
-/*! \page central_repo_page Central Repository
+﻿/*! \page central_repo_page Référentiel central
 
 [TOC]
 
 
-\section cr_overview Overview
+\section cr_overview Aperçu
 
-The central repository allows a user to find matching artifacts both across cases and across data sources in the same case. 
-It is a combination of an ingest module that extracts, stores, and compares properties against lists of notable 
-properties, a database that stores these properties, and an additional panel in Autopsy to display other instances of each 
-property. The central repository database can either be SQLite or PostgreSQL.
+Le référentiel central permet à un utilisateur de retrouver des artefacts correspondants à la fois entre les cas et entre les sources de données dans le même cas.
+Il s'agit d'une combinaison de module d'acquisition qui extrait, stocke et compare les propriétés à des listes de
+propriétés notables, une base de données qui stocke ces propriétés et un panneau supplémentaire dans Autopsy pour afficher d'autres instances de chaque
+propriété. La base de données du référentiel central peut être SQLite ou PostgreSQL.
 
-The following are some use cases for the central repository:
-- <b>Finding Other Instances of a Property</b>
- - If you navigate to a file or Autopsy artifact (such as a Web History item), there is a content viewer in the bottom right that will show you other instances of this property across the data stored in the central repository. 
-- <b>Alerting When Previously Notable Properties Occur</b>
- - You can use the central repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as notable they will be added to the Interesting Items section of the tree when seen again in any future cases.
-- <b>Storing Hash Sets</b>
- - You can create and import hash sets into the central repository instead of using local copies in the \ref hash_db_page "Hash Lookup module". These hash sets are functionally equivalent to local hash sets but can be shared among multiple analysts (when using a PostgreSQL central repository).
+Voici quelques cas d'utilisation du référentiel central:
+- <b>Recherche d'autres instances d'une propriété</b>
+ - Si vous accédez à un fichier ou à un artefact d’Autopsy (tel qu’un élément de "Web History"), une visionneuse de contenu en bas à droite vous montrera d’autres instances de cette propriété dans les données stockées dans le référentiel central.
+- <b>Alerte lorsque des propriétés précédemment caractérisées comme notables se produisent</b>
+ - Vous pouvez utiliser le référentiel central pour enregistrer les propriétés associées aux fichiers et aux artefacts qui étaient des preuves (ou "notables"). Une fois que ces propriétés ont été marquées comme notables, elles seront ajoutées à la section "Interesting Items" de l'arborescence lorsqu'elles seront retrouvées dans de futurs cas.
+- <b>Stockage des ensembles de hachage</b>
+ - Vous pouvez créer et importer des ensembles de hachage dans le référentiel central au lieu d'utiliser des copies locales pour le module \ref hash_db_page "Hash Lookup". Ces ensembles de hachage sont fonctionnellement équivalents aux ensembles de hachage locaux mais peuvent être partagés entre plusieurs analystes (lors de l'utilisation d'un référentiel central PostgreSQL).
 
-\section cr_terms Terms and Concepts
+\section cr_terms Termes et concepts
 
-- <b>Central Repository</b> - The Autopsy feature containing the central repository database and Central Repository Ingest Module. Also responsible for displaying correlated properties to the user
-- <b>Central Repository Database</b> - the SQLite or PostgreSQL database that holds all the data
-- <b>Central Repository Ingest Module</b> - The ingest module responsible for adding new properties to the database and comparing these properties against existing notable properties
-- <b>Property</b> - The data being stored/correlated. These can be file paths/MD5 hashes, email addresses, phone numbers, etc.
+- <b>Référentiel central (Central Repository)</b> - La fonction d’Autopsy contenant la base de données du référentiel central et le module d’acquisition "Central Repository". Également responsable de l'affichage des propriétés corrélées pour l'utilisateur
+- <b>Base de données du référentiel central (Central Repository Database)</b> - La base de données SQLite ou PostgreSQL qui contient toutes les données
+- <b>Module d'acquisition "Central Repository"</b> - Module d'acquisition chargé d'ajouter de nouvelles propriétés à la base de données et de comparer ces propriétés aux propriétés notables existantes
+- <b>Propriété (Property)</b> - Les données sont stockées/corrélées. Il peut s'agir de chemins de fichiers/hachages MD5, adresses e-mail, numéros de téléphone, etc...
 
-\section cr_setup Setup
+\section cr_setup Installer
 
-The central repository settings are found on the main options panel (Tools->Options) on the "Central Repository" tab. 
+Les paramètres du référentiel central se trouvent dans le panneau d'options principal (Tools->Options) dans l'onglet "Central Repository". 
 
 \image html central_repo_options.png
 
-\subsection cr_db_setup Database Configuration
+\subsection cr_db_setup Database Configuration (Configuration de la base de données)
 
-There are two types of central repository databases:
-- <b>SQLite</b> - This type of database is stored in a file. It should only be used when a single client will be accessing the database. You can not use this option with \ref multiuser_page "multi-user cases".
-- <b>PostgreSQL</b> - This type of database is stored on a server running either on the user's host or a remote server. This option must be used if multiple users will be using the same database.
+Il existe deux types de bases de données de référentiel central:
+- <b>SQLite</b> - Ce type de base de données est stocké dans un fichier. Il ne doit être utilisé que lorsqu'un seul client accède à la base de données. Vous ne pouvez pas utiliser cette option avec des \ref multiuser_page "cas multi-utilisateurs".
+- <b>PostgreSQL</b> - Ce type de base de données est stocké sur un serveur s'exécutant soit sur l'hôte de l'utilisateur, soit sur un serveur distant. Cette option doit être utilisée si plusieurs utilisateurs utiliseront la même base de données.
 
-\subsubsection cr_db_setup_auto Automatic Database Configuration
+\subsubsection cr_db_setup_auto Configuration automatique de la base de données
 
-Starting with Autopsy 4.15, when you load Autopsy and the central repository is not enabled you will be 
-asked if you want to enable it. Doing so will create a SQLite database in your Autopsy user folder (on Windows this will be in AppData). You will only be prompted to do this once. Whichever option you select, you can change your central repository settings later as described below.
+À partir de la version 4.15 d'Autopsy, lorsque vous chargez le logiciel et que le référentiel central n'est pas activé, il vous sera demandé si vous souhaitez l'activer. Cela créera une base de données SQLite dans votre dossier utilisateur Autopsy (sous Windows, ce sera dans AppData). Vous ne serez invité à le faire qu'une seule fois. Quelle que soit l'option que vous sélectionnez, vous pouvez modifier les paramètres de votre référentiel central ultérieurement, comme décrit ci-dessous.
 
-Since a SQLite database can't be used for multi-user cases, you are also given the option to switch to a PostgreSQL database when you \ref multiuser_install_clients "enable multi-user cases". If you are currently using a SQLite database, when you enable multi-user cases you will be asked if you want to switch to a PostgreSQL database on the same server. Note that the contents of your SQLite database will not be copied over.
+Puisqu'une base de données SQLite ne peut pas être utilisée pour des cas multi-utilisateurs, vous avez également la possibilité de basculer vers une base de données PostgreSQL lorsque vous \ref multiuser_install_clients "activez les cas multi-utilisateurs". Si vous utilisez actuellement une base de données SQLite, lorsque vous activez des cas multi-utilisateurs, il vous sera demandé si vous souhaitez basculer vers une base de données PostgreSQL sur le même serveur. Notez que le contenu de votre base de données SQLite ne sera pas copié.
 
-\subsubsection cr_db_setup_manual Manual Database Configuration
+\subsubsection cr_db_setup_manual Configuration manuelle de la base de données
 
-On the central repository options panel, check the 'Use a Central Repository' option and then click the Configure button to set up a database. There are three options here:
-- <b>SQLite</b> - This option stores the database in a file. It should only be used when a single client will be accessing the database.
-- <b>PostgreSQL using multi-user settings</b> - This option uses a central repository on the same PostgreSQL server that has been configured for \ref multiuser_page "multi-user cases". This option can not be selected if multi-user cases are not enabled. This is one of the options if multiple users will be using the same database.
-- <b>Custom PostgreSQL</b> - This option uses a database server running either on the user's host or a remote server, where the server is specified in the central repository settings. This is one of the options if multiple users will be using the same database.
+Dans le panneau d'options du référentiel central, cochez l'option "Use a Central Repository" puis cliquez sur le bouton "Configure" pour créer une base de données. Il y a trois options ici:
+- <b>SQLite</b> - Cette option stocke la base de données dans un fichier. Il ne doit être utilisé que lorsqu'un seul client accède à la base de données.
+- <b>PostgreSQL using multi-user settings</b> - Cette option utilise un référentiel central sur le même serveur PostgreSQL qui a été configuré pour \ref multiuser_page "les cas multi-utilisateurs". Cette option ne peut pas être sélectionnée si les cas multi-utilisateurs ne sont pas activés. C'est l'une des options à sélectionner si plusieurs utilisateurs utilisent la même base de données.
+- <b>Custom PostgreSQL</b> - Cette option utilise un serveur de base de données s'exécutant sur l'hôte de l'utilisateur ou sur un serveur distant, où le serveur est spécifié dans les paramètres du référentiel central. C'est l'une des options à sélectionner si plusieurs utilisateurs utilisent la même base de données.
 
-Once a database has been configured, the lower two buttons on the main panel will be enabled, which will be described below.
+Une fois la base de données configurée, les deux boutons inférieurs du panneau principal seront activés, ce qui sera décrit ci-dessous.
 
-<b>Setting up a PostgreSQL deployment using the multi-user settings</b>
+<b>Configuration d'un déploiement PostgreSQL à l'aide des paramètres multi-utilisateurs</b>
 
-See the \ref install_multiuser_page page for instructions on configuring a multi-user environment. Once done, you can select the "PostgreSQL using multi-user settings" option to create/use a central repository on that PostgreSQL server.
+Voir la page \ref install_multiuser_page pour obtenir des instructions sur la configuration d'un environnement multi-utilisateur. Une fois cela fait, vous pouvez sélectionner l'option "PostgreSQL using multi-user settings" pour créer/utiliser un référentiel central sur ce serveur PostgreSQL.
 
-<b>Setting up a custom PostgreSQL deployment</b>
+<b>Configurer un déploiement PostgreSQL personnalisé</b>
 
-If needed, see the \ref install_postgresql_page page for help setting up your PostgreSQL server.
+Si nécessaire, consultez la page \ref install_postgresql_page pour obtenir de l'aide sur la configuration de votre serveur PostgreSQL.
 
-For PostgreSQL all values are required, but some defaults are provided for convenience.
+Pour PostgreSQL, toutes les valeurs sont requises, mais certaines valeurs par défaut sont fournies pour plus de commodité.
 
 \image html central_repo_postgres.png
 
-- Host Name/IP is the hostname or IP of your PostgreSQL server.
-- Port is the port that the PostgreSQL server is listening on; default is 5432.
-- User Name is a PostgreSQL user that can create and modify databases
-- User Password is the password for the user.
+- Host Name/IP : c'est le nom d'hôte ou l'adresse IP de votre serveur PostgreSQL.
+- Port : c'est le port sur lequel le serveur PostgreSQL écoute; la valeur par défaut est 5432.
+- User Name : c'est un utilisateur PostgreSQL qui peut créer et modifier des bases de données
+- User Password : c'est le mot de passe de l'utilisateur.
 
-If the database does not exist, you wll be prompted to create it.
+Si la base de données n'existe pas, vous serez invité à la créer.
 
 
-<b>Setting Up SQLite Deployment</b>
+<b>Configuration du déploiement de SQLite</b>
 
-Select SQLite in the Database Type to set up a SQLite database. SQLite databases should not be used if more than one client will be accessing the central repository.
+Sélectionnez SQLite dans le type de base de données pour configurer une base de données SQLite. Les bases de données SQLite ne doivent pas être utilisées si plusieurs clients accèdent au référentiel central.
 
 \image html central_repo_sqlite.png
 
-Enter or browse to a folder for the database. If the database file does not exist in that folder, you will be prompted to create it. 
+Entrez ou recherchez un dossier pour la base de données. Si le fichier de base de données n'existe pas dans ce dossier, vous serez invité à le créer.
 
-\subsection cr_manage_properties Manage Correlation Properties
+\subsection cr_manage_properties Manage Correlation Properties (Gérer les propriétés de corrélation)
 
-The Central Repository ingest module can save different types of properties to the database. By default all properties are recorded, but 
-this setting can be changed on the options panel through the Manage Correlation Properties button. Note that these settings 
-are saved to the database, so in a multi-user setting any changes will affect all users.
+Le module d'acquisition "Central Repository" peut enregistrer différents types de propriétés dans la base de données. Par défaut, toutes les propriétés sont enregistrées, mais
+ce paramètre peut être modifié dans le panneau d'options via le bouton "Manage Correlation Properties". Notez que ces paramètres
+sont enregistrés dans la base de données, donc dans un paramètrage multi-utilisateur, toute modification affectera tous les utilisateurs.
 
 \image html central_repo_types.png
 
-Descriptions of the property types:
+Descriptions des types de propriétés:
 - <b>Files</b>
- - Files are correlated based on MD5 hash and file path and name. The \ref hash_db_page must be enabled.
+ - Les fichiers sont corrélés en fonction du hachage MD5 et du chemin et du nom du fichier. Le module \ref hash_db_page doit être activé.
 - <b>Domains</b>
- - Domains are extracted from the various web artifacts, which primarily come from the \ref recent_activity_page.
+ - Les domaines sont extraits des différents artefacts Web, qui proviennent principalement du module \ref recent_activity_page.
 - <b>Email Addresses</b>
- - Email addresses are created by modules such as the \ref email_parser_page.
+ - Les adresses e-mail sont créées par des modules tels que \ref email_parser_page.
 - <b>Phone Numbers</b>
- - Phone numbers are currently only extracted from call logs, contact lists and message, which come from the \ref android_analyzer_page.
+ - Les numéros de téléphone ne sont actuellement extraits que des journaux d'appels, des listes de contacts et des messages, qui proviennent du module \ref android_analyzer_page.
 - <b>USB Devices</b>
- - USB device properties come from the registry parsing in the \ref recent_activity_page.
+ - Les propriétés du périphérique USB proviennent de l'analyse de la base de registre dans le module \ref recent_activity_page.
 - <b>Wireless Networks</b>
- - Wireless networks are correlated on SSIDs, and come from the registry parsing in the \ref recent_activity_page.
+ - Les réseaux sans fil sont corrélés sur les SSID et proviennent de l'analyse de la base de registre dans le module \ref recent_activity_page.
 - <b>MAC Addresses</b>
- - MAC address properties are currently only created by custom Autopsy modules.
+ - Les propriétés d'adresses MAC ne sont actuellement créées que par des modules Autopsy personnalisés.
 - <b>IMEI Number</b>
- - IMEIs properties are currently only created by custom Autopsy modules.
+ - Les propriétés d'IMEI ne sont actuellement créées que par des modules Autopsy personnalisés.
 - <b>IMSI Number</b>
- - IMSI properties are currently only created by custom Autopsy modules.
+ - Les propriétés d'IMSI ne sont actuellement créées que par des modules Autopsy personnalisés.
 - <b>ICCID Number</b>
- - ICCID properties are currently only created by custom Autopsy modules.
+ - Les propriétés d'ICCID ne sont actuellement créées que par des modules Autopsy personnalisés.
 - <b>Credit Card</b>
- - Credid Card properties are created by the \ref keyword_search_page.
-- <b> App-specific Accounts (Facebook, Twitter, etc)</b>
- - These properties primarily come from the \ref android_analyzer_page.
+ - Les propriétés de carte de crédit sont créées par le module \ref keyword_search_page.
+- <b> App-specific Accounts (Facebook, Twitter, etc...)</b>
+ - Ces propriétés proviennent principalement du module \ref android_analyzer_page.
 
-\subsection cr_manage_orgs Manage Organizations
+\subsection cr_manage_orgs Manage Organizations (Gérer les organisations)
 
-Organizations are stored in the central repository and contain contact information for the given organization. Organizations are used for Hash Sets saved in the central repository, and can also be associated with Autopsy cases. 
+Les organisations sont stockées dans le référentiel central et contiennent les informations de contact pour l'organisation donnée. Les organisations sont utilisées pour les jeux de hachage enregistrés dans le référentiel central et peuvent également être associées à des cas d'Autopsy.
 
 \image html central_repo_orgs.png
 
-One default org, "Not Specified" will always be present in the list. New organizations can be created, edited, and deleted through the appropriate buttons. Note that any organization that is currently in use by a case or hash set can not be deleted. All fields apart from the organization name are optional.
+Une organisation par défaut, "Not Specified" sera toujours présente dans la liste. De nouvelles organisations peuvent être créées, modifiées et supprimées via les boutons appropriés. Notez que toute organisation actuellement utilisée par un cas ou un jeu de hachage ne peut pas être supprimée. Tous les champs à l'exception du nom de l'organisation sont facultatifs.
 
 \image html central_repo_new_org.png
 
-\subsection cr_show_cases Manage Cases
+\subsection cr_show_cases Manage Cases (Gérer les cas)
 
-Displays a list of all cases that are in the central repository database and details about each case.
+Affiche une liste de tous les cas qui se trouvent dans la base de données du référentiel central et des détails sur chaque cas.
 
 \image html central_repo_details.png
 
-\section cr_using_repo Using the Central Repository
+\section cr_using_repo Utilisation du référentiel central
 
-\subsection cr_ingest_module Central Repository Module
+\subsection cr_ingest_module Le module "Central Repository"
 
-The Central Repository ingest module is responsible for adding properties to the database and comparing each property 
-against the list of notable properties. It is best to run all ingest modules to get the most out of the Correlation 
-Engine. For example, if Hash Lookup is not run then the Central Repository module will not put any files into the 
-database. If the Central Repository module is not run on a particular case but a central repository is enabled, 
-there will still be some limited functionality. The Content Viewer will still display matching properties from 
-other cases/data sources where the Central Repository was run.
+Le module d'acquisition "Central Repository" est chargé d'ajouter des propriétés à la base de données et de comparer chaque propriété
+à la liste des propriétés notables. Il est préférable d'exécuter tous les modules d'acquisition pour tirer le meilleur parti du moteur de corrélation. Par exemple, si "Hash Lookup" n'est pas exécuté, le module "Central Repository" ne mettra aucun fichier dans la
+base de données. Si le module "Central Repository" n'est pas exécuté sur un cas particulier mais qu'un référentiel central est activé,
+il y aura toujours des fonctionnalités limitées. La visionneuse de contenu affichera toujours les propriétés correspondantes dans
+les autres cas/sources de données où le module "Central Repository" a été exécuté.
 
 \image html central_repo_ingest_settings.png
 
-There are three settings for the Central Repository ingest module:
+Il existe trois paramètres pour le module d'acquisition "Central Repository":
 <ul>
-<li><b>Save items to the Central Repository</b> - This should only be unselected in the rare case that you don't want to add any properties from the current data source to the central repository, but still want to flag past occurrences.
-<li><b>Flag items previously tagged as notable</b> - Enabling this causes Interesting Item/File artifacts to be created when properties matching those previously flagged are found. See the next section \ref cr_tagging for details.
-<li><b>Flag previously seen devices</b> - When this is enabled, an Interesting Item artifact will be created if any device-related property (USB, MAC Address, IMSI, IMEI, ICCID) is found that is already in the central repository, regardless of whether they have been flagged.
+<li><b>Save items to the Central Repository</b> - Cette option ne doit être désélectionnée que dans les rares cas où vous ne souhaitez pas ajouter de propriétés de la source de données actuelle au référentiel central, mais souhaitez quand même signaler les occurrences passées.
+<li><b>Flag items previously tagged as notable</b> - L'activation de cette option entraîne la création d'artefacts d'éléments/fichiers intéressants lorsque des propriétés correspondant à celles précédemment marquées sont trouvées. Voir la section suivante \ref cr_tagging pour plus de détails.
+<li><b>Flag previously seen devices</b> - Lorsque cette option est activée, un artefact "Interesting Item" sera créé si une propriété liée au périphérique (USB, adresse MAC, IMSI, IMEI, ICCID) est détectée et se trouve déjà dans le référentiel central, qu'elle ait été ou non signalée.
 </li>
 
-\subsection cr_tagging Tagging Files and Artifacts
+\subsection cr_tagging Marquage de fichiers et d'artefacts
 
-Tagging a file or artifact with a "notable" tag will change its associated property in the central repository to notable as well. 
-By default, there will be a tag named "Notable Item" that can be used for this purpose. See the \ref tagging_page "Tagging page" for more information on creating additional tags with notable status. 
-Any future data source ingest (where this module is enabled) 
-will use those notable properties in a similar manner as a Known Bad hash set, causing matching files and artifacts from that 
-ingest to be added to the Interesting Items list in that currently open case.
+Marquer un fichier ou un artefact avec une balise "notable" changera également sa propriété associée dans le référentiel central en notable.
+Par défaut, il y aura une balise nommée "Notable Item" qui pourra être utilisée à cette fin. Voir la page sur les \ref tagging_page "marquages" pour plus d'informations sur la création de balises supplémentaires avec un statut notable.
+Toute future acquisition de source de données (où ce module est activé)
+utilisera ces propriétés "notables" de la même manière qu'un ensemble de hachage "connus défavorablement", provoquant l'ajout des fichiers et artefacts correspondants de cette acquisition à la liste "Interesting Items" du cas actuellement ouvert.
 
 \image html central_repo_tag_file.png
 
-If a tag is accidentally added to a file or artifact, it can be removed though the context menu. This will remove its property's
-notable status in the central repository.
+Si une balise est accidentellement ajoutée à un fichier ou à un artefact, elle peut être supprimée via le menu contextuel. Cela supprimera sa propriété de statut notable dans le référentiel central.
 
-If you would like to prevent the Interesting Items from being created in a particular case, you can disable the flagging 
-through the run time ingest properties. Note that this only disables the Interesting Item results - all properties
-are still added to the central repository.
+Si vous souhaitez empêcher la création de "Interesting Items" dans un cas particulier, vous pouvez désactiver le marquage
+via les propriétés d'acquisition au moment de l'exécution. Notez que cela désactive uniquement les résultats de "Interesting Item" - toutes les propriétés sont toujours ajoutés au référentiel central.
 
 \image html central_repo_ingest_settings.png
 
-\section cr_viewing_results Viewing Results
+\section cr_viewing_results Affichage des résultats
 
-Results from enabling a central repository and running the Central Repository Ingest Module can be seen in two places:
-- The Content Viewer for each file or artifact will display all matching properties from other cases/data sources
-- The Interesting Files node of the result tree will contain any files or results that matched properties previously marked as notable
+Les résultats de l'activation d'un référentiel central et de l'exécution du module d'acquisition "Central Repository" peuvent être consultés à deux endroits:
+- La visionneuse de contenu, pour chaque fichier ou artefact, affichera toutes les propriétés correspondantes dans d'autres cas/sources de données
+- Le nœud "Interesting Files" de l'arborescence contiendra tous les fichiers ou résultats correspondant aux propriétés précédemment marquées comme notables
 
-\subsection cr_content_viewer Content Viewer
+\subsection cr_content_viewer Visionneuse de contenu
 
-The \ref content_viewer_page panel is where previous instances of properties are displayed. Without a central repository enabled, 
-this "Other Occurrences" panel will show files with hashes matching the selected file within the current case. Enabling a central 
-repository allows this panel to also display matching properties stored in the database, and adds some functionality to the row. 
-Note that the Central Repository Ingest Module does not have to have been run on the current data source to see correlated 
-properties from the central repository. If the selected file or artifact is associated by one of the supported Correlation Types, 
-to one or more properties in the database, the associated properties will be displayed. Note: the Content 
-Viewer will display ALL associated properties available in the database. It ignores the user's enabled/disabled Correlation Properties.
+La \ref content_viewer_page est l'endroit où les instances précédentes des propriétés sont affichées. Sans un référentiel central activé,
+le panneau "Other Occurrences" affichera les fichiers avec des hachages correspondant au fichier sélectionné dans le cas actuel. Activer un référentiel central permet à ce panneau d'afficher également les propriétés correspondantes stockées dans la base de données et ajoute des fonctionnalités à la ligne.
+Notez que le module d'acquisition "Central Repository" n'a pas besoin d'avoir été exécuté sur la source de données actuelle pour voir les
+propriétés du référentiel central. Si le fichier ou l'artefact sélectionné est associé, par l'un des types de corrélation pris en charge,
+à une ou plusieurs propriétés de la base de données, les propriétés associées seront affichées. Remarque: La visionneuse de contenu affichera TOUTES les propriétés associées disponibles dans la base de données. Elle ignore les propriétés de corrélation activées/désactivées de l'utilisateur.
 
-The other occurrences are grouped by case and then data source. Selecting one of the results brings up information on it in the right column. If a file or artifact was previously marked as notable, you will see "notable" in red next to "Known Status".
+Les autres occurrences sont regroupées par cas, puis par source de données. La sélection de l'un des résultats fait apparaître des informations à ce sujet dans la colonne de droite. Si un fichier ou un artefact était précédemment marqué comme notable, vous verrez "notable" en rouge à côté de "Known Status".
 
 \image html central_repo_content_viewer.png
 
-The user can click on any column heading to sort by the values in that column.
+L'utilisateur peut cliquer sur n'importe quel en-tête de colonne pour trier les valeurs de cette colonne.
 
-If the user selects an entry in the third column and then right-clicks, a menu will be displayed.
-This menu has several options.
+Si l'utilisateur sélectionne une entrée dans la troisième colonne puis clique avec le bouton droit de la souris, un menu s'affiche.
+Ce menu a plusieurs options.
 -# Export All Other Occurrences to CSV
 -# Show Case Details
--# Show Frequency
+-# Show Frequency 
 
-<b>Export All Other Occurrences to CSV</b>
+<b>Export All Other Occurrences to CSV (Exporter toutes les autres occurrences au format CSV)</b>
 
-This option will save every other occurrence in the Content Viewer table to a CSV file.
-By default, the CSV file is saved into the Export directory inside the currently open Autopsy case,
-but the user is free to select a different location.
+Cette option enregistre toutes les autres occurrences du tableau de la visionneuse de contenu dans un fichier CSV.
+Par défaut, le fichier CSV est enregistré dans le répertoire d'export à l'intérieur du cas d'Autopsy actuellement ouvert,
+mais l'utilisateur est libre de sélectionner un emplacement différent.
 
-<b>Show Case Details</b>
+<b>Show Case Details (Afficher les détails du cas)</b>
 
-This option will open a dialog that displays all of the relevant details for the selected case. The 
-details will include:
-- Case UUID
-- Case Name
-- Case Creation Date
-- Case Examiner contact information
-- Case Examiner's notes
+Cette option ouvrira une boîte de dialogue qui affiche tous les détails pertinents pour le cas sélectionné. Ces détails comprendront:
+- Case UUID (Identifiant du cas)
+- Case Name (Nom du cas)
+- Case Creation Date (Date de création du cas)
+- Case Examiner contact information (Informations de contact de l'analyste du cas)
+- Case Examiner's notes (Notes de l'analyste du cas)
 
-These details would have been entered by the examiner of the selected case, when creating the case or later by visiting
-the Case -> Case Properties menu.
+Ces détails auront été saisis par l'analyste du cas sélectionné, lors de la création du cas ou plus tard en allant dans le menu Case->Case Properties.
 
-<b>Show Frequency</b>
+<b>Show Frequency (Afficher la fréquence)</b>
 
-This shows how common the selected file is. The value is the percentage of case/data source tuples that have the selected property.
+Cela montre à quel point le fichier sélectionné est commun. La valeur est le pourcentage de tuples de cas/source de données qui ont la propriété sélectionnée.
 
-\subsection cr_interesting_items Interesting Items
+\subsection cr_interesting_items Interesting Items (Éléments intéressants)
 
-In the Results tree of an open case is an entry called Interesting Items. When this module is enabled, all of the enabled 
-Correlatable Properties will cause matching files and artifacts to be added to this Interesting Items tree during ingest.
+Dans la section "Results" de l'arborescence d'un cas ouvert se trouve une entrée intitulée "Interesting Items". Lorsque ce module est activé, tous les propriétés corrélables entraîneront l'ajout de fichiers et d'artefacts correspondants à cette zone "Interesting Items" de l'arborescence, lors de l'acquisition.
 
 \image html central_repo_interesting_items.png
 
-As an example, suppose the Files Correlatable Property is enabled and the ingest is currently processing a file "badfile.exe", and the MD5 hash 
-for that file already exists in the database as a notable file property. In this case an entry in the Interesting Items tree will be added for 
-the current instance of "badfile.exe" in the data source currently being ingested.
+Par exemple, supposons que la propriété "Files Correlatable" est activée et que l'acquisition traite actuellement un fichier "badfile.exe" dont le hachage MD5 existe déjà dans la base de données en tant que propriété de fichier notable. Dans ce cas, une entrée dans l'arborescence "Interesting Items" sera ajoutée pour
+l'instance actuelle de "badfile.exe" dans la source de données en cours d'acquisition.
 
-The same type of thing will happen for each enabled Correlatable Property.
+Le même type de chose se produira pour chaque propriété corrélable activée.
 
-In the case of the phone number correlatable type, the Interesting Items tree will start a sub-tree for each phone number. The sub-tree will 
-then contain each instance of that notable phone number.
+Dans le cas du type de numéro de téléphone corrélable, l'arborescence "Interesting Items" affichera une sous-arborescence pour chaque numéro de téléphone. Le sous-arbre contiendra alors chaque instance de ce numéro de téléphone notable.
 
 
 
