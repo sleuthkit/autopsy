@@ -1,105 +1,103 @@
-/*! \page ad_hoc_keyword_search_page Ad Hoc Keyword Search
+/*! \page ad_hoc_keyword_search_page Recherche par mot-clé ad hoc
 
 [TOC]
 
-\section ad_hoc_kw_overview Overview
+\section ad_hoc_kw_overview Aperçu
 
-The ad hoc keyword search features allows you to run single keyword terms or lists of keywords against all images in a case. Both options are located in the top right of the main Autopsy window.
+Les fonctionnalités de recherche par mot-clé ad hoc vous permettent d'exécuter des recheches de mot-clé unique ou des listes de mots-clés sur toutes les images d'un cas. Les deux options sont situées en haut à droite de la fenêtre principale d'Autopsy.
 
 \image html keyword-search-ad-hoc.PNG
 
-The \ref keyword_search_page must be selected during ingest before doing an ad hoc keyword search. If you don't want to search for any of the existing keyword lists, you can deselect everything to just index the files for later searching.
+Le module \ref keyword_search_page doit être sélectionné lors de l'acquisition avant d'effectuer une recherche par mot-clé ad hoc. Si vous ne souhaitez rechercher aucune des listes de mots clés existantes, vous pouvez tout désélectionner pour simplement indexer les fichiers pour une recherche ultérieure.
 
-\section ad_hoc_kw_types_section Creating Keywords
+\section ad_hoc_kw_types_section Créer des mots-clés
 
-The following sections will give a description of each keyword type, then will show some sample text and how various search terms would work against it. 
+Les sections suivantes donneront une description de chaque type de mot-clé, puis montreront un exemple de texte et comment différents termes de recherche fonctionneront avec lui.
 
-## Exact match
+## Exact match (correspondance exacte)
 
-Exact match should be used in cases where the search term is expected to always be surrounded by non-word characters (typically whitespace or punctuation). Spaces/punctuation are allowed in the search term, and capitalization is ignored.
-
-> The quick reddish-brown fox jumps over the lazy dog.
-
-- "quick", "brown", "dog" will match
-- "FOX", "Fox", "fox" will all match
-- "reddish-brown fox", "brown fox", "LAZY DOG" will match
-- "rown" and "lazy do" will not match since they are not bounded by non-word characters in the text
-
-## Substring match
-
-Substring match should be used where the search term is just part of a word, or to allow for different word endings. Capitalization is ignored but spaces and other punctuation can not appear in the search term.
+"Exact match" doit être utilisé dans les cas où le terme de recherche est censé être toujours entouré de caractères autres que des mots (généralement des espaces ou des signes de ponctuation). Les espaces/ponctuations sont autorisés dans le terme de recherche et la casse est ignorée.
 
 > The quick reddish-brown fox jumps over the lazy dog.
 
-- "jump" will match "jumps", and would also match "jumping", "jumped", etc.
-- "dog" will match
-- "UMP", "oX" will match
-- "y dog", "ish-brown" will not match
+- "quick", "brown", "dog" correspondront
+- "FOX", "Fox", "fox" correspondront tous
+- "reddish-brown fox", "brown fox", "LAZY DOG" correspondront
+- "rown" et "lazy do" ne correspondront pas car ils ne sont pas délimités par des caractères autres que des mots dans le texte
 
-## Regex match
+## Substring match (correspondance de sous-chaîne de caractères)
 
-Regex match can be used to search for a specific pattern. Regular expressions are supported using Lucene Regex Syntax which is documented here: https://www.elastic.co/guide/en/elasticsearch/reference/1.6/query-dsl-regexp-query.html#regexp-syntax. Wildcards are automatically added to the beginning and end of the regular expressions to ensure all matches are found. Additionally, the resulting hits are split on common token separator boundaries (e.g. space, newline, colon, exclamation point etc.) to make the resulting keyword hit more amenable to highlighting. As of Autopsy 4.9, regex searches are no longer case sensitive. This includes literal characters and character classes.
+"Substring match" doit être utilisé lorsque le terme de recherche n'est qu'une partie d'un mot, ou pour permettre différentes fins de mot. Les majuscules sont ignorées, mais les espaces et autres signes de ponctuation ne peuvent pas apparaître dans le terme de la recherche.
 
-<b>Note:</b> Since Autopsy 4.4, boundary characters ('^' and '$') no longer work as word boundaries. Previously a search for "^[0-9]{5}$" would return all five 
-digit strings surrounded by some type of non-word characters. For example, "The number 12345 is.." would contain a match, while "123456789 people" would not. This was because the regex
-was compared against each "word" in the document. In newer versions, the text is not split into words internally so this type of search no longer works. To get similar results, replace the 
-boundary characters with the specific characters that should represent a word break. For example, "^[0-9]{5}$" could become "[ \.\-\,][0-9]{5}[ \.\-\,]".
+> The quick reddish-brown fox jumps over the lazy dog.
 
-There is some validation on the regex but it's best to test on a sample image to make sure your regexes are correct and working as expected. One simple way to test is by creating a sample text file that your expression should match, ingesting it as a \ref ds_log "Logical File Set" and then running the regex query.
+- "jump" correspondra avec "jumps", et "jumping", "jumped", etc... correspondraient également
+- "dog" correspondra
+- "UMP", "oX" correspondront
+- "y dog", "ish-brown" ne correspondront pas
+
+## Regex match (correspondance des expressions régulières)
+
+"Regex match" peut être utilisé pour rechercher un modèle spécifique. Les expressions régulières sont prises en charge à l'aide de la Syntaxe de Lucene Regex qui est documentée ici: https://www.elastic.co/guide/en/elasticsearch/reference/1.6/query-dsl-regexp-query.html#regexp-syntax. Des caractères génériques sont automatiquement ajoutés au début et à la fin des expressions régulières pour garantir que toutes les correspondances soient trouvées. De plus, les hits résultants sont divisés sur des limites de séparateur communes (par exemple, espace, nouvelle ligne, deux-points, point d'exclamation, etc...) pour rendre le hit de mot-clé résultant plus facile à mettre en évidence. Depuis Autopsy 4.9, les recherches regex ne sont plus sensibles à la casse. Cela inclut les caractères littéraux et les classes de caractères.
+
+<b>Remarque:</b> Depuis Autopsy 4.4, les caractères de limite ("^" et "$") ne fonctionnent plus comme limites de mot. Auparavant, une recherche sur "^[0-9]{5}$" renvoyait toutes les chaînes de cinq chiffres entourées d'un certain type de caractères autres que des mots. Par exemple, "Le nombre 12345 est .." correspondait, alors que "123456789 personnes" ne correspondait pas. C'était parce que l'expression régulière
+avait été comparée à chaque "mot" du document. Dans les versions plus récentes, le texte n'est pas divisé en mots en interne, de sorte que ce type de recherche ne fonctionne plus. Pour obtenir des résultats similaires, remplacez les caractères de délimitation avec les caractères spécifiques qui doivent représenter un saut de mot. Par exemple, "^[0-9]{5}$" pourrait devenir "[ \.\-\,][0-9]{5}[ \.\-\,]".
+
+Il y a une certaine validation de l'expression régulière, mais il est préférable de tester sur une image d'exemple pour vous assurer que vos expressions régulières sont correctes et fonctionnent comme prévu. Un moyen simple de tester consiste à créer un exemple de fichier texte auquel votre expression doit correspondre, en l'intégrant en tant qu'\ref ds_log "Ensemble de fichiers logiques" puis en exécutant la requête regex.
 
 > In the year 1885 in an article titled Current Notes, the quick brown fox first jumped over the lazy dog.
 
-- "fox" and "FOX" will both match since the search is case-insensitive
-- "qu.ck", "cu.*es" will match
-- "[JLK]umped" will match "jumped"
-- "[0-9]{4}" will match 1885. Character classes like "\d" are not supported. Backreferences are also not supported (but will not generate an error), so "Cu(.)\1ent" would not work to find "Current"
+- "fox" et "FOX" correspondront tous les deux puisque la recherche est insensible à la casse
+- "qu.ck", "cu.*es" correspondront
+- "[JLK]umped" correspondra à "jumped"
+- "[0-9]{4}" correspondra à 1885. Les classes de caractères comme "\d" ne sont pas pris en charge. Les "backreference" ne sont pas non plus prises en charge (mais ne généreront pas d'erreur), donc "Cu(.)\1ent" ne fonctionnera pas pour trouver "Current"
 
-## Other notes
+## Autres notes
 
-### Built-in keywords
+### Mots clés intégrés
 
-The \ref keyword_search_page has several built-in searches that can not be edited. The ones that are most prone to false hits (IP Address and Phone Number) require that the matching text is surrounded by boundary characters, such as spaces or certain punctuation. For example:
-- "Address 10.1.5.127 is unavailable" - The built-in IP Address search would find "10.1.5.127" because it is surrounded by whitespace
-- "abc10.1.7.99xyz" - The built-in IP Address search would not find it because it is surrounded by letters
+Le module \ref keyword_search_page a plusieurs recherches intégrées qui ne peuvent pas être modifiées. Ceux qui sont les plus sujets aux faux positifs ("IP Address" et "Phone Number") exigent que le texte correspondant soit entouré de caractères de délimitation, tels que des espaces ou certaines ponctuations. Par example:
+- "Address 10.1.5.127 is unavailable" - La recherche intégrée "IP Address" trouverait "10.1.5.127" car il est entouré d'espaces blancs
+- "abc10.1.7.99xyz" - La recherche intégrée "IP Address" ne la trouverait pas car il est entouré de lettres
 
-If you want to override this default behavior:
-- Copy the existing regex. The easiest way to do this is to click on Keyword Lists, the list you want then the specific entry you want and hit control+c to copy. It will need a bit of cleanup afterward.
-- Remove the boundary characters on the beginning and end of the regex
-- Make a new keyword list containing the result and run it either during ingest or through the Keyword Lists button.
+Si vous souhaitez remplacer ce comportement par défaut:
+- Copiez le regex existant. Le moyen le plus simple de le faire est de cliquer sur "Keyword Lists", la liste qui vous intéresse puis l'entrée spécifique que vous voulez et appuyez sur Ctrl+C pour copier. Il faudra faire un peu de nettoyage par la suite.
+- Supprimez les caractères de limite au début et à la fin de l'expression régulière
+- Créez une nouvelle liste de mots-clés contenant le résultat et exécutez-la pendant l'acquisition ou via le bouton "Keyword Lists".
 
-### Non-Latin text
-In general all three types of keyword searches will work as expected but the feature has not been thoroughly tested with all character sets. For example, the searches may no longer be case-insensitive. As with regex above, we suggest testing on a sample file.
+### Texte non latin
+En général, les trois types de recherche par mot-clé fonctionnent comme prévu, mais la fonctionnalité n'a pas été testée de manière approfondie avec tous les jeux de caractères. Par exemple, les recherches peuvent ne plus être insensibles à la casse. Comme avec le regex ci-dessus, nous vous suggérons de tester sur un exemple de fichier.
 
-\section ad_hoc_kw_search Keyword Search
+\section ad_hoc_kw_search Keyword Search (Recherche par mot clé)
 
-Individual keyword or regular expressions can quickly be searched using the search text box widget. You can select "Exact Match", "Substring Match" and "Regular Expression" match. See the earlier \ref ad_hoc_kw_types_section section for information on each keyword type.  The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+left click or control+left click. The "Save search results" checkbox determines whether the search results will be saved to the case database. 
+Il est possible de rechercher rapidement des mots clés individuels ou des expressions régulières à l'aide de l'assistant de recherche dans la zone de texte. Vous pouvez sélectionner les correspondances "Exact Match", "Substring Match" et "Regular Expression". Voir la section précédente \ref ad_hoc_kw_types_section pour plus d'informations sur chaque type de mot-clé. La recherche peut être limitée à certaines sources de données uniquement en cochant la case située en bas, puis en mettant en surbrillance les sources de données dans lesquelles effectuer la recherche. Plusieurs sources de données peuvent être sélectionnées en utilisant les touches Maj+clic gauche ou Ctrl+clic gauche. La case "Save search results" détermine si les résultats de la recherche seront enregistrés dans la base de données du cas.
 
 \image html keyword-search-bar.PNG
 
-Results will be opened in a separate Results Viewer for every search executed. If the "Save search results" checkbox was enabled, the results will also be saved in the Directory Tree as shown in the screenshot below.
+Les résultats apparaitront dans une visionneuse de résultats distincte pour chaque recherche exécutée. Si la case "Save search results" a été cochée, les résultats seront également enregistrés dans l'arborescence comme indiqué dans la capture d'écran ci-dessous.
 
 \image html keyword-search-hits.PNG
 
-\section ad_hoc_kw_lists Keyword Lists
+\section ad_hoc_kw_lists Keyword Lists (Listes de mots-clés)
 
-In addition to being selected during ingest, keyword lists can also be run through the Keyword Lists button. For information on setting up these keyword lists, see the \ref keywordListsTab section of the ingest module documentation.
+En plus d'être sélectionnées lors de l'acquisition, les listes de mots-clés peuvent également être exécutées via le bouton "Keyword Lists". Pour plus d'informations sur la configuration de ces listes de mots clés, consultez la section \ref keywordListsTab de la documentation du module d'acquisition.
 
-Lists created using the Keyword Search Configuration Dialog can be manually searched by the user by pressing on the 'Keyword Lists' button and selecting the check boxes corresponding to the lists to be searched. The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+left click or control+left click. Once everything has been configured, press "Search" to begin the search. The "Save search results" checkbox determines whether the search results will be saved to the case database.
+Les listes créées à l'aide de la boîte de dialogue "Keyword Search Configuration" peuvent être recherchées manuellement par l'utilisateur en appuyant sur le bouton "Keyword Lists" et en cochant les cases correspondant aux listes à rechercher. La recherche peut être limitée à certaines sources de données uniquement en cochant la case située en bas, puis en mettant en surbrillance les sources de données dans lesquelles effectuer la recherche. Plusieurs sources de données peuvent être sélectionnées en utilisant les touches Maj+clic gauche ou Ctrl+clic gauche. Une fois que tout a été configuré, appuyez sur "Search" pour lancer la recherche. La case à cocher "Save search results" détermine si les résultats de la recherche seront enregistrés dans la base de données du cas.
 
 \image html keyword-search-list.PNG
 
-If the "Save search results" checkbox was enabled, the results of the keyword list search will be shown in the tree, as shown below.
+Si la case "Save search results" a été cochée, les résultats de la recherche de la liste de mots-clés seront affichés dans l'arborescence, comme indiqué ci-dessous.
 
 \image html keyword-search-list-results.PNG
 
-\section ad_hoc_during_ingest Doing ad hoc searches during ingest
+\section ad_hoc_during_ingest Effectuer des recherches ad hoc lors de l'acquisition
 
-Ad hoc searches are intended to be used after ingest completes, but can be used in a limited capacity while ingest is ongoing.
+Les recherches ad hoc sont destinées à être utilisées une fois l'acquisition terminée, mais peuvent être utilisées dans une capacité limitée pendant que l'acquisition est en cours.
 
-Manual \ref ad_hoc_kw_search for individual keywords or regular expressions can be executed while ingest is ongoing, using the current index. Note however, that you may miss some results if the entire index has not yet been populated. Autopsy enables you to perform the search on an incomplete index in order to retrieve some preliminary results in real-time.
+Une recherche \ref ad_hoc_kw_search manuelle pour des mots-clés individuels ou des expressions régulières peut être exécutée pendant l'acquisition, en utilisant l'index actuel. Notez cependant que vous risquez de manquer certains résultats si l'index n'a pas encore été renseigné intégralement. Autopsy vous permet d'effectuer la recherche sur un index incomplet afin de récupérer quelques résultats préliminaires en temps réel.
 
-During the ingest, the normal manual search using \ref ad_hoc_kw_lists behaves differently than after ingest is complete. A selected list can instead be added to the ingest process and it will be searched in the background instead.
+Pendant l'acquisition, la recherche manuelle normale utilisant des \ref ad_hoc_kw_lists se comporte différemment une fois l'acquisition terminée. Une liste sélectionnée peut être ajoutée au processus d'acquisition et elle sera recherchée en arrière-plan à la place.
 
-Most keyword management features are disabled during ingest. You can not edit keyword lists but can create new lists (but not add to them) and copy and export existing lists.
+La plupart des fonctionnalités de gestion des mots clés sont désactivées lors de l'acquisition. Vous ne pouvez pas modifier les listes de mots clés, mais vous pouvez créer de nouvelles listes (mais pas y ajouter des éléments), copier et exporter des listes existantes.
 
 */
