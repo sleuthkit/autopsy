@@ -51,6 +51,16 @@ public interface DataContentViewer {
      *
      */
     public String getTitle();
+    
+    /**
+     * Returns the title of this viewer to display in the tab.
+     *
+     * @param node The node to be viewed in the DataContentViewer.
+     * @return the title of DataContentViewer.
+     */
+    public default String getTitle(Node node) {
+        return getTitle();
+    }
 
     /**
      * Returns a short description of this viewer to use as a tool tip for its

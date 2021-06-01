@@ -33,6 +33,7 @@ import javafx.scene.image.ImageView;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.TagName;
 
@@ -118,13 +119,13 @@ public class DrawableAttribute<T extends Comparable<T>> {
             = new DrawableAttribute<>(AttributeName.CREATED_TIME, Bundle.DrawableAttribute_createdTime(),
                     true,
                     "clock--plus.png", //NON-NLS
-                    f -> Collections.singleton(ContentUtils.getStringTime(f.getCrtime(), f.getAbstractFile())));
+                    f -> Collections.singleton(TimeZoneUtils.getFormattedTime(f.getCrtime())));
 
     public final static DrawableAttribute<String> MODIFIED_TIME
             = new DrawableAttribute<>(AttributeName.MODIFIED_TIME, Bundle.DrawableAttribute_modifiedTime(),
                     true,
                     "clock--pencil.png", //NON-NLS
-                    f -> Collections.singleton(ContentUtils.getStringTime(f.getMtime(), f.getAbstractFile())));
+                    f -> Collections.singleton(TimeZoneUtils.getFormattedTime(f.getMtime())));
 
     public final static DrawableAttribute<String> MAKE
             = new DrawableAttribute<>(AttributeName.MAKE, Bundle.DrawableAttribute_cameraMake(),

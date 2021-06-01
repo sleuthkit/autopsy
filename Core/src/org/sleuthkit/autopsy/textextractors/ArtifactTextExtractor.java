@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,10 +22,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -57,7 +56,7 @@ class ArtifactTextExtractor implements TextExtractor {
                 // in the Autopsy datamodel.
                 switch (attribute.getValueType()) {
                     case DATETIME:
-                        artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), artifact));
+                        artifactContents.append(TimeZoneUtils.getFormattedTime(attribute.getValueLong()));
                         break;
                     default:
                         artifactContents.append(attribute.getDisplayString());

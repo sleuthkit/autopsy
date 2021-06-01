@@ -105,6 +105,7 @@ Metadata.nodeText.exceptionNotice.text=Error getting file metadata:
 MessageArtifactViewer.textbodyScrollPane.TabConstraints.tabTitle=Text
 JPEGViewerDummy.jLabel1.text=You are looking at a JPEG file:
 JPEGViewerDummy.jTextField1.text=jTextField1
+Metadata_dataArtifactTitle=Source File Metadata
 PDFViewer.encryptedDialog=This document is password protected.
 PDFViewer.errorDialog=An error occurred while opening this PDF document. Check the logs for more information. You may continue to use this feature on other PDF documents.
 PListNode.KeyCol=Key
