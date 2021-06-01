@@ -35,7 +35,6 @@ import org.sleuthkit.autopsy.yara.YaraJNIWrapper;
 import org.sleuthkit.autopsy.yara.YaraWrapperException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_YARA_HIT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_RULE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -46,7 +45,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Methods for scanning files for yara rule matches.
  */
 final class YaraIngestHelper {
-
+    
+    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.MethodCategory.AUTO);
     private static final String YARA_DIR = "yara";
     private static final String YARA_C_EXE = "yarac64.exe";
     private static final String MODULE_NAME = YaraIngestModuleFactory.getModuleName();
@@ -207,7 +207,7 @@ final class YaraIngestHelper {
             attributes.add(new BlackboardAttribute(TSK_SET_NAME, MODULE_NAME, ruleSetName));
             attributes.add(new BlackboardAttribute(TSK_RULE, MODULE_NAME, rule));
 
-            BlackboardArtifact artifact = abstractFile.newAnalysisResult(new BlackboardArtifact.Type(TSK_YARA_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
+            BlackboardArtifact artifact = abstractFile.newAnalysisResult(BlackboardArtifact.Type.TSK_YARA_HIT, NOTABLE_SCORE, null, ruleSetName, rule, attributes)
                     .getAnalysisResult();
 
             artifacts.add(artifact);

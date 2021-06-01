@@ -153,7 +153,7 @@ public class EXIFProcessor implements PictureProcessor {
                 final BlackboardArtifact exifArtifact = file.newDataArtifact(new BlackboardArtifact.Type(TSK_METADATA_EXIF), attributes);
                 
                 final BlackboardArtifact userSuspectedArtifact = file.newAnalysisResult(
-                        new BlackboardArtifact.Type(TSK_USER_CONTENT_SUSPECTED), Score.SCORE_UNKNOWN, null, null, null,
+                        BlackboardArtifact.Type.TSK_USER_CONTENT_SUSPECTED, Score.SCORE_UNKNOWN, null, null, null,
                         Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, Bundle.ExifProcessor_userContent_description())))
                         .getAnalysisResult();
                 
