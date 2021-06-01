@@ -56,12 +56,12 @@ class OcrIconCellRenderer extends GrayableCellRenderer {
             //JTables contain the value we want directly in the cell
             switchValue = value;
         }
-        if (switchValue instanceof Integer && (int) switchValue != 0) {
+        if (switchValue instanceof Boolean && (boolean) switchValue == true) {
             setIcon(checkedIcon);
             setToolTipText(org.openide.util.NbBundle.getMessage(OcrIconCellRenderer.class, "OcrIconCellRenderer.enabled.tooltiptext"));
         } else {
             setIcon(null);
-            if (switchValue instanceof Integer) {
+            if (switchValue instanceof Boolean) {
                 setToolTipText(org.openide.util.NbBundle.getMessage(OcrIconCellRenderer.class, "OcrIconCellRenderer.disabled.tooltiptext"));
             }
         }

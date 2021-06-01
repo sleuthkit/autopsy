@@ -124,11 +124,12 @@ final class AutoIngestJobsNode extends AbstractNode {
             AutoIngestJob thisJob = this.autoIngestJob;
             AutoIngestJob otherJob = ((AutoIngestJobWrapper) other).autoIngestJob;
 
-            // Only equal if the manifest paths and processing stage details are the same.
+            // Only equal if the manifest paths, processing stage details, priority, and OCR flag are the same.
             return thisJob.getManifest().getFilePath().equals(otherJob.getManifest().getFilePath())
                     && jobStage.equals(((AutoIngestJobWrapper) other).jobStage)
                     && jobSnapshot.equals(((AutoIngestJobWrapper) other).jobSnapshot)
-                    && jobPriority.equals(((AutoIngestJobWrapper) other).jobPriority);
+                    && jobPriority.equals(((AutoIngestJobWrapper) other).jobPriority)
+                    && (thisJob.getOcrEnabled() == otherJob.getOcrEnabled());
         }
 
         @Override
@@ -171,6 +172,10 @@ final class AutoIngestJobsNode extends AbstractNode {
 
         Integer getPriority() {
             return autoIngestJob.getPriority();
+        }
+
+        boolean getOcrEnabled() {
+            return autoIngestJob.getOcrEnabled();
         }
     }
 
@@ -328,6 +333,8 @@ final class AutoIngestJobsNode extends AbstractNode {
                             jobWrapper.getManifest().getDateFileCreated()));
                     ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text(),
                             jobWrapper.getPriority()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text(),
+                            jobWrapper.getOcrEnabled()));
                     break;
                 case RUNNING_JOB:
                     AutoIngestJob.StageDetails status = jobWrapper.getProcessingStageDetails();

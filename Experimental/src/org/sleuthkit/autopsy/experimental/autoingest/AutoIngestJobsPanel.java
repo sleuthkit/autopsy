@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
     private static final long serialVersionUID = 1L;
     private static final int INITIAL_CASENAME_WIDTH = 170;
     private static final int INITIAL_DATASOURCE_WIDTH = 270;
-    private static final int INITIAL_PRIORITIZED_WIDTH = 20;
+    private static final int INITIAL_PRIORITIZED_WIDTH = 20; // ELTODO
     private static final int INITIAL_STATUS_WIDTH = 20;
     private static final int INVALID_INDEX = -1;
     private final org.openide.explorer.view.OutlineView outlineView;
@@ -88,6 +88,11 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_PRIORITIZED_WIDTH);
                     outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new PrioritizedIconCellRenderer());
                 }
+                indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_ocr_text());
+                if (indexOfColumn != INVALID_INDEX) {
+                    outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_PRIORITIZED_WIDTH);
+                    outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new OcrIconCellRenderer());
+                }                
                 break;
             case RUNNING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
