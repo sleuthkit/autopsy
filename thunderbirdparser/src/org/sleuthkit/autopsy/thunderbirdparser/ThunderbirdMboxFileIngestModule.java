@@ -75,7 +75,7 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.Fil
  * structure and metadata.
  */
 public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.MethodCategory.AUTO);
+    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();

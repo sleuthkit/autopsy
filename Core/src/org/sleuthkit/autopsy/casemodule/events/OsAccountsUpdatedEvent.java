@@ -20,22 +20,24 @@ package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.OsAccount;
 
 /**
- * Event fired when hosts are changed.
+ * An application event published when OS accounts in the Sleuth Kit data model
+ * for a case have been updated.
  */
-public class HostsChangedEvent extends HostsEvent {
+public final class OsAccountsUpdatedEvent extends OsAccountsEvent {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Main constructor.
+     * Constructs an application event published when OS accounts in the Sleuth
+     * Kit data model for a case have been updated.
      *
-     * @param dataModelObjects The new values for the hosts that have been
-     * changed.
+     * @param osAccounts The OS accounts that were updated.
      */
-    public HostsChangedEvent(List<Host> dataModelObjects) {
-        super(Case.Events.HOSTS_CHANGED.name(), dataModelObjects);
+    public OsAccountsUpdatedEvent(List<OsAccount> osAccounts) {
+        super(Case.Events.OS_ACCOUNTS_UPDATED.toString(), osAccounts);
     }
+    
 }

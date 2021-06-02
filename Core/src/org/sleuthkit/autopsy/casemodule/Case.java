@@ -85,13 +85,15 @@ import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
-import org.sleuthkit.autopsy.casemodule.events.HostsRemovedEvent;
-import org.sleuthkit.autopsy.casemodule.events.OsAccountAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
-import org.sleuthkit.autopsy.casemodule.events.OsAccountDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsAddedToPersonEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsRemovedFromPersonEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.PersonsChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
@@ -190,7 +192,7 @@ public class Case {
     private final SleuthkitEventListener sleuthkitEventListener;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
-    
+
     private volatile boolean hasDataSource = false;
     private volatile boolean hasData = false;
 
@@ -434,43 +436,50 @@ public class Case {
          */
         CR_COMMENT_CHANGED,
         /**
-         * OSAccount associated with the current case added. Call getOsAccount
-         * to get the added account;
+         * One or more OS accounts have been added to the case.
          */
-        OS_ACCOUNT_ADDED,
+        OS_ACCOUNTS_ADDED,
         /**
-         * OSAccount associated with the current case has changed. Call
-         * getOsAccount to get the changed account;
+         * One or more OS accounts in the case have been updated.
          */
-        OS_ACCOUNT_CHANGED,
+        OS_ACCOUNTS_UPDATED,
         /**
-         * OSAccount associated with the current case has been deleted.
+         * One or more OS accounts have been deleted from the case.
          */
-        OS_ACCOUNT_REMOVED,
+        OS_ACCOUNTS_DELETED,
         /**
-         * Hosts associated with the current case added.
+         * One or more hosts have been added to the case.
          */
         HOSTS_ADDED,
         /**
-         * Hosts associated with the current case has changed.
+         * One or more hosts in the case have been updated.
          */
-        HOSTS_CHANGED,
+        HOSTS_UPDATED,
         /**
-         * Hosts associated with the current case has been deleted.
+         * One or more hosts have been deleted from the case.
          */
         HOSTS_DELETED,
         /**
-         * Persons associated with the current case added.
+         * One or more persons have been added to the case.
          */
         PERSONS_ADDED,
         /**
-         * Persons associated with the current case has changed.
+         * One or more persons in the case have been updated.
          */
-        PERSONS_CHANGED,
+        PERSONS_UPDATED,
         /**
-         * Persons associated with the current case has been deleted.
+         * One or more persons been deleted from the case.
          */
-        PERSONS_DELETED;
+        PERSONS_DELETED,
+        /**
+         * One or more hosts have been added to a person.
+         */
+        HOSTS_ADDED_TO_PERSON,
+        /**
+         * One or more hosts have been removed from a person.
+         */
+        HOSTS_REMOVED_FROM_PERSON;
+
     };
 
     /**
@@ -505,18 +514,14 @@ public class Case {
         }
 
         @Subscribe
-        public void publishOsAccountAddedEvent(TskEvent.OsAccountsAddedTskEvent event) {
+        public void publishOsAccountsAddedEvent(TskEvent.OsAccountsAddedTskEvent event) {
             hasData = true;
-            for (OsAccount account : event.getOsAcounts()) {
-                eventPublisher.publish(new OsAccountAddedEvent(account));
-            }
+            eventPublisher.publish(new OsAccountsAddedEvent(event.getOsAcounts()));
         }
 
         @Subscribe
-        public void publishOsAccountChangedEvent(TskEvent.OsAccountsChangedTskEvent event) {
-            for (OsAccount account : event.getOsAcounts()) {
-                eventPublisher.publish(new OsAccountChangedEvent(account));
-            }
+        public void publishOsAccountsUpdatedEvent(TskEvent.OsAccountsUpdatedTskEvent event) {
+            eventPublisher.publish(new OsAccountsUpdatedEvent(event.getOsAcounts()));
         }
 
         @Subscribe
@@ -526,10 +531,7 @@ public class Case {
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Unable to retrieve the hasData status from the db", ex);
             }
-            
-            for (Long accountId : event.getOsAcountObjectIds()) {
-                eventPublisher.publish(new OsAccountDeletedEvent(accountId));
-            }
+            eventPublisher.publish(new OsAccountsDeletedEvent(event.getOsAccountObjectIds()));
         }
 
         /**
@@ -541,8 +543,7 @@ public class Case {
         @Subscribe
         public void publishHostsAddedEvent(TskEvent.HostsAddedTskEvent event) {
             hasData = true;
-            eventPublisher.publish(new HostsAddedEvent(
-                    event == null ? Collections.emptyList() : event.getHosts()));
+            eventPublisher.publish(new HostsAddedEvent(event.getHosts()));
         }
 
         /**
@@ -552,9 +553,8 @@ public class Case {
          * @param event The sleuthkit event for the updating of hosts.
          */
         @Subscribe
-        public void publishHostsChangedEvent(TskEvent.HostsChangedTskEvent event) {
-            eventPublisher.publish(new HostsChangedEvent(
-                    event == null ? Collections.emptyList() : event.getHosts()));
+        public void publishHostsUpdatedEvent(TskEvent.HostsUpdatedTskEvent event) {
+            eventPublisher.publish(new HostsUpdatedEvent(event.getHosts()));
         }
 
         /**
@@ -570,9 +570,8 @@ public class Case {
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Unable to retrieve the hasData status from the db", ex);
             }
-            
-            eventPublisher.publish(new HostsRemovedEvent(
-                    event == null ? Collections.emptyList() : event.getHosts()));
+
+            eventPublisher.publish(new HostsDeletedEvent(event.getHostIds()));
         }
 
         /**
@@ -583,8 +582,7 @@ public class Case {
          */
         @Subscribe
         public void publishPersonsAddedEvent(TskEvent.PersonsAddedTskEvent event) {
-            eventPublisher.publish(new PersonsAddedEvent(
-                    event == null ? Collections.emptyList() : event.getPersons()));
+            eventPublisher.publish(new PersonsAddedEvent(event.getPersons()));
         }
 
         /**
@@ -594,9 +592,8 @@ public class Case {
          * @param event The sleuthkit event for the updating of persons.
          */
         @Subscribe
-        public void publishPersonsChangedEvent(TskEvent.PersonsChangedTskEvent event) {
-            eventPublisher.publish(new PersonsChangedEvent(
-                    event == null ? Collections.emptyList() : event.getPersons()));
+        public void publishPersonsUpdatedEvent(TskEvent.PersonsUpdatedTskEvent event) {
+            eventPublisher.publish(new PersonsUpdatedEvent(event.getPersons()));
         }
 
         /**
@@ -607,9 +604,19 @@ public class Case {
          */
         @Subscribe
         public void publishPersonsDeletedEvent(TskEvent.PersonsDeletedTskEvent event) {
-            eventPublisher.publish(new PersonsDeletedEvent(
-                    event == null ? Collections.emptyList() : event.getPersons()));
+            eventPublisher.publish(new PersonsDeletedEvent(event.getPersonIds()));
         }
+
+        @Subscribe
+        public void publishHostsAddedToPersonEvent(TskEvent.HostsAddedToPersonTskEvent event) {
+            eventPublisher.publish(new HostsAddedToPersonEvent(event.getPerson(), event.getHosts()));
+        }
+
+        @Subscribe
+        public void publisHostsRemovedFromPersonEvent(TskEvent.HostsRemovedFromPersonTskEvent event) {
+            eventPublisher.publish(new HostsRemovedFromPersonEvent(event.getPerson(), event.getHostIds()));
+        }
+
     }
 
     /**
@@ -1232,106 +1239,105 @@ public class Case {
     /**
      * Update the GUI to to reflect the current case.
      */
-    private static void updateGUIForCaseOpened(Case newCurrentCase) {                  
-                /*
-                 * If the case database was upgraded for a new schema and a
-                 * backup database was created, notify the user.
-                 */
-                SleuthkitCase caseDb = newCurrentCase.getSleuthkitCase();
-                String backupDbPath = caseDb.getBackupDatabasePath();
-                if (null != backupDbPath) {
-                    JOptionPane.showMessageDialog(
-                            mainFrame,
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg", backupDbPath),
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                            JOptionPane.INFORMATION_MESSAGE);
-                }
+    private static void updateGUIForCaseOpened(Case newCurrentCase) {
+        /*
+         * If the case database was upgraded for a new schema and a backup
+         * database was created, notify the user.
+         */
+        SleuthkitCase caseDb = newCurrentCase.getSleuthkitCase();
+        String backupDbPath = caseDb.getBackupDatabasePath();
+        if (null != backupDbPath) {
+            JOptionPane.showMessageDialog(
+                    mainFrame,
+                    NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg", backupDbPath),
+                    NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
 
-                /*
-                 * Look for the files for the data sources listed in the case
-                 * database and give the user the opportunity to locate any that
-                 * are missing.
-                 */
-                Map<Long, String> imgPaths = getImagePaths(caseDb);
-                for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
-                    long obj_id = entry.getKey();
-                    String path = entry.getValue();
-                    boolean fileExists = (new File(path).isFile() || DriveUtils.driveExists(path));
-                    if (!fileExists) {
-                        try {
-                            // Using invokeAndWait means that the dialog will
-                            // open on the EDT but this thread will wait for an 
-                            // answer. Using invokeLater would cause this loop to
-                            // end before all of the dialogs appeared.  
-                            SwingUtilities.invokeAndWait(new Runnable() {
-                                @Override
-                                public void run() {
-                                    int response = JOptionPane.showConfirmDialog(
+        /*
+         * Look for the files for the data sources listed in the case database
+         * and give the user the opportunity to locate any that are missing.
+         */
+        Map<Long, String> imgPaths = getImagePaths(caseDb);
+        for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
+            long obj_id = entry.getKey();
+            String path = entry.getValue();
+            boolean fileExists = (new File(path).isFile() || DriveUtils.driveExists(path));
+            if (!fileExists) {
+                try {
+                    // Using invokeAndWait means that the dialog will
+                    // open on the EDT but this thread will wait for an 
+                    // answer. Using invokeLater would cause this loop to
+                    // end before all of the dialogs appeared.  
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            int response = JOptionPane.showConfirmDialog(
                                     mainFrame,
                                     NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", path),
                                     NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
                                     JOptionPane.YES_NO_OPTION);
-                                    if (response == JOptionPane.YES_OPTION) {
-                                        MissingImageDialog.makeDialog(obj_id, caseDb);
-                                    } else {
-                                        logger.log(Level.SEVERE, "User proceeding with missing image files"); //NON-NLS
+                            if (response == JOptionPane.YES_OPTION) {
+                                MissingImageDialog.makeDialog(obj_id, caseDb);
+                            } else {
+                                logger.log(Level.SEVERE, "User proceeding with missing image files"); //NON-NLS
 
-                                    }
-                                }
-                                
-                            });
-                        } catch (InterruptedException | InvocationTargetException ex) {
-                           logger.log(Level.SEVERE, "Failed to show missing image confirmation dialog", ex); //NON-NLS 
-                        } 
-                    }
+                            }
+                        }
+
+                    });
+                } catch (InterruptedException | InvocationTargetException ex) {
+                    logger.log(Level.SEVERE, "Failed to show missing image confirmation dialog", ex); //NON-NLS 
                 }
+            }
+        }
 
-                /*
-                 * Enable the case-specific actions.
-                 */
-                CallableSystemAction.get(AddImageAction.class).setEnabled(FeatureAccessUtils.canAddDataSources());
-                CallableSystemAction.get(OpenHostsAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
-                CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(FeatureAccessUtils.canDeleteCurrentCase());
-                CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
-                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
-                CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(true);
-                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
-                CallableSystemAction.get(OpenDiscoveryAction.class).setEnabled(true);
-            
+        /*
+         * Enable the case-specific actions.
+         */
+        CallableSystemAction.get(AddImageAction.class).setEnabled(FeatureAccessUtils.canAddDataSources());
+        CallableSystemAction.get(OpenHostsAction.class).setEnabled(true);
+        CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+        CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
+        CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
+        CallableSystemAction.get(CaseDeleteAction.class).setEnabled(FeatureAccessUtils.canDeleteCurrentCase());
+        CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+        CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
+        CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(true);
+        CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+        CallableSystemAction.get(OpenDiscoveryAction.class).setEnabled(true);
+
+        /*
+         * Add the case to the recent cases tracker that supplies a list of
+         * recent cases to the recent cases menu item and the open/create case
+         * dialog.
+         */
+        RecentCases.getInstance().addRecentCase(newCurrentCase.getDisplayName(), newCurrentCase.getMetadata().getFilePath().toString());
+        final boolean hasData = newCurrentCase.hasData();
+
+        SwingUtilities.invokeLater(() -> {
             /*
-             * Add the case to the recent cases tracker that supplies a list
-             * of recent cases to the recent cases menu item and the
-             * open/create case dialog.
+             * Open the top components (windows within the main application
+             * window).
+             *
+             * Note: If the core windows are not opened here, they will be
+             * opened via the DirectoryTreeTopComponent 'propertyChange()'
+             * method on a DATA_SOURCE_ADDED event.
              */
-            RecentCases.getInstance().addRecentCase(newCurrentCase.getDisplayName(), newCurrentCase.getMetadata().getFilePath().toString());
-            final boolean hasData = newCurrentCase.hasData();
-            
-            SwingUtilities.invokeLater(() -> {
-                /*
-                 * Open the top components (windows within the main application
-                 * window).
-                 *
-                 * Note: If the core windows are not opened here, they will be
-                 * opened via the DirectoryTreeTopComponent 'propertyChange()'
-                 * method on a DATA_SOURCE_ADDED event.
-                 */
-                if (hasData) {
-                    CoreComponentControl.openCoreWindows();
-                } else {
-                    //ensure that the DirectoryTreeTopComponent is open so that it's listener can open the core windows including making it visible.
-                    DirectoryTreeTopComponent.findInstance();
-                }
+            if (hasData) {
+                CoreComponentControl.openCoreWindows();
+            } else {
+                //ensure that the DirectoryTreeTopComponent is open so that it's listener can open the core windows including making it visible.
+                DirectoryTreeTopComponent.findInstance();
+            }
 
-                /*
-                 * Reset the main window title to:
-                 *
-                 * [curent case display name] - [application name].
-                 */
-                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + getNameForTitle());
-            });
+            /*
+             * Reset the main window title to:
+             *
+             * [curent case display name] - [application name].
+             */
+            mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + getNameForTitle());
+        });
     }
 
     /*
@@ -1684,16 +1690,16 @@ public class Case {
 
     /**
      * Returns true if there is any data in the case.
-     * 
+     *
      * @return True or false.
      */
     public boolean hasData() {
         return hasData;
     }
-    
+
     /**
      * Returns true if there is one or more data sources in the case.
-     * 
+     *
      * @return True or false.
      */
     public boolean hasDataSource() {
@@ -1858,72 +1864,6 @@ public class Case {
         eventPublisher.publish(new BlackBoardArtifactTagDeletedEvent(deletedTag));
     }
 
-    public void notifyOsAccountAdded(OsAccount account) {
-        eventPublisher.publish(new OsAccountAddedEvent(account));
-    }
-
-    public void notifyOsAccountChanged(OsAccount account) {
-        eventPublisher.publish(new OsAccountChangedEvent(account));
-    }
-
-    public void notifyOsAccountRemoved(Long osAccountObjectId) {
-        eventPublisher.publish(new OsAccountDeletedEvent(osAccountObjectId));
-    }
-
-    /**
-     * Notify via an autopsy event that a host has been added.
-     *
-     * @param host The host that has been added.
-     */
-    public void notifyHostAdded(Host host) {
-        eventPublisher.publish(new HostsAddedEvent(Collections.singletonList(host)));
-    }
-
-    /**
-     * Notify via an autopsy event that a host has been changed.
-     *
-     * @param newValue The host that has been updated.
-     */
-    public void notifyHostChanged(Host newValue) {
-        eventPublisher.publish(new HostsChangedEvent(Collections.singletonList(newValue)));
-    }
-
-    /**
-     * Notify via an autopsy event that a host has been deleted.
-     *
-     * @param host The host that has been deleted.
-     */
-    public void notifyHostDeleted(Host host) {
-        eventPublisher.publish(new HostsRemovedEvent(Collections.singletonList(host)));
-    }
-
-    /**
-     * Notify via an autopsy event that a person has been added.
-     *
-     * @param person The person that has been added.
-     */
-    public void notifyPersonAdded(Person person) {
-        eventPublisher.publish(new PersonsAddedEvent(Collections.singletonList(person)));
-    }
-
-    /**
-     * Notify via an autopsy event that a person has been changed.
-     *
-     * @param newValue The person that has been updated.
-     */
-    public void notifyPersonChanged(Person newValue) {
-        eventPublisher.publish(new PersonsChangedEvent(Collections.singletonList(newValue)));
-    }
-
-    /**
-     * Notify via an autopsy event that a person has been deleted.
-     *
-     * @param person The person that has been deleted.
-     */
-    public void notifyPersonDeleted(Person person) {
-        eventPublisher.publish(new PersonsDeletedEvent(Collections.singletonList(person)));
-    }
-
     /**
      * Adds a report to the case.
      *
@@ -1966,7 +1906,7 @@ public class Case {
             throw new TskCoreException(errorMsg, ex);
         }
         hasData = true;
-        
+
         Report report = this.caseDb.addReport(normalizedLocalPath, srcModuleName, reportName, parent);
         eventPublisher.publish(new ReportAddedEvent(report));
         return report;
@@ -1996,16 +1936,16 @@ public class Case {
         for (Report report : reports) {
             this.caseDb.deleteReport(report);
         }
-        
+
         try {
             hasData = dbHasData();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Unable to retrieve the hasData status from the db", ex);
         }
-        
+
         for (Report report : reports) {
             eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), report, null));
-        } 
+        }
     }
 
     /**
@@ -3538,17 +3478,17 @@ public class Case {
 
         }
     }
-    
+
     /**
-     * Initialize the hasData and hasDataSource parameters by checking the 
+     * Initialize the hasData and hasDataSource parameters by checking the
      * database.
-     * 
+     *
      * hasDataSource will be true if any data Source exists the db.
-     * 
-     * hasData will be true if hasDataSource is true or if there are entries
-     * in the tsk_object or tsk_host tables.
-     * 
-     * @throws TskCoreException 
+     *
+     * hasData will be true if hasDataSource is true or if there are entries in
+     * the tsk_object or tsk_host tables.
+     *
+     * @throws TskCoreException
      */
     private void updateDataParameters() throws TskCoreException {
         hasDataSource = dbHasDataSource();
@@ -3559,13 +3499,13 @@ public class Case {
             hasData = true;
         }
     }
-    
+
     /**
      * Returns true of there are any data sources in the case database.
-     * 
+     *
      * @return True if this case as a data source.
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     private boolean dbHasDataSource() throws TskCoreException {
         String query = "SELECT count(*) AS count FROM (SELECT * FROM data_source_info LIMIT 1)t";
@@ -3580,35 +3520,35 @@ public class Case {
             throw new TskCoreException("Error accessing case databse", ex);
         }
     }
-    
+
     /**
      * Returns true if the case has data. A case has data if there is at least
      * one row in either the tsk_objects or tsk_hosts table.
-     * 
+     *
      * @return True if there is data in this case.
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     private boolean dbHasData() throws TskCoreException {
         // The LIMIT 1 in the subquery should limit the data returned and 
         // make the overall query more efficent.
         String query = "SELECT SUM(cnt) total FROM "
                 + "(SELECT COUNT(*) AS cnt FROM "
-                + "(SELECT * FROM tsk_objects LIMIT 1)t " 
+                + "(SELECT * FROM tsk_objects LIMIT 1)t "
                 + "UNION ALL "
                 + "SELECT COUNT(*) AS cnt FROM "
                 + "(SELECT * FROM tsk_hosts LIMIT 1)r) s";
         try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             if (resultSet.next()) {
-                return resultSet.getLong("total") > 0; 
+                return resultSet.getLong("total") > 0;
             } else {
                 return false;
             }
-        } catch ( SQLException ex) {
+        } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
             throw new TskCoreException("Error accessing case databse", ex);
-        }  
+        }
     }
 
     /**

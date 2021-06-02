@@ -206,7 +206,9 @@ DeleteCaseTask.progress.parsingManifest=Parsing manifest file {0}...
 DeleteCaseTask.progress.releasingManifestLock=Releasing lock on the manifest file {0}...
 DeleteCaseTask.progress.startMessage=Starting deletion...
 DeleteOrphanCaseNodesAction.progressDisplayName=Cleanup Case Znodes
+# {0} - item count
 DeleteOrphanCaseNodesDialog.additionalInit.lblNodeCount.text=Znodes found: {0}
+# {0} - item count
 DeleteOrphanCaseNodesDialog.additionalInit.znodesTextArea.countMessage=ZNODES FOUND: {0}
 DeleteOrphanCaseNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service
 # {0} - node path

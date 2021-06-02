@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class YaraIngestHelper {
     
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.MethodCategory.AUTO);
+    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
     private static final String YARA_DIR = "yara";
     private static final String YARA_C_EXE = "yarac64.exe";
     private static final String MODULE_NAME = YaraIngestModuleFactory.getModuleName();

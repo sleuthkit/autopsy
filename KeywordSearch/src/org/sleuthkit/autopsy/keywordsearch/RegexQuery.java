@@ -72,7 +72,7 @@ import org.sleuthkit.datamodel.TskData;
 final class RegexQuery implements KeywordSearchQuery {
 
     public static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     
     /**
      * Lucene regular expressions do not support the following Java predefined
