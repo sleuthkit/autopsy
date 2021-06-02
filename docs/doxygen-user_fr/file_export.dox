@@ -1,63 +1,63 @@
-/*! \page file_export_page File Export
+/*! \page file_export_page File Export (Export de fichiers)
 
 [TOC]
 
 
-\section file_export_overview Overview
+\section file_export_overview Aperçu
 
-If enabled, the File Exporter will run after each \ref auto_ingest_page job and export any files from that data source that match the supplied rules. Most users will not need to use this feature - analysts can open the auto ingest cases in an examiner node and look through the data there.
+S'il est activé, l'exportateur de fichiers s'exécutera après chaque tâche d'\ref auto_ingest_page et exportera tous les fichiers de cette source de données qui correspondent aux règles fournies. La plupart des utilisateurs n'auront pas besoin d'utiliser cette fonctionnalité - les analystes peuvent ouvrir les cas d'acquisition automatique dans un "Examiner Node" et y consulter les données.
 
 \section file_export_setup Configuration
 
-After enabling the file exporter, the first thing to do is set two output folders. The "Files Folder" is the base directory for all exported files, and the "Reports Folder" is the base directory for reports (lists of every file exported for each data source). If possible, it is best to use UNC paths.
+Après avoir activé l'exportateur de fichiers, la première chose à faire est de définir deux dossiers de sortie. Le "Files Folder" est le répertoire de base de tous les fichiers exportés et le "Reports Folder" est le répertoire de base des rapports (listes de chaque fichier exporté pour chaque source de données). Si possible, il est préférable d'utiliser des chemins UNC.
 
 \image html AutoIngest/file_exporter_main.png
 
-Next you'll make rules for the files you want to export. Each rule must have a name and at least one condition set. If more than one condition is set, then all conditions must be true to export the file. When you're done setting up your rule, press the "Save" button to save it. You'll see the new rule in the list on the left side.
+Ensuite, vous établissez des règles pour les fichiers que vous souhaitez exporter. Chaque règle doit avoir un nom et au moins un ensemble de conditions. Si plusieurs conditions sont définies, toutes les conditions doivent être vraies pour exporter le fichier. Lorsque vous avez terminé de configurer votre règle, appuyez sur le bouton "Save" pour la sauvegarder. Vous verrez la nouvelle règle dans la liste sur le côté gauche.
 
-All of the saved rules will be run against each data source. There's no way to set a rule as inactive, so if you make a rule and don't want it to run you'll have to use the "Delete Rule" button to remove it.
+Toutes les règles enregistrées seront exécutées sur chaque source de données. Il n'y a aucun moyen de définir une règle comme inactive, donc si vous créez une règle et que vous ne voulez pas qu'elle s'exécute, vous devrez utiliser le bouton "Delete Rule" pour la supprimer.
 
-You'll need to run at the \ref hash_db_page and \ref file_type_identification_page to use the file exporter. You may need to run additional modules based on any attributes in your rules.
+Vous devrez exécuter les modules \ref hash_db_page et \ref file_type_identification_page pour utiliser l'exportateur de fichiers. Vous devrez peut-être exécuter des modules supplémentaires en fonction des attributs de vos règles.
 
-\subsection file_exporter_mime MIME Type
+\subsection file_exporter_mime MIME Type (Type MIME)
 
-The first condition is based on MIME type. To enable it, check the box before "MIME Type", then select a MIME type from the list and choose whether you want to match it or not match it. Multiple MIME types can not be selected at this time. The following shows a rule that will match all PNG images.
+La première condition est basée sur le type MIME. Pour l'activer, cochez la case avant "MIME Type", puis sélectionnez un type MIME dans la liste et choisissez si vous voulez le faire correspondre ou non. Pour le moment, il est impossible de sélectionner plusieurs types MIME. Ce qui suit montre une règle qui correspondra à toutes les images PNG.
 
 \image html AutoIngest/file_export_png.png
 
-\subsection file_exporter_size File Size
+\subsection file_exporter_size File Size (Taille de fichier)
 
-The second condition is based on file size. You can choose a file size (using the list on the right to change the units) and then select whether files should be larger, smaller, equal to, or not equal to that size. The following shows a rule that will match plain text files that are over 1kB.
+La deuxième condition est basée sur la taille du fichier. Vous pouvez choisir une taille de fichier (en utilisant la liste de droite pour modifier les unités), puis sélectionner si les fichiers doivent être plus grands, plus petits, égaux ou non à cette taille. Ce qui suit montre une règle qui correspondra aux fichiers de texte brut de plus de 1 Ko.
 
 \image html AutoIngest/file_export_size.png
 
-\subsection file_exporter_attributes Attributes
+\subsection file_exporter_attributes Attributes (Attributs)
 
-The third condition is based on blackboard artifacts and attributes, which is how Autopsy stores most of its analysis results. A file will be exported if it is linked to a matching attribute. Using this type of condition will require some familiarity with exactly how these attributes are being created and what data we expect to see in them. There's some information to get started in the <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6.0/mod_bbpage.html">Sleuthkit documentation</a>. You will most likely also have to open an Autopsy database file to verify the exact attribute types being used to hold the data you're interested in.
+La troisième condition est basée sur les artefacts et les attributs du Blackboard, c'est ainsi qu'Autopsy stocke la plupart de ses résultats d'analyse. Un fichier sera exporté s'il est lié à un attribut correspondant. L'utilisation de ce type de condition exigera une certaine familiarité avec la manière exacte dont ces attributs sont créés et les données que nous nous attendons à y voir. Il y a quelques informations de base dans la <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6.0/mod_bbpage.html">documentation Sleuthkit</a>. Vous devrez probablement également ouvrir un fichier de base de données d'Autopsy pour vérifier les types d'attributs exacts utilisés pour contenir les données qui vous intéressent.
 
-To make an attribute condition, select the artifact type and then the attribute type that you are interested in. On the next line you can enter a value and set what relation you want the attribute to have to it (equals, not equals, greater/less than). Not all options will make sense with all data types. Then use the "Add Attribute" button to add it to the attribute list. If you make a mistake, use the "Delete Attribute" button to erase it. The following shows a rule that will export any files that had a keyword hit for the word "bomb" in them.
+Pour créer une condition d'attribut, sélectionnez le type d'artefact, puis le type d'attribut qui vous intéresse. Sur la ligne suivante, vous pouvez entrer une valeur et définir la relation que vous voulez qu'ait l'attribut (égal, pas égal, supérieur/inférieur). Toutes les options n'auront pas de sens avec tous les types de données. Utilisez ensuite le bouton "Add Attribute" pour l'ajouter à la liste d'attributs. Si vous faites une erreur, utilisez le bouton "Delete Attribute" pour l'effacer. Ce qui suit montre une règle qui exportera tous les fichiers étant ressortis d'une recherche de mots-clés avec le mot "bomb".
 
 \image html AutoIngest/file_export_keyword.png
 
-It's possible to do more general matching on the artifacts. Suppose you wanted to export all files that the \ref encryption_page flagged as "Encryption Suspected". These files will have a TSK_ENCRYPTION_SUSPECTED artifact with a single "TSK_COMMENT" attribute that contains the entropy calculated for the file. In this case we can use the "not equals" operator on a string that we wouldn't expect to see in the TSK_COMMENT field to effectively change the condition to "has an associated TSK_ENCRYPTION_SUSPECTED artifact."
+Il est possible de paramétrer une correspondance plus générale sur les artefacts. Supposons que vous vouliez exporter tous les fichiers que le module \ref encryption_page a marqué comme "Encryption Suspected". Ces fichiers auront un artefact TSK_ENCRYPTION_SUSPECTED avec un seul attribut "TSK_COMMENT" qui contient l'entropie calculée pour chaque fichier. Dans ce cas, nous pouvons utiliser l'opérateur "non égal" avec la chaîne que nous ne nous attendons pas à trouver dans le champs TSK_COMMENT, afin de modifier efficacement la condition en "possède un artefact TSK_ENCRYPTION_SUSPECTED associé."
  
 \image html AutoIngest/file_export_encrypton.png
 
-\section file_export_output Output
+\section file_export_output Export
 
-The exported files are found under the files folder that was specified in the \ref file_export_setup step and then organized at the top layer by the device ID of the data source. 
+Les fichiers exportés se trouvent dans le dossier qui a été spécifié lors de l'étape de \ref file_export_setup, puis organisés au niveau du dossier racine par l'identifiant du périphérique de la source de données.
 
 \image html AutoIngest/file_export_dir_structure.png
 
-Exported files are named with their hash and stored in subfolders based on parts of that hash, to prevent any single folder from becoming very large.
+Les fichiers exportés sont nommés avec leur hachage et stockés dans des sous-dossiers basés sur les parties de ce hachage, pour éviter qu'un seul dossier ne devienne très volumineux.
 
 \image html AutoIngest/file_export_file_loc.png
 
-The report files are also found in subfolders under the device ID and then the rule name. 
+Les fichiers de rapport se trouvent également dans les sous-dossiers sous l'identifiant de l'appareil, puis le nom de la règle.
 
 \image html AutoIngest/file_export_json_loc.png
 
-This json file will contain information about the file, and any associated artifact that was part of the rule's conditions.
+Ce fichier json contiendra des informations sur le fichier et tous les artefacts associés faisant partie des règles de conditions.
 \verbatim
 {"7C89F280C337AB3E997D20527B8EC6F8":{"Filename":"\\\\WIN-4913\\AutopsyData\\FileExportFiles\\37567\\text-plain\\7C\\89\\F2\\80\\7C89F280C337AB3E997D20527B8EC6F8",
 "Type":"text/plain","MD5":"7C89F280C337AB3E997D20527B8EC6F8","File data":{"Modified":["0000-00-00 00:00:00"],"Changed":["0000-00-0000:00:00"],
