@@ -125,15 +125,11 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules a data source level ingest task, plus ingest tasks for any
-     * files and artifacts associated with the data source that are currently in
-     * the case database. The data source is obtained from the ingest pipeline
-     * passed in.
-     *
-     * Scheduling these tasks atomically means that it is valid to call
-     * currentTasksAreCompleted() immediately afterwards. Also note that the
-     * file filter for the job is obtained from the ingest pipeline and its
-     * application may cause some or even all of the file tasks to be discarded.
+     * Schedules ingest tasks based on the types of ingest modules that the
+     * ingest pipeline that will exedute tasks has. Scheduling these tasks
+     * atomically means that it is valid to call currentTasksAreCompleted()
+     * immediately after calling this method. Note that the may cause some or
+     * even all of any file tasks to be discarded.
      *
      * @param ingestPipeline The ingest pipeline that will execute the scheduled
      *                       tasks. A reference to the pipeline is added to each
@@ -144,9 +140,15 @@ final class IngestTasksScheduler {
      */
     synchronized void scheduleIngestTasks(IngestJobPipeline ingestPipeline) {
         if (!ingestPipeline.isCancelled()) {
-            scheduleDataSourceIngestTask(ingestPipeline);
-            scheduleFileIngestTasks(ingestPipeline, Collections.emptyList());
-            scheduleDataArtifactIngestTasks(ingestPipeline);
+            if (ingestPipeline.hasDataSourceIngestModules()) {
+                scheduleDataSourceIngestTask(ingestPipeline);
+            }
+            if (ingestPipeline.hasFileIngestModules()) {
+                scheduleFileIngestTasks(ingestPipeline, Collections.emptyList());
+            }
+            if (ingestPipeline.hasDataArtifactIngestModules()) {
+                scheduleDataArtifactIngestTasks(ingestPipeline);
+            }
         }
     }
 
@@ -312,7 +314,9 @@ final class IngestTasksScheduler {
      *                       execute() method is called, execute() can pass the
      *                       target Content of the task to the pipeline for
      *                       processing by the pipeline's ingest modules.
-     * @param artifacts      The artifacts.
+     * @param artifacts      A subset of the data artifacts from the data
+     *                       source; if empty, then all of the data artifacts
+     *                       from the data source will be scheduled.
      */
     synchronized void scheduleDataArtifactIngestTasks(IngestJobPipeline ingestPipeline, List<DataArtifact> artifacts) {
         if (!ingestPipeline.isCancelled()) {

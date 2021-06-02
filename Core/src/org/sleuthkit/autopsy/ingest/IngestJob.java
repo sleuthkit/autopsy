@@ -174,7 +174,7 @@ public final class IngestJob {
         }
         // Streaming ingest jobs will only have one data source
         IngestJobPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
-        streamingIngestPipeline.addStreamingIngestDataSource();
+        streamingIngestPipeline.notifyFileStreamingCompleted();
     }
 
     /**
