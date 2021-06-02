@@ -19,44 +19,54 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A base class for application events published when persons in the Sleuth Kit
- * data model for a case have been added or updated.
+ * Application events published when one or more hosts have been removed from a
+ * person.
  */
-public class PersonsEvent extends TskDataModelChangedEvent<Person, Person> {
+public class HostsRemovedFromPersonEvent extends TskDataModelChangedEvent<Person, Long> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs the base class part of an application event published when
-     * persons in the Sleuth Kit data model for a case have been added or
-     * updated.
+     * Constructs an application event published when one or more hosts have
+     * been removed from a person.
      *
-     * @param eventName The name of the Case.Events enum value for the event
-     *                  type.
-     * @param persons   The persons.
+     * @param person The person.
+     * @param hostIds  The host IDs of the removed hosts.
      */
-    PersonsEvent(String eventName, List<Person> persons) {
-        super(eventName, null, null, persons, Person::getPersonId);
+    public HostsRemovedFromPersonEvent(Person person, List<Long> hostIds) {
+        super(Case.Events.HOSTS_REMOVED_FROM_PERSON.toString(), Collections.singletonList(person), Person::getPersonId, hostIds, (id -> id));
     }
 
     /**
-     * Gets the persons that have been added or updated.
+     * Gets the person.
      *
-     * @return The persons.
+     * @return The person.
      */
-    public List<Person> getPersons() {
+    public Person getPerson() {
+        return getOldValue().get(0);
+    }
+
+    /**
+     * Gets the host IDs of the removed hosts.
+     *
+     * @return The host IDs.
+     */
+    public List<Long> getHostIds() {
         return getNewValue();
     }
 
     @Override
-    protected List<Person> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+    protected List<Person> getOldValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
         List<Person> persons = new ArrayList<>();
         for (Long id : ids) {
             Optional<Person> person = caseDb.getPersonManager().getPerson(id);
@@ -65,6 +75,11 @@ public class PersonsEvent extends TskDataModelChangedEvent<Person, Person> {
             }
         }
         return persons;
+    }
+
+    @Override
+    protected List<Long> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        return ids;
     }
 
 }

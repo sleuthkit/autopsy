@@ -38,7 +38,7 @@ import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.MergeHostMenuAction;
@@ -177,8 +177,8 @@ public class HostNode extends DisplayableItemNode {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (hostId != null && eventType.equals(Case.Events.HOSTS_CHANGED.toString()) && evt instanceof HostsChangedEvent) {
-                ((HostsChangedEvent) evt).getNewValue().stream()
+            if (hostId != null && eventType.equals(Case.Events.HOSTS_UPDATED.toString()) && evt instanceof HostsUpdatedEvent) {
+                ((HostsUpdatedEvent) evt).getHosts().stream()
                         .filter(h -> h != null && h.getHostId() == hostId)
                         .findFirst()
                         .ifPresent((newHost) -> {
@@ -246,7 +246,7 @@ public class HostNode extends DisplayableItemNode {
                 host == null ? Lookups.fixed(displayName) : Lookups.fixed(host, displayName));
                 
         hostId = host == null ? null : host.getHostId();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED),
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_UPDATED),
                 WeakListeners.propertyChange(hostChangePcl, this));
         super.setName(displayName);
         super.setDisplayName(displayName);

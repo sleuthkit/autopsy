@@ -46,10 +46,10 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ContentNodeSelectionInfo;
-import org.sleuthkit.autopsy.datamodel.DataSourcesByTypeNode;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
+import org.sleuthkit.autopsy.datamodel.DataSourceFilesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.datamodel.PersonGroupingNode;
+import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -227,7 +227,7 @@ public class ViewContextAction extends AbstractAction {
                             }
 
                             // for this data source, get the "Data Sources" child node
-                            Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourcesNode.getNameIdentifier());
+                            Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourceFilesNode.getNameIdentifier());
 
                             // check whether this is the data source we are looking for
                             parentTreeViewNode = findParentNodeInTree(parentContent, datasourceGroupingNode);
@@ -243,7 +243,7 @@ public class ViewContextAction extends AbstractAction {
                         Node datasourceGroupingNode = rootChildren.findChild(dsname);
                         if (!Objects.isNull(datasourceGroupingNode)) {
                             Children dsChildren = datasourceGroupingNode.getChildren();
-                            parentTreeViewNode = dsChildren.findChild(DataSourcesNode.getNameIdentifier());
+                            parentTreeViewNode = dsChildren.findChild(DataSourceFilesNode.getNameIdentifier());
                         }
                     }
 
@@ -260,7 +260,7 @@ public class ViewContextAction extends AbstractAction {
             } else {  // Classic view 
                 // Start the search at the DataSourcesNode
                 Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
-                Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesByTypeNode.getNameIdentifier());
+                Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesNode.getNameIdentifier());
                 if (rootDsNode != null) {
                     for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
                         DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
@@ -329,8 +329,8 @@ public class ViewContextAction extends AbstractAction {
             return Collections.emptyList();
         } else if (node.getLookup().lookup(Host.class) != null || 
                 node.getLookup().lookup(Person.class) != null || 
-                DataSourcesByTypeNode.getNameIdentifier().equals(node.getLookup().lookup(String.class)) || 
-                PersonGroupingNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+                DataSourcesNode.getNameIdentifier().equals(node.getLookup().lookup(String.class)) || 
+                PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
             Children children = node.getChildren();
             Node[] childNodes = children == null ? null : children.getNodes();
             if (childNodes == null) {

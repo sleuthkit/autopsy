@@ -20,20 +20,24 @@ package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 
 /**
- * Event fired when hosts are removed.
+ * Application events published when persons in the Sleuth Kit data model for
+ * a case have been updated.
  */
-public class HostsRemovedEvent extends HostsEvent {
-    
+public class PersonsUpdatedEvent extends PersonsEvent {
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
-     * Main constructor.
-     * @param dataModelObjects The list of hosts that have been deleted.
+     * Constructs an application event published when persons in the Sleuth Kit
+     * data model for a case have been updated.
+     *
+     * @param persons The updated persons.
      */
-    public HostsRemovedEvent(List<Host> dataModelObjects) {
-        super(Case.Events.HOSTS_DELETED.name(), dataModelObjects);
+    public PersonsUpdatedEvent(List<Person> persons) {
+        super(Case.Events.PERSONS_UPDATED.name(), persons);
     }
+
 }
