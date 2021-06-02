@@ -39,7 +39,6 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
@@ -53,7 +52,6 @@ import org.sleuthkit.datamodel.TskException;
     "FileExtMismatchIngestModule.readError.message=Could not read settings."
 })
 public class FileExtMismatchIngestModule implements FileIngestModule {
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     
     private static final Logger logger = Logger.getLogger(FileExtMismatchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
@@ -147,7 +145,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
                 
                 // add artifact               
                 BlackboardArtifact bart = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_EXT_MISMATCH_DETECTED, LIKELY_NOTABLE_SCORE, 
+                        BlackboardArtifact.Type.TSK_EXT_MISMATCH_DETECTED, Score.SCORE_LIKELY_NOTABLE, 
                         null, null, justification, Collections.emptyList())
                         .getAnalysisResult();
 

@@ -511,9 +511,9 @@ public class HashDbIngestModule implements FileIngestModule {
         }
         switch (knownFilesType) {
             case KNOWN:
-                return new Score(Significance.NONE, Score.Priority.NORMAL);
+                return Score.SCORE_NONE;
             case KNOWN_BAD:
-                return new Score(Significance.NOTABLE, Score.Priority.NORMAL);
+                return Score.SCORE_NOTABLE;
             default:
             case NO_CHANGE:
                 return Score.SCORE_UNKNOWN;

@@ -47,8 +47,6 @@ import org.sleuthkit.datamodel.VolumeSystem;
  */
 final class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModule {
 
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
     private Blackboard blackboard;
@@ -106,7 +104,7 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
                             return ProcessResult.OK;
                         }
                         if (BitlockerDetection.isBitlockerVolume(volume)) {
-                            return flagVolume(volume, BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, NOTABLE_SCORE, 
+                            return flagVolume(volume, BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NOTABLE, 
                                     Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_bitlocker());
                         }
 
@@ -114,7 +112,7 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
                             return ProcessResult.OK;
                         }
                         if (isVolumeEncrypted(volume)) {
-                            return flagVolume(volume, BlackboardArtifact.Type.TSK_ENCRYPTION_SUSPECTED, LIKELY_NOTABLE_SCORE,
+                            return flagVolume(volume, BlackboardArtifact.Type.TSK_ENCRYPTION_SUSPECTED, Score.SCORE_LIKELY_NOTABLE,
                                     String.format(Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_suspected(), calculatedEntropy));
                         }
                     }
