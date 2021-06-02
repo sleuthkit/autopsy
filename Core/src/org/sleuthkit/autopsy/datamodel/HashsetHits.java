@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
  * Hash set hits node support. Inner classes have all of the nodes in the tree.
@@ -136,7 +137,7 @@ public class HashsetHits implements AutopsyVisitableItem {
 
             int setNameId = ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int artId = TSK_HASHSET_HIT.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+            String query = "SELECT value_text,blackboard_artifacts.artifact_obj_id,attribute_type_id " //NON-NLS
                     + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
                     + "attribute_type_id=" + setNameId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
@@ -150,11 +151,11 @@ public class HashsetHits implements AutopsyVisitableItem {
                 synchronized (hashSetHitsMap) {
                     while (resultSet.next()) {
                         String setName = resultSet.getString("value_text"); //NON-NLS
-                        long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                        long artifactObjId = resultSet.getLong("artifact_obj_id"); //NON-NLS
                         if (!hashSetHitsMap.containsKey(setName)) {
                             hashSetHitsMap.put(setName, new HashSet<>());
                         }
-                        hashSetHitsMap.get(setName).add(artifactId);
+                        hashSetHitsMap.get(setName).add(artifactObjId);
                     }
                 }
             } catch (TskCoreException | SQLException ex) {
@@ -380,10 +381,10 @@ public class HashsetHits implements AutopsyVisitableItem {
     /**
      * Creates the nodes for the hits in a given set.
      */
-    private class HitFactory extends BaseChildFactory<BlackboardArtifact> implements Observer {
+    private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
 
         private final String hashsetName;
-        private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
+        private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
 
         private HitFactory(String hashsetName) {
             super(hashsetName);
@@ -401,7 +402,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact key) {
+        protected Node createNodeForKey(AnalysisResult key) {
             return new BlackboardArtifactNode(key);
         }
 
@@ -411,13 +412,13 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected List<BlackboardArtifact> makeKeys() {
+        protected List<AnalysisResult> makeKeys() {
             if (skCase != null) {
 
                 hashsetResults.getArtifactIds(hashsetName).forEach((id) -> {
                     try {
                         if (!artifactHits.containsKey(id)) {
-                            BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                            AnalysisResult art = skCase.getBlackboard().getAnalysisResultById(id);
                             //Cache attributes while we are off the EDT.
                             //See JIRA-5969
                             art.getAttributes();

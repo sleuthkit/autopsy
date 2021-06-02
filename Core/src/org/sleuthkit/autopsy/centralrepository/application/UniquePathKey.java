@@ -16,12 +16,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.centralrepository.contentviewer;
+package org.sleuthkit.autopsy.centralrepository.application;
 
 import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.contentviewer.OtherOccurrencesPanel;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -29,7 +30,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Used as a key to ensure we eliminate duplicates from the result set by not
  * overwriting CR correlation instances.
  */
-final class UniquePathKey {
+public final class UniquePathKey {
 
     private static final Logger logger = Logger.getLogger(UniquePathKey.class.getName());
     private final String dataSourceID;
@@ -37,7 +38,7 @@ final class UniquePathKey {
     private final String type;
     private final String caseUUID;
 
-    UniquePathKey(OtherOccurrenceNodeInstanceData nodeData) {
+    public UniquePathKey(NodeData nodeData) {
         super();
         dataSourceID = nodeData.getDeviceID();
         if (nodeData.getFilePath() != null) {
@@ -56,7 +57,7 @@ final class UniquePathKey {
                 //place holder value will be used since correlation attribute was unavailble
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Unable to get current case", ex);
-                tempCaseUUID = OtherOccurrencesPanel.getPlaceholderUUID();
+                tempCaseUUID = OtherOccurrences.getPlaceholderUUID();
             }
         }
         caseUUID = tempCaseUUID;

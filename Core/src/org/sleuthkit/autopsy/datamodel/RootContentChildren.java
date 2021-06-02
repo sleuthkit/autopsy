@@ -130,7 +130,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(DataSources i) {
-            return new DataSourcesNode(i.filteringDataSourceObjId());
+            return new DataSourceFilesNode(i.filteringDataSourceObjId());
         }
 
         @Override
@@ -177,7 +177,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(PersonGrouping personGrouping) {
-            return new PersonGroupingNode(personGrouping.getPerson());
+            return new PersonNode(personGrouping.getPerson());
         }
 
         @Override
@@ -192,7 +192,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(DataSourcesByType dataSourceHosts) {
-            return new DataSourcesByTypeNode();
+            return new DataSourcesNode();
         }
 
         @Override

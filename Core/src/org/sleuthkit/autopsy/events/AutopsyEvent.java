@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,12 +22,18 @@ import java.beans.PropertyChangeEvent;
 import java.io.Serializable;
 
 /**
- * A base class for events to be published to registered subscribers on both
- * this Autopsy node and other Autopsy nodes. The class extends
- * PropertyChangeEvent to integrate with legacy use of JavaBeans
- * PropertyChangeEvents and PropertyChangeListeners as an application event
- * system, and implements Serializable to allow it to be published over a
- * network in serialized form.
+ * A base class for application events that can be published to registered
+ * subscribers on both this Autopsy node and other Autopsy nodes.
+ *
+ * The class extends PropertyChangeEvent to integrate with legacy use of
+ * JavaBeans PropertyChangeEvents and PropertyChangeListeners as an application
+ * event publisher-subcriber mechanism. Subclasses need to decide what
+ * constitutes "old" and "new" objects for them and are encouraged to provide
+ * getters for these values that do not require clients to cast the return
+ * values.
+ *
+ * This class implements Serializable to allow it to be published over a network
+ * in serialized form.
  */
 public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
 
@@ -36,17 +42,22 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
 
     /**
      * Events have a source field set to local or remote to allow event
-     * subscribers to filter events by source type.
+     * subscribers to filter events by source type. For a multi-user case, a
+     * local event has happened on this Autopsy node, and a remote event has
+     * happened on another Autopsy node.
+     *
+     * Events are local by default and are changed to remote events by the event
+     * publishers on other Autopsy nodes upon event receipt.
      */
     public enum SourceType {
-
         LOCAL,
         REMOTE
     };
 
     /**
-     * Constructs an event that can be published to registered subscribers on
-     * both this Autopsy node and other Autopsy nodes.
+     * Constructs the base class part of an application event that can be
+     * published to registered subscribers on both this Autopsy node and other
+     * Autopsy nodes.
      *
      * @param eventName The event name.
      * @param oldValue  The "old" value to associate with the event. May be
@@ -60,7 +71,7 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
     }
 
     /**
-     * Gets the source type (local or remote).
+     * Gets the event source type (local or remote).
      *
      * @return SourceType The source type of the event, local or remote.
      */
@@ -69,12 +80,9 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
     }
 
     /**
-     * Gets the source type (local or remote) as a string. This is for clients
-     * that do not have access to the AutopsyEvent type, and is necessary
-     * because the events package is not currently a public package within the
-     * Autopsy-Core NetBeans Module (NBM).
+     * Gets the event source type (local or remote) as a string.
      *
-     * @return A string, either "LOCAL" or "REMOTE", as an Object.
+     * @return A string, either "LOCAL" or "REMOTE."
      */
     @Override
     public Object getSource() {
@@ -82,10 +90,10 @@ public class AutopsyEvent extends PropertyChangeEvent implements Serializable {
     }
 
     /**
-     * Sets the source type (local or remote). This field is mutable in this way
-     * to allow an event to be published both locally and remotely without
-     * requiring the construction of two separate objects. It is for use by the
-     * event publishing classes within this package only.
+     * Sets the source type (local or remote). This field is mutable to allow an
+     * event to be published both locally and remotely without requiring the
+     * construction of two separate objects. It is for use by the event
+     * publishing classes within this package only.
      *
      * @param sourceType The source type of the event, local or remote.
      */

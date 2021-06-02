@@ -35,6 +35,7 @@ import jarray
 import inspect
 from java.lang import System
 from java.util.logging import Level
+from org.sleuthkit.datamodel import Score
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import ReadContentInputStream
@@ -88,6 +89,7 @@ class SampleJythonFileIngestModuleFactory(IngestModuleFactoryAdapter):
 # TODO: Rename this to something more specific. Could just remove "Factory" from above name.
 # Looks at the attributes of the passed in file.
 class SampleJythonFileIngestModule(FileIngestModule):
+    LIKELY_NOTABLE_SCORE = Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO)
 
     _logger = Logger.getLogger(SampleJythonFileIngestModuleFactory.moduleName)
 
@@ -130,7 +132,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
             attrs = ArrayList()
             attrs.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
                   SampleJythonFileIngestModuleFactory.moduleName, "Text Files"))
-            art = file.newAnalysisResult(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Score.SCORE_UNKNOWN, None, None, None, attrs)
+            art = file.newAnalysisResult(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, self.LIKELY_NOTABLE_SCORE, None, "Text Files", None, attrs)
 
 
             try:

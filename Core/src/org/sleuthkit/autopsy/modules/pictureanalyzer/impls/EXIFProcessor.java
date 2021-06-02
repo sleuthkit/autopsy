@@ -154,10 +154,11 @@ public class EXIFProcessor implements PictureProcessor {
             final Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
             if (!attributes.isEmpty() && !blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
-                final DataArtifact exifArtifact = file.newDataArtifact(new BlackboardArtifact.Type(TSK_METADATA_EXIF), attributes);
 
-                final AnalysisResult userSuspectedArtifact = file.newAnalysisResult(
-                        new BlackboardArtifact.Type(TSK_USER_CONTENT_SUSPECTED), Score.SCORE_UNKNOWN, null, null, null,
+                final BlackboardArtifact exifArtifact = file.newDataArtifact(BlackboardArtifact.Type.TSK_METADATA_EXIF, attributes);
+                
+                final BlackboardArtifact userSuspectedArtifact = file.newAnalysisResult(
+                        BlackboardArtifact.Type.TSK_USER_CONTENT_SUSPECTED, Score.SCORE_UNKNOWN, null, null, null,
                         Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, Bundle.ExifProcessor_userContent_description())))
                         .getAnalysisResult();
 

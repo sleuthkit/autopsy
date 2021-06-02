@@ -481,5 +481,10 @@ public final class FileTypes implements AutopsyVisitableItem {
         public List<AnalysisResult> getAllAnalysisResults() throws TskCoreException {
             return content.getAllAnalysisResults();
         }
+
+        @Override
+        public List<DataArtifact> getAllDataArtifacts() throws TskCoreException {
+            return content.getAllDataArtifacts();
+        }
     }
 }

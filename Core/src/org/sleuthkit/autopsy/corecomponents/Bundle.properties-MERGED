@@ -30,8 +30,8 @@ CTL_DataContentAction=DataContent
 CTL_DataContentTopComponent=Data Content
 CTL_OfflineHelpAction=Offline Autopsy Documentation
 CTL_OnlineHelpAction=Online Autopsy Documentation
-DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database
-DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database
+DataArtifactContentViewer.failedToGetAttributes.message=Failed to get some or all attributes from case database
+DataArtifactContentViewer.failedToGetSourcePath.message=Failed to get source file path from case database
 DataContentViewerHex.copyingFile=Copying file to open in HxD...
 DataContentViewerHex.launchError=Unable to launch HxD Editor. Please specify the HxD install location in Tools -> Options -> External Viewer
 DataContentViewerHex_loading_text=Loading hex from file...
@@ -75,9 +75,9 @@ DataContentViewerHex.totalPageLabel.text_1=100
 DataContentViewerHex.pageLabel2.text=Page
 
 # Product Information panel
-LBL_Description=<div style=\"font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif;\">\n    <b>Product Version:</b> {0} ({9}) <br><b>Sleuth Kit Version:</b> {7} <br><b>Netbeans RCP Build:</b> {8} <br> <b>Java:</b> {1}; {2}<br> <b>System:</b> {3}; {4}; {5}<br><b>Userdir:</b> {6}</div>
+LBL_Description=<div style="font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif;">\n    <b>Product Version:</b> {0} ({9}) <br><b>Sleuth Kit Version:</b> {7} <br><b>Netbeans RCP Build:</b> {8} <br> <b>Java:</b> {1}; {2}<br> <b>System:</b> {3}; {4}; {5}<br><b>Userdir:</b> {6}</div>
 Format_OperatingSystem_Value={0} version {1} running on {2}
-LBL_Copyright=<div style\="font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif; ">Autopsy&trade; is a digital forensics platform based on The Sleuth Kit&trade; and other tools. <br><ul><li>General Information: <a style\="color: \#1E2A60;" href\="http://www.sleuthkit.org">http://www.sleuthkit.org</a>.</li><li>Training: <a style\="color: \#1E2A60;" href\="https://www.autopsy.com/support/training/">https://www.autopsy.com/support/training/</a></li><li>Support: <a style\="color: \#1E2A60;" href\="https://www.sleuthkit.org/support.php">https://www.sleuthkit.org/support.php</a></li></ul>Copyright &copy; 2003-2020. </div>
+LBL_Copyright=<div style="font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif; ">Autopsy&trade; is a digital forensics platform based on The Sleuth Kit&trade; and other tools. <br><ul><li>General Information: <a style="color: #1E2A60;" href="http://www.sleuthkit.org">http://www.sleuthkit.org</a>.</li><li>Training: <a style="color: #1E2A60;" href="https://www.autopsy.com/support/training/">https://www.autopsy.com/support/training/</a></li><li>Support: <a style="color: #1E2A60;" href="https://www.sleuthkit.org/support.php">https://www.sleuthkit.org/support.php</a></li></ul>Copyright &copy; 2003-2020. </div>
 SortChooser.dialogTitle=Choose Sort Criteria
 ThumbnailViewChildren.progress.cancelling=(Cancelling)
 # {0} - file name
@@ -88,13 +88,13 @@ INDEX_FOR_LOCAL_HELP=/docs/index.html
 LBL_Close=Close
 DataContentViewerHex.copyMenuItem.text=Copy
 DataContentViewerHex.selectAllMenuItem.text=Select All
-DataContentViewerArtifact.totalPageLabel.text=100
-DataContentViewerArtifact.prevPageButton.text=
-DataContentViewerArtifact.pageLabel2.text=Result
-DataContentViewerArtifact.nextPageButton.text=
-DataContentViewerArtifact.currentPageLabel.text=1
-DataContentViewerArtifact.ofLabel.text=of
-DataContentViewerArtifact.pageLabel.text=Result:
+DataArtifactContentViewer.totalPageLabel.text=100
+DataArtifactContentViewer.prevPageButton.text=
+DataArtifactContentViewer.pageLabel2.text=Result
+DataArtifactContentViewer.nextPageButton.text=
+DataArtifactContentViewer.currentPageLabel.text=1
+DataArtifactContentViewer.ofLabel.text=of
+DataArtifactContentViewer.pageLabel.text=Result:
 AdvancedConfigurationDialog.applyButton.text=OK
 DataContentViewerHex.goToPageTextField.text=
 DataContentViewerHex.goToPageLabel.text=Go to Page: 
@@ -105,14 +105,14 @@ DataResultViewerThumbnail.pageNextButton.text=
 DataResultViewerThumbnail.imagesLabel.text=Images:
 DataResultViewerThumbnail.imagesRangeLabel.text=-
 DataResultViewerThumbnail.pageNumLabel.text=-
-DataResultViewerThumbnail.filePathLabel.text=\ \ \ 
+DataResultViewerThumbnail.filePathLabel.text=\   
 DataResultViewerThumbnail.goToPageLabel.text=Go to Page:
 DataResultViewerThumbnail.goToPageField.text=
 AdvancedConfigurationDialog.cancelButton.text=Cancel
-DataContentViewerArtifact.waitText=Retrieving and preparing data, please wait...
-DataContentViewerArtifact.errorText=Error retrieving result
-DataContentViewerArtifact.title=Results
-DataContentViewerArtifact.toolTip=Displays Results associated with the file
+DataArtifactContentViewer.waitText=Retrieving and preparing data, please wait...
+DataArtifactContentViewer.errorText=Error retrieving result
+DataArtifactContentViewer.title=Data Artifacts
+DataArtifactContentViewer.toolTip=Displays Results associated with the file
 DataContentViewerHex.goToPageTextField.msgDlg=Please enter a valid page number between 1 and {0}
 DataContentViewerHex.goToPageTextField.err=Invalid page number
 DataContentViewerHex.setDataView.errorText=(offset {0}-{1} could not be read)

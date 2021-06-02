@@ -1,0 +1,8 @@
+OtherOccurrences.csvHeader.attribute=Matched Attribute
+OtherOccurrences.csvHeader.case=Case
+OtherOccurrences.csvHeader.comment=Comment
+OtherOccurrences.csvHeader.dataSource=Data Source
+OtherOccurrences.csvHeader.device=Device
+OtherOccurrences.csvHeader.known=Known
+OtherOccurrences.csvHeader.path=Path
+OtherOccurrences.csvHeader.value=Attribute Value
