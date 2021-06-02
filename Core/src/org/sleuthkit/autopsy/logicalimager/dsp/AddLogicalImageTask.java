@@ -100,7 +100,7 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     
     private final static Logger LOGGER = Logger.getLogger(AddLogicalImageTask.class.getName());
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS

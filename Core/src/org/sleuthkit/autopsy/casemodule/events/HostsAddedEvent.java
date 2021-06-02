@@ -23,17 +23,21 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Host;
 
 /**
- * Event fired when new hosts are added.
+ * Application events published when hosts have been added to the Sleuth Kit
+ * data model for a case.
  */
-public class HostsAddedEvent extends HostsEvent {
-    
+public final class HostsAddedEvent extends HostsEvent {
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
-     * Main constructor.
-     * @param dataModelObjects The hosts that have been added.
+     * Constructs an application event published when hosts have been added to
+     * the Sleuth Kit data model for a case.
+     *
+     * @param hosts The hosts that have been added.
      */
-    public HostsAddedEvent(List<Host> dataModelObjects) {
-        super(Case.Events.HOSTS_ADDED.name(), dataModelObjects);
+    public HostsAddedEvent(List<Host> hosts) {
+        super(Case.Events.HOSTS_ADDED.name(), hosts);
     }
+
 }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel.hosts;
 
 import java.awt.event.ActionEvent;
+import java.util.Collections;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
@@ -46,6 +47,7 @@ public class RemoveParentPersonAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(RemoveParentPersonAction.class.getName());
 
+    private final Person person;
     private final Host host;
 
     /**
@@ -59,12 +61,13 @@ public class RemoveParentPersonAction extends AbstractAction {
                 person == null || person.getName() == null
                 ? Bundle.RemoveParentPersonAction_unknownPerson() : person.getName()));
         this.host = host;
+        this.person = person;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().setPerson(host, null);
+            Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().removeHostsFromPerson(person, Collections.singletonList(host));
         } catch (NoCurrentCaseException | TskCoreException ex) {
             String hostName = this.host == null || this.host.getName() == null ? "" : this.host.getName();
             logger.log(Level.WARNING, String.format("Unable to remove parent from host: %s", hostName), ex);

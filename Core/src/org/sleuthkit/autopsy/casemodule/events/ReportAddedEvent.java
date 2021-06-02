@@ -28,33 +28,38 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Event published when a report is added to a case.
+ * An application event published when a report is added to a case.
  */
-public final class ReportAddedEvent extends TskDataModelChangeEvent<Report> {
+public final class ReportAddedEvent extends TskDataModelChangedEvent<Report, Report> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs an event published when a report is added to a case.
+     * Constructs an application event published when a report is added to a
+     * case.
      *
-     * @param report The data source that was added.
+     * @param report The report that was added.
      */
     public ReportAddedEvent(Report report) {
-        super(Case.Events.REPORT_ADDED.toString(), Stream.of(report.getId()).collect(Collectors.toList()), Stream.of(report).collect(Collectors.toList()));
+        super(Case.Events.REPORT_ADDED.toString(), null, null, Stream.of(report).collect(Collectors.toList()), Report::getId);
     }
 
+    /**
+     * Gets the reoprt that was added to the case.
+     *
+     * @return The report.
+     */
     public Report getReport() {
         List<Report> reports = getNewValue();
         return reports.get(0);
     }
-    
+
     @Override
-    protected List<Report> getDataModelObjects(SleuthkitCase caseD, List<Long> ids) throws TskCoreException {
+    protected List<Report> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
         Long id = ids.get(0);
-        Report report = caseD.getReportById(id);
         List<Report> reports = new ArrayList<>();
-        reports.add(report);
+        reports.add(caseDb.getReportById(id));
         return reports;
     }
-    
+
 }
