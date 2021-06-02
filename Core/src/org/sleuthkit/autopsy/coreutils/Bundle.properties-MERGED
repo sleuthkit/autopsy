@@ -30,9 +30,7 @@ PlatformUtil.getProcVmUsed.sigarNotInit.msg=Cannot get virt mem used, sigar not 
 PlatformUtil.getProcVmUsed.gen.msg=Cannot get virt mem used, {0}
 PlatformUtil.getJvmMemInfo.usageText=JVM heap usage: {0}, JVM non-heap usage: {1}
 PlatformUtil.getPhysicalMemInfo.usageText=Physical memory usage (max, total, free): {0}, {1}, {2}
-PlatformUtil.getAllMemUsageInfo.usageText={0}\n\
-{1}\n\
-Process Virtual Memory: {2}
+PlatformUtil.getAllMemUsageInfo.usageText={0}\n{1}\nProcess Virtual Memory: {2}
 # {0} - file name
 ReadImageTask.mesageText=Reading image: {0}
 StringExtract.illegalStateException.cannotInit.msg=Unicode table not properly initialized, cannot instantiate StringExtract

@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 class StixArtifactData {
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     private static final String MODULE_NAME = "Stix";
 
     private AbstractFile file;

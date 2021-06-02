@@ -19,23 +19,25 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.List;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.Person;
+import static org.sleuthkit.autopsy.casemodule.Case.Events.OS_ACCOUNTS_ADDED;
+import org.sleuthkit.datamodel.OsAccount;
 
 /**
- * Event fired when persons are changed.
+ * An application event published when OS accounts are added to the Sleuth Kit
+ * data model for a case.
  */
-public class PersonsChangedEvent extends PersonsEvent {
+public final class OsAccountsAddedEvent extends OsAccountsEvent {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Main constructor.
+     * Constructs an application event published when OS accounts are added to
+     * the Sleuth Kit data model for a case.
      *
-     * @param dataModelObjects The new values for the persons that have been
-     * changed.
+     * @param osAccounts The OS accounts that were added.
      */
-    public PersonsChangedEvent(List<Person> dataModelObjects) {
-        super(Case.Events.PERSONS_CHANGED.name(), dataModelObjects);
+    public OsAccountsAddedEvent(List<OsAccount> osAccounts) {
+        super(OS_ACCOUNTS_ADDED.toString(), osAccounts);
     }
+
 }

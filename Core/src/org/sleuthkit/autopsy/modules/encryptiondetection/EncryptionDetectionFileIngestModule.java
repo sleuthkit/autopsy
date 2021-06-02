@@ -64,8 +64,8 @@ import org.xml.sax.SAXException;
 final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter {
 
     private static final int FILE_SIZE_MODULUS = 512;
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.MethodCategory.AUTO);
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
+    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
     
     private static final String DATABASE_FILE_EXTENSION = "db";
     private static final int MINIMUM_DATABASE_FILE_SIZE = 65536; //64 KB
