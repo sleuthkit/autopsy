@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,7 +80,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
                 Bundle.DataSourceSummaryNode_column_results_header(), Bundle.DataSourceSummaryNode_column_results_header(),
                 Bundle.DataSourceSummaryNode_column_tags_header(), Bundle.DataSourceSummaryNode_column_tags_header());
         outline = outlineView.getOutline();
-
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         dataSourceSummaryList = getDataSourceSummaryList(usageMap, fileCountsMap);

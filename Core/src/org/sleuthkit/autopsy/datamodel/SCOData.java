@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.datamodel.Score;
 
 /**
  * Container to bag the S C & O data for an abstract file node.
@@ -27,11 +28,11 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
  */
 class SCOData {
 
-    private Pair<DataResultViewerTable.Score, String> scoreAndDescription = null;  
+    private Pair<Score, String> scoreAndDescription = null;  
     private DataResultViewerTable.HasCommentStatus comment = null;
     private Pair<Long, String> countAndDescription = null;
 
-    Pair<DataResultViewerTable.Score, String> getScoreAndDescription() {
+    Pair<Score, String> getScoreAndDescription() {
         return scoreAndDescription;
     }
 
@@ -43,7 +44,7 @@ class SCOData {
         return countAndDescription;
     }
     
-    void setScoreAndDescription(Pair<DataResultViewerTable.Score, String> scoreAndDescription) {
+    void setScoreAndDescription(Pair<Score, String> scoreAndDescription) {
         this.scoreAndDescription = scoreAndDescription;
     }
     void setComment(DataResultViewerTable.HasCommentStatus comment) {

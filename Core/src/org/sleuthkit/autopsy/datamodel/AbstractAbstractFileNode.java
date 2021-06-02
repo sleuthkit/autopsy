@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
@@ -59,14 +58,14 @@ import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslationUtil;
+import org.sleuthkit.datamodel.Score;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -350,10 +349,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     new WeakReference<>(this), weakPcl));
         }
 
-        properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
-        properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));
-        properties.add(new NodeProperty<>(ACCESS_TIME.toString(), ACCESS_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getAtime(), content)));
-        properties.add(new NodeProperty<>(CREATED_TIME.toString(), CREATED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCrtime(), content)));
+        properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getMtime())));
+        properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getCtime())));
+        properties.add(new NodeProperty<>(ACCESS_TIME.toString(), ACCESS_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getAtime())));
+        properties.add(new NodeProperty<>(CREATED_TIME.toString(), CREATED_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getCrtime())));
         properties.add(new NodeProperty<>(SIZE.toString(), SIZE.toString(), NO_DESCR, content.getSize()));
         properties.add(new NodeProperty<>(FLAGS_DIR.toString(), FLAGS_DIR.toString(), NO_DESCR, content.getDirFlagAsString()));
         properties.add(new NodeProperty<>(FLAGS_META.toString(), FLAGS_META.toString(), NO_DESCR, content.getMetaFlagsAsString()));
@@ -430,43 +429,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
         return Pair.of(count, description);
-    }
-
-    @NbBundle.Messages({
-        "AbstractAbstractFileNode.createSheet.score.displayName=S",
-        "AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.",
-        "AbstractAbstractFileNode.createSheet.interestingResult.description=File has interesting result associated with it.",
-        "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
-        "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag.",
-        "AbstractAbstractFileNode.createSheet.noScore.description=No score"})
-    @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-        DataResultViewerTable.Score score = DataResultViewerTable.Score.NO_SCORE;
-        String description = Bundle.AbstractAbstractFileNode_createSheet_noScore_description();
-        if (content.getKnown() == TskData.FileKnown.BAD) {
-            score = DataResultViewerTable.Score.NOTABLE_SCORE;
-            description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
-        }
-        try {
-            if (score == DataResultViewerTable.Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
-                score = DataResultViewerTable.Score.INTERESTING_SCORE;
-                description = Bundle.AbstractAbstractFileNode_createSheet_interestingResult_description();
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error getting artifacts for file: " + content.getName(), ex);
-        }
-        if (!tags.isEmpty() && (score == DataResultViewerTable.Score.NO_SCORE || score == DataResultViewerTable.Score.INTERESTING_SCORE)) {
-            score = DataResultViewerTable.Score.INTERESTING_SCORE;
-            description = Bundle.AbstractAbstractFileNode_createSheet_taggedFile_description();
-            for (Tag tag : tags) {
-                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    score = DataResultViewerTable.Score.NOTABLE_SCORE;
-                    description = Bundle.AbstractAbstractFileNode_createSheet_notableTaggedFile_description();
-                    break;
-                }
-            }
-        }
-        return Pair.of(score, description);
     }
 
     @NbBundle.Messages({
@@ -571,10 +533,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
         map.put(NAME.toString(), getContentDisplayName(content));
         map.put(LOCATION.toString(), getContentPath(content));
-        map.put(MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
-        map.put(CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
-        map.put(ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
-        map.put(CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
+        map.put(MOD_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getMtime()));
+        map.put(CHANGED_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getCtime()));
+        map.put(ACCESS_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getAtime()));
+        map.put(CREATED_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getCrtime()));
         map.put(SIZE.toString(), content.getSize());
         map.put(FLAGS_DIR.toString(), content.getDirFlagAsString());
         map.put(FLAGS_META.toString(), content.getMetaFlagsAsString());

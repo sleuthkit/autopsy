@@ -32,14 +32,17 @@ import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -57,7 +60,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     /**
      * Underlying Sleuth Kit Content object
      */
-    T content;
+    protected final T content;
     private static final Logger logger = Logger.getLogger(AbstractContentNode.class.getName());
 
     /**
@@ -339,7 +342,26 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      *
      * @return Score property for the underlying content of the node.
      */
-    abstract protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags);
+    @Messages({
+        "# {0} - significanceDisplayName",
+        "AbstractContentNode_getScorePropertyAndDescription_description=Has an {0} analysis result score"
+    })
+    protected Pair<Score, String> getScorePropertyAndDescription(List<Tag> tags) {
+        Score score = Score.SCORE_UNKNOWN;
+        try {
+            if (content instanceof AnalysisResult) {
+                score = ((AnalysisResult) content).getScore();
+            } else {
+                score = this.content.getAggregateScore();    
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to get aggregate score for content with id: " + this.content.getId(), ex);
+        }
+        
+        String significanceDisplay = score.getSignificance().getDisplayName();
+        String description = Bundle.AbstractContentNode_getScorePropertyAndDescription_description(significanceDisplay);
+        return Pair.of(score, description);
+    }
 
     /**
      * Returns comment property for the node.

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,12 +59,10 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUti
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -75,12 +73,14 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.Score;
 
 /**
  * A BlackboardArtifactNode is an AbstractNode implementation that can be used
@@ -438,7 +438,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * action to view it in the timeline.
          */
         try {
-            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact) &&
+                    // don't show ViewArtifactInTimelineAction for AnalysisResults.
+                    (!(this.artifact instanceof AnalysisResult))) {
+                
                 actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
         } catch (TskCoreException ex) {
@@ -680,22 +683,22 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.displayName"),
                         "",
-                        file == null ? "" : ContentUtils.getStringTime(file.getMtime(), file)));
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getMtime())));
                 sheetSet.put(new NodeProperty<>(
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.displayName"),
                         "",
-                        file == null ? "" : ContentUtils.getStringTime(file.getCtime(), file)));
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getCtime())));
                 sheetSet.put(new NodeProperty<>(
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.displayName"),
                         "",
-                        file == null ? "" : ContentUtils.getStringTime(file.getAtime(), file)));
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getAtime())));
                 sheetSet.put(new NodeProperty<>(
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.displayName"),
                         "",
-                        file == null ? "" : ContentUtils.getStringTime(file.getCrtime(), file)));
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getCrtime())));
                 sheetSet.put(new NodeProperty<>(
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.displayName"),
@@ -844,94 +847,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Computes the value of the score property ("S" in S, C, O) for the
-     * artifact represented by this node. The score property indicates whether
-     * the artifact or its source content is notable or interesting.
-     *
-     * IMPORTANT: Notability takes precedence when computing the score.
-     *
-     * A red icon will be displayed in the property sheet if the hash of the
-     * source file has been found in a notable hash set or if either the
-     * artifact or its source content has been tagged with a notable tag. A
-     * yellow icon will be displayed if the source file belongs to an
-     * interesting file set or either the artifact or its source content has
-     * been tagged with a non-notable tag.
-     *
-     * @param tags The tags that have been applied to the artifact and its
-     *             source content.
-     *
-     * @return The value of the score property as an enum element and a
-     *         description string for dislpay in a tool tip.
-     */
-    @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-        /*
-         * Is the artifact's source content marked as notable?
-         */
-        Score score = Score.NO_SCORE;
-        String description = Bundle.BlackboardArtifactNode_createSheet_noScore_description();
-        if (srcContent instanceof AbstractFile) {
-            if (((AbstractFile) srcContent).getKnown() == TskData.FileKnown.BAD) {
-                score = Score.NOTABLE_SCORE;
-                description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
-            }
-        }
-
-        /*
-         * If the artifact is a hash set hit, is the hash set a notable hashes
-         * hash set?
-         */
-        if (score == Score.NO_SCORE && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-            try {
-                BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME));
-                List<HashDbManager.HashDb> notableHashsets = HashDbManager.getInstance().getKnownBadFileHashSets();
-                for (HashDbManager.HashDb hashDb : notableHashsets) {
-                    if (hashDb.getHashSetName().equals(attr.getValueString())) {
-                        score = Score.NOTABLE_SCORE;
-                        description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
-                        break;
-                    }
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting TSK_SET_NAME attribute for TSK_HASHSET_HIT artifact (artifact objID={0})", artifact.getId()), ex);
-            }
-        }
-
-        /*
-         * Is the artifact's source content notable?
-         */
-        if (score == Score.NO_SCORE) {
-            try {
-                if (!srcContent.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).isEmpty()) {
-                    score = Score.INTERESTING_SCORE;
-                    description = Bundle.BlackboardArtifactNode_createSheet_interestingResult_description();
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting TSK_INTERESTING_ARTIFACT_HIT artifacts for source content (artifact objID={0})", artifact.getId()), ex);
-            }
-        }
-
-        /*
-         * Analyze any tags applied to the artifact or its source content. If
-         * there are tags, tha artifact is at least interesting. If one of the
-         * tags is a notable tag, the artifact is notable.
-         */
-        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.INTERESTING_SCORE)) {
-            score = Score.INTERESTING_SCORE;
-            description = Bundle.BlackboardArtifactNode_createSheet_taggedItem_description();
-            for (Tag tag : tags) {
-                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    score = Score.NOTABLE_SCORE;
-                    description = Bundle.BlackboardArtifactNode_createSheet_notableTaggedItem_description();
-                    break;
-                }
-            }
-        }
-
-        return Pair.of(score, description);
-    }
-
-    /**
      * Computes the value of the other occurrences property ("O" in S, C, O) for
      * the artifact represented by this node. The value of the other occurrences
      * property is the number of other data sources this artifact appears in
@@ -1033,7 +948,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                     addEmailMsgProperty(map, attribute);
                 } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-                    map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), srcContent));
+                    map.put(attribute.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(attribute.getValueLong()));
                 } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
                         && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
                     /*
@@ -1099,7 +1014,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
             map.put(attribute.getAttributeType().getDisplayName(), value);
         } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-            map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), srcContent));
+            map.put(attribute.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(attribute.getValueLong()));
         } else {
             map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
         }
@@ -1146,7 +1061,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.noScore.description=No score"})
     @Deprecated
     protected final void addScorePropertyAndDescription(Sheet.Set sheetSet, List<Tag> tags) {
-        Pair<DataResultViewerTable.Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
+        Pair<Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), scoreAndDescription.getRight(), scoreAndDescription.getLeft()));
     }
 

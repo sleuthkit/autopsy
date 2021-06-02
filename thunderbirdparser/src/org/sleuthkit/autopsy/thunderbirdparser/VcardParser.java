@@ -388,6 +388,9 @@ final class VcardParser {
         String telephoneText = telephone.getText();
        
         if (telephoneText == null || telephoneText.isEmpty()) {
+            if (telephone.getUri() == null) {
+                return;
+            }
             telephoneText =  telephone.getUri().getNumber();
             if (telephoneText == null || telephoneText.isEmpty()) {
                 return;
@@ -502,6 +505,9 @@ final class VcardParser {
     private void addPhoneAccountInstances(Telephone telephone, AbstractFile abstractFile, Collection<AccountFileInstance> accountInstances) {
         String telephoneText = telephone.getText();
         if (telephoneText == null || telephoneText.isEmpty()) {
+            if (telephone.getUri() == null) {
+                return;
+            }
             telephoneText =  telephone.getUri().getNumber();
             if (telephoneText == null || telephoneText.isEmpty()) {
                 return;
