@@ -56,7 +56,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * artifacts.
  */
 class VolatilityProcessor {
-
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    
     private static final Logger logger = Logger.getLogger(VolatilityProcessor.class.getName());
     private static final String VOLATILITY = "Volatility"; //NON-NLS
     private static final String VOLATILITY_EXECUTABLE = "volatility_2.6_win64_standalone.exe"; //NON-NLS
@@ -377,17 +378,15 @@ class VolatilityProcessor {
                     }
                     try {
 
-                        Collection<BlackboardAttribute> attributes = singleton(
-                                new BlackboardAttribute(
-                                        TSK_SET_NAME, VOLATILITY,
-                                        Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName))
-                        );
+                        String setName = Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName);
+                        Collection<BlackboardAttribute> attributes = singleton(new BlackboardAttribute(TSK_SET_NAME, VOLATILITY, setName));
 
                         // Create artifact if it doesn't already exist.
                         if (!blackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
                             BlackboardArtifact volArtifact = resolvedFile.newAnalysisResult(
-                                    new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT), 
-                                    Score.SCORE_UNKNOWN, null, null, null, attributes)
+                                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, LIKELY_NOTABLE_SCORE, 
+                                    null, setName, null, 
+                                    attributes)
                                     .getAnalysisResult();
 
                             try {

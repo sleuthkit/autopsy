@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -37,7 +36,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.io.FileUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -102,6 +100,8 @@ final class AddLogicalImageTask implements Runnable {
         }
     }
 
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    
     private final static Logger LOGGER = Logger.getLogger(AddLogicalImageTask.class.getName());
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS
     private final static String USERS_TXT = "_users.txt"; //NON-NLS
@@ -445,13 +445,9 @@ final class AddLogicalImageTask implements Runnable {
         BlackboardArtifact artifact;
         try {
             artifact = this.blackboard.newAnalysisResult(
-                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT,
-                    fileId,
-                    dataSourceId,
-                    Score.SCORE_UNKNOWN,
-                    null,
-                    null,
-                    null,
+                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, fileId, dataSourceId,
+                    LIKELY_NOTABLE_SCORE,
+                    null, ruleSetName, null,
                     Arrays.asList(
                             new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName),
                             new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, ruleName)
