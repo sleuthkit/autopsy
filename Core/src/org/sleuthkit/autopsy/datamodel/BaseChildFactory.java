@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Abstract child factory that provides paging and filtering functionality to
@@ -42,7 +41,7 @@ import org.sleuthkit.datamodel.Content;
  *
  * @param <T>
  */
-public abstract class BaseChildFactory<T extends Content> extends ChildFactory.Detachable<T> {
+public abstract class BaseChildFactory<T> extends ChildFactory.Detachable<T> {
 
     private static final Logger logger = Logger.getLogger(BaseChildFactory.class.getName());
 

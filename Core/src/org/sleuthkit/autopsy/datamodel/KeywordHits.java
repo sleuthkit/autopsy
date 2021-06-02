@@ -58,6 +58,7 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
@@ -860,19 +861,19 @@ public class KeywordHits implements AutopsyVisitableItem {
         "KeywordHits.createNodeForKey.chgTime.name=ChangeTime",
         "KeywordHits.createNodeForKey.chgTime.displayName=Change Time",
         "KeywordHits.createNodeForKey.chgTime.desc=Change Time"})
-    private BlackboardArtifactNode createBlackboardArtifactNode(AnalysisResult art) {
+    private BlackboardArtifactNode createBlackboardArtifactNode(BlackboardArtifactNodeKey key) {
         if (skCase == null) {
             return null;
         }
 
-        BlackboardArtifactNode n = new BlackboardArtifactNode(art); //NON-NLS
+        BlackboardArtifactNode n = new BlackboardArtifactNode(key); //NON-NLS
 
         // The associated file should be available through the Lookup that
         // gets created when the BlackboardArtifactNode is constructed.
         AbstractFile file = n.getLookup().lookup(AbstractFile.class);
         if (file == null) {
             try {
-                file = skCase.getAbstractFileById(art.getObjectID());
+                file = skCase.getAbstractFileById(key.getArtifact().getObjectID());
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren", ex); //NON-NLS
                 return n;
@@ -907,7 +908,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     /**
      * Creates nodes for individual files that had hits
      */
-    private class HitsFactory extends BaseChildFactory<AnalysisResult> implements Observer {
+    private class HitsFactory extends BaseChildFactory<BlackboardArtifactNodeKey> implements Observer {
 
         private final String keyword;
         private final String setName;
@@ -928,7 +929,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected List<AnalysisResult> makeKeys() {
+        protected List<BlackboardArtifactNodeKey> makeKeys() {
             if (skCase != null) {
                 keywordResults.getArtifactIds(setName, keyword, instance).forEach((id) -> {
                     try {
@@ -943,15 +944,21 @@ public class KeywordHits implements AutopsyVisitableItem {
                         logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
                     }
                 });
-
-                return new ArrayList<>(artifactHits.values());
+                
+                List<BlackboardArtifactNodeKey> keyList = new ArrayList<>();
+             
+                for (AnalysisResult art : artifactHits.values()) {
+                    keyList.add(new BlackboardArtifactNodeKey(art));
+                }
+               
+                return keyList;
             }
             return Collections.emptyList();
         }
 
         @Override
-        protected Node createNodeForKey(AnalysisResult art) {
-            return createBlackboardArtifactNode(art);
+        protected Node createNodeForKey(BlackboardArtifactNodeKey key) {
+            return createBlackboardArtifactNode(key);
         }
 
         @Override

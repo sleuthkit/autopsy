@@ -84,6 +84,7 @@ import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
 import org.sleuthkit.autopsy.datamodel.PersonGroupingNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
@@ -1595,7 +1596,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return binChildren.findChild(binName);
     }
 
-    public void viewArtifactContent(BlackboardArtifact art) {
+    public void viewArtifactContent(BlackboardArtifactNodeKey art) {
         new ViewContextAction(
                 NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.action.viewArtContent.text"),
                 new BlackboardArtifactNode(art)).actionPerformed(null);

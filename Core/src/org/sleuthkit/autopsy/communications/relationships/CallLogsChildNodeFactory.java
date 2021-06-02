@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.communications.relationships.CallLogsChildNodeFactory.CallLogNodeKey;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -104,7 +105,7 @@ final class CallLogsChildNodeFactory extends ChildFactory<CallLogNodeKey>{
     @Override
     protected Node createNodeForKey(CallLogNodeKey key) {
         
-        return new CallLogNode(key.getArtifact(), key.getDeviceID());
+        return new CallLogNode(key, key.getDeviceID());
     }
     
     /**
@@ -157,22 +158,12 @@ final class CallLogsChildNodeFactory extends ChildFactory<CallLogNodeKey>{
      * ChildFactory key class which contains a BlackboardArtifact and its
      * data source deviceID
      */
-    final class CallLogNodeKey{
-        private final BlackboardArtifact artifact;
+    final class CallLogNodeKey extends BlackboardArtifactNodeKey{
         private final String deviceID;
         
         private CallLogNodeKey(BlackboardArtifact artifact, String deviceID) {
-            this.artifact = artifact;
+            super(artifact);
             this.deviceID = deviceID;
-        }
-        
-        /**
-         * Get the BlackboardArtifact for this key
-         * 
-         * @return BlackboardArtifact instance
-         */
-        BlackboardArtifact getArtifact() {
-            return artifact;
         }
         
         /**

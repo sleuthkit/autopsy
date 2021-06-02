@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.AnalysisResult;
 
 public class InterestingHits implements AutopsyVisitableItem {
@@ -460,7 +461,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
-    private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
+    private class HitFactory extends BaseChildFactory<BlackboardArtifactNodeKey> implements Observer {
 
         private final String setName;
         private final String typeName;
@@ -479,7 +480,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected List<AnalysisResult> makeKeys() {
+        protected List<BlackboardArtifactNodeKey> makeKeys() {
 
             if (skCase != null) {
                 interestingResults.getArtifactIds(setName, typeName).forEach((id) -> {
@@ -496,14 +497,19 @@ public class InterestingHits implements AutopsyVisitableItem {
                     }
                 });
 
-                return new ArrayList<>(artifactHits.values());
+                List<BlackboardArtifactNodeKey> nodeKeys = new ArrayList<>();
+                for(AnalysisResult art: artifactHits.values()) {
+                   nodeKeys.add(new BlackboardArtifactNodeKey(art));
+                }
+                
+                return nodeKeys;
             }
             return Collections.emptyList();
         }
 
         @Override
-        protected Node createNodeForKey(AnalysisResult art) {
-            return new BlackboardArtifactNode(art);
+        protected Node createNodeForKey(BlackboardArtifactNodeKey nodeKey) {
+            return new BlackboardArtifactNode(nodeKey);
         }
 
         @Override

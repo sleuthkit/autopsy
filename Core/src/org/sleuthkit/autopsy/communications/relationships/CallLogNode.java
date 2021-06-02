@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,8 +47,8 @@ final class CallLogNode extends BlackboardArtifactNode {
     
     final static String DURATION_PROP = "duration";
     
-    CallLogNode(BlackboardArtifact artifact, String deviceID) { 
-        super(artifact, Utils.getIconFilePath(Account.Type.PHONE));
+    CallLogNode(BlackboardArtifactNodeKey nodeKey, String deviceID) { 
+        super(nodeKey, Utils.getIconFilePath(Account.Type.PHONE));
         setDisplayName(deviceID);
     }
     

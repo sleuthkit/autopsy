@@ -24,6 +24,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
@@ -44,7 +45,7 @@ final class ThreadNode extends AbstractNode{
     
     final private MessageNode messageNode;
     
-    ThreadNode(BlackboardArtifact artifact, String threadID, Action preferredAction) {
+    ThreadNode(BlackboardArtifactNodeKey artifact, String threadID, Action preferredAction) {
         super(Children.LEAF);
             messageNode = new MessageNode(artifact, threadID, preferredAction);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/threaded.png" );

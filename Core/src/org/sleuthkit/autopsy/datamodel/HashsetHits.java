@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
@@ -381,7 +382,7 @@ public class HashsetHits implements AutopsyVisitableItem {
     /**
      * Creates the nodes for the hits in a given set.
      */
-    private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
+    private class HitFactory extends BaseChildFactory<BlackboardArtifactNodeKey> implements Observer {
 
         private final String hashsetName;
         private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
@@ -402,7 +403,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(AnalysisResult key) {
+        protected Node createNodeForKey(BlackboardArtifactNodeKey key) {
             return new BlackboardArtifactNode(key);
         }
 
@@ -412,23 +413,24 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected List<AnalysisResult> makeKeys() {
+        protected List<BlackboardArtifactNodeKey> makeKeys() {
             if (skCase != null) {
 
                 hashsetResults.getArtifactIds(hashsetName).forEach((id) -> {
                     try {
                         if (!artifactHits.containsKey(id)) {
-                            AnalysisResult art = skCase.getBlackboard().getAnalysisResultById(id);
-                            //Cache attributes while we are off the EDT.
-                            //See JIRA-5969
-                            art.getAttributes();
-                            artifactHits.put(id, art);
+                            artifactHits.put(id, skCase.getBlackboard().getAnalysisResultById(id));
                         }
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
                     }
                 });
-                return new ArrayList<>(artifactHits.values());
+                
+                List<BlackboardArtifactNodeKey> nodeKeys = new ArrayList<>();
+                for(AnalysisResult art: artifactHits.values()) {
+                   nodeKeys.add(new BlackboardArtifactNodeKey(art));
+                }
+                return nodeKeys;
             }
             return Collections.emptyList();
         }

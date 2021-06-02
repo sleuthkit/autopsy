@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -35,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * BlackboardArtifact objects.
  *
  */
-public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
+public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifactNodeKey>{
 
     private static final Logger logger = Logger.getLogger(MessagesChildNodeFactory.class.getName());
 
@@ -67,7 +68,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     }
     
     @Override
-    protected boolean createKeys(List<BlackboardArtifact> list) {
+    protected boolean createKeys(List<BlackboardArtifactNodeKey> list) {
         
         if(selectionInfo == null) {
             return true;
@@ -108,7 +109,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
                 }
 
                 if(threadIDs == null || threadIDs.contains(artifactThreadID)) {
-                    list.add(bba);
+                    list.add(new BlackboardArtifactNodeKey(bba));
                 }                
             }
 
@@ -122,7 +123,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     }
     
     @Override
-    protected Node createNodeForKey(BlackboardArtifact key) {
+    protected Node createNodeForKey(BlackboardArtifactNodeKey key) {
         return new MessageNode(key, null, null);
     }
     
@@ -131,10 +132,13 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact>{
      * TSK_EMAIL_MSG, TSK_MESSAGE, and TSK_CALLLOG by their respective creation
      * date-time.
      */
-    class DateComparator implements Comparator<BlackboardArtifact> {
+    class DateComparator implements Comparator<BlackboardArtifactNodeKey> {
         @Override
-        public int compare(BlackboardArtifact bba1, BlackboardArtifact bba2) {
+        public int compare(BlackboardArtifactNodeKey node1, BlackboardArtifactNodeKey node2) {
 
+            BlackboardArtifact bba1 = node1.getArtifact();
+            BlackboardArtifact bba2 = node2.getArtifact();
+            
             BlackboardAttribute attribute1 = null;
             BlackboardAttribute attribute2 = null;
             // Inializing to Long.MAX_VALUE so that if a BlackboardArtifact of 

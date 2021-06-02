@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -50,6 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.python.google.common.collect.Sets;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.Blackboard;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
@@ -577,7 +579,7 @@ public class Artifacts {
     /**
      * Creates children for a given artifact type
      */
-    private static class ArtifactFactory extends BaseChildFactory<BlackboardArtifact> implements RefreshThrottler.Refresher {
+    private static class ArtifactFactory extends BaseChildFactory<BlackboardArtifactNodeKey> implements RefreshThrottler.Refresher {
 
         private static final Logger logger = Logger.getLogger(ArtifactFactory.class.getName());
         private final BlackboardArtifact.Type type;
@@ -638,12 +640,12 @@ public class Artifacts {
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact key) {
+        protected Node createNodeForKey(BlackboardArtifactNodeKey key) {
             return new BlackboardArtifactNode(key);
         }
 
         @Override
-        protected List<BlackboardArtifact> makeKeys() {
+        protected List<BlackboardArtifactNodeKey> makeKeys() {
             try {
                 List<? extends BlackboardArtifact> arts;
                 Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
@@ -661,15 +663,11 @@ public class Artifacts {
                             : blackboard.getDataArtifacts(type.getTypeID());
                         break;
                 }
-
+                List<BlackboardArtifactNodeKey> toRet = new ArrayList<>();
                 for (BlackboardArtifact art : arts) {
-                    //Cache attributes while we are off the EDT.
-                    //See JIRA-5969
-                    art.getAttributes();
+                    toRet.add(new BlackboardArtifactNodeKey(art));
                 }
-                
-                @SuppressWarnings("unchecked")
-                List<BlackboardArtifact> toRet = (List<BlackboardArtifact>)(List<?>)arts;    
+
                 return toRet;
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Trying to access case when no case is open.", ex); //NON-NLS
@@ -716,5 +714,8 @@ public class Artifacts {
             }
             return false;
         }
+    }
+
+    private Artifacts() {
     }
 }

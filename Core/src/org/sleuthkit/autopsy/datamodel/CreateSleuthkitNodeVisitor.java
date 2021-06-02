@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -98,7 +99,7 @@ public class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<Abs
 
     @Override
     public AbstractContentNode<? extends Content> visit(BlackboardArtifact art) {
-        return new BlackboardArtifactNode(art);
+        return new BlackboardArtifactNode(new BlackboardArtifactNodeKey(art));
     }
     
     @Override

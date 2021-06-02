@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,15 +21,19 @@ package org.sleuthkit.autopsy.ingest;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskException;
 
@@ -39,8 +43,12 @@ import org.sleuthkit.datamodel.TskException;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class IngestMessageDetailsPanel extends javax.swing.JPanel {
 
+    private static final long serialVersionUID = 1L;
+
     private final IngestMessageMainPanel mainPanel;
     private final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
+    
+    private static final Logger logger = Logger.getLogger(IngestMessageDetailsPanel.class.getName());
 
     /**
      * Creates new form IngestMessageDetailsPanel
@@ -182,7 +190,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         if (messageGroup != null) {
             BlackboardArtifact art = messageGroup.getData();
             if (art != null) {
-                dtc.viewArtifactContent(art);
+                dtc.viewArtifactContent(new BlackboardArtifactNodeKey(art));
             }
         }
         messageDetailsPane.setCursor(null);
