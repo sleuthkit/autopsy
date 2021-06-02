@@ -67,7 +67,7 @@ import org.sleuthkit.datamodel.Score;
 final class CentralRepoIngestModule implements FileIngestModule {
 
     private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = false;
     static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = false;
     static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;

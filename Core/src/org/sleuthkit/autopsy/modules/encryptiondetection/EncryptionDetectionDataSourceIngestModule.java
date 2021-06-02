@@ -47,8 +47,8 @@ import org.sleuthkit.datamodel.VolumeSystem;
  */
 final class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModule {
 
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO);
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.MethodCategory.AUTO);
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
+    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
     private Blackboard blackboard;

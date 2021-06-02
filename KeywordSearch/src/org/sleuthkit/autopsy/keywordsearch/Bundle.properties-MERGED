@@ -5,6 +5,7 @@ AccountsText.nextPage.exception.msg=No next page.
 AccountsText.previousItem.exception.msg=No previous item.
 AccountsText.previousPage.exception.msg=No previous page.
 CannotRunFileTypeDetection=Unable to run file type detection.
+Collection.unableToIndexData.error=Unable to add data to text index. All future text indexing for the current case will be skipped.
 DropdownListSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
