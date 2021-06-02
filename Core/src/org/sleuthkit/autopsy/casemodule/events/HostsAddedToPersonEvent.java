@@ -19,39 +19,62 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A base class for application events published when hosts in the Sleuth Kit
- * data model for a case have been added or updated.
+ * Application events published when one or more hosts have been added to a
+ * person.
  */
-public class HostsEvent extends TskDataModelChangedEvent<Host, Host> {
+public final class HostsAddedToPersonEvent extends TskDataModelChangedEvent<Person, Host> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs the base class part of an application event published when
-     * hosts in the Sleuth Kit data model for a case have been added or updated.
+     * Constructs an application event published when one or more hosts have
+     * been added to a person.
      *
-     * @param eventName The name of the Case.Events enum value for the event
-     *                  type.
-     * @param hosts     The hosts.
+     * @param person The person.
+     * @param hosts  The hosts.
      */
-    HostsEvent(String eventName, List<Host> hosts) {
-        super(eventName, null, null, hosts, Host::getHostId);
+    public HostsAddedToPersonEvent(Person person, List<Host> hosts) {
+        super(Case.Events.HOSTS_ADDED_TO_PERSON.toString(), Collections.singletonList(person), Person::getPersonId, hosts, Host::getHostId);
     }
 
     /**
-     * Gets the hosts that have been added or updated.
+     * Gets the person.
+     *
+     * @return The person.
+     */
+    public Person getPerson() {
+        return getOldValue().get(0);
+    }
+
+    /**
+     * Gets the hosts.
      *
      * @return The hosts.
      */
     public List<Host> getHosts() {
         return getNewValue();
+    }
+
+    @Override
+    protected List<Person> getOldValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        List<Person> persons = new ArrayList<>();
+        for (Long id : ids) {
+            Optional<Person> person = caseDb.getPersonManager().getPerson(id);
+            if (person.isPresent()) {
+                persons.add(person.get());
+            }
+        }
+        return persons;
     }
 
     @Override
@@ -64,6 +87,6 @@ public class HostsEvent extends TskDataModelChangedEvent<Host, Host> {
             }
         }
         return hosts;
-    }
-
+    }    
+    
 }

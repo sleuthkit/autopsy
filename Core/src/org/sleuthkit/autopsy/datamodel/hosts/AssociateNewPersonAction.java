@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel.hosts;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
+import java.util.Collections;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
@@ -66,7 +67,7 @@ public class AssociateNewPersonAction extends AbstractAction {
             newPersonName = getAddDialogName();
             if (StringUtils.isNotBlank(newPersonName)) {
                 Person person = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().newPerson(newPersonName);
-                Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().setPerson(host, person);
+                Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().addHostsToPerson(person, Collections.singletonList(host));
             }
         } catch (NoCurrentCaseException | TskCoreException ex) {
             String hostName = this.host == null || this.host.getName() == null ? "" : this.host.getName();
