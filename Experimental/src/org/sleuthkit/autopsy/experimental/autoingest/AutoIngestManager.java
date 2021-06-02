@@ -55,6 +55,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -105,6 +106,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.ingest.IngestStream;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleException;
 import org.sleuthkit.autopsy.keywordsearch.Server;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -144,7 +146,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         ControlEventType.SHUTDOWN.toString(),
         ControlEventType.GENERATE_THREAD_DUMP_REQUEST.toString(),
         Event.CANCEL_JOB.toString(),
-        Event.REPROCESS_JOB.toString()}));
+        Event.REPROCESS_JOB.toString(),
+        Event.OCR_STATE_CHANGE.toString()}));
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
@@ -308,6 +311,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     handleRemoteJobCancelEvent((AutoIngestJobCancelEvent) event);
                 } else if (event instanceof AutoIngestJobReprocessEvent) {
                     handleRemoteJobReprocessEvent((AutoIngestJobReprocessEvent) event);
+                } else if (event instanceof AutoIngestOcrStateChangeEvent) {
+                    handleRemoteOcrEvent((AutoIngestOcrStateChangeEvent) event);
                 }
             }
         }
@@ -476,8 +481,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      *
      * @param event OCR enabled/disabled event from another auto ingest node.
      */
-    private void handleRemoteOcrEvent(AutoIngestOcrEnabledEvent event) {
-        // ELTODO
+    private void handleRemoteOcrEvent(AutoIngestOcrStateChangeEvent event) {
         switch (event.getEventType()) {
             case OCR_ENABLED:
                 sysLogger.log(Level.INFO, "Received OCR enabled event for case {0} from user {1} on machine {2}",
@@ -495,9 +499,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         String hostName = event.getNodeName();
         hostNamesToLastMsgTime.put(hostName, Instant.now());
+        
+        // update all pending jobs and get latest ZK manifest node contents for those jobs
+        scanInputDirsNow();
+        
         setChanged();
-        notifyObservers(Event.OCR_STATE_CHANGE); // ELTODO
-    }    
+        notifyObservers(Event.OCR_STATE_CHANGE);
+    }
 
     /**
      * Processes a case deletion event from another node by triggering an
@@ -2084,10 +2092,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         }
 
                         iterator.remove();
-                        currentJob = job;
+                        // create a new job object based on latest ZK node data (i.e. instead of potentially stale local pending AutoIngestJob). 
+                        currentJob = new AutoIngestJob(nodeData);
                         break;
 
-                    } catch (AutoIngestJobNodeData.InvalidDataException ex) {
+                    } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJobException ex) {
                         sysLogger.log(Level.WARNING, String.format("Unable to use node data for %s", manifestPath), ex);
                     }
                 }
@@ -2269,7 +2278,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         /**
          * Updates the ingest system settings by downloading the latest version
-         * of the settings if using shared configuration.
+         * of the settings if using shared configuration. Also updates the OCR
+         * setting.
          *
          * @throws SharedConfigurationException if there is an error downloading
          *                                      shared configuration.
@@ -2285,6 +2295,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 currentJob.setProcessingStage(AutoIngestJob.Stage.UPDATING_SHARED_CONFIG, Date.from(Instant.now()));
                 new SharedConfiguration().downloadConfiguration();
             }
+            
+            // update the OCR enabled/disabled setting
+            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
+            kwsService.changeOcrState(currentJob.getOcrEnabled());
         }
 
         /**

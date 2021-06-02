@@ -467,8 +467,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  * Publish the OCR enabled event.
                  */
                 new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestOcrEnabledEvent(LOCAL_HOST_NAME, caseName,
-                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestOcrEnabledEvent.EventType.OCR_ENABLED));
+                    eventPublisher.publishRemotely(new AutoIngestOcrStateChangeEvent(LOCAL_HOST_NAME, caseName,
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestOcrStateChangeEvent.EventType.OCR_ENABLED));
                 }).start();
             }
         }

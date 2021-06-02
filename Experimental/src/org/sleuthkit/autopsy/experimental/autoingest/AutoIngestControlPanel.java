@@ -122,6 +122,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
     private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 60;
     private static final int PRIORITY_COLUMN_MAX_WIDTH = 150;
+    private static final int OCR_COLUMN_PREFERRED_WIDTH = 60;
+    private static final int OCR_COLUMN_MAX_WIDTH = 150;
     private static final int ACTIVITY_TIME_COL_MIN_WIDTH = 250;
     private static final int ACTIVITY_TIME_COL_MAX_WIDTH = 450;
     private static final int TIME_COL_MIN_WIDTH = 30;
@@ -410,12 +412,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
         column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
         
-        // ELTODO
         column = pendingTable.getColumn(JobsTableModelColumns.OCR.getColumnHeader());
         column.setCellRenderer(new OcrIconCellRenderer());
-        column.setMaxWidth(PRIORITY_COLUMN_MAX_WIDTH);// ELTODO
-        column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);// ELTODO
-        column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);// ELTODO
+        column.setMaxWidth(OCR_COLUMN_MAX_WIDTH);
+        column.setPreferredWidth(OCR_COLUMN_PREFERRED_WIDTH);
+        column.setWidth(OCR_COLUMN_PREFERRED_WIDTH);
 
         /**
          * Allow sorting when a column header is clicked.

@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 /**
  * Event published when an automated ingest manager enables or disables OCR on a case.
  */
-public final class AutoIngestOcrEnabledEvent extends AutopsyEvent implements Serializable {
+public final class AutoIngestOcrStateChangeEvent extends AutopsyEvent implements Serializable {
 
     /**
      * Possible event types
@@ -49,7 +49,7 @@ public final class AutoIngestOcrEnabledEvent extends AutopsyEvent implements Ser
      * @param userName The logged in user
      * @param eventType The type of OCR enabled/disabled event
      */
-    public AutoIngestOcrEnabledEvent(String nodeName, String caseName, String userName, EventType eventType) {
+    public AutoIngestOcrStateChangeEvent(String nodeName, String caseName, String userName, EventType eventType) {
         super(AutoIngestManager.Event.OCR_STATE_CHANGE.toString(), null, null);
         this.caseName = caseName;
         this.nodeName = nodeName;
