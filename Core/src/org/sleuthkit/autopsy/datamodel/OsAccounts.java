@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Host;
@@ -303,7 +304,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
             Optional<Long> creationTimeValue = account.getCreationTime();
             String timeDisplayStr
-                    = creationTimeValue.isPresent() ? DATE_FORMATTER.format(new java.util.Date(creationTimeValue.get() * 1000)) : "";
+                    = creationTimeValue.isPresent() ? TimeZoneUtils.getFormattedTime(creationTimeValue.get() * 1000) : "";
 
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_createdTimeProperty_name(),
@@ -332,11 +333,6 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
         @Override
         protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
-            return null;
-        }
-
-        @Override
-        protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
             return null;
         }
 

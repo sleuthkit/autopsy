@@ -125,10 +125,10 @@ public class PersonGroupingNode extends DisplayableItemNode {
                 logger.log(Level.WARNING, String.format("Unable to get data sources for host: %s", personName), ex);
             }
 
-            hosts.stream()
+            toPopulate.addAll(hosts.stream()
                     .map(HostGrouping::new)
                     .sorted()
-                    .forEach(toPopulate::add);
+                    .collect(Collectors.toList()));
 
             return true;
         }

@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree.
@@ -162,7 +163,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             int pathAttrId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID();
 
             String query = "SELECT \n"
-                    + "	art.artifact_id AS artifact_id,\n"
+                    + "	art.artifact_obj_id AS artifact_obj_id,\n"
                     + "	(SELECT value_text FROM blackboard_attributes attr\n"
                     + "	WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + pathAttrId + "\n"
                     + "	LIMIT 1) AS value_text\n"
@@ -177,14 +178,14 @@ public class EmailExtracted implements AutopsyVisitableItem {
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
-                    Long artifactId = resultSet.getLong("artifact_id");
+                    Long artifactObjId = resultSet.getLong("artifact_obj_id");
                     Map<String, String> accountFolderMap = parsePath(resultSet.getString("value_text"));
                     String account = accountFolderMap.get(MAIL_ACCOUNT);
                     String folder = accountFolderMap.get(MAIL_FOLDER);
 
                     Map<String, List<Long>> folders = newMapping.computeIfAbsent(account, (str) -> new LinkedHashMap<>());
                     List<Long> messages = folders.computeIfAbsent(folder, (str) -> new ArrayList<>());
-                    messages.add(artifactId);
+                    messages.add(artifactObjId);
                 }
             } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS
@@ -502,7 +503,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Node representing mail folder content (mail messages)
      */
-    private class MessageFactory extends BaseChildFactory<BlackboardArtifact> implements Observer {
+    private class MessageFactory extends BaseChildFactory<DataArtifact> implements Observer {
 
         private final String accountName;
         private final String folderName;
@@ -515,7 +516,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact art) {
+        protected Node createNodeForKey(DataArtifact art) {
             return new BlackboardArtifactNode(art);
         }
 
@@ -525,13 +526,13 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        protected List<BlackboardArtifact> makeKeys() {
-            List<BlackboardArtifact> keys = new ArrayList<>();
+        protected List<DataArtifact> makeKeys() {
+            List<DataArtifact> keys = new ArrayList<>();
 
             if (skCase != null) {
                 emailResults.getArtifactIds(accountName, folderName).forEach((id) -> {
                     try {
-                        BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                        DataArtifact art = skCase.getBlackboard().getDataArtifactById(id);
                         //Cache attributes while we are off the EDT.
                         //See JIRA-5969
                         art.getAttributes();

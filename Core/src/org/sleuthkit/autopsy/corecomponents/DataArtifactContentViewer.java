@@ -32,19 +32,22 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import java.util.Collections;
 import java.util.HashSet;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.ArtifactContentViewer;
 import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultTableArtifactContentViewer;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
- * Instances of this class display the BlackboardArtifacts associated with the
+ * Instances of this class display the DataArtifact associated with the
  * Content represented by a Node.
  *
  * It goes through a list of known ArtifactContentViewer to find a viewer that
@@ -52,27 +55,32 @@ import org.sleuthkit.autopsy.contentviewers.artifactviewers.DefaultTableArtifact
  */
 @ServiceProvider(service = DataContentViewer.class, position = 7)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer {
+public class DataArtifactContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = 1L;
 
     @NbBundle.Messages({
-        "DataContentViewerArtifact.failedToGetSourcePath.message=Failed to get source file path from case database",
-        "DataContentViewerArtifact.failedToGetAttributes.message=Failed to get some or all attributes from case database"
+        "DataArtifactContentViewer.failedToGetSourcePath.message=Failed to get source file path from case database",
+        "DataArtifactContentViewer.failedToGetAttributes.message=Failed to get some or all attributes from case database"
     })
-    private final static Logger logger = Logger.getLogger(DataContentViewerArtifact.class.getName());
-    private final static String WAIT_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.waitText");
-    private final static String ERROR_TEXT = NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.errorText");
+    private final static Logger logger = Logger.getLogger(DataArtifactContentViewer.class.getName());
+    private final static String WAIT_TEXT = NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.waitText");
+    private final static String ERROR_TEXT = NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.errorText");
+
+    // Value to return in isPreferred if this viewer is less preferred.
+    private static final int LESS_PREFERRED = 3;
+    // Value to return in isPreferred if this viewer is more preferred.
+    private static final int MORE_PREFERRED = 6;
 
     private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
     private int currentPage = 1;
     private final Object lock = new Object();
-    private List<BlackboardArtifact> artifactTableContents; // Accessed by multiple threads, use getArtifactContents() and setArtifactContents()
+    private List<DataArtifact> artifactTableContents; // Accessed by multiple threads, use getArtifactContents() and setArtifactContents()
     private SwingWorker<ViewUpdate, Void> currentTask; // Accessed by multiple threads, use startNewTask()
 
     private final Collection<ArtifactContentViewer> knowArtifactViewers = new HashSet<>(Lookup.getDefault().lookupAll(ArtifactContentViewer.class));
 
-    public DataContentViewerArtifact() {
+    public DataArtifactContentViewer() {
 
         initComponents();
 
@@ -89,8 +97,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jPanel1 = new javax.swing.JPanel();
+        scrollPane = new javax.swing.JScrollPane();
+        menuBar = new javax.swing.JPanel();
         totalPageLabel = new javax.swing.JLabel();
         ofLabel = new javax.swing.JLabel();
         currentPageLabel = new javax.swing.JLabel();
@@ -102,57 +110,60 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
         artifactContentPanel = new javax.swing.JPanel();
 
-        setPreferredSize(new java.awt.Dimension(100, 58));
+        setMinimumSize(new java.awt.Dimension(300, 60));
+        setPreferredSize(new java.awt.Dimension(300, 60));
 
-        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        scrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new java.awt.Dimension(6, 60));
 
-        jPanel1.setPreferredSize(new java.awt.Dimension(620, 58));
-        jPanel1.setLayout(new java.awt.GridBagLayout());
+        menuBar.setMaximumSize(null);
+        menuBar.setMinimumSize(null);
+        menuBar.setPreferredSize(null);
+        menuBar.setLayout(new java.awt.GridBagLayout());
 
-        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.totalPageLabel.text")); // NOI18N
-        totalPageLabel.setMaximumSize(new java.awt.Dimension(40, 16));
-        totalPageLabel.setPreferredSize(new java.awt.Dimension(25, 16));
+        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.totalPageLabel.text")); // NOI18N
+        totalPageLabel.setMaximumSize(null);
+        totalPageLabel.setPreferredSize(null);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(3, 12, 0, 0);
-        jPanel1.add(totalPageLabel, gridBagConstraints);
+        menuBar.add(totalPageLabel, gridBagConstraints);
 
-        ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.ofLabel.text")); // NOI18N
+        ofLabel.setText(org.openide.util.NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.ofLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(3, 12, 0, 0);
-        jPanel1.add(ofLabel, gridBagConstraints);
+        menuBar.add(ofLabel, gridBagConstraints);
 
-        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.currentPageLabel.text")); // NOI18N
-        currentPageLabel.setMaximumSize(new java.awt.Dimension(38, 14));
-        currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
-        currentPageLabel.setPreferredSize(new java.awt.Dimension(20, 14));
+        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.currentPageLabel.text")); // NOI18N
+        currentPageLabel.setMaximumSize(null);
+        currentPageLabel.setPreferredSize(null);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(4, 7, 0, 0);
-        jPanel1.add(currentPageLabel, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(3, 7, 0, 0);
+        menuBar.add(currentPageLabel, gridBagConstraints);
 
-        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.pageLabel.text")); // NOI18N
+        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.pageLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(3, 12, 0, 0);
-        jPanel1.add(pageLabel, gridBagConstraints);
+        menuBar.add(pageLabel, gridBagConstraints);
 
         nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-        nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.nextPageButton.text")); // NOI18N
+        nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.nextPageButton.text")); // NOI18N
         nextPageButton.setBorderPainted(false);
         nextPageButton.setContentAreaFilled(false);
         nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
@@ -169,9 +180,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 35, 0);
-        jPanel1.add(nextPageButton, gridBagConstraints);
+        menuBar.add(nextPageButton, gridBagConstraints);
 
-        pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.pageLabel2.text")); // NOI18N
+        pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.pageLabel2.text")); // NOI18N
         pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
         pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -179,11 +190,11 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(3, 41, 0, 0);
-        jPanel1.add(pageLabel2, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(3, 30, 0, 0);
+        menuBar.add(pageLabel2, gridBagConstraints);
 
         prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-        prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.prevPageButton.text")); // NOI18N
+        prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.prevPageButton.text")); // NOI18N
         prevPageButton.setBorderPainted(false);
         prevPageButton.setContentAreaFilled(false);
         prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
@@ -200,22 +211,22 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 35, 0);
-        jPanel1.add(prevPageButton, gridBagConstraints);
+        menuBar.add(prevPageButton, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 8;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHEAST;
         gridBagConstraints.insets = new java.awt.Insets(3, 0, 0, 8);
-        jPanel1.add(artifactLabel, gridBagConstraints);
+        menuBar.add(artifactLabel, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 7;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 0.1;
-        jPanel1.add(filler1, gridBagConstraints);
+        menuBar.add(filler1, gridBagConstraints);
 
-        jScrollPane1.setViewportView(jPanel1);
+        scrollPane.setViewportView(menuBar);
 
         artifactContentPanel.setLayout(new javax.swing.OverlayLayout(artifactContentPanel));
 
@@ -223,15 +234,15 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE)
+            .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
             .addComponent(artifactContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(scrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(artifactContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE))
+                .addComponent(artifactContentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 30, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -254,13 +265,13 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private javax.swing.JLabel artifactLabel;
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.Box.Filler filler1;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPanel menuBar;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel ofLabel;
     private javax.swing.JLabel pageLabel;
     private javax.swing.JLabel pageLabel2;
     private javax.swing.JButton prevPageButton;
+    private javax.swing.JScrollPane scrollPane;
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
@@ -304,17 +315,17 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerArtifact.title");
+        return NbBundle.getMessage(this.getClass(), "DataArtifactContentViewer.title");
     }
 
     @Override
     public String getToolTip() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerArtifact.toolTip");
+        return NbBundle.getMessage(this.getClass(), "DataArtifactContentViewer.toolTip");
     }
 
     @Override
     public DataContentViewer createInstance() {
-        return new DataContentViewerArtifact();
+        return new DataArtifactContentViewer();
     }
 
     @Override
@@ -334,39 +345,56 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         }
 
         for (Content content : node.getLookup().lookupAll(Content.class)) {
-            if ((content != null) && (!(content instanceof BlackboardArtifact))) {
+            if ((content != null) && (!(content instanceof DataArtifact)) && (!(content instanceof AnalysisResult))) {
                 try {
-                    return content.getAllArtifactsCount() > 0;
-                } catch (TskException ex) {
-                    logger.log(Level.SEVERE, "Couldn't get count of BlackboardArtifacts for content", ex); //NON-NLS
+                    return Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().hasDataArtifacts(content.getId());
+                } catch (NoCurrentCaseException | TskException ex) {
+                    logger.log(Level.SEVERE, "Couldn't get count of DataArtifacts for content", ex); //NON-NLS
                 }
             }
         }
+        
         return false;
     }
 
     @Override
     public int isPreferred(Node node) {
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        // low priority if node doesn't have an artifact (meaning it was found from normal directory
-        // browsing, or if the artifact is something that means the user really wants to see the original
-        // file and not more details about the artifact
-        if ((artifact == null)
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())) {
-            return 3;
-        } else {
-            return 6;
+        // get the artifact from the lookup
+        DataArtifact artifact = node.getLookup().lookup(DataArtifact.class);
+        if (artifact == null) {
+            return LESS_PREFERRED;
+        }
+
+        // get the type of the artifact
+        BlackboardArtifact.Type artifactType;
+        try {
+            artifactType = artifact.getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE,
+                    String.format("There was an error getting the artifact type for artifact with id: %d", artifact.getId()),
+                    ex);
+            return LESS_PREFERRED;
+        }
+
+        // if web download or web cache, less preferred since the content is important and not the artifact itself.
+        if (artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_DOWNLOAD.getTypeID()
+                || artifactType.getTypeID() == BlackboardArtifact.Type.TSK_WEB_CACHE.getTypeID()) {
+
+            return LESS_PREFERRED;
+        }
+
+        switch (artifactType.getCategory()) {
+            // data artifacts should be more preferred
+            case DATA_ARTIFACT:
+                return MORE_PREFERRED;
+            // everything else is less preferred
+            case ANALYSIS_RESULT:
+            default:
+                return LESS_PREFERRED;
         }
     }
 
-    private ArtifactContentViewer getSupportingViewer(BlackboardArtifact artifact) {
+    private ArtifactContentViewer getSupportingViewer(DataArtifact artifact) {
         for (ArtifactContentViewer viewer : knowArtifactViewers) {
             if (viewer.isSupported(artifact)) {
                 return viewer;
@@ -383,10 +411,10 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
         int numberOfPages;
         int currentPage;
-        BlackboardArtifact artifact;
+        DataArtifact artifact;
         String errorMsg;
 
-        ViewUpdate(int numberOfPages, int currentPage, BlackboardArtifact artifact) {
+        ViewUpdate(int numberOfPages, int currentPage, DataArtifact artifact) {
             this.currentPage = currentPage;
             this.numberOfPages = numberOfPages;
             this.artifact = artifact;
@@ -422,7 +450,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         if (viewUpdate.artifact != null) {
             artifactLabel.setText(viewUpdate.artifact.getDisplayName());
 
-            BlackboardArtifact artifact = viewUpdate.artifact;
+            DataArtifact artifact = viewUpdate.artifact;
             ArtifactContentViewer viewer = this.getSupportingViewer(artifact);
             viewer.setArtifact(artifact);
 
@@ -464,7 +492,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
      * @param artifactList A list of ResultsTableArtifact representations of
      *                     artifacts.
      */
-    private void setArtifactContents(List<BlackboardArtifact> artifactList) {
+    private void setArtifactContents(List<DataArtifact> artifactList) {
         synchronized (lock) {
             this.artifactTableContents = artifactList;
         }
@@ -475,10 +503,21 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
      *
      * @return A list of artifacts.
      */
-    private List<BlackboardArtifact> getArtifactContents() {
+    private List<DataArtifact> getArtifactContents() {
         synchronized (lock) {
             return Collections.unmodifiableList(artifactTableContents);
         }
+    }
+    
+    /**
+     * Metric for determining if content is parent source content.
+     * @param content The content.
+     * @return True if this content should be used for source content.
+     */
+    private static boolean isSourceContent(Content content) {
+        return (content != null) && 
+                (!(content instanceof DataArtifact)) && 
+                (!(content instanceof AnalysisResult));
     }
 
     /**
@@ -500,20 +539,18 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             // blackboard artifact, if any.
             Lookup lookup = selectedNode.getLookup();
 
-            // Get the content. We may get BlackboardArtifacts, ignore those here.
-            ArrayList<BlackboardArtifact> artifacts = new ArrayList<>();
+            // Get the content. We may get DataArtifacts, ignore those here.
+            List<DataArtifact> artifacts = Collections.emptyList();
             Collection<? extends Content> contents = lookup.lookupAll(Content.class);
             if (contents.isEmpty()) {
                 return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
             }
-            Content underlyingContent = null;
             for (Content content : contents) {
-                if ((content != null) && (!(content instanceof BlackboardArtifact))) {
+                if (isSourceContent(content)) {
                     // Get all of the blackboard artifacts associated with the content. These are what this
                     // viewer displays.
                     try {
-                        artifacts = content.getAllArtifacts();
-                        underlyingContent = content;
+                        artifacts = content.getAllDataArtifacts();
                         break;
                     } catch (TskException ex) {
                         logger.log(Level.SEVERE, "Couldn't get artifacts", ex); //NON-NLS
@@ -527,15 +564,15 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             }
 
             // Build the new artifact contents cache.
-            ArrayList<BlackboardArtifact> artifactContents = new ArrayList<>();
-            for (BlackboardArtifact artifact : artifacts) {
+            ArrayList<DataArtifact> artifactContents = new ArrayList<>();
+            for (DataArtifact artifact : artifacts) {
                 artifactContents.add(artifact);
             }
 
-            // If the node has an underlying blackboard artifact, show it. If not,
+            // If the node has an underlying data artifact, show it. If not,
             // show the first artifact.
             int index = 0;
-            BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
+            DataArtifact artifact = lookup.lookup(DataArtifact.class);
             if (artifact != null) {
                 index = artifacts.indexOf(artifact);
                 if (index == -1) {
@@ -547,7 +584,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                             if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                                 long assocArtifactId = attr.getValueLong();
                                 int assocArtifactIndex = -1;
-                                for (BlackboardArtifact art : artifacts) {
+                                for (DataArtifact art : artifacts) {
                                     if (assocArtifactId == art.getArtifactID()) {
                                         assocArtifactIndex = artifacts.indexOf(art);
                                         break;
@@ -616,14 +653,14 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         protected ViewUpdate doInBackground() {
             // Get the artifact content to display from the cache. Note that one must be subtracted from the
             // page index to get the corresponding artifact content index.
-            List<BlackboardArtifact> artifactContents = getArtifactContents();
+            List<DataArtifact> artifactContents = getArtifactContents();
 
             // It may take a considerable amount of time to fetch the attributes of the selected artifact so check for cancellation.
             if (isCancelled()) {
                 return null;
             }
 
-            BlackboardArtifact artifactContent = artifactContents.get(pageIndex - 1);
+            DataArtifact artifactContent = artifactContents.get(pageIndex - 1);
             return new ViewUpdate(artifactContents.size(), pageIndex, artifactContent);
         }
 

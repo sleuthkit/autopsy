@@ -22,18 +22,15 @@ import org.sleuthkit.autopsy.datamodel.AttachmentNode;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
+import java.awt.Cursor;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JScrollPane;
 import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -44,13 +41,13 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.contentviewers.TranslatablePanel;
 import org.sleuthkit.autopsy.contentviewers.TranslatablePanel.TranslatablePanelException;
 import org.sleuthkit.autopsy.contentviewers.Utilities;
+import org.sleuthkit.autopsy.contentviewers.artifactviewers.MessageArtifactWorker.MesssageArtifactData;
 import org.sleuthkit.autopsy.corecomponents.AutoWrappingJTextPane;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
@@ -71,13 +68,8 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
-import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
-import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.FileAttachment;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.Attachment;
-import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.URLAttachment;
 
 /**
  * Shows SMS/MMS/EMail messages
@@ -141,6 +133,8 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
     private ExplorerManager drpExplorerManager;
     
     private MessageAccountPanel accountsPanel;
+    
+    private MessageArtifactWorker worker;
 
     public MessageArtifactViewer(List<JTextComponent> textAreas, DataResultPanel drp) {
         this.textAreas = textAreas;
@@ -419,54 +413,47 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
 
     @Override
     public void setArtifact(BlackboardArtifact artifact) {
-        this.artifact = artifact;
+        resetComponent();
+
+        if (worker != null) {
+            worker.cancel(true);
+            worker = null;
+        }
+
         if (artifact == null) {
-            resetComponent();
             return;
         }
 
-        /*
-         * If the artifact is a keyword hit, use the associated artifact as the
-         * one to show in this viewer
-         */
-        if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
-            try {
-                getAssociatedArtifact(artifact).ifPresent(associatedArtifact -> {
-                    this.artifact = associatedArtifact;
-                });
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "error getting associated artifact", ex);
+        worker = new MessageArtifactWorker(artifact) {
+            @Override
+            public void done() {
+                if (isCancelled()) {
+                    return;
+                }
+
+                try {
+                    MesssageArtifactData data = get();
+                    MessageArtifactViewer.this.artifact = data.getArtifact();
+                    if (data.getArtifact().getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
+                        displayMsg(data);
+                    } else if (data.getArtifact().getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
+                        displayEmailMsg(data);
+                    } else {
+                        resetComponent();
+                    }
+
+                    msgbodyTabbedPane.setEnabledAt(ACCT_TAB_INDEX, true);
+                    accountsPanel.setArtifact(data.getArtifact());
+                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to update message viewer for artifact (%d)", artifact.getId(), ex));
+                }
             }
-        }
+        };
 
-        if (this.artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
-            displayMsg();
-        } else if (this.artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
-            displayEmailMsg();
-        } else {
-            resetComponent();
-        }
-        
-        msgbodyTabbedPane.setEnabledAt(ACCT_TAB_INDEX, true);
-        accountsPanel.setArtifact(artifact);
-    }
-
-    /**
-     * Get the artifact associated with the given artifact, if there is one.
-     *
-     * @param artifact The artifact to get the associated artifact from. Must
-     *                 not be null
-     *
-     * @throws TskCoreException If there is a critical error querying the DB.
-     * @return An optional containing the artifact associated with the given
-     *         artifact, if there is one.
-     */
-    private static Optional<BlackboardArtifact> getAssociatedArtifact(final BlackboardArtifact artifact) throws TskCoreException {
-        BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_TYPE);
-        if (attribute != null) {
-            return Optional.of(artifact.getSleuthkitCase().getArtifactByArtifactId(attribute.getValueLong()));
-        }
-        return Optional.empty();
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        worker.execute();
     }
 
     @Override
@@ -474,7 +461,7 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
         return this;
     }
 
-    private void resetComponent() {
+    public void resetComponent() {
         // reset all fields
         fromText.setText("");
         fromLabel.setEnabled(false);
@@ -505,7 +492,7 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
         //if the artifact is a keyword hit, check if its associated artifact is a message or email.
         if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
             try {
-                if (getAssociatedArtifact(artifact).map(MessageArtifactViewer::isMessageArtifact).orElse(false)) {
+                if (MessageArtifactWorker.getAssociatedArtifact(artifact).map(MessageArtifactViewer::isMessageArtifact).orElse(false)) {
                     return true;
                 }
             } catch (TskCoreException ex) {
@@ -534,27 +521,25 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
      * Configure the text area at the given index to show the content of the
      * given type.
      *
-     * @param type  The ATTRIBUT_TYPE to show in the indexed tab.
+     * @param text text to show in the indexed tab.
      * @param index The index of the text area to configure.
      *
      * @throws TskCoreException
      */
-    private void configureTextArea(BlackboardAttribute.ATTRIBUTE_TYPE type, int index) throws TskCoreException {
-        String attributeText = getAttributeValueSafe(artifact, type);
-
-        if (index == HTML_TAB_INDEX && StringUtils.isNotBlank(attributeText)) {
-            htmlPanel.setHtmlText(attributeText);
-        } else if (index == TEXT_TAB_INDEX && StringUtils.isNotBlank(attributeText)) {
-            textPanel.setContent(attributeText, artifact.toString());
+    private void configureTextArea(String text, int index) {
+        if (index == HTML_TAB_INDEX && StringUtils.isNotBlank(text)) {
+            htmlPanel.setHtmlText(text);
+        } else if (index == TEXT_TAB_INDEX && StringUtils.isNotBlank(text)) {
+            textPanel.setContent(text, artifact.toString());
         } else {
             JTextComponent textComponent = textAreas.get(index);
             if (textComponent != null) {
-                textComponent.setText(attributeText);
+                textComponent.setText(text);
                 textComponent.setCaretPosition(0); //make sure we start at the top
             }
         }
 
-        final boolean hasText = attributeText.length() > 0;
+        final boolean hasText = text.length() > 0;
 
         msgbodyTabbedPane.setEnabledAt(index, hasText);
         if (hasText) {
@@ -570,38 +555,8 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
         datetimeText.setEnabled(true);
     }
 
-    private void configureAttachments() throws TskCoreException {
-
-        final Set<Attachment> attachments;
-
-        //  Attachments are specified in an attribute TSK_ATTACHMENTS as JSON attribute
-        BlackboardAttribute attachmentsAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ATTACHMENTS));
-        if (attachmentsAttr != null) {
-
-            attachments = new HashSet<>();
-            try {
-                MessageAttachments msgAttachments = BlackboardJsonAttrUtil.fromAttribute(attachmentsAttr, MessageAttachments.class);
-                Collection<FileAttachment> fileAttachments = msgAttachments.getFileAttachments();
-                for (FileAttachment fileAttachment : fileAttachments) {
-                    attachments.add(fileAttachment);
-                }
-                Collection<URLAttachment> urlAttachments = msgAttachments.getUrlAttachments();
-                for (URLAttachment urlAttachment : urlAttachments) {
-                    attachments.add(urlAttachment);
-                }
-            } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
-                LOGGER.log(Level.WARNING, String.format("Unable to parse json for MessageAttachments object in artifact: %s", artifact.getName()), ex);
-            }
-        } else {    // For backward compatibility - email attachements are derived files and children of the email message artifact
-            attachments = new HashSet<>();
-            for (Content child : artifact.getChildren()) {
-                if (child instanceof AbstractFile) {
-                    attachments.add(new FileAttachment((AbstractFile) child));
-                }
-            }
-        }
-
-        final int numberOfAttachments = attachments.size();
+    private void configureAttachments(Set<Attachment> attachments) {
+        int numberOfAttachments = attachments.size();
 
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, numberOfAttachments > 0);
         msgbodyTabbedPane.setTitleAt(ATTM_TAB_INDEX, "Attachments (" + numberOfAttachments + ")");
@@ -609,79 +564,48 @@ public class MessageArtifactViewer extends javax.swing.JPanel implements Artifac
                 new AttachmentsChildren(attachments))), true));
     }
 
-    private void displayEmailMsg() {
+    private void displayEmailMsg(MesssageArtifactData artifactData) {
         enableCommonFields();
 
         directionText.setEnabled(false);
         ccLabel.setEnabled(true);
 
-        try {
-            this.fromText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));
-            this.fromText.setToolTipText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));
-            this.toText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_TO));
-            this.toText.setToolTipText(getAttributeValueSafe(artifact, TSK_EMAIL_TO));
-            this.directionText.setText("");
-            this.ccText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_CC));
-            this.ccText.setToolTipText(getAttributeValueSafe(artifact, TSK_EMAIL_CC));
-            this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
-            this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME_RCVD));
+        this.fromText.setText(artifactData.getAttributeDisplayString( TSK_EMAIL_FROM));
+        this.fromText.setToolTipText(artifactData.getAttributeDisplayString(TSK_EMAIL_FROM));
+        this.toText.setText(artifactData.getAttributeDisplayString(TSK_EMAIL_TO));
+        this.toText.setToolTipText(artifactData.getAttributeDisplayString(TSK_EMAIL_TO));
+        this.directionText.setText("");
+        this.ccText.setText(artifactData.getAttributeDisplayString(TSK_EMAIL_CC));
+        this.ccText.setToolTipText(artifactData.getAttributeDisplayString(TSK_EMAIL_CC));
+        this.subjectText.setText(artifactData.getAttributeDisplayString(TSK_SUBJECT));
+        this.datetimeText.setText(artifactData.getAttributeDisplayString(TSK_DATETIME_RCVD));
 
-            configureTextArea(TSK_HEADERS, HDR_TAB_INDEX);
-            configureTextArea(TSK_EMAIL_CONTENT_PLAIN, TEXT_TAB_INDEX);
-            configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
-            configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
-            configureAttachments();
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
-        }
+        configureTextArea(artifactData.getAttributeDisplayString(TSK_HEADERS), HDR_TAB_INDEX);
+        configureTextArea(artifactData.getAttributeDisplayString(TSK_EMAIL_CONTENT_PLAIN), TEXT_TAB_INDEX);
+        configureTextArea(artifactData.getAttributeDisplayString(TSK_EMAIL_CONTENT_HTML), HTML_TAB_INDEX);
+        configureTextArea(artifactData.getAttributeDisplayString(TSK_EMAIL_CONTENT_RTF), RTF_TAB_INDEX);
+        configureAttachments(artifactData.getAttachements());  
     }
 
-    private void displayMsg() {
+    private void displayMsg(MesssageArtifactData artifactData) {
         enableCommonFields();
 
         directionText.setEnabled(true);
         ccLabel.setEnabled(false);
 
-        try {
-            this.fromText.setText(getAttributeValueSafe(artifact, TSK_PHONE_NUMBER_FROM));
-            this.toText.setText(getAttributeValueSafe(artifact, TSK_PHONE_NUMBER_TO));
-            this.directionText.setText(getAttributeValueSafe(artifact, TSK_DIRECTION));
-            this.ccText.setText("");
-            this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
-            this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME));
+        this.fromText.setText(artifactData.getAttributeDisplayString(TSK_PHONE_NUMBER_FROM));
+        this.toText.setText(artifactData.getAttributeDisplayString(TSK_PHONE_NUMBER_TO));
+        this.directionText.setText(artifactData.getAttributeDisplayString(TSK_DIRECTION));
+        this.ccText.setText("");
+        this.subjectText.setText(artifactData.getAttributeDisplayString(TSK_SUBJECT));
+        this.datetimeText.setText(artifactData.getAttributeDisplayString(TSK_DATETIME));
 
-            msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
-            msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
-            msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
-            msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
-            configureTextArea(TSK_TEXT, TEXT_TAB_INDEX);
-            configureAttachments();
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to get attributes for message.", ex); //NON-NLS
-        }
-    }
-
-    private static String getAttributeValueSafe(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException {
-        return Optional.ofNullable(artifact.getAttribute(new BlackboardAttribute.Type(type)))
-                .map(BlackboardAttribute::getDisplayString)
-                .orElse("");
-    }
-
-    /**
-     * Cleans out input HTML string
-     *
-     * @param htmlInString The HTML string to cleanse
-     *
-     * @return The cleansed HTML String
-     */
-    static private String cleanseHTML(String htmlInString) {
-
-        Document doc = Jsoup.parse(htmlInString);
-
-        //fix all img tags
-        doc.select("img[src]").forEach(img -> img.attr("src", ""));
-
-        return doc.html();
+        msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
+        msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
+        msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
+        msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
+        configureTextArea(artifactData.getAttributeDisplayString(TSK_TEXT), TEXT_TAB_INDEX);
+        configureAttachments(artifactData.getAttachements());
     }
     
     /**

@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.datamodel.AnalysisResult;
 
 public class InterestingHits implements AutopsyVisitableItem {
 
@@ -130,7 +131,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
             int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int artId = artType.getTypeID();
-            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id " //NON-NLS
+            String query = "SELECT value_text,blackboard_artifacts.artifact_obj_id,attribute_type_id " //NON-NLS
                     + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
                     + "attribute_type_id=" + setNameId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
@@ -144,13 +145,13 @@ public class InterestingHits implements AutopsyVisitableItem {
                     ResultSet resultSet = dbQuery.getResultSet();
                     while (resultSet.next()) {
                         String value = resultSet.getString("value_text"); //NON-NLS
-                        long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                        long artifactObjId = resultSet.getLong("artifact_obj_id"); //NON-NLS
                         if (!interestingItemsMap.containsKey(value)) {
                             interestingItemsMap.put(value, new LinkedHashMap<>());
                             interestingItemsMap.get(value).put(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName(), new HashSet<>());
                             interestingItemsMap.get(value).put(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName(), new HashSet<>());
                         }
-                        interestingItemsMap.get(value).get(artType.getDisplayName()).add(artifactId);
+                        interestingItemsMap.get(value).get(artType.getDisplayName()).add(artifactObjId);
                     }
                 }
             } catch (TskCoreException | SQLException ex) {
@@ -462,11 +463,11 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
-    private class HitFactory extends BaseChildFactory<BlackboardArtifact> implements Observer {
+    private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
 
         private final String setName;
         private final String typeName;
-        private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
+        private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
 
         private HitFactory(String setName, String typeName) {
             /**
@@ -481,13 +482,13 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected List<BlackboardArtifact> makeKeys() {
+        protected List<AnalysisResult> makeKeys() {
 
             if (skCase != null) {
                 interestingResults.getArtifactIds(setName, typeName).forEach((id) -> {
                     try {
                         if (!artifactHits.containsKey(id)) {
-                            BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                            AnalysisResult art = skCase.getBlackboard().getAnalysisResultById(id);
                             //Cache attributes while we are off the EDT.
                             //See JIRA-5969
                             art.getAttributes();
@@ -504,7 +505,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact art) {
+        protected Node createNodeForKey(AnalysisResult art) {
             return new BlackboardArtifactNode(art);
         }
 
