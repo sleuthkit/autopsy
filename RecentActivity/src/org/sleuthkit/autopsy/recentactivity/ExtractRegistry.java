@@ -1434,21 +1434,23 @@ class ExtractRegistry extends Extract {
                         && !line.contains(("Recent File List"))) {
                     // Split line on "> " which is the record delimiter between position and file
                     String tokens[] = line.split("> ");
-                    String fileName = tokens[1];
-                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                    attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                    attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
-                    try{
-                        BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
-                        if (bba != null) {
-                            bbartifacts.add(bba);
-                            bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                    if (tokens.length > 1) {
+                        String fileName = tokens[1];
+                        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                        attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
+                        attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
+                        try{
+                            BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
                             if (bba != null) {
                                 bbartifacts.add(bba);
+                                bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
+                                if (bba != null) {
+                                    bbartifacts.add(bba);
+                                }
                             }
+                        } catch(TskCoreException ex) {
+                            logger.log(Level.SEVERE, String.format("Failed to create TSK_RECENT_OBJECT artifact for file %d", regFile.getId()), ex);
                         }
-                    } catch(TskCoreException ex) {
-                        logger.log(Level.SEVERE, String.format("Failed to create TSK_RECENT_OBJECT artifact for file %d", regFile.getId()), ex);
                     }
                     line = reader.readLine();
                 }

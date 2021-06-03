@@ -28,7 +28,6 @@ import com.healthmarketscience.jackcess.util.MemFileChannel;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.BufferUnderflowException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import org.apache.tika.exception.EncryptedDocumentException;
@@ -65,7 +64,9 @@ import org.xml.sax.SAXException;
 final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter {
 
     private static final int FILE_SIZE_MODULUS = 512;
-
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
+    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
+    
     private static final String DATABASE_FILE_EXTENSION = "db";
     private static final int MINIMUM_DATABASE_FILE_SIZE = 65536; //64 KB
 
@@ -157,10 +158,11 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                  */
                 String mimeType = fileTypeDetector.getMIMEType(file);
                 if (mimeType.equals("application/octet-stream") && isFileEncryptionSuspected(file)) {
-                    return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED,
+                    return flagFile(file, BlackboardArtifact.Type.TSK_ENCRYPTION_SUSPECTED, LIKELY_NOTABLE_SCORE,
                             String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
                 } else if (isFilePasswordProtected(file)) {
-                    return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
+                    return flagFile(file, BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, NOTABLE_SCORE, 
+                    Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
                 }
             }
         } catch (ReadContentInputStreamException | SAXException | TikaException | UnsupportedCodecException ex) {
@@ -191,18 +193,19 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      * @param file         The file to be processed.
      * @param artifactType The type of artifact to create. Assumed to be an
      *                     analysis result type.
+     * @param score        The score of the analysis result.
      * @param comment      A comment to be attached to the artifact.
      *
      * @return 'OK' if the file was processed successfully, or 'ERROR' if there
      *         was a problem.
      */
-    private IngestModule.ProcessResult flagFile(AbstractFile file, BlackboardArtifact.ARTIFACT_TYPE artifactType, String comment) {
+    private IngestModule.ProcessResult flagFile(AbstractFile file, BlackboardArtifact.Type artifactType, Score score, String comment) {
         try {
             if (context.fileIngestIsCancelled()) {
                 return IngestModule.ProcessResult.OK;
             }
 
-            BlackboardArtifact artifact = file.newAnalysisResult(new BlackboardArtifact.Type(artifactType), Score.SCORE_UNKNOWN, null, null, null, 
+            BlackboardArtifact artifact = file.newAnalysisResult(artifactType, score, null, null, comment, 
                     Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                     EncryptionDetectionModuleFactory.getModuleName(), comment)))
                     .getAnalysisResult();

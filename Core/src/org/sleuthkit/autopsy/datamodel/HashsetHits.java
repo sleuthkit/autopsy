@@ -282,7 +282,8 @@ public class HashsetHits implements AutopsyVisitableItem {
         
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
-        HashsetNameFactory() {
+        @Override
+        protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);

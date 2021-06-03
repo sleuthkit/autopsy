@@ -498,9 +498,6 @@ final public class Accounts implements AutopsyVisitableItem {
 
         private DefaultAccountFactory(Account.Type accountType) {
             this.accountType = accountType;
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
         }
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
@@ -556,6 +553,13 @@ final public class Accounts implements AutopsyVisitableItem {
         };
         
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        
+        @Override
+        protected void addNotify() {
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+        }
 
         @Override
         protected void finalize() throws Throwable {
@@ -727,12 +731,7 @@ final public class Accounts implements AutopsyVisitableItem {
         };
         
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
-        
-        ViewModeFactory() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-        }
+
 
         @Subscribe
         @Override
@@ -744,6 +743,13 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
+        }
+        
+        @Override
+        protected void addNotify() {
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
         }
 
         @Override
@@ -883,7 +889,8 @@ final public class Accounts implements AutopsyVisitableItem {
         
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
-        FileWithCCNFactory() {
+        @Override
+        protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);

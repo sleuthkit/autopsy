@@ -75,6 +75,7 @@ import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments.Fil
  * structure and metadata.
  */
 public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
+    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
@@ -242,13 +243,14 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                     // encrypted pst: Add encrypted file artifact
                     try {
 
+                    String encryptionFileLevel = NbBundle.getMessage(this.getClass(), 
+                                        "ThunderbirdMboxFileIngestModule.encryptionFileLevel");
                     BlackboardArtifact artifact = abstractFile.newAnalysisResult(
-                            new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED), 
-                            Score.SCORE_UNKNOWN, null, null, null, Arrays.asList(
+                            BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, 
+                            NOTABLE_SCORE, null, null, encryptionFileLevel, Arrays.asList(
                                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, 
                                         EmailParserModuleFactory.getModuleName(), 
-                                        NbBundle.getMessage(this.getClass(), 
-                                        "ThunderbirdMboxFileIngestModule.encryptionFileLevel"))
+                                        encryptionFileLevel)
                             ))
                             .getAnalysisResult();
 

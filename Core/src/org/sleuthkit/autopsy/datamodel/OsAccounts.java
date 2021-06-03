@@ -39,7 +39,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.events.OsAccountChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -125,8 +125,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.OS_ACCOUNT_ADDED.toString())
-                        || eventType.equals(Case.Events.OS_ACCOUNT_REMOVED.toString())) {
+                if (eventType.equals(Case.Events.OS_ACCOUNTS_ADDED.toString())
+                        || eventType.equals(Case.Events.OS_ACCOUNTS_DELETED.toString())) {
                     refresh(true);
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
@@ -140,16 +140,17 @@ public final class OsAccounts implements AutopsyVisitableItem {
         
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(listener, null);
 
-        OsAccountNodeFactory () {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNT_ADDED, Case.Events.OS_ACCOUNT_REMOVED), weakPcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-        }
-
         @Override
         protected void finalize() throws Throwable {
             super.finalize();
-            Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_ADDED), weakPcl);
+            Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNTS_ADDED), weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+        }
+        
+        @Override
+        protected void addNotify() {
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNTS_ADDED, Case.Events.OS_ACCOUNTS_DELETED), listener);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
 
         @Override
@@ -186,11 +187,14 @@ public final class OsAccounts implements AutopsyVisitableItem {
         private final PropertyChangeListener listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.Events.OS_ACCOUNT_CHANGED.name())) {
-                    if (((OsAccountChangedEvent) evt).getOsAccount().getId() == account.getId()) {
-                        // Update the account node to the new one
-                        account = ((OsAccountChangedEvent) evt).getOsAccount();
-                        updateSheet();
+                if (evt.getPropertyName().equals(Case.Events.OS_ACCOUNTS_UPDATED.name())) {
+                    OsAccountsUpdatedEvent updateEvent = (OsAccountsUpdatedEvent) evt;
+                    for (OsAccount acct : updateEvent.getOsAccounts()) {
+                        if (acct.getId() == account.getId()) {
+                            account = acct;
+                            updateSheet();
+                            break;
+                        }
                     }
                 } else if (evt.getPropertyName().equals(REALM_DATA_AVAILABLE_EVENT)) {
                     OsAccountRealm realm = (OsAccountRealm) evt.getNewValue();
@@ -224,7 +228,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
             setDisplayName(account.getName());
             setIconBaseWithExtension(ICON_PATH);
 
-            Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNT_CHANGED), weakListener);
+            Case.addEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNTS_UPDATED), weakListener);
         }
 
         @Override

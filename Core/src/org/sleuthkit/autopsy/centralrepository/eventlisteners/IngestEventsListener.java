@@ -37,7 +37,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
@@ -63,12 +62,9 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
-import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
-import org.sleuthkit.datamodel.Account;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT;
-import org.sleuthkit.datamodel.CommunicationsUtils;
 import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.Score.Priority;
+import org.sleuthkit.datamodel.Score.Significance;
 
 /**
  * Listen for ingest events and update entries in the Central Repository
@@ -76,7 +72,7 @@ import org.sleuthkit.datamodel.Score;
  */
 @NbBundle.Messages({"IngestEventsListener.ingestmodule.name=Central Repository"})
 public class IngestEventsListener {
-
+    private static final Score LIKELY_NOTABLE_SCORE = new Score(Significance.LIKELY_NOTABLE, Priority.NORMAL);
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
@@ -216,17 +212,17 @@ public class IngestEventsListener {
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
         "IngestEventsListener.prevCaseComment.text=Previous Case: "})
     static private void makeAndPostPreviousNotableArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames) {
-
-        Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
-                TSK_SET_NAME, MODULE_NAME,
-                Bundle.IngestEventsListener_prevTaggedSet_text()),
+        Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
+                new BlackboardAttribute(
+                        TSK_SET_NAME, MODULE_NAME,
+                        Bundle.IngestEventsListener_prevTaggedSet_text()),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
                         Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
                 new BlackboardAttribute(
                         TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
                         originalArtifact.getArtifactID()));
-        makeAndPostInterestingArtifact(originalArtifact, attributesForNewArtifact);
+        makeAndPostInterestingArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text());
     }
 
     /**
@@ -251,26 +247,28 @@ public class IngestEventsListener {
                 new BlackboardAttribute(
                         TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
                         originalArtifact.getArtifactID()));
-        makeAndPostInterestingArtifact(originalArtifact, attributesForNewArtifact);
+        makeAndPostInterestingArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
     }
-
+    
+    
     /**
      * Make an interesting item artifact to flag the passed in artifact.
      *
      * @param originalArtifact         Artifact in current case we want to flag
      * @param attributesForNewArtifact Attributes to assign to the new
      *                                 Interesting items artifact
+     * @param configuration            The configuration to be specified for the new interesting artifact hit
      */
-    private static void makeAndPostInterestingArtifact(BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact) {
+    private static void makeAndPostInterestingArtifact(BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration) {
         try {
             SleuthkitCase tskCase = originalArtifact.getSleuthkitCase();
             AbstractFile abstractFile = tskCase.getAbstractFileById(originalArtifact.getObjectID());
             Blackboard blackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_ARTIFACT_HIT, attributesForNewArtifact)) {
-                BlackboardArtifact newInterestingArtifact = abstractFile.newAnalysisResult(
-                        new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT),
-                        Score.SCORE_UNKNOWN, null, null, null, attributesForNewArtifact)
+                  BlackboardArtifact newInterestingArtifact = abstractFile.newAnalysisResult(
+                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, LIKELY_NOTABLE_SCORE, 
+                        null, configuration, null, attributesForNewArtifact)
                         .getAnalysisResult();
 
                 try {

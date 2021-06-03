@@ -431,7 +431,8 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     private abstract class DetachableObserverChildFactory<X> extends ChildFactory.Detachable<X> implements Observer {
 
-        DetachableObserverChildFactory() {
+        @Override
+        protected void addNotify() {
             keywordResults.addObserver(this);
         }
 

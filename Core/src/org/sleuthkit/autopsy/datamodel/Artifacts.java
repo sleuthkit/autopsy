@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -322,7 +321,10 @@ public class Artifacts {
             };
 
             weakPcl = WeakListeners.propertyChange(pcl, null);
-            
+        }
+        
+        @Override
+        protected void addNotify() {            
             refreshThrottler.registerForIngestModuleEvents();
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);

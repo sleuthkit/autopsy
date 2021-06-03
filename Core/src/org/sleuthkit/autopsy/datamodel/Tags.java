@@ -224,6 +224,10 @@ public class Tags implements AutopsyVisitableItem {
          */
         TagNameNodeFactory(long objId) {
             this.filteringDSObjId = objId;
+        }
+        
+        @Override
+        protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
             tagResults.update();
