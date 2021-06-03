@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -39,9 +38,12 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
@@ -55,13 +57,18 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
 public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
-    
+
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GeneralPurposeArtifactViewer.class.getName());
     // Number of columns in the gridbag layout.
     private final static int MAX_COLS = 4;
-    private final static Insets ROW_INSETS = new java.awt.Insets(0, 12, 0, 0);
-    private final static Insets HEADER_INSETS = new java.awt.Insets(0, 0, 0, 0);
+    private final static Insets ROW_INSETS = new java.awt.Insets(0, 0, 0, 0);
+
+    private final static Insets FIRST_HEADER_INSETS = new Insets(0, 0, 0, 0);
+    private final static Insets HEADER_INSETS = new Insets(ContentViewerDefaults.getSectionSpacing(), 0, ContentViewerDefaults.getLineSpacing(), 0);
+    private final static Insets VALUE_COLUMN_INSETS = new Insets(0, ContentViewerDefaults.getColumnSpacing(), ContentViewerDefaults.getLineSpacing(), 0);
+    private final static Insets KEY_COLUMN_INSETS = new Insets(0, ContentViewerDefaults.getSectionIndent(), ContentViewerDefaults.getLineSpacing(), 0);
+
     private final static double GLUE_WEIGHT_X = 1.0;
     private final static double TEXT_WEIGHT_X = 0.0;
     private final static int LABEL_COLUMN = 0;
@@ -78,7 +85,6 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()};
     private static final List<Integer> TYPES_WITH_DATE_SECTION = Arrays.asList(new Integer[]{BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()});
     private final GridBagLayout gridBagLayout = new GridBagLayout();
-    private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
     private final Map<Integer, Integer[]> orderingMap = new HashMap<>();
     private final javax.swing.JPanel detailsPanel = new javax.swing.JPanel();
 
@@ -89,8 +95,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     public GeneralPurposeArtifactViewer() {
         addOrderings();
         initComponents();
-        gridBagConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
         detailsPanel.setLayout(gridBagLayout);
+        detailsPanel.setBorder(new EmptyBorder(ContentViewerDefaults.getPanelInsets()));
     }
 
     /**
@@ -134,7 +140,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
     }
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.unknown.text=Unknown"})
     @Override
@@ -175,14 +181,8 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         detailsPanel.removeAll();
         detailsPanel.setLayout(gridBagLayout);
         detailsPanel.revalidate();
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridx = LABEL_COLUMN;
-        gridBagConstraints.weighty = 0.0;
-        gridBagConstraints.weightx = TEXT_WEIGHT_X;    // keep components fixed horizontally.
-        gridBagConstraints.fill = GridBagConstraints.NONE;
-        gridBagConstraints.insets = ROW_INSETS;
     }
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public boolean isSupported(BlackboardArtifact artifact) {
@@ -197,7 +197,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL.getTypeID());
     }
-    
+
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.attrHeader=Details",
         "GeneralPurposeArtifactViewer.details.sourceHeader=Source",
         "GeneralPurposeArtifactViewer.details.dataSource=Data Source",
@@ -250,8 +250,10 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFilePath) {
         final Integer artifactTypeId = artifact.getArtifactTypeID();
+        int curRow = 0;
         if (!(artifactTypeId < 1 || artifactTypeId >= Integer.MAX_VALUE)) {
-            JTextPane firstTextPane = addDetailsHeader(artifactTypeId);
+            JTextPane firstTextPane = addDetailsHeader(artifactTypeId, curRow);
+            curRow++;
             Integer[] orderingArray = orderingMap.get(artifactTypeId);
             if (orderingArray == null) {
                 orderingArray = DEFAULT_ORDERING;
@@ -262,27 +264,39 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                     for (BlackboardAttribute bba : attrList) {
                         if (bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
                             if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
-                                addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_time(), TimeZoneUtils.getFormattedTime(bba.getValueLong()));
+                                addNameValueRow(Bundle.GeneralPurposeArtifactViewer_dates_time(), TimeZoneUtils.getFormattedTime(bba.getValueLong()), curRow);
                             } else {
-                                addNameValueRow(bba.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(bba.getValueLong()));
+                                addNameValueRow(bba.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(bba.getValueLong()), curRow);
                             }
                         } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID() && artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
-                            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_term_label(), bba.getDisplayString());
+                            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_term_label(), bba.getDisplayString(), curRow);
                         } else if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()) {
                             String displayString = bba.getDisplayString();
                             if (!attributeMap.containsKey(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID())) {
                                 displayString += Bundle.GeneralPurposeArtifactViewer_noFile_text();
                             }
-                            addNameValueRow(bba.getAttributeType().getDisplayName(), displayString);
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), displayString, curRow);
                         } else {
-                            addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString());
+                            addNameValueRow(bba.getAttributeType().getDisplayName(), bba.getDisplayString(), curRow);
                         }
+                        curRow++;
                     }
                 }
             }
             if (TYPES_WITH_DATE_SECTION.contains(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID())) {
                 boolean headerAdded = false;
-                headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_created(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()), headerAdded);
+                List<Pair<String, String>> dateKeyValuePairs = Stream.of(
+                        Pair.of(Bundle.GeneralPurposeArtifactViewer_dates_created(), 
+                                attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID())),
+                        Pair.of(Bundle.GeneralPurposeArtifactViewer_dates_start(), 
+                                attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID())),
+                        Pair.of(Bundle.GeneralPurposeArtifactViewer_dates_end(), 
+                                attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID())),
+                        Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(), 
+                                attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()))
+                )
+                )
+                headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_created(), , headerAdded);
                 headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_start(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()), headerAdded);
                 headerAdded = addDates(Bundle.GeneralPurposeArtifactViewer_dates_end(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()), headerAdded);
                 addDates(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getDisplayName(), attributeMap.remove(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()), headerAdded);
@@ -311,21 +325,25 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         detailsPanel.revalidate();
     }
 
+
     /**
      * Private helper method to add all dates in a given attribute list.
      *
      * @param label        Specific String to use in place of attributes display
      *                     name.
      * @param attrList     List of attributes to add dates for.
+     * @param rowStart     The starting row of these dates.
      * @param headerExists If the "Dates" header has already been displayed.
      *
-     * @return True if the "Dates" header has been displayed, false otherwise.
+     * @return The next empty row.
      */
-    private boolean addDates(String label, List<BlackboardAttribute> attrList, boolean headerExists) {
+    private int addDates(String label, List<BlackboardAttribute> attrList, int rowStart, boolean headerExists) {
+        int curRow = rowStart;
         boolean headerAdded = headerExists;
         if (attrList != null) {
             if (!headerAdded) {
-                addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader());
+                addHeader(Bundle.GeneralPurposeArtifactViewer_details_datesHeader(), curRow);
+                curRow++;
                 headerAdded = true;
             }
             String labelToUse = label;
@@ -333,16 +351,18 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 if (StringUtils.isBlank(label)) {
                     labelToUse = bba.getAttributeType().getDisplayName();
                 }
-                addNameValueRow(labelToUse, bba.getDisplayString());
+                addNameValueRow(labelToUse, bba.getDisplayString(), curRow);
+                curRow++;
             }
         }
-        return headerAdded;
+        return new AddDatesData();
     }
 
     /**
      * Helper method to add an artifact specific details header.
      *
      * @param artifactTypeId ID of artifact type to add header for.
+     * @param row            The row of the header.
      */
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.bookmarkHeader=Bookmark Details",
         "GeneralPurposeArtifactViewer.details.historyHeader=Visit Details",
@@ -350,7 +370,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         "GeneralPurposeArtifactViewer.details.searchHeader=Web Search",
         "GeneralPurposeArtifactViewer.details.cachedHeader=Cached File",
         "GeneralPurposeArtifactViewer.details.cookieHeader=Cookie Details",})
-    private JTextPane addDetailsHeader(int artifactTypeId) {
+    private JTextPane addDetailsHeader(int artifactTypeId, int row) {
         String header;
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
             header = Bundle.GeneralPurposeArtifactViewer_details_historyHeader();
@@ -367,48 +387,58 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         } else {
             header = Bundle.GeneralPurposeArtifactViewer_details_attrHeader();
         }
-        return addHeader(header);
+        return addHeader(header, row);
+    }
+
+    private GridBagConstraints getDefaultConstraints(int row, int col) {
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridy = row;
+        gridBagConstraints.gridx = col;
+        gridBagConstraints.weighty = 0.0;
+        gridBagConstraints.weightx = TEXT_WEIGHT_X;    // keep components fixed horizontally.
+        gridBagConstraints.fill = GridBagConstraints.NONE;
+        gridBagConstraints.insets = ROW_INSETS;
+        gridBagConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        return gridBagConstraints;
     }
 
     /**
      * Adds a new heading to the panel.
      *
      * @param headerString Heading string to display.
+     * @param row          The grid row to add this header.
      *
      * @return JLabel Heading label added.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private JTextPane addHeader(String headerString) {
+    private JTextPane addHeader(String headerString, int row) {
         // create label for heading
         javax.swing.JTextPane headingLabel = new javax.swing.JTextPane();
         headingLabel.setOpaque(false);
         headingLabel.setFocusable(false);
         headingLabel.setEditable(false);
-        // add a blank line before the start of new section, unless it's 
-        // the first section
-        if (gridBagConstraints.gridy != 0) {
-            gridBagConstraints.gridy++;
-            // add to panel
-            addToPanel(new javax.swing.JLabel(" "));
-            addLineEndGlue();
-            headingLabel.setFocusable(false);
-        } 
-        gridBagConstraints.gridy++;
-        gridBagConstraints.gridx = LABEL_COLUMN;;
+
+        GridBagConstraints gridBagConstraints = getDefaultConstraints(row, LABEL_COLUMN);
+
+        gridBagConstraints.insets = (row == 0)
+                ? FIRST_HEADER_INSETS
+                : HEADER_INSETS;
+
         // let the header span all of the row
         gridBagConstraints.gridwidth = MAX_COLS;
         gridBagConstraints.insets = HEADER_INSETS;
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
         // set text
         headingLabel.setText(headerString);
         // make it large and bold
-        headingLabel.setFont(headingLabel.getFont().deriveFont(Font.BOLD, headingLabel.getFont().getSize() + 2));
+        headingLabel.setFont(ContentViewerDefaults.getHeaderFont());
         // add to panel
-        addToPanel(headingLabel);
+        addToPanel(headingLabel, gridBagConstraints);
         // reset constraints to normal
         gridBagConstraints.gridwidth = LABEL_WIDTH;
         // add line end glue
-        addLineEndGlue();
-        gridBagConstraints.insets = ROW_INSETS;
+        addLineEndGlue(row);
+
         return headingLabel;
     }
 
@@ -418,63 +448,68 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
      *
      * @param keyString   Key name to display.
      * @param valueString Value string to display.
+     * @param row         The row index.
      */
-    private JTextPane addNameValueRow(String keyString, String valueString) {
-        addKeyAtCol(keyString);
-        return addValueAtCol(valueString);
+    private JTextPane addNameValueRow(String keyString, String valueString, int row) {
+        addKeyAtCol(keyString, row);
+        return addValueAtCol(valueString, row);
     }
 
     /**
      * Adds a filler/glue at the end of the line to keep the other columns
      * aligned, in case the panel is resized.
+     *
+     * @param row The row for the line end glue.
      */
-    private void addLineEndGlue() {
+    private void addLineEndGlue(int row) {
         // Place the filler just past the last column.
-        gridBagConstraints.gridx = MAX_COLS;
+        GridBagConstraints gridBagConstraints = getDefaultConstraints(row, MAX_COLS);
         gridBagConstraints.weightx = GLUE_WEIGHT_X; // take up all the horizontal space
-        gridBagConstraints.fill = GridBagConstraints.BOTH;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         javax.swing.Box.Filler horizontalFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(32767, 0));
         // add to panel
-        addToPanel(horizontalFiller);
-        // restore fill & weight
-        gridBagConstraints.fill = GridBagConstraints.NONE;
-        gridBagConstraints.weightx = TEXT_WEIGHT_X;
+        addToPanel(horizontalFiller, gridBagConstraints);
     }
 
     /**
      * Adds a filler/glue at the bottom of the panel to keep the data rows
      * aligned, in case the panel is resized.
+     *
+     * @param row The row for the line end glue.
      */
-    private void addPageEndGlue() {
+    private void addPageEndGlue(int row) {
+        GridBagConstraints gridBagConstraints = getDefaultConstraints(row, 0);
         gridBagConstraints.weighty = 1.0; // take up all the vertical space
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         javax.swing.Box.Filler vertFiller = new javax.swing.Box.Filler(new Dimension(0, 0), new Dimension(0, 0), new Dimension(0, 32767));
         // add to panel
-        addToPanel(vertFiller);
+        addToPanel(vertFiller, gridBagConstraints);
     }
 
     /**
      * Adds a label/key to the panel.
      *
      * @param keyString Key name to display.
+     * @param row       The row for this column.
      *
      * @return Label added.
      */
-    private JLabel addKeyAtCol(String keyString) {
+    private JLabel addKeyAtCol(String keyString, int row) {
         // create label
         javax.swing.JLabel keyLabel = new javax.swing.JLabel();
         keyLabel.setFocusable(false);
-        gridBagConstraints.gridy++;
-        gridBagConstraints.gridx = LABEL_COLUMN;
+
+        GridBagConstraints gridBagConstraints = getDefaultConstraints(row, LABEL_COLUMN);
         gridBagConstraints.gridwidth = LABEL_WIDTH;
+        gridBagConstraints.insets = KEY_COLUMN_INSETS;
         // set text
-        keyLabel.setText(keyString + ": ");
+        keyLabel.setText(keyString + ":");
         // add to panel
-        addToPanel(keyLabel);
+        addToPanel(keyLabel, gridBagConstraints);
         return keyLabel;
     }
 
-    private void addToPanel(Component comp) {
+    private void addToPanel(Component comp, GridBagConstraints gridBagConstraints) {
         detailsPanel.add(comp, gridBagConstraints);
         detailsPanel.revalidate();
     }
@@ -483,20 +518,22 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
      * Adds a value string to the panel at specified column.
      *
      * @param valueString Value string to display.
+     * @param row         The row for this column.
      *
      * @return Label added.
      */
-    private JTextPane addValueAtCol(String valueString) {
+    private JTextPane addValueAtCol(String valueString, int row) {
         // create label,
         JTextPane valueField = new JTextPane();
         valueField.setFocusable(false);
         valueField.setEditable(false);
         valueField.setOpaque(false);
-        gridBagConstraints.gridx = VALUE_COLUMN;
-        GridBagConstraints cloneConstraints = (GridBagConstraints) gridBagConstraints.clone();
+
+        GridBagConstraints gridBagConstraints = getDefaultConstraints(row, VALUE_COLUMN);
         // let the value span 2 cols
-        cloneConstraints.gridwidth = VALUE_WIDTH;
-        cloneConstraints.fill = GridBagConstraints.BOTH;
+        gridBagConstraints.gridwidth = VALUE_WIDTH;
+        gridBagConstraints.insets = VALUE_COLUMN_INSETS;
+
         // set text
         valueField.setText(valueString);
         // attach a right click menu with Copy option
@@ -507,10 +544,10 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             }
         });
         // add label to panel with cloned contraintsF
-        detailsPanel.add(valueField, cloneConstraints);
+        detailsPanel.add(valueField, gridBagConstraints);
         revalidate();
         // end the line
-        addLineEndGlue();
+        addLineEndGlue(row);
         return valueField;
     }
 

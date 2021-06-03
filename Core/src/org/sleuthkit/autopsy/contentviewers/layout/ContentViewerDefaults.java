@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.contentviewers.defaults;
+package org.sleuthkit.autopsy.contentviewers.layout;
 
 import com.google.common.base.Suppliers;
 import java.awt.Font;
@@ -34,8 +34,12 @@ public class ContentViewerDefaults {
     private static final Supplier<Integer> DEFAULT_INDENT = Suppliers.memoize(() -> DEFAULT_FONT_PX.get());
     private static final Supplier<Integer> DEFAULT_SECTION_SPACING = Suppliers.memoize(() -> DEFAULT_FONT_PX.get());
     
-
+    private static final Supplier<Integer> DEFAULT_COLUMN_SPACING = Suppliers.memoize(() -> (int)(DEFAULT_FONT_PX.get() / 3));
+    private static final Supplier<Integer> DEFAULT_LINE_SPACING = Suppliers.memoize(() -> (int)(DEFAULT_FONT_PX.get() / 5));
     
+    public static int getColumnSpacing() {
+        return DEFAULT_COLUMN_SPACING.get();
+    }
     
     public static Font getFont() {
         return DEFAULT_FONT.get();
@@ -55,6 +59,10 @@ public class ContentViewerDefaults {
     
     public static Integer getSectionSpacing() {
         return DEFAULT_SECTION_SPACING.get();
+    }
+    
+    public static Integer getLineSpacing() {
+        return DEFAULT_LINE_SPACING.get();
     }
     
     // line spacing???
