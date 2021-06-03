@@ -320,7 +320,7 @@ class SevenZipExtractor {
 
             if (!blackboard.artifactExists(archiveFile, TSK_INTERESTING_FILE_HIT, attributes)) {
  
-                BlackboardArtifact artifact = archiveFile.newAnalysisResult(
+                BlackboardArtifact artifact = rootArchive.getArchiveFile().newAnalysisResult(
                         BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, LIKELY_NOTABLE_SCORE, 
                         null, setName, null, 
                         attributes)
