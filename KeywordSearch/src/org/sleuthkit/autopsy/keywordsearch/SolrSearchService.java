@@ -471,6 +471,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     @Override
     public void changeOcrState(boolean state) {
         KeywordSearchSettings.setOcrOption(state);
+        KeywordSearchSettings.setLimitedOcrOption(state);
     }
 
 }
