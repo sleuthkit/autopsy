@@ -324,7 +324,8 @@ public class Artifacts {
         }
         
         @Override
-        protected void addNotify() {            
+        protected void addNotify() { 
+            super.addNotify();
             refreshThrottler.registerForIngestModuleEvents();
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);

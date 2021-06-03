@@ -85,15 +85,15 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
     
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        Case.removeEventTypeSubscriber(EVENTS_OF_INTEREST, weakPcl);
-    }
-
-    @Override
     protected void addNotify() {
         super.addNotify();
         Case.addEventTypeSubscriber(EVENTS_OF_INTEREST, weakPcl);
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        Case.removeEventTypeSubscriber(EVENTS_OF_INTEREST, weakPcl);
     }
 
     /**

@@ -116,17 +116,16 @@ public class PersonNode extends DisplayableItemNode {
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(hostAddedDeletedPcl, null);
 
         @Override
+        protected void addNotify() {
+            Case.addEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, weakPcl);
+        }
+        
+        @Override
         protected void finalize() throws Throwable {
             super.finalize();
             Case.removeEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, weakPcl);
         }
         
-        @Override
-        protected void addNotify() {
-            Case.addEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, weakPcl);
-        }
-
-
         @Override
         protected HostNode createNodeForKey(HostGrouping key) {
             return key == null ? null : new HostNode(key);

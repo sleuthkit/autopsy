@@ -68,6 +68,17 @@ public class HostNode extends DisplayableItemNode {
         private final Function<DataSourceGrouping, Node> dataSourceToNode;
         
         /**
+         * Main constructor.
+         *
+         * @param dataSourceToItem Converts a data source to a node.
+         * @param host The host.
+         */
+        HostGroupingChildren(Function<DataSourceGrouping, Node> dataSourceToNode, Host host) {
+            this.host = host;
+            this.dataSourceToNode = dataSourceToNode;
+        }
+        
+        /**
          * Listener for handling DATA_SOURCE_ADDED / HOST_DELETED events.
          * A host may have been deleted as part of a merge, which means its data sources could
          * have moved to a different host requiring a refresh.
@@ -84,20 +95,10 @@ public class HostNode extends DisplayableItemNode {
         };
         
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(dataSourceAddedPcl, null);
-
-        /**
-         * Main constructor.
-         *
-         * @param dataSourceToItem Converts a data source to a node.
-         * @param host The host.
-         */
-        HostGroupingChildren(Function<DataSourceGrouping, Node> dataSourceToNode, Host host) {
-            this.host = host;
-            this.dataSourceToNode = dataSourceToNode;
-        }
         
         @Override
         protected void addNotify() {
+            super.addNotify();
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), weakPcl);
         }
 
