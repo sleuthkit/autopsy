@@ -1004,43 +1004,50 @@ TableNormalization = Union[IGNORE_TABLE, NormalizeRow]
 This dictionary maps tables where data should be specially handled to how they should be handled.
 """
 TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
-    "image_gallery_groups_seen": IGNORE_TABLE,
     "blackboard_artifacts": IGNORE_TABLE,
     "blackboard_attributes": IGNORE_TABLE,
-    "tsk_files": NormalizeRow(normalize_tsk_files),
-    "tsk_vs_parts": NormalizeColumns({
-        "obj_id": MASKED_OBJ_ID
+    "data_source_info": NormalizeColumns({
+        "device_id": "{device id}",
+        "added_date_time": "{dateTime}"
     }),
     "image_gallery_groups": NormalizeColumns({
         "group_id": MASKED_ID
     }),
-    "tsk_files_path": NormalizeRow(normalize_tsk_files_path),
-    "tsk_file_layout": NormalizeColumns({
-        "obj_id": lambda guid_util, col: normalize_unalloc_files(guid_util.get_guid_for_file_objid(col))
-    }),
-    "tsk_objects": NormalizeRow(normalize_tsk_objects),
+    "image_gallery_groups_seen": IGNORE_TABLE,
+    "ingest_jobs": NormalizeRow(normalize_ingest_jobs),
     "reports": NormalizeColumns({
         "obj_id": MASKED_OBJ_ID,
         "path": "AutopsyTestCase",
         "crtime": 0
     }),
-    "data_source_info": NormalizeColumns({
-        "device_id": "{device id}",
-        "added_date_time": "{dateTime}"
+    "tsk_aggregate_score": NormalizeColumns({
+       "obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Object ID Omitted"),
+       "data_source_obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Data Source Object ID Omitted"),
     }),
-    "ingest_jobs": NormalizeRow(normalize_ingest_jobs),
-    "tsk_examiners": NormalizeColumns({
-        "login_name": "{examiner_name}"
+    "tsk_analysis_results": NormalizeColumns({
+        "artifact_obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Artifact Object ID Omitted"),
     }),
+    "tsk_data_artifacts": NormalizeColumns({
+        "artifact_obj_id":
+            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Artifact Object ID Omitted"),
+        "os_account_obj_id":
+            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Account Object ID Omitted"),
+    }),
+    "tsk_event_descriptions": NormalizeRow(normalize_tsk_event_descriptions),
     "tsk_events": NormalizeColumns({
         "event_id": "MASKED_EVENT_ID",
         "event_description_id": None,
         "time": None,
     }),
-    "tsk_event_descriptions": NormalizeRow(normalize_tsk_event_descriptions),
-    "tsk_os_accounts": NormalizeColumns({
-        "os_account_obj_id": MASKED_OBJ_ID
+    "tsk_examiners": NormalizeColumns({
+        "login_name": "{examiner_name}"
     }),
+    "tsk_files": NormalizeRow(normalize_tsk_files),
+    "tsk_file_layout": NormalizeColumns({
+        "obj_id": lambda guid_util, col: normalize_unalloc_files(guid_util.get_guid_for_file_objid(col))
+    }),
+    "tsk_files_path": NormalizeRow(normalize_tsk_files_path),
+    "tsk_objects": NormalizeRow(normalize_tsk_objects),
     "tsk_os_account_attributes": NormalizeColumns({
         "id": MASKED_ID,
         "os_account_obj_id": lambda guid_util, col: guid_util.get_guid_for_accountid(col),
@@ -1050,11 +1057,11 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
         "id": MASKED_ID,
         "os_account_obj_id": lambda guid_util, col: guid_util.get_guid_for_accountid(col)
     }),
-    "tsk_data_artifacts": NormalizeColumns({
-        "artifact_obj_id":
-            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Artifact Object ID Omitted"),
-        "os_account_obj_id":
-            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Account Object ID Omitted"),
+    "tsk_os_accounts": NormalizeColumns({
+        "os_account_obj_id": MASKED_OBJ_ID
+    }),
+    "tsk_vs_parts": NormalizeColumns({
+        "obj_id": MASKED_OBJ_ID
     })
 }
 
