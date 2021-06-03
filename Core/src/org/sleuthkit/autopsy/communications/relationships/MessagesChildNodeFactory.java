@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,11 +69,11 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifactNod
     
     @Override
     protected boolean createKeys(List<BlackboardArtifactNodeKey> list) {
-        
-        if(selectionInfo == null) {
+
+        if (selectionInfo == null) {
             return true;
         }
-        
+
         final Set<Content> relationshipSources;
         try {
             relationshipSources = selectionInfo.getRelationshipSources();
@@ -83,15 +83,15 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifactNod
         }
 
         try {
-            for(Content content: relationshipSources) {
-                if( !(content instanceof BlackboardArtifact)){
+            for (Content content : relationshipSources) {
+                if (!(content instanceof BlackboardArtifact)) {
                     continue;
                 }
-                
+
                 BlackboardArtifact bba = (BlackboardArtifact) content;
                 BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
-                if (fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG 
+                if (fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG
                         && fromID != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
                     continue;
                 }
@@ -101,22 +101,21 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifactNod
                 // the "UNTHREADED_ID"
                 // All call logs will default to a single call logs thread
                 String artifactThreadID = MessageNode.UNTHREADED_ID;
-                
+
                 BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
 
-                if(attribute != null) {
+                if (attribute != null) {
                     artifactThreadID = attribute.getValueString();
                 }
 
-                if(threadIDs == null || threadIDs.contains(artifactThreadID)) {
-                    list.add(new BlackboardArtifactNodeKey(bba));
-                }                
+                if (threadIDs == null || threadIDs.contains(artifactThreadID)) {
+                    list.add(BlackboardArtifactNodeKey.createNodeKey(bba));
+                }
             }
-
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to load artifacts for relationship sources.", ex); //NON-NLS
         }
-        
+
         list.sort(new DateComparator());
 
         return true;

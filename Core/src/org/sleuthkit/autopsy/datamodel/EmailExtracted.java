@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +51,6 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
-import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree.
@@ -530,7 +529,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             if (skCase != null) {
                 emailResults.getArtifactIds(accountName, folderName).forEach((id) -> {
                     try {
-                        keys.add(new BlackboardArtifactNodeKey(skCase.getBlackboard().getDataArtifactById(id)));
+                        keys.add(BlackboardArtifactNodeKey.createNodeKey(skCase.getBlackboard().getDataArtifactById(id)));
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error getting mail messages keys", ex); //NON-NLS
                     }

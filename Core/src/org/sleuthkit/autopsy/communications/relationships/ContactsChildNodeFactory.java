@@ -23,14 +23,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT;
-import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -89,7 +85,11 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifactNode
             BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
             if (fromID == TSK_CONTACT) {
-                list.add(new BlackboardArtifactNodeKey(bba));
+                try {
+                    list.add(BlackboardArtifactNodeKey.createNodeKey(bba));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed create contact node keys.", ex); //NON-NLS
+                }
             }
         });
 

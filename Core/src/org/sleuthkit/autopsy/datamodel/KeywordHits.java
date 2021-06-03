@@ -946,11 +946,14 @@ public class KeywordHits implements AutopsyVisitableItem {
                 });
                 
                 List<BlackboardArtifactNodeKey> keyList = new ArrayList<>();
-             
-                for (AnalysisResult art : artifactHits.values()) {
-                    keyList.add(new BlackboardArtifactNodeKey(art));
+                try {
+                    for (AnalysisResult art : artifactHits.values()) {
+                        keyList.add(BlackboardArtifactNodeKey.createNodeKey(art));
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to create node keys", ex); //NON-NLS
                 }
-               
+
                 return keyList;
             }
             return Collections.emptyList();

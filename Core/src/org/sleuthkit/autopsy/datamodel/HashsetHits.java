@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -427,8 +427,12 @@ public class HashsetHits implements AutopsyVisitableItem {
                 });
                 
                 List<BlackboardArtifactNodeKey> nodeKeys = new ArrayList<>();
-                for(AnalysisResult art: artifactHits.values()) {
-                   nodeKeys.add(new BlackboardArtifactNodeKey(art));
+                try {
+                    for (AnalysisResult art : artifactHits.values()) {
+                        nodeKeys.add(BlackboardArtifactNodeKey.createNodeKey(art));
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to create media viewer node key.", ex);
                 }
                 return nodeKeys;
             }

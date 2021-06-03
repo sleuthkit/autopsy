@@ -41,7 +41,6 @@ import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -96,6 +95,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * artifacts.
      */
     private static final Cache<Long, Content> contentCache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
+    
+    private static final Cache<Long, BlackboardArtifactNodeKey> keyCache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
     /*
      * Case events that indicate an update to the node's property sheet may be
@@ -132,7 +133,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private Content srcContent;
     private volatile String translatedSourceName;
     
-    private String dataSourceName;
+    private String dataSourceName= "";
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -229,16 +230,29 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     private final PropertyChangeListener weakListener = WeakListeners.propertyChange(listener, null);
 
+    /**
+     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
+     * can be used to represent an artifact of any type.
+     * 
+     * @param key A key containing the artifact this node represents.
+     */
     public BlackboardArtifactNode(BlackboardArtifactNodeKey key) {
         this(key, IconsUtil.getIconFilePath(key.getArtifact().getArtifactTypeID()));
     }
     
+    /**
+     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
+     * can be used to represent an artifact of any type.
+     * 
+     * @param nodeKey A key containing the artifact this node represents.
+     * @param iconPath The path to the icon for the artifact type.
+     */
     public BlackboardArtifactNode(BlackboardArtifactNodeKey nodeKey, String iconPath) {
         super(nodeKey.getArtifact(), createLookup(nodeKey));
         this.artifact = nodeKey.getArtifact();
         srcContent = nodeKey.getSourceContent();
         dataSourceName = nodeKey.getDataSourceStr();
-       
+
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -246,97 +260,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
     }
-    
-    /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
-     *
-     * @param artifact The artifact to represent.
-     * @param iconPath The path to the icon for the artifact type.
-     */
-//    public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
-//        super(artifact, createLookup(artifact, false));
-//        this.artifact = artifact;
-//        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
-//            if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
-//                srcContent = lookupContent;
-//                try {
-//                    /*
-//                     * Calling this getter causes the unique path of the source
-//                     * content to be cached in the Content object. This is
-//                     * advantageous as long as this node is constructed in a
-//                     * background thread instead of a UI thread.
-//                     */
-//                    srcContent.getUniquePath();
-//                } catch (TskCoreException ex) {
-//                    logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
-//                }
-//                break;
-//            }
-//        }
-//        if (srcContent == null) {
-//            throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
-//        }
-//        setName(Long.toString(artifact.getArtifactID()));
-//        String displayName = srcContent.getName();
-//        setDisplayName(displayName);
-//        setShortDescription(displayName);
-//        setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
-//        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
-//    }
-
-    /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
-     *
-     * @param artifact               The artifact to represent.
-     * @param lookupIsAssociatedFile True if the Content lookup should be made
-     *                               for the associated file instead of the
-     *                               parent file.
-     */
-    @Beta
-    public BlackboardArtifactNode(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
-        super(artifact, createLookup(artifact, lookupIsAssociatedFile));
-        this.artifact = artifact;
-        try {
-            //The lookup for a file may or may not exist so we define the srcContent as the parent.
-            srcContent = artifact.getParent();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, MessageFormat.format("Error getting the parent of the artifact for (artifact objID={0})", artifact.getId()), ex);
-        }
-        if (srcContent != null) {
-            try {
-                /*
-                 * Calling this getter causes the unique path of the source
-                 * content to be cached in the Content object. This is
-                 * advantageous as long as this node is constructed in a
-                 * background thread instead of a UI thread.
-                 */
-                srcContent.getUniquePath();
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
-            }
-        } else {
-            throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
-        }
-        setName(Long.toString(artifact.getArtifactID()));
-        String displayName = srcContent.getName();
-        setDisplayName(displayName);
-        setShortDescription(displayName);
-        String iconPath = IconsUtil.getIconFilePath(artifact.getArtifactTypeID());
-        setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
-        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
-    }
-
-    /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
-     *
-     * @param artifact The artifact to represent.
-     */
-//    public BlackboardArtifactNode(BlackboardArtifact artifact) {
-//        this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
-//    }
 
     /**
      * Creates a Lookup object for this node and populates it with both the
@@ -346,7 +269,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      *
      * @return The Lookup.
      */
-    private static Lookup createLookup(BlackboardArtifact artifact) {
+    private static Lookup createLookupWithArtifact(BlackboardArtifact artifact) {
         final long objectID = artifact.getObjectID();
         try {
             Content content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
@@ -372,38 +295,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 return Lookups.fixed(nodeKey.getArtifact(), content);
             }
         } else {
-            return createLookup(nodeKey.getArtifact());
+            return createLookupWithArtifact(nodeKey.getArtifact());
         }
-    }
-    /**
-     * Creates a Lookup object for this node and populates it with both the
-     * artifact this node represents and its source content.
-     *
-     * @param artifact               The artifact this node represents.
-     * @param lookupIsAssociatedFile True if the Content lookup should be made
-     *                               for the associated file instead of the
-     *                               parent file.
-     *
-     * @return The Lookup.
-     */
-    private static Lookup createLookup(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
-        Content content = null;
-        if (lookupIsAssociatedFile) {
-            try {
-                content = getPathIdFile(artifact);
-            } catch (ExecutionException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
-                content = null;
-            }
-            if (content == null) {
-                return Lookups.fixed(artifact);
-            } else {
-                return Lookups.fixed(artifact, content);
-            }
-        } else {
-            return createLookup(artifact);
-        }
-
     }
 
     /**
@@ -742,21 +635,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         file == null ? "" : StringUtils.defaultString(file.getMd5Hash())));
             }
         } else {
-            if(dataSourceName == null) {
-                try {
-                    Content dataSource = srcContent.getDataSource();
-                    if (dataSource != null) {
-                        dataSourceName = dataSource.getName();
-                    } else {
-                        dataSourceName = getRootAncestorName();
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, MessageFormat.format("Error getting source data source name (artifact objID={0})", artifact.getId()), ex); //NON-NLS
-
-                }
-            } 
-            
-            if (dataSourceName.isEmpty() == false) {
+            if (!dataSourceName.isEmpty()) {
                 sheetSet.put(new NodeProperty<>(
                         NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.dataSrc.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.dataSrc.displayName"),
@@ -1071,7 +950,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public <T> T accept(ContentNodeVisitor<T> visitor) {
         return visitor.visit(this);
     }
-    
+
+    /**
+     * The key for the BlackboardArtifact node factories. These objects should
+     * be created on a background thread or in a ChildFactory makeKey\createKeys
+     * methods.
+     */
     public static class BlackboardArtifactNodeKey {
 
         private final BlackboardArtifact artifact;
@@ -1082,7 +966,50 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         private String dataSourceStr = "";
 
-        
+        /**
+         * Creates a node key for the given artifact or returns an existing one
+         * from cache. This operation may take a long time and should be called
+         * from a background thread or a factory makeKey\createKeys method.
+         *
+         * @param artifact The artifact to represent.
+         *
+         * @return A new key object.
+         *
+         * @throws TskCoreException
+         */
+        static public BlackboardArtifactNodeKey createNodeKey(BlackboardArtifact artifact) throws TskCoreException {
+            return createNodeKey(artifact, false);
+        }
+
+        /**
+         * Creates a node key for the given artifact or returns an existing one
+         * from cache.
+         *
+         * @param artifact               The artifact to represent.
+         * @param lookupIsAssociatedFile True if the Content lookup should be
+         *                               made for the associated file instead of
+         *                               the parent file.
+         *
+         * @return A new key object.
+         *
+         * @throws TskCoreException
+         */
+        @Beta
+        static public BlackboardArtifactNodeKey createNodeKey(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) throws TskCoreException {
+            try {
+                return keyCache.get(artifact.getObjectID(), () -> new BlackboardArtifactNodeKey(artifact, lookupIsAssociatedFile));
+            } catch (ExecutionException ex) {
+                throw new TskCoreException(String.format("Failed to get node key for artifact from cache id(%d)", artifact.getId()), ex);
+            }
+        }
+
+        /**
+         * Creates a new key for the given object.
+         *
+         * Note: This method is public to support subclass in CVT.
+         *
+         * @param artifact
+         */
         public BlackboardArtifactNodeKey(BlackboardArtifact artifact) {
             this(artifact, false);
         }
@@ -1090,11 +1017,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         /**
          * To work with the "beta" constructor that uses the associated file as
          * the source content.
-         * 
+         *
          * @param artifact
-         * @param lookupIsAssociatedFile 
+         * @param lookupIsAssociatedFile
          */
-        public BlackboardArtifactNodeKey(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
+        private BlackboardArtifactNodeKey(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
             this.artifact = artifact;
             this.lookupIsAssociatedFile = lookupIsAssociatedFile;
             try {
@@ -1105,18 +1032,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
 
         /**
-         * Initializes the data for the key. To prevent blocking the UI this 
-         * method should be called in a background thread or from 
-         * makeKeys\createKeys.
-         * 
-         * @throws TskCoreException 
+         * Initializes the data for the key.
+         *
+         * @throws TskCoreException
          */
         private void initializeKeyData() throws TskCoreException {
             if (artifact == null) {
                 return;
             }
 
-            if(lookupIsAssociatedFile) {
+            if (lookupIsAssociatedFile) {
                 try {
                     associatedFile = getPathIdFile(artifact);
                 } catch (ExecutionException ex) {
@@ -1142,25 +1067,54 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             } else {
                 dataSourceStr = getRootAncestorName(sourceContent);
             }
-          
+
         }
 
+        /**
+         * Returns the artifact that this key represents.
+         *
+         * @return The artifact.
+         */
         public BlackboardArtifact getArtifact() {
             return artifact;
         }
 
+        /**
+         * Returns whether or not the associated file should be used instead of
+         * the parent file when creating a node lookup.
+         *
+         * @return True if the associated file should be used.
+         */
+        @Beta
         public boolean isLookupIsAssociatedFile() {
             return lookupIsAssociatedFile;
         }
 
+        /**
+         * The artifacts parent\source content object.
+         *
+         * @return
+         */
         public Content getSourceContent() {
             return sourceContent;
         }
 
+        /**
+         * The artifacts associated file.
+         *
+         * @return The associated file or null if lookupIsAssociatedFile was
+         *         false or none was found.
+         */
         public Content getAssociatedFile() {
             return associatedFile;
         }
 
+        /**
+         * Returns the display string\name of the data source.
+         *
+         * @return Data source name or empty string if one was not found or an
+         *         exception occurred during string creation.
+         */
         public String getDataSourceStr() {
             return dataSourceStr;
         }

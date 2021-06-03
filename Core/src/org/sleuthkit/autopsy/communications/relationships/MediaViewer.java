@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -189,7 +189,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
                 try {
                     Content parentContent = thumbnail.getParent();
                     if (parentContent != null && parentContent instanceof BlackboardArtifact) {
-                        contentViewer.setNode(new BlackboardArtifactNode(new BlackboardArtifactNodeKey((BlackboardArtifact) parentContent)));
+                        contentViewer.setNode(new BlackboardArtifactNode(BlackboardArtifactNodeKey.createNodeKey((BlackboardArtifact) parentContent)));
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Unable to get parent Content from AbstraceContent instance.", ex); //NON-NLS

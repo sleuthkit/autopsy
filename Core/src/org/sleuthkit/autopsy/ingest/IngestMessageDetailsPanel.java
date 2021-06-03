@@ -190,7 +190,11 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         if (messageGroup != null) {
             BlackboardArtifact art = messageGroup.getData();
             if (art != null) {
-                dtc.viewArtifactContent(new BlackboardArtifactNodeKey(art));
+                try {
+                    dtc.viewArtifactContent(BlackboardArtifactNodeKey.createNodeKey(art));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to create nodeKey for artifact.", ex);
+                }
             }
         }
         messageDetailsPane.setCursor(null);

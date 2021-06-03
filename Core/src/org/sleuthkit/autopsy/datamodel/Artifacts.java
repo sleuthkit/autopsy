@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -653,19 +653,19 @@ public class Artifacts {
 
                     case ANALYSIS_RESULT:
                         arts = (filteringDSObjId > 0)
-                            ? blackboard.getAnalysisResultsByType(type.getTypeID(), filteringDSObjId)
-                            : blackboard.getAnalysisResultsByType(type.getTypeID());
+                                ? blackboard.getAnalysisResultsByType(type.getTypeID(), filteringDSObjId)
+                                : blackboard.getAnalysisResultsByType(type.getTypeID());
                         break;
                     case DATA_ARTIFACT:
                     default:
                         arts = (filteringDSObjId > 0)
-                            ? blackboard.getDataArtifacts(type.getTypeID(), filteringDSObjId)
-                            : blackboard.getDataArtifacts(type.getTypeID());
+                                ? blackboard.getDataArtifacts(type.getTypeID(), filteringDSObjId)
+                                : blackboard.getDataArtifacts(type.getTypeID());
                         break;
                 }
                 List<BlackboardArtifactNodeKey> toRet = new ArrayList<>();
                 for (BlackboardArtifact art : arts) {
-                    toRet.add(new BlackboardArtifactNodeKey(art));
+                    toRet.add(BlackboardArtifactNodeKey.createNodeKey(art));
                 }
 
                 return toRet;
