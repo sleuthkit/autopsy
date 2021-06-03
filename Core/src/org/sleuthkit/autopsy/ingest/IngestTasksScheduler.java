@@ -66,7 +66,7 @@ final class IngestTasksScheduler {
     @GuardedBy("this")
     private final Queue<FileIngestTask> streamedFileIngestTasksQueue;
     private final IngestTaskTrackingQueue fileIngestTasksQueue;
-    private final IngestTaskTrackingQueue resultIngestTasksQueue;
+    private final IngestTaskTrackingQueue artifactIngestTasksQueue;
 
     /**
      * Gets the ingest tasks scheduler singleton that creates ingest tasks for
@@ -91,7 +91,7 @@ final class IngestTasksScheduler {
         batchedFileIngestTasksQueue = new LinkedList<>();
         fileIngestTasksQueue = new IngestTaskTrackingQueue();
         streamedFileIngestTasksQueue = new LinkedList<>();
-        resultIngestTasksQueue = new IngestTaskTrackingQueue();
+        artifactIngestTasksQueue = new IngestTaskTrackingQueue();
     }
 
     /**
@@ -121,7 +121,7 @@ final class IngestTasksScheduler {
      * @return The queue.
      */
     BlockingIngestTaskQueue getResultIngestTaskQueue() {
-        return resultIngestTasksQueue;
+        return artifactIngestTasksQueue;
     }
 
     /**
@@ -323,7 +323,7 @@ final class IngestTasksScheduler {
             for (DataArtifact artifact : artifacts) {
                 DataArtifactIngestTask task = new DataArtifactIngestTask(ingestPipeline, artifact);
                 try {
-                    this.resultIngestTasksQueue.putLast(task);
+                    this.artifactIngestTasksQueue.putLast(task);
                 } catch (InterruptedException ex) {
                     DataSource dataSource = ingestPipeline.getDataSource();
                     logger.log(Level.WARNING, String.format("Interrupted while enqueuing data artifact tasks for %s (data source object ID = %d)", dataSource.getName(), dataSource.getId()), ex); //NON-NLS
@@ -362,7 +362,7 @@ final class IngestTasksScheduler {
      * @param task The completed task.
      */
     synchronized void notifyTaskCompleted(DataArtifactIngestTask task) {
-        resultIngestTasksQueue.taskCompleted(task);
+        artifactIngestTasksQueue.taskCompleted(task);
     }
 
     /**
@@ -380,7 +380,7 @@ final class IngestTasksScheduler {
                 || hasTasksForJob(batchedFileIngestTasksQueue, pipelineId)
                 || hasTasksForJob(streamedFileIngestTasksQueue, pipelineId)
                 || fileIngestTasksQueue.hasTasksForJob(pipelineId)
-                || resultIngestTasksQueue.hasTasksForJob(pipelineId));
+                || artifactIngestTasksQueue.hasTasksForJob(pipelineId));
     }
 
     /**
@@ -758,8 +758,9 @@ final class IngestTasksScheduler {
                 countTasksForJob(topLevelFileIngestTasksQueue, jobId),
                 countTasksForJob(batchedFileIngestTasksQueue, jobId),
                 fileIngestTasksQueue.countQueuedTasksForJob(jobId),
-                dataSourceIngestTasksQueue.countRunningTasksForJob(jobId) + fileIngestTasksQueue.countRunningTasksForJob(jobId),
-                countTasksForJob(streamedFileIngestTasksQueue, jobId));
+                dataSourceIngestTasksQueue.countRunningTasksForJob(jobId) + fileIngestTasksQueue.countRunningTasksForJob(jobId) + artifactIngestTasksQueue.countRunningTasksForJob(jobId),
+                countTasksForJob(streamedFileIngestTasksQueue, jobId),
+                artifactIngestTasksQueue.countQueuedTasksForJob(jobId));
     }
 
     /**
@@ -1063,14 +1064,24 @@ final class IngestTasksScheduler {
         private final long fileQueueSize;
         private final long runningListSize;
         private final long streamingQueueSize;
+        private final long artifactsQueueSize;
 
         /**
+         * RJCTODO
+         *
          * Constructs a snapshot of ingest tasks data for an ingest job.
          *
-         * @param jobId The identifier associated with the job.
+         * @param jobId              The identifier associated with the job.
+         * @param dsQueueSize
+         * @param rootQueueSize
+         * @param dirQueueSize
+         * @param fileQueueSize
+         * @param runningListSize
+         * @param streamingQueueSize
+         * @param artifactsQueueSize
          */
         IngestJobTasksSnapshot(long jobId, long dsQueueSize, long rootQueueSize, long dirQueueSize, long fileQueueSize,
-                long runningListSize, long streamingQueueSize) {
+                long runningListSize, long streamingQueueSize, long artifactsQueueSize) {
             this.jobId = jobId;
             this.dsQueueSize = dsQueueSize;
             this.rootQueueSize = rootQueueSize;
@@ -1078,6 +1089,7 @@ final class IngestTasksScheduler {
             this.fileQueueSize = fileQueueSize;
             this.runningListSize = runningListSize;
             this.streamingQueueSize = streamingQueueSize;
+            this.artifactsQueueSize = artifactsQueueSize;
         }
 
         /**
@@ -1124,6 +1136,10 @@ final class IngestTasksScheduler {
 
         long getRunningListSize() {
             return runningListSize;
+        }
+        
+        long getArtifactsQueueSize() {
+            return artifactsQueueSize;
         }
 
     }

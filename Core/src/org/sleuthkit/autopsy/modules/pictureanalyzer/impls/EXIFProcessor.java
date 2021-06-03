@@ -154,28 +154,23 @@ public class EXIFProcessor implements PictureProcessor {
             final Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
             if (!attributes.isEmpty() && !blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
-
-                final BlackboardArtifact exifArtifact = file.newDataArtifact(BlackboardArtifact.Type.TSK_METADATA_EXIF, attributes);
-                
-                final BlackboardArtifact userSuspectedArtifact = file.newAnalysisResult(
+                List<BlackboardArtifact> artifacts = new ArrayList<>();
+                final DataArtifact exifArtifact = file.newDataArtifact(BlackboardArtifact.Type.TSK_METADATA_EXIF, attributes);
+                artifacts.add(exifArtifact);
+                final AnalysisResult userSuspectedArtifact = file.newAnalysisResult(
                         BlackboardArtifact.Type.TSK_USER_CONTENT_SUSPECTED, Score.SCORE_UNKNOWN, null, null, null,
                         Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, Bundle.ExifProcessor_userContent_description())))
                         .getAnalysisResult();
+                artifacts.add(userSuspectedArtifact);
 
                 try {
-                    // index the artifact for keyword search
-                    blackboard.postArtifact(exifArtifact, MODULE_NAME);
-                    blackboard.postArtifact(userSuspectedArtifact, MODULE_NAME);
+                    blackboard.postArtifacts(artifacts, MODULE_NAME);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, String.format("Error posting TSK_METADATA_EXIF and TSK_USER_CONTENT_SUSPECTED artifacts for %s (object ID = %d)", file.getName(), file.getId()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.ExifProcessor_indexError_message(), exifArtifact.getDisplayName());
                 }
 
-                /*
-                 * Add the data artifact to the ingest job for processing by the
-                 * data artifact ingest modules.
-                 */
                 context.addDataArtifactsToJob(Collections.singletonList(exifArtifact));
             }
         } catch (TskCoreException ex) {

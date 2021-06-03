@@ -189,7 +189,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
         resultIngestTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-results-ingest-%d").build()); //NON-NLS;        
         threadId = nextIngestManagerTaskId.incrementAndGet();
-        dataSourceLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getResultIngestTaskQueue()));
+        resultIngestTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getResultIngestTaskQueue()));
         // RJCTODO
         // ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
         // RJCTODO: Where is the shut down code?
