@@ -55,13 +55,9 @@ import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- * An ingest-job-level pipeline that works with the ingest tasks scheduler to
- * coordinate the creation, scheduling, and execution of ingest tasks for one of
- * the data sources in an ingest job. An ingest job pipeline is actually
- * composed of multiple ingest task pipelines. Each ingest task pipeline is a
- * sequence of ingest modules of a given type (e.g., data source level, file
- * level, or artifact ingest modules) that have been enabled and configured as
- * part of the ingest job settings.
+ * A pipeline of ingest modules for analyzing one of the data sources in an
+ * ingest job. The ingest modules are actually organized into child pipelines by
+ * ingest module type and are run in stages.
  */
 final class IngestJobPipeline {
 
@@ -79,15 +75,15 @@ final class IngestJobPipeline {
     /*
      * These fields define an ingest pipeline: the parent ingest job, a pipeline
      * ID, the user's ingest job settings, and the data source to be analyzed.
-     * Optionally, there is a set of files to be analyzed, instead of analyzing
+     * Optionally, there is a set of files to be analyzed instead of analyzing
      * all of the files in the data source.
      *
-     * The pipeline ID is used to associate the pipeline with its ingest tasks.
-     * The ingest job ID cannot be used for this purpose because the parent
-     * ingest job may have more than one data source and each data source gets
-     * its own pipeline.
+     * The pipeline ID is used to associate the pipeline with the ingest tasks
+     * that the ingest task scheduler creates for the ingest job. The ingest job
+     * ID cannot be used for this purpose because the parent ingest job may have
+     * more than one data source and each data source gets its own pipeline.
      */
-    private final IngestJob job;
+    private final IngestJob parentJob;
     private static final AtomicLong nextPipelineId = new AtomicLong(0L);
     private final long pipelineId;
     private final IngestJobSettings settings;
@@ -110,9 +106,9 @@ final class IngestJobPipeline {
          */
         FIRST_STAGE_FILES_ONLY,
         /*
-         * The pipeline is running one or more of the following three types of
-         * ingest modules: higher priority data source level ingest modules,
-         * file ingest modules, and artifact ingest modules.
+         * The pipeline is running the following three types of ingest modules:
+         * higher priority data source level ingest modules, file ingest
+         * modules, and artifact ingest modules.
          */
         FIRST_STAGE,
         /**
@@ -129,7 +125,7 @@ final class IngestJobPipeline {
     private final Object stageTransitionLock = new Object();
 
     /*
-     * An ingest pipeline has separate data source level ingest task pipelines
+     * An ingest pipeline has separate data source level ingest module pipelines
      * for the first and second stages. Longer running, lower priority modules
      * belong in the second stage pipeline.
      */
@@ -138,30 +134,32 @@ final class IngestJobPipeline {
     private volatile DataSourceIngestPipeline currentDataSourceIngestPipeline;
 
     /*
-     * An ingest pipeline has a collection of identical file ingest task
+     * An ingest pipeline has a collection of identical file ingest module
      * pipelines, one for each file ingest thread in the ingest manager. The
-     * ingest threads take ingest task pipelines as they need them and return
-     * the pipelines using a blocking queue. Additionally, a fixed list of all
-     * of the file pipelines is used to cycle through each of the individual
-     * task pipelines to check their status.
+     * file ingest threads take file ingest pipeline copies as they need them
+     * for each file ingest task in the ingest job and return the pipelines
+     * using a blocking queue. Additionally, a fixed list of all of the file
+     * ingest module pipelines is used to bypass the blocking queue when cycling
+     * through the pipelines to make ingest progress snapshots.
      */
     private final LinkedBlockingQueue<FileIngestPipeline> fileIngestPipelinesQueue = new LinkedBlockingQueue<>();
     private final List<FileIngestPipeline> fileIngestPipelines = new ArrayList<>();
 
     /*
-     * An ingest pipeline has a single artifact ingest task pipeline
+     * An ingest pipeline has a single data artifact ingest module pipeline.
      */
     private DataArtifactIngestPipeline artifactIngestPipeline;
 
     /*
-     * An ingest pipeline supports cancellation of just its currently running
-     * data source level ingest task pipeline or cancellation of all of its
-     * child ingest task pipelines. Cancellation works by setting flags that are
-     * checked by the ingest task pipelines every time they transition from one
-     * module to another. Modules are also expected to check these flags (via
-     * the ingest job context) and stop processing if they are set. This means
-     * that there can be a variable length delay between a cancellation request
-     * and its fulfillment.
+     * An ingest pipeline supports cancellation of analysis by individual data
+     * source level ingest modules or cancellation of all remaining analysis by
+     * ingest modules. Cancellation works by setting flags that are checked by
+     * the ingest module pipelines every time they transition from one module to
+     * another. Ingest modules are also expected to check these flags (via the
+     * ingest job context) and stop processing if they are set. This approach to
+     * cancellation means that there can be a variable length delay between a
+     * cancellation request and its fulfillment. Analysis already completed at
+     * the time that cancellation occurs is not discarded.
      */
     private volatile boolean currentDataSourceIngestModuleCancelled;
     private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
@@ -169,19 +167,17 @@ final class IngestJobPipeline {
     private volatile IngestJob.CancellationReason cancellationReason = IngestJob.CancellationReason.NOT_CANCELLED;
 
     /*
-     * An ingest pipeline interacts with the ingest task scheduler to create and
-     * queue ingest tasks and to determine whether or not there are ingest tasks
-     * still to be executed.
+     * An ingest pipeline interacts with the ingest task scheduler to create
+     * ingest tasks for the content of the data source that is the subject of
+     * the ingest job and to queue them for the ingest manager's ingest threads.
+     * Ingest tasks are the units of work for the child ingest module pipelines.
      */
     private static final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
 
     /*
-     * If running in a GUI, an ingest pipeline reports progress and allows a
-     * user to cancel either an individual data source level ingest module or
-     * all of its ingest tasks using progress bars in the lower right hand
-     * corner of the main application window. There is also support for taking
-     * ingest progress snapshots and for recording ingest job details in the
-     * case database.
+     * If running with a GUI, an ingest pipeline reports analysis progress and
+     * allows a user to cancel all or part of the analysis using progress bars
+     * in the lower right hand corner of the main application window.
      */
     private final boolean doUI;
     private final Object dataSourceIngestProgressLock = new Object();
@@ -195,8 +191,8 @@ final class IngestJobPipeline {
     private ProgressHandle artifactIngestProgressBar;
 
     /*
-     * Ingest pipeline details are tracked using this object and are recorded in
-     * the case database.
+     * Ingest job details are tracked using this object and are recorded in the
+     * case database.
      */
     private volatile IngestJobInfo ingestJobInfo;
 
@@ -206,18 +202,13 @@ final class IngestJobPipeline {
     private final long createTime;
 
     /**
-     * Constructs an ingest-job-level pipeline that works with the ingest tasks
-     * scheduler to coordinate the creation, scheduling, and execution of ingest
-     * tasks for one of the data sources in an ingest job. An ingest job
-     * pipeline is actually composed of multiple ingest task pipelines. Each
-     * ingest task pipeline is a sequence of ingest modules of a given type
-     * (e.g., data source level, file level, or artifact ingest modules) that
-     * have been enabled and configured as part of the ingest job settings.
+     * Constructs a pipeline of ingest modules for analyzing one of the data
+     * sources in an ingest job. The ingest modules are actually organized into
+     * child pipelines by ingest module type and are run in stages.
      *
      * @param job        The ingest job.
-     * @param dataSource One of the data sources that are the subjects of the
-     *                   ingest job.
-     * @param settings   The ingest settings for the ingest job.
+     * @param dataSource The data source.
+     * @param settings   The ingest job settings.
      *
      * @throws InterruptedException Exception thrown if the thread in which the
      *                              pipeline is being created is interrupted.
@@ -227,21 +218,16 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Constructs an ingest-job-level pipeline that works with the ingest tasks
-     * scheduler to coordinate the creation, scheduling, and execution of ingest
-     * tasks for one of the data sources in an ingest job. An ingest job
-     * pipeline is actually composed of multiple ingest task pipelines. Each
-     * ingest task pipeline is a sequence of ingest modules of a given type
-     * (e.g., data source level, file level, or artifact ingest modules) that
-     * have been enabled and configured as part of the ingest job settings.
+     * Constructs a pipeline of ingest modules for analyzing one of the data
+     * sources in an ingest job. The ingest modules are actually organized into
+     * child pipelines by ingest module type and are run in stages.
      *
      * @param job        The ingest job.
-     * @param dataSource One of the data sources that are the subjects of the
-     *                   ingest job.
+     * @param dataSource The data source.
      * @param files      A subset of the files from the data source. If the list
      *                   is empty, ALL of the files in the data source are an
      *                   analyzed.
-     * @param settings   The ingest settings for the ingest job.
+     * @param settings   The ingest job settings.
      *
      * @throws InterruptedException Exception thrown if the thread in which the
      *                              pipeline is being created is interrupted.
@@ -250,7 +236,7 @@ final class IngestJobPipeline {
         if (!(dataSource instanceof DataSource)) {
             throw new IllegalArgumentException("Passed dataSource that does not implement the DataSource interface"); //NON-NLS
         }
-        this.job = job;
+        parentJob = job;
         pipelineId = IngestJobPipeline.nextPipelineId.getAndIncrement();
         this.dataSource = (DataSource) dataSource;
         this.files = new ArrayList<>();
@@ -577,7 +563,7 @@ final class IngestJobPipeline {
         if (errors.isEmpty()) {
             recordIngestJobStartUpInfo();
             if (hasFirstStageDataSourceIngestModules() || hasFileIngestModules() || hasDataArtifactIngestModules()) {
-                if (job.getIngestMode() == IngestJob.Mode.STREAMING) {
+                if (parentJob.getIngestMode() == IngestJob.Mode.STREAMING) {
                     startFirstStageFilesOnly();
                 } else {
                     startFirstStage();
@@ -838,7 +824,7 @@ final class IngestJobPipeline {
             if (doUI) {
                 startDataSourceIngestProgressBar();
             }
-            logInfoMessage(String.format("Starting second stage ingest task pipelines for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), job.getId())); //NON-NLS
+            logInfoMessage(String.format("Starting second stage ingest task pipelines for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), parentJob.getId())); //NON-NLS
             stage = IngestJobPipeline.Stages.SECOND_STAGE;
             currentDataSourceIngestPipeline = secondStageDataSourceIngestPipeline;
             taskScheduler.scheduleDataSourceIngestTask(this);
@@ -1004,7 +990,7 @@ final class IngestJobPipeline {
             }
         }
 
-        job.notifyIngestPipelineShutDown(this);
+        parentJob.notifyIngestPipelineShutDown(this);
     }
 
     /**
