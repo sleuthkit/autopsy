@@ -20,51 +20,47 @@ package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A base class for application events published when persons in the Sleuth Kit
- * data model for a case have been added or updated.
+ * A base class for application events published when OS accounts in the Sleuth
+ * Kit data model for a case have been added or updated.
  */
-public class PersonsEvent extends TskDataModelChangedEvent<Person, Person> {
+class OsAccountsEvent extends TskDataModelChangedEvent<OsAccount, OsAccount> {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * Constructs the base class part of an application event published when
-     * persons in the Sleuth Kit data model for a case have been added or
+     * OS accounts in the Sleuth Kit data model for a case have been added or
      * updated.
      *
      * @param eventName The name of the Case.Events enum value for the event
      *                  type.
-     * @param persons   The persons.
+     * @param account   The OS accounts.
      */
-    PersonsEvent(String eventName, List<Person> persons) {
-        super(eventName, null, null, persons, Person::getPersonId);
+    OsAccountsEvent(String eventName, List<OsAccount> osAccounts) {
+        super(eventName, null, null, osAccounts, OsAccount::getId);
     }
 
     /**
-     * Gets the persons that have been added or updated.
+     * Gets the OS accounts that have been added or updated.
      *
-     * @return The persons.
+     * @return The OS accounts.
      */
-    public List<Person> getPersons() {
+    public List<OsAccount> getOsAccounts() {
         return getNewValue();
     }
 
     @Override
-    protected List<Person> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
-        List<Person> persons = new ArrayList<>();
+    protected List<OsAccount> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        List<OsAccount> osAccounts = new ArrayList<>();
         for (Long id : ids) {
-            Optional<Person> person = caseDb.getPersonManager().getPerson(id);
-            if (person.isPresent()) {
-                persons.add(person.get());
-            }
+            osAccounts.add(caseDb.getOsAccountManager().getOsAccountByObjectId(id));
         }
-        return persons;
+        return osAccounts;
     }
 
 }

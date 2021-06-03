@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -59,6 +60,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.blackboardutils.WebBrowserArtifactsHelper;
@@ -67,7 +69,8 @@ import org.sleuthkit.datamodel.blackboardutils.WebBrowserArtifactsHelper;
  * Chromium recent activity extraction
  */
 class Chromium extends Extract {
-
+    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
+    
     private static final String HISTORY_QUERY = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, " //NON-NLS
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) AS from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url"; //NON-NLS
     private static final String COOKIE_QUERY = "SELECT name, value, host_key, expires_utc,last_access_utc, creation_utc FROM cookies"; //NON-NLS
@@ -823,11 +826,15 @@ class Chromium extends Extract {
                 // get form address atifacts
                 getFormAddressArtifacts(webDataFile, tempFilePath, isSchemaV8X);
                 if (databaseEncrypted) {
-                   Collection<BlackboardAttribute> bbattributes = new ArrayList<>(); 
-                   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
-                            RecentActivityExtracterModuleFactory.getModuleName(), 
-                            String.format("%s Autofill Database Encryption Detected", browser)));
-                   bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, webDataFile, bbattributes)); 
+                    String comment = String.format("%s Autofill Database Encryption Detected", browser);
+                   Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                           new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, 
+                                   RecentActivityExtracterModuleFactory.getModuleName(), comment));
+
+                   bbartifacts.add(
+                           webDataFile.newAnalysisResult(
+                                   BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, NOTABLE_SCORE, 
+                                   null, null, comment, bbattributes).getAnalysisResult()); 
                 }
             } catch (NoCurrentCaseException | TskCoreException | Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, String.format("Error adding artifacts to the case database "

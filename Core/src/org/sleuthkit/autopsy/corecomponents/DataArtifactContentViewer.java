@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.DataArtifact;
  * It goes through a list of known ArtifactContentViewer to find a viewer that
  * supports a given artifact and then hands it the artifact to display.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 7)
+@ServiceProvider(service = DataContentViewer.class, position = 6)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataArtifactContentViewer extends javax.swing.JPanel implements DataContentViewer {
 

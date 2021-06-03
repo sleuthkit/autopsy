@@ -20,20 +20,32 @@ package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.Person;
 
 /**
- * Event fired when persons are removed.
+ * Application events published when persons have been deleted from the Sleuth
+ * Kit data model for a case.
  */
-public class PersonsDeletedEvent extends PersonsEvent {
-    
+public class PersonsDeletedEvent extends TskDataModelObjectsDeletedEvent {
+
     private static final long serialVersionUID = 1L;
-    
+
     /**
-     * Main constructor.
-     * @param dataModelObjects The list of persons that have been deleted.
+     * Constructs an application event published when persons have been deleted
+     * from the Sleuth Kit data model for a case.
+     *
+     * @param personIds The IDs of the persons that have been deleted.
      */
-    public PersonsDeletedEvent(List<Person> dataModelObjects) {
-        super(Case.Events.PERSONS_DELETED.name(), dataModelObjects);
+    public PersonsDeletedEvent(List<Long> personIds) {
+        super(Case.Events.PERSONS_DELETED.name(), personIds);
     }
+
+    /**
+     * Gets the person IDs of the persons that have been deleted.
+     *
+     * @return The person IDs.
+     */
+    List<Long> getPersonIds() {
+        return getOldValue();
+    }
+
 }
