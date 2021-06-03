@@ -134,7 +134,7 @@ final class AutoIngestJobNodeData {
         if (null == nodeData || nodeData.length == 0) {
             throw new InvalidDataException(null == nodeData ? "Null nodeData byte array" : "Zero-length nodeData byte array");
         }
-
+        
         /*
          * Set default values for all fields.
          */
@@ -600,6 +600,10 @@ final class AutoIngestJobNodeData {
             if (this.version >= 2) {
                 buffer.putLong(this.dataSourceSize);
             }
+            
+            if (this.version >= 3) {
+                buffer.putInt(this.ocrEnabled ? 1 : 0);
+            }            
         }
 
         // Prepare the array

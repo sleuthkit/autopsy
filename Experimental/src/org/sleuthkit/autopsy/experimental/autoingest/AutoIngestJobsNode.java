@@ -99,12 +99,14 @@ final class AutoIngestJobsNode extends AbstractNode {
         private final Stage jobStage;
         private final List<Snapshot> jobSnapshot;
         private final Integer jobPriority;
+        private final Boolean ocrFlag;
 
         AutoIngestJobWrapper(AutoIngestJob job) {
             autoIngestJob = job;
             jobStage = job.getProcessingStage();
             jobSnapshot = job.getIngestJobSnapshots();
             jobPriority = job.getPriority();
+            ocrFlag = job.getOcrEnabled();
         }
 
         AutoIngestJob getJob() {
@@ -129,7 +131,7 @@ final class AutoIngestJobsNode extends AbstractNode {
                     && jobStage.equals(((AutoIngestJobWrapper) other).jobStage)
                     && jobSnapshot.equals(((AutoIngestJobWrapper) other).jobSnapshot)
                     && jobPriority.equals(((AutoIngestJobWrapper) other).jobPriority)
-                    && (thisJob.getOcrEnabled() == otherJob.getOcrEnabled());
+                    && ocrFlag.equals(((AutoIngestJobWrapper) other).ocrFlag);
         }
 
         @Override
@@ -139,7 +141,7 @@ final class AutoIngestJobsNode extends AbstractNode {
             hash = 23 * hash + Objects.hashCode(this.jobStage);
             hash = 23 * hash + Objects.hashCode(this.jobSnapshot);
             hash = 23 * hash + Objects.hashCode(this.jobPriority);
-            hash = 23 * hash + Objects.hashCode(this.autoIngestJob.getOcrEnabled());
+            hash = 23 * hash + Objects.hashCode(this.ocrFlag);
             return hash;
         }
 
