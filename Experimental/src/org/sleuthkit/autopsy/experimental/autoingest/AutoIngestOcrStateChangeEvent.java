@@ -47,14 +47,18 @@ public final class AutoIngestOcrStateChangeEvent extends AutopsyEvent implements
      * @param caseName The name of the case.
      * @param nodeName The host name of the node that enabled/disabled OCR.
      * @param userName The logged in user
-     * @param eventType The type of OCR enabled/disabled event
+     * @param ocrState Flag whether OCR is enabled/disabled
      */
-    public AutoIngestOcrStateChangeEvent(String nodeName, String caseName, String userName, EventType eventType) {
+    public AutoIngestOcrStateChangeEvent(String nodeName, String caseName, String userName, boolean ocrState) {
         super(AutoIngestManager.Event.OCR_STATE_CHANGE.toString(), null, null);
         this.caseName = caseName;
         this.nodeName = nodeName;
         this.userName = userName;
-        this.eventType = eventType;
+        if (ocrState == true) {
+            this.eventType = EventType.OCR_ENABLED;
+        } else {
+            this.eventType = EventType.OCR_DISABLED;
+        }
     }
 
     /**

@@ -437,7 +437,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @throws AutoIngestMonitorException If there is an error enabling OCR for the jobs for the case.
      *
      */
-    void enableOcrForCase(final String caseName) throws AutoIngestMonitorException {
+    void changeOcrStateForCase(final String caseName, final boolean ocrState) throws AutoIngestMonitorException {
         List<AutoIngestJob> jobsToPrioritize = new ArrayList<>();
         synchronized (jobsLock) {
             for (AutoIngestJob pendingJob : getPendingJobs()) {
@@ -450,12 +450,12 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     String manifestNodePath = job.getManifest().getFilePath().toString();
                     try {
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
-                        nodeData.setOcrEnabled(true);
+                        nodeData.setOcrEnabled(ocrState);
                         coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
                     } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
                         throw new AutoIngestMonitorException("Error enabling OCR for job " + job.toString(), ex);
                     }
-                    job.setOcrEnabled(true);
+                    job.setOcrEnabled(ocrState);
 
                     /**
                      * Update job object in pending jobs queue
@@ -468,7 +468,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  */
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestOcrStateChangeEvent(LOCAL_HOST_NAME, caseName,
-                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestOcrStateChangeEvent.EventType.OCR_ENABLED));
+                            AutoIngestManager.getSystemUserNameProperty(), ocrState));
                 }).start();
             }
         }
