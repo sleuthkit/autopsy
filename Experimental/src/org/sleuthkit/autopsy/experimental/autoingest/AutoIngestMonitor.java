@@ -167,6 +167,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             handleAutoIngestNodeStateEvent((AutoIngestNodeStateEvent) event);
         } else if (event instanceof ThreadDumpResponseEvent) {
             handleRemoteThreadDumpResponseEvent((ThreadDumpResponseEvent) event);
+        } else if (event instanceof AutoIngestOcrStateChangeEvent) {
+            handleOcrStateChangeEvent((AutoIngestOcrStateChangeEvent) event);
         }
     }
 
@@ -229,6 +231,15 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         }
     }
 
+    /**
+     * Handles an OCR state change event.
+     *
+     * @param event OCR state change event.
+     */
+    private void handleOcrStateChangeEvent(AutoIngestOcrStateChangeEvent event) {
+        coordSvcQueryExecutor.submit(new StateRefreshTask());
+    }    
+    
     /**
      * Handles an auto ingest job/case prioritization event.
      *

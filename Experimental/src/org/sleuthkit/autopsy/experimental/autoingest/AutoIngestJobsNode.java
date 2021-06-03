@@ -139,6 +139,7 @@ final class AutoIngestJobsNode extends AbstractNode {
             hash = 23 * hash + Objects.hashCode(this.jobStage);
             hash = 23 * hash + Objects.hashCode(this.jobSnapshot);
             hash = 23 * hash + Objects.hashCode(this.jobPriority);
+            hash = 23 * hash + Objects.hashCode(this.autoIngestJob.getOcrEnabled());
             return hash;
         }
 
