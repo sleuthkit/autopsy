@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers.contextviewer;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
@@ -74,8 +75,10 @@ public final class ContextUsagePanel extends javax.swing.JPanel implements Conte
         jUsageNameLabel = new javax.swing.JLabel();
         jUsageTextLabel = new javax.swing.JLabel();
 
-        setBackground(new java.awt.Color(255, 255, 255));
-        setPreferredSize(new java.awt.Dimension(495, 75));
+        setBackground(ContentViewerDefaults.getPanelBackground());
+        setMaximumSize(new java.awt.Dimension(32767, 55));
+        setMinimumSize(new java.awt.Dimension(300, 55));
+        setPreferredSize(new java.awt.Dimension(495, 55));
 
         org.openide.awt.Mnemonics.setLocalizedText(jUsageGoToResultButton, org.openide.util.NbBundle.getMessage(ContextUsagePanel.class, "ContextUsagePanel.jUsageGoToResultButton.text")); // NOI18N
         jUsageGoToResultButton.addActionListener(new java.awt.event.ActionListener() {
@@ -93,25 +96,23 @@ public final class ContextUsagePanel extends javax.swing.JPanel implements Conte
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(50, 50, 50)
                 .addComponent(jUsageNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jUsageTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
-                .addGap(36, 36, 36))
+                .addComponent(jUsageTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
-                .addGap(90, 90, 90)
+                .addGap(40, 40, 40)
                 .addComponent(jUsageGoToResultButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(275, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(2, 2, 2)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jUsageTextLabel)
                     .addComponent(jUsageNameLabel, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jUsageGoToResultButton))
+                .addComponent(jUsageGoToResultButton)
+                .addGap(0, 11, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

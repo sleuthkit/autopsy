@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.contentviewers.contextviewer;
 
 import java.awt.Component;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,12 +29,14 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.BoxLayout;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
+import javax.swing.border.EmptyBorder;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -55,6 +58,10 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     private static final Logger logger = Logger.getLogger(ContextViewer.class.getName());
     private static final int ARTIFACT_STR_MAX_LEN = 1024;
     private static final int ATTRIBUTE_STR_MAX_LEN = 200;
+    
+    private final static Insets FIRST_HEADER_INSETS = new Insets(0, 0, 0, 0);
+    private final static Insets HEADER_INSETS = new Insets(ContentViewerDefaults.getSectionSpacing(), 0, ContentViewerDefaults.getLineSpacing(), 0);
+    private final static Insets DATA_ROW_INSETS = new Insets(0, ContentViewerDefaults.getSectionIndent(), ContentViewerDefaults.getLineSpacing(), 0);
 
     // defines a list of artifacts that provide context for a file
     private static final List<BlackboardArtifact.ARTIFACT_TYPE> CONTEXT_ARTIFACTS = new ArrayList<>();
@@ -91,75 +98,28 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         javax.swing.JLabel jUnknownLabel = new javax.swing.JLabel();
         jScrollPane = new javax.swing.JScrollPane();
 
-        jSourcePanel.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
+        jSourcePanel.setBorder(new EmptyBorder(FIRST_HEADER_INSETS));
+        jSourcePanel.setLayout(new javax.swing.BoxLayout(jSourcePanel, javax.swing.BoxLayout.PAGE_AXIS));
 
-        jSourceLabel.setFont(jSourceLabel.getFont().deriveFont(jSourceLabel.getFont().getStyle() | java.awt.Font.BOLD, jSourceLabel.getFont().getSize()+1));
+        jSourceLabel.setFont(ContentViewerDefaults.getHeaderFont());
         org.openide.awt.Mnemonics.setLocalizedText(jSourceLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jSourceLabel.text")); // NOI18N
+        jSourcePanel.add(jSourceLabel);
 
-        javax.swing.GroupLayout jSourcePanelLayout = new javax.swing.GroupLayout(jSourcePanel);
-        jSourcePanel.setLayout(jSourcePanelLayout);
-        jSourcePanelLayout.setHorizontalGroup(
-            jSourcePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jSourcePanelLayout.createSequentialGroup()
-                .addGap(40, 40, 40)
-                .addComponent(jSourceLabel)
-                .addContainerGap(304, Short.MAX_VALUE))
+        jUsagePanel.setBorder(new EmptyBorder(HEADER_INSETS));
+        jUsagePanel.setLayout(new javax.swing.BoxLayout(jUsagePanel, javax.swing.BoxLayout.PAGE_AXIS));
+
+        jUsageLabel.setFont(ContentViewerDefaults.getHeaderFont()
         );
-        jSourcePanelLayout.setVerticalGroup(
-            jSourcePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jSourcePanelLayout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addComponent(jSourceLabel)
-                .addGap(2, 2, 2))
-        );
-
-        jUsagePanel.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
-
-        jUsageLabel.setFont(jUsageLabel.getFont().deriveFont(jUsageLabel.getFont().getStyle() | java.awt.Font.BOLD, jUsageLabel.getFont().getSize()+1));
         org.openide.awt.Mnemonics.setLocalizedText(jUsageLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUsageLabel.text")); // NOI18N
+        jUsagePanel.add(jUsageLabel);
 
-        javax.swing.GroupLayout jUsagePanelLayout = new javax.swing.GroupLayout(jUsagePanel);
-        jUsagePanel.setLayout(jUsagePanelLayout);
-        jUsagePanelLayout.setHorizontalGroup(
-            jUsagePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jUsagePanelLayout.createSequentialGroup()
-                .addGap(40, 40, 40)
-                .addComponent(jUsageLabel)
-                .addContainerGap(298, Short.MAX_VALUE))
-        );
-        jUsagePanelLayout.setVerticalGroup(
-            jUsagePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jUsagePanelLayout.createSequentialGroup()
-                .addGap(2, 2, 2)
-                .addComponent(jUsageLabel)
-                .addGap(2, 2, 2))
-        );
-
-        jUnknownPanel.setBackground(new java.awt.Color(255, 255, 255));
+        jUnknownPanel.setLayout(new javax.swing.BoxLayout(jUnknownPanel, javax.swing.BoxLayout.PAGE_AXIS));
 
         org.openide.awt.Mnemonics.setLocalizedText(jUnknownLabel, org.openide.util.NbBundle.getMessage(ContextViewer.class, "ContextViewer.jUnknownLabel.text")); // NOI18N
+        jUnknownLabel.setBorder(new EmptyBorder(DATA_ROW_INSETS));
+        jUnknownPanel.add(jUnknownLabel);
 
-        javax.swing.GroupLayout jUnknownPanelLayout = new javax.swing.GroupLayout(jUnknownPanel);
-        jUnknownPanel.setLayout(jUnknownPanelLayout);
-        jUnknownPanelLayout.setHorizontalGroup(
-            jUnknownPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jUnknownPanelLayout.createSequentialGroup()
-                .addGap(50, 50, 50)
-                .addComponent(jUnknownLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jUnknownPanelLayout.setVerticalGroup(
-            jUnknownPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jUnknownPanelLayout.createSequentialGroup()
-                .addGap(2, 2, 2)
-                .addComponent(jUnknownLabel)
-                .addGap(2, 2, 2))
-        );
-
-        setBackground(new java.awt.Color(255, 255, 255));
         setPreferredSize(new java.awt.Dimension(495, 358));
-
-        jScrollPane.setBackground(new java.awt.Color(255, 255, 255));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -275,6 +235,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             }
         }
         javax.swing.JPanel contextContainer = new javax.swing.JPanel();
+        contextContainer.setBorder(new EmptyBorder(ContentViewerDefaults.getPanelInsets()));
+        
         contextContainer.add(jSourcePanel);
         contextContainer.setLayout(new BoxLayout(contextContainer, BoxLayout.Y_AXIS));
         if (contextSourcePanels.isEmpty()) {
@@ -282,6 +244,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         } else {
             for (javax.swing.JPanel sourcePanel : contextSourcePanels) {
                 contextContainer.add(sourcePanel);
+                contextContainer.setAlignmentX(0);
             }
         }
         contextContainer.add(jUsagePanel);
@@ -290,10 +253,11 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         } else {
             for (javax.swing.JPanel usagePanel : contextUsagePanels) {
                 contextContainer.add(usagePanel);
+                contextContainer.setAlignmentX(0);
             }
         }
         
-        contextContainer.setBackground(javax.swing.UIManager.getDefaults().getColor("window"));
+        contextContainer.setBackground(ContentViewerDefaults.getPanelBackground());
         contextContainer.setEnabled(foundASource);
         contextContainer.setVisible(foundASource);
         jScrollPane.getViewport().setView(contextContainer);
@@ -346,6 +310,8 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             String sourceName = Bundle.ContextViewer_attachmentSource();
             String sourceText = msgArtifactToAbbreviatedString(associatedArtifact);
             ContextSourcePanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, dateTime);
+            sourcePanel.setBorder(new EmptyBorder(DATA_ROW_INSETS));
+            sourcePanel.setAlignmentX(0);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == associatedArtifact.getArtifactTypeID()
@@ -353,18 +319,24 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             String sourceName = Bundle.ContextViewer_downloadSource();
             String sourceText = webDownloadArtifactToString(associatedArtifact);
             ContextSourcePanel sourcePanel = new ContextSourcePanel(sourceName, sourceText, associatedArtifact, dateTime);
+            sourcePanel.setBorder(new EmptyBorder(DATA_ROW_INSETS));
+            sourcePanel.setAlignmentX(0);
             contextSourcePanels.add(sourcePanel);
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_recentDocs();
             String sourceText = recentDocArtifactToString(associatedArtifact);
-            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);        
+            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime); 
+            usagePanel.setBorder(new EmptyBorder(DATA_ROW_INSETS));
+            usagePanel.setAlignmentX(0);
             contextUsagePanels.add(usagePanel);
             
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == associatedArtifact.getArtifactTypeID()) {
             String sourceName = Bundle.ContextViewer_programExecution();
             String sourceText = programExecArtifactToString(associatedArtifact);
-            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);        
+            ContextUsagePanel usagePanel = new ContextUsagePanel(sourceName, sourceText, associatedArtifact, dateTime);    
+            usagePanel.setBorder(new EmptyBorder(DATA_ROW_INSETS));
+            usagePanel.setAlignmentX(0);
             contextUsagePanels.add(usagePanel);
         }
         
