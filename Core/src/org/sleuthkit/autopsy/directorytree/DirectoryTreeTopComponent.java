@@ -86,7 +86,7 @@ import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
-import org.sleuthkit.autopsy.datamodel.PersonGroupingNode;
+import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
@@ -241,7 +241,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (node == null) {
             return Collections.emptyList();
         } else if (node.getLookup().lookup(Person.class) != null
-                || PersonGroupingNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
             Children children = node.getChildren();
             Node[] childNodes = children == null ? null : children.getNodes();
             if (childNodes != null) {
@@ -1193,7 +1193,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return Optional.empty();
         } else if (node.getLookup().lookup(Host.class) != null
                 || node.getLookup().lookup(Person.class) != null
-                || PersonGroupingNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
             // if host or person node, recurse until we find correct data source node.
             Children children = node.getChildren();
 

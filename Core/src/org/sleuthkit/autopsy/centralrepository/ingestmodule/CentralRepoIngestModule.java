@@ -67,7 +67,6 @@ import org.sleuthkit.datamodel.Score;
 final class CentralRepoIngestModule implements FileIngestModule {
 
     private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
-
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = false;
     static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = false;
     static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
@@ -334,7 +333,6 @@ final class CentralRepoIngestModule implements FileIngestModule {
      * @param caseDisplayNames Case names to be added to a TSK_COMMON attribute.
      */
     private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
-
         Collection<BlackboardAttribute> attributes = Arrays.asList(
                 new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
@@ -347,8 +345,8 @@ final class CentralRepoIngestModule implements FileIngestModule {
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_FILE_HIT, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
-                        new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT), 
-                        Score.SCORE_UNKNOWN, null, null, null, attributes)
+                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                        null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), null, attributes)
                         .getAnalysisResult();
                 try {
                     // index the artifact for keyword search

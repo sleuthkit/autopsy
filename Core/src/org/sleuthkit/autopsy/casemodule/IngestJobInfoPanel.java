@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016-2019 Basis Technology Corp.
+ * Copyright 2016-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE);
-
+    private static final int EXTRA_ROW_HEIGHT = 4;
     private List<IngestJobInfo> ingestJobs;
     private final List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
@@ -100,6 +100,9 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
                 }
             }
         });
+        ingestJobTable.setRowHeight(ingestJobTable.getRowHeight() + EXTRA_ROW_HEIGHT);
+        ingestModuleTable.setRowHeight(ingestModuleTable.getRowHeight() + EXTRA_ROW_HEIGHT);
+                
     }
 
     /**
@@ -267,19 +270,18 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         javax.swing.JScrollPane ingestModulesScrollPane = new javax.swing.JScrollPane();
         ingestModuleTable = new javax.swing.JTable();
 
-        setMaximumSize(new java.awt.Dimension(32767, 32767));
         setLayout(new java.awt.BorderLayout());
 
-        contentPanel.setMaximumSize(new java.awt.Dimension(32767, 32767));
         contentPanel.setMinimumSize(new java.awt.Dimension(625, 150));
         contentPanel.setPreferredSize(new java.awt.Dimension(625, 150));
         contentPanel.setLayout(new java.awt.GridBagLayout());
 
         ingestJobsScrollPane.setBorder(null);
         ingestJobsScrollPane.setMinimumSize(new java.awt.Dimension(16, 16));
-        ingestJobsScrollPane.setPreferredSize(null);
 
         ingestJobTable.setModel(ingestJobTableModel);
+        ingestJobTable.setGridColor(javax.swing.UIManager.getDefaults().getColor("InternalFrame.borderColor"));
+        ingestJobTable.setIntercellSpacing(new java.awt.Dimension(4, 2));
         ingestJobTable.getTableHeader().setReorderingAllowed(false);
         ingestJobsScrollPane.setViewportView(ingestJobTable);
         ingestJobTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -315,6 +317,8 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         ingestModulesScrollPane.setPreferredSize(new java.awt.Dimension(254, 16));
 
         ingestModuleTable.setModel(ingestModuleTableModel);
+        ingestModuleTable.setGridColor(javax.swing.UIManager.getDefaults().getColor("InternalFrame.borderColor"));
+        ingestModuleTable.setIntercellSpacing(new java.awt.Dimension(4, 2));
         ingestModulesScrollPane.setViewportView(ingestModuleTable);
 
         gridBagConstraints = new java.awt.GridBagConstraints();

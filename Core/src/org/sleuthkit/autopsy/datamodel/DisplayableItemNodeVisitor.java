@@ -42,7 +42,7 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Data Sources Area
      */
-    T visit(DataSourcesNode in);
+    T visit(DataSourceFilesNode in);
 
     T visit(LayoutFileNode lfn);
 
@@ -192,11 +192,11 @@ public interface DisplayableItemNodeVisitor<T> {
     
     T visit(OsAccounts.OsAccountListNode node);
 
-    T visit(PersonGroupingNode node);
+    T visit(PersonNode node);
 
     T visit(HostNode node);
 
-    T visit(DataSourcesByTypeNode node);
+    T visit(DataSourcesNode node);
     
     /*
      * Unsupported node
@@ -406,7 +406,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(DataSourcesNode in) {
+        public T visit(DataSourceFilesNode in) {
             return defaultVisit(in);
         }
 
@@ -561,12 +561,12 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(DataSourcesByTypeNode node) {
+        public T visit(DataSourcesNode node) {
             return defaultVisit(node);
         }
 
         @Override
-        public T visit(PersonGroupingNode node) {
+        public T visit(PersonNode node) {
             return defaultVisit(node);
         }
         

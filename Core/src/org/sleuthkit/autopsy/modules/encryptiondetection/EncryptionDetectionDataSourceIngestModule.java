@@ -104,14 +104,16 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
                             return ProcessResult.OK;
                         }
                         if (BitlockerDetection.isBitlockerVolume(volume)) {
-                            return flagVolume(volume, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_bitlocker());
+                            return flagVolume(volume, BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NOTABLE, 
+                                    Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_bitlocker());
                         }
 
                         if (context.dataSourceIngestIsCancelled()) {
                             return ProcessResult.OK;
                         }
                         if (isVolumeEncrypted(volume)) {
-                            return flagVolume(volume, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED, String.format(Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_suspected(), calculatedEntropy));
+                            return flagVolume(volume, BlackboardArtifact.Type.TSK_ENCRYPTION_SUSPECTED, Score.SCORE_LIKELY_NOTABLE,
+                                    String.format(Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_suspected(), calculatedEntropy));
                         }
                     }
                     // Update progress bar
@@ -148,19 +150,20 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
      * @param volume       The volume to be processed.
      * @param artifactType The type of artifact to create. This is assumed to be
      *                     an analysis result type.
+     * @param score        The score of the analysis result.
      * @param comment      A comment to be attached to the artifact.
      *
      * @return 'OK' if the volume was processed successfully, or 'ERROR' if
      *         there was a problem.
      */
-    private IngestModule.ProcessResult flagVolume(Volume volume, BlackboardArtifact.ARTIFACT_TYPE artifactType, String comment) {
+    private IngestModule.ProcessResult flagVolume(Volume volume, BlackboardArtifact.Type artifactType, Score score, String comment) {
 
         if (context.dataSourceIngestIsCancelled()) {
             return ProcessResult.OK;
         }
 
         try {
-            BlackboardArtifact artifact = volume.newAnalysisResult(new BlackboardArtifact.Type(artifactType), Score.SCORE_UNKNOWN, null, null, null, 
+            BlackboardArtifact artifact = volume.newAnalysisResult(artifactType, score, null, null, comment, 
                     Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, EncryptionDetectionModuleFactory.getModuleName(), comment)))
                     .getAnalysisResult();
             

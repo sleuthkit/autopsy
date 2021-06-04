@@ -18,27 +18,24 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
-import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelCellModel;
 
 /**
  * The default cell model.
  */
 public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
 
-    final T data;
-    final Function<T, String> stringConverter;
-    String tooltip;
-    CellModel.HorizontalAlign horizontalAlignment;
-    Insets insets;
-    List<MenuItem> popupMenu;
-    Supplier<List<MenuItem>> menuItemSupplier;
-    final String excelFormatString;
+    private final T data;
+    private final String text;
+    private String tooltip;
+    private CellModel.HorizontalAlign horizontalAlignment;
+    private List<MenuItem> popupMenu;
+    private Supplier<List<MenuItem>> menuItemSupplier;
+    private final String excelFormatString;
 
     /**
      * Main constructor.
@@ -52,9 +49,9 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
     /**
      * Constructor.
      *
-     * @param data The data to be displayed in the cell.
+     * @param data            The data to be displayed in the cell.
      * @param stringConverter The means of converting that data to a string or
-     * null to use .toString method on object.
+     *                        null to use .toString method on object.
      */
     public DefaultCellModel(T data, Function<T, String> stringConverter) {
         this(data, stringConverter, null);
@@ -63,20 +60,25 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
     /**
      * Constructor.
      *
-     * @param data The data to be displayed in the cell.
-     * @param stringConverter The means of converting that data to a string or
-     * null to use .toString method on object.
+     * @param data              The data to be displayed in the cell.
+     * @param stringConverter   The means of converting that data to a string or
+     *                          null to use .toString method on object.
      * @param excelFormatString The apache poi excel format string to use with
-     * the data.
+     *                          the data.
      *
      * NOTE: Only certain data types can be exported. See
      * ExcelTableExport.createCell() for types.
      */
     public DefaultCellModel(T data, Function<T, String> stringConverter, String excelFormatString) {
         this.data = data;
-        this.stringConverter = stringConverter;
         this.excelFormatString = excelFormatString;
-        this.tooltip = getText();
+
+        if (stringConverter == null) {
+            text = this.data == null ? "" : this.data.toString();
+        } else {
+            text = stringConverter.apply(this.data);
+        }
+        this.tooltip = text;
     }
 
     @Override
@@ -91,11 +93,7 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
 
     @Override
     public String getText() {
-        if (this.stringConverter == null) {
-            return this.data == null ? "" : this.data.toString();
-        } else {
-            return this.stringConverter.apply(this.data);
-        }
+        return text;
     }
 
     @Override
@@ -133,32 +131,13 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
     }
 
     @Override
-    public Insets getInsets() {
-        return insets;
-    }
-
-    /**
-     * Sets the insets for the text within the cell
-     *
-     * @param insets The insets.
-     *
-     * @return As a utility, returns this.
-     */
-    public DefaultCellModel<T> setInsets(Insets insets) {
-        this.insets = insets;
-        return this;
-    }
-
-    @Override
     public List<MenuItem> getPopupMenu() {
         if (popupMenu != null) {
             return Collections.unmodifiableList(popupMenu);
         }
-
         if (menuItemSupplier != null) {
             return this.menuItemSupplier.get();
         }
-
         return null;
     }
 
@@ -166,6 +145,7 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
      * Sets a function to lazy load the popup menu items.
      *
      * @param menuItemSupplier The lazy load function for popup items.
+     *
      * @return
      */
     public DefaultCellModel<T> setPopupMenuRetriever(Supplier<List<MenuItem>> menuItemSupplier) {
@@ -177,6 +157,7 @@ public class DefaultCellModel<T> implements GuiCellModel, ExcelCellModel {
      * Sets the list of items for a popup menu
      *
      * @param popupMenu
+     *
      * @return As a utility, returns this.
      */
     public DefaultCellModel<T> setPopupMenu(List<MenuItem> popupMenu) {

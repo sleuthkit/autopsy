@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * DataContentViewer for OsAccounts.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 7)
+@ServiceProvider(service = DataContentViewer.class, position = 5)
 public class OsAccountViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = 1L;

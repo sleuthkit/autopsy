@@ -79,6 +79,7 @@ import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Score;
 
 /**
@@ -365,7 +366,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * action to view it in the timeline.
          */
         try {
-            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact) &&
+                    // don't show ViewArtifactInTimelineAction for AnalysisResults.
+                    (!(this.artifact instanceof AnalysisResult))) {
+                
                 actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
         } catch (TskCoreException ex) {
