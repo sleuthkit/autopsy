@@ -122,7 +122,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
     private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 60;
     private static final int PRIORITY_COLUMN_MAX_WIDTH = 150;
-    private static final int OCR_COLUMN_PREFERRED_WIDTH = 80;
+    private static final int OCR_COLUMN_PREFERRED_WIDTH = 50;
     private static final int OCR_COLUMN_MAX_WIDTH = 150;
     private static final int ACTIVITY_TIME_COL_MIN_WIDTH = 250;
     private static final int ACTIVITY_TIME_COL_MAX_WIDTH = 450;
@@ -182,7 +182,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CaseFolder=Case Folder",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.LocalJob= Local Job?",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath= Manifest File Path",
-        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.OCR=OCR Enabled"
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.OCR=OCR"
     })
     private enum JobsTableModelColumns {
 

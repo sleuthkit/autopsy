@@ -2297,6 +2297,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             }
             
             // update the OCR enabled/disabled setting
+            if (currentJob.getOcrEnabled()) {
+                sysLogger.log(Level.INFO, "Enabling OCR for job {0}", currentJob.getManifest().getFilePath());
+            } else {
+                sysLogger.log(Level.INFO, "Disabling OCR for job {0}", currentJob.getManifest().getFilePath());
+            }
             KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
             kwsService.changeOcrState(currentJob.getOcrEnabled());
         }
