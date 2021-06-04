@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
@@ -103,7 +104,21 @@ class ContentChildren extends AbstractContentChildren<Content> {
 
     @Override
     protected List<Content> makeKeys() {
-        return getDisplayChildren(parent);
+        List<Content> contentList = getDisplayChildren(parent);
+        
+        // Call the getUniquePath method to cache the value for future use
+        // in the EDT
+        contentList.forEach(content->{
+            try {
+                content.getUniquePath();
+            } catch (TskCoreException ex) {
+                 logger.log(Level.SEVERE, String.format("Failed attempt to cache the "
+                    + "unique path of the abstract file instance. Name: %s (objID=%d)",
+                    content.getName(), content.getId()), ex);
+            }
+        });
+        
+        return contentList;
     }
 
     @Override
