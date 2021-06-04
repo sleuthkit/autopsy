@@ -56,7 +56,6 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * artifacts.
  */
 class VolatilityProcessor {
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     
     private static final Logger logger = Logger.getLogger(VolatilityProcessor.class.getName());
     private static final String VOLATILITY = "Volatility"; //NON-NLS
@@ -384,7 +383,7 @@ class VolatilityProcessor {
                         // Create artifact if it doesn't already exist.
                         if (!blackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
                             BlackboardArtifact volArtifact = resolvedFile.newAnalysisResult(
-                                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, LIKELY_NOTABLE_SCORE, 
+                                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
                                     null, setName, null, 
                                     attributes)
                                     .getAnalysisResult();

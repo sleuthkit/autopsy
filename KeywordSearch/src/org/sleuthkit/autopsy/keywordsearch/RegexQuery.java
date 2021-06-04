@@ -72,7 +72,6 @@ import org.sleuthkit.datamodel.TskData;
 final class RegexQuery implements KeywordSearchQuery {
 
     public static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     
     /**
      * Lucene regular expressions do not support the following Java predefined
@@ -615,7 +614,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
         try {
             return content.newAnalysisResult(
-                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, LIKELY_NOTABLE_SCORE, 
+                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_LIKELY_NOTABLE, 
                     null, listName, null, attributes)
                     .getAnalysisResult();
         } catch (TskCoreException e) {
