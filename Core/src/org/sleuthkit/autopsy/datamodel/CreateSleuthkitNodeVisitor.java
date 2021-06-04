@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -33,6 +35,7 @@ import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.UnsupportedContent;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
@@ -41,6 +44,8 @@ import org.sleuthkit.datamodel.Volume;
  * Creates appropriate Node for each sub-class of Content
  */
 public class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<AbstractContentNode<? extends Content>> {
+    
+    private static final Logger logger = Logger.getLogger(CreateSleuthkitNodeVisitor.class.getName());
 
     @Override
     public AbstractContentNode<? extends Content> visit(Directory drctr) {
@@ -99,7 +104,13 @@ public class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<Abs
 
     @Override
     public AbstractContentNode<? extends Content> visit(BlackboardArtifact art) {
-        return new BlackboardArtifactNode(new BlackboardArtifactNodeKey(art));
+        try {
+            return new BlackboardArtifactNode(BlackboardArtifactNodeKey.createNodeKey(art));
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to creatNodeKey for artifact (%d)", art.getId()), ex);
+        }
+        
+        return null;
     }
     
     @Override

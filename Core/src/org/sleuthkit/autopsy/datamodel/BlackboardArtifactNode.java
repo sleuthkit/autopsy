@@ -1010,7 +1010,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          *
          * @param artifact
          */
-        public BlackboardArtifactNodeKey(BlackboardArtifact artifact) {
+        private BlackboardArtifactNodeKey(BlackboardArtifact artifact) {
             this(artifact, false);
         }
 
