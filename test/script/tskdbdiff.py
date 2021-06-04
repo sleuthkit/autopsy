@@ -454,7 +454,8 @@ class TskGuidUtils:
         guid_image_names = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, name FROM tsk_image_names "
                                                                 "WHERE sequence=0")
         guid_os_accounts = TskGuidUtils._get_guid_dict(db_conn, "SELECT os_account_obj_id, addr FROM tsk_os_accounts")
-        guid_reports = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, path FROM reports")
+        guid_reports = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, path FROM reports",
+                                                   normalizer=normalize_file_path)
 
         objid_artifacts = TskGuidUtils._get_guid_dict(db_conn,
                                                       "SELECT blackboard_artifacts.artifact_obj_id, "
@@ -917,8 +918,8 @@ def normalize_tsk_files(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[st
 
     row_copy['obj_id'] = MASKED_OBJ_ID
     row_copy['os_account_obj_id'] = 'MASKED_OS_ACCOUNT_OBJ_ID'
-    row_copy['parent_path'] = normalize_unalloc_files(row['parent_path'])
-    row_copy['name'] = normalize_unalloc_files(row['name'])
+    row_copy['parent_path'] = normalize_file_path(row['parent_path'])
+    row_copy['name'] = normalize_file_path(row['name'])
     return row_copy
 
 
@@ -986,7 +987,7 @@ def normalize_tsk_objects_path(guid_util: TskGuidUtils, objid: int,
 
         path = os.path.join(*path_parts) if len(path_parts) > 0 else '/'
 
-        return normalize_file_path(path)
+        return path
 
 
 def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
