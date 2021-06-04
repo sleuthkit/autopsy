@@ -122,7 +122,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
     private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 60;
     private static final int PRIORITY_COLUMN_MAX_WIDTH = 150;
-    private static final int OCR_COLUMN_PREFERRED_WIDTH = 60;
+    private static final int OCR_COLUMN_PREFERRED_WIDTH = 80;
     private static final int OCR_COLUMN_MAX_WIDTH = 150;
     private static final int ACTIVITY_TIME_COL_MIN_WIDTH = 250;
     private static final int ACTIVITY_TIME_COL_MAX_WIDTH = 450;
@@ -566,7 +566,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.OCR.getColumnHeader())); // ELTODO ?
         
         /*
          * Set up a column to display the cases associated with the jobs.
@@ -618,6 +617,15 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setMaxWidth(STATUS_COL_MAX_WIDTH);
         column.setPreferredWidth(STATUS_COL_PREFERRED_WIDTH);
         column.setWidth(STATUS_COL_PREFERRED_WIDTH);
+        
+        /*
+         * Set up a column to display OCR enabled/disabled flag.
+         */
+        column = completedTable.getColumn(JobsTableModelColumns.OCR.getColumnHeader());
+        column.setCellRenderer(new OcrIconCellRenderer());
+        column.setMaxWidth(OCR_COLUMN_MAX_WIDTH);
+        column.setPreferredWidth(OCR_COLUMN_PREFERRED_WIDTH);
+        column.setWidth(OCR_COLUMN_PREFERRED_WIDTH);
 
         /*
          * Allow sorting when a column header is clicked.
@@ -871,6 +879,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 case JOB_COMPLETED:
                 case CASE_DELETED:
                 case REPROCESS_JOB:
+                case OCR_STATE_CHANGE:                    
                     updateExecutor.submit(new UpdateAllJobsTablesTask());
                     break;
                 case PAUSED_BY_USER_REQUEST:
@@ -897,7 +906,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     });
                     break;
                 case CASE_PRIORITIZED:
-                case OCR_STATE_CHANGE:
                     updateExecutor.submit(new UpdatePendingJobsTableTask());
                     break;
                 case JOB_STATUS_UPDATED:

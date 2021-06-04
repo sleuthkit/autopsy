@@ -355,6 +355,8 @@ final class AutoIngestJobsNode extends AbstractNode {
                             jobWrapper.getCompletedDate()));
                     ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text(),
                             jobWrapper.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text(),
+                            jobWrapper.getOcrEnabled()));                    
                     break;
                 default:
             }
