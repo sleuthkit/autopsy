@@ -135,9 +135,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int ACTIVITY_COL_MIN_WIDTH = 70;
     private static final int ACTIVITY_COL_MAX_WIDTH = 2000;
     private static final int ACTIVITY_COL_PREFERRED_WIDTH = 300;
-    private static final int STATUS_COL_MIN_WIDTH = 55;
+    private static final int STATUS_COL_MIN_WIDTH = 50;
     private static final int STATUS_COL_MAX_WIDTH = 250;
-    private static final int STATUS_COL_PREFERRED_WIDTH = 55;
+    private static final int STATUS_COL_PREFERRED_WIDTH = 50;
     private static final int COMPLETED_TIME_COL_MIN_WIDTH = 30;
     private static final int COMPLETED_TIME_COL_MAX_WIDTH = 2000;
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
