@@ -69,7 +69,6 @@ import org.sleuthkit.datamodel.blackboardutils.WebBrowserArtifactsHelper;
  * Chromium recent activity extraction
  */
 class Chromium extends Extract {
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
     
     private static final String HISTORY_QUERY = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, " //NON-NLS
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) AS from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url"; //NON-NLS
@@ -833,7 +832,7 @@ class Chromium extends Extract {
 
                    bbartifacts.add(
                            webDataFile.newAnalysisResult(
-                                   BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, NOTABLE_SCORE, 
+                                   BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NOTABLE, 
                                    null, null, comment, bbattributes).getAnalysisResult()); 
                 }
             } catch (NoCurrentCaseException | TskCoreException | Blackboard.BlackboardException ex) {

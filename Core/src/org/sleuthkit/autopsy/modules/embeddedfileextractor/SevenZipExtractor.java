@@ -89,8 +89,6 @@ class SevenZipExtractor {
     private static final Logger logger = Logger.getLogger(SevenZipExtractor.class.getName());
 
     private static final String MODULE_NAME = EmbeddedFileExtractorModuleFactory.getModuleName();
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
     
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
@@ -321,7 +319,7 @@ class SevenZipExtractor {
             if (!blackboard.artifactExists(archiveFile, TSK_INTERESTING_FILE_HIT, attributes)) {
  
                 BlackboardArtifact artifact = rootArchive.getArchiveFile().newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, LIKELY_NOTABLE_SCORE, 
+                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
                         null, setName, null, 
                         attributes)
                         .getAnalysisResult();
@@ -864,7 +862,7 @@ class SevenZipExtractor {
             try {
                 BlackboardArtifact artifact = archiveFile.newAnalysisResult(
                         new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED), 
-                        NOTABLE_SCORE, 
+                        Score.SCORE_NOTABLE, 
                         null, null, encryptionType, 
                         Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, encryptionType)))
                         .getAnalysisResult();

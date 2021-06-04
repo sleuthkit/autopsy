@@ -67,7 +67,6 @@ import org.sleuthkit.datamodel.Score;
 final class CentralRepoIngestModule implements FileIngestModule {
 
     private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = false;
     static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = false;
     static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
@@ -346,7 +345,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_FILE_HIT, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, LIKELY_NOTABLE_SCORE, 
+                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
                         null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), null, attributes)
                         .getAnalysisResult();
                 try {
