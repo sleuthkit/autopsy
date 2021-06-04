@@ -188,7 +188,7 @@ final class AutoIngestAdminActions {
                 EventQueue.invokeLater(() -> {
                     try {
                         dashboard.getMonitor().changeOcrStateForCase(job.getManifest().getCaseName(), true);
-                        dashboard.getPendingJobsPanel().refresh(new AutoIngestNodeRefreshEvents.RefreshCaseEvent(dashboard.getMonitor(), job.getManifest().getCaseName())); // ELTODO
+                        dashboard.getPendingJobsPanel().refresh(new AutoIngestNodeRefreshEvents.RefreshCaseEvent(dashboard.getMonitor(), job.getManifest().getCaseName()));
                     } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                         String errorMessage = String.format(Bundle.AutoIngestAdminActions_enableOCR_error(), job.getManifest().getCaseName());
                         logger.log(Level.SEVERE, errorMessage, ex);
@@ -236,7 +236,7 @@ final class AutoIngestAdminActions {
                 EventQueue.invokeLater(() -> {
                     try {
                         dashboard.getMonitor().changeOcrStateForCase(job.getManifest().getCaseName(), false);
-                        dashboard.getPendingJobsPanel().refresh(new AutoIngestNodeRefreshEvents.RefreshCaseEvent(dashboard.getMonitor(), job.getManifest().getCaseName())); // ELTODO
+                        dashboard.getPendingJobsPanel().refresh(new AutoIngestNodeRefreshEvents.RefreshCaseEvent(dashboard.getMonitor(), job.getManifest().getCaseName()));
                     } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                         String errorMessage = String.format(Bundle.AutoIngestAdminActions_disableOCR_error(), job.getManifest().getCaseName());
                         logger.log(Level.SEVERE, errorMessage, ex);
