@@ -61,7 +61,6 @@ class LuceneQuery implements KeywordSearchQuery {
     static final int SNIPPET_LENGTH = 50;
     static final String HIGHLIGHT_FIELD = Server.Schema.TEXT.toString();
 
-    private static final Score KEYWORD_SEARCH_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     /**
@@ -265,7 +264,7 @@ class LuceneQuery implements KeywordSearchQuery {
 
         try {
             return content.newAnalysisResult(
-                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, KEYWORD_SEARCH_SCORE, 
+                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_LIKELY_NOTABLE, 
                     null, listName, null, 
                     attributes)
                     .getAnalysisResult();

@@ -51,7 +51,6 @@ import org.sleuthkit.datamodel.TskDataException;
  */
 public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
 
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
     private static final Logger logger = Logger.getLogger(DataSourceIntegrityIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getInstance();
@@ -297,7 +296,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                     BlackboardArtifact verificationFailedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboard().newAnalysisResult(
                             BlackboardArtifact.Type.TSK_VERIFICATION_FAILED,
                             img.getId(), img.getId(),
-                            NOTABLE_SCORE,
+                            Score.SCORE_NOTABLE,
                             null, null, artifactComment,
                             Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                                     DataSourceIntegrityModuleFactory.getModuleName(), artifactComment)))
