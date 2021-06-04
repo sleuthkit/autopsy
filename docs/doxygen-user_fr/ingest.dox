@@ -1,104 +1,104 @@
-/*! \page ingest_page Ingest Modules
+/*! \page ingest_page Ingest Modules (Modules d'acquisition)
 
 [TOC]
 
 
-Ingest modules analyze the data in a data source.  They perform all of the analysis of the files and parse their contents.  Examples include \ref hash_db_page "hash calculation and lookup", \ref keyword_search_page "keyword searching", and \ref recent_activity_page "web artifact extraction". 
+Les "Ingest Modules" analysent les données d'une source de données. Ils effectuent toutes les analyses des fichiers ainsi que de leur contenu.  Exemples de modules d'acquisition: \ref hash_db_page, \ref keyword_search_page ou \ref recent_activity_page.
 
-Immediately after you add a data source to a case (see \ref ds_page), you will be presented with a dialog to configure the ingest modules to run on it.  Once configured, they will run in the background and provide you real-time results when they find relevant information.  
+Immédiatement après avoir ajouté une source de données à un cas - voir \ref ds_page -, une boîte de dialogue vous sera présentée pour configurer les modules d'acquisition à exécuter dessus. Une fois configurés, ils fonctionneront en arrière-plan et vous fourniront des résultats en temps réel lorsqu'ils trouveront des informations pertinentes.  
 
-This page covers the use of ingest modules.  Specific pages will cover the configuration of specific modules.   See \ref module_install_page for details on installing 3rd-party ingest modules. 
+Cette page couvre l'utilisation des modules d'acquisition. Des pages spécifiques couvriront la configuration de modules particuliers. Voir \ref module_install_page pour plus de détails sur l'installation de modules d'acquisition tiers. 
 
-\section ingest_performance Multi-threaded and Priority
+\section ingest_performance Multi-thread et priorités
 
-Ingest modules are configured to find user content quickly.  The ingest modules are grouped into pipelines and each file goes down the pipeline, module by module. A pipeline may have modules in the following order: 
+Les modules d'acquisition sont configurés pour trouver rapidement le contenu de l'utilisateur. Les modules d'acquisition sont regroupés en pipelines et chaque fichier descend dans le pipeline, traversant module après module. Un pipeline peut faire passer les fichiers à travers les modules dans l'ordre suivant:
 
 \image html ingest_pipeline.PNG
 
-Multiple pipelines may be running at the same time.  By default, two pipelines are running, but you can add more depending on how many cores you have on your system.   You can configure the number of pipelines to make in the "Tools", "Options", "General" area. 
+Plusieurs pipelines peuvent fonctionner en même temps. Par défaut, deux pipelines sont exécutés en même temps, mais vous pouvez en ajouter d'autres en fonction du nombre de cœurs que vous avez sur votre système. Vous pouvez configurer le nombre de pipelines dans la zone "Tools", "Options", "General". 
 
-Autopsy prioritizes user content over other types of files and will send data from the "Documents and Settings" folder or "Users" folder into the pipelines before the "Windows" folder.  It prioritizes each folder in the system to ensure that user content is analyzed before other content. 
+Autopsy donne la priorité au contenu de l'utilisateur par rapport aux autres types de fichiers et enverra les données du dossier "Documents and Settings" ou "Users" dans les pipelines avant le dossier "Windows". Il priorise chaque dossier du système pour garantir que le contenu de l'utilisateur soit analysé avant tout autre contenu.
 
 
-\section ingest_running Running Ingest Modules
+\section ingest_running Exécution des modules d'acquisition
 
-There are two ways to start ingest modules:
--# Immediately after you add a data source
--# By right-clicking on a data source from the tree in the main interface and choosing "Run Ingest Modules"
+Il existe deux façons de démarrer les modules d'acquisition:
+-# Immédiatement après avoir ajouté une source de données
+-# En faisant un clic droit sur une source de données dans l'arborescence de l'interface principale et en choisissant "Run Ingest Modules"
 
-Once ingest is started, you can review the currently running ingest tasks in the task bar on the bottom-right corner of the main window. The ingest tasks can be cancelled by the user if so desired.
+Une fois l'acquisition démarrée, vous pouvez consulter les tâches d'acquisition en cours d'exécution dans la barre des tâches située dans le coin inférieur droit de la fenêtre principale. Les tâches d'acquisition peuvent être annulées par l'utilisateur s'il le souhaite.
 
-<b>Note: sometimes the cancellation process may take several seconds or more to complete cleanly, depending on what the ingest module was currently doing. </b>
+<b>Remarque: parfois, le processus d'annulation peut prendre plusieurs secondes ou plus pour se terminer proprement, en fonction de ce que faisait actuellement le module d'acquisition. </b>
 
-\section ingest_configure Configuring Ingest Modules
+\section ingest_configure Configuration des modules d'acquisition
 
-You will be presented with an interface to configure the ingest modules. From here, you can choose which type of files to analyze and enable or disable each module. Some modules will have further configuration settings. 
+Une interface vous sera présentée pour configurer les modules d'acquisition. De là, vous pouvez choisir le type de fichiers à analyser et activer ou désactiver chaque module. Certains modules auront des paramètres de configuration supplémentaires.
 
 \image html select-ingest-modules.PNG
 
-The selection box at the top controls which files the ingest modules will run on. The two built-in options are "All files, directories, and unallocated space" and "All Files and Directories." The \ref file_filters section describes how to create custom file filters. The chosen filter applies to all ingest modules.
+La zone de sélection en haut contrôle les fichiers sur lesquels les modules d'acquisition seront exécutés. Les deux options intégrées sont "All files, directories, and unallocated space" ("Tous les fichiers, répertoires et espace non alloué"") et "All Files and Directories" ("Tous les fichiers et répertoires"). La section \ref file_filters décrit comment créer des filtres de fichiers personnalisés. Le filtre choisi s'applique à tous les modules d'acquisition.
 
-There are two places to configure ingest modules. When you select the module name, you may have some "run time" options to configure in the panel to the right.  These are generally settings that you may want to change from image to image. 
+Il existe deux emplacements pour configurer les modules d'acquisition. Lorsque vous sélectionnez le nom du module, vous pouvez avoir des options "d'exécution" à configurer dans le panneau de droite. Il s'agit généralement de paramètres que vous souhaiterez peut-être modifier en fonction de votre cas.
 
-There may also be an "Advanced" button that is enabled in the lower corner.  Pressing this button allows you to change global settings that are not specific to a single image.  This advanced configuration panel can often be found in the "Tools", "Options" menu too. 
+Il peut également y avoir un bouton "Global Settings" qui est activé dans le coin inférieur. Appuyez sur ce bouton pour modifier les paramètres globaux qui ne sont pas spécifiques à un seul cas. Ce panneau de configuration avancée se trouve souvent aussi dans le menu "Tools", "Options".
 
-As an example, the hash lookup module will allow you to enable or disable hash sets in the "run time" options panel, but requires you to go to the "Advanced" dialog to add or remove hash sets from the Autopsy configuration. 
+À titre d'exemple, le module de "Hash Lookup" (recherche de hachage) vous permettra d'activer ou de désactiver les jeux de hachage dans le panneau des options "d'exécution", mais vous oblige à accéder à la boîte de dialogue "Global Settings" pour ajouter ou supprimer des ensembles de hachage de la configuration d'Autopsy.
 
-\section file_filters Custom File Filters
+\section file_filters File Filters (Filtres de fichiers personnalisés)
 
-The file filters panel can be opened from the ingest module selection panel or through the Ingest tab on the main options panel. File filters allow ingest modules to be run on only a subset of the files. In the example below, a filter has been set up to only run on files with a "png" extension.
+Le panneau "File Filters" peut être ouvert à partir du panneau de sélection du module d'acquisition ou via l'onglet "Ingest" du panneau d'options principal. Les filtres de fichiers permettent aux modules d'acquisition d'être exécutés uniquement sur un sous-ensemble des fichiers. Dans l'exemple ci-dessous, un filtre a été mis en place pour ne s'exécuter que sur les fichiers avec une extension "png".
 
 \image html ingest-file-filters.PNG
 
-Each filter contains one or more rules for selecting files based on a combination of file name, path, and how recently the file was modified. Only one rule needs to match for the file to pass. Additionally, you can enter multiple comma-separated file extensions. All files will still be displayed in the tree view, but the ingest modules will only run on a subset. If we use the previous example and run the hash module, only files ending in .png will have their hash computed.
+Chaque filtre contient une ou plusieurs règles de sélection de fichiers en fonction d'une combinaison du nom du fichier, du chemin et de la date de modification du fichier. Une seule règle doit correspondre pour que le fichier passe. En outre, vous pouvez saisir plusieurs extensions de fichiers séparées par des virgules. Tous les fichiers seront toujours affichés dans l'arborescence, mais les modules d'acquisition ne fonctionneront que sur un sous-ensemble. Si nous utilisons l'exemple précédent et exécutons le module de hachage, seuls les fichiers se terminant par .png verront leur hachage calculé.
 
-\section ingest_profiles Using Ingest Profiles
+\section ingest_profiles Profiles (Profils d'acquisition)
 
-Ingest profiles allow you to quickly choose a defined set of ingest modules to run. This can be useful if you run different sets of ingest modules (or different configurations of those ingest modules) on different types of data. Ingest profiles can be configured through the Ingest tab on the options panel.
+Les profils d'acquisition vous permettent de choisir rapidement un ensemble défini de modules d'acquisition à exécuter. Cela peut être utile si vous exécutez différents ensembles de modules d'acquisition (ou différentes configurations de ces modules d'acquisition) sur différents types de données. Les profils d'acquisition peuvent être configurés via l'onglet "Ingest" du panneau d'options.
 
 \image html ingest-profiles.PNG
 
-Each profile can specify different per-run settings for each ingest module, and you can choose use either a predefined or custom file filter (see \ref file_filters).
+Chaque profil peut spécifier différents paramètres d'exécution pour chaque module d'acquisition, et vous pouvez choisir d'utiliser un filtre de fichiers prédéfini ou personnalisé - voir \ref file_filters.
 
 \image html ingest-profile-create.PNG
 
-If any custom profiles are present, there will be a new screen in the add data source wizard.
+Si des profils personnalisés ont été créés, un nouvel écran s'affichera dans l'assistant d'ajout de source de données.
 
 \image html profile-data-source-panel.PNG
 
-If you choose custom settings it will bring up the normal ingest module selection panel. If you choose a user-defined profile the ingest module screen will be skipped entirely and the ingest modules from that profile will be run on the data source. The profile selection panel will also appear when running ingest by right-clicking on a data source from the tree.
+Si vous choisissez des paramètres personnalisés ("Custom Settings"), le panneau normal de sélection des modules d'acquisition apparaîtra. Si vous choisissez un profil défini par l'utilisateur, l'écran du module d'acquisition sera entièrement ignoré et les modules d'acquisition de ce profil seront exécutés sur la source de données. Le panneau de sélection de profil apparaîtra également lors de l'exécution de l'acquisition en effectuant un clic droit sur une source de données dans l'arborescence.
 
 <br><br>
-\section ingest_already_run Notification of Ingest Already Run
-If an ingest module has already been run for a particular data source, you will see a triangular yellow icon with an exclaimation point next to the module in the "Run Ingest Modules" dialog, as shown in the screenshot below.
+\section ingest_already_run Notification de module déjà exécuté
+Si un module d'acquisition a déjà été exécuté sur une source de données particulière, vous verrez une icône triangulaire jaune avec un point d'exclamation à côté du module dans la boîte de dialogue "Run Ingest Modules", comme illustré dans la capture d'écran ci-dessous.
 <br><br>
 \image html ingest-already-run.PNG
 <br><br>
-If an older version of an ingest module has been run for a particular data source, you will see a round blue icon with an "i" next to the module in the "Run Ingest Modules" dialog, as shown in the screenshot below.
+Si une ancienne version d'un module d'acquisition a été exécutée sur une source de données particulière, vous verrez une icône ronde bleue avec un "i" à côté du module dans la boîte de dialogue "Run Ingest Modules", comme illustré dans la capture d'écran ci-dessous.
 <br><br>
 \image html previous-version-already-run.PNG
 <br><br>
 
-Clicking "View Ingest History" will show you the ingest history in tabular form, allowing you to see which modules were run on which data sources and when, as shown in the screenshot below.
+Cliquez sur "History" pour afficher l'historique des modules d'acquisition sous forme de tableau, vous permettant de voir quels modules ont été exécutés sur quelles sources de données et à quel moment, comme indiqué dans la capture d'écran ci-dessous.
 <br><br>
 \image html ingest-history.PNG
 <br><br>
 
-\section ingest_results Viewing Ingest Module Results
+\section ingest_results Affichage des résultats du module d'acquisition
 
-Ingest modules run in the background. An ingest module can provide you results in a variety of ways, but we recommend specific methods:
+Les modules d'acquisition s'exécutent en arrière-plan. Un module d'acquisition peut vous fournir des résultats de différentes manières, mais nous vous présentons quelques méthodes spécifiques:
 
--# If they post results to the Blackboard, then you will find them in the "Results" area of the tree in the main interface.
--# They can send a message to the Ingest Inbox so that you get a message each time something really important is found. 
+-# S'ils publient des résultats dans le Blackboard, vous trouverez ces derniers dans la zone "Results" de l'arborescence de l'interface principale.
+-# Ils peuvent envoyer un message dans la boîte de notification des Ingest Modules afin que vous receviez un message chaque fois que quelque chose de vraiment important est trouvé. 
 \image html inbox-button.PNG
 \image html inbox-main-screen.PNG
--# If the module is a wrapper around another forensics tool, they may simply provide a link to the output of that tool, in which case you will see a new entry in the "Reports" area of the tree.
+-# Si le module est un container incluant un autre outil d'investigation, il peut simplement fournir un lien vers la sortie de cet outil, auquel cas vous verrez une nouvelle entrée dans la zone "Reports" de l'arborescence.
 
-All of the official Autopsy modules send results to the blackboard, but if you install third-party apps, then they may choose any approach -- including a pop-up window each time they find something.  
+Tous les modules officiels d'Autopsy envoient les résultats au Blackboard, mais si vous installez des applications tierces, elles peuvent choisir n'importe quelle autre approche -- y compris une fenêtre contextuelle chaque fois qu'elles trouvent quelque chose. 
 
-\section ingest_monitoring Viewing Ongoing Ingest Activity
-While Ingest is running, one can use the "Ingest Progress Snapshot" tool to see what activity is going on at the moment. Click on "Help", "Get Ingest Progress Snapshot" to view the dialog shown in the screenshot below.
+\section ingest_monitoring Affichage de l'activité en cours des modules d'acquisition
+Pendant que les modules d'acquisition sont en cours d'exécution, on peut utiliser l'outil "Ingest Progress Snapshot" pour voir quelle activité est en cours en ce moment. Cliquez sur "Help", "Get Ingest Progress Snapshot" pour afficher la boîte de dialogue illustrée dans la capture d'écran ci-dessous.
 \image html ingest_progress_snapshot.PNG
-To refresh the view, use the "Refresh" button.
+Pour actualiser la vue, utilisez le bouton "Refresh".
 
 */
