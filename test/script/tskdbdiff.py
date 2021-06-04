@@ -412,13 +412,14 @@ class TskGuidUtils:
     """
 
     @staticmethod
-    def _get_guid_dict(db_conn, select_statement, delim=""):
+    def _get_guid_dict(db_conn, select_statement, delim="", normalizer: Union[Callable[[str], str], None] = None):
         """
         Retrieves a dictionary mapping the first item selected to a concatenation of the remaining values.
         Args:
             db_conn: The database connection.
             select_statement: The select statement.
             delim: The delimiter for how row data from index 1 to end shall be concatenated.
+            normalizer: Means of normalizing the generated string or None.
 
         Returns: A dictionary mapping the key (the first item in the select statement) to a concatenation of the remaining values.
 
@@ -428,7 +429,10 @@ class TskGuidUtils:
         ret_dict = {}
         for row in cursor:
             # concatenate value rows with delimiter filtering out any null values.
-            ret_dict[row[0]] = delim.join([str(col) for col in filter(lambda col: col is not None, row[1:])])
+            value_str = delim.join([str(col) for col in filter(lambda col: col is not None, row[1:])])
+            if normalizer:
+                value_str = normalizer(value_str)
+            ret_dict[row[0]] = value_str
 
         return ret_dict
 
@@ -442,7 +446,8 @@ class TskGuidUtils:
         Returns: The instance of this class.
 
         """
-        guid_files = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, parent_path, name FROM tsk_files")
+        guid_files = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, parent_path, name FROM tsk_files",
+                                                 normalizer=normalize_file_path)
         guid_vs_parts = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, addr, start FROM tsk_vs_parts", "_")
         guid_vs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, vs_type, img_offset FROM tsk_vs_info", "_")
         guid_fs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, img_offset, fs_type FROM tsk_fs_info", "_")
@@ -862,7 +867,6 @@ def normalize_unalloc_files(path_str: Union[str, None]) -> Union[str, None]:
     Returns: The path string where timestamps are removed from unalloc strings.
 
     """
-
     # takes a file name like "Unalloc_30580_7466496_2980941312" and removes the object id to become
     # "Unalloc_7466496_2980941312"
     return None if path_str is None else re.sub('Unalloc_[0-9]+_', 'Unalloc_', path_str)
@@ -879,6 +883,17 @@ def normalize_regripper_files(path_str: Union[str, None]) -> Union[str, None]:
     """
     # takes a file name like "regripper-12345-full" and removes the id to become "regripper-full"
     return None if path_str is None else re.sub(r'regripper-[0-9]+-full', 'regripper-full', path_str)
+
+
+def normalize_file_path(path_str: Union[str, None]) -> Union[str, None]:
+    """
+    Normalizes file paths removing or replacing pieces that will change from run to run (i.e. object id)
+    Args:
+        path_str: The original path string.
+
+    Returns: The normalized path string
+    """
+    return normalize_unalloc_files(normalize_regripper_files(path_str))
 
 
 def normalize_tsk_files(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
@@ -971,7 +986,7 @@ def normalize_tsk_objects_path(guid_util: TskGuidUtils, objid: int,
 
         path = os.path.join(*path_parts) if len(path_parts) > 0 else '/'
 
-        return normalize_regripper_files(normalize_unalloc_files(path))
+        return normalize_file_path(path)
 
 
 def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
@@ -1044,7 +1059,7 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
     }),
     "tsk_files": NormalizeRow(normalize_tsk_files),
     "tsk_file_layout": NormalizeColumns({
-        "obj_id": lambda guid_util, col: normalize_unalloc_files(guid_util.get_guid_for_file_objid(col))
+        "obj_id": lambda guid_util, col: guid_util.get_guid_for_file_objid(col)
     }),
     "tsk_files_path": NormalizeRow(normalize_tsk_files_path),
     "tsk_objects": NormalizeRow(normalize_tsk_objects),
