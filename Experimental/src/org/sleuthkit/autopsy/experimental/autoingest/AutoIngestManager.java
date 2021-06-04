@@ -2251,10 +2251,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                          auto ingest job.
          */
         private void attemptJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, IOException, JobMetricsCollectionException {
-            updateConfiguration();
-            if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
-                return;
-            }
             verifyRequiredSevicesAreRunning();
             if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
@@ -2264,8 +2260,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                     return;
                 }
+                updateConfiguration();
+                if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
+                    return;
+                }
                 runIngestForJob(caseForJob);
-
             } finally {
                 try {
                     Case.closeCurrentCase();

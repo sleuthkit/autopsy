@@ -109,7 +109,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
                         Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
                         Bundle.AutoIngestJobsNode_jobCompleted_text(), Bundle.AutoIngestJobsNode_jobCompleted_text(),
-                        Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text());
+                        Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text(),
+                        Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text());
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_jobCompleted_text());
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.setColumnSorted(indexOfColumn, false, 1);
@@ -119,6 +120,11 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_STATUS_WIDTH);
                     outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new StatusIconCellRenderer());
                 }
+                indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_ocr_text());
+                if (indexOfColumn != INVALID_INDEX) {
+                    outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_OCR_WIDTH);
+                    outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new OcrIconCellRenderer());
+                }                
                 break;
             default:
         }
