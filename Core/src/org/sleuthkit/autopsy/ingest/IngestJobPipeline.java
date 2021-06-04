@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
@@ -123,6 +124,13 @@ final class IngestJobPipeline {
         FINALIZATION
     };
     private volatile Stages stage = IngestJobPipeline.Stages.INITIALIZATION;
+
+    /*
+     * The stage field is volatile to allow it to be read by multiple threads.
+     * This lock is used not to guard the stage field, but to make stage
+     * transitions atomic.
+     */
+    private final Object stageTransitionLock = new Object();
 
     /*
      * An ingest pipeline has separate data source level ingest module pipelines
@@ -563,9 +571,9 @@ final class IngestJobPipeline {
             recordIngestJobStartUpInfo();
             if (hasFirstStageDataSourceIngestModules() || hasFileIngestModules() || hasDataArtifactIngestModules()) {
                 if (parentJob.getIngestMode() == IngestJob.Mode.STREAMING) {
-                    startFileStreaming();
+                    startFirstStageInStreamingMode();
                 } else {
-                    startFirstStage();
+                    startFirstStageInBatchMode();
                 }
             } else if (hasSecondStageDataSourceIngestModules()) {
                 startSecondStage();
@@ -680,58 +688,62 @@ final class IngestJobPipeline {
      * of the files in the data source (excepting carved and derived files) have
      * already been added to the case database by the data source processor.
      */
-    private void startFirstStage() {
-        logInfoMessage("Starting first stage analysis in batch mode"); //NON-NLS        
-        stage = Stages.FIRST_STAGE_ALL_TASKS;
+    private void startFirstStageInBatchMode() {
+        synchronized (stageTransitionLock) {
+            logInfoMessage("Starting first stage analysis in batch mode"); //NON-NLS        
+            stage = Stages.FIRST_STAGE_ALL_TASKS;
 
-        /*
-         * Do a count of the files the data source processor has added to the
-         * case database. This estimate will be used for ingest progress
-         * snapshots and for the file ingest progress bar if running with a GUI.
-         */
-        if (hasFileIngestModules()) {
-            long filesToProcess = dataSource.accept(new GetFilesCountVisitor());;
-            synchronized (fileIngestProgressLock) {
-                estimatedFilesToProcess = filesToProcess;
-            }
-        }
-
-        /*
-         * If running with a GUI, start ingest progress bars in the lower right
-         * hand corner of the main application window.
-         */
-        if (doUI) {
+            /*
+             * Do a count of the files the data source processor has added to
+             * the case database. This estimate will be used for ingest progress
+             * snapshots and for the file ingest progress bar if running with a
+             * GUI.
+             */
             if (hasFileIngestModules()) {
-                startFileIngestProgressBar();
+                long filesToProcess = dataSource.accept(new GetFilesCountVisitor());;
+                synchronized (fileIngestProgressLock) {
+                    estimatedFilesToProcess = filesToProcess;
+                }
             }
-            if (hasFirstStageDataSourceIngestModules()) {
-                startDataSourceIngestProgressBar();
-            }
-            if (hasDataArtifactIngestModules()) {
-                startArtifactIngestProgressBar();
-            }
-        }
 
-        /*
-         * Make the first stage data source level ingest pipeline the current
-         * data source level pipeline.
-         */
-        currentDataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
+            /*
+             * If running with a GUI, start ingest progress bars in the lower
+             * right hand corner of the main application window.
+             */
+            if (doUI) {
+                if (hasFileIngestModules()) {
+                    startFileIngestProgressBar();
+                }
+                if (hasFirstStageDataSourceIngestModules()) {
+                    startDataSourceIngestProgressBar();
+                }
+                if (hasDataArtifactIngestModules()) {
+                    startArtifactIngestProgressBar();
+                }
+            }
 
-        /*
-         * Schedule the first stage ingest tasks and then immediately check for
-         * stage completion. This is necessary because it is possible that zero
-         * tasks will actually make it to task execution due to the file filter
-         * or other ingest job settings. In that case, there will never be a
-         * stage completion check in an ingest thread executing an ingest task,
-         * so such a job would run forever without a check here.
-         */
-        if (!files.isEmpty() && hasFileIngestModules()) {
-            taskScheduler.scheduleFileIngestTasks(this, files);
-        } else if (hasFirstStageDataSourceIngestModules() || hasFileIngestModules() || hasDataArtifactIngestModules()) {
-            taskScheduler.scheduleIngestTasks(this);
+            /*
+             * Make the first stage data source level ingest pipeline the
+             * current data source level pipeline.
+             */
+            currentDataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
+
+            /*
+             * Schedule the first stage ingest tasks and then immediately check
+             * for stage completion. This is necessary because it is possible
+             * that zero tasks will actually make it to task execution due to
+             * the file filter or other ingest job settings. In that case, there
+             * will never be a stage completion check in an ingest thread
+             * executing an ingest task, so such a job would run forever without
+             * a check here.
+             */
+            if (!files.isEmpty() && hasFileIngestModules()) {
+                taskScheduler.scheduleFileIngestTasks(this, files);
+            } else if (hasFirstStageDataSourceIngestModules() || hasFileIngestModules() || hasDataArtifactIngestModules()) {
+                taskScheduler.scheduleIngestTasks(this);
+            }
+            checkForStageCompleted();
         }
-        checkForStageCompleted();
     }
 
     /**
@@ -740,38 +752,40 @@ final class IngestJobPipeline {
      * adds them to the case database and file level analysis can begin before
      * data source level analysis.
      */
-    private void startFileStreaming() {
-        logInfoMessage("Starting first stage analysis in streaming mode"); //NON-NLS
-        stage = Stages.FIRST_STAGE_FILE_STREAMING;
+    private void startFirstStageInStreamingMode() {
+        synchronized (stageTransitionLock) {
+            logInfoMessage("Starting first stage analysis in streaming mode"); //NON-NLS
+            stage = Stages.FIRST_STAGE_FILE_STREAMING;
 
-        if (doUI) {
-            /*
-             * If running with a GUI, start ingest progress bars in the lower
-             * right hand corner of the main application window.
-             */
-            if (hasFileIngestModules()) {
+            if (doUI) {
                 /*
-                 * Note that because estimated files remaining to process still
-                 * has its initial value of zero, the progress bar will start in
-                 * the "indeterminate" state. An estimate of the files to
-                 * process can be computed in
+                 * If running with a GUI, start ingest progress bars in the
+                 * lower right hand corner of the main application window.
                  */
-                startFileIngestProgressBar();
+                if (hasFileIngestModules()) {
+                    /*
+                     * Note that because estimated files remaining to process
+                     * still has its initial value of zero, the progress bar
+                     * will start in the "indeterminate" state. An estimate of
+                     * the files to process can be computed in
+                     */
+                    startFileIngestProgressBar();
+                }
+                if (hasDataArtifactIngestModules()) {
+                    startArtifactIngestProgressBar();
+                }
             }
-            if (hasDataArtifactIngestModules()) {
-                startArtifactIngestProgressBar();
-            }
-        }
 
-        if (hasDataArtifactIngestModules()) {
-            /*
-             * Schedule artifact ingest tasks for any artifacts currently in the
-             * case database. This needs to be done before any files or the data
-             * source are streamed in to avoid analyzing data artifacts added to
-             * the case database by the data source level or file level ingest
-             * tasks.
-             */
-            taskScheduler.scheduleDataArtifactIngestTasks(this);
+            if (hasDataArtifactIngestModules()) {
+                /*
+                 * Schedule artifact ingest tasks for any artifacts currently in
+                 * the case database. This needs to be done before any files or
+                 * the data source are streamed in to avoid analyzing data
+                 * artifacts added to the case database by the data source level
+                 * or file level ingest tasks.
+                 */
+                taskScheduler.scheduleDataArtifactIngestTasks(this);
+            }
         }
     }
 
@@ -780,45 +794,48 @@ final class IngestJobPipeline {
      * source is now ready for analysis.
      */
     void notifyStreamedDataSourceReady() {
-        logInfoMessage("Starting full first stage analysis in streaming mode"); //NON-NLS
-        stage = IngestJobPipeline.Stages.FIRST_STAGE_ALL_TASKS;
-        currentDataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
+        synchronized (stageTransitionLock) {
+            logInfoMessage("Starting full first stage analysis in streaming mode"); //NON-NLS
+            stage = IngestJobPipeline.Stages.FIRST_STAGE_ALL_TASKS;
+            currentDataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
 
-        /*
-         * Do a count of the files the data source processor has added to the
-         * case database. This estimate will be used for ingest progress
-         * snapshots and for the file ingest progress bar if running with a GUI.
-         */
-        long filesToProcess = dataSource.accept(new GetFilesCountVisitor()) - processedFiles;
-        synchronized (fileIngestProgressLock) {
-            if (processedFiles <= filesToProcess) {
-                filesToProcess -= processedFiles;
-            }
-            estimatedFilesToProcess = filesToProcess;
-            if (doUI && fileIngestProgressBar != null) {
-                fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
-            }
-        }
-
-        if (doUI) {
-            if (hasFirstStageDataSourceIngestModules()) {
-                startDataSourceIngestProgressBar();
-            }
-        }
-
-        currentDataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
-        if (hasFirstStageDataSourceIngestModules()) {
-            IngestJobPipeline.taskScheduler.scheduleDataSourceIngestTask(this);
-        } else {
             /*
-             * If no data source level ingest task is scheduled at this time and
-             * all of the file level and artifact ingest tasks scheduled during
-             * the initial file streaming stage have already executed, there
-             * will never be a stage completion check in an ingest thread
-             * executing an ingest task, so such a job would run forever without
-             * a check here.
+             * Do a count of the files the data source processor has added to
+             * the case database. This estimate will be used for ingest progress
+             * snapshots and for the file ingest progress bar if running with a
+             * GUI.
              */
-            checkForStageCompleted();
+            long filesToProcess = dataSource.accept(new GetFilesCountVisitor()) - processedFiles;
+            synchronized (fileIngestProgressLock) {
+                if (processedFiles <= filesToProcess) {
+                    filesToProcess -= processedFiles;
+                }
+                estimatedFilesToProcess = filesToProcess;
+                if (doUI && fileIngestProgressBar != null) {
+                    fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
+                }
+            }
+
+            if (doUI) {
+                if (hasFirstStageDataSourceIngestModules()) {
+                    startDataSourceIngestProgressBar();
+                }
+            }
+
+            currentDataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
+            if (hasFirstStageDataSourceIngestModules()) {
+                IngestJobPipeline.taskScheduler.scheduleDataSourceIngestTask(this);
+            } else {
+                /*
+                 * If no data source level ingest task is scheduled at this time
+                 * and all of the file level and artifact ingest tasks scheduled
+                 * during the initial file streaming stage have already
+                 * executed, there will never be a stage completion check in an
+                 * ingest thread executing an ingest task, so such a job would
+                 * run forever without a check here.
+                 */
+                checkForStageCompleted();
+            }
         }
     }
 
@@ -826,16 +843,18 @@ final class IngestJobPipeline {
      * Starts the second stage ingest task pipelines.
      */
     private void startSecondStage() {
-        if (!cancelled && hasSecondStageDataSourceIngestModules()) {
-            logInfoMessage(String.format("Starting second stage ingest task pipelines for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), parentJob.getId())); //NON-NLS
-            stage = IngestJobPipeline.Stages.SECOND_STAGE;
+        synchronized (stageTransitionLock) {
+            if (!cancelled && hasSecondStageDataSourceIngestModules()) {
+                logInfoMessage(String.format("Starting second stage ingest task pipelines for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), parentJob.getId())); //NON-NLS
+                stage = IngestJobPipeline.Stages.SECOND_STAGE;
 
-            if (doUI) {
-                startDataSourceIngestProgressBar();
+                if (doUI) {
+                    startDataSourceIngestProgressBar();
+                }
+
+                currentDataSourceIngestPipeline = secondStageDataSourceIngestPipeline;
+                taskScheduler.scheduleDataSourceIngestTask(this);
             }
-
-            currentDataSourceIngestPipeline = secondStageDataSourceIngestPipeline;
-            taskScheduler.scheduleDataSourceIngestTask(this);
         }
     }
 
@@ -925,17 +944,19 @@ final class IngestJobPipeline {
      * completed and does a stage transition if they are.
      */
     private void checkForStageCompleted() {
-        if (stage == Stages.FIRST_STAGE_FILE_STREAMING) {
-            return;
-        }
-        if (taskScheduler.currentTasksAreCompleted(this)) {
-            switch (stage) {
-                case FIRST_STAGE_ALL_TASKS:
-                    finishFirstStage();
-                    break;
-                case SECOND_STAGE:
-                    shutDown();
-                    break;
+        synchronized (stageTransitionLock) {
+            if (stage == Stages.FIRST_STAGE_FILE_STREAMING) {
+                return;
+            }
+            if (taskScheduler.currentTasksAreCompleted(this)) {
+                switch (stage) {
+                    case FIRST_STAGE_ALL_TASKS:
+                        finishFirstStage();
+                        break;
+                    case SECOND_STAGE:
+                        shutDown();
+                        break;
+                }
             }
         }
     }
@@ -980,53 +1001,55 @@ final class IngestJobPipeline {
      * Shuts down the ingest module pipelines and progress bars for this job.
      */
     private void shutDown() {
-        logInfoMessage("Finished all tasks"); //NON-NLS        
-        stage = IngestJobPipeline.Stages.FINALIZATION;
+        synchronized (stageTransitionLock) {
+            logInfoMessage("Finished all tasks"); //NON-NLS        
+            stage = IngestJobPipeline.Stages.FINALIZATION;
 
-        shutDownIngestModulePipeline(currentDataSourceIngestPipeline);
-        shutDownIngestModulePipeline(artifactIngestPipeline);
+            shutDownIngestModulePipeline(currentDataSourceIngestPipeline);
+            shutDownIngestModulePipeline(artifactIngestPipeline);
 
-        if (doUI) {
-            synchronized (dataSourceIngestProgressLock) {
-                if (dataSourceIngestProgressBar != null) {
-                    dataSourceIngestProgressBar.finish();
-                    dataSourceIngestProgressBar = null;
+            if (doUI) {
+                synchronized (dataSourceIngestProgressLock) {
+                    if (dataSourceIngestProgressBar != null) {
+                        dataSourceIngestProgressBar.finish();
+                        dataSourceIngestProgressBar = null;
+                    }
+                }
+
+                synchronized (fileIngestProgressLock) {
+                    if (fileIngestProgressBar != null) {
+                        fileIngestProgressBar.finish();
+                        fileIngestProgressBar = null;
+                    }
+                }
+
+                synchronized (artifactIngestProgressLock) {
+                    if (artifactIngestProgressBar != null) {
+                        artifactIngestProgressBar.finish();
+                        artifactIngestProgressBar = null;
+                    }
                 }
             }
 
-            synchronized (fileIngestProgressLock) {
-                if (fileIngestProgressBar != null) {
-                    fileIngestProgressBar.finish();
-                    fileIngestProgressBar = null;
+            if (ingestJobInfo != null) {
+                if (cancelled) {
+                    try {
+                        ingestJobInfo.setIngestJobStatus(IngestJobStatusType.CANCELLED);
+                    } catch (TskCoreException ex) {
+                        logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
+                    }
+                } else {
+                    try {
+                        ingestJobInfo.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+                    } catch (TskCoreException ex) {
+                        logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
+                    }
                 }
-            }
-
-            synchronized (artifactIngestProgressLock) {
-                if (artifactIngestProgressBar != null) {
-                    artifactIngestProgressBar.finish();
-                    artifactIngestProgressBar = null;
-                }
-            }
-        }
-
-        if (ingestJobInfo != null) {
-            if (cancelled) {
                 try {
-                    ingestJobInfo.setIngestJobStatus(IngestJobStatusType.CANCELLED);
+                    ingestJobInfo.setEndDateTime(new Date());
                 } catch (TskCoreException ex) {
-                    logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
+                    logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
                 }
-            } else {
-                try {
-                    ingestJobInfo.setIngestJobStatus(IngestJobStatusType.COMPLETED);
-                } catch (TskCoreException ex) {
-                    logErrorMessage(Level.WARNING, "Failed to update ingest job status in case database", ex);
-                }
-            }
-            try {
-                ingestJobInfo.setEndDateTime(new Date());
-            } catch (TskCoreException ex) {
-                logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
             }
         }
 
@@ -1172,11 +1195,14 @@ final class IngestJobPipeline {
      * @param fileObjIds The object IDs of the files.
      */
     void addStreamedFiles(List<Long> fileObjIds) {
-        if (hasFileIngestModules()) {
-            if (stage.equals(Stages.FIRST_STAGE_FILE_STREAMING)) {
-                IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
-            } else {
-                logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
+        synchronized (stageTransitionLock) {
+            if (hasFileIngestModules()) {
+                if (stage.equals(Stages.FIRST_STAGE_FILE_STREAMING)) {
+                    IngestJobPipeline.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
+                } else {
+                    // RJCTODO: Why?
+                    logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
+                }
             }
         }
     }
@@ -1188,7 +1214,7 @@ final class IngestJobPipeline {
      *
      * @param files A list of the files to add.
      */
-    void addFiles(List<AbstractFile> files) {
+    void addFiles(List<AbstractFile> files) {        
         if (stage.equals(Stages.FIRST_STAGE_FILE_STREAMING)
                 || stage.equals(Stages.FIRST_STAGE_ALL_TASKS)) {
             taskScheduler.fastTrackFileIngestTasks(this, files);
