@@ -55,7 +55,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -471,6 +470,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         String hostName = event.getNodeName();
         hostNamesToLastMsgTime.put(hostName, Instant.now());
+        // currently the only way to the get latest ZK manifest node contents is to do an input directory scan
         scanInputDirsNow();
         setChanged();
         notifyObservers(Event.CASE_PRIORITIZED);
@@ -500,7 +500,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         String hostName = event.getNodeName();
         hostNamesToLastMsgTime.put(hostName, Instant.now());
         
-        // update all pending jobs and get latest ZK manifest node contents for those jobs
+        // currently the only way to the get latest ZK manifest node contents is to do an input directory scan
         scanInputDirsNow();
         
         setChanged();
@@ -2092,7 +2092,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         }
 
                         iterator.remove();
-                        // create a new job object based on latest ZK node data (i.e. instead of potentially stale local pending AutoIngestJob). 
+                        // create a new job object based on latest ZK node data (i.e. instead of re-using potentially stale local pending AutoIngestJob object). 
                         currentJob = new AutoIngestJob(nodeData);
                         break;
 
