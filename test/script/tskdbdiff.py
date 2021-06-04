@@ -1040,7 +1040,8 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
        "data_source_obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Data Source Object ID Omitted"),
     }),
     "tsk_analysis_results": NormalizeColumns({
-        "artifact_obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Artifact Object ID Omitted"),
+        "artifact_obj_id":
+            lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Artifact Object ID Omitted"),
     }),
     "tsk_data_artifacts": NormalizeColumns({
         "artifact_obj_id":
