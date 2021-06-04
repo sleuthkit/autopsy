@@ -27,6 +27,7 @@ import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.InlineView;
 import javax.swing.text.html.ParagraphView;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 
 /**
@@ -96,9 +97,15 @@ public class AutoWrappingJTextPane extends JTextPane {
 
         this.setEditorKit(editorKit);
     }
+    
+    
 
     @Override
     public void setText(String text) {
-        super.setText("<pre>" + EscapeUtil.escapeHtml(text) + "</pre>");
+        // setting the text format with style to avoid problems with overridden styles.
+        String style = String.format("font-family: %s; font-size: %dpt; margin: 0px; padding: 0px 0px %dpx 0px;",
+                    ContentViewerDefaults.getFont().getFamily(), ContentViewerDefaults.getFont().getSize(), ContentViewerDefaults.getLineSpacing());
+        
+        super.setText("<pre style=\"" + style + "\">" + EscapeUtil.escapeHtml(text) + "</pre>");
     }
 }

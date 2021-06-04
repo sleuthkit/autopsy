@@ -25,6 +25,11 @@ public class ContentViewerDefaults {
         // based on https://stackoverflow.com/questions/5829703/java-getting-a-font-with-a-specific-height-in-pixels/26564924#26564924
         return (int) Math.round(DEFAULT_FONT.get().getSize() * Toolkit.getDefaultToolkit().getScreenResolution() / 72.0);
     });
+    
+    private static final Supplier<Font> SUB_HEADER_FONT = Suppliers.memoize(() -> {
+        Font defaultFont = DEFAULT_FONT.get();
+        return defaultFont.deriveFont(Font.BOLD);
+    });
 
     private static final Supplier<Font> HEADER_FONT = Suppliers.memoize(() -> {
         Font defaultFont = DEFAULT_FONT.get();
@@ -72,5 +77,8 @@ public class ContentViewerDefaults {
     public static Color getPanelBackground() {
         return DEFAULT_BACKGROUND.get();
     }
-    // line spacing???
+    
+    public static Font getSubHeaderFont() {
+        return SUB_HEADER_FONT.get();
+    }
 }

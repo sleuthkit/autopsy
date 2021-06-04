@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javax.swing.JLabel;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
@@ -39,6 +38,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -79,18 +79,6 @@ public class Annotations {
     private static final Logger logger = Logger.getLogger(Annotations.class.getName());
 
     private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
-
-    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
-    // spacing occurring after an item
-    private static final int DEFAULT_TABLE_SPACING = DEFAULT_FONT_SIZE;
-
-    // html stylesheet classnames for components
-    public static final String MESSAGE_CLASSNAME = "message";
-    public static final String SUBSECTION_CLASSNAME = "subsection";
-    public static final String SUBHEADER_CLASSNAME = "subheader";
-    public static final String SECTION_CLASSNAME = "section";
-    public static final String HEADER_CLASSNAME = "header";
-    public static final String VERTICAL_TABLE_CLASSNAME = "vertical-table";
 
     // describing table values for a tag
     private static final List<ItemEntry<Tag>> TAG_ENTRIES = Arrays.asList(
@@ -200,11 +188,11 @@ public class Annotations {
      * @return If any content was actually rendered.
      */
     private static boolean renderArtifact(Element parent, BlackboardArtifact bba, Content sourceContent) {
-        boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(bba), false);
+        boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(bba), false, true);
 
         if (CentralRepository.isEnabled()) {
             List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(bba);
-            boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, false);
+            boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, false, !contentRendered);
             contentRendered = contentRendered || crRendered;
         }
 
@@ -213,12 +201,18 @@ public class Annotations {
                 || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID())
                 && (hasTskComment(bba))) {
 
-            boolean filesetRendered = appendEntries(parent, ARTIFACT_COMMENT_CONFIG, Arrays.asList(bba), false);
+            boolean filesetRendered = appendEntries(parent, ARTIFACT_COMMENT_CONFIG, Arrays.asList(bba), false, !contentRendered);
             contentRendered = contentRendered || filesetRendered;
         }
 
         Element sourceFileSection = appendSection(parent, Bundle.Annotations_sourceFile_title());
-        boolean sourceFileRendered = renderContent(sourceFileSection, sourceContent, true);
+        sourceFileSection.attr("class", ContentViewerHtmlStyles.getSpacedSectionClassName());
+        
+        Element sourceFileContainer = sourceFileSection.appendElement("div");
+        sourceFileContainer.attr("class", ContentViewerHtmlStyles.getIndentedClassName());
+        
+        
+        boolean sourceFileRendered = renderContent(sourceFileContainer, sourceContent, true);
 
         if (!sourceFileRendered) {
             sourceFileSection.remove();
@@ -238,24 +232,27 @@ public class Annotations {
      * @return If any content was actually rendered.
      */
     private static boolean renderContent(Element parent, Content sourceContent, boolean isSubheader) {
-        boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(sourceContent), isSubheader);
+        boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(sourceContent), isSubheader, true);
 
         if (sourceContent instanceof AbstractFile) {
             AbstractFile sourceFile = (AbstractFile) sourceContent;
 
             if (CentralRepository.isEnabled()) {
                 List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(sourceFile);
-                boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader);
+                boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader, 
+                        !contentRendered);
                 contentRendered = contentRendered || crRendered;
             }
 
             boolean hashsetRendered = appendEntries(parent, HASHSET_CONFIG,
                     getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT),
-                    isSubheader);
+                    isSubheader,
+                    !contentRendered);
 
             boolean interestingFileRendered = appendEntries(parent, INTERESTING_FILE_CONFIG,
                     getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT),
-                    isSubheader);
+                    isSubheader,
+                    !contentRendered);
 
             contentRendered = contentRendered || hashsetRendered || interestingFileRendered;
         }
@@ -456,24 +453,36 @@ public class Annotations {
      * will be formatted as a table in the format specified in the
      * SectionConfig.
      *
-     * @param parent       The parent element for which the entries will be
-     *                     attached.
-     * @param config       The display configuration for this entry type (i.e.
-     *                     table type, name, if data is not present).
-     * @param items        The items to display.
-     * @param isSubsection Whether or not this should be displayed as a
-     *                     subsection. If not displayed as a top-level section.
+     * @param parent         The parent element for which the entries will be
+     *                       attached.
+     * @param config         The display configuration for this entry type (i.e.
+     *                       table type, name, if data is not present).
+     * @param items          The items to display.
+     * @param isSubsection   Whether or not this should be displayed as a
+     *                       subsection. If not displayed as a top-level
+     *                       section.
+     * @param isFirstSection Whether or not this is the first section appended.
      *
      * @return If there was actual content rendered for this set of entries.
      */
     private static <T> boolean appendEntries(Element parent, Annotations.SectionConfig<T> config, List<? extends T> items,
-            boolean isSubsection) {
+            boolean isSubsection, boolean isFirstSection) {
         if (items == null || items.isEmpty()) {
             return false;
         }
 
         Element sectionDiv = (isSubsection) ? appendSubsection(parent, config.getTitle()) : appendSection(parent, config.getTitle());
-        appendVerticalEntryTables(sectionDiv, items, config.getAttributes());
+        if (!isFirstSection) {
+            sectionDiv.attr("class", ContentViewerHtmlStyles.getSpacedSectionClassName());
+        }
+        
+        Element sectionContainer = sectionDiv.appendElement("div");
+        
+        if (!isSubsection) {
+            sectionContainer.attr("class", ContentViewerHtmlStyles.getIndentedClassName());    
+        }
+        
+        appendVerticalEntryTables(sectionContainer, items, config.getAttributes());
         return true;
     }
 
@@ -499,12 +508,11 @@ public class Annotations {
                     .collect(Collectors.toList());
 
             Element childTable = appendTable(parent, 2, tableData, null);
-            childTable.attr("class", VERTICAL_TABLE_CLASSNAME);
 
             if (isFirst) {
                 isFirst = false;
             } else {
-                childTable.attr("style", String.format("margin-top: %dpx;", DEFAULT_TABLE_SPACING));
+                childTable.attr("class", ContentViewerHtmlStyles.getSpacedSectionClassName());
             }
         }
 
@@ -551,6 +559,7 @@ public class Annotations {
         Element row = rowParent.appendElement("tr");
         for (int i = 0; i < columnNumber; i++) {
             Element cell = row.appendElement(cellType);
+            cell.attr("class", ContentViewerHtmlStyles.getTextClassName());
             if (data != null && i < data.size()) {
                 cell.text(StringUtils.isEmpty(data.get(i)) ? "" : data.get(i));
             }
@@ -568,10 +577,9 @@ public class Annotations {
      */
     private static Element appendSection(Element parent, String headerText) {
         Element sectionDiv = parent.appendElement("div");
-        sectionDiv.attr("class", SECTION_CLASSNAME);
         Element header = sectionDiv.appendElement("h1");
         header.text(headerText);
-        header.attr("class", HEADER_CLASSNAME);
+        header.attr("class", ContentViewerHtmlStyles.getHeaderClassName());
         return sectionDiv;
     }
 
@@ -585,10 +593,9 @@ public class Annotations {
      */
     private static Element appendSubsection(Element parent, String headerText) {
         Element subsectionDiv = parent.appendElement("div");
-        subsectionDiv.attr("class", SUBSECTION_CLASSNAME);
         Element header = subsectionDiv.appendElement("h2");
         header.text(headerText);
-        header.attr("class", SUBHEADER_CLASSNAME);
+        header.attr("class", ContentViewerHtmlStyles.getHeaderClassName());
         return subsectionDiv;
     }
 
@@ -605,7 +612,7 @@ public class Annotations {
     private static Element appendMessage(Element parent, String message) {
         Element messageEl = parent.appendElement("p");
         messageEl.text(message);
-        messageEl.attr("class", MESSAGE_CLASSNAME);
+        messageEl.attr("class", ContentViewerHtmlStyles.getMessageClassName());
         return messageEl;
     }
 

@@ -29,6 +29,7 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
@@ -116,7 +117,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
          * selectAllMenuItem.addActionListener(actList);
          */
 
-        Utilities.configureTextPaneAsHtml(jTextPane1);
+        ContentViewerHtmlStyles.setupHtmlJTextPane(jTextPane1);
     }
 
     private void setText(String str) {

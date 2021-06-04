@@ -18,14 +18,10 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.JLabel;
 import javax.swing.SwingWorker;
-import javax.swing.text.EditorKit;
-import javax.swing.text.html.HTMLEditorKit;
 
 import static org.openide.util.NbBundle.Messages;
 import org.openide.nodes.Node;
@@ -37,6 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.contentviewers.application.Annotations;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.jsoup.nodes.Document;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 
 /**
  * Annotations view of file contents.
@@ -49,39 +46,6 @@ import org.jsoup.nodes.Document;
     "AnnotationsContentViewer.onEmpty=No annotations were found for this particular item."
 })
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
-
-    private static final String DEFAULT_FONT_FAMILY = new JLabel().getFont().getFamily();
-    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
-    private static final Color DEFAULT_BACKGROUND = new JLabel().getBackground();
-
-    // how big the subheader should be
-    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE + 1;
-
-    // how big the header should be
-    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE + 2;
-
-    // the subsection indent
-    private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
-
-    // spacing occurring after an item
-    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE * 2;
-    private static final int DEFAULT_SUBSECTION_SPACING = DEFAULT_FONT_SIZE / 2;
-    private static final int CELL_SPACING = DEFAULT_FONT_SIZE / 2;
-
-    // additional styling for components
-    private static final String STYLE_SHEET_RULE
-            = String.format(" .%s { font-family: %s; font-size: %dpt; font-style:italic; margin: 0px; padding: 0px; } ", 
-                    Annotations.MESSAGE_CLASSNAME, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE)
-            + String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; margin-top: %dpx; padding: 0px; } ",
-                    Annotations.SUBHEADER_CLASSNAME, DEFAULT_FONT_FAMILY, SUBHEADER_FONT_SIZE, DEFAULT_SUBSECTION_SPACING)
-            + String.format(" .%s { font-family: %s; font-size:%dpt;font-weight:bold; margin: 0px; padding: 0px; } ", 
-                    Annotations.HEADER_CLASSNAME, DEFAULT_FONT_FAMILY, HEADER_FONT_SIZE)
-            + String.format(" td { vertical-align: top; font-family: %s; font-size:%dpt; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px;} ", 
-                    DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" th { vertical-align: top; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px} ", 
-                    DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" .%s { margin: %dpx 0px; padding-left: %dpx; } ", Annotations.SUBSECTION_CLASSNAME, DEFAULT_SUBSECTION_SPACING, DEFAULT_SUBSECTION_LEFT_PAD)
-            + String.format(" .%s { margin-bottom: %dpx; } ", Annotations.SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
     
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(AnnotationsContentViewer.class.getName());
@@ -93,14 +57,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      */
     public AnnotationsContentViewer() {
         initComponents();
-        Utilities.configureTextPaneAsHtml(textPanel);
-        textPanel.setBackground(DEFAULT_BACKGROUND);
-        // get html editor kit and apply additional style rules
-        EditorKit editorKit = textPanel.getEditorKit();
-        if (editorKit instanceof HTMLEditorKit) {
-            HTMLEditorKit htmlKit = (HTMLEditorKit) editorKit;
-            htmlKit.getStyleSheet().addRule(STYLE_SHEET_RULE);
-        }
+        ContentViewerHtmlStyles.setupHtmlJTextPane(textPanel);
     }
 
     @Override
@@ -231,7 +188,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
            if(doc != null) {
                return doc.html();
            } else {
-               return Bundle.AnnotationsContentViewer_onEmpty();
+               return "<span class='" + ContentViewerHtmlStyles.getMessageClassName() + "'>" + Bundle.AnnotationsContentViewer_onEmpty() + "</span>";
            }
         }
         
