@@ -4,9 +4,9 @@
 Aperçu
 -----
 
-Ceci est le guide de l'utilisateur de la <a href="http://www.sleuthkit.org/autopsy/">plate-forme open source Autopsy</a>. Autopsy vous permet d'examiner un disque dur ou un appareil mobile et d'en récupérer des preuves. Ce guide devrait vous aider à utiliser Autopsy. Le <a href="http://www.sleuthkit.org/autopsy/docs/api-docs/latest/"> guide du développeur</a> vous aidera à développer vos propres modules d'Autopsy.
+Ceci est le guide de l'utilisateur de la <a href="http://www.sleuthkit.org/autopsy/">plate-forme open source Autopsy</a>. Autopsy vous permet d'analyser un disque dur ou un appareil mobile et d'en récupérer des éléments de preuves. Ce guide devrait vous aider à utiliser Autopsy. Le <a href="http://www.sleuthkit.org/autopsy/docs/api-docs/latest/"> guide du développeur</a> vous aidera à développer vos propres modules d'Autopsy.
 
-Remarque: pour les utilisateurs exécutant Autopsy sur des appareils Mac, les fonctionnalités disponibles via la boîte de dialogue "Tools"->"Options" décrit dans cette documentation sont accessibles via la barre de menu système sous "Préférences" ou via le raccourci Cmd +, (touche Commande + touche "plus").
+Remarque: pour les utilisateurs exécutant Autopsy sur des appareils Mac, les fonctionnalités disponibles via la boîte de dialogue "Tools"->"Options" et décritent dans cette documentation sont accessibles via la barre de menu système sous "Préférences" ou via le raccourci Cmd +, (touche "Cmd" + touche "plus").
 
 Rubriques d'aide
 -------

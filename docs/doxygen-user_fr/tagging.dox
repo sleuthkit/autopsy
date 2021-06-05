@@ -1,140 +1,140 @@
-/*! \page tagging_page Tagging and Commenting
+﻿/*! \page tagging_page Marquages et commentaires
 
 [TOC]
 
 
-Tagging (or Bookmarking) allows you to create a reference to a file or object and easily find it later or include it in a \ref reporting_page "report". Tagging is also used by the \ref central_repo_page "central repository" to mark items as notable. You can add comments to files and results using tags or through the central repository.
+Le marquage (ou bookmarking) vous permet de créer une référence sur un fichier ou un objet et de le retrouver facilement plus tard ou de l'inclure dans un \ref reporting_page "rapport". Il est également utilisé par le \ref central_repo_page "référentiel central" pour marquer les éléments "notables". Vous pouvez ajouter des commentaires aux fichiers et aux résultats marqués par des balises ou via le référentiel central.
 
-\section tagging_items Tagging items
+\section tagging_items Marquage des éléments
 
-When an interesting item is discovered, the user can tag it by right-clicking the item and selecting one of the tag options.
+Lorsqu'un élément intéressant est découvert, l'utilisateur peut le baliser en faisant un clic droit sur l'élément et en sélectionnant l'une des options de marquage.
 
-When you tag a Blackboard artifact result, you have the choice to either:
-- Tag File -- use this when the file itself is of interest
-- Tag Result -- use this when the result is of interest
+Lorsque vous marquez un résultat d'artefact du Blackboard, vous avez le choix entre:
+- Add File Tag -- utilisez ceci lorsque le fichier lui-même est intéressant
+- Add Result Tag -- utilisez ceci lorsque le résultat est intéressant
 
-Which to choose depends upon the context and what you desire in the final report.
+Le choix dépend du contexte et de ce que vous désirez faire apparaître dans le rapport final.
 
 \image html tagging-1.PNG
 
-At this point there are three options:
-- Use one of the existing tags to add it to the file/result without a comment
-- Tag and Comment -- use this if you need to add a comment about this tag
+À ce stade, il existe trois options:
+- Utilisez l'une des balises existantes pour l'ajouter au fichier/résultat sans commentaire
+- Tag and Comment -- utilisez ceci si vous avez besoin d'ajouter un commentaire sur ce marquage
 
 \image html tagging-2.PNG
 
-- New tag -- Create a new tag and add it to the file/result
+- New tag -- Créez une nouvelle balise et ajoutez-la au fichier/résultat
 
 \image html tagging_new_tag.PNG
 
-There are several default tag names:
-- Bookmark - Default tag for marking files of interest
-- CAT-1 through CAT-5 - For law enforcement use
-- Follow Up - Default tag for marking files to follow up on
-- Notable item - Default tag for indicating that an item should be marked as notable in the central repository
+Il existe plusieurs noms de balises par défaut:
+- Bookmark - Balise par défaut pour marquer les fichiers d'intérêt
+- Project Vic - À l'usage des forces de l'ordre
+- Follow Up - Balise par défaut pour le marquage des fichiers à suivre
+- Notable item - Balise par défaut pour indiquer qu'un élément doit être marqué comme "notable" dans le référentiel central
 
-You can also create custom tag names. These tag names will be automatically saved for future use and will be displayed above the default tag names.
+Vous pouvez également créer des noms de balises personnalisés. Ces noms de balises seront automatiquement enregistrés pour une utilisation future et seront affichés au-dessus des noms de balises par défaut.
 
-If you just want to tag the item with the default "Bookmark" tag, you can also use the keyboard shortcut control+B instead of going through the menus. 
+Si vous souhaitez simplement marquer l'élément avec la balise "Bookmark" par défaut, vous pouvez également utiliser le raccourci clavier Control + B au lieu de parcourir les menus.
 
-You can also apply tags to groups of items at once. Select multiple items in the Blackboard, right click, and add the appropriate tag.
-Items may have more than one tag.
+Vous pouvez également appliquer des balises à des groupes de plusieurs éléments à la fois. Sélectionnez ces éléments dans le Blackboard, cliquez avec le bouton droit de la souris et ajoutez la balise appropriée.
+Les éléments peuvent avoir plus d'une balise.
 
-Tagged results are shown in the "Results" portion of the tree under "Tags". Tagged items are also highlighted in the Results Viewer.
+Les résultats marqués sont affichés dans la partie "Results" de l'arborescence sous la zone "Tags". Les éléments marqués sont également mis en surbrillance dans la visionneuse de résultats.
 
 \image html tagging-4.PNG
 
-\section image_tagging Image tagging
+\section image_tagging Marquage d'une image
 
-When you have an image selected in the \ref result_viewer_page, you'll see a "Tags Menu" option in the upper right of the "Application" \ref content_viewer_page "Content Viewer". This allows you to tag only a selected area of the image. Image tagging is currently only enabled on Windows.
+Lorsque vous avez sélectionné une image dans la \ref result_viewer_page, vous verrez une option "Tags Menu" dans la partie supérieure droite de la \ref content_viewer_page "Visionneuse de contenu", sous l'onglet "Application". Cela vous permet de marquer uniquement une zone sélectionnée de l'image. Le marquage d'une image n'est actuellement activé que sur Windows.
 
 \image html tagging_image_menu.png
 
-\subsection image_tagging_creation Creating an image tag
+\subsection image_tagging_creation Créer un marquage d'une image
 
-To start, select the "Create" option on the tags menu. You may then left-click and drag on the image to create a rectangle (which will be your 'tag'). When you release the mouse, you'll be able to apply a tag name (and optionally a comment) to your image tag.
+Pour commencer, sélectionnez l'option "Create" dans le "Tags Menu". Vous pouvez ensuite faire un clic gauche et glisser le curseur de la souris sur l'image pour créer un rectangle (qui sera votre "tag"). Lorsque vous relâchez la souris, vous pourrez appliquer un nom de balise (et éventuellement un commentaire) à votre marquage d'image.
 
 \image html tagging_image_select.png
 
-You can add a new tag name using the "New Tag" button.
+Vous pouvez ajouter un nouveau nom de balise à l'aide du bouton "New Tag".
 
 \image html tagging_image_create_tag.png
 
-Once you choose the tag name you'll see a red outline in the image around the section you chose.
+Une fois que vous avez choisi le nom de la balise, vous verrez un contour rouge dans l'image autour de la section que vous avez choisie.
 
 \image html tagging_image_one_tag.png
 
-You can create multiple tags in the same image.
+Vous pouvez créer plusieurs marquages dans la même image.
 
 \image html tagging_image_multiple.png
 
-If you want to temporarily hide the tag outlines, select "Hide" from the tags menu. You can then select "Show" to see them again. The outlines will also reappear if you switch to a different item in the Result Viewer and come back.
+Si vous souhaitez masquer temporairement les contours des balises, sélectionnez "Hide" dans le "Tags Menu". Vous pouvez ensuite sélectionner "Show" pour les revoir. Les contours réapparaissent également si vous passez à un élément différent dans la visionneuse de résultats et que vous revenez sur l'image.
 
-\subsection image_tagging_editing Selecting, resizing and deleting an image tag
+\subsection image_tagging_editing Sélection, redimensionnement et suppression du marquage d'une image
 
-In order to resize or delete an image tag, you will need to first select it. You can do this by left clicking anywhere inside (or on) the image tag. Selected tags can be resized by dragging any of the 8 handles that appear. The resized dimensions will automatically be saved when the mouse is released.
+Pour redimensionner ou supprimer le marquage d'une image, vous devrez d'abord le sélectionner. Vous pouvez le faire en cliquant avec le bouton gauche de la souris n'importe où à l'intérieur de (ou sur) la balise d'image. Les balises sélectionnées peuvent être redimensionnées en faisant glisser l'une des 8 poignées qui apparaissent. Les cotes redimensionnées seront automatiquement enregistrées lorsque la souris sera relâchée.
 
 \image html tagging_image_edit_tag.png
 
-Selecting a tag will also enable the "Delete" option in the tags menu. Deleting a tag is an irreversible operation, so please use caution.
+La sélection d'une balise activera également l'option "Delete" dans le "Tags Menu". La suppression d'un marquage est une opération irréversible, donc soyez prudent.
 
-\subsection image_tagging_report Exporting and reporting on image tags
+\subsection image_tagging_report Exportation et création de rapports sur les marquages d'une image
 
-If you want to save the image with the tag outline, select "Export" from the tags menu. The result will always be a PNG file. Note that using the "Extract File(s)" option from the right-click menu in the Result Viewer will export the original image.
+Si vous souhaitez enregistrer l'image avec le contour du marquage, sélectionnez "Export" dans le "Tags Menu". Le résultat sera toujours un fichier PNG. Notez que l'utilisation de l'option "Extract File(s)" du menu contextuel de la visionneuse de résultats exportera l'image d'origine.
 
-You'll also be able to see the image tags in an \ref report_html "HTML report".
+Vous pourrez également voir les marquages d'images dans le \ref report_html "Rapport HTML".
 
 \image html tagging_image_report.png
 
-\section managing_tags Managing tags
+\section managing_tags Gérer les balises
 
-The list of tags can be edited through the Tags tab on the Options menu. 
+La liste des balises peut être modifiée via l'onglet "Custom Tags" du menu Options. 
 
 \image html tagging-5.PNG
 
 
-From here, new tags can be added, existing tags can be edited, and user-created tags can be deleted. Note that deleting a tag does not remove it from any tagged items, and that tag will still be usable in any case where it has been used to tag an item.
+De là, de nouvelles balises peuvent être ajoutées, les balises existantes peuvent être modifiées et les balises créées par l'utilisateur peuvent être supprimées. Notez que la suppression d'une balise ne la supprime d'aucun élément marqué, et cette balise sera toujours utilisable dans tous les cas où elle a été utilisée pour marquer un élément.
 
 \image html tagging-6.PNG
 
 
-If using the central repository, changing the notable status will effect tagged items in the current case only in the following way:
-- If "File A" is tagged with "Tag A", which is not notable, and then "Tag A" is switched to notable, "File A" will be marked as notable in the central repository
-- If "File B" is tagged with "Tag B", which is notable, and then "Tag B" is switched to non-notable, if there are no other notable tags on "File B" then its notable status in the central repository will be removed.
+Si vous utilisez le référentiel central, la modification du statut "notable" affectera les éléments marqués (dans le cas actuel uniquement) de la manière suivante:
+- Si "Fichier A" est marqué avec "Tag A", qui n'est pas "notable", et que "Tag A" est remplacé par "notable", "Fichier A" sera marqué comme "notable" dans le référentiel central
+- Si "Fichier B" est étiqueté avec "Tag B", qui est "notable", puis "Tag B" est remplacé par une catégorie "non-notable", s'il n'y a pas d'autres balises "notables" sur "Fichier B", alors son statut "notable" dans le référentiel central sera supprimé.
 
-\subsection user_tags Hiding tags from other users
+\subsection user_tags Masquer les marquages des autres utilisateurs
 
-Tags are associated with the account name of the user that tagged them. This information is visible through selecting items under the "Tags" section of the directory tree:
+Les marquages sont associés au nom du compte de l'utilisateur qui les a mis en place. Ces informations sont visibles en sélectionnant les éléments dans la section "Tags" de l'arborescence:
 
 \image html tagging_user_name.png
 
-or through the \ref cv_annotations content viewer:
+ou via l'onglet \ref cv_annotations de la visionneuse de contenu:
 
 \image html content_viewer_annotations.png
 
-It is possible to hide all tagged files and results in the "Tags" area of the tree that were tagged by other users. Open the \ref view_options_page menu either through the gear icon above the directory tree or through Tools->Options, and then select the checkbox to hide other users' tags in the tags area of the tree.
+Il est possible de masquer tous les fichiers et résultats présents dans la zone "Tags" de l'arborescence et ayant été marqués par d'autres utilisateurs. Ouvrez les \ref view_options_page, soit via l'icône en forme d'engrenage au-dessus de l'arborescence, soit via Tools->Options. Puis, dans la zone "Hide other users' tags in the:"  cochez la case "Tags area in the tree".
 
 \image html tagging_view_options.png
 
-\section tagging_commenting Commenting
+\section tagging_commenting Commenter
 
-There are two methods to adding comments to files and results. The first method was discussed in the \ref tagging_items section. Right click on the file or result of interest, choose "Add File Tag" or "Add Result Tag" and then "Tag and Comment". This allows you to add a comment about the item. You can add multiple tags with comments to the same file or result.
+Il existe deux méthodes pour ajouter des commentaires aux fichiers et aux résultats. La première méthode a été abordée dans la section \ref tagging_items. Faites un clic droit sur le fichier ou le résultat qui vous intéresse, choisissez "Add File Tag" ou "Add Result Tag" puis "Tag and Comment". Cela vous permet d'ajouter un commentaire sur l'élément. Vous pouvez ajouter plusieurs balises avec des commentaires au même fichier ou résultat.
 
 \image html tagging_comment_context.png
 
-If you have a \ref central_repo_page "central repository" enabled, you can also use it to save comments about files. Right click on the file and select "Add/Edit Central Repository Comment". If there was already a comment for this file it will appear in the dialog and can be changed - only one central repository comment can be stored at a time.
+Si vous avez activé un \ref central_repo_page "référentiel central", vous pouvez également l'utiliser pour enregistrer des commentaires sur les fichiers. Faites un clic droit sur le fichier et sélectionnez "Add/Edit Central Repository Comment". S'il y avait déjà un commentaire pour ce fichier, il apparaîtra dans la boîte de dialogue et peut être modifié - un seul commentaire peut être stocké à la fois dans le référentiel central.
 
 \image html tagging_cr_comment.png
 
-If a file or result has a comment associated with it, you'll see a notepad icon in the "C" column of the result viewer. Hovering over it will tell you what type of comments are on the item.
+Si un fichier ou un résultat est associé à un commentaire, vous verrez une icône en forme de bloc-notes dans la colonne "C" de la visionneuse de résultats. Le survol vous indiquera le type de commentaires sur cet élément.
 
 \image html tagging_comment_icon.png
 
-You can view comments associated with tags by going to the "Tags" section of the tree viewer and selecting one of your tags. Any comments will appear in the "Comment" column in the results viewer.
+Vous pouvez afficher les commentaires associés aux balises en allant dans la section "Tags" de l'arborescence et en sélectionnant l'une de vos balises. Tous les commentaires apparaîtront dans la colonne "Comment" de la visionneuse de résultats.
 
 \image html tagging_comment_in_result_viewer.png
 
-You can view all comments on an item through the "Annotation" tab in the content viewer.
+Vous pouvez afficher tous les commentaires sur un élément via l'onglet "Annotation" de la visionneuse de contenu.
 
 \image html tagging_comment_anno.png
 
