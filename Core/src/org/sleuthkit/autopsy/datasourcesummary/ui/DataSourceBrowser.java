@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Observer;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.event.ListSelectionListener;
@@ -66,7 +65,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private final ExplorerManager explorerManager;
     private final List<DataSourceSummary> dataSourceSummaryList;
     private final RightAlignedTableCellRenderer rightAlignedRenderer = new RightAlignedTableCellRenderer();
-    private SwingWorker<List<DataSourceSummary>, Void> rootNodeWorker = null;
+    private SwingWorker<Void, Void> rootNodeWorker = null;
 
     /**
      * Creates new form DataSourceBrowser
@@ -256,34 +255,28 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         }
 
         dataSourceSummaryList.clear();
-        rootNodeWorker = new SwingWorker<List<DataSourceSummary>, Void>() {
+        rootNodeWorker = new SwingWorker<Void, Void>() {
             @Override
-            protected List<DataSourceSummary> doInBackground() throws Exception {
+            protected Void doInBackground() throws Exception {
                 Map<Long, String> usageMap = CaseDataSourcesSummary.getDataSourceTypes();
                 Map<Long, Long> fileCountsMap = CaseDataSourcesSummary.getCountsOfFiles();
-                return getDataSourceSummaryList(usageMap, fileCountsMap);
+                dataSourceSummaryList.addAll(getDataSourceSummaryList(usageMap, fileCountsMap));
+                return null;
             }
 
             @Override
             protected void done() {
-                List<DataSourceSummary> dsSummaryList = null;
-                try {
-                    dsSummaryList = get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "Error populating root node of Data Source Browser", ex);
-                }
-                if (dsSummaryList != null) {
-                    dataSourceSummaryList.addAll(dsSummaryList);
-                }
-                addObserver(dsSummaryDialog);
+                explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
                 selectDataSource(selectedDataSourceId);
+                addObserver(dsSummaryDialog);
                 dsSummaryDialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             }
         };
+        rootNodeWorker.execute();
     }
 
-    void cancel(){
-        if (rootNodeWorker != null && !rootNodeWorker.isDone()){
+    void cancel() {
+        if (rootNodeWorker != null && !rootNodeWorker.isDone()) {
             rootNodeWorker.cancel(true);
         }
     }
