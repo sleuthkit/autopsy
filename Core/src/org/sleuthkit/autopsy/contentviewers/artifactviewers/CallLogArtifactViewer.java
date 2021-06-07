@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JScrollPane;
+import javax.swing.border.EmptyBorder;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
@@ -77,6 +78,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      */
     public CallLogArtifactViewer() {
         initComponents();
+        this.setBorder(new EmptyBorder(ContentViewerDefaults.getPanelInsets()));
     }
 
     /**
@@ -116,6 +118,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
                 currentAccountFetcher = null;
             }
         }
+        
         // repaint
         this.revalidate();
     }
@@ -311,7 +314,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     })
     private List<AccountPersonaSearcherData> updateView(CallLogViewData callLogViewData) {
 
-        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_heading_parties());
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, 0, Bundle.CallLogArtifactViewer_heading_parties());
 
         List<AccountPersonaSearcherData> dataList = new ArrayList<>();
         // Display "From" if we have non-local device accounts
@@ -386,7 +389,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     })
     private void updateMetadataView(CallLogViewData callLogViewData) {
 
-        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_heading_metadata());
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, ContentViewerDefaults.getSectionSpacing(), Bundle.CallLogArtifactViewer_heading_metadata());
 
         CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_direction());
         if (callLogViewData.getDirection() != null) {
@@ -416,7 +419,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         "CallLogArtifactViewer_heading_Source=Source",
         "CallLogArtifactViewer_label_datasource=Data Source",})
     private void updateSourceView(CallLogViewData callLogViewData) {
-        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_heading_Source());
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, ContentViewerDefaults.getSectionSpacing(), Bundle.CallLogArtifactViewer_heading_Source());
         CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_datasource());
         CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, callLogViewData.getDataSourceName());
     }
@@ -434,7 +437,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         if (callLogViewData.getOtherAttributes().isEmpty()) {
             return;
         }
-        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_heading_others());
+        CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, ContentViewerDefaults.getSectionSpacing(), Bundle.CallLogArtifactViewer_heading_others());
 
         for (Map.Entry<String, String> entry : callLogViewData.getOtherAttributes().entrySet()) {
             CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, entry.getKey());
