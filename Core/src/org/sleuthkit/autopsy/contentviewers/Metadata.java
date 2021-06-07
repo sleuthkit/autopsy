@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,18 +26,18 @@ import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.FsContent;
@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * shows the same data that can also be found in the ResultViewer table, just a
  * different order and allows the full path to be visible in the bottom area.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 6)
+@ServiceProvider(service = DataContentViewer.class, position = 4)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
@@ -229,8 +229,22 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     @Override
     public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "Metadata.title");
+        return getTitle(null);
     }
+
+    @Messages({
+        "Metadata_dataArtifactTitle=Source File Metadata"
+    })
+    @Override
+    public String getTitle(Node node) {
+        if (node != null && !node.getLookup().lookupAll(DataArtifact.class).isEmpty()) {
+            return Bundle.Metadata_dataArtifactTitle();
+        } else {
+            return NbBundle.getMessage(this.getClass(), "Metadata.title");    
+        }
+    }
+    
+    
 
     @Override
     public String getToolTip() {
@@ -299,10 +313,10 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(file.getSize()));
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), ContentUtils.getStringTime(file.getMtime(), file));
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), ContentUtils.getStringTime(file.getAtime(), file));
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), ContentUtils.getStringTime(file.getCrtime(), file));
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), ContentUtils.getStringTime(file.getCtime(), file));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), TimeZoneUtils.getFormattedTime(file.getMtime()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), TimeZoneUtils.getFormattedTime(file.getAtime()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), TimeZoneUtils.getFormattedTime(file.getCrtime()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), TimeZoneUtils.getFormattedTime(file.getCtime()));
 
                 String md5 = file.getMd5Hash();
                 if (md5 == null) {

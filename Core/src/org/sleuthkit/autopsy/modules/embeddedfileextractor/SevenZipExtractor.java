@@ -90,7 +90,7 @@ class SevenZipExtractor {
     private static final Logger logger = Logger.getLogger(SevenZipExtractor.class.getName());
 
     private static final String MODULE_NAME = EmbeddedFileExtractorModuleFactory.getModuleName();
-
+    
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
             "EmbeddedFileExtractorIngestModule.ArchiveExtractor.encryptionFileLevel");
@@ -303,11 +303,13 @@ class SevenZipExtractor {
     private void flagRootArchiveAsZipBomb(Archive rootArchive, AbstractFile archiveFile, String details, String escapedFilePath) {
         rootArchive.flagAsZipBomb();
         logger.log(Level.INFO, details);
+        
+        String setName = "Possible Zip Bomb";
         try {
             Collection<BlackboardAttribute> attributes = Arrays.asList(
                     new BlackboardAttribute(
                             TSK_SET_NAME, MODULE_NAME,
-                            "Possible Zip Bomb"),
+                            setName),
                     new BlackboardAttribute(
                             TSK_DESCRIPTION, MODULE_NAME,
                             Bundle.SevenZipExtractor_zipBombArtifactCreation_text(archiveFile.getName())),
@@ -316,9 +318,13 @@ class SevenZipExtractor {
                             details));
 
             if (!blackboard.artifactExists(archiveFile, TSK_INTERESTING_FILE_HIT, attributes)) {
+ 
                 BlackboardArtifact artifact = rootArchive.getArchiveFile().newAnalysisResult(
-                        new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
+                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                        null, setName, null, 
+                        attributes)
                         .getAnalysisResult();
+
                 try {
                     /*
                      * post the artifact which will index the artifact for
@@ -869,8 +875,9 @@ class SevenZipExtractor {
             String encryptionType = fullEncryption ? ENCRYPTION_FULL : ENCRYPTION_FILE_LEVEL;
             try {
                 BlackboardArtifact artifact = archiveFile.newAnalysisResult(
-                        new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED), Score.SCORE_UNKNOWN, 
-                        null, null, null, 
+                        new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED), 
+                        Score.SCORE_NOTABLE, 
+                        null, null, encryptionType, 
                         Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, encryptionType)))
                         .getAnalysisResult();
 
@@ -1323,12 +1330,28 @@ class SevenZipExtractor {
                 }
 
                 if (tokens.size() != byteTokens.size()) {
-                    logger.log(Level.WARNING, "Could not map path bytes to path string");
+                    logger.log(Level.WARNING, "Could not map path bytes to path string (path string: \"{0}\", bytes: {1})", 
+                            new Object[]{filePath, bytesToString(filePathBytes)});
                     return addNode(rootNode, tokens, null);
                 }
             }
 
             return addNode(rootNode, tokens, byteTokens);
+        }
+        
+        /**
+         * Convert byte array to string representation.
+         * 
+         * @param bytes Byte array
+         * 
+         * @return Byte array as lower case hex string.
+         */
+        private String bytesToString(byte[] bytes) {
+            StringBuilder result = new StringBuilder();
+            for (byte b : bytes) {
+                result.append(String.format("%02x", b));
+            }
+            return result.toString();
         }
 
         /**

@@ -79,6 +79,7 @@ import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -358,10 +359,16 @@ public class DataResultFilterNode extends FilterNode {
                 actionsList.add(ExtractAction.getInstance());
                 actionsList.add(ExportCSVAction.getInstance());
                 actionsList.add(null); // creates a menu separator
-                actionsList.add(AddContentTagAction.getInstance());
+                
+                // don't show AddContentTagAction for data artifacts.
+                if (!(ban.getArtifact() instanceof DataArtifact)) {
+                    actionsList.add(AddContentTagAction.getInstance());
+                }
+                
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
 
-                if (selectedFilesList.size() == 1) {
+                // don't show DeleteFileContentTagAction for data artifacts.
+                if ((!(ban.getArtifact() instanceof DataArtifact)) && (selectedFilesList.size() == 1)) {
                     actionsList.add(DeleteFileContentTagAction.getInstance());
                 }
             } else {

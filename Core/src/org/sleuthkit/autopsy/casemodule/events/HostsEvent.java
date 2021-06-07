@@ -19,71 +19,51 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Base event class for when something pertaining to hosts changes.
+ * A base class for application events published when hosts in the Sleuth Kit
+ * data model for a case have been added or updated.
  */
-public class HostsEvent extends TskDataModelChangeEvent<Host> {
+public class HostsEvent extends TskDataModelChangedEvent<Host, Host> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Retrieves a list of ids from a list of hosts.
-     *
-     * @param hosts The hosts.
-     * @return The list of ids.
-     */
-    private static List<Long> getIds(List<Host> hosts) {
-        return getSafeList(hosts).stream()
-                .filter(h -> h != null)
-                .map(h -> h.getHostId()).collect(Collectors.toList());
-    }
-
-    /**
-     * Returns the hosts or an empty list.
-     *
-     * @param hosts The host list.
-     * @return The host list or an empty list if the parameter is null.
-     */
-    private static List<Host> getSafeList(List<Host> hosts) {
-        return hosts == null ? Collections.emptyList() : hosts;
-    }
-
-    /**
-     * Main constructor.
+     * Constructs the base class part of an application event published when
+     * hosts in the Sleuth Kit data model for a case have been added or updated.
      *
      * @param eventName The name of the Case.Events enum value for the event
-     * type.
-     * @param dataModelObjects The list of hosts for the event.
+     *                  type.
+     * @param hosts     The hosts.
      */
-    protected HostsEvent(String eventName, List<Host> dataModelObjects) {
-        super(eventName, getIds(dataModelObjects), new ArrayList<>(getSafeList(dataModelObjects)));
+    HostsEvent(String eventName, List<Host> hosts) {
+        super(eventName, null, null, hosts, Host::getHostId);
+    }
+
+    /**
+     * Gets the hosts that have been added or updated.
+     *
+     * @return The hosts.
+     */
+    public List<Host> getHosts() {
+        return getNewValue();
     }
 
     @Override
-    protected List<Host> getDataModelObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
-        HostManager hostManager = caseDb.getHostManager();
-        List<Host> toRet = new ArrayList<>();
-        if (ids != null) {
-            for (Long id : ids) {
-                if (id == null) {
-                    continue;
-                }
-
-                Optional<Host> thisHostOpt = hostManager.getHostById(id);
-                thisHostOpt.ifPresent((h) -> toRet.add(h));
+    protected List<Host> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        List<Host> hosts = new ArrayList<>();
+        for (Long id : ids) {
+            Optional<Host> host = caseDb.getHostManager().getHostById(id);
+            if (host.isPresent()) {
+                hosts.add(host.get());
             }
         }
-
-        return toRet;
+        return hosts;
     }
 
 }

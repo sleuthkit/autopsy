@@ -220,12 +220,7 @@ public class FileManager implements Closeable {
      *                          database.
      */
     public List<AbstractFile> findFiles(String fileName, AbstractFile parent) throws TskCoreException {
-        List<AbstractFile> result = new ArrayList<>();
-        List<Content> dataSources = caseDb.getRootObjects();
-        for (Content dataSource : dataSources) {
-            result.addAll(findFiles(dataSource, fileName, parent));
-        }
-        return result;
+        return caseDb.findFilesInFolder(fileName, parent);
     }
 
     /**
@@ -268,25 +263,6 @@ public class FileManager implements Closeable {
         return caseDb.findFiles(dataSource, fileName, parentSubString);
     }
 
-    /**
-     * Finds all files and directories with a given file name and given parent
-     * file or directory in a given data source (image, local/logical files set,
-     * etc.). The name search is for full or partial matches and is case
-     * insensitive (a case insensitive SQL LIKE clause is used to query the case
-     * database).
-     *
-     * @param dataSource The data source.
-     * @param fileName   The full name or a pattern to match on part of the name
-     * @param parent     The parent file or directory.
-     *
-     * @return The matching files and directories.
-     *
-     * @throws TskCoreException if there is a problem querying the case
-     *                          database.
-     */
-    public List<AbstractFile> findFiles(Content dataSource, String fileName, AbstractFile parent) throws TskCoreException {
-        return findFiles(dataSource, fileName, parent.getName());
-    }
 
     /**
      * Finds all files and directories with a given file name and path in a
@@ -779,5 +755,28 @@ public class FileManager implements Closeable {
     private AbstractFile addLocalFile(CaseDbTransaction trans, SpecialDirectory parentDirectory, java.io.File localFile, FileAddProgressUpdater progressUpdater) throws TskCoreException {
         return addLocalFile(trans, parentDirectory, localFile, TskData.EncodingType.NONE, progressUpdater);
     }
+    
+    /**
+     * Finds all files and directories with a given file name and given parent
+     * file or directory in a given data source (image, local/logical files set,
+     * etc.). The name search is for full or partial matches and is case
+     * insensitive (a case insensitive SQL LIKE clause is used to query the case
+     * database).
+     *
+     * @param dataSource The data source.
+     * @param fileName   The full name or a pattern to match on part of the name
+     * @param parent     The parent file or directory.
+     *
+     * @return The matching files and directories.
+     *
+     * @throws TskCoreException if there is a problem querying the case
+     *                          database.
+     * 
+     * @deprecated Use version without the unnecessary dataSource argument
+     */
+    @Deprecated
+    public List<AbstractFile> findFiles(Content dataSource, String fileName, AbstractFile parent) throws TskCoreException {
+        return findFiles(fileName, parent);
+    }    
 
 }
