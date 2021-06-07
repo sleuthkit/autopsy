@@ -136,7 +136,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
      */
     private void refresh() {
         new SwingWorker<Boolean, Void>() {
-            
+
             @Override
             protected Boolean doInBackground() throws Exception {
                 ingestJobs.clear();
