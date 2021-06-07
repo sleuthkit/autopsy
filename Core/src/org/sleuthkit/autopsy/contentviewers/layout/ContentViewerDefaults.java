@@ -21,9 +21,11 @@ public class ContentViewerDefaults {
 
     private static final Supplier<Font> DEFAULT_FONT = Suppliers.memoize(() -> UIManager.getDefaults().getFont("Label.font"));
 
+    private static final Supplier<Double> PT_TO_PX = Suppliers.memoize(() -> Toolkit.getDefaultToolkit().getScreenResolution() / 72.0);
+    
     private static final Supplier<Integer> DEFAULT_FONT_PX = Suppliers.memoize(() -> {
         // based on https://stackoverflow.com/questions/5829703/java-getting-a-font-with-a-specific-height-in-pixels/26564924#26564924
-        return (int) Math.round(DEFAULT_FONT.get().getSize() * Toolkit.getDefaultToolkit().getScreenResolution() / 72.0);
+        return (int) Math.round(DEFAULT_FONT.get().getSize() * PT_TO_PX.get());
     });
     
     private static final Supplier<Font> SUB_HEADER_FONT = Suppliers.memoize(() -> {
@@ -86,5 +88,9 @@ public class ContentViewerDefaults {
     
     public static Font getSubHeaderFont() {
         return SUB_HEADER_FONT.get();
+    }
+    
+    public static Double getPtToPx() {
+        return PT_TO_PX.get();
     }
 }

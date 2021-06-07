@@ -37,26 +37,30 @@ public class ContentViewerHtmlStyles {
 
     // additional styling for components
     private static final String STYLE_SHEET_RULE
-            = String.format(" .%s { font-family: %s; font-size: %dpt;font-style:italic; margin: 0px; padding: 0px 0px %dpx 0px; } ",
-                    MESSAGE_CLASSNAME, MESSAGE_FONT.getFamily(), MESSAGE_FONT.getSize(), ContentViewerDefaults.getLineSpacing())
-            + String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px 0px %dpx 0px;  } ",
-                    HEADER_CLASSNAME, HEADER_FONT.getFamily(), HEADER_FONT.getSize(), ContentViewerDefaults.getLineSpacing())
-            + String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px 0px %dpx 0px;  } ",
-                    SUB_HEADER_CLASSNAME, SUB_HEADER_FONT.getFamily(), SUB_HEADER_FONT.getSize(), ContentViewerDefaults.getLineSpacing())
-            + String.format(" .%s { font-family: %s; font-size: %dpt; margin: 0px; padding: 0px 0px %dpx 0px;  } ",
-                    TEXT_CLASSNAME, DEFAULT_FONT.getFamily(), DEFAULT_FONT.getSize(), ContentViewerDefaults.getLineSpacing())
-            + String.format(" .%s { padding-left: %dpx } ",
-                    INDENTED_CLASSNAME, ContentViewerDefaults.getSectionIndent())
-            + String.format(" .%s { padding-top: %dpx } ",
-                    SPACED_SECTION_CLASSNAME, ContentViewerDefaults.getSectionSpacing())
-            + String.format(" .%s { padding-right: %dpx } ",
-                    KEY_COLUMN_TD_CLASSNAME, ContentViewerDefaults.getColumnSpacing());
+            = String.format(" .%s { font-family: %s; font-size: %dpt;font-style:italic; margin: 0px; padding: 0px 0px %dpt 0px; } ",
+                    MESSAGE_CLASSNAME, MESSAGE_FONT.getFamily(), MESSAGE_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
+            + String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px 0px %dpt 0px;  } ",
+                    HEADER_CLASSNAME, HEADER_FONT.getFamily(), HEADER_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
+            + String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px 0px %dpt 0px;  } ",
+                    SUB_HEADER_CLASSNAME, SUB_HEADER_FONT.getFamily(), SUB_HEADER_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
+            + String.format(" .%s { font-family: %s; font-size: %dpt; margin: 0px; padding: 0px 0px %dpt 0px;  } ",
+                    TEXT_CLASSNAME, DEFAULT_FONT.getFamily(), DEFAULT_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
+            + String.format(" .%s { padding-left: %dpt } ",
+                    INDENTED_CLASSNAME, pxToPt(ContentViewerDefaults.getSectionIndent()))
+            + String.format(" .%s { padding-top: %dpt } ",
+                    SPACED_SECTION_CLASSNAME, pxToPt(ContentViewerDefaults.getSectionSpacing()))
+            + String.format(" .%s { padding-right: %dpt } ",
+                    KEY_COLUMN_TD_CLASSNAME, pxToPt(ContentViewerDefaults.getColumnSpacing()));
 
     private static final Supplier<StyleSheet> STYLE_SHEET = Suppliers.memoize(() -> {
         StyleSheet stylesheet = new StyleSheet();
         stylesheet.addRule(STYLE_SHEET_RULE);
         return stylesheet;
     });
+    
+    private static int pxToPt(int px) {
+         return (int) Math.round(((double) px) / ContentViewerDefaults.getPtToPx());
+    }
 
     public static String getHeaderClassName() {
         return HEADER_CLASSNAME;
