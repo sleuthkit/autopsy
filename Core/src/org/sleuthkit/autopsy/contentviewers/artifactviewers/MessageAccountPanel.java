@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -44,6 +45,7 @@ import javax.swing.JTextPane;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.border.EmptyBorder;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -56,6 +58,7 @@ import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallback;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.guiutils.ContactCache;
 import org.sleuthkit.datamodel.Account;
@@ -77,6 +80,15 @@ final class MessageAccountPanel extends JPanel {
 
     private AccountFetcher currentFetcher = null;
 
+    
+    
+    /**
+     * Main constructor.
+     */
+    MessageAccountPanel() {
+        this.setBorder(new EmptyBorder(ContentViewerDefaults.getPanelInsets()));
+    }
+    
     /**
      * Set the new artifact for the panel.
      *
@@ -170,9 +182,7 @@ final class MessageAccountPanel extends JPanel {
                     layout.setHorizontalGroup(
                             layout.createParallelGroup(Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                            .addContainerGap()
-                                            .addGroup(getMainHorizontalGroup(layout, dataList))
-                                            .addContainerGap(158, Short.MAX_VALUE)));
+                                            .addGroup(getMainHorizontalGroup(layout, dataList))));
 
                     layout.setVerticalGroup(getMainVerticalGroup(layout, dataList));
                     setLayout(layout);
@@ -186,6 +196,7 @@ final class MessageAccountPanel extends JPanel {
 
                     messageLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
                     messageLabel.setText(Bundle.MessageAccountPanel_no_matches());
+                    messageLabel.setFont(ContentViewerDefaults.getMessageFont());
                     messageLabel.setEnabled(false);
                     messagePanel.add(messageLabel, java.awt.BorderLayout.CENTER);
 
@@ -224,13 +235,11 @@ final class MessageAccountPanel extends JPanel {
         private ParallelGroup getMainVerticalGroup(GroupLayout layout, List<AccountContainer> data) {
             SequentialGroup group = layout.createSequentialGroup();
             for (AccountContainer o : data) {
-                group.addGap(5)
-                        .addComponent(o.getAccountLabel())
+                group.addComponent(o.getAccountLabel())
                         .addGroup(o.getContactLineVerticalGroup(layout))
                         .addGroup(o.getPersonLineVerticalGroup(layout));
+                group.addGap(ContentViewerDefaults.getSectionSpacing());
             }
-
-            group.addContainerGap(83, Short.MAX_VALUE);
 
             return layout.createParallelGroup().addGroup(group);
 
@@ -259,12 +268,11 @@ final class MessageAccountPanel extends JPanel {
         private SequentialGroup getPersonaHorizontalGroup(GroupLayout layout, List<AccountContainer> data) {
             SequentialGroup group = layout.createSequentialGroup();
             ParallelGroup pgroup = layout.createParallelGroup(Alignment.LEADING);
-            group.addGap(10);
             for (AccountContainer o : data) {
                 pgroup.addGroup(o.getPersonaSequentialGroup(layout));
                 pgroup.addGroup(o.getContactSequentialGroup(layout));
             }
-            group.addGap(10)
+            group.addGap(ContentViewerDefaults.getSectionIndent())
                     .addGroup(pgroup)
                     .addPreferredGap(ComponentPlacement.RELATED)
                     .addGroup(getButtonGroup(layout, data));
@@ -343,7 +351,9 @@ final class MessageAccountPanel extends JPanel {
             button = new JButton();
             button.addActionListener(new PersonaButtonListener(this));
 
+            accountLabel.setMargin(new Insets(0, 0, 0, 0));
             accountLabel.setText(account.getTypeSpecificID());
+            accountLabel.setFont(ContentViewerDefaults.getHeaderFont());
             contactDisplayName.setText(contactName);
             personaDisplayName.setText(persona != null ? persona.getName() : Bundle.MessageAccountPanel_unknown_label());
 
