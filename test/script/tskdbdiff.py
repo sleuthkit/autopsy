@@ -412,13 +412,14 @@ class TskGuidUtils:
     """
 
     @staticmethod
-    def _get_guid_dict(db_conn, select_statement, delim=""):
+    def _get_guid_dict(db_conn, select_statement, delim="", normalizer: Union[Callable[[str], str], None] = None):
         """
         Retrieves a dictionary mapping the first item selected to a concatenation of the remaining values.
         Args:
             db_conn: The database connection.
             select_statement: The select statement.
             delim: The delimiter for how row data from index 1 to end shall be concatenated.
+            normalizer: Means of normalizing the generated string or None.
 
         Returns: A dictionary mapping the key (the first item in the select statement) to a concatenation of the remaining values.
 
@@ -428,7 +429,10 @@ class TskGuidUtils:
         ret_dict = {}
         for row in cursor:
             # concatenate value rows with delimiter filtering out any null values.
-            ret_dict[row[0]] = delim.join([str(col) for col in filter(lambda col: col is not None, row[1:])])
+            value_str = delim.join([str(col) for col in filter(lambda col: col is not None, row[1:])])
+            if normalizer:
+                value_str = normalizer(value_str)
+            ret_dict[row[0]] = value_str
 
         return ret_dict
 
@@ -442,14 +446,16 @@ class TskGuidUtils:
         Returns: The instance of this class.
 
         """
-        guid_files = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, parent_path, name FROM tsk_files")
+        guid_files = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, parent_path, name FROM tsk_files",
+                                                 normalizer=normalize_file_path)
         guid_vs_parts = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, addr, start FROM tsk_vs_parts", "_")
         guid_vs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, vs_type, img_offset FROM tsk_vs_info", "_")
         guid_fs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, img_offset, fs_type FROM tsk_fs_info", "_")
         guid_image_names = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, name FROM tsk_image_names "
                                                                 "WHERE sequence=0")
         guid_os_accounts = TskGuidUtils._get_guid_dict(db_conn, "SELECT os_account_obj_id, addr FROM tsk_os_accounts")
-        guid_reports = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, path FROM reports")
+        guid_reports = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, path FROM reports",
+                                                   normalizer=normalize_file_path)
 
         objid_artifacts = TskGuidUtils._get_guid_dict(db_conn,
                                                       "SELECT blackboard_artifacts.artifact_obj_id, "
@@ -862,7 +868,6 @@ def normalize_unalloc_files(path_str: Union[str, None]) -> Union[str, None]:
     Returns: The path string where timestamps are removed from unalloc strings.
 
     """
-
     # takes a file name like "Unalloc_30580_7466496_2980941312" and removes the object id to become
     # "Unalloc_7466496_2980941312"
     return None if path_str is None else re.sub('Unalloc_[0-9]+_', 'Unalloc_', path_str)
@@ -879,6 +884,17 @@ def normalize_regripper_files(path_str: Union[str, None]) -> Union[str, None]:
     """
     # takes a file name like "regripper-12345-full" and removes the id to become "regripper-full"
     return None if path_str is None else re.sub(r'regripper-[0-9]+-full', 'regripper-full', path_str)
+
+
+def normalize_file_path(path_str: Union[str, None]) -> Union[str, None]:
+    """
+    Normalizes file paths removing or replacing pieces that will change from run to run (i.e. object id)
+    Args:
+        path_str: The original path string.
+
+    Returns: The normalized path string
+    """
+    return normalize_unalloc_files(normalize_regripper_files(path_str))
 
 
 def normalize_tsk_files(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
@@ -902,8 +918,8 @@ def normalize_tsk_files(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[st
 
     row_copy['obj_id'] = MASKED_OBJ_ID
     row_copy['os_account_obj_id'] = 'MASKED_OS_ACCOUNT_OBJ_ID'
-    row_copy['parent_path'] = normalize_unalloc_files(row['parent_path'])
-    row_copy['name'] = normalize_unalloc_files(row['name'])
+    row_copy['parent_path'] = normalize_file_path(row['parent_path'])
+    row_copy['name'] = normalize_file_path(row['name'])
     return row_copy
 
 
@@ -971,7 +987,7 @@ def normalize_tsk_objects_path(guid_util: TskGuidUtils, objid: int,
 
         path = os.path.join(*path_parts) if len(path_parts) > 0 else '/'
 
-        return normalize_regripper_files(normalize_unalloc_files(path))
+        return path
 
 
 def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[str, any]:
@@ -1004,43 +1020,51 @@ TableNormalization = Union[IGNORE_TABLE, NormalizeRow]
 This dictionary maps tables where data should be specially handled to how they should be handled.
 """
 TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
-    "image_gallery_groups_seen": IGNORE_TABLE,
     "blackboard_artifacts": IGNORE_TABLE,
     "blackboard_attributes": IGNORE_TABLE,
-    "tsk_files": NormalizeRow(normalize_tsk_files),
-    "tsk_vs_parts": NormalizeColumns({
-        "obj_id": MASKED_OBJ_ID
+    "data_source_info": NormalizeColumns({
+        "device_id": "{device id}",
+        "added_date_time": "{dateTime}"
     }),
     "image_gallery_groups": NormalizeColumns({
         "group_id": MASKED_ID
     }),
-    "tsk_files_path": NormalizeRow(normalize_tsk_files_path),
-    "tsk_file_layout": NormalizeColumns({
-        "obj_id": lambda guid_util, col: normalize_unalloc_files(guid_util.get_guid_for_file_objid(col))
-    }),
-    "tsk_objects": NormalizeRow(normalize_tsk_objects),
+    "image_gallery_groups_seen": IGNORE_TABLE,
+    "ingest_jobs": NormalizeRow(normalize_ingest_jobs),
     "reports": NormalizeColumns({
         "obj_id": MASKED_OBJ_ID,
         "path": "AutopsyTestCase",
         "crtime": 0
     }),
-    "data_source_info": NormalizeColumns({
-        "device_id": "{device id}",
-        "added_date_time": "{dateTime}"
+    "tsk_aggregate_score": NormalizeColumns({
+       "obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Object ID Omitted"),
+       "data_source_obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Data Source Object ID Omitted"),
     }),
-    "ingest_jobs": NormalizeRow(normalize_ingest_jobs),
-    "tsk_examiners": NormalizeColumns({
-        "login_name": "{examiner_name}"
+    "tsk_analysis_results": NormalizeColumns({
+        "artifact_obj_id":
+            lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Artifact Object ID Omitted"),
     }),
+    "tsk_data_artifacts": NormalizeColumns({
+        "artifact_obj_id":
+            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Artifact Object ID Omitted"),
+        "os_account_obj_id":
+            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Account Object ID Omitted"),
+    }),
+    "tsk_event_descriptions": NormalizeRow(normalize_tsk_event_descriptions),
     "tsk_events": NormalizeColumns({
         "event_id": "MASKED_EVENT_ID",
         "event_description_id": None,
         "time": None,
     }),
-    "tsk_event_descriptions": NormalizeRow(normalize_tsk_event_descriptions),
-    "tsk_os_accounts": NormalizeColumns({
-        "os_account_obj_id": MASKED_OBJ_ID
+    "tsk_examiners": NormalizeColumns({
+        "login_name": "{examiner_name}"
     }),
+    "tsk_files": NormalizeRow(normalize_tsk_files),
+    "tsk_file_layout": NormalizeColumns({
+        "obj_id": lambda guid_util, col: guid_util.get_guid_for_file_objid(col)
+    }),
+    "tsk_files_path": NormalizeRow(normalize_tsk_files_path),
+    "tsk_objects": NormalizeRow(normalize_tsk_objects),
     "tsk_os_account_attributes": NormalizeColumns({
         "id": MASKED_ID,
         "os_account_obj_id": lambda guid_util, col: guid_util.get_guid_for_accountid(col),
@@ -1050,11 +1074,11 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
         "id": MASKED_ID,
         "os_account_obj_id": lambda guid_util, col: guid_util.get_guid_for_accountid(col)
     }),
-    "tsk_data_artifacts": NormalizeColumns({
-        "artifact_obj_id":
-            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Artifact Object ID Omitted"),
-        "os_account_obj_id":
-            lambda guid_util, col: guid_util.get_guid_for_file_objid(col, omitted_value="Account Object ID Omitted"),
+    "tsk_os_accounts": NormalizeColumns({
+        "os_account_obj_id": MASKED_OBJ_ID
+    }),
+    "tsk_vs_parts": NormalizeColumns({
+        "obj_id": MASKED_OBJ_ID
     })
 }
 

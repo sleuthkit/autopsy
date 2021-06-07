@@ -64,8 +64,6 @@ import org.xml.sax.SAXException;
 final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter {
 
     private static final int FILE_SIZE_MODULUS = 512;
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
     
     private static final String DATABASE_FILE_EXTENSION = "db";
     private static final int MINIMUM_DATABASE_FILE_SIZE = 65536; //64 KB
@@ -158,10 +156,10 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                  */
                 String mimeType = fileTypeDetector.getMIMEType(file);
                 if (mimeType.equals("application/octet-stream") && isFileEncryptionSuspected(file)) {
-                    return flagFile(file, BlackboardArtifact.Type.TSK_ENCRYPTION_SUSPECTED, LIKELY_NOTABLE_SCORE,
+                    return flagFile(file, BlackboardArtifact.Type.TSK_ENCRYPTION_SUSPECTED, Score.SCORE_LIKELY_NOTABLE,
                             String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
                 } else if (isFilePasswordProtected(file)) {
-                    return flagFile(file, BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, NOTABLE_SCORE, 
+                    return flagFile(file, BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NOTABLE, 
                     Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
                 }
             }

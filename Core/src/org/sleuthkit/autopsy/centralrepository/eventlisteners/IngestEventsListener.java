@@ -63,8 +63,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.datamodel.Score;
-import org.sleuthkit.datamodel.Score.Priority;
-import org.sleuthkit.datamodel.Score.Significance;
 
 /**
  * Listen for ingest events and update entries in the Central Repository
@@ -72,7 +70,6 @@ import org.sleuthkit.datamodel.Score.Significance;
  */
 @NbBundle.Messages({"IngestEventsListener.ingestmodule.name=Central Repository"})
 public class IngestEventsListener {
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Significance.LIKELY_NOTABLE, Priority.NORMAL);
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
@@ -267,7 +264,7 @@ public class IngestEventsListener {
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_ARTIFACT_HIT, attributesForNewArtifact)) {
                   BlackboardArtifact newInterestingArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, LIKELY_NOTABLE_SCORE, 
+                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE, 
                         null, configuration, null, attributesForNewArtifact)
                         .getAnalysisResult();
 
