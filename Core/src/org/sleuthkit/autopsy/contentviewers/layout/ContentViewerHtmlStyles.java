@@ -31,13 +31,14 @@ public class ContentViewerHtmlStyles {
     private static final String KEY_COLUMN_TD_CLASSNAME = CLASS_PREFIX + "keyKolumn";
 
     private static final Font DEFAULT_FONT = ContentViewerDefaults.getFont();
+    private static final Font MESSAGE_FONT = ContentViewerDefaults.getMessageFont();
     private static final Font HEADER_FONT = ContentViewerDefaults.getHeaderFont();
     private static final Font SUB_HEADER_FONT = ContentViewerDefaults.getSubHeaderFont();
 
     // additional styling for components
     private static final String STYLE_SHEET_RULE
             = String.format(" .%s { font-family: %s; font-size: %dpt;font-style:italic; margin: 0px; padding: 0px 0px %dpx 0px; } ",
-                    MESSAGE_CLASSNAME, DEFAULT_FONT.getFamily(), DEFAULT_FONT.getSize(), ContentViewerDefaults.getLineSpacing())
+                    MESSAGE_CLASSNAME, MESSAGE_FONT.getFamily(), MESSAGE_FONT.getSize(), ContentViewerDefaults.getLineSpacing())
             + String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px 0px %dpx 0px;  } ",
                     HEADER_CLASSNAME, HEADER_FONT.getFamily(), HEADER_FONT.getSize(), ContentViewerDefaults.getLineSpacing())
             + String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px 0px %dpx 0px;  } ",

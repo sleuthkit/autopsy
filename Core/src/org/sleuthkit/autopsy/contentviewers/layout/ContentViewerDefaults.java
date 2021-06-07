@@ -36,6 +36,8 @@ public class ContentViewerDefaults {
         return defaultFont.deriveFont(Font.BOLD, defaultFont.getSize() + 2);
     });
 
+    private static final Supplier<Font> MESSAGE_FONT = Suppliers.memoize(() -> DEFAULT_FONT.get().deriveFont(Font.ITALIC));
+        
     private static final Supplier<Insets> DEFAULT_PANEL_INSETS = Suppliers.memoize(() -> UIManager.getDefaults().getInsets("TextPane.margin"));
 
     private static final Supplier<Integer> DEFAULT_INDENT = Suppliers.memoize(() -> DEFAULT_FONT_PX.get());
@@ -52,6 +54,10 @@ public class ContentViewerDefaults {
 
     public static Font getFont() {
         return DEFAULT_FONT.get();
+    }
+
+    public static Font getMessageFont() {
+        return MESSAGE_FONT.get();
     }
 
     public static Font getHeaderFont() {

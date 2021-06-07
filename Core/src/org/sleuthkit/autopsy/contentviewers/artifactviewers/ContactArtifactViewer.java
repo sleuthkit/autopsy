@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialog;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsDialogCallback;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsMode;
 import org.sleuthkit.autopsy.centralrepository.persona.PersonaDetailsPanel;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
@@ -245,7 +246,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         Insets savedInsets = contactPanelConstraints.insets;
         contactPanelConstraints.gridy = 0;
         contactPanelConstraints.gridx = 0;
-        contactPanelConstraints.insets = new Insets(0, 0, 0, 0);
+        contactPanelConstraints.insets = new Insets(0, 0, ContentViewerDefaults.getLineSpacing(), 0);
 
         javax.swing.JLabel contactImage = new javax.swing.JLabel();
         contactImage.setIcon(getImageFromArtifact(contactArtifact));
@@ -346,7 +347,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         this.personaSearchStatusLabel = new javax.swing.JLabel();
         personaSearchStatusLabel.setText(personaStatusLabelText);
-
+        personaSearchStatusLabel.setFont(ContentViewerDefaults.getMessageFont());
+        
         m_constraints.gridx = 0;
 
         CommunicationArtifactViewerHelper.addComponent(this, m_gridBagLayout, m_constraints, personaSearchStatusLabel);
@@ -359,9 +361,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             personaHeader.setEnabled(false);
             personaSearchStatusLabel.setEnabled(false);
 
-            CommunicationArtifactViewerHelper.addBlankLine(this, m_gridBagLayout, m_constraints);
-            m_constraints.gridy++;
-            CommunicationArtifactViewerHelper.addMessageRow(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_cr_disabled_message());
+            Insets messageInsets = new Insets(ContentViewerDefaults.getSectionSpacing(), 0, ContentViewerDefaults.getLineSpacing(), 0);
+            CommunicationArtifactViewerHelper.addMessageRow(this, m_gridBagLayout, messageInsets, m_constraints, Bundle.ContactArtifactViewer_cr_disabled_message());
             m_constraints.gridy++;
 
             CommunicationArtifactViewerHelper.addPageEndGlue(this, m_gridBagLayout, this.m_constraints);
@@ -436,7 +437,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         Insets savedInsets = constraints.insets;
 
         // some label are indented 2x to appear indented w.r.t column above
-        Insets extraIndentInsets = new java.awt.Insets(0, 2 * CommunicationArtifactViewerHelper.LEFT_INSET, 0, 0);
+        Insets extraIndentInsets = new java.awt.Insets(0, 2 * ContentViewerDefaults.getSectionIndent(), ContentViewerDefaults.getLineSpacing(), 0);
 
         // Add a Match X label in col 0.
         constraints.gridx = 0;
@@ -461,6 +462,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         //constraints.gridwidth = 1;  // TBD: this may not be needed if we use single panel
         constraints.gridx++;
+        constraints.insets = new Insets(0, ContentViewerDefaults.getColumnSpacing(), ContentViewerDefaults.getLineSpacing(), 0);
         personaNameLabel.setText(personaName);
         gridBagLayout.setConstraints(personaNameLabel, constraints);
         CommunicationArtifactViewerHelper.addComponent(this, gridBagLayout, constraints, personaNameLabel);
@@ -474,6 +476,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
         // Shirnk the button height.
         personaButton.setMargin(new Insets(0, 5, 0, 5));
+        constraints.insets = new Insets(0, ContentViewerDefaults.getColumnSpacing(), ContentViewerDefaults.getLineSpacing(), 0);
         gridBagLayout.setConstraints(personaButton, constraints);
         CommunicationArtifactViewerHelper.addComponent(this, gridBagLayout, constraints, personaButton);
         CommunicationArtifactViewerHelper.addLineEndGlue(this, gridBagLayout, constraints);
@@ -502,7 +505,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
 
                     // this needs an extra indent
                     constraints.insets = extraIndentInsets;
-                    CommunicationArtifactViewerHelper.addKeyAtCol(this, gridBagLayout, constraints, Bundle.ContactArtifactViewer_missing_account_label(), 1);
+                    CommunicationArtifactViewerHelper.addKeyAtCol(this, gridBagLayout, constraints, extraIndentInsets, Bundle.ContactArtifactViewer_missing_account_label(), 1);
                     constraints.insets = savedInsets;
 
                     CommunicationArtifactViewerHelper.addValueAtCol(this, gridBagLayout, constraints, missingAccount.getIdentifier(), 2);
@@ -549,7 +552,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         m_constraints.gridx = 0;
         m_constraints.weighty = 0.0;
         m_constraints.weightx = 0.0;    // keep components fixed horizontally.
-        m_constraints.insets = new java.awt.Insets(0, CommunicationArtifactViewerHelper.LEFT_INSET, 0, 0);
+        m_constraints.insets = new java.awt.Insets(0, ContentViewerDefaults.getSectionIndent(), 0, 0);
         m_constraints.fill = GridBagConstraints.NONE;
 
     }

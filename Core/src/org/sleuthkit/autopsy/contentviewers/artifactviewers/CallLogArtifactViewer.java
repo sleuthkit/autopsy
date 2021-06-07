@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.guiutils.ContactCache;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -444,9 +446,8 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         "CalllogArtifactViewer_cr_disabled_message=Enable Central Repository to view, create and edit personas."
     })
     private void showCRDisabledMessage() {
-        CommunicationArtifactViewerHelper.addBlankLine(this, m_gridBagLayout, m_constraints);
-        m_constraints.gridy++;
-        CommunicationArtifactViewerHelper.addMessageRow(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_cr_disabled_message());
+        Insets messageInsets = new Insets(ContentViewerDefaults.getSectionSpacing(), 0, ContentViewerDefaults.getLineSpacing(), 0);
+        CommunicationArtifactViewerHelper.addMessageRow(this, m_gridBagLayout, messageInsets, m_constraints, Bundle.ContactArtifactViewer_cr_disabled_message());
         m_constraints.gridy++;
     }
 
@@ -505,7 +506,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         m_constraints.gridx = 0;
         m_constraints.weighty = 0.0;
         m_constraints.weightx = 0.0; // keep components fixed horizontally.
-        m_constraints.insets = new java.awt.Insets(0, CommunicationArtifactViewerHelper.LEFT_INSET, 0, 0);
+        m_constraints.insets = new java.awt.Insets(0, ContentViewerDefaults.getSectionIndent(), 0, 0);
         m_constraints.fill = GridBagConstraints.NONE;
 
     }
