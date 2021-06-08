@@ -211,6 +211,11 @@ final class ExtractZoneIdentifier extends Extract {
      * @return true if possibleDownloadFile corresponds to zoneFile, false otherwise.
      */
     private boolean isZoneFileMatch(AbstractFile zoneFile, String expectedDownloadFileName, AbstractFile possibleDownloadFile) {
+        
+        if (zoneFile == null || possibleDownloadFile == null || expectedDownloadFileName == null) {
+            return false;
+        }
+        
         if (zoneFile.getMetaAddr() != possibleDownloadFile.getMetaAddr()) {
             return false;
         }
