@@ -789,48 +789,38 @@ class SevenZipExtractor {
 
             // add them to the DB. We wait until the end so that we have the metadata on all of the
             // intermediate nodes since the order is not guaranteed
-            CaseDbTransaction trans = null;
+            //CaseDbTransaction trans = null;
             try {
-                trans = Case.getCurrentCaseThrows().getSleuthkitCase().beginTransaction();
-                unpackedTree.updateOrAddFileToCaseRec(statusMap, archiveFilePath, trans);
-                trans.commit();
-                trans = null;
+                //trans = Case.getCurrentCaseThrows().getSleuthkitCase().beginTransaction();
+                unpackedTree.updateOrAddFileToCaseRec(statusMap, archiveFilePath);
+                unpackedTree.commitCurrentTransaction();
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure", ex); //NON-NLS
+                //TODO decide if anything to cleanup, for now bailing               
+                unpackedTree.rollbackCurrentTransaction();
+            }
                 
+            if (checkForIngestCancellation(archiveFile)) {
+                return false;
+            }
+            unpackedFiles = unpackedTree.getAllFileObjects();
+            //check if children are archives, update archive depth tracking
+            for (int i = 0; i < unpackedFiles.size(); i++) {
                 if (checkForIngestCancellation(archiveFile)) {
                     return false;
                 }
-                unpackedFiles = unpackedTree.getAllFileObjects();
-                //check if children are archives, update archive depth tracking
-                for (int i = 0; i < unpackedFiles.size(); i++) {
-                    if (checkForIngestCancellation(archiveFile)) {
-                        return false;
-                    }
-                    progress.progress(String.format("%s: Searching for nested archives (%d of %d)", currentArchiveName, i + 1, unpackedFiles.size()));
-                    AbstractFile unpackedFile = unpackedFiles.get(i);
-                    if (unpackedFile == null) {
-                        continue;
-                    }
-                    if (isSevenZipExtractionSupported(unpackedFile)) {
-                        Archive child = new Archive(parentAr.getDepth() + 1, parentAr.getRootArchiveId(), archiveFile);
-                        parentAr.addChild(child);
-                        depthMap.put(unpackedFile.getId(), child);
-                    }
-                    unpackedFile.close();
+                progress.progress(String.format("%s: Searching for nested archives (%d of %d)", currentArchiveName, i + 1, unpackedFiles.size()));
+                AbstractFile unpackedFile = unpackedFiles.get(i);
+                if (unpackedFile == null) {
+                    continue;
                 }
-
-            } catch (TskCoreException | NoCurrentCaseException e) {
-                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure", e); //NON-NLS
-                //TODO decide if anything to cleanup, for now bailing
-                
-                if (trans != null) {
-                    try {
-                        trans.rollback();
-                    } catch (Exception ignored) {
-                        // Ignore exception
-                    }
+                if (isSevenZipExtractionSupported(unpackedFile)) {
+                    Archive child = new Archive(parentAr.getDepth() + 1, parentAr.getRootArchiveId(), archiveFile);
+                    parentAr.addChild(child);
+                    depthMap.put(unpackedFile.getId(), child);
                 }
+                unpackedFile.close();
             }
-
         } catch (SevenZipException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, "Error unpacking file: " + archiveFile, ex); //NON-NLS
             //inbox message
@@ -1275,6 +1265,10 @@ class SevenZipExtractor {
 
         final UnpackedNode rootNode;
         private int nodesProcessed = 0;
+            
+        private CaseDbTransaction currentTransaction = null;
+        private long transactionCounter = 0;
+        private final static long MAX_TRANSACTION_SIZE = 1000;
 
         /**
          *
@@ -1427,10 +1421,10 @@ class SevenZipExtractor {
          * Traverse the tree top-down after unzipping is done and create derived
          * files for the entire hierarchy
          */
-        void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath, CaseDbTransaction trans) throws TskCoreException, NoCurrentCaseException {
+        void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
             final FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
             for (UnpackedNode child : rootNode.getChildren()) {
-                updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath, trans);
+                updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
             }
         }
 
@@ -1448,7 +1442,7 @@ class SevenZipExtractor {
          *
          * @throws TskCoreException
          */
-        private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath, CaseDbTransaction trans) throws TskCoreException {
+        private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException {
             DerivedFile df;
             progress.progress(String.format("%s: Adding/updating files in case database (%d of %d)", currentArchiveName, ++nodesProcessed, numItems));
             try {
@@ -1458,7 +1452,7 @@ class SevenZipExtractor {
                     df = Case.getCurrentCaseThrows().getSleuthkitCase().addDerivedFile(node.getFileName(), node.getLocalRelPath(), node.getSize(),
                             node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
                             node.isIsFile(), node.getParent().getFile(), "", MODULE_NAME,
-                            "", "", TskData.EncodingType.XOR1, trans);
+                            "", "", TskData.EncodingType.XOR1, getCurrentTransaction());
                     statusMap.put(getKeyAbstractFile(df), new ZipFileStatusWrapper(df, ZipFileStatus.EXISTS));
                 } else {
                     String key = getKeyAbstractFile(existingFile.getFile());
@@ -1469,10 +1463,10 @@ class SevenZipExtractor {
                     if (existingFile.getStatus() == ZipFileStatus.UPDATE) {
                         //if the we are updating a file and its mime type was octet-stream we want to re-type it
                         String mimeType = existingFile.getFile().getMIMEType().equalsIgnoreCase("application/octet-stream") ? null : existingFile.getFile().getMIMEType();
-                        df = fileManager.updateDerivedFile((DerivedFile) existingFile.getFile(), node.getLocalRelPath(), node.getSize(),
+                        df = Case.getCurrentCaseThrows().getSleuthkitCase().updateDerivedFile((DerivedFile) existingFile.getFile(), node.getLocalRelPath(), node.getSize(),
                                 node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
                                 node.isIsFile(), mimeType, "", MODULE_NAME,
-                                "", "", TskData.EncodingType.XOR1);
+                                "", "", TskData.EncodingType.XOR1, node.getParent(), getCurrentTransaction());
                     } else {
                         //ALREADY CURRENT - SKIP
                         statusMap.put(key, new ZipFileStatusWrapper(existingFile.getFile(), ZipFileStatus.SKIP));
@@ -1514,7 +1508,48 @@ class SevenZipExtractor {
 
             //recurse adding the children if this file was incomplete the children presumably need to be added
             for (UnpackedNode child : node.getChildren()) {
-                updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath), trans);
+                updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath));
+            }
+        }
+        
+        private CaseDbTransaction getCurrentTransaction() throws TskCoreException {
+        
+            if (currentTransaction == null) {
+                startTransaction();
+            } 
+
+            if (transactionCounter > MAX_TRANSACTION_SIZE) {
+                commitCurrentTransaction();
+                startTransaction();
+            }
+
+            return currentTransaction;
+        }
+    
+        private void startTransaction() throws TskCoreException {
+            try {
+                currentTransaction = Case.getCurrentCaseThrows().getSleuthkitCase().beginTransaction();
+                transactionCounter = 0;
+            } catch (NoCurrentCaseException ex) {
+                throw new TskCoreException("Case is closed");
+            }
+        }
+    
+        private void commitCurrentTransaction() throws TskCoreException {
+            if (currentTransaction != null) {
+                currentTransaction.commit();
+                currentTransaction = null;
+            }
+        }
+    
+        private void rollbackCurrentTransaction() {
+            if (currentTransaction != null) {
+                try {
+                    currentTransaction.rollback();
+                    currentTransaction = null;
+                } catch (TskCoreException ex) {
+                    // Ignored
+                }
             }
         }
 
