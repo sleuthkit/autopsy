@@ -1,119 +1,118 @@
-/*! \page interesting_files_identifier_page Interesting Files Identifier Module
+/*! \page interesting_files_identifier_page Interesting Files Identifier (Identifiant de fichiers intéressant)
 
 [TOC]
 
 
-\section interesting_files_overview Overview
+\section interesting_files_overview Aperçu
 
-The Interesting Files module allows you to automatically flag files and directories that match a set of rules. This can be useful if you always need to check whether files with a given name or path are in the data source, or if you are always interested in files with a certain type.
+Le module "Interesting Files Identifier" vous permet de marquer automatiquement les fichiers et répertoires qui correspondent à un ensemble de règles. Cela peut être utile si vous devez toujours vérifier si des fichiers avec un nom ou un chemin donné se trouvent dans une source de données, ou si vous êtes toujours intéressé par des fichiers ayant un certain type.
 
-This module allows you to make sets of rules that will be run against each file as it is processed. If a file matches any of the rules, you will see an entry for it in the \ref tree_viewer_page. You can share your rules with other users, and import sets made by others into your copy of Autopsy.
+Ce module vous permet de créer des ensembles de règles qui seront exécutées sur chaque fichiers au fur et à mesure de leur traitement. Si un fichier correspond à l'une des règles, vous verrez une entrée concernant celui-ci dans l'\ref tree_viewer_page. Vous pouvez partager vos règles avec d'autres utilisateurs et importer des ensembles créés par d'autres dans votre copie d'Autopsy.
 
-\section interesting_files_terminology Terminology
+\section interesting_files_terminology Terminologie
 
 <ul>
-<li>A <b>rule</b> is a set of conditions that must be true about a file for it to match the rule. All conditions in the rule must be true. For example, if a rule has conditions "file size > 1 MB" and "file extension = .txt", only files that match both conditions will be considered a match.
-<li>A <b>rule set</b> is a collection of rules. If a file matches any rule in the rule set it will be flagged as a match for this rule set. Rule sets can be enabled and disabled at ingest time.
+<li>Le terme <b>"Rule"</b> correspond à un ensemble de conditions qui doivent être vraies pour un fichier afin qu'il corresponde à la règle. Toutes les conditions de la règle doivent être vraies. Par exemple, si une règle comporte des conditions "File Size > 1 MB" ("Taille du fichier > 1 Mo") et "File Extension = .txt" ("Extension du fichier = .txt"), seuls les fichiers qui correspondent aux deux conditions seront considérés comme une correspondance.
+<li>Le terme <b>"Rule Set"</b> correspond à un ensemble de règles. Si un fichier correspond à une règle de l'ensemble de règles, il sera marqué comme étant une correspondance pour cet ensemble de règles. Les ensembles de règles peuvent être activés et désactivés au moment de l'acquisition.
 </ul>
 
 \section interesting_files_config Configuration
 
-To create and edit your rule sets, go to "Tools", "Options" and then select the "Interesting Files" tab. The area on the left side will show you a list of all the rule sets that are currently available. This will include the official rule sets that are included with Autopsy and any rule sets that you create. Selecting a rule set will display its description and information about each of its rules on the right side of the panel.
+Pour créer et modifier vos ensembles de règles, allez dans "Tools", "Options" puis sélectionnez l'onglet "Interesting Files". La zone sur le côté gauche vous montrera une liste de tous les ensembles de règles actuellement disponibles. Cela inclura les ensembles de règles officiels inclus avec Autopsy ainsi que tous les ensembles de règles que vous créez. La sélection d'un ensemble de règles affichera sa description et des informations sur chacune de ses règles sur le côté droit du panneau.
 
 \image html InterestingFiles/main.png
 
-The buttons on the bottom of the left side of the panel control the rule sets.
+Les boutons situés en bas à gauche du panneau contrôlent les ensembles de règles.
 
 <ul>
-<li><b>New Set</b> - Allows you to create a new rule set (rules will be added later). You will see a new window asking for the name of the new rule set, an optional description, and whether known files should be ignored (i.e., if a file is in the NSRL, then it won't show up on the list of matches even if it satisfies the conditions of one of the rules in the set).
+<li><b>New Set</b> - Vous permet de créer un nouvel ensemble de règles (les règles seront ajoutées ultérieurement). Vous verrez une nouvelle fenêtre demandant le nom du nouvel ensemble de règles, une description facultative et si les fichiers connus doivent être ignorés (c'est-à-dire, si un fichier est dans le NSRL, il n'apparaîtra pas dans la liste des correspondances même s'il satisfait aux conditions de l'une des règles de l'ensemble).
 \image html InterestingFiles/new_rule_set.png 
-<li><b>Edit Set</b> - Brings up the same window as "New Set" and allows you to change any of the fields.
-<li><b>Delete Set</b> - Removes the selected rule set
-<li><b>Copy Set</b> - Makes a copy of the selected rule set. It will bring up the same window as "New Set". You must change the rule set name in order to save the copy.
-<li><b>Import Set</b> - Imports a previously exported rule set. Once imported, you will not need the original copy.
-<li><b>Export Set</b> - Exports the selected rule set in a format that can be shared with other Autopsy users.
+<li><b>Edit Set</b> - Ouvre la même fenêtre que "New Set" et vous permet de modifier l'un des champs.
+<li><b>Delete Set</b> - Supprime l'ensemble de règles sélectionné
+<li><b>Copy Set</b> - Crée une copie de l'ensemble de règles sélectionné. Cela fera apparaître la même fenêtre que "New Set". Vous devez modifier le nom de l'ensemble de règles pour enregistrer la copie.
+<li><b>Import Set</b> - Importe un ensemble de règles précédemment exporté. Une fois importé, vous n'aurez pas besoin de la copie originale.
+<li><b>Export Set</b> - Exporte l'ensemble de règles sélectionné dans un format qui peut être partagé avec d'autres utilisateurs d'Autopsy.
 </ul>
 
-Note that the predefined rule sets can not be deleted or edited. If you believe you have additions that would be useful to the community, see the \ref update_interesting_files_page page for instructions on submitting updates.
+Notez que les ensembles de règles prédéfinis ne peuvent pas être supprimés ou modifiés. Si vous pensez à des ajouts qui seraient utiles pour la communauté, consultez la page \ref update_interesting_files_page pour obtenir les instructions pour soumettre des mises à jour.
 
-Selecting a rule set will display its description, whether it ignores known files, and the rules contained in the set. Selecting a rule will display the conditions for that rule in the "Rule Details" section.
+La sélection d'un ensemble de règles affichera sa description, s'il ignore les fichiers connus et les règles contenues dans l'ensemble. La sélection d'une règle affichera les conditions de cette règle dans la section "Rule Details".
 
-The buttons under the list of rules allow you to create new rules and edit or delete existing rules. Selecting "New Rule" will bring up a new window to create the rule.
+Les boutons sous la liste des règles vous permettent de créer de nouvelles règles et de modifier ou supprimer des règles existantes. Sélectionner "New Rule" fera apparaître une nouvelle fenêtre pour créer une règle.
 
 \image html InterestingFiles/new_rule.png 
 
-The top line allows you to choose whether you want to match only files, only directories, or both. If you select directories or both, some of the condition types will be unavailable since they only apply to files.
+La ligne du haut vous permet de choisir si vous voulez faire correspondre uniquement des fichiers ("Files"), uniquement des répertoires ("Directories") ou les deux ("All"). Si vous sélectionnez des répertoires ou les deux, certains types de conditions ne seront pas disponibles car ils ne s'appliquent qu'aux fichiers.
 
-Each rule must have at least one condition. To create conditions, check the box to the left of the condition you want to enable. The following is a description of each condition, with some full examples after.
+Chaque règle doit avoir au moins une condition. Pour créer des conditions, cochez la case à gauche de la condition que vous souhaitez activer. Ce qui suit est une description de chaque condition, avec quelques exemples complets.
 
 <ul>
-<li><b>Name</b> - Enter either the full file name or one or more extensions, and select whether this is an exact match or a substring/regex match. If substring/regex match is enabled, it will automatically add wildcards to the beginning and end of the text. If you're only matching directories, this will match the directory name. If you're using a comma-separated list of extensions, make sure the regex checkbox is disabled - the entire contents will be interpreted as one regex when the checkbox is selected. The following table shows some examples of what the different combinations can be used for.
+<li><b>Name</b> - Entrez soit le nom complet du fichier ("Full Name") soit une ou plusieurs extensions ("Extension Only"), et sélectionnez s'il s'agit d'une correspondance exacte ou d'une sous-chaîne de caractères/expression régulière ("Substring/Regex"). Si la correspondance "Substring/Regex" est activée, elle ajoutera automatiquement des caractères génériques au début et à la fin du texte. Si vous ne faites correspondre que des répertoires, cela correspondra au nom du répertoire. Si vous utilisez une liste d'extensions séparées par des virgules, assurez-vous que la case à cocher "Substring/Regex" est désactivée - tout le contenu sera interprété comme une expression régulière lorsque la case est cochée. Le tableau suivant montre quelques exemples d'utilisation des différentes combinaisons.
 
 <table>
-<tr><th>Type</th><th>Substring/Regex</th><th>Text</th><th>Description</th><th>Sample match</th></tr>
-<tr><td>Full Name</td><td>false</td><td>\verbatim test.txt \endverbatim</td><td>Will match files named "test.txt"</td><td>text.txt</tr>
-<tr><td>Full Name</td><td>true</td><td>\verbatim bomb \endverbatim</td><td>Will match files with "bomb" anywhere their name</td><td>Pipe bomb.png</td></tr>
-<tr><td>Full Name</td><td>true</td><td>\verbatim virus.*\.exe \endverbatim</td><td>Will match files with "virus" followed by ".exe" anywhere their name</td><td>bad_virus.exe</td></tr>
-<tr><td>Extension Only</td><td>false</td><td>\verbatim zip \endverbatim</td><td>Will match .zip files</td><td>myArchive.zip</td></tr>
-<tr><td>Extension Only</td><td>false</td><td>\verbatim zip,rar,7z \endverbatim</td><td>Will match .zip, .rar, and .7z files</td><td>anotherArchive.rar</td></tr>
-<tr><td>Extension Only</td><td>true</td><td>\verbatim jp \endverbatim</td><td>Will match .jpg, .jpeg files, and any others with "jp" in the extension</td><td>myImage.jpg</td></tr>
+<tr><th>Type</th><th>Substring/Regex</th><th>Texte</th><th>Description</th><th>Exemple de correspondance</th></tr>
+<tr><td>Full Name</td><td>faux</td><td>\verbatim test.txt \endverbatim</td><td>Correspondra aux fichiers nommés "test.txt"</td><td>text.txt</tr>
+<tr><td>Full Name</td><td>vrai</td><td>\verbatim bomb \endverbatim</td><td>Associera les fichiers avec "bomb" à n'importe quel endroit de leur nom</td><td>Pipe_bomb.png</td></tr>
+<tr><td>Full Name</td><td>vrai</td><td>\verbatim virus.*\.exe \endverbatim</td><td>Correspondra aux fichiers avec "virus" suivi de ".exe" à n'importe quel endroit de leur nom</td><td>bad_virus.exe</td></tr>
+<tr><td>Extension Only</td><td>faux</td><td>\verbatim zip \endverbatim</td><td>Correspondra aux fichiers .zip</td><td>myArchive.zip</td></tr>
+<tr><td>Extension Only</td><td>faux</td><td>\verbatim zip,rar,7z \endverbatim</td><td>Correspondra aux fichiers .zip, .rar, et .7z files</td><td>anotherArchive.rar</td></tr>
+<tr><td>Extension Only</td><td>vrai</td><td>\verbatim jp \endverbatim</td><td>Correspondra aux fichiers .jpg, .jpeg, et tous les autres ayant "jp" dans l'extension</td><td>myImage.jpg</td></tr>
 </table>
 
-<li><b>Path Substring</b> - Enter a folder name that must be part of file's path for it to be a match. If you only want to specify that a word appears somewhere in the path, use the regex option.
+<li><b>Path Substring</b> - Entrez un nom de dossier qui doit faire partie du chemin du fichier pour qu'il corresponde. Si vous souhaitez uniquement spécifier un mot apparaîssant quelque part dans le chemin, utilisez l'option regex.
 <table>
-<tr><th>Regex</th><th>Text</th><th>Description</th><th>Sample match</th></tr>
-<tr><td>false</td><td>\verbatim Documents \endverbatim</td><td>Match any file that has a folder named "Documents" in its path</td><td>/folder1/Documents/fileA.doc</td></tr>
-<tr><td>true</td><td>\verbatim bomb \endverbatim</td><td>Match any file with "bomb" in the path</td><td>/folder1/bomb making/file2.doc</td></tr>
-<tr><td>true</td><td>\verbatim Users/.*/Downloads \endverbatim</td><td>Match any file with "Users" and "Downloads" in the path</td><td>C:/Users/user1/Downloads/myFile.txt</td></tr>
+<tr><th>Regex</th><th>Texte</th><th>Description</th><th>Exemple de correspondance</th></tr>
+<tr><td>faux</td><td>\verbatim Documents \endverbatim</td><td>Correspond à n'importe quel fichier qui a un dossier nommé "Documents" dans son chemin</td><td>/folder1/Documents/fileA.doc</td></tr>
+<tr><td>vrai</td><td>\verbatim bomb \endverbatim</td><td>Correspond à n'importe quel fichier qui a "bomb" dans son chemin</td><td>/folder1/bomb making/file2.doc</td></tr>
+<tr><td>vrai</td><td>\verbatim Users/.*/Downloads \endverbatim</td><td>Correspond à n'importe quel fichier qui a "Users" et "Downloads" dans son chemin</td><td>C:/Users/user1/Downloads/myFile.txt</td></tr>
 </table>
 
-<li><b>MIME Type</b> - Use the pull-down list to select a MIME type. Only a single MIME type can be selected.
+<li><b>MIME Type</b> - Utilisez la liste déroulante pour sélectionner un type MIME. Un seul type MIME peut être sélectionné.
 
-<li><b>File Size</b> - Select whether you want to match files equal to, smaller than, or larger than a given size. 
+<li><b>File Size</b> - Indiquez si vous souhaitez faire correspondre des fichiers de taille égale, inférieure ou supérieure à une taille donnée. 
 
-<li><b>Modified Within</b> - Select how recently a file must have been modified to match the rule.
+<li><b>Modified Within</b> - Sélectionnez la date à laquelle un fichier doit avoir été modifié pour correspondre à la règle.
 </ul>
 
-Finally you can optionally enter a name for the rule. This will be displayed in the UI for each match.
+Enfin, vous pouvez éventuellement saisir un nom pour la règle. Cela sera affiché dans l'interface utilisateur pour chaque correspondance.
 
-\subsection interesting_files_examples Examples
-Here are a few examples of rules being created.
+\subsection interesting_files_examples Exemples
+Voici quelques exemples de règles en cours de création.
 
-This is a rule that matches any file with "bomb" in the name that also has an "image/png" MIME type.
+C'est une règle qui correspond à tout fichier avec "bomb" dans le nom qui a également un type MIME "image/png".
 
 \image html InterestingFiles/bomb_png.png 
 
-This is a rule that matches folders named "Private".
+Il s'agit d'une règle qui correspond aux dossiers nommés "Private".
 
 \image html InterestingFiles/private_folder.png
  
-This rule is looking for archives in the user download directory. It requires "Users" and "Downloads" in the file's path, and an extension of .zip, .rar, or .7z.
+Cette règle recherche les archives dans le répertoire de téléchargement de l'utilisateur. Elle nécessite "Users" et "Downloads" dans le chemin du fichier, ainsi qu'une extension .zip, .rar ou .7z.
  
 \image html InterestingFiles/download_archive.png
 
-This is a rule that matches files with size at least 50MB that have been modified in the last week.
+Il s'agit d'une règle qui correspond aux fichiers d'une taille d'au moins 50 Mo qui ont été modifiés la semaine dernière.
 
 \image html InterestingFiles/new_large_files.png
 
-\section interesting_files_running Running the Module
+\section interesting_files_running Exécution du module
 
-At runtime, you can select which rule sets you would like to run on your data source.
+Lors du paramétrage, vous pouvez sélectionner les ensembles de règles que vous souhaitez exécuter sur votre source de données.
 
 \image html InterestingFiles/ingest.png
 
-\section interesting_files_results Viewing Results
+\section interesting_files_results Affichage des résultats
 
-Files that match any of the rules in the enabled rule sets will be shown in the Results section of the \ref tree_viewer_page under "Interesting Items" and then the name of the rule set that matched. Note that other modules besides Interesting Files put results in this section of the tree, so there may be more than just what matched your rule sets. Selecting the "Interesting Files" node under one of your rule sets will display all matching files in the \ref result_viewer_page.
+Les fichiers qui correspondent à l'une des règles des ensembles de règles activés seront affichés dans la section Results de l'\ref tree_viewer_page sous "Interesting Items", puis sous le nom de l'ensemble de règles correspondant. Notez que d'autres modules en plus de "Interesting Files Identifier" placent leurs résultats dans cette section de l'arborescence, il peut donc y avoir plus d'éléments que ceux qui correspondent à vos ensembles de règles. Sélectionner le nœud "Interesting Files" sous l'un de vos ensembles de règles affichera tous les fichiers correspondants dans la \ref result_viewer_page.
 
 \image html InterestingFiles/results.png
 
-You can see which rule matched in the "Category" column. You can export some or all of the files for further analysis. To do this, first use the standard Windows file
-selection methods to highlight the files you want to export in the \ref result_viewer_page :
+Vous pouvez voir quelle règle correspond dans la colonne "Category". Vous pouvez exporter tout ou partie des fichiers pour une analyse plus approfondie. Pour ce faire, utilisez d'abord la méthode standard de sélection de fichier sous Windows afin de mettre en évidence les fichiers que vous souhaitez exporter via la \ref result_viewer_page :
 <ul>
-<li>Hold down Ctrl and click on each file you want to export
-<li>Hold down Shift to select a range of files
-<li>Click on any file in the Result Viewer and then hit Ctrl+A to select all the files
+<li>Maintenez la touche Ctrl enfoncée et cliquez sur chaque fichier que vous souhaitez exporter
+<li>Maintenez la touche Maj enfoncée pour sélectionner une plage de fichiers
+<li>Cliquez sur n'importe quel fichier dans la visionneuse de résultats, puis appuyez sur Ctrl+A pour sélectionner tous les fichiers
 </ul>
-Once you have your desired files selected, right click and select “Extract Files” to save copies of them.
+Une fois que vous avez sélectionné les fichiers souhaités, faites un clic-droit et sélectionnez "Extract Files" pour en enregistrer une copie.
 
 */
