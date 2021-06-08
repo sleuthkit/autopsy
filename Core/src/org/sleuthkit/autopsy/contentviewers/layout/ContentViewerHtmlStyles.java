@@ -1,20 +1,31 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.contentviewers.layout;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import java.awt.Font;
 import javax.swing.JTextPane;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
 /**
- *
- * @author gregd
+ * The style sheet an class names to be used with content viewers using html
+ * rendering.
  */
 public class ContentViewerHtmlStyles {
 
@@ -52,57 +63,104 @@ public class ContentViewerHtmlStyles {
             + String.format(" .%s { padding-right: %dpt } ",
                     KEY_COLUMN_TD_CLASSNAME, pxToPt(ContentViewerDefaults.getColumnSpacing()));
 
-    private static final Supplier<StyleSheet> STYLE_SHEET = Suppliers.memoize(() -> {
-        StyleSheet stylesheet = new StyleSheet();
-        stylesheet.addRule(STYLE_SHEET_RULE);
-        return stylesheet;
-    });
-    
-    private static int pxToPt(int px) {
-         return (int) Math.round(((double) px) / ContentViewerDefaults.getPtToPx());
+    private static final StyleSheet STYLE_SHEET = new StyleSheet();
+
+    static {
+        // add the style rule to the style sheet.
+        STYLE_SHEET.addRule(STYLE_SHEET_RULE);
     }
 
+    /**
+     * Converts pixel size to point size. The html rendering seems more
+     * consistent with point size versus pixel size.
+     *
+     * @param px The pixel size.
+     *
+     * @return The point size.
+     */
+    private static int pxToPt(int px) {
+        return (int) Math.round(((double) px) / ContentViewerDefaults.getPtToPx());
+    }
+
+    /**
+     * Returns the class name to use for header text.
+     *
+     * @return The class name to use for header text.
+     */
     public static String getHeaderClassName() {
         return HEADER_CLASSNAME;
     }
 
+    /**
+     * Returns the class name to use for sub header text.
+     *
+     * @return The class name to use for sub header text.
+     */
     public static String getSubHeaderClassName() {
         return SUB_HEADER_CLASSNAME;
     }
-        
+
+    /**
+     * Returns the class name to use for message text.
+     *
+     * @return The class name to use for message text.
+     */
     public static String getMessageClassName() {
         return MESSAGE_CLASSNAME;
     }
 
+    /**
+     * Returns the class name to use for regular text.
+     *
+     * @return The class name to use for regular text.
+     */
     public static String getTextClassName() {
         return TEXT_CLASSNAME;
     }
 
+    /**
+     * Returns the class name to use for an indented (left padding) section.
+     *
+     * @return The class name to use for an indented (left padding) section.
+     */
     public static String getIndentedClassName() {
         return INDENTED_CLASSNAME;
     }
 
+    /**
+     * Returns the class name to use for a section with spacing (top padding)
+     * section.
+     *
+     * @return The class name to use for a section with spacing (top padding)
+     *         section.
+     */
     public static String getSpacedSectionClassName() {
         return SPACED_SECTION_CLASSNAME;
     }
 
+    /**
+     * Returns the class name to use for a key column with right spacing (right
+     * padding).
+     *
+     * @return The class name to use for a key column with right spacing (right
+     *         padding).
+     */
     public static String getKeyColumnClassName() {
         return KEY_COLUMN_TD_CLASSNAME;
     }
 
-    public static String getStyleSheetRule() {
-        return STYLE_SHEET_RULE;
-    }
-
-    public static StyleSheet getStyleSheet() {
-        return STYLE_SHEET.get();
-    }
-
+    /**
+     * Sets up a JTextPane for html rendering using the css class names
+     * specified in this class.
+     *
+     * @param textPane The JTextPane to set up for content viewer html
+     *                 rendering.
+     */
     public static void setupHtmlJTextPane(JTextPane textPane) {
         textPane.setContentType("text/html;charset=UTF-8"); //NON-NLS
         HTMLEditorKit kit = new HTMLEditorKit();
         textPane.setEditorKit(kit);
-        kit.setStyleSheet(ContentViewerHtmlStyles.getStyleSheet());
+        kit.setStyleSheet(STYLE_SHEET);
         textPane.setMargin(ContentViewerDefaults.getPanelInsets());
         textPane.setBackground(ContentViewerDefaults.getPanelBackground());
     }
