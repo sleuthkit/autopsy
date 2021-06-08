@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.JLabel;
 import javax.swing.SizeRequirements;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.UIManager;
 import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
@@ -59,7 +59,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     private static final Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
     
     // set font as close as possible to default
-    private static final Font DEFAULT_FONT = new JLabel().getFont();
+    private static final Font DEFAULT_FONT = UIManager.getDefaults().getFont("Label.font");
     
     private static final long serialVersionUID = 1L;
     private String contentName;
@@ -135,8 +135,9 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                 };
             }
         };
-        // get the style sheet for editing font size
+        // set new style sheet to clear default styles
         styleSheet = editorKit.getStyleSheet();
+        setStyleSheetSize(styleSheet, DEFAULT_FONT.getSize());
         
         sourceComboBox.addItemListener(itemEvent -> {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
@@ -144,6 +145,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
             }
         });
         extractedTextPane.setComponentPopupMenu(rightClickMenu);
+        
         copyMenuItem.addActionListener(actionEvent -> extractedTextPane.copy());
         selectAllMenuItem.addActionListener(actionEvent -> extractedTextPane.selectAll());
         
@@ -160,7 +162,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     
     
     private void setStyleSheetSize(StyleSheet styleSheet, int size) {
-        styleSheet.addRule("body {font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } ");
+        styleSheet.addRule("body { font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } ");
     }
     
     

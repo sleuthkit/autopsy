@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.text.MessageFormat;
 import javax.swing.JTextPane;
 import javax.swing.SizeRequirements;
 import javax.swing.text.Element;
@@ -27,6 +28,7 @@ import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.InlineView;
 import javax.swing.text.html.ParagraphView;
+import javax.swing.text.html.StyleSheet;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 
@@ -106,6 +108,6 @@ public class AutoWrappingJTextPane extends JTextPane {
         String style = String.format("font-family: %s; font-size: %dpt; margin: 0px; padding: 0px 0px %dpx 0px;",
                     ContentViewerDefaults.getFont().getFamily(), ContentViewerDefaults.getFont().getSize(), ContentViewerDefaults.getLineSpacing());
         
-        super.setText("<pre style=\"" + style + "\">" + EscapeUtil.escapeHtml(text) + "</pre>");
+        super.setText(MessageFormat.format("<pre style=\"{0}\">{1}</pre>", style, EscapeUtil.escapeHtml(text)));
     }
 }
