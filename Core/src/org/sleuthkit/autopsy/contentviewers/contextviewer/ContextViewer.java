@@ -119,7 +119,9 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
         jUnknownLabel.setBorder(new EmptyBorder(DATA_ROW_INSETS));
         jUnknownPanel.add(jUnknownLabel);
 
-        setPreferredSize(new java.awt.Dimension(495, 358));
+        setPreferredSize(new java.awt.Dimension(0, 0));
+
+        jScrollPane.setPreferredSize(new java.awt.Dimension(16, 16));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -235,10 +237,11 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
             }
         }
         javax.swing.JPanel contextContainer = new javax.swing.JPanel();
+        contextContainer.setLayout(new BoxLayout(contextContainer, BoxLayout.Y_AXIS));
         contextContainer.setBorder(new EmptyBorder(ContentViewerDefaults.getPanelInsets()));
         
         contextContainer.add(jSourcePanel);
-        contextContainer.setLayout(new BoxLayout(contextContainer, BoxLayout.Y_AXIS));
+        
         if (contextSourcePanels.isEmpty()) {
             contextContainer.add(jUnknownPanel);
         } else {

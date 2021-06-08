@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -133,11 +134,12 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
     }
 
     private void addRow(StringBuilder sb, String key, String value) {
-        sb.append("<tr><td valign=\"top\">"); //NON-NLS
-        sb.append(key);
-        sb.append("</td><td>"); //NON-NLS
-        sb.append(value);
-        sb.append("</td></tr>"); //NON-NLS
+        sb.append(MessageFormat.format("<tr><td class=\"{0}\">{1}</td><td class=\"{2}\">{3}</td></tr>", 
+                    ContentViewerHtmlStyles.getTextClassName() + " " + ContentViewerHtmlStyles.getKeyColumnClassName(),
+                    key,
+                    ContentViewerHtmlStyles.getTextClassName(),
+                    value
+                ));
     }
 
     @Messages({
