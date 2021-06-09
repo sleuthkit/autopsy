@@ -35,7 +35,6 @@ import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
@@ -126,6 +125,7 @@ final class ContactsViewer extends JPanel implements RelationshipsViewer {
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
+        contactPane.setNode(null);
         nodeFactory.refresh(info);
     }
 
