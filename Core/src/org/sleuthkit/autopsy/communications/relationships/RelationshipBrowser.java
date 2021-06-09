@@ -37,15 +37,15 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
      */
     public RelationshipBrowser() {
         initComponents();
-        
+
         MessageViewer messagesViewer = new MessageViewer();
         ContactsViewer contactsViewer = new ContactsViewer();
         SummaryViewer summaryViewer = new SummaryViewer();
         MediaViewer mediaViewer = new MediaViewer();
         CallLogViewer callLogViewer = new CallLogViewer();
-        
+
         proxyLookup = new ModifiableProxyLookup(messagesViewer.getLookup());
- 
+
         tabPane.add(summaryViewer.getDisplayName(), summaryViewer);
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(callLogViewer.getDisplayName(), callLogViewer);
@@ -95,13 +95,10 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
     }// </editor-fold>//GEN-END:initComponents
 
     private void tabPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneStateChanged
-        if(currentSelection != null) {
-            ((RelationshipsViewer) tabPane.getSelectedComponent()).setSelectionInfo(currentSelection);
-        }
-        
+        ((RelationshipsViewer) tabPane.getSelectedComponent()).setSelectionInfo(currentSelection);
         Component selectedComponent = tabPane.getSelectedComponent();
-        if(selectedComponent instanceof Lookup.Provider) {
-            Lookup lookup = ((Lookup.Provider)selectedComponent).getLookup();
+        if (selectedComponent instanceof Lookup.Provider) {
+            Lookup lookup = ((Lookup.Provider) selectedComponent).getLookup();
             proxyLookup.setNewLookups(lookup);
         }
     }//GEN-LAST:event_tabPaneStateChanged
