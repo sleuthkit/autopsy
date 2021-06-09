@@ -200,6 +200,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             
             try {
                 String text = get();
+                ContentViewerHtmlStyles.setStyles(textPanel);
                 textPanel.setText(text);
                 textPanel.setCaretPosition(0);
             } catch (InterruptedException | ExecutionException ex) {

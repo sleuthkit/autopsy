@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers.layout;
 
 import java.awt.Font;
 import javax.swing.JTextPane;
+import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
@@ -148,6 +149,15 @@ public class ContentViewerHtmlStyles {
     public static String getKeyColumnClassName() {
         return KEY_COLUMN_TD_CLASSNAME;
     }
+    
+    
+    public static void setStyles(JTextPane textPane) {
+        EditorKit editorKit = textPane.getEditorKit();
+        if (editorKit instanceof HTMLEditorKit) {
+            ((HTMLEditorKit) editorKit).setStyleSheet(STYLE_SHEET);
+        }
+    }
+        
 
     /**
      * Sets up a JTextPane for html rendering using the css class names

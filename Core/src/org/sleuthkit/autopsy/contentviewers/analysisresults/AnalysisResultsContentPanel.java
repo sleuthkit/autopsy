@@ -36,15 +36,15 @@ import org.sleuthkit.datamodel.Score;
  * Displays a list of analysis results in a panel.
  */
 public class AnalysisResultsContentPanel extends javax.swing.JPanel {
-
+    
     private static final long serialVersionUID = 1L;
-        
+    
     private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
 
     // Anchors are inserted into the navigation so that the viewer can navigate to a selection.  
     // This is the prefix of those anchors.
     private static final String RESULT_ANCHOR_PREFIX = "AnalysisResult_";
-    
+
     /**
      * Creates new form AnalysisResultsContentViewer
      */
@@ -59,8 +59,9 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
      * @param message The message to be displayed.
      */
     void showMessage(String message) {
+        ContentViewerHtmlStyles.setStyles(textPanel);
         textPanel.setText("<html><head></head><body>"
-                + MessageFormat.format("<p class='{0}'>{1}</p>",
+                + MessageFormat.format("<p class=\"{0}\">{1}</p>",
                         ContentViewerHtmlStyles.getMessageClassName(),
                         message == null ? "" : message)
                 + "</body></html>");
@@ -104,8 +105,9 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         }
 
         // set the body html
+        ContentViewerHtmlStyles.setStyles(textPanel);
         textPanel.setText(document.html());
-        
+
         // if there is a selected result scroll to it
         Optional<AnalysisResult> selectedResult = nodeResults.getSelectedResult();
         if (selectedResult.isPresent()) {
@@ -115,19 +117,22 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
 
     /**
      * Returns the anchor id to use with the analysis result (based on the id).
+     *
      * @param analysisResult The analysis result.
+     *
      * @return The anchor id.
      */
     private String getAnchor(AnalysisResult analysisResult) {
         return RESULT_ANCHOR_PREFIX + analysisResult.getId();
     }
 
-
     /**
      * Appends a result item to the parent element of an html document.
+     *
      * @param parent The parent element.
-     * @param index The index of the item in the list of all items.
-     * @param attrs The attributes of this item.
+     * @param index  The index of the item in the list of all items.
+     * @param attrs  The attributes of this item.
+     *
      * @return The result div.
      */
     @NbBundle.Messages({"# {0} - analysisResultsNumber",
@@ -138,20 +143,23 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         Element sectionDiv = appendSection(parent,
                 Bundle.AnalysisResultsContentPanel_result_headerKey(index + 1),
                 Optional.ofNullable(getAnchor(attrs.getAnalysisResult())));
-        
+
         // create a table
         Element table = sectionDiv.appendElement("table");
         table.attr("class", ContentViewerHtmlStyles.getIndentedClassName());
-
+        
         Element tableBody = table.appendElement("tbody");
 
         // append a row for each item
         for (Pair<String, String> keyVal : attrs.getAttributesToDisplay()) {
             Element row = tableBody.appendElement("tr");
             String keyString = keyVal.getKey() == null ? "" : keyVal.getKey() + ":";
-            row.appendElement("td")
+            Element keyTd = row.appendElement("td")
+                    .attr("class", ContentViewerHtmlStyles.getTextClassName());
+            
+            keyTd.appendElement("span")
                     .text(keyString)
-                    .attr("class", ContentViewerHtmlStyles.getTextClassName() + " " + ContentViewerHtmlStyles.getKeyColumnClassName());
+                    .attr("class", ContentViewerHtmlStyles.getKeyColumnClassName());
 
             String valueString = keyVal.getValue() == null ? "" : keyVal.getValue();
             row.appendElement("td")
@@ -173,7 +181,7 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
      */
     private Element appendSection(Element parent, String headerText, Optional<String> anchorId) {
         Element sectionDiv = parent.appendElement("div");
-        
+
         // append an anchor tag if there is one
         Element anchorEl = null;
         if (anchorId.isPresent()) {
@@ -181,17 +189,17 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
             anchorEl.attr("name", anchorId.get());
             anchorEl.attr("style", "padding: 0px; margin: 0px; display: inline-block;");
         }
-    
+
         // append the header
         Element header = null;
-        header = (anchorEl == null) 
+        header = (anchorEl == null)
                 ? sectionDiv.appendElement("h1")
                 : anchorEl.appendElement("h1");
         
         header.text(headerText);
         header.attr("class", ContentViewerHtmlStyles.getHeaderClassName());
         header.attr("style", "display: inline-block");
-        
+
         // return the section element
         return sectionDiv;
     }
