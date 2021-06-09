@@ -36,7 +36,7 @@ public class ImageConfig {
 
     private boolean OCREnabled = false;
     private boolean limitedOCREnabled = false;
-    private List<String> ocrLanguages = Collections.emptyList();
+    private List<String> ocrLanguages = null;
     private final TimedProcessTerminator ocrTimedTerminator = new TimedProcessTerminator(OCR_TIMEOUT_SECONDS);
 
     /**
@@ -69,7 +69,7 @@ public class ImageConfig {
     }
 
     /**
-     * Sets languages for OCR.
+     * Sets languages for OCR.  Can be null.
      *
      * See PlatformUtil for list of installed language packs.
      *
@@ -77,12 +77,12 @@ public class ImageConfig {
      */
     public void setOCRLanguages(List<String> languages) {
         this.ocrLanguages = languages == null ? 
-                Collections.emptyList() : 
+                null : 
                 Collections.unmodifiableList(new ArrayList<>(languages));
     }
 
     /**
-     * Gets the list of languages OCR should perform.
+     * Gets the list of languages OCR should perform.  Can be null.
      *
      * @return Collection of OCR languages
      */
