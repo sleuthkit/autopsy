@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,6 +64,7 @@ class Ingester {
     private static Ingester instance;
     private final LanguageSpecificContentIndexingHelper languageSpecificContentIndexingHelper
         = new LanguageSpecificContentIndexingHelper();
+    private static final int LANGUAGE_DETECTION_STRING_SIZE = 4096;
 
     private Ingester() {
     }
@@ -215,7 +216,7 @@ class Ingester {
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
 
                 if (doLanguageDetection) {
-                    int size = Math.min(chunk.getBaseChunkLength(), 4096);
+                    int size = Math.min(chunk.getBaseChunkLength(), LANGUAGE_DETECTION_STRING_SIZE);
                     language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
                     
                     // only do language detection on the first chunk of the document
