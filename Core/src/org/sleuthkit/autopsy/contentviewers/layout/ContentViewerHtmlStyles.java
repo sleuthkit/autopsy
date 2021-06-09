@@ -60,7 +60,7 @@ public class ContentViewerHtmlStyles {
             + String.format(" .%s { font-family: %s; font-size: %dpt; margin: 0px; padding: 0px 0px %dpt 0px;  } ",
                     TEXT_CLASSNAME, DEFAULT_FONT.getFamily(), DEFAULT_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
             + String.format(" .%s { font-family: %s; font-size: %dpt; margin: 0px; padding: 0px 0px %dpt 0px;  } ",
-                    MONOSPACED_CLASSNAME, "Monospaced", MONOSPACED_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
+                    MONOSPACED_CLASSNAME, Font.MONOSPACED, MONOSPACED_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
             + String.format(" .%s { padding-left: %dpt } ",
                     INDENTED_CLASSNAME, pxToPt(ContentViewerDefaults.getSectionIndent()))
             + String.format(" .%s { padding-top: %dpt } ",
