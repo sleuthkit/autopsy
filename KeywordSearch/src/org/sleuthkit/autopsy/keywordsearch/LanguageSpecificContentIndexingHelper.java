@@ -35,15 +35,15 @@ import java.util.Optional;
 class LanguageSpecificContentIndexingHelper {
 
     private final LanguageDetector languageDetector = new LanguageDetector();
-
-    Optional<Language> detectLanguageIfNeeded(Chunker.Chunk chunk) throws NoOpenCoreException {
+    
+    Optional<Language> detectLanguageIfNeeded(String text) throws NoOpenCoreException {
         double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
         if (2.2 <= indexSchemaVersion) {
-            return languageDetector.detect(chunk.toString());
+            return languageDetector.detect(text);
         } else {
             return Optional.empty();
         }
-    }
+    }    
 
     void updateLanguageSpecificFields(Map<String, Object> fields, Chunker.Chunk chunk, Language language) {
         List<String> values = new ArrayList<>();

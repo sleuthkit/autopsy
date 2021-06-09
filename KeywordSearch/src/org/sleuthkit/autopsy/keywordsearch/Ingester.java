@@ -198,6 +198,7 @@ class Ingester {
         int numChunks = 0; //unknown until chunking is done
         
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
+        Optional<Language> language = Optional.empty();
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
@@ -212,11 +213,15 @@ class Ingester {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
-                Optional<Language> language = Optional.empty();
+
                 if (doLanguageDetection) {
-                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk);
-                    language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
+                    int size = Math.min(chunk.getBaseChunkLength(), 4096);
+                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
+                    
+                    // only do language detection on the first chunk of the document
+                    doLanguageDetection = false;
                 }
+                language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
                 try {
                     //add the chunk text to Solr index
                     indexChunk(chunk.toString(), chunk.geLowerCasedChunk(), sourceName, fields);
