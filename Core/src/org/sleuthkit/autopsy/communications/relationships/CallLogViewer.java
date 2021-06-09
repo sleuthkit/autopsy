@@ -166,7 +166,7 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
     public void setSelectionInfo(SelectionInfo info) {
         callLogDataViewer.setNode(null);
         nodeFactory.refresh(info);
-      
+
     }
 
     @Override
