@@ -119,9 +119,9 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
                 updateOutlineViewPanel();
             }
         });
-        
+
         TableColumn column = outline.getColumnModel().getColumn(2);
-        column.setCellRenderer(new NodeTableCellRenderer() );
+        column.setCellRenderer(new NodeTableCellRenderer());
 
     }
 
@@ -229,7 +229,7 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
         }
     }
 
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane bottomScrollPane;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;
