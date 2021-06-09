@@ -167,28 +167,19 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         private static final long serialVersionUID = 1L;
 
-        private final String[] columnNames = {NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.jobID"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dataSource"),
+        private final String[] columnNames = {
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.jobID"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dataSource"),
             NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.start"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.numProcessed"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.filesPerSec"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.inProgress"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.filesQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dirQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.rootQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.streamingQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dsQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.artifactsQueued")};
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.numProcessed"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.filesPerSec"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.inProgress"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.filesQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dirQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.rootQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.streamingQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dsQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.artifactsQueued")};
 
         private List<Snapshot> jobSnapshots;
 

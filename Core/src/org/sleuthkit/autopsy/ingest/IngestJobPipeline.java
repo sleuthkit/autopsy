@@ -678,7 +678,12 @@ final class IngestJobPipeline {
              * GUI.
              */
             if (hasFileIngestModules()) {
-                long filesToProcess = dataSource.accept(new GetFilesCountVisitor());;
+                long filesToProcess;
+                if (files.isEmpty()) {
+                    filesToProcess = dataSource.accept(new GetFilesCountVisitor());
+                } else {
+                    filesToProcess = files.size();
+                }
                 synchronized (fileIngestProgressLock) {
                     estimatedFilesToProcess = filesToProcess;
                 }
@@ -777,20 +782,22 @@ final class IngestJobPipeline {
             stage = IngestJobPipeline.Stages.FIRST_STAGE;
             currentDataSourceIngestPipeline = firstStageDataSourceIngestPipeline;
 
-            /*
-             * Do a count of the files the data source processor has added to
-             * the case database. This estimate will be used for ingest progress
-             * snapshots and for the file ingest progress bar if running with a
-             * GUI.
-             */
-            long filesToProcess = dataSource.accept(new GetFilesCountVisitor()) - processedFiles;
-            synchronized (fileIngestProgressLock) {
-                if (processedFiles <= filesToProcess) {
-                    filesToProcess -= processedFiles;
-                }
-                estimatedFilesToProcess = filesToProcess;
-                if (doUI && fileIngestProgressBar != null) {
-                    fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
+            if (hasFileIngestModules()) {
+                /*
+                 * Do a count of the files the data source processor has added
+                 * to the case database. This estimate will be used for ingest
+                 * progress snapshots and for the file ingest progress bar if
+                 * running with a GUI.
+                 */
+                long filesToProcess = dataSource.accept(new GetFilesCountVisitor()) - processedFiles;
+                synchronized (fileIngestProgressLock) {
+                    if (processedFiles <= filesToProcess) {
+                        filesToProcess -= processedFiles;
+                    }
+                    estimatedFilesToProcess = filesToProcess;
+                    if (doUI && fileIngestProgressBar != null) {
+                        fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
+                    }
                 }
             }
 
