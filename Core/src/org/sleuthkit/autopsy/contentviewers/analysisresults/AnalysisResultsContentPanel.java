@@ -29,6 +29,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.contentviewers.analysisresults.AnalysisResultsViewModel.NodeResults;
 import org.sleuthkit.autopsy.contentviewers.analysisresults.AnalysisResultsViewModel.ResultDisplayAttributes;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Score;
 
@@ -63,7 +64,7 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         textPanel.setText("<html><head></head><body>"
                 + MessageFormat.format("<p class=\"{0}\">{1}</p>",
                         ContentViewerHtmlStyles.getMessageClassName(),
-                        message == null ? "" : message)
+                        message == null ? "" : EscapeUtil.escapeHtml(message))
                 + "</body></html>");
     }
 

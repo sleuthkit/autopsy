@@ -41,6 +41,8 @@ public class ContentViewerDefaults {
     private static final Font HEADER_FONT = DEFAULT_FONT.deriveFont(Font.BOLD, DEFAULT_FONT.getSize() + 2);
 
     private static final Font MESSAGE_FONT = DEFAULT_FONT.deriveFont(Font.ITALIC);
+    
+    private static final Font MONOSPACED_FONT = new Font(Font.MONOSPACED, Font.PLAIN, DEFAULT_FONT.getSize());
 
     private static final Insets DEFAULT_PANEL_INSETS = UIManager.getDefaults().getInsets("TextPane.margin");
 
@@ -96,6 +98,15 @@ public class ContentViewerDefaults {
      */
     public static Font getSubHeaderFont() {
         return SUB_HEADER_FONT;
+    }
+
+    /**
+     * Returns the font to be used for normal monospace.
+     *
+     * @return The font to be used for normal monospace.
+     */    
+    public static Font getMonospacedFont() {
+        return MONOSPACED_FONT;
     }
 
     /**

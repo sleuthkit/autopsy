@@ -38,6 +38,7 @@ public class ContentViewerHtmlStyles {
 
     private static final String MESSAGE_CLASSNAME = CLASS_PREFIX + "message";
     private static final String TEXT_CLASSNAME = CLASS_PREFIX + "text";
+    private static final String MONOSPACED_CLASSNAME = CLASS_PREFIX + "monospaced";
     private static final String INDENTED_CLASSNAME = CLASS_PREFIX + "indent";
     private static final String SPACED_SECTION_CLASSNAME = CLASS_PREFIX + "spacedSection";
     private static final String KEY_COLUMN_TD_CLASSNAME = CLASS_PREFIX + "keyKolumn";
@@ -46,6 +47,7 @@ public class ContentViewerHtmlStyles {
     private static final Font MESSAGE_FONT = ContentViewerDefaults.getMessageFont();
     private static final Font HEADER_FONT = ContentViewerDefaults.getHeaderFont();
     private static final Font SUB_HEADER_FONT = ContentViewerDefaults.getSubHeaderFont();
+    private static final Font MONOSPACED_FONT = ContentViewerDefaults.getMonospacedFont();
 
     // additional styling for components
     private static final String STYLE_SHEET_RULE
@@ -57,6 +59,8 @@ public class ContentViewerHtmlStyles {
                     SUB_HEADER_CLASSNAME, SUB_HEADER_FONT.getFamily(), SUB_HEADER_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
             + String.format(" .%s { font-family: %s; font-size: %dpt; margin: 0px; padding: 0px 0px %dpt 0px;  } ",
                     TEXT_CLASSNAME, DEFAULT_FONT.getFamily(), DEFAULT_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
+            + String.format(" .%s { font-family: %s; font-size: %dpt; margin: 0px; padding: 0px 0px %dpt 0px;  } ",
+                    MONOSPACED_CLASSNAME, "Monospaced", MONOSPACED_FONT.getSize(), pxToPt(ContentViewerDefaults.getLineSpacing()))
             + String.format(" .%s { padding-left: %dpt } ",
                     INDENTED_CLASSNAME, pxToPt(ContentViewerDefaults.getSectionIndent()))
             + String.format(" .%s { padding-top: %dpt } ",
@@ -120,6 +124,15 @@ public class ContentViewerHtmlStyles {
     }
 
     /**
+     * Returns the class name to use for monospaced text.
+     *
+     * @return The class name to use for monospaced text.
+     */
+    public static String getMonospacedClassName() {
+        return MONOSPACED_CLASSNAME;
+    }
+
+    /**
      * Returns the class name to use for an indented (left padding) section.
      *
      * @return The class name to use for an indented (left padding) section.
@@ -149,15 +162,19 @@ public class ContentViewerHtmlStyles {
     public static String getKeyColumnClassName() {
         return KEY_COLUMN_TD_CLASSNAME;
     }
-    
-    
+
+    /**
+     * If the textPane has an HTMLEditorKit, specifies the
+     * ContentViewerHTMLStyles styles to use refreshing the styles.
+     *
+     * @param textPane The text pane.
+     */
     public static void setStyles(JTextPane textPane) {
         EditorKit editorKit = textPane.getEditorKit();
         if (editorKit instanceof HTMLEditorKit) {
             ((HTMLEditorKit) editorKit).setStyleSheet(STYLE_SHEET);
         }
     }
-        
 
     /**
      * Sets up a JTextPane for html rendering using the css class names

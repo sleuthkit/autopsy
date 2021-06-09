@@ -72,7 +72,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     ExtractedContentPanel() {
         initComponents();
         additionalInit();
-        setSources("", new ArrayList<>());
         hitPreviousButton.setEnabled(false);
         hitNextButton.setEnabled(false);
 
@@ -137,7 +136,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         };
         // set new style sheet to clear default styles
         styleSheet = editorKit.getStyleSheet();
-        setStyleSheetSize(styleSheet, DEFAULT_FONT.getSize());
         
         sourceComboBox.addItemListener(itemEvent -> {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
@@ -158,11 +156,16 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
             if (zoomPanel instanceof TextZoomPanel)
                 ((TextZoomPanel) this.zoomPanel).resetSize();
         });
+        
+        setSources("", new ArrayList<>());
     }
     
     
     private void setStyleSheetSize(StyleSheet styleSheet, int size) {
-        styleSheet.addRule("body { font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } ");
+        styleSheet.addRule(
+                "body { font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } " +
+                "pre { font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } "
+        );
     }
     
     
@@ -501,6 +504,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
             extractedTextPane.applyComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         }
 
+        // refresh style
+        setStyleSheetSize(styleSheet, curSize);
         extractedTextPane.setText(safeText);
         extractedTextPane.setCaretPosition(0);
     }

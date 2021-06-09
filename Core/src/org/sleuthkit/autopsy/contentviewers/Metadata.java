@@ -35,6 +35,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -86,8 +87,6 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
         setPreferredSize(new java.awt.Dimension(100, 52));
 
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         jScrollPane2.setPreferredSize(new java.awt.Dimension(610, 52));
 
         jTextPane1.setEditable(false);
@@ -149,17 +148,17 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         sb.append(MessageFormat.format("<tr><td class=\"{0}\"><span class=\"{1}\">{2}:</span></td><td class=\"{3}\">{4}</td></tr>",
                 ContentViewerHtmlStyles.getKeyColumnClassName(),
                 ContentViewerHtmlStyles.getTextClassName(),
-                key,
+                EscapeUtil.escapeHtml(key),
                 ContentViewerHtmlStyles.getTextClassName(),
-                value
+                EscapeUtil.escapeHtml(key)
         ));
     }
 
-    private void addRow(StringBuilder sb, String key) {
+    private void addMonospacedRow(StringBuilder sb, String key) {
         sb.append(MessageFormat.format("<tr><td class=\"{0}\"><span class=\"{1}\">{2}</span></td></tr>",
                 ContentViewerHtmlStyles.getKeyColumnClassName(),
-                ContentViewerHtmlStyles.getTextClassName(),
-                key
+                ContentViewerHtmlStyles.getMonospacedClassName(),
+                EscapeUtil.escapeHtml(key)
         ));
     }
 
@@ -170,7 +169,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         Stream.of(safeValues)
                 .skip(1)
                 .filter(line -> line != null)
-                .forEach(line -> addRow(sb, line));
+                .forEach(line -> addRow(sb, "", EscapeUtil.escapeHtml(line)));
     }
 
     @Messages({
@@ -408,14 +407,14 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                     }
 
                     for (String str : istatStrings) {
-                        addRow(sb, str);
+                        addMonospacedRow(sb, str);
 
                         /*
                              * Very long results can cause the UI to hang before
                              * displaying, so truncate the results if necessary.
                          */
                         if (sb.length() > 50000) {
-                            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
+                            addMonospacedRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
                             break;
                         }
                     }
