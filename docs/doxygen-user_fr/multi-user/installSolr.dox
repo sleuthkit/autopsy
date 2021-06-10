@@ -1,230 +1,230 @@
-/*! \page install_solr_page Install and Configure Solr
+/*! \page install_solr_page Installer et configurer Solr
 
 [TOC]
 
-\section install_solr_overview Overview
-Autopsy uses Apache Solr to store keyword text indexes. A central server is needed in a multi-user cluster to maintain and search the indexes.
+\section install_solr_overview Aperçu
+Autopsy utilise Apache Solr pour stocker des index de texte de mots clés. Un serveur central est nécessaire dans un cluster multi-utilisateurs pour maintenir et rechercher ces index.
 
-A new text index is created for each case. The index can be stored either on shared storage or on the local drive of the Solr server(s) (large amount of local storage is required).
+Un nouvel index de texte est créé pour chaque cas. L'index peut être stocké soit sur un stockage partagé, soit sur le lecteur local du ou des serveurs Solr (une grande quantité de stockage local est requise).
 
-Solr's embedded ZooKeeper is also used as a coordination service for Autopsy.
+ZooKeeper intégré à Solr est également utilisé comme service de coordination pour Autopsy.
 
-If you have already installed Solr 4 with a previous version of Autopsy, please see the \ref upgrade_solr8_page page for information on how open older cases after the upgrade and migrate data.
+Si vous avez déjà installé Solr 4 avec une version précédente d'Autopsy, veuillez consulter la page \ref upgrade_solr8_page pour plus d'informations sur la manière d'ouvrir les anciens cas après la mise à niveau et de migrer les données.
 
-NOTE: This document assumes you will be running Solr on Windows as a service. You can run it as a non-service or on another platform, but you'll need to understand the steps in this document to make that happen. 
+REMARQUE : ce document suppose que vous exécuterez Solr sur Windows en tant que service. Vous pouvez ne pas l'exécuter en tant que service ou l'exécuter sur une autre plate-forme, mais vous devrez comprendre les étapes de ce document pour y parvenir.
 
-\section install_solr_prereq Prerequisites
+\section install_solr_prereq Conditions préalables
 
-You will need:
+Vous aurez besoin de:
 <ul>
-  <li>A 64-bit version of the Java 8 Runtime Environment (JRE) from <a href="https://github.com/ojdkbuild/ojdkbuild">https://github.com/ojdkbuild/ojdkbuild</a>. (<a href="https://github.com/ojdkbuild/ojdkbuild/blob/master/README.md">Download links</a>)
-  <li>Pre-packaged Autopsy version of Solr from <a href="https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr/SOLR_8.6.3_AutopsyService.zip/download">here</a>. This contains Solr, <a href="https://nssm.cc/">NSSM</a> to make it run as a service, and the needed schema config files. 
-  <li>A network-accessible machine to install Solr on. Note that the Solr process may need to write to a shared storage drive (if that is how you configure it) and will therefore need adequate permissions. 
+  <li>Une version 64 bits de Java 8 Runtime Environment (JRE) que vous pourrez trouver sur <a href="https://github.com/ojdkbuild/ojdkbuild">https://github.com/ojdkbuild/ojdkbuild</a>. (<a href="https://github.com/ojdkbuild/ojdkbuild/blob/master/README.md">Lien de téléchargement</a>)
+  <li>Une version Autopsy pré-packagée avec Solr que vous pourrez trouver <a href="https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr/SOLR_8.6.3_AutopsyService.zip/download">ici</a>. Cela contient Solr, <a href="https://nssm.cc/">NSSM</a> pour le faire fonctionner en tant que service, ainsi que les fichiers de configuration de schéma nécessaires.
+  <li>Une machine accessible en réseau sur laquelle installer Solr. Notez que le processus Solr peut avoir besoin d'écrire sur un lecteur de stockage partagé (si c'est ainsi que vous le configurez) et aura donc besoin des autorisations adéquates.
 </ul>
 
 
-\section install_solr_install Solr Installation
+\section install_solr_install Installation de Solr
 
-\subsection install_solr_jre JRE Installation
+\subsection install_solr_jre Installation du JRE
 
-Solr requires a Java Runtime Environment (JRE), which may already be installed. You can test this by running \c "where java" from the command line. If you see output similar to the results below, you have a JRE.
+Solr nécessite un environnement d'exécution Java (JRE), qui peut déjà être installé. Vous pouvez tester cela en exécutant \c "where java" à partir de la ligne de commande. Si vous voyez une sortie similaire aux résultats ci-dessous, vous avez un JRE.
 
 \image html wherejava.PNG
 
-If you need the JRE, use the link in the \ref install_solr_prereq section above to download an installer. Accept the default settings during installation.
+Si vous avez besoin du JRE, utilisez le lien figurant dans la section \ref install_solr_prereq ci-dessus pour télécharger le programme d'installation. Acceptez les paramètres par défaut lors de l'installation.
 
-\subsection install_solr_config Solr Configuration
+\subsection install_solr_config Configuration de Solr
 
-Follow these steps to configure Solr:
+Suivez ces étapes pour configurer Solr:
 
 <ol>
-<li>Extract the solr-8.6.3.zip archive from the location given in the \ref install_solr_prereq section into a directory of your choice. The rest of this document assumes that the archive is extracted into \c "C:\solr-8.6.3" directory.
-<li>Go to the \c "C:\solr-8.6.3\bin" directory and open the \c "solr.in.cmd" file in a text editor.
+<li>Extrayez l'archive solr-8.6.3.zip de l'emplacement indiqué dans la section \ref install_solr_prereq dans un répertoire de votre choix. Le reste de ce document suppose que l'archive est extraite dans le répertoire \c "C:\solr-8.6.3" .
+<li>Aller dans le répertoire \c "C:\solr-8.6.3\bin" et ouvrez le fichier \c "solr.in.cmd" dans un éditeur de texte.
 \image html solr_config_folder.png
-<li>Search for each "TODO" and specify a valid path for each of the required configuration parameters. These parameters will be described in detail \ref install_solr_params "below".
+<li>Recherchez chaque "TODO" et spécifiez un chemin valide pour chacun des paramètres de configuration requis. Ces paramètres seront décrits en détail \ref install_solr_params "ci-dessous".
 
 \image html solr_config_todo.png
 <br>
 \image html solr_config_param.png
 </ol>
 
-\subsubsection install_solr_params Solr Configuration Parameters
+\subsubsection install_solr_params Paramètres de configuration Solr
 
-Required Solr Configuration Parameters:
+Paramètres de configuration requis pour Solr:
 <ul>
-<li><b>JAVA_HOME</b> – path to 64-bit JRE installation. For example \c "JAVA_HOME=C:\Program Files\Java\jre1.8.0_151" or \c "JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
-<li><b>DEFAULT_CONFDIR</b> – path to Autopsy configuration directory. If the Solr archive was extracted into \c "C:\solr-8.6.3" directory, then this path will be \c "C:\ solr-8.6.3\server\solr\configsets\AutopsyConfig\conf". Do not include quotes around the path.
-<li><b>SOLR_JAVA_MEM</b> - Solr JVM heap size should be as large as the Solr machine’s resources allow, at least half of the total RAM available on the machine. A rule of thumb would be use "set SOLR_JAVA_MEM=-Xms2G -Xmx40G" for a machine with 64GB of RAM, "set SOLR_JAVA_MEM=-Xms2G -Xmx20G" for a machine with 32GB of RAM, and "set SOLR_JAVA_MEM=-Xms2G -Xmx8G" for a machine with 16GB of RAM. Please see the \ref install_solr_heap_usage "troubleshooting section" for more info regarding Solr heap usage and troubleshooting information.
-<li><b>SOLR_DATA_HOME</b> – location where Solr indexes will be stored. If this is not configured, the indexes will be stored in the \c "C:\solr-8.6.3\server\solr" directory. NOTE: for Autopsy cases consisting of large number of data sources, Solr indexes can get very large (hundreds of GBs, or TBs) so they should probably be stored on a larger network share.
+<li><b>JAVA_HOME</b> – chemin d'accès à l'installation du JRE 64 bits. Par exemple \c "JAVA_HOME=C:\Program Files\Java\jre1.8.0_151" ou \c "JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
+<li><b>DEFAULT_CONFDIR</b> – chemin vers le répertoire de configuration d'Autopsy. Si l'archive Solr a été extraite dans le répertoire \c "C:\solr-8.6.3", alors ce chemin sera \c "C:\ solr-8.6.3\server\solr\configsets\AutopsyConfig\conf". N'incluez pas de guillemets autour du chemin.
+<li><b>SOLR_JAVA_MEM</b> - La taille du tas JVM Solr doit être aussi grande que les ressources de la machine Solr le permettent, au moins la moitié de la RAM totale disponible sur la machine. Une règle empirique serait d'utiliser "set SOLR_JAVA_MEM=-Xms2G -Xmx40G" pour une machine avec 64 Go de RAM, "set SOLR_JAVA_MEM=-Xms2G -Xmx20G" pour une machine avec 32 Go de RAM, et "set SOLR_JAVA_MEM=-Xms2G -Xmx8G" pour une machine avec 16 Go de RAM. Veuillez consulter la \ref install_solr_heap_usage "rubrique dépannage" pour plus d'informations sur l'utilisation du tas Solr et sur les informations de dépannage.
+<li><b>SOLR_DATA_HOME</b> – emplacement où les index Solr seront stockés. Si ce n'est pas configuré, les index seront stockés dans le répertoire \c "C:\solr-8.6.3\server\solr". REMARQUE: pour les cas d'Autopsy composés d'un grand nombre de sources de données, les index Solr peuvent devenir très volumineux (des centaines de Go ou de To), ils devront donc probablement être stockés sur un partage réseau plus important.
 </ul>
 
-Optional Solr Configuration Parameters:
+Paramètres de configuration Solr facultatifs:
 <ul>
-<li><b>SOLR_HOST</b> – by default, the Solr node name is "localhost". If multiple Solr nodes are going to be used as part of Solr Cloud, then specify the current computer’s host name in the SOLR_HOST variable. 
+<li><b>SOLR_HOST</b> – par défaut, le nom du nœud Solr est "localhost". Si plusieurs nœuds Solr doivent être utilisés dans le cadre d'un SolrCloud, spécifiez le nom d'hôte de l'ordinateur actuel dans la variable SOLR_HOST.
 </ul>
 
-\subsubsection install_sorl_index_file_loc Solr Text Index File Location
+\subsubsection install_sorl_index_file_loc Emplacement du fichier d'index de texte Solr
 
-<b>Important note:</b> previous versions of Autopsy (Autopsy 4.17.0 and earlier) stored the Solr text indexes in the case output directory. As a result, the Solr indexes would get deleted if a user deleted the case output directory. Solr 8 (i.e. Autopsy 4.18.0 and later) no longer stores the Solr text index files in the case output directory but instead stores them in location defined by the <b>SOLR_DATA_HOME</b> parameter. As a consequence, if a user choses to manually delete case output directories (for example, to free up disk space), the Solr index directories located in <b>SOLR_DATA_HOME</b> need to be manually deleted as well.
+<b>Note importante:</b> les versions précédentes d'Autopsy (Autopsy 4.17.0 et versions antérieures) stockaient les index de texte Solr dans le répertoire de sortie de cas. En conséquence, les index Solr étaient supprimés si un utilisateur supprimait le répertoire de sortie de cas. Solr 8 (c'est-à-dire pour Autopsy 4.18.0 et versions ultérieures) ne stocke plus les fichiers d'index de texte Solr dans le répertoire de sortie du cas, mais les stocke à la place dans un emplacement défini par le paramètre <b>SOLR_DATA_HOME</b>. Par conséquent, si un utilisateur choisit de supprimer manuellement les répertoires de sortie de cas (par exemple, pour libérer de l'espace disque), les répertoires d'index Solr situés dans <b>SOLR_DATA_HOME</b> doivent également être supprimés manuellement.
 
-Text index for an Autopsy case will follow a naming structure according to following rules: \c "[Autopsy case name] [Case creation time stamp] [Text index creation time stamp] [shardX_replica_nY]". For example, the text index for an Autopsy case "Test Case" will be located in the following directory inside <b>SOLR_DATA_HOME</b>:
+L'index de texte pour un cas d'Autopsy suivra une structure de nommage selon les règles suivantes: \c "[nom du cas Autopsy] [Horodatage de la création du cas] [Horodatage de la création de l'index] [shardX_replica_nY]". Par exemple, l'index de texte pour un cas d'Autopsy "Test Case" sera situé dans le répertoire suivant à l'intérieur <b>SOLR_DATA_HOME</b>:
 
 \image html solr_config_case.png
 
-\section install_solr_service Solr Windows Service Installation
+\section install_solr_service Installation du service Windows Solr
 
-At this point Solr has been configured and ready to use.  The last step is to configure it as a Windows service so that it starts each time the computer starts. 
+À ce stade, Solr a été configuré et est prêt à l'emploi. La dernière étape consiste à le configurer en tant que service Windows afin qu'il démarre à chaque démarrage de l'ordinateur.
 
-Open a command line console as Administrator and navigate to the \c "C:\solr-8.6.3\bin" directory. From there, run the following command: \c "nssm install Solr_8.6.3".
+Ouvrez un invite de commande en tant qu'administrateur et accédez au répertoire \c "C:\solr-8.6.3\bin". À partir de là, exécutez la commande suivante: \c "nssm install Solr_8.6.3".
 
 \image html solr_install_1.png
 
-An NSSM UI window will appear. Click the "Path" navigation button:
+Une fenêtre d'interface utilisateur NSSM apparaîtra. Cliquez sur le bouton de navigation "Path":
 
 \image html solr_install_2.png
 
-Select the \c "C:\solr-8.6.3\bin\solr.cmd" file. NOTE: Make sure you don’t select the \c "solr.in.cmd" file by accident. In the "Arguments" parameter, type in \c "start –f –c":
+Selectionnez le fichier \c "C:\solr-8.6.3\bin\solr.cmd". REMARQUE: Assurez-vous de ne pas sélectionner le fichier \c "solr.in.cmd" par accident. Dans le paramètre "Arguments", tapez \c "start –f –c":
 
 \image html solr_install_3.png
 
-Optionally, configure service’s display name, startup type, and account info: 
+En option, configurez le nom d'affichage du service, le type de démarrage et les informations de compte: 
 
 \image html solr_install_4.png
 
-\subsection install_solr_service_user Configure Service User
+\subsection install_solr_service_user Configurer l'utilisateur du service
 
-In the \ref install_multiuseruser_page section, you should have decided what user to run Solr as. To configure Solr to run as that user, you'll use Windows Service Manager.
+Dans la section \ref install_multiuseruser_page, vous avez dû décider sous quel utilisateur exécuter Solr. Pour configurer Solr afin qu'il s'exécute en tant que cet utilisateur, vous utiliserez Windows Service Manager.
 
-Switch to the "Log On" tab to change the logon credentials to the chosen user who will have access to the shared storage.
-<ul><li>If you specify a domain account, the account name will be in the form of \c "DOMAINNAME\username" as shown in the example below</ul>
+Basculez vers l'onglet "Log On" pour modifier les informations d'identification de connexion pour l'utilisateur choisi qui aura accès au stockage partagé.
+<ul><li>Si vous spécifiez un compte de domaine, le nom du compte sera sous la forme \c "DOMAINNAME\username" comme le montre l'exemple ci-dessous</ul>
 
 \image html solr_user_1.png
 
-Click \c "Install Service". You should see the following UI window appear:
+Cliquez sur \c "Install Service". Vous devriez voir apparaître la fenêtre d'interface utilisateur suivante:
 
 \image html solr_user_2.png
 
-\subsection install_solr_start Start Solr Service
+\subsection install_solr_start Démarrer le service Solr
 
-At this point the Solr service has been configured and installed. You can verify this by opening Windows "Services" window:
+À ce stade, le service Solr a été configuré et est installé. Vous pouvez le vérifier en ouvrant la fenêtre "Services" de Windows:
 
 \image html solr_start_1.png
 
-Start the "Solr_8.6.3" service, and verify that the service status changes to "Running".
+Démarrez le service "Solr_8.6.3" et vérifiez que l'état du service passe à "En cours d'exécution".
 
 \image html solr_start_2.png
 
-\section install_solr_testing Testing
+\section install_solr_testing Essais
 
-There are two tests that you should perform to confirm that the Solr machine is configured correctly.
+Vous devez effectuer deux tests pour confirmer que la machine Solr est correctement configurée.
 
 <ul>
-<li><b>Web Interface:</b> You should attempt to access the Solr admin panel in a web browser. On the Solr machine, navigate to http://localhost:8983/solr/#/ and verify that the Solr admin console gets displayed. You should also attempt to access the Solr admin panel in a web browser from another machine on the network. Replace "localhost" in the previous URL with the IP address or the host name that the Solr service is running on.
+<li><b>Interface Web:</b> Vous devez essayer d'accéder au panneau d'administration de Solr dans un navigateur Web. Sur la machine Solr, accédez à http://localhost:8983/solr/#/ et vérifiez que la console d'administration Solr s'affiche. Vous devez également essayer d'accéder au panneau d'administration Solr dans un navigateur Web à partir d'une autre machine du réseau. Remplacez "localhost" dans l'URL précédente par l'adresse IP ou le nom d'hôte sur lequel le service Solr s'exécute.
 
 \image html solr_testing_1.png
 
-If the service is appropriately started but you are unable to see the screenshot above, then it could be that port 8983 for Solr and port 9983 for ZooKeeper are blocked by your firewall. Contact your network administrator to open these ports.
+Si le service est correctement démarré mais que vous ne pouvez pas voir la capture d'écran ci-dessus, il se peut que le port 8983 pour Solr et le port 9983 pour ZooKeeper soient bloqués par votre pare-feu. Contactez votre administrateur réseau pour ouvrir ces ports.
 
-<li><b>Shared Storage:</b> Log in to the Solr computer as the user you decided to run the Solr service as and attempt to access the shared storage paths. Ensure that you can access the UNC paths (or drive letters if you have hardware NAS). If everything is configured correctly you should be able to access the storage paths without having to provide credentials. If you are prompted for a password to access the shared storage, then either enter the password and choose to save the credentials or reconfigure the setup so that the same passwords are used. See the \ref multiuser_users_store section for steps on storing credentials. If you needed to store the credentials, then you should restart the service or reboot the computer (we have observed that a running service does not get the updated credentials).
+<li><b>Stockage partagé:</b> Connectez-vous à l'ordinateur Solr en tant qu'utilisateur avec lequel vous avez décidé d'exécuter le service Solr et essayez d'accéder aux chemins de stockage partagé. Assurez-vous que vous pouvez accéder aux chemins UNC (ou aux lettres de lecteur si vous avez un NAS matériel). Si tout est configuré correctement, vous devriez pouvoir accéder aux chemins de stockage sans avoir à fournir d'informations d'identification. Si vous êtes invité à saisir un mot de passe pour accéder au stockage partagé, saisissez le mot de passe et choisissez d'enregistrer les informations d'identification ou modifiez la configuration afin que les mêmes mots de passe soient utilisés. Voir la rubrique \ref multiuser_users_store concernant les étapes de stockage des informations d'identification. Si vous avez besoin de stocker les informations d'identification, vous devez redémarrer le service ou redémarrer l'ordinateur (nous avons observé qu'un service en cours d'exécution n'obtient pas les informations d'identification mises à jour).
 </ul>
 
-\section install_solr_autopsy Configuring Autopsy Clients
+\section install_solr_autopsy Configuration des clients Autopsy
 
-Once the rest of the services are configured you will \ref install_multiuserclient_page "configure Autopsy to enable multi-user cases". For the Solr 8 server, configure the Solr 8 Service and the ZooKeeper service connection info. ZooKeeper connection info is required. The ZooKeeper port number is 1000 higher than Solr service port number. By default, Solr service port is 8983 making the embedded ZooKeeper port 9983. You may also use a \ref install_solr_standalone_zk "standalone ZooKeeper service".
+Une fois les services configuré, vous allez \ref install_multiuserclient_page "configurer Autopsy pour activer les cas multi-utilisateurs". Pour le serveur Solr 8, configurez le service Solr 8 et les informations de connexion du service ZooKeeper. Les informations de connexion ZooKeeper sont requises. Le numéro de port ZooKeeper est égal au numéro de port du service Solr plus 1000. Par défaut, le port du service Solr est 8983, ce qui rend le port intégré à ZooKeeper égal à 9983. Vous pouvez également utiliser un \ref install_solr_standalone_zk "service autonome ZooKeeper".
 
-\section install_sorl_adding_nodes Adding More Solr Nodes (SolrCloud)
+\section install_sorl_adding_nodes Ajout de plus de nœuds Solr (SolrCloud)
 
-Solr 8 has ability for multiple Solr nodes to work together as a Solr cluster. In this mode (SolrCloud mode) each Solr collection/index is split across all of the available Solr nodes. This is called sharding. For example, if there are 4 Solr nodes in a SolrCloud cluster, then the text index will be split across the 4 Solr nodes, thus greatly reducing the load on each individual Solr server and improving Solr indexing and searching performance.
+Solr 8 permet à plusieurs nœuds Solr de fonctionner ensemble en tant que cluster Solr. Dans ce mode (mode SolrCloud), chaque collection/index Solr est réparti sur tous les nœuds Solr disponibles. C'est ce qu'on appelle le sharding. Par exemple, s'il y a 4 nœuds Solr dans un cluster SolrCloud, l'index de texte sera divisé entre les 4 nœuds Solr, réduisant ainsi considérablement la charge sur chaque serveur Solr individuel et améliorant les performances d'indexation et de recherche Solr.
  
-To create a Solr cluster, the following steps need to be taken:
+Pour créer un cluster Solr, vous devez suivre les étapes suivantes:
 <ol>
-<li>Follow steps in the \ref install_solr_config and \ref install_solr_service sections to create a Solr node (e.g. "Solr1"). Start the Solr service on the Solr1 machine. This machine will host the ZooKeeper service for the SolrCloud cluster. 
-<li>To add an additional Solr node (e.g. "Solr2") to the SolrCloud cluster, follow the steps in the \ref install_solr_config and \ref install_solr_service sections on the Solr2 machine. Do not start the Solr service on Solr2 yet.
-<li>Solr uses ZooKeeper for its internal coordination, so all of the Solr nodes in SolrCloud need to be pointed at the same ZooKeeper service instance. Therefore in order for Solr2 node to be part of SolrCloud, it needs to use the ZooKeeper service that all the other Solr nodes in the SolrCloud cluster are using. In step 1 we have configured Solr1 node to start its embedded ZooKeeper service (this is default Solr behavior). To achieve that, <b>ZK_HOST</b> setting on Solr2 needs to be changed to point at the ZooKeeper service that is running on Solr1 node. The ZooKeeper port number is 1000 higher than <b>SOLR_PORT</b>. By default, <b>SOLR_PORT</b> is 8983 so the embedded ZooKeeper port is 9983. Therefore the <b>ZK_HOST</b> setting in \c "C:\solr-8.6.3\bin\solr.in.cmd" file (assuming that the Solr package ZIP was extracted into \c "C:\solr-8.6.3\" directory) on Solr2 machine needs to be modified to use ZooKeeper service running on Solr1:9983.
+<li>Suivez les étapes des sections \ref install_solr_config et \ref install_solr_service pour créer un nœud Solr (par exemple "Solr1"). Démarrez le service Solr sur la machine Solr1. Cette machine hébergera le service ZooKeeper pour le cluster SolrCloud. 
+<li>Pour ajouter un nœud Solr supplémentaire (par exemple "Solr2") au cluster SolrCloud, suivez les étapes des sections \ref install_solr_config et \ref install_solr_service sur la machine Solr2. Ne démarrez pas encore le service Solr sur Solr2.
+<li>Solr utilise ZooKeeper pour sa coordination interne, donc tous les nœuds Solr dans le SolrCloud doivent pointer vers la même instance du service ZooKeeper. Par conséquent, pour que le nœud Solr2 fasse partie de SolrCloud, il doit utiliser le service ZooKeeper que tous les autres nœuds Solr du cluster SolrCloud utilisent. À l'étape 1, nous avons configuré le nœud Solr1 pour démarrer son service ZooKeeper intégré (il s'agit du comportement par défaut de Solr). Pour y parvenir, le paramètre <b>ZK_HOST</b> sur Solr2 doit être modifié pour pointer vers le service ZooKeeper qui s'exécute sur le nœud Solr1. Le numéro de port ZooKeeper est égal à <b>SOLR_PORT</b> plus 1000. Par défaut, <b>SOLR_PORT</b> est égal à 8983, donc le port ZooKeeper intégré est 9983. Par conséquent, le paramètre <b>ZK_HOST</b> dans le fichier \c "C:\solr-8.6.3\bin\solr.in.cmd" (en supposant que le package Solr ZIP a été extrait dans le répertoire \c "C:\solr-8.6.3\") sur la machine Solr2 doit être modifié pour que le service ZooKeeper utilisé soit exécuté sur Solr1:9983. 
 
 \image html solr_adding_nodes_1.png
 
-<li>Start Solr service on Solr2 machine.
-<li>When you log into a Solr admin console on either Solr1 or Solr2 (via either going to http://localhost:8983/solr/#/ on the machine, or via http://solr1:8983/solr/#/), and then navigate to "Cloud" -> "Nodes" section of the admin tree, you should see all of the Solr nodes that are part of the SolrCloud:
+<li>Démarrez le service Solr sur la machine Solr2.
+<li>Lorsque vous vous connectez à une console d'administration Solr sur Solr1 ou Solr2 (soit en allant sur http://localhost:8983/solr/#/ sur la machine, soit via http://solr1:8983/solr/#/), puis naviguez jusqu'à la section "Cloud" -> "Nodes" de l'arborescence d'administration, vous devriez voir tous les nœuds Solr qui font partie du SolrCloud:
 
 \image html solr_adding_nodes_2.png
 
-<li>Additional Solr nodes can be added to the SolrCloud by repeating the previous steps.
+<li>Des nœuds Solr supplémentaires peuvent être ajoutés au SolrCloud en répétant les étapes précédentes.
 </ol>
 
-\section install_solr_autopsy_zk Autopsy’s Use of ZooKeeper Service
+\section install_solr_autopsy_zk Utilisation du service ZooKeeper par Autopsy
 
-Autopsy uses ZooKeeper service for multi-user coordination purposes. Autopsy uses ZooKeeper to obtain locks on case level resources before modifying them. Most importantly, Autopsy stores some of its internal state data in ZooKeeper – which cases have been created, their processing state (pending, processing, or completed), as well as other case and job level state data. This is especially important if you are running Autopsy in Auto Ingest Mode, as auto ingest needs to know which jobs have already been processed. 
+Autopsy utilise le service ZooKeeper à des fins de coordination multi-utilisateurs. Autopsy utilise ZooKeeper pour verouiller les ressources d'un cas avant de les modifier. Plus important encore, Autopsy stocke certaines de ses données d'état internes dans ZooKeeper - quels cas ont été créés, leur état de traitement (en attente, en traitement ou terminé), ainsi que d'autres données d'état des cas et des tâches. Ceci est particulièrement important si vous exécutez Autopsy en mode "Auto Ingest", car l'acquisition automatisée doit savoir quelles tâches ont déjà été traitées.
 
-In the screen shot below, for coordination purposes Autopsy will be using the ZooKeeper server that is running on the Solr 8 server ("Solr1" machine). 
+Dans la capture d'écran ci-dessous, Autopsy utilisera le serveur ZooKeeper qui s'exécute sur le serveur Solr 8 (machine "Solr1") à des fins de coordination.
 
 \image html solr_autopsy_zk.png
 
-\subsection install_solr_standalone_zk Standalone ZooKeeper Server
+\subsection install_solr_standalone_zk Serveur ZooKeeper autonome
 
-In our testing, for Autopsy purposes it is not necessary to have a standalone ZooKeeper server. For the regular Autopsy use case it is sufficient to use the "embedded" ZooKeeper service that is started by Solr service (on port 9983). However, Apache Solr documentation recommends that a standalone ZooKeeper service (running on separate a machine) is used in production environments. Below are instructions on how to setup a standalone ZooKeeper server and how to configure Solr & Autopsy to use it. 
+Lors de nos tests, il n'a pas été nécessaire d'avoir un serveur ZooKeeper autonome avec Autopsy. En cas d'utilisation normale d'Autopsy, il suffit d'utiliser le service ZooKeeper "intégré" qui est démarré par le service Solr (sur le port 9983). Cependant, la documentation d'Apache Solr recommande d'utiliser un service ZooKeeper autonome (s'exécutant sur une machine distincte) dans les environnements de production. Vous trouverez ci-dessous des instructions sur la configuration d'un serveur ZooKeeper autonome et la configuration de Solr et d'Autopsy pour utiliser ce serveur.
 
-General Solr-related steps for this process are outlined in the Solr user guide below, in section "SolrCloud Configuration and Parameters":
+Les étapes générales pour mettre en place ce processus lié à Solr sont décrites dans le guide de l'utilisateur de Solr ci-dessous, dans la section "SolrCloud Configuration and Parameters":
 
 https://lucene.apache.org/solr/guide/8_6/solrcloud-configuration-and-parameters.html
 
 <ol>
-<li>Download the appropriate Zookeeper installation from http://zookeeper.apache.org/releases.html . Solr 8.6.3 is integrated with Zookeeper 3.5.7. There are several options for download – binaries or source code. The file that you are looking for is \c "apache-zookeeper-3.5.7-bin.tar.gz":
+<li>Téléchargez l'installation appropriée de ZooKeeper à partir de http://zookeeper.apache.org/releases.html . Solr 8.6.3 est intégré à Zookeeper 3.5.7. Il existe plusieurs options de téléchargement – binaires ou code source. Le fichier que vous recherchez est \c "apache-zookeeper-3.5.7-bin.tar.gz":
 https://archive.apache.org/dist/zookeeper/zookeeper-3.5.7/
-<li>Extract the downloaded tar file containing Zookeeper installation
-<li>Create/edit the \c "/conf/zoo.cfg" file to have the following: 
+<li>Extrayez le fichier tar téléchargé contenant l'installation de ZooKeeper
+<li>Créer/éditer le fichier \c "/conf/zoo.cfg" pour avoir les éléments suivants:
 <ul>
-<li>Specify "dataDir" directory – this is where ZK database will be stored.
-<li>Specify "clientPort". For example, "clientPort=9983". 
-<li>"Four letter commands" need to be enabled in ZK config file: https://lucene.apache.org/solr/guide/8_6/setting-up-an-external-zookeeper-ensemble.html#configuration-for-a-zookeeper-ensemble
+<li>Spécifiez le répertoire "dataDir" - c'est là que la base de données ZooKeeper sera stockée.
+<li>Spécifiez "clientPort". Par exemple, "clientPort=9983".
+<li>"Four letter commands" doit être activé dans le fichier de configuration ZooKeeper: https://lucene.apache.org/solr/guide/8_6/setting-up-an-external-zookeeper-ensemble.html#configuration-for-a-zookeeper-ensemble
 </ul>
-<li>There are Windows and Linux Zookeeeper startup scripts. For Windows, open a command prompt (admin NOT required), go to the directory where the tar file was extracted (e.g. \c "C:\Bitnami\zookeeper-3.5.7"), and type in \c "bin\zkServer.cmd". We have been using Cygwin in our testing and therefore using Linux commands in our examples. For Linux/CygWin, go to the same directory (e.g. \c "C:\Bitnami\zookeeper-3.5.7"), and type in \c "bin/zkServer.sh start".
-<li>To verify that Zookeeper is running, in command prompt one can type in \c "bin/zkServer.sh status" (or equivalent Windows command). 
+<li>Il existe des scripts de démarrage Windows et Linux pour ZooKeeper. Pour Windows, ouvrez une invite de commande (administrateur NON requis), accédez au répertoire où le fichier tar a été extrait (par exemple, \c "C:\Bitnami\zookeeper-3.5.7"), et tapez \c "bin\zkServer.cmd". Nous avons utilisé Cygwin dans nos tests et nous avons donc utilisé des commandes Linux dans nos exemples. Pour Linux/CygWin, allez dans le même répertoire (par ex. \c "C:\Bitnami\zookeeper-3.5.7"), et tapez \c "bin/zkServer.sh start".
+<li>Pour vérifier que ZooKeeper est en cours d'exécution, dans l'invite de commande, vous pouvez taper \c "bin/zkServer.sh status" (ou une commande Windows équivalente).
 
 \image html solr_standalone_zk_1.png
 
-<li>To make Solr use the external ZooKeeper, the following needs to be done. Navigate to the directory where Solr startup scripts are located (usually \c "C:\solr-8.6.3\apache-solr\bin"). Open the \c "solr.in.cmd" file in text editor. If standalone ZooKeeper service is running on the same machine (not recommended), edit the <b>ZK_HOST</b> variable to be \c "set ZK_HOST=localhost:9983". If Zookeeper is running a different machine (e.g. "Solr5"), then enter the Zookeeper machine's host name or IP address instead of "localhost" (e.g. \c "set ZK_HOST=Solr5:9983").
+<li>Pour que Solr utilise un ZooKeeper autonome, les étapes suivantes doivent être effectuées. Accédez au répertoire où se trouvent les scripts de démarrage Solr (généralement \c "C:\solr-8.6.3\apache-solr\bin"). Ouvrez le fichier \c "solr.in.cmd" dans un éditeur de texte. Si le service ZooKeeper autonome s'exécute sur la même machine (non recommandé), modifiez la variable <b>ZK_HOST</b> en \c "set ZK_HOST=localhost:9983". Si ZooKeeper s'exécute sur une machine différente (par exemple, "Solr5"), entrez le nom d'hôte ou l'adresse IP de la machine ZooKeeper au lieu de "localhost" (par exemple, \c "set ZK_HOST=Solr5:9983").
 
 \image html solr_standalone_zk_2.png
 
-<li>Re-installation of Solr service is not necessary. Simply stop the Solr service and re-start it.
-<li>Once the Solr service has been restarted, you can navigate to Solr admin console (Cloud -> ZK Status) and verify that Solr is using the correct Zookeeper and that the Zookeeper is running. 
+<li>La réinstallation du service Solr n'est pas nécessaire. Arrêtez simplement le service Solr et redémarrez-le.
+<li>Une fois le service Solr redémarré, vous pouvez accéder à la console d'administration Solr (Cloud -> ZK Status) et vérifiez que Solr utilise le bon ZooKeeper et que ZooKeeper est en cours d'exécution.
 
 \image html solr_standalone_zk_3.png
 
-<li>Configure Autopsy Multi-User panel to use the standalone ZooKeeper server. Start Autopsy and open the multi-user settings panel from "Tools", "Options", "Multi-user". Note that in order to create or open Multi-user cases, "Enable Multi-user cases" must be checked and the settings below must be correct.
+<li>Configurez les options multi-utilisateurs d'Autopsy pour utiliser le serveur autonome ZooKeeper. Démarrez Autopsy et ouvrez le panneau des paramètres multi-utilisateurs à partir de "Tools", "Options", "Multi-user". Notez que pour créer ou ouvrir des cas multi-utilisateurs, "Enable Multi-user cases" doit être coché et les paramètres ci-dessous doivent être corrects.
 
 \image html solr_standalone_zk_4.png
 </ol>
 
-\section install_solr_backup Backing Up
+\section install_solr_backup Sauvegarde
 
-Solr creates two types of data that need to be backed up:
+Solr crée deux types de données qui doivent être sauvegardées:
 
 <ul>
-<li><b>Text Indexes:</b> These are stored in directory that was specified in <b>SOLR_DATA_HOME</b> parameter (see \ref install_solr_params).
-<li><b>ZooKeeper Data:</b> Autopsy uses a service called ZooKeeper embedded in Solr that stores data about what cases exist and who has them open. This data needs to be backed up so that you can have a list of all available multi-user cases.
-<ol><li>In a default installation that data is stored in \c "C:\solr-8.6.3\server\solr zoo_data" (assuming that the Solr package ZIP was extracted into \c "C:\solr-8.6.3" directory).</ol>
+<li><b>Index de texte:</b> Ceux-ci sont stockés dans le répertoire qui a été spécifié dans le paramètre <b>SOLR_DATA_HOME</b> (voir \ref install_solr_params).
+<li><b>Données ZooKeeper:</b> Autopsy utilise un service appelé ZooKeeper intégré à Solr qui stocke des données sur les cas existants et sur qui les a ouverts. Ces données doivent être sauvegardées afin que vous puissiez avoir une liste de tous les cas multi-utilisateurs disponibles.
+<ol><li>Dans une installation par défaut les données sont stockées dans \c "C:\solr-8.6.3\server\solr zoo_data" (en supposant que le package ZIP de Solr ait été extrait dans le répertoire \c "C:\solr-8.6.3").</ol>
 </ul>
 
-\section Troubleshooting
+\section Dépannage
 
-\subsection install_solr_delayed_start Delayed Start Problems With Large Number Of Solr Collections
+\subsection install_solr_delayed_start Problèmes de démarrage retardé avec un grand nombre de collections Solr
 
-In our testing, we have encountered an issue when a very large number (thousands) of Autopsy multi-user cases was created. Each new Autopsy multi-user case creates a Solr "collection" that contains the Solr text index. With 2,000 existing collections, when Solr service is restarted, Solr appears to internally be "loading" roughly 250 collections per minute (in chronological order, starting with oldest collections). After 4 minutes roughly half of the 2,000 collections were loaded. Users are able to search the collections that have been loaded, but they are unable to open or search the collections that have not yet been internally loaded by Solr. After 7-8 minutes all collections were loaded. These numbers will vary depending on the specific cluster configuration, text index file location (network or local storage), network throughput, number of Solr servers, etc. 
+Lors de nos tests, nous avons rencontré des problèmes lorsqu'un très grand nombre (des milliers) de cas Autopsy multi-utilisateurs ont été créés. Chaque nouveau cas multi-utilisateurs Autopsy crée une "collection" Solr qui contient l'index de texte Solr. Avec 2 000 collections existantes, lorsque le service Solr est redémarré, Solr semble "charger" en interne environ 250 collections par minute (par ordre chronologique, en commençant par les collections les plus anciennes). Après 4 minutes, environ la moitié des 2 000 collections étaient chargées. Les utilisateurs peuvent rechercher dans les collections qui ont été chargées, mais ils ne peuvent pas ouvrir ou rechercher dans les collections qui n'ont pas encore été chargées en interne par Solr. Après 7 à 8 minutes, toutes les collections ont été chargées. Ces chiffres varient en fonction de la configuration spécifique du cluster, de l'emplacement du fichier d'index de texte (stockage réseau ou local), du débit du réseau, du nombre de serveurs Solr, etc...
 
-\subsection install_solr_heap_usage Solr Heap Usage and Recommendations
+\subsection install_solr_heap_usage Utilisation du tas Solr et recommandations
 
-Solr JVM heap plays especially important role if you are going to create a large number of Autopsy cases (i.e. Solr collections). Here are some “rule of thumb” Solr heap usage stats that we identified during our internal testing:
+Le tas JVM Solr joue un rôle particulièrement important si vous allez créer un grand nombre de cas Autopsy (c'est-à-dire des collections Solr). Voici quelques "règles empiriques" de statistiques d'utilisation du tas Solr que nous avons identifiées lors de nos tests internes:
 <ul>
-<li>For very small cases/collections, our tests show that Solr uses an absolute minimum of 7-10 MB of heap per collection. 
-<li>For larger cases/collections (50-100GB input E01 size) Solr uses at least 65 MB per collection 
-<li>For large cases/collections (1.5TB input E01 size) Solr uses at least 850 MB per collection
+<li>Pour les très petits cas/collections, nos tests montrent que Solr utilise un minimum absolu de 7 à 10 Mo de tas par collection. 
+<li>Pour les cas/collections plus volumineux (taille de E01 en entrée : 50-100 Go), Solr utilise au moins 65 Mo par collection 
+<li>Pour les cas/collections volumineux (taille de E01 en entrée : 1,5 To) Solr utilise au moins 850 Mo par collection
 </ul>
 
-\subsubsection install_solr_heap_troublshooting Troubleshooting Solr Heap Issues
+\subsubsection install_solr_heap_troublshooting Dépannage des problèmes de tas Solr
 
-Once the Solr JVM uses all of its available heap and is unable to free up any memory via garbage collection, the Solr service will not be able to create new collections or may become completely unresponsive, resulting in Autopsy being unable to create new text indexes. Below is a list of some of the errors that you might see as a result of this in the Solr (not Autopsy) service logs and/or the Solr admin console:
+Lorsque la JVM Solr a utilisé tout son tas disponible et est incapable de libérer de la mémoire avec des éliminations de collections, le service Solr ne pourra pas créer de nouvelles collections ou peut complètement ne plus répondre, ce qui empêchera Autopsy de créer de nouveaux index de texte. Vous trouverez ci-dessous une liste de certaines erreurs que vous pourriez voir à la suite de ce problème dans les journaux de service Solr (pas dans les journaux d'Autopsy) et/ou la console d'administration Solr:
 
 <ul>
 <li>org.apache.solr.common.SolrException: Could not register as the leader because creating the ephemeral registration node in ZooKeeper failed
@@ -237,7 +237,7 @@ Once the Solr JVM uses all of its available heap and is unable to free up any me
 <li>ZkIndexSchemaReader Error creating ZooKeeper watch for the managed schema
 </ul>
 
-You may also see the following ZooKeeper errors:
+Vous pouvez également voir les erreurs ZooKeeper suivantes:
 <ul>
 <li>org.apache.zookeeper.KeeperException$NodeExistsException: KeeperErrorCode = NodeExists
 <li>org.apache.zookeeper.KeeperException$BadVersionException: KeeperErrorCode = BadVersion for (collection_name)/state.json
@@ -245,43 +245,43 @@ You may also see the following ZooKeeper errors:
 <li>org.apache.zookeeper.KeeperException$SessionExpiredException: KeeperErrorCode = Session expired for /configs/AutopsyConfig/managed-schema
 </ul>
 
-The common theme among most of these errors is the breakdown in communication between Solr and ZooKeeper, especially when using an embedded ZooKeeper server. It is important to note that these errors may potentially occur for other reasons and are not unique to Solr heap issues. 
+Le thème commun à la plupart de ces erreurs est la rupture de la communication entre Solr et ZooKeeper, en particulier lors de l'utilisation d'un serveur ZooKeeper intégré. Il est important de noter que ces erreurs peuvent potentiellement se produire pour d'autres raisons et ne sont pas propres aux problèmes de tas Solr. 
 
-\subsubsection install_solr_monitoring Monitoring Solr Heap Usage
+\subsubsection install_solr_monitoring Surveillance de l'utilisation du tas Solr
 
-The simplest way to see current Solr heap usage is to check the Solr Admin Console web page. To access the Solr admin console, on the Solr machine navigate to http://localhost:8983/solr/#/ . There you will be able to see the Solr memory usage:
+Le moyen le plus simple de voir l'utilisation actuelle du tas Solr est de consulter la page Web de la console d'administration Solr. Pour accéder à la console d'administration Solr, sur la machine Solr, accédez à http://localhost:8983/solr/#/ . Vous pourrez y voir l'utilisation de la mémoire Solr:
 
 \image html solr_config_monitoring.png
 
-However, the dashboard does not show enough detail to know when Solr is out of heap, so it should only be used to identify that you are NOT having heap issues. Even if the dashboard shows that the Solr heap is fully used, it may or may not be an issue. It is best to use profiling tools like Java VisualVM. In order for VisualVM to connect to Solr, you will need to enable the JMX interface for Solr’s Java process. The details are described here:
+Cependant, le tableau de bord ne montre pas suffisamment de détails pour savoir quand Solr est à court de tas, il ne doit donc être utilisé que pour identifier que vous n'avez PAS de problèmes de tas. Même si le tableau de bord indique que le tas Solr est entièrement utilisé, cela peut être un problème ou non. Il est préférable d'utiliser des outils de profilage comme Java VisualVM. Pour que VisualVM se connecte à Solr, vous devez activer l'interface JMX pour le processus Java de Solr. Les détails sont décrits ici :
 <ul><li>https://solr.apache.org/guide/8_3/using-jmx-with-solr.html#using-jmx-with-solr</ul>
 
-Solr heap and other performance tuning is described in the following article:
+Le tas Solr et d'autres réglages de performances sont décrits dans l'article suivant:
 <ul><li>https://cwiki.apache.org/confluence/display/SOLR/SolrPerformanceProblems</ul>
 
-\subsubsection install_solr_performance_tuning Notes on Solr Performance Tuning
+\subsubsection install_solr_performance_tuning Remarques sur le réglage des performances de Solr
 
-If you are going to work with large images (TBs) and KWS performance is important, the best approach is to use a network (Multi-User) Solr server. 
+Si vous envisagez de travailler avec des images volumineuses (de plusieurs To) et que les performances de KWS sont importantes, la meilleure approche consiste à utiliser un serveur Solr en réseau (multi-utilisateurs).
 
-Some notes:
+Quelques notes:
 <ul>
-<li>A single Solr server works well for data sources up to 1TB; after that the performance starts to slow down. The performance doesn't "drop off the cliff," but it keeps slowing down as you add more data to the index. After 3TBs of input data the Solr performance takes a significant decline.
+<li>Un seul serveur Solr fonctionne bien pour les sources de données jusqu'à 1 To ; après cela, ses performances commencent à ralentir. Les performances ne "chutent pas", mais elles continuent de ralentir à mesure que vous ajoutez plus de données à l'index. Après 3 To de données d'entrée, les performances de Solr diminuent considérablement.
 
-<li>A single Multi-User Solr server may not perform much better than a Single-User Autopsy case. However, in Multi-User mode you can add additional Solr servers and create a Solr cluster. See the \ref install_sorl_adding_nodes section in the above documentation. These additional nodes are where the performance gains come from, especially for large input data sources. Apache Solr documentation calls this "SolrCloud" mode and each Solr server is called a "shard". The more Solr servers/shards you have, the better performance you will have for large data sets. On our test and production clusters, we are using 4-6 Solr servers to handle data sets of up to 10TB, which seems to be the upper limit. After that, you are better off breaking your Autopsy case into multiple cases, thus creating a separate Solr index for each case.
+<li>Un seul serveur Solr multi-utilisateur peut ne pas fonctionner beaucoup mieux qu'un cas Autopsy mono-utilisateur. Cependant, en mode multi-utilisateurs, vous pouvez ajouter des serveurs Solr supplémentaires et créer un cluster Solr. Voir la rubrique \ref install_sorl_adding_nodes dans la documentation ci-dessus. Ces nœuds supplémentaires sont une source des gains en performances, en particulier pour les sources de données d'entrée volumineuses. La documentation Apache Solr appelle ce mode "SolrCloud" et chaque serveur Solr est appelé un "shard". Plus vous avez de serveurs/shards Solr, meilleures sont les performances pour les grands ensembles de données. Sur nos clusters de test et de production, nous utilisons 4 à 6 serveurs Solr pour gérer des ensembles de données allant jusqu'à 10 To, ce qui semble être la limite la plus haute. Après cela, il vaut mieux diviser votre cas Autopsy en plusieurs cas, créant ainsi un index Solr distinct pour chaque cas.
 
-<li>In our testing, a 3-node SolrCloud indexes data roughly twice as fast as single Solr node. A 6-node SolrCloud indexes data almost twice as fast as 3-node SolrCloud. After that we did not see much performance gain. These performance figures are heavily dependent on network throughput, machine resources, disk access speeds, and the type of data that is being indexed.
+<li>Lors de nos tests, un SolrCloud à 3 nœuds indexe les données environ deux fois plus vite qu'un seul nœud Solr. Un SolrCloud à 6 nœuds indexe les données presque deux fois plus vite qu'un SolrCloud à 3 nœuds. Après cela, nous n'avons pas vu beaucoup de gain de performance. Ces chiffres de performances dépendent fortement du débit du réseau, des ressources de la machine, de la vitesse d'accès au disque et du type de données indexées.
 
-<li>Exact match searches are much faster than substring or regex searches.
+<li>Les recherches de correspondance exacte sont beaucoup plus rapides que les recherches de sous-chaîne ou d'expression régulière.
 
-<li>Regex searches tend to use a lot of RAM on the Solr server.
+<li>Les recherches Regex ont tendance à utiliser beaucoup de RAM sur le serveur Solr.
 
-<li>Indexing/searching of unallocated space really slows everything down because it is mostly binary or garbled data.
+<li>L'indexation/la recherche d'espace non alloué ralentit vraiment tout, car il s'agit principalement de données binaires ou tronquées.
 
-<li>If you are not going to look at the search results until ingest is over then you should disable the periodic keyword searches. They will start taking longer as your input data grows. This can be done in Tools->Options->Keyword Search tab:
+<li>Si vous n'allez pas consulter les résultats de la recherche tant que l'acquisition n'est pas terminée, vous devez désactiver les recherches périodiques par mot-clé. Elles commenceront à prendre plus de temps au fur et à mesure que vos données d'entrée augmenteront. Cela peut être fait via le menu Tools->Options->Keyword Search:
 
 \image html solr_disable_periodic_search.png
 
-<li>In Single-User mode, if you are ingesting and indexing data sources that are multiple TBs in size, then both Autopsy memory and especially the Solr JVM memory needs to be increased from their default settings. This can be done in Tools->Options->Application tab. We would recommend at least 10GB heap size for Autopsy and at least 6-8GB heap size for Solr. Note that these are "maximum" values that the process will be allowed to use/request. The operating system will not allocate more heap than the process actually needs.
+<li>En mode mono-utilisateur, si vous exécutez une acquisition et indexez des sources de données de plusieurs To, la mémoire d'Autopsy et en particulier la mémoire JVM Solr doivent être augmentées par rapport aux paramètres par défaut. Cela peut être fait via le menu Tools->Options->Application. Nous recommandons une taille de tas d'au moins 10 Go pour Autopsy et une taille de tas d'au moins 6 à 8 Go pour Solr. Notez qu'il s'agit des valeurs "maximum" que le processus sera autorisé à utiliser/demander. Le système d'exploitation n'allouera pas plus de tas que le processus n'en a réellement besoin.
 
 \image html solr_jvm.png
 
