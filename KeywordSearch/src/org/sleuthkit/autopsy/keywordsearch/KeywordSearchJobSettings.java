@@ -32,6 +32,10 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
     private HashSet<String> namesOfEnabledKeywordLists;
     private HashSet<String> namesOfDisabledKeywordLists; // Added in version 1.1
 
+    private boolean OCREnabled;
+    private boolean limitedOCREnabled;
+    private boolean OCROnly;
+
     /**
      * Constructs ingest job settings for the keywords search module.
      *
@@ -50,6 +54,64 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
     KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists, List<String> namesOfDisabledKeywordLists) {
         this.namesOfEnabledKeywordLists = new HashSet<>(namesOfEnabledKeywordLists);
         this.namesOfDisabledKeywordLists = new HashSet<>(namesOfDisabledKeywordLists);
+    }
+
+    /**
+     * Whether or not OCR is enabled for keyword search.
+     *
+     * @return Whether or not OCR is enabled for keyword search.
+     */
+    public boolean isOCREnabled() {
+        return OCREnabled;
+    }
+
+    /**
+     * Sets whether or not OCR is enabled for keyword search.
+     *
+     * @param OCREnabled Whether or not OCR is enabled for keyword search.
+     */
+    public void setOCREnabled(boolean OCREnabled) {
+        this.OCREnabled = OCREnabled;
+    }
+
+    /**
+     * Returns true if OCR is to be perform only on images larger than 100KB.
+     *
+     * @return If true, OCR is to be performed only on images larger than 100KB.
+     */
+    public boolean isLimitedOCREnabled() {
+        return limitedOCREnabled;
+    }
+
+    /**
+     * Sets whether or not OCR should be performed only on images larger than
+     * 100KB.
+     *
+     * @param limitedOCREnabled Whether or not OCR should be performed only on
+     *                          images larger than 100KB.
+     */
+    public void setLimitedOCREnabled(boolean limitedOCREnabled) {
+        this.limitedOCREnabled = limitedOCREnabled;
+    }
+
+    /**
+     * Returns true if keyword search ingest should be solely limited to OCR.
+     *
+     * @return True if keyword search ingest should be solely limited to OCR.
+     */
+    public boolean isOCROnly() {
+        return OCROnly;
+    }
+
+    /**
+     * Sets whether or not keyword search ingest should be solely limited to
+     * OCR.
+     *
+     * @param OCROnly Whether or not keyword search ingest should be solely
+     *                limited to OCR.
+     */
+    public void setOCROnly(boolean OCROnly) {
+        this.OCROnly = OCROnly;
     }
 
     /**
