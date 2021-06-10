@@ -1684,12 +1684,11 @@ class ExtractRegistry extends Extract {
      * @returnv BlackboardArtifact or a null value
      */
     private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
-        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         String fileName = FilenameUtils.getName(filePathName);
         String filePath = FilenameUtils.getPath(filePathName);
         List<AbstractFile> sourceFiles;
         try {
-            sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
+            sourceFiles = currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, fileName, filePath);
             if (!sourceFiles.isEmpty()) {
                 for (AbstractFile sourceFile : sourceFiles) {
                     if (sourceFile.getParentPath().endsWith(filePath)) {

@@ -163,8 +163,9 @@ class DataSourceUsageAnalyzer extends Extract {
     private void checkIfOsSpecificVolume(ExtractOs.OS_TYPE osType) throws TskCoreException {
         FileManager fileManager = currentCase.getServices().getFileManager();
         for (String filePath : osType.getFilePaths()) {
-            for (AbstractFile file : fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
-                if ((file.getParentPath() + file.getName()).equals(filePath)) {
+            for (AbstractFile file : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, 
+                    FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
+               if ((file.getParentPath() + file.getName()).equals(filePath)) {
                     createDataSourceUsageArtifact(osType.getDsUsageLabel());
                     return;
                 }
@@ -224,10 +225,9 @@ class DataSourceUsageAnalyzer extends Extract {
      * @throws TskCoreException 
      */
     private boolean hasAndroidMediaCardRootNames() throws TskCoreException{
-        FileManager fileManager = currentCase.getServices().getFileManager();
         for (String fileName : ANDROID_MEDIACARD_ROOT_FILENAMES) {
-            for (AbstractFile file : fileManager.findFiles(dataSource, fileName, "/")) { // NON-NLS
-                if (file.getParentPath().equals("/") && file.getName().equalsIgnoreCase(fileName)) { // NON-NLS
+            for (AbstractFile file : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, fileName, "/")) { // NON-NLS
+               if (file.getParentPath().equals("/") && file.getName().equalsIgnoreCase(fileName)) { // NON-NLS
                     createDataSourceUsageArtifact(Bundle.DataSourceUsage_AndroidMedia());
                     return true;
                 }

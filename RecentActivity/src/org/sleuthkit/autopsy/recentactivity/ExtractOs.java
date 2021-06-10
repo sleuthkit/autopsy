@@ -117,9 +117,9 @@ class ExtractOs extends Extract {
      *         search for
      */
     private AbstractFile getFirstFileFound(List<String> pathsToSearchFor) throws TskCoreException{
-        FileManager fileManager = currentCase.getServices().getFileManager();
         for (String filePath : pathsToSearchFor) {
-            for (AbstractFile file : fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
+            
+            for (AbstractFile file : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
                 if ((file.getParentPath() + file.getName()).equals(filePath)) {
                     return file;
                 }
