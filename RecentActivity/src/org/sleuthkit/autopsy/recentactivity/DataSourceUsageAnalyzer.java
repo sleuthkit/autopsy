@@ -227,7 +227,7 @@ class DataSourceUsageAnalyzer extends Extract {
     private boolean hasAndroidMediaCardRootNames() throws TskCoreException{
         FileManager fileManager = currentCase.getServices().getFileManager();
         for (String fileName : ANDROID_MEDIACARD_ROOT_FILENAMES) {
-           for (AbstractFile file : fileManager.findFiles(dataSource, fileName, "/")) { // NON-NLS
+            for (AbstractFile file : fileManager.findFiles(dataSource, fileName, "/")) { // NON-NLS
                 if (file.getParentPath().equals("/") && file.getName().equalsIgnoreCase(fileName)) { // NON-NLS
                     createDataSourceUsageArtifact(Bundle.DataSourceUsage_AndroidMedia());
                     return true;
