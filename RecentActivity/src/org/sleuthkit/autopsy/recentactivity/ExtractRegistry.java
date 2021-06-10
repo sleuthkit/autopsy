@@ -1690,11 +1690,7 @@ class ExtractRegistry extends Extract {
         try {
             sourceFiles = currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, fileName, filePath);
             if (!sourceFiles.isEmpty()) {
-                for (AbstractFile sourceFile : sourceFiles) {
-                    if (sourceFile.getParentPath().endsWith(filePath)) {
-                        return createAssociatedArtifact(sourceFile, bba);
-                    }
-                }
+                return createAssociatedArtifact(sourceFiles.get(0), bba);
             }
         } catch (TskCoreException ex) {
             // only catching the error and displaying the message as the file may not exist on the 
