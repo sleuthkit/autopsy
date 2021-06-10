@@ -44,7 +44,7 @@ Si la fenêtre d'Autopsy ne ressemble plus à la fenêtre par défaut : \ref uil
 
 Si la réinitialisation des fenêtres ne résout pas le problème, vous devrez peut-être supprimer votre dossier utilisateur comme décrit dans la section suivante.
 
-\subsection troubleshooting_user_folder Suppression du dossier utilisateur dAutopsy
+\subsection troubleshooting_user_folder Suppression du dossier utilisateur Autopsy
 
 Si Autopsy commence à se comporter de manière étrange, arrête complètement de se charger ou si des éléments de menu disparaissent, vous devrez probablement supprimer votre dossier utilisateur. Cela entrainera essentiellement une nouvelle installation. Sous Windows, le dossier utilisateur se trouve dans "C:\Users\(nom d'utilisateur)\AppData\Roaming\autopsy".
 Notez que si vous supprimez ce dossier, vous perdrez tous vos paramètres d'Autopsy, y compris les listes de mots clés, les ensembles de fichiers intéressants et la configuration générale. Si vous souhaitez conserver ces paramètres, vous pouvez faire ce qui suit:
