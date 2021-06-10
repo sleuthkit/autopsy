@@ -122,7 +122,7 @@ public class DataSourcesNode extends DisplayableItemNode {
      * Main constructor.
      */
     DataSourcesNode() {
-        super(Children.create(new DataSourcesByTypeChildren(), false), Lookups.singleton(NAME));
+        super(Children.create(new DataSourcesByTypeChildren(), true), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png");
