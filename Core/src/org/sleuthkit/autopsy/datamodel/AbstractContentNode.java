@@ -112,7 +112,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * @param lookup  The Lookup object for the node.
      */
     AbstractContentNode(T content, Lookup lookup) {
-        super(Children.create(new ContentChildren(content), false), lookup);
+        super(Children.create(new ContentChildren(content), true), lookup);
         this.content = content;
         //super.setName(ContentUtils.getSystemName(content));
         super.setName("content_" + Long.toString(content.getId())); //NON-NLS
