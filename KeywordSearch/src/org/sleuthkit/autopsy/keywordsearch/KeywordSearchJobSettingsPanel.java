@@ -47,9 +47,9 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
 
 
     KeywordSearchJobSettingsPanel(KeywordSearchJobSettings initialSettings) {
-        initializeKeywordListSettings(initialSettings);
         initComponents();
         customizeComponents();
+        initializeKeywordListSettings(initialSettings);
     }
 
     private void initializeKeywordListSettings(KeywordSearchJobSettings settings) {
