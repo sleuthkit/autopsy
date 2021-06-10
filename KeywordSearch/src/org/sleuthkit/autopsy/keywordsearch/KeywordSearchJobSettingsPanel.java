@@ -28,6 +28,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
@@ -39,43 +40,17 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.StringsExtr
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSettingsPanel implements PropertyChangeListener {
-
     private final KeywordListsTableModel tableModel = new KeywordListsTableModel();
     private final List<String> keywordListNames = new ArrayList<>();
     private final Map<String, Boolean> keywordListStates = new HashMap<>();
     private final XmlKeywordSearchList keywordListsManager = XmlKeywordSearchList.getCurrent();
+
 
     KeywordSearchJobSettingsPanel(KeywordSearchJobSettings initialSettings) {
         initializeKeywordListSettings(initialSettings);
         initComponents();
         customizeComponents();
     }
-    
-    /*
-    
-    
-        TODO load:
-        ocrCheckBox.setSelected(KeywordSearchSettings.getOcrOption());
-        limitedOcrCheckbox.setSelected(KeywordSearchSettings.getLimitedOcrOption());
-        ocrCheckBox.setEnabled(!ingestRunning);
-        limitedOcrCheckbox.setEnabled(ocrCheckBox.isSelected() && !ingestRunning);
-    
-        TODO store:
-        KeywordSearchSettings.setOcrOption(ocrCheckBox.isSelected());
-        KeywordSearchSettings.setLimitedOcrOption(limitedOcrCheckbox.isSelected());
-    
-    
-        TODO other enable:
-    
-        if (!PlatformUtil.isWindowsOS() || !PlatformUtil.is64BitOS()) {
-            ocrCheckBox.setText(Bundle.KeywordSearchGlobalSearchSettingsPanel_customizeComponents_windowsOCR());
-            ocrCheckBox.setSelected(false);
-            ocrCheckBox.setEnabled(false);
-            limitedOcrCheckbox.setSelected(false);
-            limitedOcrCheckbox.setEnabled(false);
-            limitedOcrCheckbox.setText(Bundle.KeywordSearchGlobalSearchSettingsPanel_customizeComponents_windowsLimitedOCR());
-        }
-    */
 
     private void initializeKeywordListSettings(KeywordSearchJobSettings settings) {
         keywordListNames.clear();
@@ -86,6 +61,23 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
             keywordListNames.add(listName);
             keywordListStates.put(listName, settings.keywordListIsEnabled(listName));
         }
+        
+        ocrCheckBox.setSelected(settings.isOCREnabled());
+        limitedOcrCheckbox.setSelected(settings.isLimitedOCREnabled());
+        ocrOnlyCheckbox.setSelected(settings.isOCROnly());
+        
+        handleOcrEnabled(settings.isOCREnabled());
+    }
+    
+    /**
+     * Handles setting enabled state of checkbox.
+     * @param ocrEnabled Whether or not the ocr setting is enabled.
+     */
+    private void handleOcrEnabled(boolean ocrEnabled) {
+        boolean platformSupported = PlatformUtil.isWindowsOS() && PlatformUtil.is64BitOS();
+        ocrCheckBox.setEnabled(platformSupported);
+        limitedOcrCheckbox.setEnabled(platformSupported && ocrEnabled);
+        ocrOnlyCheckbox.setEnabled(platformSupported && ocrEnabled);
     }
 
     private void customizeComponents() {
@@ -197,7 +189,8 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 disabledListNames.add(listName);
             }
         }
-        return new KeywordSearchJobSettings(enabledListNames, disabledListNames);
+        return new KeywordSearchJobSettings(enabledListNames, disabledListNames, 
+                this.ocrCheckBox.isSelected(), this.limitedOcrCheckbox.isSelected(), this.ocrOnlyCheckbox.isSelected());
     }
 
     void reset(KeywordSearchJobSettings newSettings) {
@@ -266,7 +259,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         keywordSearchEncodings = new javax.swing.JLabel();
         ocrCheckBox = new javax.swing.JCheckBox();
         limitedOcrCheckbox = new javax.swing.JCheckBox();
-        ocrOnly = new javax.swing.JCheckBox();
+        ocrOnlyCheckbox = new javax.swing.JCheckBox();
 
         setPreferredSize(new java.awt.Dimension(300, 170));
 
@@ -313,10 +306,10 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
             }
         });
 
-        ocrOnly.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.ocrOnly.text")); // NOI18N
-        ocrOnly.addActionListener(new java.awt.event.ActionListener() {
+        ocrOnlyCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.ocrOnlyCheckbox.text")); // NOI18N
+        ocrOnlyCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ocrOnlyActionPerformed(evt);
+                ocrOnlyCheckboxActionPerformed(evt);
             }
         });
 
@@ -338,10 +331,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                                         .addComponent(encodingsLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(keywordSearchEncodings)))
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addComponent(languagesValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -350,7 +340,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                                 .addGap(21, 21, 21)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(limitedOcrCheckbox)
-                                    .addComponent(ocrOnly))))
+                                    .addComponent(ocrOnlyCheckbox))))
                         .addContainerGap())))
         );
         layout.setVerticalGroup(
@@ -359,7 +349,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 .addGap(7, 7, 7)
                 .addComponent(titleLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 22, Short.MAX_VALUE)
+                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(languagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -371,7 +361,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 .addGap(18, 18, 18)
                 .addComponent(ocrCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ocrOnly)
+                .addComponent(ocrOnlyCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(limitedOcrCheckbox)
                 .addContainerGap())
@@ -379,7 +369,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     }// </editor-fold>//GEN-END:initComponents
 
     private void ocrCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ocrCheckBoxActionPerformed
-        limitedOcrCheckbox.setEnabled(ocrCheckBox.isSelected());
+        handleOcrEnabled(ocrCheckBox.isSelected());
         firePropertyChange(KeywordSearchOptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_ocrCheckBoxActionPerformed
 
@@ -387,9 +377,9 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         firePropertyChange(KeywordSearchOptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_limitedOcrCheckboxActionPerformed
 
-    private void ocrOnlyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ocrOnlyActionPerformed
+    private void ocrOnlyCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ocrOnlyCheckboxActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_ocrOnlyActionPerformed
+    }//GEN-LAST:event_ocrOnlyCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel encodingsLabel;
@@ -400,7 +390,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     private javax.swing.JScrollPane listsScrollPane;
     private javax.swing.JTable listsTable;
     private javax.swing.JCheckBox ocrCheckBox;
-    private javax.swing.JCheckBox ocrOnly;
+    private javax.swing.JCheckBox ocrOnlyCheckbox;
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
 }

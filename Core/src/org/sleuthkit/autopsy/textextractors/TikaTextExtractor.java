@@ -171,9 +171,30 @@ final class TikaTextExtractor implements TextExtractor {
      *
      * @return Flag indicating if OCR is set to be used.
      */
-    private boolean ocrEnabled() {
-        return TESSERACT_PATH != null && tesseractOCREnabled
-                && PlatformUtil.isWindowsOS() == true && PlatformUtil.is64BitOS();
+    /**
+     * Method to indicate if OCR should be performed on this image file. Checks
+     * to see if the limited OCR setting is enabled. If it is it will also check
+     * that one of the limiting factors is true.
+     *
+     * @param file    The AbstractFile which OCR might be performed on.
+     * @param boolean The configuration setting which indicates if limited OCR
+     *                is enabled in Keyword Search.
+     *
+     * @return True if limited OCR is not enabled or the image is greater than
+     *         100KB in size or the image is a derived file.
+     */
+    @Override
+    public boolean willUseOCR() {
+        // If Tesseract has been installed and is set to be used through
+        // configuration, then ocr is enabled. OCR can only currently be run on 64
+        // bit Windows OS.
+        return TESSERACT_PATH != null
+                && tesseractOCREnabled
+                && PlatformUtil.isWindowsOS() == true 
+                && PlatformUtil.is64BitOS()
+                // if limited OCR is not enabled or the image is greater than 100KB in size or the image is a derived file.
+                && content instanceof AbstractFile
+                && (!limitedOCREnabled || content.getSize() > LIMITED_OCR_SIZE_MIN || ((AbstractFile) content).getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED);
     }
 
     /**
@@ -200,7 +221,7 @@ final class TikaTextExtractor implements TextExtractor {
 
         // Handle images seperately so the OCR task can be cancelled.
         // See JIRA-4519 for the need to have cancellation in the UI and ingest.
-        if (ocrEnabled() && mimeType.toLowerCase().startsWith("image/") && useOcrOnFile(file)) {
+        if (willUseOCR() && mimeType.toLowerCase().startsWith("image/")) {
             InputStream imageOcrStream = performOCR(file);
             return new InputStreamReader(imageOcrStream, Charset.forName("UTF-8"));
         }
@@ -221,7 +242,7 @@ final class TikaTextExtractor implements TextExtractor {
         officeParserConfig.setUseSAXDocxExtractor(true);
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
 
-        if (ocrEnabled() && useOcrOnFile(file)) {
+        if (willUseOCR()) {
             // Configure OCR for Tika if it chooses to run OCR
             // during extraction
             TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
@@ -345,22 +366,6 @@ final class TikaTextExtractor implements TextExtractor {
                 inputFile.delete();
             }
         }
-    }
-
-    /**
-     * Method to indicate if OCR should be performed on this image file. Checks
-     * to see if the limited OCR setting is enabled. If it is it will also check
-     * that one of the limiting factors is true.
-     *
-     * @param file    The AbstractFile which OCR might be performed on.
-     * @param boolean The configuration setting which indicates if limited OCR
-     *                is enabled in Keyword Search.
-     *
-     * @return True if limited OCR is not enabled or the image is greater than
-     *         100KB in size or the image is a derived file.
-     */
-    private boolean useOcrOnFile(AbstractFile file) {
-        return !limitedOCREnabled || file.getSize() > LIMITED_OCR_SIZE_MIN || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED;
     }
 
     /**

@@ -36,6 +36,7 @@ public class ImageConfig {
 
     private boolean OCREnabled = false;
     private boolean limitedOCREnabled = false;
+    private boolean OCROnly = false;
     private List<String> ocrLanguages = null;
     private final TimedProcessTerminator ocrTimedTerminator = new TimedProcessTerminator(OCR_TIMEOUT_SECONDS);
 
@@ -50,6 +51,26 @@ public class ImageConfig {
     }
 
     /**
+     * Gets the OCR flag that has been set. By default this flag is turned off.
+     *
+     * @return Flag indicating if OCR is enabled.
+     */
+    public boolean getOCREnabled() {
+        return this.OCREnabled;
+    }
+    
+    /**
+     * Gets the limited OCR flag to indicate if OCR should be limited to larger
+     * images and images which were extracted from documents.
+     *
+     * @return Flag indicating if limited OCR is enabled. True if OCR should be
+     *         limited, false otherwise..
+     */
+    public boolean getLimitedOCREnabled() {
+        return limitedOCREnabled;
+    }
+    
+    /**
      * Enables the limiting OCR to be run on larger images and images which were
      * extracted from documents.
      *
@@ -58,15 +79,25 @@ public class ImageConfig {
     public void setLimitedOCREnabled(boolean enabled) {
         this.limitedOCREnabled = enabled;
     }
+    
+    /**
+     * Sets whether to only performs keyword search with OCR.
+     *
+     * @param enabled Only performs keyword search with OCR if true.
+     */
+    public void setOCROnly(boolean enabled) {
+        this.OCREnabled = enabled;
+    }
 
     /**
-     * Gets the OCR flag that has been set. By default this flag is turned off.
+     * Returns whether to only performs keyword search with OCR.
      *
-     * @return Flag indicating if OCR is enabled.
+     * @return Whether to only performs keyword search with OCR.
      */
-    public boolean getOCREnabled() {
+    public boolean getOCROnly() {
         return this.OCREnabled;
     }
+
 
     /**
      * Sets languages for OCR.  Can be null.
@@ -97,16 +128,5 @@ public class ImageConfig {
      */
     public ProcessTerminator getOCRTimeoutTerminator() {
         return ocrTimedTerminator;
-    }
-
-    /**
-     * Gets the limited OCR flag to indicate if OCR should be limited to larger
-     * images and images which were extracted from documents.
-     *
-     * @return Flag indicating if limited OCR is enabled. True if OCR should be
-     *         limited, false otherwise..
-     */
-    public boolean getLimitedOCREnabled() {
-        return limitedOCREnabled;
     }
 }

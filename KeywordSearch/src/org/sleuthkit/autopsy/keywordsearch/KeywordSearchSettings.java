@@ -134,24 +134,36 @@ class KeywordSearchSettings {
     }
 
     /**
-     * Save OCR setting to permanent storage
-     *
-     * @param enabled Is OCR enabled?
-     */
-    static void setOcrOption(boolean enabled) {
-        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, OCR_ENABLED, (enabled ? "true" : "false")); //NON-NLS
-    }
-
-    /**
      * Get OCR setting from permanent storage
      *
      * @return Is OCR enabled?
+     *
+     * @deprecated Please use KeywordSearchJobSettings instead.
      */
+    @Deprecated
     static boolean getOcrOption() {
         if (ModuleSettings.settingExists(PROPERTIES_OPTIONS, OCR_ENABLED)) {
             return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, OCR_ENABLED).equals("true"); //NON-NLS
         } else {
             return OCR_ENABLED_DEFAULT;
+        }
+    }
+
+    /**
+     * Gets the limited OCR flag to indicate if OCR should be limited to larger
+     * images and images which were extracted from documents.
+     *
+     * @return Flag indicating if limited OCR is enabled. True if OCR should be
+     *         limited, false otherwise.
+     *
+     * @deprecated Please use KeywordSearchJobSettings instead.
+     */
+    @Deprecated
+    static boolean getLimitedOcrOption() {
+        if (ModuleSettings.settingExists(PROPERTIES_OPTIONS, LIMITED_OCR_ENABLED)) {
+            return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, LIMITED_OCR_ENABLED).equals("true"); //NON-NLS
+        } else {
+            return LIMITED_OCR_ENABLED_DEFAULT;
         }
     }
 
@@ -246,45 +258,10 @@ class KeywordSearchSettings {
             logger.log(Level.INFO, "No configuration for UTF16 found, generating defaults..."); //NON-NLS
             KeywordSearchSettings.setStringExtractOption(StringsExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
         }
-        //setting OCR default (disabled by default)
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, OCR_ENABLED)) {
-            logger.log(Level.INFO, "No configuration for OCR found, generating defaults..."); //NON-NLS
-            KeywordSearchSettings.setOcrOption(OCR_ENABLED_DEFAULT);
-        }
-        //setting OCR default (disabled by default)
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, LIMITED_OCR_ENABLED)) {
-            logger.log(Level.INFO, "No configuration for OCR found, generating defaults..."); //NON-NLS
-            KeywordSearchSettings.setLimitedOcrOption(LIMITED_OCR_ENABLED_DEFAULT);
-        }
         //setting default Latin-1 Script
         if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())) {
             logger.log(Level.INFO, "No configuration for Scripts found, generating defaults..."); //NON-NLS
             ModuleSettings.setConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
-        }
-    }
-
-    /**
-     * Enables the limiting OCR to be run on larger images and images which were
-     * extracted from documents.
-     *
-     * @param enabled Flag indicating if OCR is enabled.
-     */
-    static void setLimitedOcrOption(boolean enabled) {
-        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, LIMITED_OCR_ENABLED, (enabled ? "true" : "false")); //NON-NLS
-    }
-
-    /**
-     * Gets the limited OCR flag to indicate if OCR should be limited to larger
-     * images and images which were extracted from documents.
-     *
-     * @return Flag indicating if limited OCR is enabled. True if OCR should be
-     *         limited, false otherwise..
-     */
-    static boolean getLimitedOcrOption() {
-        if (ModuleSettings.settingExists(PROPERTIES_OPTIONS, LIMITED_OCR_ENABLED)) {
-            return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, LIMITED_OCR_ENABLED).equals("true"); //NON-NLS
-        } else {
-            return LIMITED_OCR_ENABLED_DEFAULT;
         }
     }
 }
