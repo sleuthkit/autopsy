@@ -1123,7 +1123,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         private final List<AutoIngestJob> newPendingJobsList = new ArrayList<>();
         private final List<AutoIngestJob> newCompletedJobsList = new ArrayList<>();
-        private Lock currentDirLock;
 
         /**
          * Searches the input directories for manifest files. The search results
@@ -1131,27 +1130,29 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * list.
          */
         private void scan() {
-            synchronized (jobsLock) {
-                if (Thread.currentThread().isInterrupted()) {
-                    return;
-                }
-                try {
-                    newPendingJobsList.clear();
-                    newCompletedJobsList.clear();
-                    Files.walkFileTree(rootInputDirectory, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, this);
-                    Collections.sort(newPendingJobsList);
+
+            if (Thread.currentThread().isInterrupted()) {
+                return;
+            }
+            try {
+                newPendingJobsList.clear();
+                newCompletedJobsList.clear();
+                Files.walkFileTree(rootInputDirectory, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, this);
+                Collections.sort(newPendingJobsList);
+                synchronized (jobsLock) {
                     AutoIngestManager.this.pendingJobs = newPendingJobsList;
                     AutoIngestManager.this.completedJobs = newCompletedJobsList;
-
-                } catch (Exception ex) {
-                    /*
-                     * NOTE: Need to catch all unhandled exceptions here.
-                     * Otherwise uncaught exceptions will propagate up to the
-                     * calling thread and may stop it from running.
-                     */
-                    sysLogger.log(Level.SEVERE, String.format("Error scanning the input directory %s", rootInputDirectory), ex);
                 }
+
+            } catch (Exception ex) {
+                /*
+                 * NOTE: Need to catch all unhandled exceptions here. Otherwise
+                 * uncaught exceptions will propagate up to the calling thread
+                 * and may stop it from running.
+                 */
+                sysLogger.log(Level.SEVERE, String.format("Error scanning the input directory %s", rootInputDirectory), ex);
             }
+
             synchronized (scanMonitor) {
                 scanMonitor.notify();
             }
