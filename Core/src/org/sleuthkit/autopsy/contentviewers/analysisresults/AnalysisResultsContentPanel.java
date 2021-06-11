@@ -113,6 +113,9 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         Optional<AnalysisResult> selectedResult = nodeResults.getSelectedResult();
         if (selectedResult.isPresent()) {
             textPanel.scrollToReference(getAnchor(selectedResult.get()));
+        } else {
+            // otherwise, scroll to the beginning.
+            textPanel.setCaretPosition(0);
         }
     }
 
