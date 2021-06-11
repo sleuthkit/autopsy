@@ -215,6 +215,46 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         outline.getTableHeader().addMouseListener(outlineViewListener);
     }
+    
+    private static final int MIN_COLUMN_WIDTH = 30;
+    private static final int MAX_COLUMN_WIDTH = 300;
+    private static final int SAMPLE_ROW_NUM = 50;
+    private static final int COLUMN_PADDING = 10;
+    
+    // based on https://stackoverflow.com/questions/17627431/auto-resizing-the-jtable-column-widths
+    private void resizeColumnWidth(JTable table) {
+        final TableColumnModel columnModel = table.getColumnModel();
+
+        int availableTableWidth = table.getWidth();
+        for (int column = 0; column < table.getColumnCount(); column++) {
+            int width = MIN_COLUMN_WIDTH; // Min width
+            
+            TableColumn tableColumn = columnModel.getColumn(column);
+            TableCellRenderer headerRenderer = tableColumn.getHeaderRenderer();
+            if (headerRenderer == null) {
+                headerRenderer = table.getTableHeader().getDefaultRenderer();
+            }
+            Object headerValue = tableColumn.getHeaderValue();
+            Component headerComp = headerRenderer.getTableCellRendererComponent(table, headerValue, false, false, 0, column);
+            width = Math.max(headerComp.getPreferredSize().width + COLUMN_PADDING , width);
+            
+            for (int row = 0; row < Math.min(table.getRowCount(), SAMPLE_ROW_NUM); row++) {
+                TableCellRenderer renderer = table.getCellRenderer(row, column);
+                Component comp = table.prepareRenderer(renderer, row, column);
+                width = Math.max(comp.getPreferredSize().width + COLUMN_PADDING, width);
+            }
+            if(width > MAX_COLUMN_WIDTH)
+                width=MAX_COLUMN_WIDTH;
+            
+            if (column == table.getColumnCount() - 1) {
+                columnModel.getColumn(column).setMaxWidth(availableTableWidth);
+                columnModel.getColumn(column).setMinWidth(width);
+            } else {
+                columnModel.getColumn(column).setPreferredWidth(width);
+                availableTableWidth -= width;
+            }
+        }
+    }
 
     private void initializePagingSupport() {
         if (pagingSupport == null) {
@@ -434,7 +474,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
         }
 
-        setColumnWidths();
+        resizeColumnWidth(outline);
+        //setColumnWidths();
 
         /*
          * Load column sorting information from preferences file and apply it to
