@@ -248,6 +248,15 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         return explorerManager;
     }
 
+    /**
+     * Populate the data source browser with an updated list of the data sources
+     * and information about them.
+     *
+     * @param dsSummaryDialog      The dialog which contains this data source
+     *                             browser panel.
+     * @param selectedDataSourceId The object id for the data source which
+     *                             should be selected.
+     */
     void populateBrowser(DataSourceSummaryDialog dsSummaryDialog, Long selectedDataSourceId) {
         dsSummaryDialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (rootNodeWorker != null && !rootNodeWorker.isDone()) {
@@ -275,6 +284,10 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         rootNodeWorker.execute();
     }
 
+    /**
+     * Cancel the worker that updates the data source summary list and updates
+     * the data source summary browser.
+     */
     void cancel() {
         if (rootNodeWorker != null && !rootNodeWorker.isDone()) {
             rootNodeWorker.cancel(true);

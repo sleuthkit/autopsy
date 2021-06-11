@@ -161,6 +161,11 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     private javax.swing.JSplitPane dataSourceSummarySplitPane;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Populate the data source browser with the specified data source selected.
+     *
+     * @param selectedDataSource The data source which should be selected in the data source browser.
+     */
     void populatePanel(Long selectedDataSource) {
         dataSourcesPanel.populateBrowser(this, selectedDataSource);
     }
