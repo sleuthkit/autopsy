@@ -80,6 +80,7 @@ import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.Score;
 
 /**
@@ -108,17 +109,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             Case.Events.CONTENT_TAG_DELETED,
             Case.Events.CR_COMMENT_CHANGED,
             Case.Events.CURRENT_CASE);
-
-    /*
-     * Artifact types for which the unique path of the artifact's source content
-     * should be displayed in the node's property sheet.
-     */
-    private static final Integer[] SHOW_UNIQUE_PATH = new Integer[]{
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-    };
 
     /*
      * Artifact types for which the file metadata of the artifact's source file
@@ -650,12 +640,19 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     NO_DESCR,
                     actualMimeType));
         }
+        
+        BlackboardArtifact.Type artifactType = null;
+        try {
+            artifactType = artifact.getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to get type for artifact with id: " + artifact.getId());
+        }
 
         /*
          * If the type of the artifact represented by this node dictates the
          * addition of the source content's unique path, add it to the sheet.
          */
-        if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
+        if (artifactType != null && artifactType.getCategory() == Category.ANALYSIS_RESULT) {
             String sourcePath = ""; //NON-NLS
             try {
                 sourcePath = srcContent.getUniquePath();
