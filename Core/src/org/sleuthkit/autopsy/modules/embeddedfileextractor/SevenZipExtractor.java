@@ -808,6 +808,9 @@ class SevenZipExtractor {
                 logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure", e); //NON-NLS
                 //TODO decide if anything to cleanup, for now bailing
             }
+            
+            // Get the new files to be added to the case.
+            unpackedFiles = unpackedTree.getAllFileObjects();
 
         } catch (SevenZipException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, "Error unpacking file: " + archiveFile, ex); //NON-NLS
