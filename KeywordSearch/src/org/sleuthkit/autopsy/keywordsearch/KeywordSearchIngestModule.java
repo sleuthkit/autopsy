@@ -501,7 +501,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         ImageConfig imageConfig = new ImageConfig();
         imageConfig.setOCREnabled(settings.isOCREnabled());
         imageConfig.setLimitedOCREnabled(settings.isLimitedOCREnabled());
-        imageConfig.setOCROnly(settings.isOCROnly());
         ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
         Lookup extractionContext = Lookups.fixed(imageConfig, terminator);
         try {

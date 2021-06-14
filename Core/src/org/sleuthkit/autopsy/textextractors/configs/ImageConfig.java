@@ -36,7 +36,6 @@ public class ImageConfig {
 
     private boolean OCREnabled = false;
     private boolean limitedOCREnabled = false;
-    private boolean OCROnly = false;
     private List<String> ocrLanguages = null;
     private final TimedProcessTerminator ocrTimedTerminator = new TimedProcessTerminator(OCR_TIMEOUT_SECONDS);
 
@@ -79,25 +78,6 @@ public class ImageConfig {
     public void setLimitedOCREnabled(boolean enabled) {
         this.limitedOCREnabled = enabled;
     }
-    
-    /**
-     * Sets whether to only performs keyword search with OCR.
-     *
-     * @param enabled Only performs keyword search with OCR if true.
-     */
-    public void setOCROnly(boolean enabled) {
-        this.OCREnabled = enabled;
-    }
-
-    /**
-     * Returns whether to only performs keyword search with OCR.
-     *
-     * @return Whether to only performs keyword search with OCR.
-     */
-    public boolean getOCROnly() {
-        return this.OCREnabled;
-    }
-
 
     /**
      * Sets languages for OCR.  Can be null.
