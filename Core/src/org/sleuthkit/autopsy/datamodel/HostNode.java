@@ -212,7 +212,7 @@ public class HostNode extends DisplayableItemNode {
      * @param hosts The HostDataSources key.
      */
     HostNode(HostDataSources hosts) {
-        this(Children.create(new HostGroupingChildren(HOST_DATA_SOURCES, hosts.getHost()), false), hosts.getHost());
+        this(Children.create(new HostGroupingChildren(HOST_DATA_SOURCES, hosts.getHost()), true), hosts.getHost());
     }
 
     /**
@@ -222,7 +222,7 @@ public class HostNode extends DisplayableItemNode {
      * @param hostGrouping The HostGrouping key.
      */
     HostNode(HostGrouping hostGrouping) {
-        this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), false), hostGrouping.getHost());
+        this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), true), hostGrouping.getHost());
     }
 
     /**

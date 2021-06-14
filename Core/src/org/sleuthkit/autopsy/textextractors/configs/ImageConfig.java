@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.textextractors.configs;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.TimedProcessTerminator;
@@ -32,9 +34,9 @@ public class ImageConfig {
 
     private static final int OCR_TIMEOUT_SECONDS = 30 * 60;
 
-    private Boolean OCREnabled;
-    private Boolean limitedOCREnabled;
-    private List<String> ocrLanguages;
+    private boolean OCREnabled = false;
+    private boolean limitedOCREnabled = false;
+    private List<String> ocrLanguages = null;
     private final TimedProcessTerminator ocrTimedTerminator = new TimedProcessTerminator(OCR_TIMEOUT_SECONDS);
 
     /**
@@ -67,18 +69,20 @@ public class ImageConfig {
     }
 
     /**
-     * Sets languages for OCR.
+     * Sets languages for OCR.  Can be null.
      *
      * See PlatformUtil for list of installed language packs.
      *
      * @param languages List of languages to use
      */
     public void setOCRLanguages(List<String> languages) {
-        this.ocrLanguages = languages;
+        this.ocrLanguages = languages == null ? 
+                null : 
+                Collections.unmodifiableList(new ArrayList<>(languages));
     }
 
     /**
-     * Gets the list of languages OCR should perform.
+     * Gets the list of languages OCR should perform.  Can be null.
      *
      * @return Collection of OCR languages
      */
