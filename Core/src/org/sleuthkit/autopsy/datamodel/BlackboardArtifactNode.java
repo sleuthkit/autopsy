@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -181,6 +182,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                      */
                     unregisterListener();
                     contentCache.invalidateAll();
+                    keyCache.invalidateAll();
                 }
             } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
                 SCOData scoData = (SCOData) evt.getNewValue();
@@ -264,7 +266,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     @Beta
     static public BlackboardArtifactNodeKey createNodeKey(BlackboardArtifact artifact, boolean putAssocFileInLookup) throws TskCoreException {
         try {
-            return keyCache.get(artifact.getObjectID(), () -> new BlackboardArtifactNodeKey(artifact, putAssocFileInLookup));
+            return keyCache.get(artifact.getId(), () -> new BlackboardArtifactNodeKey(artifact, putAssocFileInLookup));
         } catch (ExecutionException ex) {
             throw new TskCoreException(String.format("Failed to get node key for artifact from cache id(%d)", artifact.getId()), ex);
         }
@@ -1103,6 +1105,24 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         public String getDeviceID() {
             return deviceId;
         }
+        
+        @Override
+        public boolean equals(Object that) {
+            if (this == that) {
+                return true;
+            } else if (!(that instanceof BlackboardArtifactNodeKey)) {
+                return false;
+            } else {
+                BlackboardArtifactNodeKey thatKey = (BlackboardArtifactNodeKey) that;
+                return this.artifact.getId() == thatKey.getArtifact().getId();
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(artifact.getId(), artifact.getArtifactID(), artifact.getArtifactTypeID());
+        }
+        
     }
 
     /**
