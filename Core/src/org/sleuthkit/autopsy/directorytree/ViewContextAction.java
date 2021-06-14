@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.TreeView;
@@ -275,6 +276,11 @@ public class ViewContextAction extends AbstractAction {
                     }
                 }
             }
+            
+            // if no node is found, do nothing
+            if (parentTreeViewNode == null) {
+                return;
+            }
 
             /*
              * Set the child selection info of the parent tree node, then select
@@ -377,6 +383,11 @@ public class ViewContextAction extends AbstractAction {
         Node dummyRootNode = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(contentBranch)), true);
         Children ancestorChildren = dummyRootNode.getChildren();
 
+        // if content is the data source provided, return that.
+        if (ancestorChildren.getNodesCount() == 1 && StringUtils.equals(ancestorChildren.getNodeAt(0).getName(), node.getName())) {
+            return node;
+        }
+        
         /*
         * Search the tree for the parent node. Note that this algorithm
         * simply discards "extra" ancestor nodes not shown in the tree,
