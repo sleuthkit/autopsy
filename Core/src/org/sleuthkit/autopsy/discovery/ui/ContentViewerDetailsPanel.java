@@ -75,7 +75,7 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
 
                 }
                 if (!useAssociatedFile || pathIdAttr != null) {
-                    node = new BlackboardArtifactNode(BlackboardArtifactNodeKey.createNodeKey(artifact, useAssociatedFile));
+                    node = new BlackboardArtifactNode(BlackboardArtifactNode.createNodeKey(artifact, useAssociatedFile));
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error getting Path ID Attribute for artifact with ID: " + artifact.getArtifactID(), ex);

@@ -581,7 +581,7 @@ final public class Accounts implements AutopsyVisitableItem {
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    list.add(BlackboardArtifactNodeKey.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_obj_id"))));
+                    list.add(BlackboardArtifactNode.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_obj_id"))));
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
@@ -1498,7 +1498,7 @@ final public class Accounts implements AutopsyVisitableItem {
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    list.add(BlackboardArtifactNodeKey.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_id"))));
+                    list.add(BlackboardArtifactNode.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_id"))));
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS

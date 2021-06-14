@@ -189,7 +189,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
                 try {
                     Content parentContent = thumbnail.getParent();
                     if (parentContent != null && parentContent instanceof BlackboardArtifact) {
-                        contentViewer.setNode(new BlackboardArtifactNode(BlackboardArtifactNodeKey.createNodeKey((BlackboardArtifact) parentContent)));
+                        contentViewer.setNode(new BlackboardArtifactNode(BlackboardArtifactNode.createNodeKey((BlackboardArtifact) parentContent)));
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Unable to get parent Content from AbstraceContent instance.", ex); //NON-NLS

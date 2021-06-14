@@ -31,6 +31,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -175,7 +176,7 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifactNodeKe
         }
 
         for (BlackboardArtifact bba : rootMessageMap.values()) {
-            list.add(BlackboardArtifactNodeKey.createNodeKey(bba));
+            list.add(BlackboardArtifactNode.createNodeKey(bba));
         }
 
         list.sort(new ThreadDateComparator());

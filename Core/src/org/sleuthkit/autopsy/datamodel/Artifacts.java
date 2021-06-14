@@ -665,7 +665,7 @@ public class Artifacts {
                 }
                 List<BlackboardArtifactNodeKey> toRet = new ArrayList<>();
                 for (BlackboardArtifact art : arts) {
-                    toRet.add(BlackboardArtifactNodeKey.createNodeKey(art));
+                    toRet.add(BlackboardArtifactNode.createNodeKey(art));
                 }
 
                 return toRet;

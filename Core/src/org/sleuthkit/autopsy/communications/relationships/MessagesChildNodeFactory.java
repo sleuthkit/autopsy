@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -109,7 +110,7 @@ public class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifactNod
                 }
 
                 if (threadIDs == null || threadIDs.contains(artifactThreadID)) {
-                    list.add(BlackboardArtifactNodeKey.createNodeKey(bba));
+                    list.add(BlackboardArtifactNode.createNodeKey(bba));
                 }
             }
         } catch (TskCoreException ex) {

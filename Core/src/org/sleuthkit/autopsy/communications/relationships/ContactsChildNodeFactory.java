@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT;
@@ -86,7 +87,7 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifactNode
 
             if (fromID == TSK_CONTACT) {
                 try {
-                    list.add(BlackboardArtifactNodeKey.createNodeKey(bba));
+                    list.add(BlackboardArtifactNode.createNodeKey(bba));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Failed create contact node keys.", ex); //NON-NLS
                 }

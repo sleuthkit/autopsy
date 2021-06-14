@@ -105,9 +105,9 @@ public class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<Abs
     @Override
     public AbstractContentNode<? extends Content> visit(BlackboardArtifact art) {
         try {
-            return new BlackboardArtifactNode(BlackboardArtifactNodeKey.createNodeKey(art));
+            return new BlackboardArtifactNode(BlackboardArtifactNode.createNodeKey(art));
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to creatNodeKey for artifact (%d)", art.getId()), ex);
+            logger.log(Level.SEVERE, String.format("Failed to create node for artifact due to failure to create node key (%d)", art.getId()), ex);
         }
         
         return null;

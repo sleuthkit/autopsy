@@ -47,9 +47,9 @@ final class CallLogNode extends BlackboardArtifactNode {
     
     final static String DURATION_PROP = "duration";
     
-    CallLogNode(BlackboardArtifactNodeKey nodeKey, String deviceID) { 
+    CallLogNode(BlackboardArtifactNodeKey nodeKey) { 
         super(nodeKey, Utils.getIconFilePath(Account.Type.PHONE));
-        setDisplayName(deviceID);
+        setDisplayName(nodeKey.getDeviceID());
     }
     
     @Override

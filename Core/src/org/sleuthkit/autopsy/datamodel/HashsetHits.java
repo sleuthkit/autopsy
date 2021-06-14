@@ -429,7 +429,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                 List<BlackboardArtifactNodeKey> nodeKeys = new ArrayList<>();
                 try {
                     for (AnalysisResult art : artifactHits.values()) {
-                        nodeKeys.add(BlackboardArtifactNodeKey.createNodeKey(art));
+                        nodeKeys.add(BlackboardArtifactNode.createNodeKey(art));
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Failed to create media viewer node key.", ex);

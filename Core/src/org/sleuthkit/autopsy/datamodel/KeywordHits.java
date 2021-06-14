@@ -948,7 +948,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 List<BlackboardArtifactNodeKey> keyList = new ArrayList<>();
                 try {
                     for (AnalysisResult art : artifactHits.values()) {
-                        keyList.add(BlackboardArtifactNodeKey.createNodeKey(art));
+                        keyList.add(BlackboardArtifactNode.createNodeKey(art));
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Failed to create node keys", ex); //NON-NLS

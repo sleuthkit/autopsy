@@ -28,7 +28,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -191,9 +191,9 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             BlackboardArtifact art = messageGroup.getData();
             if (art != null) {
                 try {
-                    dtc.viewArtifactContent(BlackboardArtifactNodeKey.createNodeKey(art));
+                    dtc.viewArtifactContent(BlackboardArtifactNode.createNodeKey(art));
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to create nodeKey for artifact.", ex);
+                    logger.log(Level.SEVERE, String.format("Failed to create the key for artifact (id=%d)", art.getId()), ex);
                 }
             }
         }
