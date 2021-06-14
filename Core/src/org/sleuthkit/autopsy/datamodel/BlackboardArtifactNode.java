@@ -1027,7 +1027,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          */
         private void initializeKeyData(boolean putAssocFileInLookup) throws TskCoreException {
             if (artifact == null) {
-                return;
+                throw new TskCoreException("Unable to create artifact key, the given artifact was null");
             }
 
             if (putAssocFileInLookup) {
