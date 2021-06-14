@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.DataSource;
@@ -59,7 +58,7 @@ final class DataSourceSummaryNode extends AbstractNode {
      *                       DataSources which are this nodes children
      */
     DataSourceSummaryNode(List<DataSourceSummary> dataSourceList) {
-        super(Children.create(new DataSourceSummaryChildren(dataSourceList), false));
+        super(Children.create(new DataSourceSummaryChildren(dataSourceList), true));
     }
 
     /**
