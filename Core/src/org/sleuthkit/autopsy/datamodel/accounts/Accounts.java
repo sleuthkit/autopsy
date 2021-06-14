@@ -578,15 +578,16 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "     AND blackboard_attributes.value_text = '" + accountType.getTypeName() + "'" //NON-NLS
                     + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause(); //NON-NLS
+            List<BlackboardArtifactNodeKey> newKeys = new ArrayList<>();
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    list.add(BlackboardArtifactNode.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_obj_id"))));
+                    newKeys.add(BlackboardArtifactNode.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_obj_id"))));
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
             }
-
+            list.addAll(newKeys);
             return true;
         }
 
@@ -1495,14 +1496,16 @@ final public class Accounts implements AutopsyVisitableItem {
                     + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause()
                     + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
+            List<BlackboardArtifactNodeKey> newKeys = new ArrayList<>();
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    list.add(BlackboardArtifactNode.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_id"))));
+                    newKeys.add(BlackboardArtifactNode.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_id"))));
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
             }
+            list.addAll(newKeys);
             return true;
         }
 
