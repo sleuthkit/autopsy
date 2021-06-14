@@ -29,7 +29,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
@@ -1062,7 +1064,7 @@ class ExtractRegistry extends Extract {
         
         File regfile = new File(regFilePath);
         List<BlackboardArtifact> newArtifacts = new ArrayList<>();
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(regfile))) {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(regfile), StandardCharsets.UTF_8))) {
             // Read the file in and create a Document and elements
             String userInfoSection = "User Information";
             String previousLine = null;
