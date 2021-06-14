@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@ import javax.swing.AbstractAction;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.datasourcesummary.ui.Bundle;
 
 /**
  * ViewSummaryInformationAction action for opening a Data Sources Summary Dialog
@@ -40,8 +39,8 @@ public final class ViewSummaryInformationAction extends AbstractAction {
      * Create a ViewSummaryInformationAction for the selected datasource.
      *
      * @param selectedDataSource - the data source which is currently selected
-                           and will be selected initially when the
-                           DataSourceSummaryDialog opens.
+     *                           and will be selected initially when the
+     *                           DataSourceSummaryDialog opens.
      */
     @Messages({"ViewSummaryInformationAction.name.text=View Summary Information"})
     public ViewSummaryInformationAction(Long selectedDataSource) {
@@ -54,10 +53,7 @@ public final class ViewSummaryInformationAction extends AbstractAction {
         SwingUtilities.invokeLater(() -> {
             Frame mainWindow = WindowManager.getDefault().getMainWindow();
             dataSourceSummaryDialog = new DataSourceSummaryDialog(mainWindow);
-            //allow dialog to be closed when actions performed
-            dataSourceSummaryDialog.enableObserver();
-            //select the specifed data source
-            dataSourceSummaryDialog.selectDataSource(selectDataSource);
+            dataSourceSummaryDialog.populatePanel(selectDataSource);
             dataSourceSummaryDialog.setResizable(true);
             dataSourceSummaryDialog.setLocationRelativeTo(mainWindow);
             dataSourceSummaryDialog.setVisible(true);
