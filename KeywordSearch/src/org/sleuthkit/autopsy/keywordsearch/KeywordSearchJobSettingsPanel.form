@@ -36,20 +36,20 @@
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                       <Component id="keywordSearchEncodings" min="-2" max="-2" attributes="0"/>
                                   </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                                      <Component id="languagesValLabel" min="-2" pref="274" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="ocrCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="limitedOcrCheckbox" min="-2" max="-2" attributes="0"/>
+                                          <Component id="ocrOnlyCheckbox" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                  </Group>
                               </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                              <Component id="languagesValLabel" min="-2" pref="274" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="ocrCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="limitedOcrCheckbox" min="-2" max="-2" attributes="0"/>
-                                  <Component id="ocrOnlyCheckbox" min="-2" max="-2" attributes="0"/>
-                              </Group>
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>

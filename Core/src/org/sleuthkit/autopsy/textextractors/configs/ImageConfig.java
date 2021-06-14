@@ -35,7 +35,6 @@ public class ImageConfig {
     private static final int OCR_TIMEOUT_SECONDS = 30 * 60;
 
     private boolean OCREnabled = false;
-    private boolean limitedOCREnabled = false;
     private List<String> ocrLanguages = null;
     private final TimedProcessTerminator ocrTimedTerminator = new TimedProcessTerminator(OCR_TIMEOUT_SECONDS);
 
@@ -58,27 +57,6 @@ public class ImageConfig {
         return this.OCREnabled;
     }
     
-    /**
-     * Gets the limited OCR flag to indicate if OCR should be limited to larger
-     * images and images which were extracted from documents.
-     *
-     * @return Flag indicating if limited OCR is enabled. True if OCR should be
-     *         limited, false otherwise..
-     */
-    public boolean getLimitedOCREnabled() {
-        return limitedOCREnabled;
-    }
-    
-    /**
-     * Enables the limiting OCR to be run on larger images and images which were
-     * extracted from documents.
-     *
-     * @param enabled Flag indicating if OCR is enabled.
-     */
-    public void setLimitedOCREnabled(boolean enabled) {
-        this.limitedOCREnabled = enabled;
-    }
-
     /**
      * Sets languages for OCR.  Can be null.
      *

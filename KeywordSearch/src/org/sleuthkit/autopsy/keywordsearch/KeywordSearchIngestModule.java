@@ -87,6 +87,8 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 })
 public final class KeywordSearchIngestModule implements FileIngestModule {
 
+    private static final int LIMITED_OCR_SIZE_MIN = 100 * 1024;
+
     /**
      * generally text extractors should ignore archives and let unpacking
      * modules take care of them
@@ -352,10 +354,18 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         // if ocr only is enabled and not an ocr file, return
         Optional<TextExtractor> extractorOpt = getExtractor(abstractFile);
 
-        // if ocr only and the extractor is not present or will not perform ocr on this file, continue
-        if (settings.isOCREnabled() && settings.isOCROnly() && 
-                (!extractorOpt.isPresent() || !extractorOpt.get().willUseOCR())) {
-            return ProcessResult.OK;
+        if (settings.isOCREnabled()) {
+            // if ocr only and the extractor is not present or will not perform ocr on this file, continue
+            if (settings.isOCROnly() && (!extractorOpt.isPresent() || !extractorOpt.get().willUseOCR())) {
+                return ProcessResult.OK;
+            }
+
+            // if limited ocr is enabled, the extractor will use ocr, and 
+            // the file would not be subject to limited ocr reading, continue
+            if (settings.isLimitedOCREnabled() && extractorOpt.isPresent() && 
+                    extractorOpt.get().willUseOCR() && !isLimitedOCRFile(abstractFile)) {
+                return ProcessResult.OK;
+            }
         }
 
         if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
@@ -436,6 +446,19 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     }
 
     /**
+     * Returns true if file should have text extracted when limited OCR setting
+     * is specified.
+     *
+     * @param aFile The abstract file.
+     *
+     * @return True if file should have text extracted when limited OCR setting
+     *         is on.
+     */
+    private boolean isLimitedOCRFile(AbstractFile aFile) {
+        return (aFile.getSize() > LIMITED_OCR_SIZE_MIN || ((AbstractFile) aFile).getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED);
+    }
+
+    /**
      * Posts inbox message with summary of text_ingested files
      */
     private void postIndexSummary() {
@@ -500,7 +523,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private Optional<TextExtractor> getExtractor(AbstractFile abstractFile) {
         ImageConfig imageConfig = new ImageConfig();
         imageConfig.setOCREnabled(settings.isOCREnabled());
-        imageConfig.setLimitedOCREnabled(settings.isLimitedOCREnabled());
         ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
         Lookup extractionContext = Lookups.fixed(imageConfig, terminator);
         try {

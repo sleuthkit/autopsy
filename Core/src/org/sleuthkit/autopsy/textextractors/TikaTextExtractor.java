@@ -134,7 +134,6 @@ final class TikaTextExtractor implements TextExtractor {
     // Used to log to the tika file that is why it uses the java.util.logging.logger class instead of the Autopsy one
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
-    private static final int LIMITED_OCR_SIZE_MIN = 100 * 1024;
     private final ThreadFactory tikaThreadFactory
             = new ThreadFactoryBuilder().setNameFormat("tika-reader-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(tikaThreadFactory);
@@ -144,7 +143,6 @@ final class TikaTextExtractor implements TextExtractor {
     private final Content content;
 
     private boolean tesseractOCREnabled;
-    private boolean limitedOCREnabled;
     private static final String TESSERACT_DIR_NAME = "Tesseract-OCR"; //NON-NLS
     private static final String TESSERACT_EXECUTABLE = "tesseract.exe"; //NON-NLS
     private static final File TESSERACT_PATH = locateTesseractExecutable();
@@ -190,11 +188,10 @@ final class TikaTextExtractor implements TextExtractor {
         // bit Windows OS.
         return TESSERACT_PATH != null
                 && tesseractOCREnabled
-                && PlatformUtil.isWindowsOS() == true 
+                && PlatformUtil.isWindowsOS()
                 && PlatformUtil.is64BitOS()
                 // if limited OCR is not enabled or the image is greater than 100KB in size or the image is a derived file.
-                && content instanceof AbstractFile
-                && (!limitedOCREnabled || content.getSize() > LIMITED_OCR_SIZE_MIN || ((AbstractFile) content).getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED);
+                && content instanceof AbstractFile;
     }
 
     /**
@@ -557,7 +554,6 @@ final class TikaTextExtractor implements TextExtractor {
             ImageConfig configInstance = context.lookup(ImageConfig.class);
             if (configInstance != null) {
                 this.tesseractOCREnabled = configInstance.getOCREnabled();
-                this.limitedOCREnabled = configInstance.getLimitedOCREnabled();
 
                 if (Objects.nonNull(configInstance.getOCRLanguages())) {
                     this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());

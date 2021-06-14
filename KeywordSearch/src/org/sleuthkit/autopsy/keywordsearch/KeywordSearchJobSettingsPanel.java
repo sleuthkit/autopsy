@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.StringsExtr
  * Ingest job settings panel for keyword search file ingest modules.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSettingsPanel implements PropertyChangeListener {
+public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSettingsPanel implements PropertyChangeListener {       
     private final KeywordListsTableModel tableModel = new KeywordListsTableModel();
     private final List<String> keywordListNames = new ArrayList<>();
     private final Map<String, Boolean> keywordListStates = new HashMap<>();
@@ -330,17 +330,17 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(encodingsLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(keywordSearchEncodings)))
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addComponent(languagesValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(ocrCheckBox)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(21, 21, 21)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(limitedOcrCheckbox)
-                                    .addComponent(ocrOnlyCheckbox))))
+                                        .addComponent(keywordSearchEncodings))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(10, 10, 10)
+                                        .addComponent(languagesValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(ocrCheckBox)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(21, 21, 21)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(limitedOcrCheckbox)
+                                            .addComponent(ocrOnlyCheckbox))))
+                                .addGap(0, 0, Short.MAX_VALUE)))
                         .addContainerGap())))
         );
         layout.setVerticalGroup(
