@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -287,8 +288,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     private static Lookup createLookup(BlackboardArtifactNodeKey nodeKey) {
         Content content;
-        if (nodeKey.isLookupIsAssociatedFile()) {
-            content = nodeKey.getAssociatedFile();
+        Optional<Content> associatedFile = nodeKey.getAssociatedFile();
+        if (associatedFile.isPresent()) {
+            content = associatedFile.get();
             
             if (content == null) {
                 return Lookups.fixed(nodeKey.getArtifact());
@@ -806,27 +808,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Gets the name of the root ancestor of the source content for the artifact
-     * represented by this node.
-     *
-     * @return The root ancestor name or the empty string if an error occurs.
-     */
-    String getRootAncestorName() {
-        String parentName = srcContent.getName();
-        Content parent = srcContent;
-        try {
-            while ((parent = parent.getParent()) != null) {
-                parentName = parent.getName();
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error getting root ancestor name for source content (artifact objID={0})", artifact.getId()), ex); //NON-NLS
-            return "";
-        }
-        return parentName;
-    }
-
-    /**
-     * Adds a "custom" property to the property sheet of this node, indepoendent
+     * Adds a "custom" property to the property sheet of this node, independent
      * of the artifact this node represents or its source content.
      *
      * @param property The custom property.
@@ -963,7 +945,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public static class BlackboardArtifactNodeKey {
 
         private final BlackboardArtifact artifact;
-        private final boolean lookupIsAssociatedFile;
 
         private Content sourceContent;
         private Content associatedFile;
@@ -990,7 +971,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * from cache.
          *
          * @param artifact               The artifact to represent.
-         * @param lookupIsAssociatedFile True if the Content lookup should be
+         * @param putAssocFileInLookup   True if the Content lookup should be
          *                               made for the associated file instead of
          *                               the parent file.
          *
@@ -999,9 +980,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * @throws TskCoreException
          */
         @Beta
-        static public BlackboardArtifactNodeKey createNodeKey(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) throws TskCoreException {
+        static public BlackboardArtifactNodeKey createNodeKey(BlackboardArtifact artifact, boolean putAssocFileInLookup) throws TskCoreException {
             try {
-                return keyCache.get(artifact.getObjectID(), () -> new BlackboardArtifactNodeKey(artifact, lookupIsAssociatedFile));
+                return keyCache.get(artifact.getObjectID(), () -> new BlackboardArtifactNodeKey(artifact, putAssocFileInLookup));
             } catch (ExecutionException ex) {
                 throw new TskCoreException(String.format("Failed to get node key for artifact from cache id(%d)", artifact.getId()), ex);
             }
@@ -1025,11 +1006,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * @param artifact
          * @param lookupIsAssociatedFile
          */
-        private BlackboardArtifactNodeKey(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
+        private BlackboardArtifactNodeKey(BlackboardArtifact artifact, boolean putAssocFileInLookup) {
             this.artifact = artifact;
-            this.lookupIsAssociatedFile = lookupIsAssociatedFile;
             try {
-                initializeKeyData();
+                initializeKeyData(putAssocFileInLookup);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, MessageFormat.format("Failed to create artifact node key for (artifact objID={0})", artifact.getId()), ex); //NON-NLS
             }
@@ -1040,12 +1020,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          *
          * @throws TskCoreException
          */
-        private void initializeKeyData() throws TskCoreException {
+        private void initializeKeyData(boolean putAssocFileInLookup) throws TskCoreException {
             if (artifact == null) {
                 return;
             }
 
-            if (lookupIsAssociatedFile) {
+            if (putAssocFileInLookup) {
                 try {
                     associatedFile = getPathIdFile(artifact);
                 } catch (ExecutionException ex) {
@@ -1084,17 +1064,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
 
         /**
-         * Returns whether or not the associated file should be used instead of
-         * the parent file when creating a node lookup.
-         *
-         * @return True if the associated file should be used.
-         */
-        @Beta
-        public boolean isLookupIsAssociatedFile() {
-            return lookupIsAssociatedFile;
-        }
-
-        /**
          * The artifacts parent\source content object.
          *
          * @return
@@ -1109,8 +1078,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * @return The associated file or null if lookupIsAssociatedFile was
          *         false or none was found.
          */
-        public Content getAssociatedFile() {
-            return associatedFile;
+        public Optional<Content> getAssociatedFile() {
+            return Optional.ofNullable(associatedFile);
         }
 
         /**
