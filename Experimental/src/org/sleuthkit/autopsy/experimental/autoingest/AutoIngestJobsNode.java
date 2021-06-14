@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +69,7 @@ final class AutoIngestJobsNode extends AbstractNode {
      *                 refresh events
      */
     AutoIngestJobsNode(AutoIngestMonitor monitor, AutoIngestJobStatus status, EventBus eventBus) {
-        super(Children.create(new AutoIngestNodeChildren(monitor, status, eventBus), false));
+        super(Children.create(new AutoIngestNodeChildren(monitor, status, eventBus), true));
         refreshChildrenEventBus = eventBus;
     }
 
