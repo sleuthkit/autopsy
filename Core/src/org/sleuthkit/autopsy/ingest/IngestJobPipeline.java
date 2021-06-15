@@ -789,11 +789,8 @@ final class IngestJobPipeline {
                  * progress snapshots and for the file ingest progress bar if
                  * running with a GUI.
                  */
-                long filesToProcess = dataSource.accept(new GetFilesCountVisitor()) - processedFiles;
+                long filesToProcess = dataSource.accept(new GetFilesCountVisitor());
                 synchronized (fileIngestProgressLock) {
-                    if (processedFiles <= filesToProcess) {
-                        filesToProcess -= processedFiles;
-                    }
                     estimatedFilesToProcess = filesToProcess;
                     if (doUI && fileIngestProgressBar != null) {
                         fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
