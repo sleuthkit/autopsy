@@ -288,7 +288,7 @@ public class ViewContextAction extends AbstractAction {
             simply returns the first one that it finds. Instead we have to loop over all
             data sources with that name, and make sure we find the correct one.
              */
-            List<Node> dataSourceLevelNodes = Stream.of(rootChildren.getNodes())
+            List<Node> dataSourceLevelNodes = Stream.of(rootChildren.getNodes(true))
                     .flatMap(rootNode -> getDataSourceLevelNodes(rootNode).stream())
                     .collect(Collectors.toList());
 
@@ -380,12 +380,12 @@ public class ViewContextAction extends AbstractAction {
                 || DataSourcesNode.getNameIdentifier().equals(node.getLookup().lookup(String.class))
                 || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
             Children children = node.getChildren();
-            Node[] childNodes = children == null ? null : children.getNodes();
+            Node[] childNodes = children == null ? null : children.getNodes(true);
             if (childNodes == null) {
                 return Collections.emptyList();
             }
 
-            return Stream.of(node.getChildren().getNodes())
+            return Stream.of(node.getChildren().getNodes(true))
                     .flatMap(parent -> getDataSourceLevelNodes(parent).stream())
                     .collect(Collectors.toList());
         } else {
@@ -441,8 +441,9 @@ public class ViewContextAction extends AbstractAction {
         Node parentTreeViewNode = null;
         for (int i = 0; i < ancestorChildren.getNodesCount(); i++) {
             Node ancestorNode = ancestorChildren.getNodeAt(i);
-            for (int j = 0; j < treeNodeChildren.getNodesCount(); j++) {
-                Node treeNode = treeNodeChildren.getNodeAt(j);
+            Node[] treeNodeChilds = treeNodeChildren.getNodes(true);
+            for (int j = 0; j < treeNodeChilds.length; j++) {
+                Node treeNode = treeNodeChilds[j];
                 if (ancestorNode.getName().equals(treeNode.getName())) {
                     parentTreeViewNode = treeNode;
                     treeNodeChildren = treeNode.getChildren();
