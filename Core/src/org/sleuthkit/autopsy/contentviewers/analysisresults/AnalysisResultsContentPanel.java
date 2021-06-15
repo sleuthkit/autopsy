@@ -18,12 +18,9 @@
  */
 package org.sleuthkit.autopsy.contentviewers.analysisresults;
 
-import java.awt.Color;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
-import javax.swing.JLabel;
-import javax.swing.text.html.HTMLEditorKit;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -31,6 +28,8 @@ import org.jsoup.nodes.Element;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.contentviewers.analysisresults.AnalysisResultsViewModel.NodeResults;
 import org.sleuthkit.autopsy.contentviewers.analysisresults.AnalysisResultsViewModel.ResultDisplayAttributes;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Score;
 
@@ -38,59 +37,21 @@ import org.sleuthkit.datamodel.Score;
  * Displays a list of analysis results in a panel.
  */
 public class AnalysisResultsContentPanel extends javax.swing.JPanel {
-
+    
     private static final long serialVersionUID = 1L;
-        
+    
     private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
-
-    private static final String DEFAULT_FONT_FAMILY = new JLabel().getFont().getFamily();
-    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
-    private static final Color DEFAULT_BACKGROUND = new JLabel().getBackground();
-
-    // html stylesheet classnames for components
-    private static final String ANALYSIS_RESULTS_CLASS_PREFIX = "analysisResult_";
-    private static final String SPACED_SECTION_CLASSNAME = ANALYSIS_RESULTS_CLASS_PREFIX + "spacedSection";
-    private static final String SUBSECTION_CLASSNAME = ANALYSIS_RESULTS_CLASS_PREFIX + "subsection";
-    private static final String HEADER_CLASSNAME = ANALYSIS_RESULTS_CLASS_PREFIX + "header";
-    public static final String MESSAGE_CLASSNAME = ANALYSIS_RESULTS_CLASS_PREFIX + "message";
-    public static final String TD_CLASSNAME = ANALYSIS_RESULTS_CLASS_PREFIX + "td";
 
     // Anchors are inserted into the navigation so that the viewer can navigate to a selection.  
     // This is the prefix of those anchors.
     private static final String RESULT_ANCHOR_PREFIX = "AnalysisResult_";
-
-    // how big the header should be
-    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE + 2;
-
-    // spacing occurring after an item
-    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE / 2;
-    private static final int CELL_SPACING = DEFAULT_FONT_SIZE / 2;
-
-    // the subsection indent
-    private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
-
-    // additional styling for components
-    private static final String STYLE_SHEET_RULE
-            = String.format(" .%s { font-size: %dpt;font-style:italic; margin: 0px; padding: 0px; } ", MESSAGE_CLASSNAME, DEFAULT_FONT_SIZE)
-            + String.format(" .%s { font-family: %s; font-size: %dpt; font-weight: bold; margin: 0px; padding: 0px; } ",
-                    HEADER_CLASSNAME, DEFAULT_FONT_FAMILY, HEADER_FONT_SIZE)
-            + String.format(" .%s { vertical-align: top; font-family: %s; font-size: %dpt; text-align: left; margin: 0pt; padding: 0px %dpt 0px 0px;} ",
-                    TD_CLASSNAME, DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" .%s { margin-top: %dpt; } ", SPACED_SECTION_CLASSNAME, DEFAULT_SECTION_SPACING)
-            + String.format(" .%s { padding-left: %dpt; }", SUBSECTION_CLASSNAME, DEFAULT_SUBSECTION_LEFT_PAD);
-    
-
 
     /**
      * Creates new form AnalysisResultsContentViewer
      */
     public AnalysisResultsContentPanel() {
         initComponents();
-
-        textPanel.setContentType("text/html;charset=UTF-8"); //NON-NLS
-        HTMLEditorKit kit = new HTMLEditorKit();
-        textPanel.setEditorKit(kit);
-        kit.getStyleSheet().addRule(STYLE_SHEET_RULE);
+        ContentViewerHtmlStyles.setupHtmlJTextPane(textPanel);
     }
 
     /**
@@ -99,10 +60,11 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
      * @param message The message to be displayed.
      */
     void showMessage(String message) {
+        ContentViewerHtmlStyles.setStyles(textPanel);
         textPanel.setText("<html><head></head><body>"
-                + MessageFormat.format("<p class='{0}'>{1}</p>",
-                        MESSAGE_CLASSNAME,
-                        message == null ? "" : message)
+                + MessageFormat.format("<p class=\"{0}\">{1}</p>",
+                        ContentViewerHtmlStyles.getMessageClassName(),
+                        message == null ? "" : EscapeUtil.escapeHtml(message))
                 + "</body></html>");
     }
 
@@ -137,12 +99,16 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         List<ResultDisplayAttributes> displayAttributes = nodeResults.getAnalysisResults();
         for (int idx = 0; idx < displayAttributes.size(); idx++) {
             AnalysisResultsViewModel.ResultDisplayAttributes resultAttrs = displayAttributes.get(idx);
-            appendResult(body, idx, resultAttrs);
+            Element sectionDiv = appendResult(body, idx, resultAttrs);
+            if (idx > 0 || aggregateScore.isPresent()) {
+                sectionDiv.attr("class", ContentViewerHtmlStyles.getSpacedSectionClassName());
+            }
         }
 
         // set the body html
+        ContentViewerHtmlStyles.setStyles(textPanel);
         textPanel.setText(document.html());
-        
+
         // if there is a selected result scroll to it
         Optional<AnalysisResult> selectedResult = nodeResults.getSelectedResult();
         if (selectedResult.isPresent()) {
@@ -155,48 +121,57 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
 
     /**
      * Returns the anchor id to use with the analysis result (based on the id).
+     *
      * @param analysisResult The analysis result.
+     *
      * @return The anchor id.
      */
     private String getAnchor(AnalysisResult analysisResult) {
         return RESULT_ANCHOR_PREFIX + analysisResult.getId();
     }
 
-
     /**
      * Appends a result item to the parent element of an html document.
+     *
      * @param parent The parent element.
-     * @param index The index of the item in the list of all items.
-     * @param attrs The attributes of this item.
+     * @param index  The index of the item in the list of all items.
+     * @param attrs  The attributes of this item.
+     *
+     * @return The result div.
      */
     @NbBundle.Messages({"# {0} - analysisResultsNumber",
         "AnalysisResultsContentPanel_result_headerKey=Analysis Result {0}"
     })
-    private void appendResult(Element parent, int index, AnalysisResultsViewModel.ResultDisplayAttributes attrs) {
+    private Element appendResult(Element parent, int index, AnalysisResultsViewModel.ResultDisplayAttributes attrs) {
         // create a new section with appropriate header
         Element sectionDiv = appendSection(parent,
                 Bundle.AnalysisResultsContentPanel_result_headerKey(index + 1),
                 Optional.ofNullable(getAnchor(attrs.getAnalysisResult())));
-        
+
         // create a table
         Element table = sectionDiv.appendElement("table");
-        table.attr("class", SUBSECTION_CLASSNAME);
-
+        table.attr("class", ContentViewerHtmlStyles.getIndentedClassName());
+        
         Element tableBody = table.appendElement("tbody");
 
         // append a row for each item
         for (Pair<String, String> keyVal : attrs.getAttributesToDisplay()) {
             Element row = tableBody.appendElement("tr");
             String keyString = keyVal.getKey() == null ? "" : keyVal.getKey() + ":";
-            row.appendElement("td")
+            Element keyTd = row.appendElement("td")
+                    .attr("class", ContentViewerHtmlStyles.getTextClassName());
+            
+            keyTd.appendElement("span")
                     .text(keyString)
-                    .attr("class", TD_CLASSNAME);
+                    .attr("class", ContentViewerHtmlStyles.getKeyColumnClassName());
 
             String valueString = keyVal.getValue() == null ? "" : keyVal.getValue();
             row.appendElement("td")
                     .text(valueString)
-                    .attr("class", TD_CLASSNAME);
+                    .attr("class", ContentViewerHtmlStyles.getTextClassName());
         }
+        
+        return sectionDiv;
     }
 
     /**
@@ -210,21 +185,25 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
      */
     private Element appendSection(Element parent, String headerText, Optional<String> anchorId) {
         Element sectionDiv = parent.appendElement("div");
-        
+
         // append an anchor tag if there is one
+        Element anchorEl = null;
         if (anchorId.isPresent()) {
-            Element anchorEl = sectionDiv.appendElement("a");
+            anchorEl = sectionDiv.appendElement("a");
             anchorEl.attr("name", anchorId.get());
+            anchorEl.attr("style", "padding: 0px; margin: 0px; display: inline-block;");
         }
 
-        // set the class for the section
-        sectionDiv.attr("class", SPACED_SECTION_CLASSNAME);
-        
         // append the header
-        Element header = sectionDiv.appendElement("h1");
-        header.text(headerText);
-        header.attr("class", HEADER_CLASSNAME);
+        Element header = null;
+        header = (anchorEl == null)
+                ? sectionDiv.appendElement("h1")
+                : anchorEl.appendElement("h1");
         
+        header.text(headerText);
+        header.attr("class", ContentViewerHtmlStyles.getHeaderClassName());
+        header.attr("style", "display: inline-block");
+
         // return the section element
         return sectionDiv;
     }
@@ -244,7 +223,6 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         setPreferredSize(new java.awt.Dimension(100, 58));
 
         textPanel.setEditable(false);
-        textPanel.setBackground(DEFAULT_BACKGROUND);
         textPanel.setName(""); // NOI18N
         textPanel.setPreferredSize(new java.awt.Dimension(600, 52));
         scrollPane.setViewportView(textPanel);

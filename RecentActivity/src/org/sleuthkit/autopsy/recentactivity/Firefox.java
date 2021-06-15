@@ -592,7 +592,8 @@ class Firefox extends Extract {
                     bbartifacts.add(webDownloadArtifact);
 
                     // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
-                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
+                    for (AbstractFile downloadedFile : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, 
+                            FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
                         bbartifacts.add(createAssociatedArtifact(downloadedFile, webDownloadArtifact));
                         break;
                     }
@@ -727,7 +728,8 @@ class Firefox extends Extract {
                     bbartifacts.add(webDownloadArtifact);
 
                     // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
-                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
+                    for (AbstractFile downloadedFile : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, 
+                            FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
                         bbartifacts.add(createAssociatedArtifact(downloadedFile, webDownloadArtifact));
                         break;
                     }

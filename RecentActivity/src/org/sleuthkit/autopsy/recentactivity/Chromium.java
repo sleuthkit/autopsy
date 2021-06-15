@@ -633,7 +633,7 @@ class Chromium extends Extract {
                     BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
                     bbartifacts.add(webDownloadArtifact);
                     String normalizedFullPath = FilenameUtils.normalize(fullPath, true);
-                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(normalizedFullPath), FilenameUtils.getPath(normalizedFullPath))) {
+                    for (AbstractFile downloadedFile : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, FilenameUtils.getName(normalizedFullPath), FilenameUtils.getPath(normalizedFullPath))) {
                         bbartifacts.add(createAssociatedArtifact(downloadedFile, webDownloadArtifact));
                         break;
                     }

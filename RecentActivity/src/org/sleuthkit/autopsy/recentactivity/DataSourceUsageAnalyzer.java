@@ -157,17 +157,13 @@ class DataSourceUsageAnalyzer extends Extract {
      * does not exist with the given description.
      *
      * @param osType - the OS_TYPE to check for
-     *
-     * @return true if any specified files exist false if none exist
      */
     private void checkIfOsSpecificVolume(ExtractOs.OS_TYPE osType) throws TskCoreException {
-        FileManager fileManager = currentCase.getServices().getFileManager();
         for (String filePath : osType.getFilePaths()) {
-            for (AbstractFile file : fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
-                if ((file.getParentPath() + file.getName()).equals(filePath)) {
-                    createDataSourceUsageArtifact(osType.getDsUsageLabel());
-                    return;
-                }
+            for (AbstractFile file : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, 
+                    FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
+                createDataSourceUsageArtifact(osType.getDsUsageLabel());
+                return;
             }
         }
     }
