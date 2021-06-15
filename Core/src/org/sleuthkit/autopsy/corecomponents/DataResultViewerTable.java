@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.corecomponents;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Cursor;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -49,6 +47,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import static javax.swing.SwingConstants.CENTER;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
@@ -106,6 +105,27 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
 
+    // How many rows to sample in order to determine column width.
+    private static final int SAMPLE_ROW_NUM = 100;
+
+    // The padding to be added in addition to content size when considering column width.
+    private static final int COLUMN_PADDING = 15;
+
+    // The minimum column width.
+    private static final int MIN_COLUMN_WIDTH = 30;
+
+    // The maximum column width.
+    private static final int MAX_COLUMN_WIDTH = 300;
+
+    // The minimum row height to use when calculating whether scroll bar will be used.
+    private static final int MIN_ROW_HEIGHT = 10;
+
+    // The width of the scroll bar.
+    private static final int SCROLL_BAR_WIDTH = ((Integer) UIManager.get("ScrollBar.width")).intValue();
+
+    // Any additional padding to be used for the first column.
+    private static final int FIRST_COL_ADDITIONAL_WIDTH = 0;
+
     private static final String NOTEPAD_ICON_PATH = "org/sleuthkit/autopsy/images/notepad16.png";
     private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
     private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
@@ -152,7 +172,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * OutlineView to the actions global context.
      *
      * @param explorerManager The explorer manager of the ancestor top
-     * component.
+     *                        component.
      */
     public DataResultViewerTable(ExplorerManager explorerManager) {
         this(explorerManager, Bundle.DataResultViewerTable_title());
@@ -165,8 +185,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * in the OutlineView to the actions global context.
      *
      * @param explorerManager The explorer manager of the ancestor top
-     * component.
-     * @param title The title.
+     *                        component.
+     * @param title           The title.
      */
     public DataResultViewerTable(ExplorerManager explorerManager, String title) {
         super(explorerManager);
@@ -364,6 +384,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
              */
             if (rootNode != null && rootNode.getChildren().getNodesCount() > 0) {
                 this.getExplorerManager().setRootContext(this.rootNode);
+                outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
                 setupTable();
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
@@ -415,13 +436,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (propsExist) {
             firstProp = props.remove(0);
         }
-
-        /*
-         * show the horizontal scroll panel and show all the content & header If
-         * there is only one column (which was removed from props above) Just
-         * let the table resize itself.
-         */
-        outline.setAutoResizeMode((props.isEmpty()) ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
 
         assignColumns(props); // assign columns to match the properties
         if (firstProp != null) {
@@ -507,87 +521,59 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /*
      * Sets the column widths for the child OutlineView of this tabular results
-     * viewer.
+     * viewer providing any additional width to last column.
      */
     protected void setColumnWidths() {
-        if (rootNode.getChildren().getNodesCount() != 0) {
-            final Graphics graphics = outlineView.getGraphics();
+        // based on https://stackoverflow.com/questions/17627431/auto-resizing-the-jtable-column-widths
+        final TableColumnModel columnModel = outline.getColumnModel();
 
-            if (graphics != null) {
-                // Current width of the outlineView
-                double outlineViewWidth = outlineView.getSize().getWidth();
-                // List of the column widths
-                List<Integer> columnWidths = new ArrayList<>();
-                final FontMetrics metrics = graphics.getFontMetrics();
+        // the remaining table width that can be used in last row
+        double availableTableWidth = outlineView.getSize().getWidth();
 
-                int margin = 4;
-                int padding = 8;
+        for (int columnIdx = 0; columnIdx < outline.getColumnCount(); columnIdx++) {
+            int columnPadding = (columnIdx == 0) ? FIRST_COL_ADDITIONAL_WIDTH + COLUMN_PADDING : COLUMN_PADDING;
+            TableColumn tableColumn = columnModel.getColumn(columnIdx);
 
-                int totalColumnWidth = 0;
-                int cntMaxSizeColumns = 0;
+            // The width of this column
+            int width = MIN_COLUMN_WIDTH;
 
-                // Calulate the width for each column keeping track of the number
-                // of columns that were set to columnwidthLimit.
-                for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
-                    int firstColumnPadding = (column == 0) ? 32 : 0;
-                    int columnWidthLimit = (column == 0) ? 350 : 300;
-                    int valuesWidth = 0;
-
-                    // find the maximum width needed to fit the values for the first 100 rows, at most
-                    for (int row = 0; row < Math.min(100, outline.getRowCount()); row++) {
-                        TableCellRenderer renderer = outline.getCellRenderer(row, column);
-                        Component comp = outline.prepareRenderer(renderer, row, column);
-                        valuesWidth = Math.max(comp.getPreferredSize().width, valuesWidth);
-                    }
-
-                    int headerWidth = metrics.stringWidth(outline.getColumnName(column));
-                    valuesWidth += firstColumnPadding; // add extra padding for first column
-
-                    int columnWidth = Math.max(valuesWidth, headerWidth);
-                    columnWidth += 2 * margin + padding; // add margin and regular padding
-
-                    columnWidth = Math.min(columnWidth, columnWidthLimit);
-                    columnWidths.add(columnWidth);
-
-                    totalColumnWidth += columnWidth;
-
-                    if (columnWidth == columnWidthLimit) {
-                        cntMaxSizeColumns++;
-                    }
-                }
-
-                // Figure out how much extra, if any can be given to the columns
-                // so that the table is as wide as outlineViewWidth. If cntMaxSizeColumns
-                // is greater than 0 divide the extra space between the columns 
-                // that could use more space.  Otherwise divide evenly amoung 
-                // all columns.
-                int extraWidth = 0;
-
-                if (totalColumnWidth < outlineViewWidth) {
-                    if (cntMaxSizeColumns > 0) {
-                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth) / cntMaxSizeColumns);
-                    } else {
-                        extraWidth = (int) ((outlineViewWidth - totalColumnWidth) / columnWidths.size());
-                    }
-                }
-
-                for (int column = 0; column < columnWidths.size(); column++) {
-                    int columnWidth = columnWidths.get(column);
-
-                    if (cntMaxSizeColumns > 0) {
-                        if (columnWidth >= ((column == 0) ? 350 : 300)) {
-                            columnWidth += extraWidth;
-                        }
-                    } else {
-                        columnWidth += extraWidth;
-                    }
-
-                    outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
-                }
+            // get header cell width
+            // taken in part from https://stackoverflow.com/a/18381924
+            TableCellRenderer headerRenderer = tableColumn.getHeaderRenderer();
+            if (headerRenderer == null) {
+                headerRenderer = outline.getTableHeader().getDefaultRenderer();
             }
-        } else {
-            // if there's no content just auto resize all columns
-            outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            Object headerValue = tableColumn.getHeaderValue();
+            Component headerComp = headerRenderer.getTableCellRendererComponent(outline, headerValue, false, false, 0, columnIdx);
+            width = Math.max(headerComp.getPreferredSize().width + columnPadding, width);
+
+            // get the max of row widths from the first SAMPLE_ROW_NUM rows
+            Component comp = null;
+            int rowCount = outline.getRowCount();
+            for (int row = 0; row < Math.min(rowCount, SAMPLE_ROW_NUM); row++) {
+                TableCellRenderer renderer = outline.getCellRenderer(row, columnIdx);
+                comp = outline.prepareRenderer(renderer, row, columnIdx);
+                width = Math.max(comp.getPreferredSize().width + columnPadding, width);
+            }
+
+            // no higher than maximum column width
+            if (width > MAX_COLUMN_WIDTH) {
+                width = MAX_COLUMN_WIDTH;
+            }
+
+            // if last column, calculate remaining width factoring in the possibility of a scroll bar.
+            if (columnIdx == outline.getColumnCount() - 1) {
+                int rowHeight = comp == null ? MIN_ROW_HEIGHT : comp.getPreferredSize().height;
+                if (headerComp.getPreferredSize().height + rowCount * rowHeight > outlineView.getSize().getHeight()) {
+                    availableTableWidth -= SCROLL_BAR_WIDTH;
+                }
+
+                columnModel.getColumn(columnIdx).setPreferredWidth(Math.max(width, (int) availableTableWidth));
+            } else {
+                // otherwise set preferred width to width and decrement availableTableWidth accordingly
+                columnModel.getColumn(columnIdx).setPreferredWidth(width);
+                availableTableWidth -= width;
+            }
         }
     }
 
@@ -743,7 +729,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * order.
      *
      * @return a List<Node.Property<?>> of the properties in the persisted
-     * order.
+     *         order.
      */
     private synchronized List<Node.Property<?>> loadColumnOrder() {
 
@@ -1260,18 +1246,20 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         /**
          * Returns the icon denoted by the Score's Significance.
+         *
          * @param significance The Score's Significance.
+         *
          * @return The icon (or null) related to that significance.
          */
         private ImageIcon getIcon(Significance significance) {
             if (significance == null) {
                 return null;
             }
-            
+
             switch (significance) {
                 case NOTABLE:
                     return NOTABLE_ICON_SCORE;
-                case LIKELY_NOTABLE: 
+                case LIKELY_NOTABLE:
                     return INTERESTING_SCORE_ICON;
                 case LIKELY_NONE:
                 case NONE:
@@ -1280,7 +1268,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     return null;
             }
         }
-        
+
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
