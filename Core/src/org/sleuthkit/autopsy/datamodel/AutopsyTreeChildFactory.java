@@ -128,7 +128,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                             .sorted()
                             .collect(Collectors.toList());
 
-                    if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
+                    if (CollectionUtils.isNotEmpty(personManager.getHostsWithoutPersons())) {
                         nodes.add(new PersonGrouping(null));
                     }
                 } else {
