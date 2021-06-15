@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -86,7 +85,7 @@ public class ViewContextAction extends AbstractAction {
      * parent of the content, selecting the parent in the tree view, then
      * selecting the content in the results view.
      *
-     * @param displayName The display name for the action.
+     * @param displayName  The display name for the action.
      * @param artifactNode The artifact node for the artifact.
      */
     public ViewContextAction(String displayName, BlackboardArtifactNode artifactNode) {
@@ -108,9 +107,9 @@ public class ViewContextAction extends AbstractAction {
      * parent of the content, selecting the parent in the tree view, then
      * selecting the content in the results view.
      *
-     * @param displayName The display name for the action.
+     * @param displayName           The display name for the action.
      * @param fileSystemContentNode The file system content node for the
-     * content.
+     *                              content.
      */
     public ViewContextAction(String displayName, AbstractFsContentNode<? extends AbstractFile> fileSystemContentNode) {
         super(displayName);
@@ -123,9 +122,9 @@ public class ViewContextAction extends AbstractAction {
      * content, selecting the parent in the tree view, then selecting the
      * content in the results view.
      *
-     * @param displayName The display name for the action.
+     * @param displayName              The display name for the action.
      * @param abstractAbstractFileNode The AbstractAbstractFileNode node for the
-     * content.
+     *                                 content.
      */
     public ViewContextAction(String displayName, AbstractAbstractFileNode<? extends AbstractFile> abstractAbstractFileNode) {
         super(displayName);
@@ -139,7 +138,7 @@ public class ViewContextAction extends AbstractAction {
      * content in the results view.
      *
      * @param displayName The display name for the action.
-     * @param content The content.
+     * @param content     The content.
      */
     public ViewContextAction(String displayName, Content content) {
         super(displayName);
@@ -151,7 +150,7 @@ public class ViewContextAction extends AbstractAction {
      * branch of the tree view to the level of the parent of the content,
      * selecting the parent in the tree view, then selecting the content in the
      * results view.
-     * 
+     *
      * NOTE: This code will likely need updating in the event that the structure
      * of the nodes is changed (i.e. adding parent levels). Places to look when
      * changing node structure include:
@@ -171,25 +170,25 @@ public class ViewContextAction extends AbstractAction {
         EventQueue.invokeLater(() -> {
 
             Content parentContent = getParentContent(this.content);
-            
+
             if ((parentContent != null) && (parentContent instanceof UnsupportedContent)) {
                 MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_unsupportedParent());
                 logger.log(Level.WARNING, String.format("Could not navigate to unsupported content with id: %d", parentContent.getId())); //NON-NLS
             }
-     
+
             // Get the "Data Sources" node from the tree view.
             DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
             ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
-            
+
             Node parentTreeViewNode = null;
             if (parentContent != null) {
-                if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) { 
+                if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                     parentTreeViewNode = getParentNodeGroupedByPersonHost(treeViewExplorerMgr, parentContent);
-                } else {  
+                } else {
                     parentTreeViewNode = getParentNodeGroupedByDataSource(treeViewExplorerMgr, parentContent);
-                }    
+                }
             }
-            
+
             // if no node is found, report error and do nothing
             if (parentTreeViewNode == null) {
                 MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
@@ -200,29 +199,44 @@ public class ViewContextAction extends AbstractAction {
             setNodeSelection(this.content, parentTreeViewNode, treeViewTopComponent, treeViewExplorerMgr);
         });
     }
-    
+
+    /**
+     * Get the parent content for the content to be selected in the results
+     * view. If the parent content is null, then the specified content is a data
+     * source, and the parent tree view node is the "Data Sources" node.
+     * Otherwise, the tree view needs to be searched to find the parent treeview
+     * node.
+     *
+     * @param content The content whose parent will be returned. If this item is
+     *                a datasource, it will be returned.
+     *
+     * @return The content if content is a data source or the parent of this
+     *         content.
+     */
     private Content getParentContent(Content content) {
-        /*
-        * Get the parent content for the content to be selected in the
-        * results view. If the parent content is null, then the specified
-        * content is a data source, and the parent tree view node is the
-        * "Data Sources" node. Otherwise, the tree view needs to be
-        * searched to find the parent treeview node.
-        */
+
         try {
-            Content parent = content.getParent(); 
-            if (parent == null && content instanceof DataSource) {
-                parent = content;
-            }
-            return parent;
+            return (content instanceof DataSource)
+                    ? content
+                    : content.getParent();
         } catch (TskCoreException ex) {
             MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindDirectory());
             logger.log(Level.SEVERE, String.format("Could not get parent of Content object: %s", content), ex); //NON-NLS
             return null;
         }
     }
-    
 
+    /**
+     * Returns the node in the tree related to the parentContent or null if
+     * can't be found. This method should be used when view is grouped by data
+     * source.
+     *
+     * @param treeViewExplorerMgr The explorer manager.
+     * @param parentContent       The content whose equivalent node will be
+     *                            returned if found.
+     *
+     * @return The node if found or null.
+     */
     private Node getParentNodeGroupedByDataSource(ExplorerManager treeViewExplorerMgr, Content parentContent) {
         // Classic view
         // Start the search at the DataSourcesNode
@@ -240,13 +254,24 @@ public class ViewContextAction extends AbstractAction {
                 }
             }
         }
-        
+
         return null;
     }
 
+    /**
+     * Returns the node in the tree related to the parentContent or null if
+     * can't be found. This method should be used when view is grouped by
+     * hosts/persons.
+     *
+     * @param treeViewExplorerMgr The explorer manager.
+     * @param parentContent       The content whose equivalent node will be
+     *                            returned if found.
+     *
+     * @return The node if found or null.
+     */
     private Node getParentNodeGroupedByPersonHost(ExplorerManager treeViewExplorerMgr, Content parentContent) {
         // 'Group by Data Source' view
-        
+
         SleuthkitCase skCase;
         String dsname;
         try {
@@ -262,7 +287,7 @@ public class ViewContextAction extends AbstractAction {
             are multiple data sources with the same name, then "getChildren().findChild(dsname)"
             simply returns the first one that it finds. Instead we have to loop over all
             data sources with that name, and make sure we find the correct one.
-            */
+             */
             List<Node> dataSourceLevelNodes = Stream.of(rootChildren.getNodes())
                     .flatMap(rootNode -> getDataSourceLevelNodes(rootNode).stream())
                     .collect(Collectors.toList());
@@ -282,16 +307,22 @@ public class ViewContextAction extends AbstractAction {
                     // found the data source node
                     return parentTreeViewNode;
                 }
-            }   
+            }
         } catch (NoCurrentCaseException | TskDataException | TskCoreException ex) {
             MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
             logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
         }
-        
+
         return null;
     }
-    
-    
+
+    /**
+     * Set the node selection in the tree.
+     * @param content The content to select.
+     * @param parentTreeViewNode The node that is the parent of the content.
+     * @param treeViewTopComponent The DirectoryTreeTopComponent.
+     * @param treeViewExplorerMgr The ExplorerManager.
+     */
     private void setNodeSelection(Content content, Node parentTreeViewNode, DirectoryTreeTopComponent treeViewTopComponent, ExplorerManager treeViewExplorerMgr) {
         /*
         * Set the child selection info of the parent tree node, then select
@@ -299,7 +330,7 @@ public class ViewContextAction extends AbstractAction {
         * this selection info and use it to complete this action when the
         * tree view top component responds to the selection of the parent
         * node by pushing it into the results view top component.
-        */
+         */
         DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) parentTreeViewNode).getOriginal();
         undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(content));
         if (content instanceof BlackboardArtifact) {
@@ -312,7 +343,7 @@ public class ViewContextAction extends AbstractAction {
                 logger.log(Level.SEVERE, "Could not find associated content from artifact with id %d", artifact.getId());
             }
         }
-        
+
         TreeView treeView = treeViewTopComponent.getTree();
         treeView.expandNode(parentTreeViewNode);
         if (treeViewTopComponent.getSelectedNode().equals(parentTreeViewNode)) {
@@ -338,15 +369,16 @@ public class ViewContextAction extends AbstractAction {
      * returns itself.
      *
      * @param node The node.
+     *
      * @return The child nodes that are at the data source level.
      */
     private List<Node> getDataSourceLevelNodes(Node node) {
         if (node == null) {
             return Collections.emptyList();
-        } else if (node.getLookup().lookup(Host.class) != null || 
-                node.getLookup().lookup(Person.class) != null || 
-                DataSourcesNode.getNameIdentifier().equals(node.getLookup().lookup(String.class)) || 
-                PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+        } else if (node.getLookup().lookup(Host.class) != null
+                || node.getLookup().lookup(Person.class) != null
+                || DataSourcesNode.getNameIdentifier().equals(node.getLookup().lookup(String.class))
+                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
             Children children = node.getChildren();
             Node[] childNodes = children == null ? null : children.getNodes();
             if (childNodes == null) {
@@ -366,7 +398,8 @@ public class ViewContextAction extends AbstractAction {
      * of the specified content.
      *
      * @param parentContent parent content for the content to be searched for
-     * @param node Node tree to search
+     * @param node          Node tree to search
+     *
      * @return Node object of the matching parent, NULL if not found
      */
     private Node findParentNodeInTree(Content parentContent, Node node) {
@@ -397,7 +430,7 @@ public class ViewContextAction extends AbstractAction {
         if (ancestorChildren.getNodesCount() == 1 && StringUtils.equals(ancestorChildren.getNodeAt(0).getName(), node.getName())) {
             return node;
         }
-        
+
         /*
         * Search the tree for the parent node. Note that this algorithm
         * simply discards "extra" ancestor nodes not shown in the tree,
