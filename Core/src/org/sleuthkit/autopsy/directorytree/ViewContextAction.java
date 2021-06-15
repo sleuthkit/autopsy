@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -169,158 +170,167 @@ public class ViewContextAction extends AbstractAction {
     public void actionPerformed(ActionEvent event) {
         EventQueue.invokeLater(() -> {
 
-            /*
-             * Get the parent content for the content to be selected in the
-             * results view. If the parent content is null, then the specified
-             * content is a data source, and the parent tree view node is the
-             * "Data Sources" node. Otherwise, the tree view needs to be
-             * searched to find the parent treeview node.
-             */
-            Content parentContent = null;
-            try {
-                parentContent = content.getParent();
-            } catch (TskCoreException ex) {
-                MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindDirectory());
-                logger.log(Level.SEVERE, String.format("Could not get parent of Content object: %s", content), ex); //NON-NLS
-                return;
-            }
+            Content parentContent = getParentContent(this.content);
             
-            if ((parentContent != null) 
-                    && (parentContent instanceof UnsupportedContent)) {
+            if ((parentContent != null) && (parentContent instanceof UnsupportedContent)) {
                 MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_unsupportedParent());
                 logger.log(Level.WARNING, String.format("Could not navigate to unsupported content with id: %d", parentContent.getId())); //NON-NLS
-                return;
             }
-
-            /*
-             * Get the "Data Sources" node from the tree view.
-             */
+     
+            // Get the "Data Sources" node from the tree view.
             DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
             ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
+            
             Node parentTreeViewNode = null;
-            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) { // 'Group by Data Source' view
-
-                SleuthkitCase skCase;
-                String dsname;
-                try {
-                    // get the objid/name of the datasource of the selected content.
-                    skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                    long contentDSObjid = content.getDataSource().getId();
-                    DataSource datasource = skCase.getDataSource(contentDSObjid);
-                    dsname = datasource.getName();
-                    Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
-
-                    if (null != parentContent) {
-                        // the tree view needs to be searched to find the parent treeview node.
-                        /* NOTE: we can't do a lookup by data source name here, becase if there 
-                        are multiple data sources with the same name, then "getChildren().findChild(dsname)"
-                        simply returns the first one that it finds. Instead we have to loop over all
-                        data sources with that name, and make sure we find the correct one.
-                         */
-                        List<Node> dataSourceLevelNodes = Stream.of(rootChildren.getNodes())
-                                .flatMap(rootNode -> getDataSourceLevelNodes(rootNode).stream())
-                                .collect(Collectors.toList());
-                        
-                        for (Node treeNode : dataSourceLevelNodes) {
-                            // in the root, look for a data source node with the name of interest
-                            if (!(treeNode.getName().equals(dsname))) {
-                                continue;
-                            }
-
-                            // for this data source, get the "Data Sources" child node
-                            Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourceFilesNode.getNameIdentifier());
-
-                            // check whether this is the data source we are looking for
-                            parentTreeViewNode = findParentNodeInTree(parentContent, datasourceGroupingNode);
-                            if (parentTreeViewNode != null) {
-                                // found the data source node
-                                break;
-                            }
-                        }
-                    } else {
-                        /* If the parent content is null, then the specified
-                        * content is a data source, and the parent tree view node is the
-                        * "Data Sources" node. */
-                        Node datasourceGroupingNode = rootChildren.findChild(dsname);
-                        if (!Objects.isNull(datasourceGroupingNode)) {
-                            Children dsChildren = datasourceGroupingNode.getChildren();
-                            parentTreeViewNode = dsChildren.findChild(DataSourceFilesNode.getNameIdentifier());
-                        }
-                    }
-
-                    if (parentTreeViewNode == null) {
-                        MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
-                        logger.log(Level.SEVERE, "Failed to locate data source node in tree."); //NON-NLS
-                        return;
-                    }
-                } catch (NoCurrentCaseException | TskDataException | TskCoreException ex) {
-                    MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
-                    logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
-                    return;
-                }
-            } else {  // Classic view 
-                // Start the search at the DataSourcesNode
-                Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
-                Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesNode.getNameIdentifier());
-                if (rootDsNode != null) {
-                    for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
-                        DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
-                        if (dataSource != null) {
-                            // the tree view needs to be searched to find the parent treeview node.
-                            Node potentialParentTreeViewNode = findParentNodeInTree(parentContent, dataSourceLevelNode);
-                            if (potentialParentTreeViewNode != null) {
-                                parentTreeViewNode = potentialParentTreeViewNode;
-                                break;
-                            }
-                        }
-                    }
-                }
+            if (parentContent != null) {
+                if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) { 
+                    parentTreeViewNode = getParentNodeGroupedByPersonHost(treeViewExplorerMgr, parentContent);
+                } else {  
+                    parentTreeViewNode = getParentNodeGroupedByDataSource(treeViewExplorerMgr, parentContent);
+                }    
             }
             
-            // if no node is found, do nothing
+            // if no node is found, report error and do nothing
             if (parentTreeViewNode == null) {
+                MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
+                logger.log(Level.SEVERE, "Failed to locate data source node in tree."); //NON-NLS
                 return;
             }
 
-            /*
-             * Set the child selection info of the parent tree node, then select
-             * the parent node in the tree view. The results view will retrieve
-             * this selection info and use it to complete this action when the
-             * tree view top component responds to the selection of the parent
-             * node by pushing it into the results view top component.
-             */
-            DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) parentTreeViewNode).getOriginal();
-            undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(content));
-            if (content instanceof BlackboardArtifact) {
-                BlackboardArtifact artifact = ((BlackboardArtifact) content);
-                long associatedId = artifact.getObjectID();
-                try {
-                    Content associatedFileContent = artifact.getSleuthkitCase().getContentById(associatedId);
-                    undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(associatedFileContent));
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Could not find associated content from artifact with id %d", artifact.getId());
-                }
-            }
-
-            TreeView treeView = treeViewTopComponent.getTree();
-            treeView.expandNode(parentTreeViewNode);
-            if (treeViewTopComponent.getSelectedNode().equals(parentTreeViewNode)) {
-                //In the case where our tree view already has the destination directory selected 
-                //due to an optimization in the ExplorerManager.setExploredContextAndSelection method 
-                //the property change we listen for to call DirectoryTreeTopComponent.respondSelection 
-                //will not be sent so we call it manually ourselves after making 
-                //the directory listing the active tab.
-                treeViewTopComponent.setDirectoryListingActive();
-                treeViewTopComponent.respondSelection(treeViewExplorerMgr.getSelectedNodes(), new Node[]{parentTreeViewNode});
-            } else {
-                try {
-                    treeViewExplorerMgr.setExploredContextAndSelection(parentTreeViewNode, new Node[]{parentTreeViewNode});
-                } catch (PropertyVetoException ex) {
-                    MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotSelectDirectory());
-                    logger.log(Level.SEVERE, "Failed to select the parent node in the tree view", ex); //NON-NLS
-                }
-            }
+            setNodeSelection(this.content, parentTreeViewNode, treeViewTopComponent, treeViewExplorerMgr);
         });
+    }
+    
+    private Content getParentContent(Content content) {
+        /*
+        * Get the parent content for the content to be selected in the
+        * results view. If the parent content is null, then the specified
+        * content is a data source, and the parent tree view node is the
+        * "Data Sources" node. Otherwise, the tree view needs to be
+        * searched to find the parent treeview node.
+        */
+        try {
+            Content parent = content.getParent(); 
+            if (parent == null && content instanceof DataSource) {
+                parent = content;
+            }
+            return parent;
+        } catch (TskCoreException ex) {
+            MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindDirectory());
+            logger.log(Level.SEVERE, String.format("Could not get parent of Content object: %s", content), ex); //NON-NLS
+            return null;
+        }
+    }
+    
+
+    private Node getParentNodeGroupedByDataSource(ExplorerManager treeViewExplorerMgr, Content parentContent) {
+        // Classic view
+        // Start the search at the DataSourcesNode
+        Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
+        Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesNode.getNameIdentifier());
+        if (rootDsNode != null) {
+            for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
+                DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
+                if (dataSource != null) {
+                    // the tree view needs to be searched to find the parent treeview node.
+                    Node potentialParentTreeViewNode = findParentNodeInTree(parentContent, dataSourceLevelNode);
+                    if (potentialParentTreeViewNode != null) {
+                        return potentialParentTreeViewNode;
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    private Node getParentNodeGroupedByPersonHost(ExplorerManager treeViewExplorerMgr, Content parentContent) {
+        // 'Group by Data Source' view
+        
+        SleuthkitCase skCase;
+        String dsname;
+        try {
+            // get the objid/name of the datasource of the selected content.
+            skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            long contentDSObjid = parentContent.getDataSource().getId();
+            DataSource datasource = skCase.getDataSource(contentDSObjid);
+            dsname = datasource.getName();
+            Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
+
+            // the tree view needs to be searched to find the parent treeview node.
+            /* NOTE: we can't do a lookup by data source name here, becase if there
+            are multiple data sources with the same name, then "getChildren().findChild(dsname)"
+            simply returns the first one that it finds. Instead we have to loop over all
+            data sources with that name, and make sure we find the correct one.
+            */
+            List<Node> dataSourceLevelNodes = Stream.of(rootChildren.getNodes())
+                    .flatMap(rootNode -> getDataSourceLevelNodes(rootNode).stream())
+                    .collect(Collectors.toList());
+
+            for (Node treeNode : dataSourceLevelNodes) {
+                // in the root, look for a data source node with the name of interest
+                if (!(treeNode.getName().equals(dsname))) {
+                    continue;
+                }
+
+                // for this data source, get the "Data Sources" child node
+                Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourceFilesNode.getNameIdentifier());
+
+                // check whether this is the data source we are looking for
+                Node parentTreeViewNode = findParentNodeInTree(parentContent, datasourceGroupingNode);
+                if (parentTreeViewNode != null) {
+                    // found the data source node
+                    return parentTreeViewNode;
+                }
+            }   
+        } catch (NoCurrentCaseException | TskDataException | TskCoreException ex) {
+            MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
+            logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
+        }
+        
+        return null;
+    }
+    
+    
+    private void setNodeSelection(Content content, Node parentTreeViewNode, DirectoryTreeTopComponent treeViewTopComponent, ExplorerManager treeViewExplorerMgr) {
+        /*
+        * Set the child selection info of the parent tree node, then select
+        * the parent node in the tree view. The results view will retrieve
+        * this selection info and use it to complete this action when the
+        * tree view top component responds to the selection of the parent
+        * node by pushing it into the results view top component.
+        */
+        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) parentTreeViewNode).getOriginal();
+        undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(content));
+        if (content instanceof BlackboardArtifact) {
+            BlackboardArtifact artifact = ((BlackboardArtifact) content);
+            long associatedId = artifact.getObjectID();
+            try {
+                Content associatedFileContent = artifact.getSleuthkitCase().getContentById(associatedId);
+                undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(associatedFileContent));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Could not find associated content from artifact with id %d", artifact.getId());
+            }
+        }
+        
+        TreeView treeView = treeViewTopComponent.getTree();
+        treeView.expandNode(parentTreeViewNode);
+        if (treeViewTopComponent.getSelectedNode().equals(parentTreeViewNode)) {
+            //In the case where our tree view already has the destination directory selected
+            //due to an optimization in the ExplorerManager.setExploredContextAndSelection method
+            //the property change we listen for to call DirectoryTreeTopComponent.respondSelection
+            //will not be sent so we call it manually ourselves after making
+            //the directory listing the active tab.
+            treeViewTopComponent.setDirectoryListingActive();
+            treeViewTopComponent.respondSelection(treeViewExplorerMgr.getSelectedNodes(), new Node[]{parentTreeViewNode});
+        } else {
+            try {
+                treeViewExplorerMgr.setExploredContextAndSelection(parentTreeViewNode, new Node[]{parentTreeViewNode});
+            } catch (PropertyVetoException ex) {
+                MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotSelectDirectory());
+                logger.log(Level.SEVERE, "Failed to select the parent node in the tree view", ex); //NON-NLS
+            }
+        }
     }
 
     /**
