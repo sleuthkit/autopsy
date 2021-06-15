@@ -189,6 +189,8 @@ public class HostNode extends DisplayableItemNode {
             }
         }
     };
+    
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(hostChangePcl, null);
 
     /*
      * Get the host name or 'unknown host' if null.
@@ -247,8 +249,7 @@ public class HostNode extends DisplayableItemNode {
                 host == null ? Lookups.fixed(displayName) : Lookups.fixed(host, displayName));
                 
         hostId = host == null ? null : host.getHostId();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_UPDATED),
-                WeakListeners.propertyChange(hostChangePcl, this));
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_UPDATED), weakPcl);
         super.setName(displayName);
         super.setDisplayName(displayName);
         this.setIconBaseWithExtension(ICON_PATH);

@@ -173,6 +173,8 @@ public class PersonNode extends DisplayableItemNode {
             }
         }
     };
+    
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(personChangePcl, null);
 
     /**
      * Gets the display name for this person or "Unknown Persons".
@@ -210,8 +212,7 @@ public class PersonNode extends DisplayableItemNode {
         this.setIconBaseWithExtension(ICON_PATH);
         this.person = person;
         this.personId = person == null ? null : person.getPersonId();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_UPDATED),
-                WeakListeners.propertyChange(personChangePcl, this));
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_UPDATED), weakPcl);
     }
 
     @Override
