@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -37,6 +38,7 @@ import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -178,6 +180,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
      * Handle the change in thumbnail node selection.
      */
     private void handleNodeSelectionChange() {
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         final Node[] nodes = tableEM.getSelectedNodes();
 
         if (nodes != null && nodes.length == 1) {
@@ -186,7 +189,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
                 try {
                     Content parentContent = thumbnail.getParent();
                     if (parentContent != null && parentContent instanceof BlackboardArtifact) {
-                        contentViewer.setNode(new BlackboardArtifactNode((BlackboardArtifact) parentContent));
+                        contentViewer.setNode(new BlackboardArtifactNode(BlackboardArtifactNode.createNodeKey((BlackboardArtifact) parentContent)));
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Unable to get parent Content from AbstraceContent instance.", ex); //NON-NLS
@@ -195,6 +198,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
         } else {
             contentViewer.setNode(null);
         }
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
     /**

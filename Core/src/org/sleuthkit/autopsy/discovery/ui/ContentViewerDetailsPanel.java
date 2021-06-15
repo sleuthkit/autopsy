@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -67,15 +68,17 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
             boolean useAssociatedFile = artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
                     || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID();
             BlackboardAttribute pathIdAttr = null;
-            if (useAssociatedFile) {
-                try {
+            try {
+                if (useAssociatedFile) {
+
                     pathIdAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error getting Path ID Attribute for artifact with ID: " + artifact.getArtifactID(), ex);
+
                 }
-            }
-            if (!useAssociatedFile || pathIdAttr != null) {
-                node = new BlackboardArtifactNode(artifact, useAssociatedFile);
+                if (!useAssociatedFile || pathIdAttr != null) {
+                    node = new BlackboardArtifactNode(BlackboardArtifactNode.createNodeKey(artifact, useAssociatedFile));
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error getting Path ID Attribute for artifact with ID: " + artifact.getArtifactID(), ex);
             }
         }
         contentViewer.setNode(node);

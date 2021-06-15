@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,8 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -42,7 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * only emails, call logs and messages.
  *
  */
-final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
+final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifactNodeKey> {
 
     private static final Logger logger = Logger.getLogger(ThreadChildNodeFactory.class.getName());
 
@@ -80,7 +82,7 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
      * @return True on success
      */
     @Override
-    protected boolean createKeys(List<BlackboardArtifact> list) {
+    protected boolean createKeys(List<BlackboardArtifactNodeKey> list) {
         if(selectionInfo == null) {
             return true;
         }
@@ -107,13 +109,13 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
      * @return True on success
      * @throws TskCoreException 
      */
-    private boolean createRootMessageKeys(List<BlackboardArtifact> list, Set<Content> relationshipSources) throws TskCoreException{
+    private boolean createRootMessageKeys(List<BlackboardArtifactNodeKey> list, Set<Content> relationshipSources) throws TskCoreException{
         Map<String, BlackboardArtifact> rootMessageMap = new HashMap<>();
-        for(Content content: relationshipSources) {
-            if(!(content instanceof BlackboardArtifact)) {
+        for (Content content : relationshipSources) {
+            if (!(content instanceof BlackboardArtifact)) {
                 continue;
             }
-            
+
             BlackboardArtifact bba = (BlackboardArtifact) content;
             BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
@@ -124,36 +126,36 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                 // To achive this assign any artifact that does not have a threadID
                 // the "UNTHREADED_ID"
                 String threadID = MessageNode.UNTHREADED_ID;
-                
+
                 BlackboardAttribute attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID));
 
-                if(attribute != null) {
+                if (attribute != null) {
                     threadID = attribute.getValueString();
-                } 
+                }
 
                 BlackboardArtifact tableArtifact = rootMessageMap.get(threadID);
-                if(tableArtifact == null) {
-                    rootMessageMap.put(threadID, bba);          
+                if (tableArtifact == null) {
+                    rootMessageMap.put(threadID, bba);
                 } else {
                     // Get the date of the message
                     BlackboardAttribute tableAttribute = null;
-                    switch(fromID) {
+                    switch (fromID) {
                         case TSK_EMAIL_MSG:
                             tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
                             attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT));
                             // put the earliest message into the table
-                            if(tableAttribute != null 
-                                    && attribute != null 
+                            if (tableAttribute != null
+                                    && attribute != null
                                     && tableAttribute.getValueLong() > attribute.getValueLong()) {
                                 rootMessageMap.put(threadID, bba);
                             }
-                        break;
+                            break;
                         case TSK_MESSAGE:
                             tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
                             attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
                             // put the earliest message into the table
-                            if(tableAttribute != null 
-                                    && attribute != null 
+                            if (tableAttribute != null
+                                    && attribute != null
                                     && tableAttribute.getValueLong() < attribute.getValueLong()) {
                                 rootMessageMap.put(threadID, bba);
                             }
@@ -162,39 +164,37 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                             tableAttribute = tableArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
                             attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START));
                             // put the earliest message into the table
-                            if(tableAttribute != null 
-                                    && attribute != null 
+                            if (tableAttribute != null
+                                    && attribute != null
                                     && tableAttribute.getValueLong() > attribute.getValueLong()) {
                                 rootMessageMap.put(threadID, bba);
                             }
                             break;
                     }
-
-                    
                 }
             }
         }
 
-        for(BlackboardArtifact bba: rootMessageMap.values()) {
-             list.add(bba);
+        for (BlackboardArtifact bba : rootMessageMap.values()) {
+            list.add(BlackboardArtifactNode.createNodeKey(bba));
         }
-        
+
         list.sort(new ThreadDateComparator());
             
         return true;
     }
 
     @Override
-    protected Node createNodeForKey(BlackboardArtifact bba) {
+    protected Node createNodeForKey(BlackboardArtifactNodeKey nodeKey) {
         BlackboardAttribute attribute = null;
         try {
-            attribute = bba.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID)); 
+            attribute = nodeKey.getArtifact().getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_THREAD_ID)); 
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, String.format("Unable to get threadID for artifact: %s", bba.getName()), ex);
+            logger.log(Level.WARNING, String.format("Unable to get threadID for artifact: %d", nodeKey.getArtifact().getId()), ex);
         } 
         
         if (attribute != null) {
-            return new ThreadNode(bba, attribute.getValueString(), preferredAction);
+            return new ThreadNode(nodeKey, attribute.getValueString(), preferredAction);
         } else {
             // Only one of these should occur.
             return new UnthreadedNode();
@@ -237,10 +237,13 @@ final class ThreadChildNodeFactory extends ChildFactory<BlackboardArtifact> {
      * 
      * Nodes will be sorted newest to oldest.
      */
-    class ThreadDateComparator implements Comparator<BlackboardArtifact> {
+    class ThreadDateComparator implements Comparator<BlackboardArtifactNodeKey> {
 
         @Override
-        public int compare(BlackboardArtifact bba1, BlackboardArtifact bba2) {
+        public int compare(BlackboardArtifactNodeKey key1, BlackboardArtifactNodeKey key2) {
+            BlackboardArtifact bba1 = key1.getArtifact();
+            BlackboardArtifact bba2 = key2.getArtifact();
+            
             BlackboardAttribute attribute1 = null;
             BlackboardAttribute attribute2 = null;
             // Inializing to Long.MAX_VALUE so that if a BlackboardArtifact of 

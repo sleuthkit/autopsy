@@ -63,12 +63,12 @@ class MessageNode extends BlackboardArtifactNode {
 
     private final Action defaultNoopAction = new DefaultMessageAction();
 
-    MessageNode(BlackboardArtifact artifact, String threadID, Action preferredAction) {
-        super(artifact);
+    MessageNode(BlackboardArtifactNodeKey nodeKey, String threadID, Action preferredAction) {
+        super(nodeKey);
 
         this.preferredAction = preferredAction;
 
-        final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s"); // NON-NLS
+        final String stripEnd = StringUtils.stripEnd(nodeKey.getArtifact().getDisplayName(), "s"); // NON-NLS
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message"); // NON-NLS
         setDisplayName(removeEndIgnoreCase.isEmpty() ? stripEnd : removeEndIgnoreCase);
 

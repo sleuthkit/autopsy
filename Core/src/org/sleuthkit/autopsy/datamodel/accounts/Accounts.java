@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,6 +70,7 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -81,7 +82,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.Type;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -491,7 +491,7 @@ final public class Accounts implements AutopsyVisitableItem {
 
     }
 
-    final private class DefaultAccountFactory extends ObservingChildren<Long> {
+    final private class DefaultAccountFactory extends ObservingChildren<BlackboardArtifactNodeKey> {
 
         private final Account.Type accountType;
 
@@ -568,7 +568,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<Long> list) {
+        protected boolean createKeys(List<BlackboardArtifactNodeKey> list) {
             String query
                     = "SELECT blackboard_artifacts.artifact_obj_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
@@ -578,28 +578,22 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "     AND blackboard_attributes.value_text = '" + accountType.getTypeName() + "'" //NON-NLS
                     + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause(); //NON-NLS
+            List<BlackboardArtifactNodeKey> newKeys = new ArrayList<>();
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
-                List<Long> tempList = new ArrayList<>();
                 while (rs.next()) {
-                    tempList.add(rs.getLong("artifact_obj_id")); // NON-NLS
+                    newKeys.add(BlackboardArtifactNode.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_obj_id"))));
                 }
-                list.addAll(tempList);
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
             }
-
+            list.addAll(newKeys);
             return true;
         }
 
         @Override
-        protected Node[] createNodesForKey(Long t) {
-            try {
-                return new Node[]{new BlackboardArtifactNode(skCase.getBlackboard().getDataArtifactById(t))};
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error get black board artifact with id " + t, ex);
-                return new Node[0];
-            }
+        protected Node[] createNodesForKey(BlackboardArtifactNodeKey nodeKey) {
+            return new Node[] {new BlackboardArtifactNode(nodeKey)};
         }
 
         @Subscribe
@@ -1469,7 +1463,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    final private class CreditCardNumberFactory extends ObservingChildren<Long> {
+    final private class CreditCardNumberFactory extends ObservingChildren<BlackboardArtifactNodeKey> {
 
         private final BinResult bin;
 
@@ -1490,7 +1484,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<Long> list) {
+        protected boolean createKeys(List<BlackboardArtifactNodeKey> list) {
 
             String query
                     = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
@@ -1502,31 +1496,22 @@ final public class Accounts implements AutopsyVisitableItem {
                     + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause()
                     + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
+            List<BlackboardArtifactNodeKey> newKeys = new ArrayList<>();
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    list.add(rs.getLong("artifact_id")); //NON-NLS
+                    newKeys.add(BlackboardArtifactNode.createNodeKey(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_id"))));
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
-
             }
+            list.addAll(newKeys);
             return true;
         }
 
         @Override
-        protected Node[] createNodesForKey(Long artifactID) {
-            if (skCase == null) {
-                return new Node[0];
-            }
-
-            try {
-                DataArtifact art = skCase.getBlackboard().getDataArtifactById(artifactID);
-                return new Node[]{new AccountArtifactNode(art)};
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
-                return new Node[0];
-            }
+        protected Node[] createNodesForKey(BlackboardArtifactNodeKey nodeKey) {
+            return new Node[]{new AccountArtifactNode(nodeKey)};
         }
     }
 
@@ -1797,9 +1782,9 @@ final public class Accounts implements AutopsyVisitableItem {
 
         private final BlackboardArtifact artifact;
 
-        private AccountArtifactNode(BlackboardArtifact artifact) {
-            super(artifact, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
-            this.artifact = artifact;
+        private AccountArtifactNode(BlackboardArtifactNodeKey nodeKey) {
+            super(nodeKey, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
+            this.artifact = nodeKey.getArtifact();
             setName(Long.toString(this.artifact.getArtifactID()));
 
             reviewStatusBus.register(this);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
-import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 
 /**
  * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree.
@@ -500,7 +500,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Node representing mail folder content (mail messages)
      */
-    private class MessageFactory extends BaseChildFactory<DataArtifact> implements Observer {
+    private class MessageFactory extends BaseChildFactory<BlackboardArtifactNodeKey> implements Observer {
 
         private final String accountName;
         private final String folderName;
@@ -513,8 +513,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(DataArtifact art) {
-            return new BlackboardArtifactNode(art);
+        protected Node createNodeForKey(BlackboardArtifactNodeKey nodeKey) {
+            return new BlackboardArtifactNode(nodeKey);
         }
 
         @Override
@@ -523,17 +523,13 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        protected List<DataArtifact> makeKeys() {
-            List<DataArtifact> keys = new ArrayList<>();
+        protected List<BlackboardArtifactNodeKey> makeKeys() {
+            List<BlackboardArtifactNodeKey> keys = new ArrayList<>();
 
             if (skCase != null) {
                 emailResults.getArtifactIds(accountName, folderName).forEach((id) -> {
                     try {
-                        DataArtifact art = skCase.getBlackboard().getDataArtifactById(id);
-                        //Cache attributes while we are off the EDT.
-                        //See JIRA-5969
-                        art.getAttributes();
-                        keys.add(art);
+                        keys.add(BlackboardArtifactNode.createNodeKey(skCase.getBlackboard().getDataArtifactById(id)));
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error getting mail messages keys", ex); //NON-NLS
                     }

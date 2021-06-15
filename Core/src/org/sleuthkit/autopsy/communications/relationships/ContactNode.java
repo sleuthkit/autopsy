@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,13 +56,13 @@ final class ContactNode extends BlackboardArtifactNode {
         "ContactNode_URL=URL",
         "ContactNode_Home_Number=Home Number",})
 
-    ContactNode(BlackboardArtifact artifact) {
-        super(artifact);
+    ContactNode(BlackboardArtifactNodeKey nodeKey) {
+        super(nodeKey);
 
-        String name = getAttributeDisplayString(artifact, TSK_NAME);
+        String name = getAttributeDisplayString(nodeKey.getArtifact(), TSK_NAME);
         if (name == null || name.trim().isEmpty()) {
             // VCards use TSK_NAME_PERSON instead of TSK_NAME
-            name = getAttributeDisplayString(artifact, TSK_NAME_PERSON);
+            name = getAttributeDisplayString(nodeKey.getArtifact(), TSK_NAME_PERSON);
         }
         setDisplayName(name);
     }

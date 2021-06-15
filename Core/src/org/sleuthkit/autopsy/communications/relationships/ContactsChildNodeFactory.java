@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,19 +23,18 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode.BlackboardArtifactNodeKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT;
-import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * ChildFactory for ContactNodes.
  */
-final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
+final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifactNodeKey>{
     private static final Logger logger = Logger.getLogger(ContactsChildNodeFactory.class.getName());
 
     private SelectionInfo selectionInfo;
@@ -67,7 +66,7 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
      * @return True on success
      */
     @Override
-    protected boolean createKeys(List<BlackboardArtifact> list) {
+    protected boolean createKeys(List<BlackboardArtifactNodeKey> list) {
         
         if(selectionInfo == null) {
             return true;
@@ -87,7 +86,11 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
             BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
             if (fromID == TSK_CONTACT) {
-                list.add(bba);
+                try {
+                    list.add(BlackboardArtifactNode.createNodeKey(bba));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed create contact node keys.", ex); //NON-NLS
+                }
             }
         });
 
@@ -95,7 +98,7 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     }
 
     @Override
-    protected Node createNodeForKey(BlackboardArtifact key) {
+    protected Node createNodeForKey(BlackboardArtifactNodeKey key) {
         return new ContactNode(key);
     }
 }
