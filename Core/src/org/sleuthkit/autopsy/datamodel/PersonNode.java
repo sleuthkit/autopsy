@@ -203,7 +203,7 @@ public class PersonNode extends DisplayableItemNode {
      * @param displayName The display name for the person.
      */
     private PersonNode(Person person, String displayName) {
-        super(Children.create(new PersonChildren(person), false),
+        super(Children.create(new PersonChildren(person), true),
                 person == null ? Lookups.fixed(displayName) : Lookups.fixed(person, displayName));
         super.setName(displayName);
         super.setDisplayName(displayName);

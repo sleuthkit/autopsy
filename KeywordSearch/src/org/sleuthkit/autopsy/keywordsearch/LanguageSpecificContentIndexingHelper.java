@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,15 +35,15 @@ import java.util.Optional;
 class LanguageSpecificContentIndexingHelper {
 
     private final LanguageDetector languageDetector = new LanguageDetector();
-
-    Optional<Language> detectLanguageIfNeeded(Chunker.Chunk chunk) throws NoOpenCoreException {
+    
+    Optional<Language> detectLanguageIfNeeded(String text) throws NoOpenCoreException {
         double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
         if (2.2 <= indexSchemaVersion) {
-            return languageDetector.detect(chunk.toString());
+            return languageDetector.detect(text);
         } else {
             return Optional.empty();
         }
-    }
+    }    
 
     void updateLanguageSpecificFields(Map<String, Object> fields, Chunker.Chunk chunk, Language language) {
         List<String> values = new ArrayList<>();

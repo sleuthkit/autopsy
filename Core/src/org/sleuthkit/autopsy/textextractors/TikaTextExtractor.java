@@ -551,12 +551,9 @@ final class TikaTextExtractor implements TextExtractor {
             List<ProcessTerminator> terminators = new ArrayList<>();
             ImageConfig configInstance = context.lookup(ImageConfig.class);
             if (configInstance != null) {
-                if (Objects.nonNull(configInstance.getOCREnabled())) {
-                    this.tesseractOCREnabled = configInstance.getOCREnabled();
-                }
-                if (Objects.nonNull(configInstance.getLimitedOCREnabled())) {
-                    this.limitedOCREnabled = configInstance.getLimitedOCREnabled();
-                }
+                this.tesseractOCREnabled = configInstance.getOCREnabled();
+                this.limitedOCREnabled = configInstance.getLimitedOCREnabled();
+
                 if (Objects.nonNull(configInstance.getOCRLanguages())) {
                     this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
                 }

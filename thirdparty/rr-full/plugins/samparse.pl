@@ -23,6 +23,7 @@
 #-----------------------------------------------------------
 package samparse;
 use strict;
+use Encode::Unicode;
 
 my %config = (hive          => "SAM",
               hivemask      => 2,
@@ -364,7 +365,8 @@ sub _translateSID {
 #---------------------------------------------------------------------
 sub _uniToAscii {
   my $str = $_[0];
-  $str =~ s/\x00//g;
+  Encode::from_to($str,'UTF-16LE','utf8');
+  $str = Encode::decode_utf8($str);
   return $str;
 }
 
