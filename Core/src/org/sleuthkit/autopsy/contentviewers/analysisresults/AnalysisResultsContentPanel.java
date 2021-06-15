@@ -26,20 +26,22 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.contentviewers.analysisresults.AnalysisResultsViewModel.NodeResults;
 import org.sleuthkit.autopsy.contentviewers.analysisresults.AnalysisResultsViewModel.ResultDisplayAttributes;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
 
 /**
  * Displays a list of analysis results in a panel.
  */
 public class AnalysisResultsContentPanel extends javax.swing.JPanel {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
 
     // Anchors are inserted into the navigation so that the viewer can navigate to a selection.  
@@ -80,27 +82,18 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
      *
      * @param nodeResults The analysis results data to display.
      */
-    @NbBundle.Messages("AnalysisResultsContentPanel_aggregateScore_displayKey=Aggregate Score")
     void displayResults(NodeResults nodeResults) {
         Document document = Jsoup.parse(EMPTY_HTML);
         Element body = document.getElementsByTag("body").first();
 
-        // if there is an aggregate score, append a section with the value
-        Optional<Score> aggregateScore = nodeResults.getAggregateScore();
-        if (aggregateScore.isPresent()) {
-            appendSection(body,
-                    MessageFormat.format("{0}: {1}",
-                            Bundle.AnalysisResultsContentPanel_aggregateScore_displayKey(),
-                            aggregateScore.get().getSignificance().getDisplayName()),
-                    Optional.empty());
-        }
+        Optional<Element> panelHeader = appendPanelHeader(body, nodeResults.getContent(), nodeResults.getAggregateScore());
 
         // for each analysis result item, display the data.
         List<ResultDisplayAttributes> displayAttributes = nodeResults.getAnalysisResults();
         for (int idx = 0; idx < displayAttributes.size(); idx++) {
             AnalysisResultsViewModel.ResultDisplayAttributes resultAttrs = displayAttributes.get(idx);
             Element sectionDiv = appendResult(body, idx, resultAttrs);
-            if (idx > 0 || aggregateScore.isPresent()) {
+            if (idx > 0 || panelHeader.isPresent()) {
                 sectionDiv.attr("class", ContentViewerHtmlStyles.getSpacedSectionClassName());
             }
         }
@@ -117,6 +110,48 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
             // otherwise, scroll to the beginning.
             textPanel.setCaretPosition(0);
         }
+    }
+
+    /**
+     * Appends the header to the panel.
+     *
+     * @param parent  The parent html element.
+     * @param content The content whose name will be added if present.
+     * @param score   The aggregate score whose significance will be added if
+     *                present.
+     *
+     * @return The html element.
+     */
+    @Messages({
+        "AnalysisResultsContentPanel_aggregateScore_displayKey=Aggregate Score",
+        "AnalysisResultsContentPanel_content_displayKey=Item"
+    })
+    private Optional<Element> appendPanelHeader(Element parent, Optional<Content> content, Optional<Score> score) {
+        if (!content.isPresent() || !score.isPresent()) {
+            return Optional.empty();
+        }
+
+        Element container = parent.appendElement("div");
+
+        // if there is content append the name
+        content.ifPresent((c) -> {
+            container.appendElement("p")
+                    .attr("class", ContentViewerHtmlStyles.getTextClassName())
+                    .text(MessageFormat.format("{0}: {1}",
+                            Bundle.AnalysisResultsContentPanel_content_displayKey(),
+                            c.getName()));
+        });
+
+        // if there is an aggregate score, append the value
+        score.ifPresent((s) -> {
+            container.appendElement("p")
+                    .attr("class", ContentViewerHtmlStyles.getTextClassName())
+                    .text(MessageFormat.format("{0}: {1}",
+                            Bundle.AnalysisResultsContentPanel_aggregateScore_displayKey(),
+                            s.getSignificance().getDisplayName()));
+        });
+
+        return Optional.ofNullable(container);
     }
 
     /**
@@ -151,7 +186,7 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         // create a table
         Element table = sectionDiv.appendElement("table");
         table.attr("class", ContentViewerHtmlStyles.getIndentedClassName());
-        
+
         Element tableBody = table.appendElement("tbody");
 
         // append a row for each item
@@ -160,7 +195,7 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
             String keyString = keyVal.getKey() == null ? "" : keyVal.getKey() + ":";
             Element keyTd = row.appendElement("td")
                     .attr("class", ContentViewerHtmlStyles.getTextClassName());
-            
+
             keyTd.appendElement("span")
                     .text(keyString)
                     .attr("class", ContentViewerHtmlStyles.getKeyColumnClassName());
@@ -170,7 +205,7 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
                     .text(valueString)
                     .attr("class", ContentViewerHtmlStyles.getTextClassName());
         }
-        
+
         return sectionDiv;
     }
 
@@ -199,7 +234,7 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         header = (anchorEl == null)
                 ? sectionDiv.appendElement("h1")
                 : anchorEl.appendElement("h1");
-        
+
         header.text(headerText);
         header.attr("class", ContentViewerHtmlStyles.getHeaderClassName());
         header.attr("style", "display: inline-block");
