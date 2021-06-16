@@ -53,7 +53,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.STARTED, IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE);
     private static final int EXTRA_ROW_HEIGHT = 4;
-    private List<IngestJobInfo> ingestJobs = new ArrayList<>();
+    private final List<IngestJobInfo> ingestJobs = new ArrayList<>();
     private final List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
     private IngestModuleTableModel ingestModuleTableModel = new IngestModuleTableModel(null);
@@ -177,11 +177,11 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
      * Reset the panel.
      */
     private void reset() {
-        this.ingestJobs = new ArrayList<>();
-        setDataSource(null);
         if (refreshWorker != null) {
             refreshWorker.cancel(true);
         }
+        this.ingestJobs.clear();
+        setDataSource(null);
     }
 
     @Messages({"IngestJobInfoPanel.IngestJobTableModel.StartTime.header=Start Time",
