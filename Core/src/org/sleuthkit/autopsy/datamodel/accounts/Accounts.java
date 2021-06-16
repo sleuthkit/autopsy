@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,6 +57,7 @@ import org.openide.nodes.NodeOp;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -218,8 +219,8 @@ final public class Accounts implements AutopsyVisitableItem {
         abstract void handleDataAdded(ModuleDataEvent event);
 
         @Override
-        protected void removeNotify() {
-            super.removeNotify();
+        protected void finalize() throws Throwable {
+            super.finalize();
             reviewStatusBus.unregister(ObservingChildren.this);
         }
 
@@ -415,6 +416,8 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Subscribe
         @Override
@@ -473,18 +476,18 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
-            super.removeNotify();
+        protected void finalize() throws Throwable {
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            super.finalize();
         }
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             super.addNotify();
             refresh(true);
         }
@@ -550,21 +553,22 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
-            super.addNotify();
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
         }
 
         @Override
-        protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
-            super.removeNotify();
+        protected void finalize() throws Throwable {
+            super.finalize();
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
         }
 
         @Override
@@ -727,6 +731,9 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+
 
         @Subscribe
         @Override
@@ -739,20 +746,21 @@ final public class Accounts implements AutopsyVisitableItem {
         void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
-
+        
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             super.addNotify();
         }
 
         @Override
-        protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
+        protected void finalize() throws Throwable {
+            super.finalize();
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             super.removeNotify();
         }
 
@@ -881,21 +889,23 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             super.addNotify();
         }
 
         @Override
-        protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
-            super.removeNotify();
+        protected void finalize() throws Throwable {
+            super.finalize();
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
         }
 
         @Subscribe
@@ -1095,21 +1105,23 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             super.addNotify();
         }
 
         @Override
-        protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
-            super.removeNotify();
+        protected void finalize() throws Throwable{
+            super.finalize();
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
         }
 
         @Subscribe
