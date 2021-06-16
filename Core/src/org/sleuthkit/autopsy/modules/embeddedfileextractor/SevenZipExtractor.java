@@ -46,6 +46,7 @@ import net.sf.sevenzipjbinding.PropID;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
+import org.apache.tika.Tika;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
 import org.netbeans.api.progress.ProgressHandle;
@@ -189,6 +190,15 @@ class SevenZipExtractor {
                 break;
             }
             if (mimeType.toString().equals(fileMimeType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    boolean isSevenZipExtractionSupported(String mimeType) {
+        for (SupportedArchiveExtractionFormats supportedMimeType : SupportedArchiveExtractionFormats.values()) {
+            if (mimeType.contains(supportedMimeType.toString())) {
                 return true;
             }
         }
@@ -789,33 +799,18 @@ class SevenZipExtractor {
             // add them to the DB. We wait until the end so that we have the metadata on all of the
             // intermediate nodes since the order is not guaranteed
             try {
-                unpackedTree.updateOrAddFileToCaseRec(statusMap, archiveFilePath);
+                unpackedTree.updateOrAddFileToCaseRec(statusMap, archiveFilePath, parentAr, archiveFile, depthMap);
                 if (checkForIngestCancellation(archiveFile)) {
                     return false;
-                }
-                unpackedFiles = unpackedTree.getAllFileObjects();
-                //check if children are archives, update archive depth tracking
-                for (int i = 0; i < unpackedFiles.size(); i++) {
-                    if (checkForIngestCancellation(archiveFile)) {
-                        return false;
-                    }
-                    progress.progress(String.format("%s: Searching for nested archives (%d of %d)", currentArchiveName, i + 1, unpackedFiles.size()));
-                    AbstractFile unpackedFile = unpackedFiles.get(i);
-                    if (unpackedFile == null) {
-                        continue;
-                    }
-                    if (isSevenZipExtractionSupported(unpackedFile)) {
-                        Archive child = new Archive(parentAr.getDepth() + 1, parentAr.getRootArchiveId(), archiveFile);
-                        parentAr.addChild(child);
-                        depthMap.put(unpackedFile.getId(), child);
-                    }
-                    unpackedFile.close();
                 }
 
             } catch (TskCoreException | NoCurrentCaseException e) {
                 logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure", e); //NON-NLS
                 //TODO decide if anything to cleanup, for now bailing
             }
+            
+            // Get the new files to be added to the case.
+            unpackedFiles = unpackedTree.getAllFileObjects();
 
         } catch (SevenZipException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, "Error unpacking file: " + archiveFile, ex); //NON-NLS
@@ -991,6 +986,8 @@ class SevenZipExtractor {
         private EncodedFileOutputStream output;
         private String localAbsPath;
         private int bytesWritten;
+        private static final Tika tika = new Tika();
+        private String mimeType = "";
 
         UnpackStream(String localAbsPath) throws IOException {
             this.output = new EncodedFileOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
@@ -1003,6 +1000,7 @@ class SevenZipExtractor {
             this.output = new EncodedFileOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
             this.localAbsPath = localAbsPath;
             this.bytesWritten = 0;
+            this.mimeType = "";
         }
 
         public int getSize() {
@@ -1012,6 +1010,10 @@ class SevenZipExtractor {
         @Override
         public int write(byte[] bytes) throws SevenZipException {
             try {
+                // Detect MIME type now while the file is in memory
+                if (bytesWritten == 0) {
+                    mimeType = tika.detect(bytes);
+                }
                 output.write(bytes);
                 this.bytesWritten += bytes.length;
             } catch (IOException ex) {
@@ -1021,6 +1023,10 @@ class SevenZipExtractor {
                                 localAbsPath), ex);
             }
             return bytes.length;
+        }
+
+        public String getMIMEType() {
+            return mimeType;
         }
 
         public void close() throws IOException {
@@ -1196,6 +1202,8 @@ class SevenZipExtractor {
                         0L, createTimeInSeconds, accessTimeInSeconds, modTimeInSeconds,
                         localRelPath);
                 return;
+            } else {
+                unpackedNode.setMimeType(unpackStream.getMIMEType());
             }
 
             final String localAbsPath = archiveDetailsMap.get(
@@ -1413,10 +1421,10 @@ class SevenZipExtractor {
          * Traverse the tree top-down after unzipping is done and create derived
          * files for the entire hierarchy
          */
-        void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
+        void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath, Archive parentAr, AbstractFile archiveFile, ConcurrentHashMap<Long, Archive> depthMap) throws TskCoreException, NoCurrentCaseException {
             final FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
             for (UnpackedNode child : rootNode.getChildren()) {
-                updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
+                updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath, parentAr, archiveFile, depthMap);
             }
         }
 
@@ -1434,7 +1442,7 @@ class SevenZipExtractor {
          *
          * @throws TskCoreException
          */
-        private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException {
+        private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath, Archive parentAr, AbstractFile archiveFile, ConcurrentHashMap<Long, Archive> depthMap) throws TskCoreException {
             DerivedFile df;
             progress.progress(String.format("%s: Adding/updating files in case database (%d of %d)", currentArchiveName, ++nodesProcessed, numItems));
             try {
@@ -1497,10 +1505,17 @@ class SevenZipExtractor {
                     }
                 }
             }
+            
+            // Check for zip bombs
+            if (isSevenZipExtractionSupported(node.getMimeType())) {
+                Archive child = new Archive(parentAr.getDepth() + 1, parentAr.getRootArchiveId(), archiveFile);
+                parentAr.addChild(child);
+                depthMap.put(node.getFile().getId(), child);
+            }
 
             //recurse adding the children if this file was incomplete the children presumably need to be added
             for (UnpackedNode child : node.getChildren()) {
-                updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath));
+                updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath), parentAr, archiveFile, depthMap);
             }
         }
 
@@ -1517,6 +1532,7 @@ class SevenZipExtractor {
             private long size;
             private long ctime, crtime, atime, mtime;
             private boolean isFile;
+            private String mimeType = "";
             private UnpackedNode parent;
 
             //root constructor
@@ -1592,6 +1608,14 @@ class SevenZipExtractor {
 
             void setFile(AbstractFile file) {
                 this.file = file;
+            }
+            
+            void setMimeType(String mimeType) {
+                this.mimeType = mimeType;
+            }
+            
+            String getMimeType() {
+                return mimeType;
             }
 
             /**

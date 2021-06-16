@@ -193,7 +193,7 @@ abstract class PrioritizationAction extends AbstractAction {
      * AutoIngestJob is a part of.
      */
     @Messages({"PrioritizationAction.prioritizeCaseAction.title=Prioritize Case",
-        "PrioritizationAction.prioritizeCaseAction.error==Failed to prioritize case \"%s\"."})
+        "PrioritizationAction.prioritizeCaseAction.error=Failed to prioritize case \"%s\"."})
     static final class PrioritizeCaseAction extends PrioritizationAction {
 
         private static final long serialVersionUID = 1L;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotProvider;
 final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSnapshotProvider, Serializable {
 
     private static final long serialVersionUID = 1L;
-    private static final int CURRENT_VERSION = 3;
+    private static final int CURRENT_VERSION = 4;
     private static final int DEFAULT_PRIORITY = 0;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
@@ -100,6 +100,11 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
     private List<IngestThreadActivitySnapshot> ingestThreadsSnapshot;
     private List<Snapshot> ingestJobsSnapshot;
     private Map<String, Long> moduleRunTimesSnapshot;
+    
+    /*
+     * Version 4 fields.
+     */
+    private boolean ocrEnabled;
 
     /**
      * Constructs a new automated ingest job. All job state not specified in the
@@ -194,6 +199,11 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
             this.ingestJobsSnapshot = Collections.emptyList();
             this.moduleRunTimesSnapshot = Collections.emptyMap();
             
+            /*
+             * Version 4 fields
+             */
+            this.ocrEnabled = nodeData.getOcrEnabled();
+            
         } catch (Exception ex) {
             throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
         }
@@ -253,6 +263,24 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
     synchronized Integer getPriority() {
         return this.priority;
     }
+    
+    /**
+     * Gets the OCR flag for the job.
+     *
+     * @return Flag whether OCR is enabled/disabled.
+     */
+    synchronized boolean getOcrEnabled() {
+        return this.ocrEnabled;
+    }
+
+    /**
+     * Sets the OCR enabled/disabled flag for the job.
+     *
+     * @param enabled Flag whether OCR is enabled/disabled.
+     */
+    synchronized void setOcrEnabled(boolean enabled) {
+        this.ocrEnabled = enabled;
+    }    
 
     /**
      * Sets the processing stage of the job. The start date/time for the stage

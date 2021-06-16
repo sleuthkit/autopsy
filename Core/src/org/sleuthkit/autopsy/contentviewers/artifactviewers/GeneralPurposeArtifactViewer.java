@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -30,18 +30,24 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
@@ -55,13 +61,18 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @ServiceProvider(service = ArtifactContentViewer.class)
 public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel implements ArtifactContentViewer {
-    
+
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(GeneralPurposeArtifactViewer.class.getName());
     // Number of columns in the gridbag layout.
     private final static int MAX_COLS = 4;
-    private final static Insets ROW_INSETS = new java.awt.Insets(0, 12, 0, 0);
-    private final static Insets HEADER_INSETS = new java.awt.Insets(0, 0, 0, 0);
+    private final static Insets ZERO_INSETS = new java.awt.Insets(0, 0, 0, 0);
+
+    private final static Insets FIRST_HEADER_INSETS = ZERO_INSETS;
+    private final static Insets HEADER_INSETS = new Insets(ContentViewerDefaults.getSectionSpacing(), 0, ContentViewerDefaults.getLineSpacing(), 0);
+    private final static Insets VALUE_COLUMN_INSETS = new Insets(0, ContentViewerDefaults.getColumnSpacing(), ContentViewerDefaults.getLineSpacing(), 0);
+    private final static Insets KEY_COLUMN_INSETS = new Insets(0, ContentViewerDefaults.getSectionIndent(), ContentViewerDefaults.getLineSpacing(), 0);
+
     private final static double GLUE_WEIGHT_X = 1.0;
     private final static double TEXT_WEIGHT_X = 0.0;
     private final static int LABEL_COLUMN = 0;
@@ -91,6 +102,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         initComponents();
         gridBagConstraints.anchor = GridBagConstraints.FIRST_LINE_START;
         detailsPanel.setLayout(gridBagLayout);
+        detailsPanel.setBorder(new EmptyBorder(ContentViewerDefaults.getPanelInsets()));
     }
 
     /**
@@ -180,7 +192,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.weighty = 0.0;
         gridBagConstraints.weightx = TEXT_WEIGHT_X;    // keep components fixed horizontally.
         gridBagConstraints.fill = GridBagConstraints.NONE;
-        gridBagConstraints.insets = ROW_INSETS;
+        gridBagConstraints.insets = ZERO_INSETS;
     }
     
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -386,29 +398,26 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         headingLabel.setEditable(false);
         // add a blank line before the start of new section, unless it's 
         // the first section
-        if (gridBagConstraints.gridy != 0) {
-            gridBagConstraints.gridy++;
-            // add to panel
-            addToPanel(new javax.swing.JLabel(" "));
-            addLineEndGlue();
-            headingLabel.setFocusable(false);
-        } 
+        gridBagConstraints.insets = (gridBagConstraints.gridy == 0) 
+                ? FIRST_HEADER_INSETS
+                : HEADER_INSETS;
+        
         gridBagConstraints.gridy++;
         gridBagConstraints.gridx = LABEL_COLUMN;;
         // let the header span all of the row
         gridBagConstraints.gridwidth = MAX_COLS;
-        gridBagConstraints.insets = HEADER_INSETS;
         // set text
         headingLabel.setText(headerString);
         // make it large and bold
-        headingLabel.setFont(headingLabel.getFont().deriveFont(Font.BOLD, headingLabel.getFont().getSize() + 2));
+        headingLabel.setFont(ContentViewerDefaults.getHeaderFont());
+        headingLabel.setMargin(ZERO_INSETS);
         // add to panel
         addToPanel(headingLabel);
         // reset constraints to normal
         gridBagConstraints.gridwidth = LABEL_WIDTH;
         // add line end glue
         addLineEndGlue();
-        gridBagConstraints.insets = ROW_INSETS;
+        gridBagConstraints.insets = ZERO_INSETS;
         return headingLabel;
     }
 
@@ -465,6 +474,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         javax.swing.JLabel keyLabel = new javax.swing.JLabel();
         keyLabel.setFocusable(false);
         gridBagConstraints.gridy++;
+        gridBagConstraints.insets = KEY_COLUMN_INSETS;
         gridBagConstraints.gridx = LABEL_COLUMN;
         gridBagConstraints.gridwidth = LABEL_WIDTH;
         // set text
@@ -492,7 +502,9 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         valueField.setFocusable(false);
         valueField.setEditable(false);
         valueField.setOpaque(false);
+        valueField.setMargin(ZERO_INSETS);
         gridBagConstraints.gridx = VALUE_COLUMN;
+        gridBagConstraints.insets = VALUE_COLUMN_INSETS;
         GridBagConstraints cloneConstraints = (GridBagConstraints) gridBagConstraints.clone();
         // let the value span 2 cols
         cloneConstraints.gridwidth = VALUE_WIDTH;
