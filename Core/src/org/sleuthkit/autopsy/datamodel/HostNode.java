@@ -66,7 +66,7 @@ public class HostNode extends DisplayableItemNode {
 
         private final Host host;
         private final Function<DataSourceGrouping, Node> dataSourceToNode;
-
+        
         /**
          * Main constructor.
          *
@@ -77,7 +77,7 @@ public class HostNode extends DisplayableItemNode {
             this.host = host;
             this.dataSourceToNode = dataSourceToNode;
         }
-
+        
         /**
          * Listener for handling DATA_SOURCE_ADDED / HOST_DELETED events.
          * A host may have been deleted as part of a merge, which means its data sources could
@@ -93,15 +93,19 @@ public class HostNode extends DisplayableItemNode {
                 }
             }
         };
-
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(dataSourceAddedPcl, null);
+        
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
+            super.addNotify();
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), weakPcl);
         }
 
         @Override
-        protected void removeNotify() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
+        protected void finalize() throws Throwable {
+            super.finalize();
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), weakPcl);
         }
 
         @Override
@@ -222,7 +226,7 @@ public class HostNode extends DisplayableItemNode {
      * @param hostGrouping The HostGrouping key.
      */
     HostNode(HostGrouping hostGrouping) {
-        this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), true), hostGrouping.getHost());
+        this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), false), hostGrouping.getHost());
     }
 
     /**

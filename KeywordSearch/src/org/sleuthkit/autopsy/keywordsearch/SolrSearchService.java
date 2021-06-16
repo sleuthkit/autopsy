@@ -462,4 +462,17 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         }
     }
 
+    /**
+     * A flag to enable or disable OCR on all future text indexing. Also sets the
+     * the "Limited OCR" functionality accordingly.
+     *
+     * @param state Boolean flag to enable/disable OCR. Set to True to enable
+     *              OCR, or False to disable it.
+     */
+    @Override
+    public void changeOcrState(boolean state) {
+        KeywordSearchSettings.setOcrOption(state);
+        KeywordSearchSettings.setLimitedOcrOption(state);
+    }
+
 }
