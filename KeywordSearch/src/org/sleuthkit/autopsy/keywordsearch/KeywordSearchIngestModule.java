@@ -592,7 +592,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 //divide into chunks and index
                 return Ingester.getDefault().indexText(finalReader, aFile.getId(), aFile.getName(), aFile, context);
             } catch (TextExtractor.InitReaderException ex) {
-                //No text extractor found... run the default instead
+                // Text extractor could not be initialized.  No text will be extracted.
                 return false;
             }
         }

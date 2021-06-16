@@ -101,7 +101,7 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
     }
 
     /**
-     * Returns true if OCR is to be perform only on images larger than 100KB.
+     * Returns true if OCR is to be performed only on images larger than 100KB.
      * May defer to KeywordSearchSettings if no setting serialized.
      *
      * @return If true, OCR is to be performed only on images larger than 100KB.
@@ -112,7 +112,7 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
             limitedOCREnabled = KeywordSearchSettings.getLimitedOcrOption();
         }
         
-        return ocrEnabled;
+        return limitedOCREnabled;
     }
 
     /**
