@@ -596,8 +596,9 @@ final class ChromeCacheExtractor {
         if (fileCopyCache.containsKey(fileTableKey)) {
             return Optional.of(fileCopyCache.get(fileTableKey).getAbstractFile());
         }
-        
-        List<AbstractFile> cacheFiles = fileManager.findFiles(dataSource, cacheFileName, cacheFolderName); //NON-NLS
+
+        List<AbstractFile> cacheFiles = currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, 
+                cacheFileName, cacheFolderName);
         if (!cacheFiles.isEmpty()) {
             // Sort the list for consistency. Preference is:
             // - In correct subfolder and allocated
