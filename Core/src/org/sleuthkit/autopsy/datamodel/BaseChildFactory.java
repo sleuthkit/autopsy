@@ -19,8 +19,9 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.prefs.PreferenceChangeEvent;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.Content;
 
@@ -56,7 +58,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * This static map is used to facilitate communication between the UI and
      * the child factory.
      */
-    private static Map<String, EventBus> nodeNameToEventBusMap = new ConcurrentHashMap<>();
+    private static PropertyChangeSupport nodeNameToEventBusMap = new PropertyChangeSupport(BaseChildFactory.class);
 
     @Messages({
         "# {0} - node name", "BaseChildFactory.NoSuchEventBusException.message=No event bus for node: {0}"
@@ -75,13 +77,8 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * @param nodeName   The name of the node.
      * @param subscriber The subscriber to register.
      */
-    public static void register(String nodeName, Object subscriber) {
-        EventBus bus = nodeNameToEventBusMap.get(nodeName);
-        if (bus == null) {
-            bus = new EventBus(nodeName);
-            nodeNameToEventBusMap.put(nodeName, bus);
-        }
-        bus.register(subscriber);
+    public static void register(String nodeName, PropertyChangeListener subscriber) {
+        nodeNameToEventBusMap.addPropertyChangeListener(nodeName, subscriber);
     }
 
     /**
@@ -94,11 +91,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException
      */
     public static void post(String nodeName, Object event) throws NoSuchEventBusException {
-        EventBus bus = nodeNameToEventBusMap.get(nodeName);
-        if (bus == null) {
-            throw new NoSuchEventBusException(nodeName);
-        }
-        bus.post(event);
+        nodeNameToEventBusMap.firePropertyChange(nodeName, null, event);
     }
 
     public BaseChildFactory(String nodeName) {
@@ -228,6 +221,23 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      */
     private class PagingSupport {
 
+        private final PropertyChangeListener listener = (pce) -> {
+            if (pce == null) {
+                return;
+            }
+            
+            Object event = pce.getNewValue();
+            if (event instanceof PageChangeEvent) {
+                subscribeToPageChange((PageChangeEvent) event);
+            } else if (event instanceof PageSizeChangeEvent) {
+                subscribeToPageSizeChange((PageSizeChangeEvent) event);
+            } else if (event instanceof RefreshKeysEvent) {
+                subscribeToRefreshKeys((RefreshKeysEvent) event);
+            }
+        };
+        
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange(listener, null);
+        
         private final String nodeName;
         private int pageSize;
         private int currentPage;
@@ -259,7 +269,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
                 }
             });
 
-            register(nodeName, this);
+            register(nodeName, weakListener);
         }
 
         /**
@@ -315,13 +325,10 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
          *
          * @param event
          */
-        @Subscribe
         private void subscribeToPageChange(PageChangeEvent event) {
-            if (event != null) {
-                currentPage = event.getPageNumber();
-                isPageChangeEvent = true;
-                refresh(true);
-            }
+            currentPage = event.getPageNumber();
+            isPageChangeEvent = true;
+            refresh(true);
         }
 
         /**
@@ -330,29 +337,23 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
          *
          * @param event
          */
-        @Subscribe
         private void subscribeToPageSizeChange(PageSizeChangeEvent event) {
-            if (event != null) {
-                int newPageSize = event.getPageSize();
-                if (pageSize == newPageSize) {
-                    // No change...nothing to do.
-                    return;
-                }
-
-                pageSize = newPageSize;
-                splitKeysIntoPages(pages.stream().flatMap(List::stream).collect(Collectors.toList()));
-
-                currentPage = 1;
-                isPageSizeChangeEvent = true;
-                refresh(true);
+            int newPageSize = event.getPageSize();
+            if (pageSize == newPageSize) {
+                // No change...nothing to do.
+                return;
             }
+
+            pageSize = newPageSize;
+            splitKeysIntoPages(pages.stream().flatMap(List::stream).collect(Collectors.toList()));
+
+            currentPage = 1;
+            isPageSizeChangeEvent = true;
+            refresh(true);
         }
 
-        @Subscribe
         private void subscribeToRefreshKeys(RefreshKeysEvent event) {
-            if (event != null) {
-                refresh(true);
-            }
+            refresh(true);
         }
     }
 }
