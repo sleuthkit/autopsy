@@ -174,6 +174,7 @@ public class ViewContextAction extends AbstractAction {
             if ((parentContent != null) && (parentContent instanceof UnsupportedContent)) {
                 MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_unsupportedParent());
                 logger.log(Level.WARNING, String.format("Could not navigate to unsupported content with id: %d", parentContent.getId())); //NON-NLS
+                return;
             }
 
             // Get the "Data Sources" node from the tree view.
