@@ -31,6 +31,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -76,15 +77,18 @@ public class DataSourcesNode extends DisplayableItemNode {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(UPDATE_EVTS, pcl);
+            Case.addEventTypeSubscriber(UPDATE_EVTS, weakPcl);
         }
 
         @Override
-        protected void removeNotify() {
-            Case.removeEventTypeSubscriber(UPDATE_EVTS, pcl);
+        protected void finalize() throws Throwable{
+            Case.removeEventTypeSubscriber(UPDATE_EVTS, weakPcl);
+            super.finalize();
         }
 
         @Override
