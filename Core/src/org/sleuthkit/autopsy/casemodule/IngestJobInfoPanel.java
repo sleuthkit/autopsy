@@ -59,7 +59,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     private IngestModuleTableModel ingestModuleTableModel = new IngestModuleTableModel(null);
     private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private DataSource selectedDataSource;
-    private static SwingWorker<Boolean, Void> refreshWorker = null; 
+    private static SwingWorker<Boolean, Void> refreshWorker = null;
 
     /**
      * Creates new form IngestJobInfoPanel
@@ -136,7 +136,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
      * Get the updated complete list of ingest jobs.
      */
     private void refresh() {
-        if (refreshWorker != null && !refreshWorker.isDone()){
+        if (refreshWorker != null && !refreshWorker.isDone()) {
             refreshWorker.cancel(true);
         }
         refreshWorker = new SwingWorker<Boolean, Void>() {
@@ -179,7 +179,9 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     private void reset() {
         this.ingestJobs = new ArrayList<>();
         setDataSource(null);
-        refreshWorker.cancel(true);
+        if (refreshWorker != null) {
+            refreshWorker.cancel(true);
+        }
     }
 
     @Messages({"IngestJobInfoPanel.IngestJobTableModel.StartTime.header=Start Time",
