@@ -311,7 +311,7 @@ final class ReportVisualPanel2 extends JPanel {
         advancedButton = new javax.swing.JButton();
         allTaggedResultsRadioButton = new javax.swing.JRadioButton();
 
-        setPreferredSize(new java.awt.Dimension(650, 275));
+        setPreferredSize(new java.awt.Dimension(834, 374));
 
         optionsButtonGroup.add(specificTaggedResultsRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(specificTaggedResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.specificTaggedResultsRadioButton.text")); // NOI18N
