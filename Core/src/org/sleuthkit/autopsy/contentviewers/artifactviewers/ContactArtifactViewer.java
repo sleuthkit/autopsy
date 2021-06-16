@@ -130,19 +130,15 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         // Reset the panel.
         resetComponent();
 
-        if (artifact == null) {
-            return;
+        if (artifact != null) {
+            try {
+                extractArtifactData(artifact);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
+                return;
+            }
+            updateView();
         }
-
-        try {
-            extractArtifactData(artifact);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
-            return;
-        }
-
-        updateView();
-
         this.setLayout(this.m_gridBagLayout);
         this.revalidate();
         this.repaint();
@@ -164,6 +160,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * Extracts data from the artifact to be displayed in the panel.
      *
      * @param artifact Artifact to show.
+     *
      * @throws TskCoreException
      */
     private void extractArtifactData(BlackboardArtifact artifact) throws TskCoreException {
@@ -235,7 +232,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     /**
      * Updates the contact image in the view.
      *
-     * @param contactPanelLayout Panel layout.
+     * @param contactPanelLayout      Panel layout.
      * @param contactPanelConstraints Layout constraints.
      *
      */
@@ -267,7 +264,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     /**
      * Updates the contact name in the view.
      *
-     * @param contactPanelLayout Panel layout.
+     * @param contactPanelLayout      Panel layout.
      * @param contactPanelConstraints Layout constraints.
      *
      */
@@ -294,9 +291,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * Updates the view by displaying the given list of attributes in the given
      * section panel.
      *
-     * @param sectionAttributesList List of attributes to display.
-     * @param sectionHeader Section name label.
-     * @param contactPanelLayout Panel layout.
+     * @param sectionAttributesList   List of attributes to display.
+     * @param sectionHeader           Section name label.
+     * @param contactPanelLayout      Panel layout.
      * @param contactPanelConstraints Layout constraints.
      *
      */
@@ -418,12 +415,12 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     /**
      * Displays the given persona in the persona panel.
      *
-     * @param persona Persona to display.
-     * @param matchNumber Number of matches.
+     * @param persona             Persona to display.
+     * @param matchNumber         Number of matches.
      * @param missingAccountsList List of contact accounts this persona may be
-     * missing.
-     * @param gridBagLayout Layout to use.
-     * @param constraints layout constraints.
+     *                            missing.
+     * @param gridBagLayout       Layout to use.
+     * @param constraints         layout constraints.
      *
      * @throws CentralRepoException
      */
@@ -567,7 +564,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * @param artifact
      *
      * @return Image from a TSK_CONTACT artifact or default image if none was
-     * found or the artifact is not a TSK_CONTACT
+     *         found or the artifact is not a TSK_CONTACT
      */
     private ImageIcon getImageFromArtifact(BlackboardArtifact artifact) {
         ImageIcon imageIcon = defaultImage;
@@ -617,7 +614,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
          * Creates a persona searcher task.
          *
          * @param accountAttributesList List of attributes that may map to
-         * accounts.
+         *                              accounts.
          */
         ContactPersonaSearcherTask(BlackboardArtifact artifact) {
             this.artifact = artifact;
@@ -647,7 +644,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                         }
                     }
                 }
-                
+
                 Collection<PersonaAccount> personaAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
                 if (personaAccounts != null && !personaAccounts.isEmpty()) {
                     // get personas for the account
@@ -716,7 +713,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         /**
          * Constructor.
          *
-         * @param personaNameLabel Persona name label.
+         * @param personaNameLabel    Persona name label.
          * @param personaActionButton Persona action button.
          */
         PersonaUIComponents(JLabel personaNameLabel, JButton personaActionButton) {
@@ -784,8 +781,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             for (CentralRepoAccount account : contactUniqueAccountsList) {
                 personaPanel.addAccount(account, Bundle.ContactArtifactViewer_persona_account_justification(), Persona.Confidence.HIGH);
             }
-            
-            if(contactName != null && contactUniqueAccountsList.isEmpty()) {
+
+            if (contactName != null && contactUniqueAccountsList.isEmpty()) {
                 createPersonaDialog.setStartupPopupMessage(Bundle.ContactArtifactViewer_id_not_found_in_cr(contactName));
             }
 

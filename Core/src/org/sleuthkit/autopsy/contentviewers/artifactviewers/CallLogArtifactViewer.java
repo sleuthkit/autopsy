@@ -97,30 +97,28 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     public void setArtifact(BlackboardArtifact artifact) {
         resetComponent();
 
-        if (artifact == null) {
-            return;
-        }
-
         CallLogViewData callLogViewData = null;
         try {
             callLogViewData = getCallLogViewData(artifact);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error getting attributes for Calllog artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
-
+        List<AccountPersonaSearcherData> personaSearchDataList = new ArrayList<>();
         // update the view with the call log data
         if (callLogViewData != null) {
-            List<AccountPersonaSearcherData> personaSearchDataList = updateView(callLogViewData);
-            if (!personaSearchDataList.isEmpty()) {
-                currentAccountFetcher = new PersonaAccountFetcher(artifact, personaSearchDataList, this);
-                currentAccountFetcher.execute();
-            } else {
-                currentAccountFetcher = null;
-            }
+            personaSearchDataList.addAll(updateView(callLogViewData));
+
+        }
+        if (!personaSearchDataList.isEmpty()) {
+            currentAccountFetcher = new PersonaAccountFetcher(artifact, personaSearchDataList, this);
+            currentAccountFetcher.execute();
+        } else {
+            currentAccountFetcher = null;
         }
         
         // repaint
         this.revalidate();
+        this.repaint();
     }
 
     /**
@@ -320,7 +318,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         // Display "From" if we have non-local device accounts
         if (callLogViewData.getFromAccount() != null) {
             CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_from());
-            
+
             // check if this is local account
             String accountDisplayString = getAccountDisplayString(callLogViewData.getFromAccount(), callLogViewData);
             CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, accountDisplayString);
@@ -371,8 +369,6 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
         this.setLayout(m_gridBagLayout);
         this.revalidate();
-        this.repaint();
-
         return dataList;
     }
 
