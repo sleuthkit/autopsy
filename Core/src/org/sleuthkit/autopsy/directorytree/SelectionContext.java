@@ -20,7 +20,9 @@ package org.sleuthkit.autopsy.directorytree;
 
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.DataSourceFilesNode;
 import static org.sleuthkit.autopsy.directorytree.Bundle.*;
+import org.sleuthkit.datamodel.DataSource;
 
 @NbBundle.Messages({"SelectionContext.dataSources=Data Sources",
     "SelectionContext.dataSourceFiles=Data Source Files",
@@ -62,6 +64,8 @@ enum SelectionContext {
         if (n == null || n.getParentNode() == null) {
             // Parent of root node or root node. Occurs during case open / close.
             return SelectionContext.OTHER;
+        } else if (DataSourceFilesNode.getNameIdentifier() == n.getName() || n.getLookup().lookup(DataSource.class) != null) {
+            return SelectionContext.DATA_SOURCES;
         } else if (n.getParentNode().getParentNode() == null) {
             // One level below root node. Should be one of DataSources, Views, or Results
             return SelectionContext.getContextFromName(n.getDisplayName());
