@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -134,31 +135,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         // only allow one item to be selected at a time
         getTree().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-        //Hook into the JTree and pre-expand the Views Node and Results node when a user
-        //expands an item in the tree that makes these nodes visible.
-        ((ExpansionBeanTreeView) getTree()).addTreeExpansionListener(new TreeExpansionListener() {
-            @Override
-            public void treeExpanded(TreeExpansionEvent event) {
-                //Bail immediately if we are not in the Group By view.
-                //Assumption here is that the views are already expanded.
-                if (!CasePreferences.getGroupItemsInTreeByDataSource()) {
-                    return;
-                }
 
-                Node expandedNode = Visualizer.findNode(event.getPath().getLastPathComponent());
-                for (Node child : em.getRootContext().getChildren().getNodes()) {
-                    if (child.equals(expandedNode)) {
-                        preExpandNodes(child.getChildren());
-                    }
-                }
-            }
-
-            @Override
-            public void treeCollapsed(TreeExpansionEvent event) {
-                //Do nothing
-            }
-
-        });
         // remove the close button
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
         setName(NbBundle.getMessage(DirectoryTreeTopComponent.class, "CTL_DirectoryTreeTopComponent"));
@@ -201,30 +178,28 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     private void preExpandNodes(Children rootChildren) {
         BeanTreeView tree = getTree();
-        for (String categoryKey : new String[]{AnalysisResults.getName(), DataArtifacts.getName()}) {
-            Node categoryNode = rootChildren.findChild(categoryKey);
 
-            if (!Objects.isNull(categoryNode)) {
-                tree.expandNode(categoryNode);
-                Children resultsChildren = categoryNode.getChildren();
-                Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
-            }
-        }
-
-        Node views = rootChildren.findChild(ViewsNode.NAME);
-        if (!Objects.isNull(views)) {
-            tree.expandNode(views);
+        // using getNodes(true) to fetch children so that async nodes are loaded
+        Node[] rootChildrenNodes = rootChildren.getNodes(true);
+        if (rootChildrenNodes == null || rootChildrenNodes.length < 1) {
+            return;
         }
 
         // expand all nodes parents of and including hosts if group by host/person
         if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-            Node[] rootNodes = rootChildren.getNodes();
-            if (rootNodes != null) {
-                Stream.of(rootNodes)
-                        .flatMap((n) -> getHostNodesAndParents(n).stream())
-                        .filter((n) -> n != null)
-                        .forEach((n) -> tree.expandNode(n));
-            }
+            Stream.of(rootChildrenNodes)
+                    .flatMap((n) -> getHostNodesAndParents(n).stream())
+                    .filter((n) -> n != null)
+                    .forEach(tree::expandNode);
+        } else {
+            // nodes to be opened if present at top level
+            Set<String> resultArtifactNames
+                    = Stream.of(AnalysisResults.getName(), DataArtifacts.getName(), ViewsNode.NAME)
+                            .collect(Collectors.toSet());
+
+            Stream.of(rootChildrenNodes)
+                    .filter(n -> n != null && resultArtifactNames.contains(n.getName()))
+                    .forEach(tree::expandNode);
         }
     }
 
