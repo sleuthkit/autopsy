@@ -71,12 +71,15 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Set;
+import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.parser.pdf.PDFParserConfig.OCR_STRATEGY;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.HybridTerminator;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
@@ -86,8 +89,8 @@ final class TikaTextExtractor implements TextExtractor {
 
     //Mimetype groups to aassist extractor implementations in ignoring binary and 
     //archive files.
-    private static final List<String> BINARY_MIME_TYPES
-            = ImmutableList.of(
+    private static final Set<String> BINARY_MIME_TYPES
+            = ImmutableSet.of(
                     //ignore binary blob data, for which string extraction will be used
                     "application/octet-stream", //NON-NLS
                     "application/x-msdownload"); //NON-NLS
@@ -96,8 +99,8 @@ final class TikaTextExtractor implements TextExtractor {
      * generally text extractors should ignore archives and let unpacking
      * modules take care of them
      */
-    private static final List<String> ARCHIVE_MIME_TYPES
-            = ImmutableList.of(
+    private static final Set<String> ARCHIVE_MIME_TYPES
+            = ImmutableSet.of(
                     //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
                     "application/x-7z-compressed", //NON-NLS
                     "application/x-ace-compressed", //NON-NLS
@@ -134,6 +137,7 @@ final class TikaTextExtractor implements TextExtractor {
     // Used to log to the tika file that is why it uses the java.util.logging.logger class instead of the Autopsy one
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
+
     private final ThreadFactory tikaThreadFactory
             = new ThreadFactoryBuilder().setNameFormat("tika-reader-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(tikaThreadFactory);
@@ -183,17 +187,49 @@ final class TikaTextExtractor implements TextExtractor {
      */
     @Override
     public boolean willUseOCR() {
+        return isOcrSupported()
+                // if limited OCR is not enabled or the image is greater than 100KB in size or the image is a derived file.
+                && content instanceof AbstractFile
+                // in order to ocr, it needs to either be an image or a document with embedded content
+                && (isImage((AbstractFile) content) || isDocumentWithEmbeds((AbstractFile) content));
+    }
+    
+    private boolean isOcrSupported() {
         // If Tesseract has been installed and is set to be used through
         // configuration, then ocr is enabled. OCR can only currently be run on 64
         // bit Windows OS.
         return TESSERACT_PATH != null
                 && tesseractOCREnabled
                 && PlatformUtil.isWindowsOS()
-                && PlatformUtil.is64BitOS()
-                // if limited OCR is not enabled or the image is greater than 100KB in size or the image is a derived file.
-                && content instanceof AbstractFile;
+                && PlatformUtil.is64BitOS();
+    }
+    
+    private boolean isImage(AbstractFile aFile) {
+        String mimeType = aFile.getMIMEType();
+        if (mimeType == null) {
+            return false;
+        }
+        
+        return FileTypeUtils.FileTypeCategory.IMAGE.getMediaTypes().contains(mimeType.toLowerCase());
     }
 
+    
+    private boolean isDocumentWithEmbeds(AbstractFile aFile) {
+        String mimeType = aFile.getMIMEType();
+        if (mimeType == null) {
+            return false;
+        }
+        
+        mimeType = mimeType.toLowerCase();
+        
+        if (ARCHIVE_MIME_TYPES.contains(mimeType)) {
+            return false;
+        }
+        
+        ParsingEmbeddedDocumentExtractor extractor = new ParsingEmbeddedDocumentExtractor(getParseContext(true));
+        extractor.shouldParseEmbedded(metadata)
+    }
+    
     /**
      * Returns a reader that will iterate over the text extracted from Apache
      * Tika.
@@ -225,42 +261,7 @@ final class TikaTextExtractor implements TextExtractor {
 
         // Set up Tika
         final InputStream stream = new ReadContentInputStream(content);
-        final ParseContext parseContext = new ParseContext();
-
-        // Documents can contain other documents. By adding
-        // the parser back into the context, Tika will recursively
-        // parse embedded documents.
-        parseContext.set(Parser.class, parser);
-
-        // Use the more memory efficient Tika SAX parsers for DOCX and
-        // PPTX files (it already uses SAX for XLSX).
-        OfficeParserConfig officeParserConfig = new OfficeParserConfig();
-        officeParserConfig.setUseSAXPptxExtractor(true);
-        officeParserConfig.setUseSAXDocxExtractor(true);
-        parseContext.set(OfficeParserConfig.class, officeParserConfig);
-
-        if (willUseOCR()) {
-            // Configure OCR for Tika if it chooses to run OCR
-            // during extraction
-            TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
-            String tesseractFolder = TESSERACT_PATH.getParent();
-            ocrConfig.setTesseractPath(tesseractFolder);
-            ocrConfig.setLanguage(languagePacks);
-            ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
-            parseContext.set(TesseractOCRConfig.class, ocrConfig);
-
-            // Configure how Tika handles OCRing PDFs
-            PDFParserConfig pdfConfig = new PDFParserConfig();
-
-            // This stategy tries to pick between OCRing a page in the 
-            // PDF and doing text extraction. It makes this choice by
-            // first running text extraction and then counting characters.
-            // If there are too few characters or too many unmapped 
-            // unicode characters, it'll run the entire page through OCR
-            // and take that output instead. See JIRA-6938
-            pdfConfig.setOcrStrategy(OCR_STRATEGY.AUTO);
-            parseContext.set(PDFParserConfig.class, pdfConfig);
-        }
+        ParseContext parseContext = getParseContext();
 
         Metadata metadata = new Metadata();
         //Make the creation of a TikaReader a cancellable future in case it takes too long
@@ -306,6 +307,43 @@ final class TikaTextExtractor implements TextExtractor {
         } finally {
             future.cancel(true);
         }
+    }
+
+    private ParseContext getParseContext(boolean ocrEnabled) {
+        final ParseContext parseContext = new ParseContext();
+        // Documents can contain other documents. By adding
+        // the parser back into the context, Tika will recursively
+        // parse embedded documents.
+        parseContext.set(Parser.class, parser);
+        // Use the more memory efficient Tika SAX parsers for DOCX and
+        // PPTX files (it already uses SAX for XLSX).
+        OfficeParserConfig officeParserConfig = new OfficeParserConfig();
+        officeParserConfig.setUseSAXPptxExtractor(true);
+        officeParserConfig.setUseSAXDocxExtractor(true);
+        parseContext.set(OfficeParserConfig.class, officeParserConfig);
+        if (ocrEnabled) {
+            // Configure OCR for Tika if it chooses to run OCR
+            // during extraction
+            TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
+            String tesseractFolder = TESSERACT_PATH.getParent();
+            ocrConfig.setTesseractPath(tesseractFolder);
+            ocrConfig.setLanguage(languagePacks);
+            ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
+            parseContext.set(TesseractOCRConfig.class, ocrConfig);
+            
+            // Configure how Tika handles OCRing PDFs
+            PDFParserConfig pdfConfig = new PDFParserConfig();
+            
+            // This stategy tries to pick between OCRing a page in the
+            // PDF and doing text extraction. It makes this choice by
+            // first running text extraction and then counting characters.
+            // If there are too few characters or too many unmapped
+            // unicode characters, it'll run the entire page through OCR
+            // and take that output instead. See JIRA-6938
+            pdfConfig.setOcrStrategy(OCR_STRATEGY.AUTO);
+            parseContext.set(PDFParserConfig.class, pdfConfig);
+        }
+        return parseContext;
     }
 
     /**
