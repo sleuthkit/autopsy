@@ -815,7 +815,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, value));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, itemMtime));
-                                            BlackboardArtifact bbart = regFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DELETED_PROG), bbattributes);
+                                            BlackboardArtifact bbart = regFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_INSTALLED_PROG), bbattributes);
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.", ex); //NON-NLS

@@ -26,6 +26,7 @@ CorrelationType.IMEI.displayName=IMEI Number
 CorrelationType.IMSI.displayName=IMSI Number
 CorrelationType.MAC.displayName=MAC Addresses
 CorrelationType.PHONE.displayName=Phone Numbers
+CorrelationType.PROG_NAME.displayName=Installed Programs
 CorrelationType.SSID.displayName=Wireless Networks
 CorrelationType.USBID.displayName=USB Devices
 EamArtifactInstances.knownStatus.bad=Bad
