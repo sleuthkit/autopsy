@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,7 +60,7 @@ public final class InstanceCountNode extends DisplayableItemNode {
         "InstanceCountNode.displayName=Exists in %s data sources (%s)"
     })
     public InstanceCountNode(int instanceCount, CommonAttributeValueList attributeValues, CorrelationAttributeInstance.Type type) {
-        super(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList(), type), false));
+        super(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList(), type), true));
         this.type = type;
         this.instanceCount = instanceCount;
         this.attributeValues = attributeValues;

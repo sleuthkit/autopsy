@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearchservice;
 
+import com.google.common.annotations.Beta;
 import java.io.Closeable;
 import java.io.IOException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
@@ -105,5 +106,14 @@ public interface KeywordSearchService extends Closeable {
      * @throws KeywordSearchServiceException if unable to delete.
      */
     void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException;
+    
+    /**
+     * A flag to enable or disable OCR on all future text indexing.
+     *
+     * @param state Boolean flag to enable/disable OCR. Set to True to enable
+     *              OCR, or False to disable it.
+     */
+    @Beta
+    void changeOcrState(boolean state);
 
 }

@@ -92,6 +92,7 @@ public class PersonNode extends DisplayableItemNode {
          */
         PersonChildren(Person person) {
             this.person = person;
+            
         }
 
         /**
@@ -111,17 +112,20 @@ public class PersonNode extends DisplayableItemNode {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(hostAddedDeletedPcl, null);
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, hostAddedDeletedPcl);
+            Case.addEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, weakPcl);
         }
-
+        
         @Override
-        protected void removeNotify() {
-            Case.removeEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, hostAddedDeletedPcl);
+        protected void finalize() throws Throwable {
+            super.finalize();
+            Case.removeEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, weakPcl);
         }
-
+        
         @Override
         protected HostNode createNodeForKey(HostGrouping key) {
             return key == null ? null : new HostNode(key);
@@ -203,7 +207,7 @@ public class PersonNode extends DisplayableItemNode {
      * @param displayName The display name for the person.
      */
     private PersonNode(Person person, String displayName) {
-        super(Children.create(new PersonChildren(person), false),
+        super(Children.create(new PersonChildren(person), true),
                 person == null ? Lookups.fixed(displayName) : Lookups.fixed(person, displayName));
         super.setName(displayName);
         super.setDisplayName(displayName);

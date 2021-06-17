@@ -20,16 +20,22 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -63,6 +69,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
     public Metadata() {
         initComponents();
         customizeComponents();
+        ContentViewerHtmlStyles.setupHtmlJTextPane(jTextPane1);
     }
 
     /**
@@ -80,8 +87,6 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
         setPreferredSize(new java.awt.Dimension(100, 52));
 
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         jScrollPane2.setPreferredSize(new java.awt.Dimension(610, 52));
 
         jTextPane1.setEditable(false);
@@ -116,30 +121,59 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
          * selectAllMenuItem.addActionListener(actList);
          */
 
-        Utilities.configureTextPaneAsHtml(jTextPane1);
     }
 
     private void setText(String str) {
-        jTextPane1.setText("<html><body>" + str + "</body></html>"); //NON-NLS
+        ContentViewerHtmlStyles.setupHtmlJTextPane(jTextPane1);
+        jTextPane1.setText("<html><head></head><body>" + str + "</body></html>"); //NON-NLS
+    }
+
+    private void addHeader(StringBuilder sb, String header, boolean spaced) {
+        sb.append(MessageFormat.format("<div class=\"{0}\"><h1 class=\"{1}\">{2}</h1></div>", 
+                (spaced) ? ContentViewerHtmlStyles.getSpacedSectionClassName() : "",
+                ContentViewerHtmlStyles.getHeaderClassName(), 
+                header));
     }
 
     private void startTable(StringBuilder sb) {
-        sb.append("<table>"); //NON-NLS
+        sb.append(MessageFormat.format("<table class=\"{0}\"><tbody>",
+                ContentViewerHtmlStyles.getIndentedClassName())); //NON-NLS
     }
 
     private void endTable(StringBuilder sb) {
-        sb.append("</table>"); //NON-NLS
+        sb.append("</tbody></table>"); //NON-NLS
     }
 
     private void addRow(StringBuilder sb, String key, String value) {
-        sb.append("<tr><td valign=\"top\">"); //NON-NLS
-        sb.append(key);
-        sb.append("</td><td>"); //NON-NLS
-        sb.append(value);
-        sb.append("</td></tr>"); //NON-NLS
+        sb.append(MessageFormat.format("<tr><td class=\"{0}\"><span class=\"{1}\">{2}:</span></td><td class=\"{3}\">{4}</td></tr>",
+                ContentViewerHtmlStyles.getKeyColumnClassName(),
+                ContentViewerHtmlStyles.getTextClassName(),
+                EscapeUtil.escapeHtml(key),
+                ContentViewerHtmlStyles.getTextClassName(),
+                EscapeUtil.escapeHtml(key)
+        ));
+    }
+
+    private void addMonospacedRow(StringBuilder sb, String key) {
+        sb.append(MessageFormat.format("<tr><td class=\"{0}\"><span class=\"{1}\">{2}</span></td></tr>",
+                ContentViewerHtmlStyles.getKeyColumnClassName(),
+                ContentViewerHtmlStyles.getMonospacedClassName(),
+                EscapeUtil.escapeHtml(key)
+        ));
+    }
+
+    private void addRowWithMultipleValues(StringBuilder sb, String key, String[] values) {
+        String[] safeValues = values == null || values.length < 1 ? new String[]{""} : values;
+        
+        addRow(sb, key, safeValues[0]);
+        Stream.of(safeValues)
+                .skip(1)
+                .filter(line -> line != null)
+                .forEach(line -> addRow(sb, "", EscapeUtil.escapeHtml(line)));
     }
 
     @Messages({
+        "Metadata.headerTitle=Metadata",
         "Metadata.tableRowTitle.mimeType=MIME Type",
         "Metadata.nodeText.truncated=(results truncated)",
         "Metadata.tableRowTitle.sha1=SHA1",
@@ -219,8 +253,11 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 if (StringUtils.isEmpty(details)) {
                     details = Bundle.Metadata_nodeText_unknown();
                 }
-                details = details.replaceAll("\n", "<br>");
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.acquisitionDetails"), details);
+                String[] lines = (details != null) ? details.split("\n") : new String[]{""};
+                addRowWithMultipleValues(sb,
+                        NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.acquisitionDetails"),
+                        lines);
+
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error reading acquisition details from case database", ex); //NON-NLS
             }
@@ -240,11 +277,9 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         if (node != null && !node.getLookup().lookupAll(DataArtifact.class).isEmpty()) {
             return Bundle.Metadata_dataArtifactTitle();
         } else {
-            return NbBundle.getMessage(this.getClass(), "Metadata.title");    
+            return NbBundle.getMessage(this.getClass(), "Metadata.title");
         }
     }
-    
-    
 
     @Override
     public String getToolTip() {
@@ -299,6 +334,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             }
 
             StringBuilder sb = new StringBuilder();
+            addHeader(sb, Bundle.Metadata_headerTitle(), false);
             startTable(sb);
 
             if (file != null) {
@@ -357,30 +393,35 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                  * If we have a file system file, grab the more detailed
                  * metadata text too
                  */
-                try {
-                    if (file instanceof FsContent) {
-                        FsContent fsFile = (FsContent) file;
+                if (file instanceof FsContent) {
+                    FsContent fsFile = (FsContent) file;
 
-                        sb.append("<hr /><pre>\n"); //NON-NLS
-                        sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.text"));
-                        sb.append(" <br /><br />"); // NON-NLS
-                        for (String str : fsFile.getMetaDataText()) {
-                            sb.append(str).append("<br />"); //NON-NLS
+                    addHeader(sb, NbBundle.getMessage(this.getClass(), "Metadata.nodeText.text"), true);
+                    startTable(sb);
 
-                            /*
+                    List<String> istatStrings = Collections.emptyList();
+                    try {
+                        istatStrings = fsFile.getMetaDataText();
+                    } catch (TskCoreException ex) {
+                        istatStrings = Arrays.asList(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text") + ex.getLocalizedMessage());
+                    }
+
+                    for (String str : istatStrings) {
+                        addMonospacedRow(sb, str);
+
+                        /*
                              * Very long results can cause the UI to hang before
                              * displaying, so truncate the results if necessary.
-                             */
-                            if (sb.length() > 50000) {
-                                sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
-                                break;
-                            }
+                         */
+                        if (sb.length() > 50000) {
+                            addMonospacedRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
+                            break;
                         }
-                        sb.append("</pre>\n"); //NON-NLS
                     }
-                } catch (TskCoreException ex) {
-                    sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
+
+                    endTable(sb);
                 }
+
             } else {
                 try {
                     addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getUniquePath());
@@ -419,20 +460,18 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
                 // Add all the data source paths to the "Local Path" value cell.
                 String[] imagePaths = image.getPaths();
+
+                                
                 if (imagePaths.length > 0) {
-                    StringBuilder pathValues = new StringBuilder("<div>");
-                    pathValues.append(imagePaths[0]);
-                    pathValues.append("</div>");
-                    for (int i = 1; i < imagePaths.length; i++) {
-                        pathValues.append("<div>");
-                        pathValues.append(imagePaths[i]);
-                        pathValues.append("</div>");
-                    }
-                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), pathValues.toString());
+                    addRowWithMultipleValues(sb,
+                        NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"),
+                        imagePaths);
                 } else {
                     addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"),
                             NbBundle.getMessage(this.getClass(), "Metadata.nodeText.none"));
                 }
+
+                endTable(sb);
             }
 
             if (isCancelled()) {
