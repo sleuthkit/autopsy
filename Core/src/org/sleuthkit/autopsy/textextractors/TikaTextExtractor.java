@@ -75,8 +75,18 @@ import com.google.common.collect.ImmutableSet;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.Set;
-import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.mail.RFC822Parser;
+import org.apache.tika.parser.mbox.MboxParser;
+import org.apache.tika.parser.mbox.OutlookPSTParser;
+import org.apache.tika.parser.microsoft.OfficeParser;
+import org.apache.tika.parser.epub.EpubParser;
+import org.apache.tika.parser.microsoft.TNEFParser;
+import org.apache.tika.parser.microsoft.ooxml.OOXMLParser;
+import org.apache.tika.parser.odf.OpenDocumentParser;
+import org.apache.tika.parser.pdf.PDFParser;
 import org.apache.tika.parser.pdf.PDFParserConfig.OCR_STRATEGY;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.HybridTerminator;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
@@ -134,6 +144,21 @@ final class TikaTextExtractor implements TextExtractor {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
+    private static final List<Parser> DOCUMENTS_WITH_EMBEDS_PARSERS = ImmutableList.of(
+            new OpenDocumentParser(),
+            new OOXMLParser(),
+            new OfficeParser(),
+
+            new PDFParser(),
+
+            new EpubParser(),
+            
+            new MboxParser(),
+            new RFC822Parser(),
+            new OutlookPSTParser(),
+            new TNEFParser()
+    );
+    
     // Used to log to the tika file that is why it uses the java.util.logging.logger class instead of the Autopsy one
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
@@ -166,25 +191,6 @@ final class TikaTextExtractor implements TextExtractor {
         this.content = content;
     }
 
-    /**
-     * If Tesseract has been installed and is set to be used through
-     * configuration, then ocr is enabled. OCR can only currently be run on 64
-     * bit Windows OS.
-     *
-     * @return Flag indicating if OCR is set to be used.
-     */
-    /**
-     * Method to indicate if OCR should be performed on this image file. Checks
-     * to see if the limited OCR setting is enabled. If it is it will also check
-     * that one of the limiting factors is true.
-     *
-     * @param file    The AbstractFile which OCR might be performed on.
-     * @param boolean The configuration setting which indicates if limited OCR
-     *                is enabled in Keyword Search.
-     *
-     * @return True if limited OCR is not enabled or the image is greater than
-     *         100KB in size or the image is a derived file.
-     */
     @Override
     public boolean willUseOCR() {
         return isOcrSupported()
@@ -193,7 +199,11 @@ final class TikaTextExtractor implements TextExtractor {
                 // in order to ocr, it needs to either be an image or a document with embedded content
                 && (isImage((AbstractFile) content) || isDocumentWithEmbeds((AbstractFile) content));
     }
-    
+
+    /**
+     * Whether or not OCR is supported in environment.
+     * @return True if OCR is supported.
+     */
     private boolean isOcrSupported() {
         // If Tesseract has been installed and is set to be used through
         // configuration, then ocr is enabled. OCR can only currently be run on 64
@@ -204,6 +214,11 @@ final class TikaTextExtractor implements TextExtractor {
                 && PlatformUtil.is64BitOS();
     }
     
+    /**
+     * Returns whether or not the file is a known image.
+     * @param aFile The abstract file.
+     * @return True if mime type is an image type.
+     */
     private boolean isImage(AbstractFile aFile) {
         String mimeType = aFile.getMIMEType();
         if (mimeType == null) {
@@ -214,6 +229,11 @@ final class TikaTextExtractor implements TextExtractor {
     }
 
     
+    /**
+     * Whether or not file is a document type known to have embedded images.
+     * @param aFile The abstract file.
+     * @return True if document type with possible image embeds.
+     */
     private boolean isDocumentWithEmbeds(AbstractFile aFile) {
         String mimeType = aFile.getMIMEType();
         if (mimeType == null) {
@@ -226,8 +246,14 @@ final class TikaTextExtractor implements TextExtractor {
             return false;
         }
         
-        ParsingEmbeddedDocumentExtractor extractor = new ParsingEmbeddedDocumentExtractor(getParseContext(true));
-        extractor.shouldParseEmbedded(metadata)
+        MediaType mediaType = MediaType.parse(mimeType);
+                
+        ParseContext parseContext = getParseContext(true);
+        Optional<Parser> parserOpt = DOCUMENTS_WITH_EMBEDS_PARSERS.stream()
+                .filter((p) -> p.getSupportedTypes(parseContext).contains(mediaType))
+                .findFirst();
+        
+        return parserOpt.isPresent();
     }
     
     /**
@@ -249,19 +275,17 @@ final class TikaTextExtractor implements TextExtractor {
 
         // Only abstract files are supported, see isSupported()
         final AbstractFile file = ((AbstractFile) content);
-        // This mime type must be non-null, see isSupported()
-        final String mimeType = file.getMIMEType();
 
         // Handle images seperately so the OCR task can be cancelled.
         // See JIRA-4519 for the need to have cancellation in the UI and ingest.
-        if (willUseOCR() && mimeType.toLowerCase().startsWith("image/")) {
+        if (isOcrSupported() && isImage(file)) {
             InputStream imageOcrStream = performOCR(file);
             return new InputStreamReader(imageOcrStream, Charset.forName("UTF-8"));
         }
 
         // Set up Tika
         final InputStream stream = new ReadContentInputStream(content);
-        ParseContext parseContext = getParseContext();
+        ParseContext parseContext = getParseContext(isOcrSupported());
 
         Metadata metadata = new Metadata();
         //Make the creation of a TikaReader a cancellable future in case it takes too long
@@ -309,6 +333,11 @@ final class TikaTextExtractor implements TextExtractor {
         }
     }
 
+    /**
+     * Returns a parse context to be used.
+     * @param ocrEnabled Whether or not OCR is enabled.
+     * @return The generated ParseContext.
+     */
     private ParseContext getParseContext(boolean ocrEnabled) {
         final ParseContext parseContext = new ParseContext();
         // Documents can contain other documents. By adding
