@@ -137,17 +137,20 @@ public final class OsAccounts implements AutopsyVisitableItem {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(listener, null);
 
+        @Override
+        protected void finalize() throws Throwable {
+            super.finalize();
+            Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNTS_ADDED), weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+        }
+        
         @Override
         protected void addNotify() {
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNTS_ADDED, Case.Events.OS_ACCOUNTS_DELETED), listener);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
-        }
-
-        @Override
-        protected void removeNotify() {
-            Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNTS_ADDED), listener);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), listener);
         }
 
         @Override
