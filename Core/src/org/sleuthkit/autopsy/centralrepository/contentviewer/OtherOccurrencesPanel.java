@@ -49,7 +49,6 @@ import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -87,6 +86,8 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
     private SwingWorker<?, ?> worker;
     
+    // Initializing the JFileChooser in a thread to prevent a block on the EDT
+    // see https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
     private final FutureTask<JFileChooser> futureFileChooser = new FutureTask<>(JFileChooser::new);
     private JFileChooser CSVFileChooser;
 
@@ -254,11 +255,14 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         if (casesTableModel.getRowCount() > 0) {
             
             if(CSVFileChooser == null) {
-                try {
+                try{
                     CSVFileChooser = futureFileChooser.get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    Exceptions.printStackTrace(ex);
-                } 
+                    // If something happened with the thread try and 
+                    // initalized the chooser now
+                    logger.log(Level.WARNING, "A failure occurred in the JFileChooser background thread");
+                    CSVFileChooser = new JFileChooser();
+                }
             }
             
             Calendar now = Calendar.getInstance();

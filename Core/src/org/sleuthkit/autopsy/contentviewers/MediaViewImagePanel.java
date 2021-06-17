@@ -72,7 +72,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.io.FilenameUtils;
 import org.controlsfx.control.MaskerPane;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog.TagNameAndComment;
@@ -194,6 +193,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private Task<Image> readImageFileTask;
     private volatile ImageTransforms imageTransforms;
     
+    // Initializing the JFileChooser in a thread to prevent a block on the EDT
+    // see https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
     private final FutureTask<JFileChooser> futureFileChooser = new FutureTask<>(JFileChooser::new);
 
     /**
@@ -1050,7 +1051,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     try {
                         exportChooser = futureFileChooser.get();
                     } catch (InterruptedException | ExecutionException ex) {
-                        Exceptions.printStackTrace(ex);
+                        // If something happened with the thread try and 
+                        // initalized the chooser now
+                        logger.log(Level.WARNING, "A failure occurred in the JFileChooser background thread");
+                        exportChooser = new JFileChooser();
                     } 
                 }
                 
