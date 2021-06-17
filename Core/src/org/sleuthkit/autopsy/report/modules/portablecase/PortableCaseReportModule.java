@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.caseuco.CaseUcoExporter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -69,12 +70,14 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.Pool;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
@@ -392,8 +395,8 @@ public class PortableCaseReportModule implements ReportModule {
         // Copy interesting files and results
         if (!setNames.isEmpty()) {
             try {
-                List<BlackboardArtifact> interestingFiles = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                for (BlackboardArtifact art : interestingFiles) {
+                List<AnalysisResult> interestingFiles = currentCase.getSleuthkitCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID());
+                for (AnalysisResult art : interestingFiles) {
                     // Check for cancellation 
                     if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
                         handleCancellation(progressPanel);
@@ -411,8 +414,8 @@ public class PortableCaseReportModule implements ReportModule {
             }
 
             try {
-                List<BlackboardArtifact> interestingResults = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
-                for (BlackboardArtifact art : interestingResults) {
+                List<AnalysisResult> interestingResults = currentCase.getSleuthkitCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID());
+                for (AnalysisResult art : interestingResults) {
                     // Check for cancellation 
                     if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
                         handleCancellation(progressPanel);
@@ -936,9 +939,6 @@ public class PortableCaseReportModule implements ReportModule {
                     String.join(",", oldAssociatedAttribute.getSources()), newAssociatedArtifact.getArtifactID()));
         }
 
-        // Create the new artifact
-        int newArtifactTypeId = getNewArtifactTypeId(artifactToCopy);
-        BlackboardArtifact newArtifact = portableSkCase.newBlackboardArtifact(newArtifactTypeId, newContentId);
         List<BlackboardAttribute> oldAttrs = artifactToCopy.getAttributes();
 
         // Copy over each attribute, making sure the type is in the new case.
@@ -977,8 +977,57 @@ public class PortableCaseReportModule implements ReportModule {
                     throw new TskCoreException("Unexpected attribute value type found: " + oldAttr.getValueType().getLabel()); // NON-NLS
             }
         }
-
-        newArtifact.addAttributes(newAttrs);
+        // Create the new artifact
+        int newArtifactTypeId = getNewArtifactTypeId(artifactToCopy);
+        BlackboardArtifact.Type newArtifactType = portableSkCase.getArtifactType(newArtifactTypeId);
+        BlackboardArtifact newArtifact;
+        
+        // First, check if the artifact being copied is an AnalysisResult or a DataArtifact. If it
+        // is neither, attempt to reload it as the appropriate subclass.
+        if (!((artifactToCopy instanceof AnalysisResult) || (artifactToCopy instanceof DataArtifact))) {
+            try {
+                if (newArtifactType.getCategory().equals(BlackboardArtifact.Category.ANALYSIS_RESULT)) {
+                    AnalysisResult ar = currentCase.getSleuthkitCase().getBlackboard().getAnalysisResultById(artifactToCopy.getId());
+                    if (ar != null) {
+                        artifactToCopy = ar;
+                    }
+                } else {
+                    DataArtifact da = currentCase.getSleuthkitCase().getBlackboard().getDataArtifactById(artifactToCopy.getId());
+                    if (da != null) {
+                        artifactToCopy = da;
+                    }
+                }
+            } catch (TskCoreException ex) {
+                // If the lookup failed, just use the orginal BlackboardArtifact
+            }
+        }
+        
+        try {
+            if (artifactToCopy instanceof AnalysisResult) {
+                AnalysisResult analysisResultToCopy = (AnalysisResult) artifactToCopy;
+                newArtifact = portableSkCase.getBlackboard().newAnalysisResult(newArtifactType, newContentId,
+                        newIdToContent.get(newContentId).getDataSource().getId(), analysisResultToCopy.getScore(), 
+                        analysisResultToCopy.getConclusion(), analysisResultToCopy.getConfiguration(), 
+                        analysisResultToCopy.getJustification(), newAttrs).getAnalysisResult();
+            } else if (artifactToCopy instanceof DataArtifact) {
+                DataArtifact dataArtifactToCopy = (DataArtifact) artifactToCopy;
+                newArtifact = portableSkCase.getBlackboard().newDataArtifact(newArtifactType, newContentId, 
+                        newIdToContent.get(newContentId).getDataSource().getId(), 
+                        newAttrs, dataArtifactToCopy.getOsAccountObjectId().orElse(null));
+            } else {
+                if (newArtifactType.getCategory().equals(BlackboardArtifact.Category.ANALYSIS_RESULT)) {
+                    newArtifact = portableSkCase.getBlackboard().newAnalysisResult(newArtifactType, newContentId,
+                        newIdToContent.get(newContentId).getDataSource().getId(), Score.SCORE_NONE, 
+                        null, null, null, newAttrs).getAnalysisResult();
+                } else {
+                    newArtifact = portableSkCase.getBlackboard().newDataArtifact(newArtifactType, newContentId, 
+                        newIdToContent.get(newContentId).getDataSource().getId(), 
+                        newAttrs, null);
+                }
+            }    
+        } catch (BlackboardException ex) {
+            throw new TskCoreException("Error copying artifact with ID: " + artifactToCopy.getId());
+        }
 
         oldArtifactIdToNewArtifact.put(artifactToCopy.getArtifactID(), newArtifact);
         return newArtifact;
