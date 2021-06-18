@@ -799,9 +799,7 @@ class SevenZipExtractor {
 
             // add them to the DB. We wait until the end so that we have the metadata on all of the
             // intermediate nodes since the order is not guaranteed
-            //CaseDbTransaction trans = null;
             try {
-                //trans = Case.getCurrentCaseThrows().getSleuthkitCase().beginTransaction();
                 unpackedTree.updateOrAddFileToCaseRec(statusMap, archiveFilePath, parentAr, archiveFile, depthMap);
                 unpackedTree.commitCurrentTransaction();
             } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -1274,6 +1272,11 @@ class SevenZipExtractor {
         final UnpackedNode rootNode;
         private int nodesProcessed = 0;
             
+        // It is significantly faster to add the DerivedFiles to the case on a transaction,
+        // but we don't want to hold the transaction (and case write lock) for the entire 
+        // stage. Instead, we use the same transaction for MAX_TRANSACTION_SIZE database operations
+        // and then commit that transaction and start a new one, giving at least a short window
+        // for other processes.
         private CaseDbTransaction currentTransaction = null;
         private long transactionCounter = 0;
         private final static long MAX_TRANSACTION_SIZE = 1000;
@@ -1527,6 +1530,16 @@ class SevenZipExtractor {
             }
         }
         
+        /**
+         * Get the current transaction being used in updateOrAddFileToCaseRec().
+         * If there is no transaction, one will be started. After the
+         * transaction has been used MAX_TRANSACTION_SIZE, it will be committed and a
+         * new transaction will be opened.
+         * 
+         * @return The open transaction.
+         * 
+         * @throws TskCoreException 
+         */
         private CaseDbTransaction getCurrentTransaction() throws TskCoreException {
         
             if (currentTransaction == null) {
@@ -1542,6 +1555,11 @@ class SevenZipExtractor {
             return currentTransaction;
         }
     
+        /**
+         * Open a transaction.
+         * 
+         * @throws TskCoreException 
+         */
         private void startTransaction() throws TskCoreException {
             try {
                 currentTransaction = Case.getCurrentCaseThrows().getSleuthkitCase().beginTransaction();
@@ -1551,6 +1569,11 @@ class SevenZipExtractor {
             }
         }
     
+        /**
+         * Commit the current transaction.
+         * 
+         * @throws TskCoreException 
+         */
         private void commitCurrentTransaction() throws TskCoreException {
             if (currentTransaction != null) {
                 currentTransaction.commit();
@@ -1558,6 +1581,9 @@ class SevenZipExtractor {
             }
         }
     
+        /**
+         * Rollback the current transaction.
+         */
         private void rollbackCurrentTransaction() {
             if (currentTransaction != null) {
                 try {
