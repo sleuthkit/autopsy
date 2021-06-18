@@ -147,6 +147,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             .put("pdf:PDFVersion", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VERSION)
             .build();
 
+    private static final String PDF_MIME_TYPE = "application/pdf";
+
     /**
      * Options for this extractor
      */
@@ -354,6 +356,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         // if ocr only is enabled and not an ocr file, return
         Optional<TextExtractor> extractorOpt = getExtractor(abstractFile);
 
+        String mimeType = fileTypeDetector.getMIMEType(abstractFile).trim().toLowerCase();
+
         if (settings.isOCREnabled()) {
             // if ocr only and the extractor is not present or will not perform ocr on this file, continue
             if (settings.isOCROnly() && (!extractorOpt.isPresent() || !extractorOpt.get().willUseOCR())) {
@@ -362,8 +366,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             // if limited ocr is enabled, the extractor will use ocr, and 
             // the file would not be subject to limited ocr reading, continue
-            if (settings.isLimitedOCREnabled() && extractorOpt.isPresent() && 
-                    extractorOpt.get().willUseOCR() && !isLimitedOCRFile(abstractFile)) {
+            if (settings.isLimitedOCREnabled() && extractorOpt.isPresent()
+                    && extractorOpt.get().willUseOCR() && !isLimitedOCRFile(abstractFile, mimeType)) {
                 return ProcessResult.OK;
             }
         }
@@ -373,7 +377,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (context.fileIngestIsCancelled()) {
                 return ProcessResult.OK;
             }
-            indexer.indexFile(extractorOpt, abstractFile, false);
+            indexer.indexFile(extractorOpt, abstractFile, mimeType, false);
             return ProcessResult.OK;
         }
 
@@ -381,7 +385,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         if (context.fileIngestIsCancelled()) {
             return ProcessResult.OK;
         }
-        indexer.indexFile(extractorOpt, abstractFile, true);
+        indexer.indexFile(extractorOpt, abstractFile, mimeType, true);
 
         // Start searching if it hasn't started already
         if (!startedSearching) {
@@ -449,13 +453,16 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * Returns true if file should have text extracted when limited OCR setting
      * is specified.
      *
-     * @param aFile The abstract file.
+     * @param aFile    The abstract file.
+     * @param mimeType The file mime type.
      *
      * @return True if file should have text extracted when limited OCR setting
      *         is on.
      */
-    private boolean isLimitedOCRFile(AbstractFile aFile) {
-        return (aFile.getSize() > LIMITED_OCR_SIZE_MIN || ((AbstractFile) aFile).getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED);
+    private boolean isLimitedOCRFile(AbstractFile aFile, String mimeType) {
+        return aFile.getSize() > LIMITED_OCR_SIZE_MIN
+                || aFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED
+                || PDF_MIME_TYPE.equals(mimeType);
     }
 
     /**
@@ -712,11 +719,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          *
          * @param extractor    The textExtractor to use with this file or empty
          *                     if no extractor found.
-         * @param aFile        File to analyze
+         * @param aFile        File to analyze.
+         * @param mimeType     The file mime type.
          * @param indexContent False if only metadata should be text_ingested.
          *                     True if content and metadata should be index.
          */
-        private void indexFile(Optional<TextExtractor> extractor, AbstractFile aFile, boolean indexContent) {
+        private void indexFile(Optional<TextExtractor> extractor, AbstractFile aFile, String mimeType, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
 
             TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
@@ -758,11 +766,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (context.fileIngestIsCancelled()) {
                 return;
             }
-            String fileType = fileTypeDetector.getMIMEType(aFile);
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
-            if (ARCHIVE_MIME_TYPES.contains(fileType)) {
+            if (ARCHIVE_MIME_TYPES.contains(mimeType)) {
                 try {
                     if (context.fileIngestIsCancelled()) {
                         return;
@@ -785,7 +792,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return;
                 }
-                if (fileType.equals(MimeTypes.OCTET_STREAM)) {
+                if (MimeTypes.OCTET_STREAM.equals(mimeType)) {
                     extractStringsAndIndex(aFile);
                     return;
                 }
