@@ -90,13 +90,12 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
     public boolean isSupported(Node node) {
 
         // Is supported if one of the following is true:
-        // - The central repo is enabled and the node has correlatable content
-        //   (either through the MD5 hash of the associated file or through a BlackboardArtifact)
+        // - The central repo is enabled and the node is not null
         // - The central repo is disabled and the backing file has a valid MD5 hash
-        AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
-        if (CentralRepository.isEnabled()) {
-            return !OtherOccurrences.getCorrelationAttributesFromNode(node, file).isEmpty();
+        if (CentralRepository.isEnabled() && node != null) {
+            return true;
         } else {
+            AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
             return file != null
                     && file.getSize() > 0
                     && ((file.getMd5Hash() != null) && (!file.getMd5Hash().isEmpty()));

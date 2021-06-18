@@ -130,25 +130,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public boolean isSupported(Node node) {
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-
-        try {
-            if (artifact != null) {
-                if (artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID()) != null) {
-                    return true;
-                }
-            } else {
-                if (node.getLookup().lookup(AbstractFile.class) != null) {
-                    return true;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format(
-                    "Exception while trying to retrieve a Content instance from the BlackboardArtifact '%s' (id=%d).",
-                    artifact.getDisplayName(), artifact.getArtifactID()), ex);
-        }
-
-        return false;
+     return node.getLookup().lookup(AbstractFile.class) != null;
     }
 
     @Override
