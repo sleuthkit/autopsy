@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
@@ -167,6 +168,8 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     logger.log(Level.WARNING, "Error getting results from Ingest Job Info Panel's refresh worker", ex);
+                } catch (CancellationException ignored){
+                    logger.log(Level.INFO, "The refreshing of the IngestJobInfoPanel was cancelled");
                 }
             }
         };
