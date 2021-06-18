@@ -94,12 +94,13 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
         // - The central repo is disabled and the backing file has a valid MD5 hash
         if (CentralRepository.isEnabled() && node != null) {
             return true;
-        } else {
+        } else if (node != null){
             AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
             return file != null
                     && file.getSize() > 0
                     && ((file.getMd5Hash() != null) && (!file.getMd5Hash().isEmpty()));
         }
+        return false;
     }
 
     @Override

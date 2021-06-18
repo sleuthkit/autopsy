@@ -130,7 +130,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public boolean isSupported(Node node) {
-     return node.getLookup().lookup(AbstractFile.class) != null;
+     return node != null && node.getLookup().lookup(AbstractFile.class) != null;
     }
 
     @Override
