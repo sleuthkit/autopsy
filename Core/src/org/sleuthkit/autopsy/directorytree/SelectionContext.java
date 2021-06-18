@@ -18,8 +18,12 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.util.Objects;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
+import org.sleuthkit.autopsy.datamodel.DataSourceFilesNode;
+import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import static org.sleuthkit.autopsy.directorytree.Bundle.*;
 
 @NbBundle.Messages({"SelectionContext.dataSources=Data Sources",
@@ -28,12 +32,12 @@ import static org.sleuthkit.autopsy.directorytree.Bundle.*;
 enum SelectionContext {
     DATA_SOURCES(SelectionContext_dataSources()),
     VIEWS(SelectionContext_views()),
-    OTHER(""),  // Subnode of another node.
-    DATA_SOURCE_FILES(SelectionContext_dataSourceFiles()); 
+    OTHER(""), // Subnode of another node.
+    DATA_SOURCE_FILES(SelectionContext_dataSourceFiles());
 
     private final String displayName;
 
-  private  SelectionContext(String displayName) {
+    private SelectionContext(String displayName) {
         this.displayName = displayName;
     }
 
@@ -62,6 +66,12 @@ enum SelectionContext {
         if (n == null || n.getParentNode() == null) {
             // Parent of root node or root node. Occurs during case open / close.
             return SelectionContext.OTHER;
+        } else if ((!Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) && DataSourcesNode.getNameIdentifier().equals(n.getParentNode().getName()))
+                || (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) && DataSourceFilesNode.getNameIdentifier().equals(n.getParentNode().getName()))) {
+            // if group by data type and root is the DataSourcesNode or
+            // if group by persons/hosts and parent of DataSourceFilesNode
+            // then it is a data source node
+            return SelectionContext.DATA_SOURCES;
         } else if (n.getParentNode().getParentNode() == null) {
             // One level below root node. Should be one of DataSources, Views, or Results
             return SelectionContext.getContextFromName(n.getDisplayName());
@@ -75,7 +85,7 @@ enum SelectionContext {
                     return context;
                 }
             }
-            
+
             return getSelectionContext(n.getParentNode());
         }
     }

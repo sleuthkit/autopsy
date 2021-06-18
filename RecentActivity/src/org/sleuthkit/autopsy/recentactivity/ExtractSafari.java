@@ -647,8 +647,6 @@ final class ExtractSafari extends Extract {
         Long time = null;
         Long pathID = null;
         
-        FileManager fileManager = getCurrentCase().getServices().getFileManager();
-        
         NSString nsstring = (NSString) entry.get(PLIST_KEY_DOWNLOAD_URL);
         if (nsstring != null) {
             url = nsstring.toString();
@@ -669,7 +667,8 @@ final class ExtractSafari extends Extract {
         bbartifacts.add(webDownloadArtifact);
         
         // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
-        for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(path), FilenameUtils.getPath(path))) {
+        for (AbstractFile downloadedFile : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, 
+                FilenameUtils.getName(path), FilenameUtils.getPath(path))) {
             bbartifacts.add(createAssociatedArtifact(downloadedFile, webDownloadArtifact));
             break;
         }

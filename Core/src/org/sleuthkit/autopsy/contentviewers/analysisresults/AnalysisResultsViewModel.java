@@ -94,6 +94,7 @@ public class AnalysisResultsViewModel {
         private final List<ResultDisplayAttributes> analysisResults;
         private final Optional<AnalysisResult> selectedResult;
         private final Optional<Score> aggregateScore;
+        private final Optional<Content> content;
 
         /**
          * Constructor.
@@ -102,11 +103,13 @@ public class AnalysisResultsViewModel {
          * @param selectedResult  The selected analysis result or empty if none
          *                        selected.
          * @param aggregateScore  The aggregate score or empty if no score.
+         * @param content         The content associated with these results.
          */
-        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult, Optional<Score> aggregateScore) {
+        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult, Optional<Score> aggregateScore, Optional<Content> content) {
             this.analysisResults = analysisResults;
             this.selectedResult = selectedResult;
             this.aggregateScore = aggregateScore;
+            this.content = content;
         }
 
         /**
@@ -134,6 +137,17 @@ public class AnalysisResultsViewModel {
          */
         Optional<Score> getAggregateScore() {
             return aggregateScore;
+        }
+
+        /**
+         * Returns the content associated with these results or empty if not
+         * present.
+         *
+         * @return The content associated with these results or empty if not
+         *         present.
+         */
+        Optional<Content> getContent() {
+            return content;
         }
     }
 
@@ -221,10 +235,11 @@ public class AnalysisResultsViewModel {
      */
     NodeResults getAnalysisResults(Node node) {
         if (node == null) {
-            return new NodeResults(Collections.emptyList(), Optional.empty(), Optional.empty());
+            return new NodeResults(Collections.emptyList(), Optional.empty(), Optional.empty(), Optional.empty());
         }
 
         Optional<Score> aggregateScore = Optional.empty();
+        Optional<Content> nodeContent = Optional.empty();
         // maps id of analysis result to analysis result to prevent duplication
         Map<Long, AnalysisResult> allAnalysisResults = new HashMap<>();
         Optional<AnalysisResult> selectedResult = Optional.empty();
@@ -236,6 +251,8 @@ public class AnalysisResultsViewModel {
             }
 
             try {
+                nodeContent = Optional.of(content);
+                
                 // get the aggregate score of that content
                 aggregateScore = Optional.ofNullable(content.getAggregateScore());
 
@@ -273,6 +290,6 @@ public class AnalysisResultsViewModel {
         // get view model representation
         List<ResultDisplayAttributes> displayAttributes = getOrderedDisplayAttributes(allAnalysisResults.values());
 
-        return new NodeResults(displayAttributes, selectedResult, aggregateScore);
+        return new NodeResults(displayAttributes, selectedResult, aggregateScore, nodeContent);
     }
 }

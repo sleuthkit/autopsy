@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.JLabel;
 import javax.swing.SizeRequirements;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.UIManager;
 import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
@@ -59,7 +59,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     private static final Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
     
     // set font as close as possible to default
-    private static final Font DEFAULT_FONT = new JLabel().getFont();
+    private static final Font DEFAULT_FONT = UIManager.getDefaults().getFont("Label.font");
     
     private static final long serialVersionUID = 1L;
     private String contentName;
@@ -72,7 +72,6 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     ExtractedContentPanel() {
         initComponents();
         additionalInit();
-        setSources("", new ArrayList<>());
         hitPreviousButton.setEnabled(false);
         hitNextButton.setEnabled(false);
 
@@ -135,7 +134,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                 };
             }
         };
-        // get the style sheet for editing font size
+        // set new style sheet to clear default styles
         styleSheet = editorKit.getStyleSheet();
         
         sourceComboBox.addItemListener(itemEvent -> {
@@ -144,6 +143,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
             }
         });
         extractedTextPane.setComponentPopupMenu(rightClickMenu);
+        
         copyMenuItem.addActionListener(actionEvent -> extractedTextPane.copy());
         selectAllMenuItem.addActionListener(actionEvent -> extractedTextPane.selectAll());
         
@@ -156,11 +156,16 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
             if (zoomPanel instanceof TextZoomPanel)
                 ((TextZoomPanel) this.zoomPanel).resetSize();
         });
+        
+        setSources("", new ArrayList<>());
     }
     
     
     private void setStyleSheetSize(StyleSheet styleSheet, int size) {
-        styleSheet.addRule("body {font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } ");
+        styleSheet.addRule(
+                "body { font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } " +
+                "pre { font-family:\"" + DEFAULT_FONT.getFamily() + "\"; font-size:" + size + "pt; } "
+        );
     }
     
     
@@ -499,6 +504,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
             extractedTextPane.applyComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         }
 
+        // refresh style
+        setStyleSheetSize(styleSheet, curSize);
         extractedTextPane.setText(safeText);
         extractedTextPane.setCaretPosition(0);
     }
