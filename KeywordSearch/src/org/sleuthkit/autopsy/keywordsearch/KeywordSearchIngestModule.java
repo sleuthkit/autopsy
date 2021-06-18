@@ -460,9 +460,16 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      *         is on.
      */
     private boolean isLimitedOCRFile(AbstractFile aFile, String mimeType) {
-        return aFile.getSize() > LIMITED_OCR_SIZE_MIN
-                || aFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED
-                || PDF_MIME_TYPE.equals(mimeType);
+        if (PDF_MIME_TYPE.equals(mimeType)) {
+            return true;
+        } 
+        
+        if (mimeType.startsWith(IMAGE_MIME_TYPE_PREFIX)) {
+            return aFile.getSize() > LIMITED_OCR_SIZE_MIN
+                || aFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED;
+        }
+        
+        return false;
     }
 
     /**
