@@ -45,14 +45,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
-import org.openide.explorer.view.Visualizer;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -127,6 +124,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
     private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
 
+    // nodes to be opened if present at top level
+    private static final Set<String> NODES_TO_EXPAND = Stream.of(AnalysisResults.getName(), DataArtifacts.getName(), ViewsNode.NAME)
+            .collect(Collectors.toSet());
+
     /**
      * the constructor
      */
@@ -192,13 +193,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     .filter((n) -> n != null)
                     .forEach(tree::expandNode);
         } else {
-            // nodes to be opened if present at top level
-            Set<String> resultArtifactNames
-                    = Stream.of(AnalysisResults.getName(), DataArtifacts.getName(), ViewsNode.NAME)
-                            .collect(Collectors.toSet());
-
             Stream.of(rootChildrenNodes)
-                    .filter(n -> n != null && resultArtifactNames.contains(n.getName()))
+                    .filter(n -> n != null && NODES_TO_EXPAND.contains(n.getName()))
                     .forEach(tree::expandNode);
         }
     }
