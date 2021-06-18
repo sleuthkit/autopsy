@@ -150,7 +150,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 ContentViewerHtmlStyles.getTextClassName(),
                 EscapeUtil.escapeHtml(key),
                 ContentViewerHtmlStyles.getTextClassName(),
-                EscapeUtil.escapeHtml(key)
+                EscapeUtil.escapeHtml(value)
         ));
     }
 
