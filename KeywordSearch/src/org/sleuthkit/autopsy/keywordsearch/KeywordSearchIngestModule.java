@@ -149,6 +149,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
     private static final String PDF_MIME_TYPE = "application/pdf";
 
+    private static final String IMAGE_MIME_TYPE_PREFIX = "image/";
+    
     /**
      * Options for this extractor
      */
