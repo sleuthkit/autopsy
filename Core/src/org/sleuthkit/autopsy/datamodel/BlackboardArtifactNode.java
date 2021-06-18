@@ -228,14 +228,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
-        
-        BlackboardArtifact.Type artType = null;
-        try {
-            artType = artifact.getType();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, MessageFormat.format("Error getting the artifact type for artifact (artifact objID={0})", artifact.getId()), ex);
-        }
-        this.artifactType = artType;
+        this.artifactType = getType(artifact);
                         
         for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
             if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
@@ -278,14 +271,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
         super(artifact, createLookup(artifact, lookupIsAssociatedFile));
         this.artifact = artifact;
-        
-        BlackboardArtifact.Type artType = null;
-        try {
-            artType = artifact.getType();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, MessageFormat.format("Error getting the artifact type for artifact (artifact objID={0})", artifact.getId()), ex);
-        }
-        this.artifactType = artType;
+        this.artifactType = getType(artifact);
         
         try {
             //The lookup for a file may or may not exist so we define the srcContent as the parent.
@@ -325,6 +311,20 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
+    }
+    
+    /**
+     * Returns the artifact type of the artifact.
+     * @param artifact The artifact.
+     * @return The artifact type or null if no type could be retrieved.
+     */
+    private static BlackboardArtifact.Type getType(BlackboardArtifact artifact) {
+        try {
+            return artifact.getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the artifact type for artifact (artifact objID={0})", artifact.getId()), ex);
+            return null;
+        }
     }
 
     /**
