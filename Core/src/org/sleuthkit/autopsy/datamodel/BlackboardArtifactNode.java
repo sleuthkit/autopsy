@@ -119,6 +119,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     };
 
     private final BlackboardArtifact artifact;
+    private final BlackboardArtifact.Type artifactType;
     private Content srcContent;
     private volatile String translatedSourceName;
 
@@ -227,6 +228,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
+        
+        BlackboardArtifact.Type artType = null;
+        try {
+            artType = artifact.getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the artifact type for artifact (artifact objID={0})", artifact.getId()), ex);
+        }
+        this.artifactType = artType;
+                        
         for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
             if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
                 srcContent = lookupContent;
@@ -268,6 +278,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
         super(artifact, createLookup(artifact, lookupIsAssociatedFile));
         this.artifact = artifact;
+        
+        BlackboardArtifact.Type artType = null;
+        try {
+            artType = artifact.getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the artifact type for artifact (artifact objID={0})", artifact.getId()), ex);
+        }
+        this.artifactType = artType;
+        
         try {
             //The lookup for a file may or may not exist so we define the srcContent as the parent.
             srcContent = artifact.getParent();
@@ -639,13 +658,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.mimeType.displayName"),
                     NO_DESCR,
                     actualMimeType));
-        }
-        
-        BlackboardArtifact.Type artifactType = null;
-        try {
-            artifactType = artifact.getType();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to get type for artifact with id: " + artifact.getId());
         }
 
         /*
