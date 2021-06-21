@@ -34,8 +34,6 @@
         </MenuItem>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JFileChooser" name="CSVFileChooser">
-    </Component>
   </NonVisualComponents>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>

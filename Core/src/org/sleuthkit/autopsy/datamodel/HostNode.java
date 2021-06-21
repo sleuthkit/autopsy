@@ -228,7 +228,7 @@ public class HostNode extends DisplayableItemNode {
      * @param hostGrouping The HostGrouping key.
      */
     HostNode(HostGrouping hostGrouping) {
-        this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), false), hostGrouping.getHost());
+        this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), true), hostGrouping.getHost());
     }
 
     /**
