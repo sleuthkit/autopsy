@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharSource;
 import java.io.IOException;
 import java.io.Reader;
@@ -147,9 +148,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             .put("pdf:PDFVersion", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VERSION)
             .build();
 
-    private static final String PDF_MIME_TYPE = "application/pdf";
-
     private static final String IMAGE_MIME_TYPE_PREFIX = "image/";
+    
+    // documents where OCR is performed
+    private static final ImmutableSet OCR_DOCUMENTS = ImmutableSet.of(
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
     
     /**
      * Options for this extractor
@@ -452,8 +457,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     }
 
     /**
-     * Returns true if file should have text extracted when limited OCR setting
-     * is specified.
+     * Returns true if file should have OCR performed on it when limited OCR 
+     * setting is specified.
      *
      * @param aFile    The abstract file.
      * @param mimeType The file mime type.
@@ -462,9 +467,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      *         is on.
      */
     private boolean isLimitedOCRFile(AbstractFile aFile, String mimeType) {
-        if (PDF_MIME_TYPE.equals(mimeType)) {
+        if (OCR_DOCUMENTS.contains(mimeType)) {
             return true;
-        } 
+        }
         
         if (mimeType.startsWith(IMAGE_MIME_TYPE_PREFIX)) {
             return aFile.getSize() > LIMITED_OCR_SIZE_MIN

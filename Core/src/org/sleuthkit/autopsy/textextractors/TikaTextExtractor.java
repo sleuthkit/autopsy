@@ -153,7 +153,12 @@ final class TikaTextExtractor implements TextExtractor {
     private String languagePacks = formatLanguagePacks(PlatformUtil.getOcrLanguagePacks());
     private static final String TESSERACT_OUTPUT_FILE_NAME = "tess_output"; //NON-NLS
 
-    private static final String PDF_MIME_TYPE = "application/pdf";
+    // documents where OCR is performed
+    private static final ImmutableSet OCR_DOCUMENTS = ImmutableSet.of(
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+    
     private static final String IMAGE_MIME_TYPE_PREFIX = "image/";
 
     private Map<String, String> metadataMap;
@@ -197,7 +202,7 @@ final class TikaTextExtractor implements TextExtractor {
 
         String mimeType = getMimeType((AbstractFile) content);
         // in order to ocr, it needs to either be an image or a document with embedded content
-        return mimeType.startsWith(IMAGE_MIME_TYPE_PREFIX) || PDF_MIME_TYPE.equals(mimeType);
+        return mimeType.startsWith(IMAGE_MIME_TYPE_PREFIX) || OCR_DOCUMENTS.contains(mimeType);
     }
 
     /**
