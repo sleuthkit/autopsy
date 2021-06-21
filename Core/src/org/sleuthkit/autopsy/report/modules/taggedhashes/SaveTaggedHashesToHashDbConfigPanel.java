@@ -388,6 +388,6 @@ class SaveTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton selectAllButton;
-    private javax.swing.JList<String> tagNamesListBox;
+    private javax.swing.JList<TagName> tagNamesListBox;
     // End of variables declaration//GEN-END:variables
 }
