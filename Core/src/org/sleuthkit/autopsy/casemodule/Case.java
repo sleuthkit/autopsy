@@ -93,6 +93,7 @@ import org.sleuthkit.autopsy.casemodule.events.HostsRemovedFromPersonEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAcctInstancesAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsDeletedEvent;
@@ -449,6 +450,10 @@ public class Case {
          */
         OS_ACCOUNTS_DELETED,
         /**
+         * One or more OS account instances have been added to the case.
+         */
+        OS_ACCT_INSTANCES_ADDED,
+        /**
          * One or more hosts have been added to the case.
          */
         HOSTS_ADDED,
@@ -535,6 +540,11 @@ public class Case {
             eventPublisher.publish(new OsAccountsDeletedEvent(event.getOsAccountObjectIds()));
         }
 
+        @Subscribe
+        public void publishOsAccountInstancesAddedEvent(TskEvent.OsAcctInstancesAddedTskEvent event) {
+            eventPublisher.publish(new OsAcctInstancesAddedEvent(event.getOsAccountInstances()));            
+        }
+        
         /**
          * Publishes an autopsy event from the sleuthkit HostAddedEvent
          * indicating that hosts have been created.
