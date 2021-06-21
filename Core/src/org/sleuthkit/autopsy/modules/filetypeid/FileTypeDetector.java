@@ -51,6 +51,7 @@ public class FileTypeDetector {
     private final List<FileType> userDefinedFileTypes;
     private final List<FileType> autopsyDefinedFileTypes;
     private static SortedSet<String> tikaDetectedTypes;
+    private final int defaultBufferSize = 2048; // Number of bytes to initially read from the file. Should cover most signatures.
 
     /**
      * Gets a sorted set of the file types that can be detected: the MIME types
@@ -204,11 +205,23 @@ public class FileTypeDetector {
         }
 
         /*
+         * Read in the beginning of the file and store it.
+         */
+        byte[] buf = new byte[defaultBufferSize];
+        int bufLen;
+        try {
+            bufLen = file.read(buf, 0, defaultBufferSize);
+        } catch (TskCoreException ex) {
+            // Proceed for now - the error will likely get logged next time the file is read.
+            bufLen = 0; 
+        }
+        
+        /*
          * If the file is a regular file, give precedence to user-defined custom
          * file types.
          */
         if (null == mimeType) {
-            mimeType = detectUserDefinedType(file);
+            mimeType = detectUserDefinedType(file, buf, bufLen);
         }
 
         /*
@@ -216,7 +229,7 @@ public class FileTypeDetector {
          * custom file types defined by Autopsy.
          */
         if (null == mimeType) {
-            mimeType = detectAutopsyDefinedType(file);
+            mimeType = detectAutopsyDefinedType(file, buf, bufLen);
         }
 
         /*
@@ -352,11 +365,11 @@ public class FileTypeDetector {
      *
      * @return The MIME type as a string if a match is found; otherwise null.
      */
-    private String detectUserDefinedType(AbstractFile file) {
+    private String detectUserDefinedType(AbstractFile file, byte[] startOfFileBuffer, int bufLen) {
         String retValue = null;
 
         for (FileType fileType : userDefinedFileTypes) {
-            if (fileType.matches(file)) {
+            if (fileType.matches(file, startOfFileBuffer, bufLen)) {
                 retValue = fileType.getMimeType();
                 break;
             }
@@ -372,9 +385,9 @@ public class FileTypeDetector {
      *
      * @return The MIME type as a string if a match is found; otherwise null.
      */
-    private String detectAutopsyDefinedType(AbstractFile file) {
+    private String detectAutopsyDefinedType(AbstractFile file, byte[] startOfFileBuffer, int bufLen) {
         for (FileType fileType : autopsyDefinedFileTypes) {
-            if (fileType.matches(file)) {
+            if (fileType.matches(file, startOfFileBuffer, bufLen)) {
                 return fileType.getMimeType();
             }
         }
