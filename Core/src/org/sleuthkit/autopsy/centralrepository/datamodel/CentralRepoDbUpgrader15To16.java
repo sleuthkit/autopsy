@@ -41,7 +41,8 @@ public class CentralRepoDbUpgrader15To16 implements CentralRepoDbUpgrader {
                 for (CorrelationAttributeInstance.Type type : CorrelationAttributeInstance.getDefaultCorrelationTypes()) {
                     String instance_type_dbname = CentralRepoDbUtil.correlationTypeToInstanceTableName(type);
 
-                    if (type.getId() == CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID) {
+                    if ((type.getId() == CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID) ||
+                        (type.getId() == CorrelationAttributeInstance.OSACCOUNT_TYPE_ID)){
 
                         // these are new Correlation types - new tables need to be created
                         statement.execute(String.format(RdbmsCentralRepoFactory.getCreateAccountInstancesTableTemplate(selectedPlatform), instance_type_dbname, instance_type_dbname));

@@ -258,6 +258,7 @@ public class CorrelationAttributeInstance implements Serializable {
     public static final int IMSI_TYPE_ID = 8;
     public static final int ICCID_TYPE_ID = 9;
     public static final int INSTALLED_PROGS_TYPE_ID = 10;
+    public static final int OSACCOUNT_TYPE_ID = 11;
     
     // An offset to assign Ids for additional  correlation types.
     public static final int ADDITIONAL_TYPES_BASE_ID = 1000;
