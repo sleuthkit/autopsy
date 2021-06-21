@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 /**
  * Ingest job settings for the keywords search module.
  */
-final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
+public final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
 
@@ -83,7 +83,7 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
      * @return Whether or not OCR is enabled for keyword search.
      */
     @SuppressWarnings("Deprecation")
-    boolean isOCREnabled() {
+    public boolean isOCREnabled() {
         if (ocrEnabled == null) {
             ocrEnabled = KeywordSearchSettings.getOcrOption();
         }
@@ -96,7 +96,7 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
      *
      * @param ocrEnabled Whether or not OCR is enabled for keyword search.
      */
-    void setOCREnabled(boolean ocrEnabled) {
+    public void setOCREnabled(boolean ocrEnabled) {
         this.ocrEnabled = ocrEnabled;
     }
 
