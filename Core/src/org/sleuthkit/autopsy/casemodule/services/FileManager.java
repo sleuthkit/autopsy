@@ -130,8 +130,7 @@ public class FileManager implements Closeable {
      * @throws TskCoreException 
      */
     public List<AbstractFile> findFilesExactName(long parentId, String name) throws TskCoreException{
-        String whereClause = "name = '%s'";
-        return caseDb.findAllFilesInFolderWhere(parentId, String.format(whereClause, name));
+        return caseDb.getFileManager().findFilesExactName(parentId, name);
     }
 
     /**

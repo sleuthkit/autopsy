@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -35,7 +33,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -48,7 +45,6 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
@@ -171,17 +167,10 @@ public class ImageNode extends AbstractContentNode<Image> {
                 Bundle.ImageNode_createSheet_timezone_desc(),
                 this.content.getTimeZone()));
 
-        try (CaseDbQuery query = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
-            ResultSet deviceIdSet = query.getResultSet();
-            if (deviceIdSet.next()) {
-                sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
+        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
                         Bundle.ImageNode_createSheet_deviceId_displayName(),
                         Bundle.ImageNode_createSheet_deviceId_desc(),
-                        deviceIdSet.getString("device_id")));
-            }
-        } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Failed to get device id for the following image: " + this.content.getId(), ex);
-        }
+                        content.getDeviceId()));
 
         return sheet;
     }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers.contextviewer;
 import java.util.ArrayList;
 import java.util.List;
 import org.sleuthkit.autopsy.contentviewers.contextviewer.ContextViewer.DateTimePanel;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
@@ -75,8 +76,10 @@ public final class ContextSourcePanel extends javax.swing.JPanel implements Date
         jSourceNameLabel = new javax.swing.JLabel();
         jSourceTextLabel = new javax.swing.JLabel();
 
-        setBackground(new java.awt.Color(255, 255, 255));
-        setPreferredSize(new java.awt.Dimension(495, 75));
+        setBackground(ContentViewerDefaults.getPanelBackground());
+        setMaximumSize(new java.awt.Dimension(495, 55));
+        setMinimumSize(new java.awt.Dimension(300, 55));
+        setPreferredSize(new java.awt.Dimension(495, 55));
 
         org.openide.awt.Mnemonics.setLocalizedText(jSourceGoToResultButton, org.openide.util.NbBundle.getMessage(ContextSourcePanel.class, "ContextSourcePanel.jSourceGoToResultButton.text")); // NOI18N
         jSourceGoToResultButton.addActionListener(new java.awt.event.ActionListener() {
@@ -94,26 +97,23 @@ public final class ContextSourcePanel extends javax.swing.JPanel implements Date
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(50, 50, 50)
                 .addComponent(jSourceNameLabel)
                 .addGap(36, 36, 36)
-                .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(260, 260, 260))
+                .addComponent(jSourceTextLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
-                .addGap(90, 90, 90)
+                .addGap(40, 40, 40)
                 .addComponent(jSourceGoToResultButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(2, 2, 2)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jSourceNameLabel)
                     .addComponent(jSourceTextLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSourceGoToResultButton)
-                .addGap(0, 0, 0))
+                .addGap(0, 11, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

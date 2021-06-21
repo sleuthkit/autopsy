@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2020 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,7 @@ package org.sleuthkit.autopsy.contentviewers;
 import java.awt.Component;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.JLabel;
 import javax.swing.SwingWorker;
-import javax.swing.text.EditorKit;
-import javax.swing.text.html.HTMLEditorKit;
 
 import static org.openide.util.NbBundle.Messages;
 import org.openide.nodes.Node;
@@ -36,6 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.contentviewers.application.Annotations;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.jsoup.nodes.Document;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 
 /**
  * Annotations view of file contents.
@@ -48,33 +46,6 @@ import org.jsoup.nodes.Document;
     "AnnotationsContentViewer.onEmpty=No annotations were found for this particular item."
 })
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
-
-    private static final int DEFAULT_FONT_SIZE = new JLabel().getFont().getSize();
-
-    // how big the subheader should be
-    private static final int SUBHEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 12 / 11;
-
-    // how big the header should be
-    private static final int HEADER_FONT_SIZE = DEFAULT_FONT_SIZE * 14 / 11;
-
-    // the subsection indent
-    private static final int DEFAULT_SUBSECTION_LEFT_PAD = DEFAULT_FONT_SIZE;
-
-    // spacing occurring after an item
-    private static final int DEFAULT_SECTION_SPACING = DEFAULT_FONT_SIZE * 2;
-    private static final int DEFAULT_SUBSECTION_SPACING = DEFAULT_FONT_SIZE / 2;
-    private static final int CELL_SPACING = DEFAULT_FONT_SIZE / 2;
-
-    // additional styling for components
-    private static final String STYLE_SHEET_RULE
-            = String.format(" .%s { font-size: %dpx;font-style:italic; margin: 0px; padding: 0px; } ", Annotations.MESSAGE_CLASSNAME, DEFAULT_FONT_SIZE)
-            + String.format(" .%s {font-size:%dpx;font-weight:bold; margin: 0px; margin-top: %dpx; padding: 0px; } ",
-                    Annotations.SUBHEADER_CLASSNAME, SUBHEADER_FONT_SIZE, DEFAULT_SUBSECTION_SPACING)
-            + String.format(" .%s { font-size:%dpx;font-weight:bold; margin: 0px; padding: 0px; } ", Annotations.HEADER_CLASSNAME, HEADER_FONT_SIZE)
-            + String.format(" td { vertical-align: top; font-size:%dpx; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px;} ", DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" th { vertical-align: top; text-align: left; margin: 0px; padding: 0px %dpx 0px 0px} ", DEFAULT_FONT_SIZE, CELL_SPACING)
-            + String.format(" .%s { margin: %dpx 0px; padding-left: %dpx; } ", Annotations.SUBSECTION_CLASSNAME, DEFAULT_SUBSECTION_SPACING, DEFAULT_SUBSECTION_LEFT_PAD)
-            + String.format(" .%s { margin-bottom: %dpx; } ", Annotations.SECTION_CLASSNAME, DEFAULT_SECTION_SPACING);
     
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(AnnotationsContentViewer.class.getName());
@@ -86,13 +57,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      */
     public AnnotationsContentViewer() {
         initComponents();
-        Utilities.configureTextPaneAsHtml(textPanel);
-        // get html editor kit and apply additional style rules
-        EditorKit editorKit = textPanel.getEditorKit();
-        if (editorKit instanceof HTMLEditorKit) {
-            HTMLEditorKit htmlKit = (HTMLEditorKit) editorKit;
-            htmlKit.getStyleSheet().addRule(STYLE_SHEET_RULE);
-        }
+        ContentViewerHtmlStyles.setupHtmlJTextPane(textPanel);
     }
 
     @Override
@@ -165,25 +130,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public boolean isSupported(Node node) {
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-
-        try {
-            if (artifact != null) {
-                if (artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID()) != null) {
-                    return true;
-                }
-            } else {
-                if (node.getLookup().lookup(AbstractFile.class) != null) {
-                    return true;
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format(
-                    "Exception while trying to retrieve a Content instance from the BlackboardArtifact '%s' (id=%d).",
-                    artifact.getDisplayName(), artifact.getArtifactID()), ex);
-        }
-
-        return false;
+     return node != null && node.getLookup().lookup(AbstractFile.class) != null;
     }
 
     @Override
@@ -223,7 +170,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
            if(doc != null) {
                return doc.html();
            } else {
-               return Bundle.AnnotationsContentViewer_onEmpty();
+               return "<span class='" + ContentViewerHtmlStyles.getMessageClassName() + "'>" + Bundle.AnnotationsContentViewer_onEmpty() + "</span>";
            }
         }
         
@@ -235,6 +182,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             
             try {
                 String text = get();
+                ContentViewerHtmlStyles.setStyles(textPanel);
                 textPanel.setText(text);
                 textPanel.setCaretPosition(0);
             } catch (InterruptedException | ExecutionException ex) {
