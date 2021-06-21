@@ -151,7 +151,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private static final String IMAGE_MIME_TYPE_PREFIX = "image/";
     
     // documents where OCR is performed
-    private static final ImmutableSet OCR_DOCUMENTS = ImmutableSet.of(
+    private static final ImmutableSet<String> OCR_DOCUMENTS = ImmutableSet.of(
             "application/pdf",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     );

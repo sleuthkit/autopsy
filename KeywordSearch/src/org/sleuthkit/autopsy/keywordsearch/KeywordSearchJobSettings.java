@@ -82,7 +82,7 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
      *
      * @return Whether or not OCR is enabled for keyword search.
      */
-    @SuppressWarnings("Deprecation")
+    @SuppressWarnings("deprecation")
     public boolean isOCREnabled() {
         if (ocrEnabled == null) {
             ocrEnabled = KeywordSearchSettings.getOcrOption();
@@ -106,7 +106,7 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
      *
      * @return If true, OCR is to be performed only on images larger than 100KB.
      */
-    @SuppressWarnings("Deprecation")
+    @SuppressWarnings("deprecation")
     boolean isLimitedOCREnabled() {
         if (limitedOCREnabled == null) {
             limitedOCREnabled = KeywordSearchSettings.getLimitedOcrOption();
