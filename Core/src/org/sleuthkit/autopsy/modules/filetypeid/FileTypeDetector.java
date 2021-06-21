@@ -53,6 +53,10 @@ public class FileTypeDetector {
     private static SortedSet<String> tikaDetectedTypes;
     private final int defaultBufferSize = 2048; // Number of bytes to initially read from the file. Should cover most signatures.
 
+        private static final Object timingLock = new Object();
+    private long totalFiles = 0;
+    private long totalMs = 0;
+    
     /**
      * Gets a sorted set of the file types that can be detected: the MIME types
      * detected by Tika (without optional parameters), the custom MIME types
@@ -190,7 +194,7 @@ public class FileTypeDetector {
             // optional parameter attached.
             return removeOptionalParameter(mimeType);
         }
-
+        long startTime = java.lang.System.currentTimeMillis();
         /*
          * Mark non-regular files (refer to TskData.TSK_FS_META_TYPE_ENUM),
          * zero-sized files, unallocated space, and unused blocks (refer to
@@ -310,6 +314,18 @@ public class FileTypeDetector {
          */
         file.setMIMEType(mimeType);
 
+                long endTime = java.lang.System.currentTimeMillis();
+        long elapsed = endTime - startTime;
+        synchronized(timingLock) {
+            totalFiles++;
+            totalMs+= elapsed;
+
+            if (totalFiles % 1000 == 0) {
+                double ave = totalMs / totalFiles;
+                System.out.println("### " + totalFiles + " processed - average time: " + ave + " ms (" + totalFiles + " files, " + totalMs + " total ms)");
+            }
+        }
+        
         return mimeType;
     }
 
