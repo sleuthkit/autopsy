@@ -158,7 +158,7 @@ final class TikaTextExtractor implements TextExtractor {
             "application/pdf",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     );
-    
+
     private static final String IMAGE_MIME_TYPE_PREFIX = "image/";
 
     private Map<String, String> metadataMap;
@@ -183,6 +183,16 @@ final class TikaTextExtractor implements TextExtractor {
         this.fileTypeDetector = detector;
     }
 
+    /**
+     * Obtains the mime type of the file using a FileTypeDetector with the
+     * file's mime type as fallback if the FileTypeDetector is not instantiated.
+     * If no mime type present, MimeTypes.OCTET_STREAM is returned.
+     *
+     * @param file The abstract file instance.
+     *
+     * @return The mime type or MimeTypes.OCTET_STREAM if the mime type cannot
+     *         be determined.
+     */
     private String getMimeType(AbstractFile file) {
         String mimeType = MimeTypes.OCTET_STREAM;
         if (fileTypeDetector != null) {
