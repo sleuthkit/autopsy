@@ -128,6 +128,11 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      *                                  of CustomFileTypesManager.
      */
     private FileType detectUserDefinedFileType(AbstractFile file) throws CustomFileTypesManager.CustomFileTypesException {
+        
+        if (CustomFileTypesManager.getInstance().getUserDefinedFileTypes().isEmpty()) {
+            return null;
+        }
+        
         /*
          * Read in the beginning of the file once.
          */

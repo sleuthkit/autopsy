@@ -51,7 +51,7 @@ public class FileTypeDetector {
     private final List<FileType> userDefinedFileTypes;
     private final List<FileType> autopsyDefinedFileTypes;
     private static SortedSet<String> tikaDetectedTypes;
-    private final int defaultBufferSize = 2048; // Number of bytes to initially read from the file. Should cover most signatures.
+    private final int defaultBufferSize = 600; // Number of bytes to initially read from the file. Should cover most signatures.
 
         private static final Object timingLock = new Object();
     private long totalFiles = 0;
@@ -219,7 +219,7 @@ public class FileTypeDetector {
             // Proceed for now - the error will likely get logged next time the file is read.
             bufLen = 0; 
         }
-        
+       
         /*
          * If the file is a regular file, give precedence to user-defined custom
          * file types.
@@ -314,7 +314,7 @@ public class FileTypeDetector {
          */
         file.setMIMEType(mimeType);
 
-                long endTime = java.lang.System.currentTimeMillis();
+        long endTime = java.lang.System.currentTimeMillis();
         long elapsed = endTime - startTime;
         synchronized(timingLock) {
             totalFiles++;
