@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -31,8 +32,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
@@ -137,13 +136,14 @@ public class KeywordHits implements AutopsyVisitableItem {
      * Exact match and substring will not have the instance layer and instead
      * will have the specific hits below their term.
      */
-    private final class KeywordResults extends Observable {
+    private final class KeywordResults extends PropertyChangeSupport {
 
         // Map from listName/Type to Map of keywords/regexp to Map of instance terms to Set of artifact Ids
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, Map<String, Set<Long>>>> topLevelMap = new LinkedHashMap<>();
 
         KeywordResults() {
+            super(null);
             update();
         }
 
@@ -332,8 +332,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 topLevelMap.putAll(listsMap);
             }
 
-            setChanged();
-            notifyObservers();
+            firePropertyChange(KeywordResults.class.getSimpleName(), null, topLevelMap);
         }
 
         public void update() {
@@ -430,22 +429,18 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
-    private abstract class DetachableObserverChildFactory<X> extends ChildFactory.Detachable<X> implements Observer {
-
+    private abstract class DetachableObserverChildFactory<X> extends ChildFactory.Detachable<X> {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
+        
         @Override
         protected void addNotify() {
-            keywordResults.addObserver(this);
+            keywordResults.addPropertyChangeListener(weakPcl);
         }
 
         @Override
         protected void finalize() throws Throwable {
             super.finalize();
-            keywordResults.deleteObserver(this);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
+            keywordResults.removePropertyChangeListener(weakPcl);
         }
     }
 
@@ -538,13 +533,18 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
-    private abstract class KWHitsNodeBase extends DisplayableItemNode implements Observer {
+    private abstract class KWHitsNodeBase extends DisplayableItemNode {
 
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
         private String displayName;
 
         private KWHitsNodeBase(Children children, Lookup lookup, String displayName) {
             super(children, lookup);
             this.displayName = displayName;
+        }
+        
+        protected void registerListeners() {
+            keywordResults.addPropertyChangeListener(weakPcl);
         }
 
         private KWHitsNodeBase(Children children) {
@@ -556,13 +556,13 @@ public class KeywordHits implements AutopsyVisitableItem {
             return getClass().getName();
         }
 
-        @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
         final void updateDisplayName() {
             super.setDisplayName(displayName + " (" + countTotalDescendants() + ")");
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            keywordResults.removePropertyChangeListener(weakPcl);
         }
 
         abstract int countTotalDescendants();
@@ -582,7 +582,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             this.listName = listName;
             updateDisplayName();
-            keywordResults.addObserver(this);
+            registerListeners();
         }
 
         @Override
@@ -704,7 +704,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             this.keyword = keyword;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             updateDisplayName();
-            keywordResults.addObserver(this);
+            registerListeners();
         }
 
         @Override
@@ -804,7 +804,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             this.instance = instance;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             updateDisplayName();
-            keywordResults.addObserver(this);
+            registerListeners();
         }
 
         @Override
@@ -911,8 +911,9 @@ public class KeywordHits implements AutopsyVisitableItem {
     /**
      * Creates nodes for individual files that had hits
      */
-    private class HitsFactory extends BaseChildFactory<AnalysisResult> implements Observer {
+    private class HitsFactory extends BaseChildFactory<AnalysisResult> {
 
+        private final PropertyChangeListener keywordHitsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
         private final String keyword;
         private final String setName;
         private final String instance;
@@ -960,17 +961,12 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected void onAdd() {
-            keywordResults.addObserver(this);
+            keywordResults.addPropertyChangeListener(keywordHitsWeakPcl);
         }
 
         @Override
         protected void onRemove() {
-            keywordResults.deleteObserver(this);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
+            keywordResults.removePropertyChangeListener(keywordHitsWeakPcl);
         }
     }
 }
