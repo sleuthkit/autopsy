@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -38,7 +39,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
-import org.sleuthkit.autopsy.casemodule.events.OsAccountsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAcctInstancesAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -56,9 +57,11 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountInstance;
 
 /**
  * Listen for case events and update entries in the Central Repository database
@@ -133,8 +136,10 @@ public final class CaseEventListener implements PropertyChangeListener {
                 jobProcessingExecutor.submit(new DataSourceNameChangedTask(dbManager, evt));
             }
             break;
-            case OS_ACCOUNTS_ADDED: {
-                jobProcessingExecutor.submit(new OsAccountAddedTask(dbManager, evt));
+            case OS_ACCT_INSTANCES_ADDED: {
+                if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                   jobProcessingExecutor.submit(new OsAccountInstancesAddedTask(dbManager, evt));
+                }
             }
         }
     }
@@ -641,12 +646,12 @@ public final class CaseEventListener implements PropertyChangeListener {
         } // CURRENT_CASE
     }
 
-    private final class OsAccountAddedTask implements Runnable {
+    private final class OsAccountInstancesAddedTask implements Runnable {
 
         private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
         
-        private OsAccountAddedTask(CentralRepository db, PropertyChangeEvent evt) {
+        private OsAccountInstancesAddedTask(CentralRepository db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
         }
@@ -657,40 +662,45 @@ public final class CaseEventListener implements PropertyChangeListener {
                 return;
             }
             
-           final OsAccountsAddedEvent osAccountsAddedEvent = (OsAccountsAddedEvent) event;
-           List<OsAccount> addedOsAccountNew = osAccountsAddedEvent.getNewValue();
-           for (OsAccount osAccount: addedOsAccountNew) {
-               Optional<String> accountAddr = osAccount.getAddr();
-               // Check address if it is null or one of the ones below we want to ignore it since they will always be one a windows system
-               // and they are not unique
-               if (!accountAddr.isPresent() || accountAddr.get().equals("S-1-5-18") || accountAddr.get().equals("S-1-5-19") || accountAddr.get().equals("S-1-5-20")) {
-                   return;
-               }
+           final OsAcctInstancesAddedEvent osAcctInstancesAddedEvent = (OsAcctInstancesAddedEvent) event;
+           List<OsAccountInstance> addedOsAccountNew = osAcctInstancesAddedEvent.getOsAccountInstances();
+           for (OsAccountInstance osAccountInstance: addedOsAccountNew) {
                try {
-                   
-                   CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
-//                   Type correlationType = CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID);
-//                   CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
-//                                    CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
-//                                    accountAddr.get(),
-//                                    correlationCase,
-//                                    CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource),
-//                                    "",
-//                                    "",
-//                                    "",
-//                                    "",
-//                                    TskData.FileKnown,
-//                                    osAccount.getId());
-                   
-//                   dbManager.addArtifactInstance(correlationAttributeInstance);
-             } catch (CentralRepoException ex) {
-                  LOGGER.log(Level.SEVERE, "Cannot get central repository for OsAccount: " + "OsAccount", ex);  //NON-NLS
-               } catch (NoCurrentCaseException ex) {
-                  LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);  //NON-NLS
-               }
-           }
+                OsAccount osAccount = osAccountInstance.getOsAccount();
+                Optional<String> accountAddr = osAccount.getAddr();
+                // Check address if it is null or one of the ones below we want to ignore it since they will always be one a windows system
+                // and they are not unique
+                if (!accountAddr.isPresent() || accountAddr.get().equals("S-1-5-18") || accountAddr.get().equals("S-1-5-19") || accountAddr.get().equals("S-1-5-20")) {
+                    return;
+                }
+                try {
+
+                    CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
+                    CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
+                                     CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
+                                     accountAddr.get(),
+                                     correlationCase,
+                                     CorrelationDataSource.fromTSKDataSource(correlationCase, osAccountInstance.getDataSource()),
+                                     "",
+                                     "",
+                                     TskData.FileKnown.KNOWN,
+                                     osAccount.getId());
+
+                    dbManager.addArtifactInstance(correlationAttributeInstance);
+                } catch (CentralRepoException ex) {
+                   LOGGER.log(Level.SEVERE, "Cannot get central repository for OsAccount: " + "OsAccount", ex);  //NON-NLS
+                } catch (NoCurrentCaseException ex) {
+                   LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);  //NON-NLS
+                }  catch (CorrelationAttributeNormalizationException ex) {
+                   LOGGER.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
+                }
+
+            } catch (TskCoreException ex) {
+                 LOGGER.log(Level.SEVERE, "Cannot get central repository for OsAccount: " + "OsAccount", ex);
+            }
            LOGGER.log(Level.INFO, "Error connecting to Central Repository database."); //NON-NLS
         }
+    }
     }
     
     private final class DataSourceNameChangedTask implements Runnable {
@@ -729,3 +739,4 @@ public final class CaseEventListener implements PropertyChangeListener {
         } // DATA_SOURCE_NAME_CHANGED
     }
 }
+
