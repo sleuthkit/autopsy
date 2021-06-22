@@ -52,10 +52,6 @@ public class FileTypeDetector {
     private final List<FileType> autopsyDefinedFileTypes;
     private static SortedSet<String> tikaDetectedTypes;
     private final int defaultBufferSize = 600; // Number of bytes to initially read from the file. Should cover most signatures.
-
-        private static final Object timingLock = new Object();
-    private long totalFiles = 0;
-    private long totalMs = 0;
     
     /**
      * Gets a sorted set of the file types that can be detected: the MIME types
