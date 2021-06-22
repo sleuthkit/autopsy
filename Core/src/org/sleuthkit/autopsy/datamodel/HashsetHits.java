@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -30,8 +31,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
@@ -101,13 +100,14 @@ public class HashsetHits implements AutopsyVisitableItem {
      * Stores all of the hashset results in a single class that is observable
      * for the child nodes
      */
-    private class HashsetResults extends Observable {
+    private class HashsetResults extends PropertyChangeSupport {
 
         // maps hashset name to list of artifacts for that set
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
 
         HashsetResults() {
+            super(null);
             update();
         }
 
@@ -163,8 +163,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
             }
 
-            setChanged();
-            notifyObservers();
+            firePropertyChange(HashsetResults.class.getSimpleName(), null, hashSetHitsMap);
         }
     }
 
@@ -220,7 +219,7 @@ public class HashsetHits implements AutopsyVisitableItem {
     /**
      * Creates child nodes for each hashset name
      */
-    private class HashsetNameFactory extends ChildFactory.Detachable<String> implements Observer {
+    private class HashsetNameFactory extends ChildFactory.Detachable<String> {
 
         /*
          * This should probably be in the HashsetHits class, but the factory has
@@ -281,14 +280,15 @@ public class HashsetHits implements AutopsyVisitableItem {
         };
         
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        private final PropertyChangeListener hashsetResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            hashsetResults.addPropertyChangeListener(hashsetResultsWeakPcl);
             hashsetResults.update();
-            hashsetResults.addObserver(this);
         }
 
         @Override
@@ -297,7 +297,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            hashsetResults.deleteObserver(this);
+            hashsetResults.removePropertyChangeListener(hashsetResultsWeakPcl);
         }
 
         @Override
@@ -310,18 +310,14 @@ public class HashsetHits implements AutopsyVisitableItem {
         protected Node createNodeForKey(String key) {
             return new HashsetNameNode(key);
         }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
     }
 
     /**
      * Node for a hash set name
      */
-    public class HashsetNameNode extends DisplayableItemNode implements Observer {
+    public class HashsetNameNode extends DisplayableItemNode {
 
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
         private final String hashSetName;
 
         public HashsetNameNode(String hashSetName) {
@@ -330,7 +326,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             this.hashSetName = hashSetName;
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
-            hashsetResults.addObserver(this);
+            hashsetResults.addPropertyChangeListener(weakPcl);
         }
 
         /**
@@ -368,11 +364,6 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
         public String getItemType() {
             /**
              * For custom settings for each hash set, return
@@ -380,13 +371,19 @@ public class HashsetHits implements AutopsyVisitableItem {
              */
             return getClass().getName();
         }
+        
+        @Override
+        protected void finalize() throws Throwable {
+            hashsetResults.removePropertyChangeListener(weakPcl);
+        } 
     }
 
     /**
      * Creates the nodes for the hits in a given set.
      */
-    private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
+    private class HitFactory extends BaseChildFactory<AnalysisResult> {
 
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
         private final String hashsetName;
         private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
 
@@ -397,22 +394,17 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         protected void onAdd() {
-            hashsetResults.addObserver(this);
+            hashsetResults.addPropertyChangeListener(weakPcl);
         }
 
         @Override
         protected void onRemove() {
-            hashsetResults.deleteObserver(this);
+            hashsetResults.removePropertyChangeListener(weakPcl);
         }
 
         @Override
         protected Node createNodeForKey(AnalysisResult key) {
             return new BlackboardArtifactNode(key);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
         }
 
         @Override
