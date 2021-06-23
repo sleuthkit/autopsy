@@ -95,14 +95,27 @@ public class Tags implements AutopsyVisitableItem {
      * other nodes can listen to. This mimics what other nodes have (keword
      * search, etc.), but theirs stores data.
      */
-    private class TagResults extends PropertyChangeSupport {
+    private class TagResults {
+        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+     
+        /**
+         * Adds a property change listener listening for changes in data.
+         * @param pcl The property change listener to be subscribed.
+         */
+        void addListener(PropertyChangeListener pcl) {
+            pcs.addPropertyChangeListener(pcl);
+        }
 
-        public TagResults() {
-            super(null);
+        /**
+         * Removes a property change listener listening for changes in data.
+         * @param pcl The property change listener to be removed from subscription.
+         */        
+        void removeListener(PropertyChangeListener pcl) {
+            pcs.removePropertyChangeListener(pcl);
         }
 
         public void update() {
-            firePropertyChange(TagResults.class.getName(), null, this);
+            pcs.firePropertyChange(TagResults.class.getName(), null, this);
         }
     }
 
@@ -235,14 +248,14 @@ public class Tags implements AutopsyVisitableItem {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
             tagResults.update();
-            tagResults.addPropertyChangeListener(tagResultsWeakPcl);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         @Override
         protected void finalize() throws Throwable {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
-            tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            tagResults.removeListener(tagResultsWeakPcl);
             super.finalize();
         }
 
@@ -302,7 +315,7 @@ public class Tags implements AutopsyVisitableItem {
             } else {
                 setIconBaseWithExtension(ICON_PATH);
             }
-            tagResults.addPropertyChangeListener(tagResultsWeakPcl);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -365,7 +378,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            tagResults.removeListener(tagResultsWeakPcl);
             super.finalize();
         }
     }
@@ -426,7 +439,7 @@ public class Tags implements AutopsyVisitableItem {
             super.setName(CONTENT_DISPLAY_NAME);
             updateDisplayName();
             this.setIconBaseWithExtension(ICON_PATH);
-            tagResults.addPropertyChangeListener(tagResultsWeakPcl);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -479,7 +492,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            tagResults.removeListener(tagResultsWeakPcl);
             super.finalize();
         }
     }
@@ -493,7 +506,7 @@ public class Tags implements AutopsyVisitableItem {
         ContentTagNodeFactory(TagName tagName) {
             super();
             this.tagName = tagName;
-            tagResults.addPropertyChangeListener(tagResultsWeakPcl);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         @Override
@@ -527,7 +540,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            tagResults.removeListener(tagResultsWeakPcl);
             super.finalize();
         }
     }
@@ -553,7 +566,7 @@ public class Tags implements AutopsyVisitableItem {
             super.setName(ARTIFACT_DISPLAY_NAME);
             this.setIconBaseWithExtension(ICON_PATH);
             updateDisplayName();
-            tagResults.addPropertyChangeListener(tagResultsWeakPcl);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -605,7 +618,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            tagResults.removeListener(tagResultsWeakPcl);
             super.finalize();
         }
     }
@@ -623,7 +636,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            tagResults.addPropertyChangeListener(tagResultsWeakPcl);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         @Override
@@ -657,7 +670,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            tagResults.removeListener(tagResultsWeakPcl);
             super.finalize();
         }
     }

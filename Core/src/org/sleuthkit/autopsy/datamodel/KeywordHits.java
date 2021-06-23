@@ -136,15 +136,32 @@ public class KeywordHits implements AutopsyVisitableItem {
      * Exact match and substring will not have the instance layer and instead
      * will have the specific hits below their term.
      */
-    private final class KeywordResults extends PropertyChangeSupport {
+    private final class KeywordResults {
 
         // Map from listName/Type to Map of keywords/regexp to Map of instance terms to Set of artifact Ids
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, Map<String, Set<Long>>>> topLevelMap = new LinkedHashMap<>();
 
+        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
         KeywordResults() {
-            super(null);
             update();
+        }
+                
+        /**
+         * Adds a property change listener listening for changes in data.
+         * @param pcl The property change listener to be subscribed.
+         */
+        void addListener(PropertyChangeListener pcl) {
+            pcs.addPropertyChangeListener(pcl);
+        }
+
+        /**
+         * Removes a property change listener listening for changes in data.
+         * @param pcl The property change listener to be removed from subscription.
+         */        
+        void removeListener(PropertyChangeListener pcl) {
+            pcs.removePropertyChangeListener(pcl);
         }
 
         /**
@@ -332,7 +349,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 topLevelMap.putAll(listsMap);
             }
 
-            firePropertyChange(KeywordResults.class.getSimpleName(), null, topLevelMap);
+            pcs.firePropertyChange(KeywordResults.class.getSimpleName(), null, topLevelMap);
         }
 
         public void update() {
@@ -435,12 +452,12 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            keywordResults.addPropertyChangeListener(weakPcl);
+            keywordResults.addListener(weakPcl);
         }
 
         @Override
         protected void finalize() throws Throwable {
-            keywordResults.removePropertyChangeListener(weakPcl);
+            keywordResults.removeListener(weakPcl);
             super.finalize();
         }
     }
@@ -545,7 +562,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         protected void registerListeners() {
-            keywordResults.addPropertyChangeListener(weakPcl);
+            keywordResults.addListener(weakPcl);
         }
 
         private KWHitsNodeBase(Children children) {
@@ -563,7 +580,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            keywordResults.removePropertyChangeListener(weakPcl);
+            keywordResults.removeListener(weakPcl);
             super.finalize();
         }
 
@@ -963,12 +980,12 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected void onAdd() {
-            keywordResults.addPropertyChangeListener(keywordHitsWeakPcl);
+            keywordResults.addListener(keywordHitsWeakPcl);
         }
 
         @Override
         protected void onRemove() {
-            keywordResults.removePropertyChangeListener(keywordHitsWeakPcl);
+            keywordResults.removeListener(keywordHitsWeakPcl);
         }
     }
 }
