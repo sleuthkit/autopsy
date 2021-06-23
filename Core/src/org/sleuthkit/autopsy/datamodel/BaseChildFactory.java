@@ -259,16 +259,6 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
         }
 
         void initialize() {
-            /**
-             * Set up a change listener so we know when the user changes the
-             * page size.
-             */
-            UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
-                if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
-                    pageSize = UserPreferences.getResultsTablePageSize();
-                }
-            });
-
             register(nodeName, weakListener);
         }
 
