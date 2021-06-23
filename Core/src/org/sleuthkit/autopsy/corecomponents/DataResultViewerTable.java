@@ -26,6 +26,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.FeatureDescriptor;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -74,6 +75,7 @@ import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -845,6 +847,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         private int currentPage;
         private int totalPages;
         private final String nodeName;
+        
+        //Subscribe to notification that the number of pages has changed.
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((pce) -> {
+            Object newVal = pce.getNewValue();
+            if (newVal instanceof PageCountChangeEvent) {
+                onPageCountChangeEvent((PageCountChangeEvent) newVal);
+            }        
+        }, null);
+        
+
 
         PagingSupport(String nodeName) {
             currentPage = 1;
@@ -852,12 +864,31 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             this.nodeName = nodeName;
             initialize();
         }
+        
+
 
         private void initialize() {
             if (!nodeName.isEmpty()) {
-                BaseChildFactory.register(nodeName, this);
+                BaseChildFactory.register(nodeName, weakPcl);
             }
             updateControls();
+        }
+        
+        /**
+         * Handles event when the number of pages has changed.
+         * @param event The page count change event.
+         */
+        private void onPageCountChangeEvent(PageCountChangeEvent event) {
+            totalPages = event.getPageCount();
+            if (totalPages > 1) {
+                // Make paging controls visible if there is more than one page.
+                togglePageControls(true);
+            }
+
+            // Only update UI controls if this event is for the node currently being viewed.
+            if (nodeName.equals(rootNode.getName())) {
+                updateControls();
+            }
         }
 
         void nextPage() {
@@ -925,27 +956,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 LOGGER.log(Level.WARNING, "Failed to post page size change event.", ex); //NON-NLS
             }
         }
-
-        /**
-         * Subscribe to notification that the number of pages has changed.
-         *
-         * @param event
-         */
-        @Subscribe
-        public void subscribeToPageCountChange(PageCountChangeEvent event) {
-            if (event != null) {
-                totalPages = event.getPageCount();
-                if (totalPages > 1) {
-                    // Make paging controls visible if there is more than one page.
-                    togglePageControls(true);
-                }
-
-                // Only update UI controls if this event is for the node currently being viewed.
-                if (nodeName.equals(rootNode.getName())) {
-                    updateControls();
-                }
-            }
-        }
+        
 
         /**
          * Make paging controls visible or invisible based on flag.
