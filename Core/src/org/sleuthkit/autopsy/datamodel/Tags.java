@@ -100,8 +100,7 @@ public class Tags implements AutopsyVisitableItem {
         public TagResults() {
             super(null);
         }
-        
-        
+
         public void update() {
             firePropertyChange(TagResults.class.getName(), null, this);
         }
@@ -217,11 +216,11 @@ public class Tags implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
-        
+
         /**
          * Constructor
          *
@@ -230,7 +229,7 @@ public class Tags implements AutopsyVisitableItem {
         TagNameNodeFactory(long objId) {
             this.filteringDSObjId = objId;
         }
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -241,10 +240,10 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
             tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            super.finalize();
         }
 
         @Override
@@ -290,7 +289,7 @@ public class Tags implements AutopsyVisitableItem {
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
         private final String BOOKMARK_TAG_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png"; //NON-NLS
         private final TagName tagName;
-        
+
         private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         public TagNameNode(TagName tagName) {
@@ -367,6 +366,7 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         protected void finalize() throws Throwable {
             tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            super.finalize();
         }
     }
 
@@ -416,7 +416,7 @@ public class Tags implements AutopsyVisitableItem {
     public class ContentTagTypeNode extends DisplayableItemNode {
 
         private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
-        
+
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
         private final TagName tagName;
 
@@ -476,14 +476,16 @@ public class Tags implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
-        
+
         @Override
         protected void finalize() throws Throwable {
             tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            super.finalize();
         }
     }
 
     private class ContentTagNodeFactory extends ChildFactory.Detachable<ContentTag> {
+
         private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         private final TagName tagName;
@@ -522,10 +524,11 @@ public class Tags implements AutopsyVisitableItem {
             // The content tags to be wrapped are used as the keys.
             return new ContentTagNode(key);
         }
-        
+
         @Override
         protected void finalize() throws Throwable {
             tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            super.finalize();
         }
     }
 
@@ -538,6 +541,7 @@ public class Tags implements AutopsyVisitableItem {
      * tag name.
      */
     public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
+
         private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         private final TagName tagName;
@@ -598,15 +602,16 @@ public class Tags implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
-        
+
         @Override
         protected void finalize() throws Throwable {
             tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            super.finalize();
         }
     }
 
     private class BlackboardArtifactTagNodeFactory extends ChildFactory.Detachable<BlackboardArtifactTag> {
-        
+
         private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         private final TagName tagName;
@@ -620,7 +625,7 @@ public class Tags implements AutopsyVisitableItem {
         protected void addNotify() {
             tagResults.addPropertyChangeListener(tagResultsWeakPcl);
         }
-        
+
         @Override
         protected boolean createKeys(List<BlackboardArtifactTag> keys) {
             try {
@@ -649,10 +654,11 @@ public class Tags implements AutopsyVisitableItem {
             // The blackboard artifact tags to be wrapped are used as the keys.
             return new BlackboardArtifactTagNode(key);
         }
-        
+
         @Override
         protected void finalize() throws Throwable {
             tagResults.removePropertyChangeListener(tagResultsWeakPcl);
+            super.finalize();
         }
     }
 }

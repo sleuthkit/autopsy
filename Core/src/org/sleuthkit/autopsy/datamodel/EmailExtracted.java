@@ -257,7 +257,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private class AccountFactory extends ChildFactory.Detachable<String> {
 
         private final PropertyChangeListener weakEmailResultsListener = WeakListeners.propertyChange((pce) -> refresh(true), null);
-        
+
         /*
          * The pcl is in the class because it has the easiest mechanisms to add
          * and remove itself during its life cycles.
@@ -315,7 +315,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
@@ -328,12 +328,12 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void finalize() throws Throwable{
-            super.finalize();
+        protected void finalize() throws Throwable {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             emailResults.removePropertyChangeListener(weakEmailResultsListener);
+            super.finalize();
         }
 
         @Override
@@ -354,7 +354,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     public class AccountNode extends DisplayableItemNode {
 
         private final String accountName;
-        
+
         private final PropertyChangeListener weakListener = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         public AccountNode(String accountName) {
@@ -405,16 +405,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
         @Override
         protected void finalize() throws Throwable {
             emailResults.removePropertyChangeListener(weakListener);
+            super.finalize();
         }
-        
-        
+
     }
 
     /**
      * Account node child creating sub nodes for every folder
      */
     private class FolderFactory extends ChildFactory.Detachable<String> {
-        
+
         private final PropertyChangeListener weakListener = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         private final String accountName;
@@ -428,7 +428,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         protected void addNotify() {
             emailResults.addPropertyChangeListener(weakListener);
         }
-        
+
         @Override
         protected boolean createKeys(List<String> list) {
             list.addAll(emailResults.getFolders(accountName));
@@ -443,7 +443,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
         @Override
         protected void finalize() throws Throwable {
             emailResults.removePropertyChangeListener(weakListener);
-        }        
+            super.finalize();
+        }
     }
 
     /**
@@ -452,7 +453,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     public class FolderNode extends DisplayableItemNode {
 
         private final PropertyChangeListener weakListener = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
-        
+
         private final String accountName;
         private final String folderName;
 
@@ -502,11 +503,12 @@ public class EmailExtracted implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
-        
+
         @Override
         protected void finalize() throws Throwable {
             emailResults.removePropertyChangeListener(weakListener);
-        } 
+            super.finalize();
+        }
     }
 
     /**

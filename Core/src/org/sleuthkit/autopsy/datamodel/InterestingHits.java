@@ -290,11 +290,11 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            super.finalize();
         }
 
         @Override
@@ -369,6 +369,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         @Override
         protected void finalize() throws Throwable {
             interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            super.finalize();
         }
 
     }
@@ -400,6 +401,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         @Override
         protected void finalize() throws Throwable {
             interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            super.finalize();
         }
     }
 
@@ -466,6 +468,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         @Override
         protected void finalize() throws Throwable {
             interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            super.finalize();
         }
     }
 
@@ -530,6 +533,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         @Override
         protected void finalize() throws Throwable {
             interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            super.finalize();
         }
     }
 }
