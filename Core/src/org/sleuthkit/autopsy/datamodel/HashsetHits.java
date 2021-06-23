@@ -100,15 +100,32 @@ public class HashsetHits implements AutopsyVisitableItem {
      * Stores all of the hashset results in a single class that is observable
      * for the child nodes
      */
-    private class HashsetResults extends PropertyChangeSupport {
+    private class HashsetResults {
 
         // maps hashset name to list of artifacts for that set
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
 
+        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+        
         HashsetResults() {
-            super(null);
             update();
+        }
+
+        /**
+         * Adds a property change listener listening for changes in data.
+         * @param pcl The property change listener to be subscribed.
+         */
+        void addListener(PropertyChangeListener pcl) {
+            pcs.addPropertyChangeListener(pcl);
+        }
+
+        /**
+         * Removes a property change listener listening for changes in data.
+         * @param pcl The property change listener to be removed from subscription.
+         */        
+        void removeListener(PropertyChangeListener pcl) {
+            pcs.removePropertyChangeListener(pcl);
         }
 
         List<String> getSetNames() {
@@ -163,7 +180,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
             }
 
-            firePropertyChange(HashsetResults.class.getSimpleName(), null, hashSetHitsMap);
+            pcs.firePropertyChange(HashsetResults.class.getSimpleName(), null, hashSetHitsMap);
         }
     }
 
@@ -287,7 +304,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            hashsetResults.addPropertyChangeListener(hashsetResultsWeakPcl);
+            hashsetResults.addListener(hashsetResultsWeakPcl);
             hashsetResults.update();
         }
 
@@ -296,7 +313,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            hashsetResults.removePropertyChangeListener(hashsetResultsWeakPcl);
+            hashsetResults.removeListener(hashsetResultsWeakPcl);
             super.finalize();
         }
 
@@ -326,7 +343,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             this.hashSetName = hashSetName;
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
-            hashsetResults.addPropertyChangeListener(weakPcl);
+            hashsetResults.addListener(weakPcl);
         }
 
         /**
@@ -374,7 +391,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         
         @Override
         protected void finalize() throws Throwable {
-            hashsetResults.removePropertyChangeListener(weakPcl);
+            hashsetResults.removeListener(weakPcl);
             super.finalize();
         } 
     }
@@ -395,12 +412,12 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         protected void onAdd() {
-            hashsetResults.addPropertyChangeListener(weakPcl);
+            hashsetResults.addListener(weakPcl);
         }
 
         @Override
         protected void onRemove() {
-            hashsetResults.removePropertyChangeListener(weakPcl);
+            hashsetResults.removeListener(weakPcl);
         }
 
         @Override

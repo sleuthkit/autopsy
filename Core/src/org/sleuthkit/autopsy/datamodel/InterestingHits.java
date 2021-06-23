@@ -88,15 +88,29 @@ public class InterestingHits implements AutopsyVisitableItem {
         interestingResults.update();
     }
 
-    private class InterestingResults extends PropertyChangeSupport {
+    private class InterestingResults {
 
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, Set<Long>>> interestingItemsMap = new LinkedHashMap<>();
+        
+        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-        public InterestingResults() {
-            super(null);
+        /**
+         * Adds a property change listener listening for changes in data.
+         * @param pcl The property change listener to be subscribed.
+         */
+        void addListener(PropertyChangeListener pcl) {
+            pcs.addPropertyChangeListener(pcl);
         }
 
+        /**
+         * Removes a property change listener listening for changes in data.
+         * @param pcl The property change listener to be removed from subscription.
+         */        
+        void removeListener(PropertyChangeListener pcl) {
+            pcs.removePropertyChangeListener(pcl);
+        }
+        
         public List<String> getSetNames() {
             List<String> setNames;
             synchronized (interestingItemsMap) {
@@ -118,7 +132,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             }
             loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT);
             loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT);
-            firePropertyChange(InterestingResults.class.getSimpleName(), null, interestingItemsMap);
+            pcs.firePropertyChange(InterestingResults.class.getSimpleName(), null, interestingItemsMap);
         }
 
         /*
@@ -284,7 +298,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            interestingResults.addPropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.addListener(interestingResultsWeakPcl);
             interestingResults.update();
         }
 
@@ -293,7 +307,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.removeListener(interestingResultsWeakPcl);
             super.finalize();
         }
 
@@ -321,7 +335,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             super.setName(setName);
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
-            interestingResults.addPropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.addListener(interestingResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -368,7 +382,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.removeListener(interestingResultsWeakPcl);
             super.finalize();
         }
 
@@ -383,7 +397,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         private HitTypeFactory(String setName) {
             super();
             this.setName = setName;
-            interestingResults.addPropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.addListener(interestingResultsWeakPcl);
         }
 
         @Override
@@ -400,7 +414,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.removeListener(interestingResultsWeakPcl);
             super.finalize();
         }
     }
@@ -424,7 +438,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             super.setName(setName + "_" + typeName);
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
-            interestingResults.addPropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.addListener(interestingResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -467,7 +481,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.removeListener(interestingResultsWeakPcl);
             super.finalize();
         }
     }
@@ -489,7 +503,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             super(setName + "_" + typeName);
             this.setName = setName;
             this.typeName = typeName;
-            interestingResults.addPropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.addListener(interestingResultsWeakPcl);
         }
 
         @Override
@@ -532,7 +546,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            interestingResults.removePropertyChangeListener(interestingResultsWeakPcl);
+            interestingResults.removeListener(interestingResultsWeakPcl);
             super.finalize();
         }
     }

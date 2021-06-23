@@ -120,15 +120,34 @@ public class EmailExtracted implements AutopsyVisitableItem {
         return visitor.visit(this);
     }
 
-    private final class EmailResults extends PropertyChangeSupport {
+    private final class EmailResults {
 
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
 
+        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+        
         EmailResults() {
-            super(null);
             update();
         }
+
+        /**
+         * Adds a property change listener listening for changes in data.
+         * @param pcl The property change listener to be subscribed.
+         */
+        void addListener(PropertyChangeListener pcl) {
+            pcs.addPropertyChangeListener(pcl);
+        }
+
+        /**
+         * Removes a property change listener listening for changes in data.
+         * @param pcl The property change listener to be removed from subscription.
+         */        
+        void removeListener(PropertyChangeListener pcl) {
+            pcs.removePropertyChangeListener(pcl);
+        }
+        
+
 
         public Set<String> getAccounts() {
             synchronized (accounts) {
@@ -196,7 +215,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 accounts.putAll(newMapping);
             }
 
-            firePropertyChange(EmailResults.class.getSimpleName(), null, accounts);
+            pcs.firePropertyChange(EmailResults.class.getSimpleName(), null, accounts);
         }
     }
 
@@ -323,7 +342,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            emailResults.addPropertyChangeListener(weakEmailResultsListener);
+            emailResults.addListener(weakEmailResultsListener);
             emailResults.update();
         }
 
@@ -332,7 +351,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            emailResults.removePropertyChangeListener(weakEmailResultsListener);
+            emailResults.removeListener(weakEmailResultsListener);
             super.finalize();
         }
 
@@ -363,7 +382,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             this.accountName = accountName;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account-icon-16.png"); //NON-NLS
             updateDisplayName();
-            emailResults.addPropertyChangeListener(weakListener);
+            emailResults.addListener(weakListener);
         }
 
         private void updateDisplayName() {
@@ -404,7 +423,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            emailResults.removePropertyChangeListener(weakListener);
+            emailResults.removeListener(weakListener);
             super.finalize();
         }
 
@@ -426,7 +445,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            emailResults.addPropertyChangeListener(weakListener);
+            emailResults.addListener(weakListener);
         }
 
         @Override
@@ -442,7 +461,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            emailResults.removePropertyChangeListener(weakListener);
+            emailResults.removeListener(weakListener);
             super.finalize();
         }
     }
@@ -464,7 +483,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             this.accountName = accountName;
             this.folderName = folderName;
             updateDisplayName();
-            emailResults.addPropertyChangeListener(weakListener);
+            emailResults.addListener(weakListener);
         }
 
         private void updateDisplayName() {
@@ -506,7 +525,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            emailResults.removePropertyChangeListener(weakListener);
+            emailResults.removeListener(weakListener);
             super.finalize();
         }
     }
@@ -553,12 +572,12 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected void onAdd() {
-            emailResults.addPropertyChangeListener(weakListener);
+            emailResults.addListener(weakListener);
         }
 
         @Override
         protected void onRemove() {
-            emailResults.removePropertyChangeListener(weakListener);
+            emailResults.removeListener(weakListener);
         }
     }
 }
