@@ -21,9 +21,11 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -31,6 +33,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
@@ -187,6 +190,16 @@ final class IngestJobPipeline {
      * A data source ingest job uses this field to report its creation time.
      */
     private final long createTime;
+
+    /*
+     * An ingest pipeline allows ingest module pipelines to register and
+     * unregister the ingest thread they are running in when a scheduled ingest
+     * pause occurs and the threads are made to sleep. This allows interruption
+     * of these threads if the ingest job is canceled.
+     */
+    private final Object threadRegistrationLock = new Object();
+    @GuardedBy("threadRegistrationLock")
+    private final Set<Thread> pausedIngestThreads = new HashSet<>();
 
     /**
      * Constructs an object that encapsulates a data source and the ingest
@@ -1275,6 +1288,13 @@ final class IngestJobPipeline {
             }
         }
 
+        synchronized (threadRegistrationLock) {
+            for (Thread thread : pausedIngestThreads) {
+                thread.interrupt();
+            }
+            pausedIngestThreads.clear();
+        }
+        
         // If a data source had no tasks in progress it may now be complete.
         checkForStageCompleted();
     }
@@ -1410,4 +1430,29 @@ final class IngestJobPipeline {
                 cancelled, cancellationReason, cancelledDataSourceIngestModules,
                 processedFilesCount, estimatedFilesToProcessCount, snapShotTime, tasksSnapshot);
     }
+
+    /**
+     * Registers a sleeping ingest thread so that it can be interrupted if the
+     * ingest job is cancelled.
+     *
+     * @param thread The ingest thread.
+     */
+    void registerPausedIngestThread(Thread thread) {
+        synchronized (threadRegistrationLock) {
+            pausedIngestThreads.add(thread);
+        }
+    }
+
+    /**
+     * Unregisters a sleeping ingest thread that was registered so that it could
+     * be interrupted if the ingest job was cancelled.
+     *
+     * @param thread The ingest thread.
+     */
+    void unregisterPausedIngestThread(Thread thread) {
+        synchronized (threadRegistrationLock) {
+            pausedIngestThreads.remove(thread);
+        }
+    }
+
 }

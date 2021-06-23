@@ -18,11 +18,17 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import static java.lang.Thread.sleep;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
@@ -36,12 +42,14 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  */
 abstract class IngestTaskPipeline<T extends IngestTask> {
 
+    private static final Logger logger = Logger.getLogger(IngestTaskPipeline.class.getName());
     private final IngestJobPipeline ingestJobPipeline;
     private final List<IngestModuleTemplate> moduleTemplates;
     private final List<PipelineModule<T>> modules;
     private volatile Date startTime;
     private volatile boolean running;
     private volatile PipelineModule<T> currentModule;
+    private volatile boolean completedScheduledPause;
 
     /**
      * Constructs an instance of an abstract superclass for pipelines of ingest
@@ -171,12 +179,14 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     List<IngestModuleError> performTask(T task) {
         List<IngestModuleError> errors = new ArrayList<>();
         if (!this.ingestJobPipeline.isCancelled()) {
+            pauseIfPauseScheduledNow();
             try {
                 prepareTask(task);
             } catch (IngestTaskPipelineException ex) {
                 errors.add(new IngestModuleError("Ingest Task Pipeline", ex)); //NON-NLS
                 return errors;
             }
+            pauseIfPauseScheduledNow();
             for (PipelineModule<T> module : modules) {
                 try {
                     currentModule = module;
@@ -188,6 +198,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
                 if (ingestJobPipeline.isCancelled()) {
                     break;
                 }
+                pauseIfPauseScheduledNow();
             }
         }
         try {
@@ -200,6 +211,42 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     }
 
     /**
+     * Pauses task execution if ingest has been configured to be paused weekly
+     * at a specified time for a specified duration.
+     */
+    private void pauseIfPauseScheduledNow() {
+        ScheduledIngestPauseSettings.setPauseEnabled(true);
+        LocalDateTime testDateTime = LocalDateTime.now();
+        ScheduledIngestPauseSettings.setPauseDayOfWeek(testDateTime.getDayOfWeek());
+        ScheduledIngestPauseSettings.setPauseStartTimeHour(testDateTime.getHour());
+        ScheduledIngestPauseSettings.setPauseStartTimeMinutes(testDateTime.getMinute());
+        ScheduledIngestPauseSettings.setPauseDurationMinutes(1);
+        ScheduledIngestPauseSettings.setPauseStartTimeWindowMinutes(60);
+        if (ScheduledIngestPauseSettings.getPauseEnabled() == true && !completedScheduledPause) {
+            LocalDateTime dateNow = LocalDateTime.now();
+            if (dateNow.getDayOfWeek() == ScheduledIngestPauseSettings.getPauseDayOfWeek()) {
+                LocalTime timeNow = dateNow.toLocalTime();
+                LocalTime pauseTime = LocalTime.of(ScheduledIngestPauseSettings.getPauseStartTimeHour(), ScheduledIngestPauseSettings.getPauseStartTimeMinutes());
+                if (timeNow.equals(pauseTime)
+                        || (timeNow.isAfter(pauseTime)
+                        && timeNow.isBefore(pauseTime.plusMinutes(ScheduledIngestPauseSettings.getPauseStartTimeWindowMinutes())))) {
+                    ingestJobPipeline.registerPausedIngestThread(Thread.currentThread());
+                    try {
+                        logger.log(Level.INFO, String.format("Pausing at %s", LocalDateTime.now()));
+                        sleep(TimeUnit.MINUTES.toMillis(ScheduledIngestPauseSettings.getPauseDurationMinutes()));
+                        logger.log(Level.INFO, String.format("Resuming at %s", LocalDateTime.now()));
+                    } catch (InterruptedException notLogged) {
+                        logger.log(Level.INFO, String.format("Resuming at %s due to interrupt (cancelation)", LocalDateTime.now()));
+                    } finally {
+                        ingestJobPipeline.unregisterPausedIngestThread(Thread.currentThread());
+                        completedScheduledPause = true;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Gets the currently running module.
      *
      * @return The module, possibly null if no module is currently running.
@@ -207,7 +254,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     PipelineModule<T> getCurrentlyRunningModule() {
         return currentModule;
     }
-    
+
     /**
      * Does any clean up required after performing a task.
      *
