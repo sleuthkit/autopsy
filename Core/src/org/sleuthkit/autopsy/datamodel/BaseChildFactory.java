@@ -116,8 +116,8 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
         onRemove();
+        super.finalize();
     }
 
     /**

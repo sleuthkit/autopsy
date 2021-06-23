@@ -252,8 +252,8 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             reviewStatusBus.removePropertyChangeListener(weakListener);
+            super.finalize();
         }
 
         @Override
@@ -276,8 +276,8 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             reviewStatusBus.removePropertyChangeListener(weakListener);
+            super.finalize();
         }
 
         protected void initializeReviewListener() {
@@ -605,10 +605,10 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            super.finalize();
         }
 
         @Override
@@ -794,11 +794,10 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            super.removeNotify();
+            super.finalize();
         }
 
         /**
@@ -940,10 +939,10 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            super.finalize();
         }
 
         @Override
@@ -1152,10 +1151,10 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable{
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            super.finalize();
         }
 
         @Override
