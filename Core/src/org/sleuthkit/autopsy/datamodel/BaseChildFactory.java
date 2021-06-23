@@ -85,7 +85,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      *
      * @param subscriber The property change listener.
      */
-    static void unregister(PropertyChangeListener subscriber) {
+    public static void unregister(PropertyChangeListener subscriber) {
         nodeNameToEventBusMap.removePropertyChangeListener(subscriber);
     }
 
@@ -229,7 +229,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      */
     private class PagingSupport {
 
-        private final PropertyChangeListener listener = (pce) -> {
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange((pce) -> {
             if (pce == null) {
                 return;
             }
@@ -242,9 +242,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
             } else if (event instanceof RefreshKeysEvent) {
                 subscribeToRefreshKeys((RefreshKeysEvent) event);
             }
-        };
-
-        private final PropertyChangeListener weakListener = WeakListeners.propertyChange(listener, null);
+        }, null);
 
         private final PreferenceChangeListener weakPreferenceListener = new WeakPreferenceChangeListener((evt) -> {
             if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
