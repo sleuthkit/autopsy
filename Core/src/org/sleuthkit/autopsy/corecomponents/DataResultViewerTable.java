@@ -874,6 +874,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             updateControls();
         }
         
+        @Override
+        protected void finalize() throws Throwable {
+            BaseChildFactory.unregister(weakPcl);
+            super.finalize();
+        }
+        
         /**
          * Handles event when the number of pages has changed.
          * @param event The page count change event.
