@@ -207,7 +207,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     PipelineModule<T> getCurrentlyRunningModule() {
         return currentModule;
     }
-
+    
     /**
      * Does any clean up required after performing a task.
      *
