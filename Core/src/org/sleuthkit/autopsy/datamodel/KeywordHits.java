@@ -430,8 +430,9 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     private abstract class DetachableObserverChildFactory<X> extends ChildFactory.Detachable<X> {
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
-        
+
         @Override
         protected void addNotify() {
             keywordResults.addPropertyChangeListener(weakPcl);
@@ -439,8 +440,8 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             keywordResults.removePropertyChangeListener(weakPcl);
+            super.finalize();
         }
     }
 
@@ -501,7 +502,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
@@ -514,7 +515,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void finalize() throws Throwable{
+        protected void finalize() throws Throwable {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
@@ -542,7 +543,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             super(children, lookup);
             this.displayName = displayName;
         }
-        
+
         protected void registerListeners() {
             keywordResults.addPropertyChangeListener(weakPcl);
         }
@@ -563,6 +564,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         @Override
         protected void finalize() throws Throwable {
             keywordResults.removePropertyChangeListener(weakPcl);
+            super.finalize();
         }
 
         abstract int countTotalDescendants();

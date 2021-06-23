@@ -293,11 +293,11 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             hashsetResults.removePropertyChangeListener(hashsetResultsWeakPcl);
+            super.finalize();
         }
 
         @Override
@@ -375,6 +375,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         @Override
         protected void finalize() throws Throwable {
             hashsetResults.removePropertyChangeListener(weakPcl);
+            super.finalize();
         } 
     }
 
