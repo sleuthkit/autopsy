@@ -186,7 +186,6 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
                 errors.add(new IngestModuleError("Ingest Task Pipeline", ex)); //NON-NLS
                 return errors;
             }
-            pauseIfPauseScheduledNow();
             for (PipelineModule<T> module : modules) {
                 try {
                     currentModule = module;
