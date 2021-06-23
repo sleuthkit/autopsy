@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.awt.Cursor;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -1334,12 +1335,14 @@ public class Case {
              * opened via the DirectoryTreeTopComponent 'propertyChange()'
              * method on a DATA_SOURCE_ADDED event.
              */
+            mainFrame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             if (hasData) {
                 CoreComponentControl.openCoreWindows();
             } else {
                 //ensure that the DirectoryTreeTopComponent is open so that it's listener can open the core windows including making it visible.
                 DirectoryTreeTopComponent.findInstance();
             }
+            mainFrame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 
             /*
              * Reset the main window title to:

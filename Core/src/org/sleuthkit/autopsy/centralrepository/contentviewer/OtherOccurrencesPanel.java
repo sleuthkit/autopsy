@@ -35,6 +35,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
@@ -46,7 +49,6 @@ import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -71,7 +73,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
     private static final CorrelationCaseWrapper NO_ARTIFACTS_CASE = new CorrelationCaseWrapper(Bundle.OtherOccurrencesPanel_table_noArtifacts());
     private static final CorrelationCaseWrapper NO_RESULTS_CASE = new CorrelationCaseWrapper(Bundle.OtherOccurrencesPanel_table_noResultsFound());
-    private static final CorrelationCaseWrapper LOADING_CASE = new CorrelationCaseWrapper(Bundle.OtherOccurrencesPanel_table_loadingResults());
     private static final Logger logger = Logger.getLogger(OtherOccurrencesPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final OtherOccurrencesFilesTableModel filesTableModel;
@@ -84,6 +85,11 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     private AbstractFile file = null;
 
     private SwingWorker<?, ?> worker;
+    
+    // Initializing the JFileChooser in a thread to prevent a block on the EDT
+    // see https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
+    private final FutureTask<JFileChooser> futureFileChooser = new FutureTask<>(JFileChooser::new);
+    private JFileChooser CSVFileChooser;
 
     /**
      * Creates new form OtherOccurrencesPanel
@@ -93,9 +99,11 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         this.casesTableModel = new OtherOccurrencesCasesTableModel();
         this.dataSourcesTableModel = new OtherOccurrencesDataSourcesTableModel();
         this.correlationAttributes = new ArrayList<>();
-        occurrencePanel = new OccurrencePanel();
         initComponents();
         customizeComponents();
+        
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(futureFileChooser);
     }
 
     private void customizeComponents() {
@@ -245,6 +253,18 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
     private void saveToCSV() throws NoCurrentCaseException {
         if (casesTableModel.getRowCount() > 0) {
+            
+            if(CSVFileChooser == null) {
+                try{
+                    CSVFileChooser = futureFileChooser.get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    // If something happened with the thread try and 
+                    // initalized the chooser now
+                    logger.log(Level.WARNING, "A failure occurred in the JFileChooser background thread");
+                    CSVFileChooser = new JFileChooser();
+                }
+            }
+            
             Calendar now = Calendar.getInstance();
             String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_data_sources.csv", now);
             CSVFileChooser.setCurrentDirectory(new File(Case.getCurrentCaseThrows().getExportDirectory()));
@@ -258,13 +278,13 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 if (!selectedFile.getName().endsWith(".csv")) { // NON-NLS
                     selectedFile = new File(selectedFile.toString() + ".csv"); // NON-NLS
                 }
-                CSVWorker worker = new CSVWorker(selectedFile, file, dataSourceName, deviceId, Collections.unmodifiableCollection(correlationAttributes));
-                worker.execute();
+                CSVWorker csvWorker = new CSVWorker(selectedFile, file, dataSourceName, deviceId, Collections.unmodifiableCollection(correlationAttributes));
+                csvWorker.execute();
             }
         }
     }
 
-    @NbBundle.Messages({"OtherOccurrencesPanel_earliestCaseNotAvailable=Not Availble."})
+    @NbBundle.Messages({"OtherOccurrencesPanel_earliestCaseNotAvailable=Not Available."})
     /**
      * Reset the UI and clear cached data.
      */
@@ -685,7 +705,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         exportToCSVMenuItem = new javax.swing.JMenuItem();
         showCaseDetailsMenuItem = new javax.swing.JMenuItem();
         showCommonalityMenuItem = new javax.swing.JMenuItem();
-        CSVFileChooser = new javax.swing.JFileChooser();
         tableContainerPanel = new javax.swing.JPanel();
         tablesViewerSplitPane = new javax.swing.JSplitPane();
         caseDatasourceFileSplitPane = new javax.swing.JSplitPane();
@@ -704,12 +723,12 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
-            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {
-                rightClickPopupMenuPopupMenuWillBecomeVisible(evt);
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
             }
             public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent evt) {
             }
-            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {
+                rightClickPopupMenuPopupMenuWillBecomeVisible(evt);
             }
         });
 
@@ -857,7 +876,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JFileChooser CSVFileChooser;
     private javax.swing.JSplitPane caseDatasourceFileSplitPane;
     private javax.swing.JSplitPane caseDatasourceSplitPane;
     private javax.swing.JScrollPane caseScrollPane;
