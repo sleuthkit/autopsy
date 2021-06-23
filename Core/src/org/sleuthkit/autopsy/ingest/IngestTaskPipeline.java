@@ -215,13 +215,6 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      * at a specified time for a specified duration.
      */
     private void pauseIfPauseScheduledNow() {
-        ScheduledIngestPauseSettings.setPauseEnabled(true);
-        LocalDateTime testDateTime = LocalDateTime.now();
-        ScheduledIngestPauseSettings.setPauseDayOfWeek(testDateTime.getDayOfWeek());
-        ScheduledIngestPauseSettings.setPauseStartTimeHour(testDateTime.getHour());
-        ScheduledIngestPauseSettings.setPauseStartTimeMinutes(testDateTime.getMinute());
-        ScheduledIngestPauseSettings.setPauseDurationMinutes(1);
-        ScheduledIngestPauseSettings.setPauseStartTimeWindowMinutes(60);
         if (ScheduledIngestPauseSettings.getPauseEnabled() == true && !completedScheduledPause) {
             LocalDateTime dateNow = LocalDateTime.now();
             if (dateNow.getDayOfWeek() == ScheduledIngestPauseSettings.getPauseDayOfWeek()) {
