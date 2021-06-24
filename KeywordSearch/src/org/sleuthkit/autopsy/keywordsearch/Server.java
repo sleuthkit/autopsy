@@ -2167,8 +2167,7 @@ public class Server {
 
             try {
                 //commit and block
-                // ELTODO indexingClient.commit(true, true);
-                indexingClient.commit(false, false, true);
+                indexingClient.commit(true, true);
             } catch (Exception e) {
                 // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
                 logger.log(Level.WARNING, "Could not commit index. ", e); //NON-NLS
