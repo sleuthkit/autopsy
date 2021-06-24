@@ -237,7 +237,7 @@ public class InterestingHits implements AutopsyVisitableItem {
          * nice methods for its startup and shutdown, so it seemed like a
          * cleaner place to register the property change listener.
          */
-        private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                 /**
@@ -287,9 +287,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                     skCase = null;
                 }
             }
-        };
-
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
         private final PropertyChangeListener interestingResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 

@@ -99,7 +99,7 @@ final public class Accounts implements AutopsyVisitableItem {
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     private static final String DISPLAY_NAME = Bundle.Accounts_RootNode_displayName();
     private static final String REVIEW_STATUS_EVENT_KEY = "ReviewStatusBus";
-    
+
     @NbBundle.Messages("AccountsRootNode.name=Accounts")  //used for the viewArtifact navigation
     final public static String NAME = Bundle.AccountsRootNode_name();
 
@@ -184,34 +184,35 @@ final public class Accounts implements AutopsyVisitableItem {
     public Action newToggleShowRejectedAction() {
         return new ToggleShowRejected();
     }
-    
-    
-    
+
     private interface ReviewStatusObserver {
+
         /**
          * Handle a ReviewStatusChangeEvent
          *
          * @param event the ReviewStatusChangeEvent to handle.
          */
-        default void handleReviewStatusChange(ReviewStatusChangeEvent event) {}
+        default void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        }
 
-        default void handleDataAdded(ModuleDataEvent event) {}
+        default void handleDataAdded(ModuleDataEvent event) {
+        }
     }
-    
-    
+
     private class ReviewStatusListener implements PropertyChangeListener {
+
         private final ReviewStatusObserver observer;
 
         public ReviewStatusListener(ReviewStatusObserver observer) {
             this.observer = observer;
         }
-        
+
         @Override
         public void propertyChange(PropertyChangeEvent pce) {
             if (pce == null) {
                 return;
             }
-            
+
             Object event = pce.getNewValue();
             if (event instanceof ReviewStatusChangeEvent) {
                 observer.handleReviewStatusChange((ReviewStatusChangeEvent) event);
@@ -219,9 +220,8 @@ final public class Accounts implements AutopsyVisitableItem {
                 observer.handleDataAdded((ModuleDataEvent) event);
             }
         }
-        
+
     }
-    
 
     /**
      * Base class for children that are also observers of the reviewStatusBus.
@@ -232,7 +232,7 @@ final public class Accounts implements AutopsyVisitableItem {
     private abstract class ObservingChildren<X> extends ChildFactory.Detachable<X> implements ReviewStatusObserver {
 
         private final PropertyChangeListener weakListener = WeakListeners.propertyChange(new ReviewStatusListener(this), null);
-        
+
         /**
          * Override of default constructor to force lazy creation of nodes, by
          * concrete instances of ObservingChildren
@@ -248,8 +248,6 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         abstract protected boolean createKeys(List<X> list);
 
-
-
         @Override
         protected void finalize() throws Throwable {
             reviewStatusBus.removePropertyChangeListener(weakListener);
@@ -264,12 +262,10 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    
-    
     private abstract class ObservingNode extends DisplayableItemNode implements ReviewStatusObserver {
-        
+
         private final PropertyChangeListener weakListener = WeakListeners.propertyChange(new ReviewStatusListener(this), null);
-        
+
         public ObservingNode(Children children, Lookup lookup) {
             super(children, lookup);
         }
@@ -285,8 +281,6 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-  
-    
     /**
      * Top-level node for the accounts tree
      */
@@ -420,59 +414,54 @@ final public class Accounts implements AutopsyVisitableItem {
          * The pcl is in this class because it has the easiest mechanisms to add
          * and remove itself during its life cycles.
          */
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
                     /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
                      */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Even with the check above, it is still possible that
-                         * the case will be closed in a different thread before
-                         * this code executes. If that happens, it is possible
-                         * for the event to have a null oldValue.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
-                            accountTypeResults.update();
-                            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
-                        }
-                    } catch (NoCurrentCaseException notUsed) {
-                        // Case is closed, do nothing.
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData
+                            && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
+                        accountTypeResults.update();
+                        reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
                     }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        refresh(true);
-                    } catch (NoCurrentCaseException notUsed) {
-                        // Case is closed, do nothing.
-                    }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    refresh(true);
+                } catch (NoCurrentCaseException notUsed) {
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                if (evt.getNewValue() == null) {
+                    removeNotify();
+                    skCase = null;
                 }
             }
-        };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
         @Override
         public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
@@ -593,9 +582,9 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -770,9 +759,8 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
         public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
@@ -783,7 +771,7 @@ final public class Accounts implements AutopsyVisitableItem {
         public void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -875,59 +863,54 @@ final public class Accounts implements AutopsyVisitableItem {
 
     final private class FileWithCCNFactory extends ObservingChildren<FileWithCCN> {
 
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
                     /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
                      */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Even with the check above, it is still possible that
-                         * the case will be closed in a different thread before
-                         * this code executes. If that happens, it is possible
-                         * for the event to have a null oldValue.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
-                            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
-                        }
-                    } catch (NoCurrentCaseException notUsed) {
-                        // Case is closed, do nothing.
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData
+                            && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
+                        reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
                     }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        refresh(true);
+                } catch (NoCurrentCaseException notUsed) {
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    refresh(true);
 
-                    } catch (NoCurrentCaseException notUsed) {
-                        // Case is closed, do nothing.
-                    }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                if (evt.getNewValue() == null) {
+                    removeNotify();
+                    skCase = null;
                 }
             }
-        };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
         @Override
         protected void addNotify() {
@@ -1088,58 +1071,53 @@ final public class Accounts implements AutopsyVisitableItem {
 
     final private class BINFactory extends ObservingChildren<BinResult> {
 
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
                     /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
                      */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Even with the check above, it is still possible that
-                         * the case will be closed in a different thread before
-                         * this code executes. If that happens, it is possible
-                         * for the event to have a null oldValue.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
-                            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
-                        }
-                    } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
-                        // Case is closed, do nothing.
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData
+                            && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
+                        reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
                     }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
-
-                        refresh(true);
-                    } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
-                        // Case is closed, do nothing.
-                    }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())
-                        && (evt.getNewValue() == null)) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    removeNotify();
-                    skCase = null;
+                } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
+                    // Case is closed, do nothing.
                 }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+
+                    refresh(true);
+                } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())
+                    && (evt.getNewValue() == null)) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                removeNotify();
+                skCase = null;
             }
-        };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
         @Override
         protected void addNotify() {
@@ -1150,7 +1128,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void finalize() throws Throwable{
+        protected void finalize() throws Throwable {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
@@ -1897,7 +1875,7 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public void actionPerformed(ActionEvent e) {
             showRejected = !showRejected;
-            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, 
+            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null,
                     new ReviewStatusChangeEvent(Collections.emptySet(), null));
         }
     }
@@ -1909,7 +1887,7 @@ final public class Accounts implements AutopsyVisitableItem {
      */
     public void setShowRejected(boolean showRejected) {
         this.showRejected = showRejected;
-        reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, 
+        reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null,
                 new ReviewStatusChangeEvent(Collections.emptySet(), null));
     }
 
@@ -1974,9 +1952,9 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             });
             //post event
-            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, 
+            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null,
                     new ReviewStatusChangeEvent(artifacts, newStatus));
-            
+
             final DataResultTopComponent directoryListing = DirectoryTreeTopComponent.findInstance().getDirectoryListing();
             final Node rootNode = directoryListing.getRootNode();
 

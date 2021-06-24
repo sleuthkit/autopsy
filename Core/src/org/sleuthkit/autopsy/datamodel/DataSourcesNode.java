@@ -68,17 +68,12 @@ public class DataSourcesNode extends DisplayableItemNode {
 
         private static final Logger logger = Logger.getLogger(DataSourcesByTypeChildren.class.getName());
 
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (UPDATE_EVT_STRS.contains(eventType)) {
-                    refresh(true);
-                }
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (UPDATE_EVT_STRS.contains(eventType)) {
+                refresh(true);
             }
-        };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
         @Override
         protected void addNotify() {
@@ -86,7 +81,7 @@ public class DataSourcesNode extends DisplayableItemNode {
         }
 
         @Override
-        protected void finalize() throws Throwable{
+        protected void finalize() throws Throwable {
             Case.removeEventTypeSubscriber(UPDATE_EVTS, weakPcl);
             super.finalize();
         }

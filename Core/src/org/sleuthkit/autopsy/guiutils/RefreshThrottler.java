@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -90,13 +91,13 @@ public class RefreshThrottler {
      * PropertyChangeListener that reacts to DATA_ADDED and CONTENT_CHANGED
      * events and schedules a refresh task if one is not already scheduled.
      */
-    private final PropertyChangeListener pcl;
+    private final PropertyChangeListener weakPcl;
 
     public RefreshThrottler(Refresher r) {
         this.refreshTaskRef = new AtomicReference<>(null);
         refresher = r;
 
-        pcl = (PropertyChangeEvent evt) -> {
+        weakPcl = WeakListeners.propertyChange((evt) -> {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())
                     || eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
@@ -110,20 +111,20 @@ public class RefreshThrottler {
                     refreshExecutor.schedule(task, MIN_SECONDS_BETWEEN_REFRESH, TimeUnit.SECONDS);
                 }
             }
-        };
+        }, null);
     }
 
     /**
      * Set up listener for ingest module events of interest.
      */
     public void registerForIngestModuleEvents() {
-        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
     }
 
     /**
      * Remove ingest module event listener.
      */
     public void unregisterEventListener() {
-        IngestManager.getInstance().removeIngestModuleEventListener(pcl);
+        IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
     }
 }

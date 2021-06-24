@@ -126,13 +126,14 @@ public class EmailExtracted implements AutopsyVisitableItem {
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
 
         private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-        
+
         EmailResults() {
             update();
         }
 
         /**
          * Adds a property change listener listening for changes in data.
+         *
          * @param pcl The property change listener to be subscribed.
          */
         void addListener(PropertyChangeListener pcl) {
@@ -141,13 +142,13 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         /**
          * Removes a property change listener listening for changes in data.
-         * @param pcl The property change listener to be removed from subscription.
-         */        
+         *
+         * @param pcl The property change listener to be removed from
+         *            subscription.
+         */
         void removeListener(PropertyChangeListener pcl) {
             pcs.removePropertyChangeListener(pcl);
         }
-        
-
 
         public Set<String> getAccounts() {
             synchronized (accounts) {
@@ -281,61 +282,56 @@ public class EmailExtracted implements AutopsyVisitableItem {
          * The pcl is in the class because it has the easiest mechanisms to add
          * and remove itself during its life cycles.
          */
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
                     /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
                      */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Even with the check above, it is still possible that
-                         * the case will be closed in a different thread before
-                         * this code executes. If that happens, it is possible
-                         * for the event to have a null oldValue.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
-                            emailResults.update();
-                        }
-                    } catch (NoCurrentCaseException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
-                    }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
                         emailResults.update();
-                    } catch (NoCurrentCaseException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
                     }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    emailResults.update();
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                if (evt.getNewValue() == null) {
+                    removeNotify();
+                    skCase = null;
                 }
             }
-        };
-
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
         @Override
         protected void addNotify() {
