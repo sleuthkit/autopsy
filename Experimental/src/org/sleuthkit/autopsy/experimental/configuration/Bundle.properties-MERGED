@@ -58,28 +58,6 @@ AutoIngestSettingsPanel.TestRunning=Test in progress...
 AutoIngestSettingsPanel.servicesDown=Some of the Multi User services are down
 GeneralOptionsPanelController.moduleErr.msg=A module caused an error listening to GeneralOptionsPanelController updates. See log to determine which module. Some data could be incomplete.
 GeneralOptionsPanelController.moduleErr=Module Error
-# {0} - errorMessage
-MultiUserTestTool.criticalError=Critical error running data source processor on test data source: {0}
-MultiUserTestTool.errorStartingIngestJob=Ingest manager error while starting ingest job
-# {0} - cancellationReason
-MultiUserTestTool.ingestCancelled=Ingest cancelled due to {0}
-MultiUserTestTool.ingestSettingsError=Failed to analyze data source due to ingest settings errors
-MultiUserTestTool.noContent=Test data source failed to produce content
-# {0} - serviceName
-MultiUserTestTool.serviceDown=Multi User service is down: {0}
-MultiUserTestTool.startupError=Failed to analyze data source due to ingest job startup error
-MultiUserTestTool.unableAddFileAsDataSource=Unable to add test file as data source to case
-MultiUserTestTool.unableCreatFile=Unable to create a file in case output directory
-# {0} - serviceName
-MultiUserTestTool.unableToCheckService=Unable to check Multi User service state: {0}
-MultiUserTestTool.unableToCreateCase=Unable to create case
-MultiUserTestTool.unableToInitializeDatabase=Case database was not successfully initialized
-MultiUserTestTool.unableToInitializeFilTypeDetector=Unable to initialize File Type Detector
-MultiUserTestTool.unableToReadDatabase=Unable to read from case database
-MultiUserTestTool.unableToReadTestFileFromDatabase=Unable to read test file info from case database
-MultiUserTestTool.unableToRunIngest=Unable to run ingest on test data source
-MultiUserTestTool.unableToUpdateKWSIndex=Unable to write to Keyword Search index
-MultiUserTestTool.unexpectedError=Unexpected error while performing Multi User test
 NodeStatusLogPanel.bnCancel.text=Cancel
 NodeStatusLogPanel.bnOk.text=OK
 NodeStatusLogPanel.bnTestDatabase.text=Test
@@ -162,3 +140,12 @@ AutoIngestSettingsPanel.bnFileExport.text=File Export Settings
 AutoIngestSettingsPanel.bnAdvancedSettings.text=Advanced Settings
 AutoIngestSettingsPanel.bnEditIngestSettings.toolTipText=Ingest job settings for the automated processing mode context.
 AutoIngestSettingsPanel.bnEditIngestSettings.text=Ingest Module Settings
+AdvancedAutoIngestSettingsPanel.pausePanel.border.title=Pause Settings
+AdvancedAutoIngestSettingsPanel.lbpauseDay.text=Day Of Week:
+AdvancedAutoIngestSettingsPanel.lbPauseTime.text=Start Time:
+AdvancedAutoIngestSettingsPanel.lbPauseDuration.text=Duration:
+AdvancedAutoIngestSettingsPanel.lbPauseWindow.text=Start Window:
+AdvancedAutoIngestSettingsPanel.lbColon.text=:
+AdvancedAutoIngestSettingsPanel.lbDurationMinutes.text=minutes
+AdvancedAutoIngestSettingsPanel.lbWindowMinutes.text=minutes
+AdvancedAutoIngestSettingsPanel.cbEnablePause.text=Enable Pause
