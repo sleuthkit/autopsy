@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
+import org.openide.util.BaseUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -57,7 +58,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * This static map is used to facilitate communication between the UI and
      * the child factory.
      */
-    private static PropertyChangeSupport nodeNameToEventBusMap = new PropertyChangeSupport(BaseChildFactory.class);
+    private static final PropertyChangeSupport nodeNameToEventBusMap = new PropertyChangeSupport(BaseChildFactory.class);
 
     @Messages({
         "# {0} - node name", "BaseChildFactory.NoSuchEventBusException.message=No event bus for node: {0}"
@@ -244,7 +245,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
             }
         }, null);
 
-        private final PreferenceChangeListener weakPreferenceListener = new WeakPreferenceChangeListener((evt) -> {
+        private final PreferenceChangeListener preferenceListener = new WeakPreferenceChangeListener((evt) -> {
             if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
                 pageSize = UserPreferences.getResultsTablePageSize();
             }
@@ -275,13 +276,13 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
              * Set up a change listener so we know when the user changes the
              * page size.
              */
-            UserPreferences.addChangeListener(weakPreferenceListener);
+            UserPreferences.addChangeListener(preferenceListener);
             register(nodeName, weakListener);
         }
 
         @Override
         protected void finalize() throws Throwable {
-            UserPreferences.removeChangeListener(weakPreferenceListener);
+            UserPreferences.removeChangeListener(preferenceListener);
             unregister(weakListener);
             super.finalize();
         }
@@ -374,9 +375,9 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     /**
      * An implementation of a PreferenceChangeListener with a weak reference.
      */
-    private class WeakPreferenceChangeListener implements PreferenceChangeListener {
+    private static class WeakPreferenceChangeListener implements PreferenceChangeListener {
 
-        private final WeakReference<PreferenceChangeListener> delegate;
+        private final ListenerRef delegate;
 
         /**
          * Main constructor.
@@ -385,7 +386,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
          *                         updates.
          */
         WeakPreferenceChangeListener(PreferenceChangeListener delegateListener) {
-            this.delegate = new WeakReference<>(delegateListener);
+            this.delegate = new ListenerRef(delegateListener);
         }
 
         @Override
@@ -394,6 +395,20 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
             if (delegateListener != null) {
                 delegateListener.preferenceChange(evt);
             }
+        }
+
+        private static class ListenerRef extends WeakReference<PreferenceChangeListener> implements Runnable {
+
+            public ListenerRef(PreferenceChangeListener listener) {
+                super(listener, BaseUtilities.activeReferenceQueue());
+            }
+
+            @Override
+            public void run() {
+                // This is NO OP but to satisfy requirements for use in BaseUtilities.activeReferenceQueue.
+                // This listener will be cleaned manually.
+            }
+
         }
     }
 }
