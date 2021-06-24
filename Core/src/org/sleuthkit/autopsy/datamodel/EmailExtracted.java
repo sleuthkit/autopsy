@@ -467,6 +467,23 @@ public class EmailExtracted implements AutopsyVisitableItem {
     }
 
     /**
+     * Ensures that the key for the parent node and child factory is the same to
+     * ensure that the BaseChildFactory registered listener node name
+     * (BaseChildFactory.register and DataResultViewerTable.setNode with event
+     * registration) is the same as the factory name that will post events from
+     * BaseChildFactory.post called in BaseChildFactory.makeKeys. See JIRA-7752
+     * for more details.
+     *
+     * @param accountName The account name.
+     * @param folderName  The folder name.
+     *
+     * @return The generated key.
+     */
+    private static String getFolderKey(String accountName, String folderName) {
+        return accountName + "_" + folderName;
+    }
+
+    /**
      * Node representing mail folder
      */
     public class FolderNode extends DisplayableItemNode {
@@ -478,7 +495,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         public FolderNode(String accountName, String folderName) {
             super(Children.create(new MessageFactory(accountName, folderName), true), Lookups.singleton(accountName));
-            super.setName(folderName);
+            super.setName(getFolderKey(accountName, folderName));
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-16.png"); //NON-NLS
             this.accountName = accountName;
             this.folderName = folderName;
@@ -540,7 +557,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         private final String folderName;
 
         private MessageFactory(String accountName, String folderName) {
-            super(accountName + "_" + folderName);
+            super(getFolderKey(accountName, folderName));
             this.accountName = accountName;
             this.folderName = folderName;
         }
