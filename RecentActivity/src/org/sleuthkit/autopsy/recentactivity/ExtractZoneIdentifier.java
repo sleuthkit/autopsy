@@ -53,7 +53,7 @@ final class ExtractZoneIdentifier extends Extract {
 
     private static final String ZONE_IDENTIFIER_FILE = "%:Zone.Identifier"; //NON-NLS
     private static final String ZONE_IDENTIFIER = ":Zone.Identifier"; //NON-NLS
-        private Content dataSource;
+    private Content dataSource;
 
     @Messages({
         "ExtractZone_process_errMsg_find=A failure occured while searching for :Zone.Indentifier files.",
