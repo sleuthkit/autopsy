@@ -109,14 +109,11 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
     }
     
     private void setPauseEnabled(boolean enabled) {
-        spStartWindow.setEnabled(enabled);
         spStarMinutes.setEnabled(enabled);
         spPauseStartHour.setEnabled(enabled);
         spDuration.setEnabled(enabled);
         lbpauseDay.setEnabled(enabled);
-        lbWindowMinutes.setEnabled(enabled);
-        lbDurationMinutes.setEnabled(enabled);
-        lbPauseWindow.setEnabled(enabled);
+        lbDurationHours.setEnabled(enabled);
         lbPauseDuration.setEnabled(enabled);
         lbPauseTime.setEnabled(enabled);
         cbPauseDay.setEnabled(enabled);
@@ -156,15 +153,12 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         lbpauseDay = new javax.swing.JLabel();
         lbPauseTime = new javax.swing.JLabel();
         lbPauseDuration = new javax.swing.JLabel();
-        lbPauseWindow = new javax.swing.JLabel();
         cbPauseDay = new javax.swing.JComboBox<>();
         spPauseStartHour = new javax.swing.JSpinner();
         javax.swing.JLabel lbColon = new javax.swing.JLabel();
         spStarMinutes = new javax.swing.JSpinner();
         spDuration = new javax.swing.JSpinner();
-        spStartWindow = new javax.swing.JSpinner();
-        lbDurationMinutes = new javax.swing.JLabel();
-        lbWindowMinutes = new javax.swing.JLabel();
+        lbDurationHours = new javax.swing.JLabel();
         cbEnablePause = new javax.swing.JCheckBox();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
 
@@ -186,7 +180,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(20, 16, 0, 16);
+        gridBagConstraints.insets = new java.awt.Insets(10, 16, 0, 16);
         add(spMainScrollPane, gridBagConstraints);
 
         jPanelAutoIngestJobSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.jPanelAutoIngestJobSettings.border.title"))); // NOI18N
@@ -276,7 +270,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 5;
-        gridBagConstraints.ipadx = 63;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 0);
         jPanelAutoIngestJobSettings.add(numberOfFileIngestThreadsComboBox, gridBagConstraints);
@@ -405,14 +399,6 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 0);
         pausePanel.add(lbPauseDuration, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPauseWindow, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbPauseWindow.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 0);
-        pausePanel.add(lbPauseWindow, gridBagConstraints);
-
         cbPauseDay.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
@@ -445,7 +431,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
         pausePanel.add(spStarMinutes, gridBagConstraints);
 
-        spDuration.setModel(new javax.swing.SpinnerNumberModel(60, 0, null, 1));
+        spDuration.setModel(new javax.swing.SpinnerNumberModel(1, 0, null, 1));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 3;
@@ -455,31 +441,13 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 0);
         pausePanel.add(spDuration, gridBagConstraints);
 
-        spStartWindow.setModel(new javax.swing.SpinnerNumberModel(60, 0, null, 1));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 0);
-        pausePanel.add(spStartWindow, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbDurationMinutes, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbDurationMinutes.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDurationHours, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbDurationHours.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
-        pausePanel.add(lbDurationMinutes, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbWindowMinutes, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbWindowMinutes.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 0);
-        pausePanel.add(lbWindowMinutes, gridBagConstraints);
+        pausePanel.add(lbDurationHours, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(cbEnablePause, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.cbEnablePause.text")); // NOI18N
         cbEnablePause.addActionListener(new java.awt.event.ActionListener() {
@@ -532,18 +500,16 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox cbTimeoutEnabled;
     private javax.swing.Box.Filler filler1;
     private javax.swing.JPanel jPanelAutoIngestJobSettings;
-    private javax.swing.JLabel lbDurationMinutes;
+    private javax.swing.JLabel lbDurationHours;
     private javax.swing.JLabel lbInputScanInterval;
     private javax.swing.JLabel lbInputScanIntervalMinutes;
     private javax.swing.JLabel lbPauseDuration;
     private javax.swing.JLabel lbPauseTime;
-    private javax.swing.JLabel lbPauseWindow;
     private javax.swing.JLabel lbRetriesAllowed;
     private javax.swing.JLabel lbSecondsBetweenJobs;
     private javax.swing.JLabel lbSecondsBetweenJobsSeconds;
     private javax.swing.JLabel lbTimeoutHours;
     private javax.swing.JLabel lbTimeoutText;
-    private javax.swing.JLabel lbWindowMinutes;
     private javax.swing.JLabel lbpauseDay;
     private javax.swing.JComboBox<Integer> numberOfFileIngestThreadsComboBox;
     private javax.swing.JPanel pausePanel;
@@ -555,7 +521,6 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JSpinner spPauseStartHour;
     private javax.swing.JSpinner spSecondsBetweenJobs;
     private javax.swing.JSpinner spStarMinutes;
-    private javax.swing.JSpinner spStartWindow;
     private javax.swing.JSpinner spTimeoutHours;
     private javax.swing.JTextArea tbWarning;
     // End of variables declaration//GEN-END:variables
