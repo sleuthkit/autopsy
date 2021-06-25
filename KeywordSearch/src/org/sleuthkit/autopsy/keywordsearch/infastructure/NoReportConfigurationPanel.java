@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.keywordsearch.infastructure;
 
 /**
- * The panel shown for all TableReportModules when configuring report modules.
+ * The panel shown for report modules with no configuration settings.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class NoReportConfigurationPanel extends javax.swing.JPanel {
 
     /**
-     * Creates new form DefaultReportConfigurationPanel
+     * Creates new form NoReportConfigurationPanel
      */
     public NoReportConfigurationPanel() {
         initComponents();
