@@ -9,7 +9,6 @@ ReportProgressPanel.progress.error=Error
 ReportProgressPanel.progress.queuing=Queuing...
 ReportProgressPanel.progress.running=Running...
 ReportProgressPanel.reportLabel.text=reportLabel
-ReportProgressPanel.statusMessageLabel.text=processingLabel
 ReportProgressPanel.separationLabel.text=:
 ReportProgressPanel.initPathLabel.noFile=<html><u>No report file</u></html>
 ReportProgressPanel.start.cancelButton.text=Cancel
