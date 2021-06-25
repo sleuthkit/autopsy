@@ -183,14 +183,14 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
         }
         progressPanel.setIndeterminate(false);
         if (!failedExports.isEmpty()) {
-            StringBuilder errorMessage = new StringBuilder("<html>Failed to export hashes for the following files: ");
+            StringBuilder errorMessage = new StringBuilder("Failed to export hashes for the following files: ");
             for (int i = 0; i < failedExports.size(); ++i) {
                 errorMessage.append(failedExports.get(i));
                 if (failedExports.size() > 1 && i < failedExports.size() - 1) {
-                    errorMessage.append(",<br>");
+                    errorMessage.append(", ");
                 }
                 if (i == failedExports.size() - 1) {
-                    errorMessage.append(".</html>");
+                    errorMessage.append(".");
                 }
             }
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, errorMessage.toString());

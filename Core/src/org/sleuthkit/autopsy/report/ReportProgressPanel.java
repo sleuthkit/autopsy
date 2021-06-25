@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2021 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,7 +83,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         initComponents();
         reportProgressBar.setIndeterminate(true);
         reportProgressBar.setMaximum(100);
-        statusMessageTextArea.setText(Bundle.ReportProgressPanel_progress_queuing());
+        statusMessageLabel.setText(Bundle.ReportProgressPanel_progress_queuing());
         status = ReportStatus.QUEUING;
         reportLabel.setText("");
         pathLabel.setText(""); //NON-NLS
@@ -174,7 +174,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
      */
     public void start() {
         EventQueue.invokeLater(() -> {
-            statusMessageTextArea.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.progress.text"));
+            statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.start.progress.text"));
             status = ReportStatus.RUNNING;
         });
     }
@@ -242,7 +242,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
     public void updateStatusLabel(String statusMessage) {
         EventQueue.invokeLater(() -> {
             if (status != ReportStatus.CANCELED) {
-                statusMessageTextArea.setText(statusMessage);
+                statusMessageLabel.setText(statusMessage);
             }
         });
     }
@@ -283,8 +283,8 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                     case COMPLETE: {
                         ReportStatus oldValue = status;
                         status = ReportStatus.COMPLETE;
-                        statusMessageTextArea.setForeground(Color.BLACK);
-                        statusMessageTextArea.setText(statusMessage);
+                        statusMessageLabel.setForeground(Color.BLACK);
+                        statusMessageLabel.setText(statusMessage);
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(GREEN);
@@ -295,8 +295,8 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                     case ERROR: {
                         ReportStatus oldValue = status;
                         status = ReportStatus.ERROR;
-                        statusMessageTextArea.setForeground(RED);
-                        statusMessageTextArea.setText(statusMessage);
+                        statusMessageLabel.setForeground(RED);
+                        statusMessageLabel.setText(statusMessage);
                         reportProgressBar.setValue(reportProgressBar.getMaximum());
                         reportProgressBar.setStringPainted(true);
                         reportProgressBar.setForeground(RED);
@@ -333,8 +333,8 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                 reportProgressBar.setForeground(RED); // Red
                 reportProgressBar.setString(ReportStatus.CANCELED.getDisplayName());
                 firePropertyChange(ReportStatus.CANCELED.toString(), oldValue, status);
-                statusMessageTextArea.setForeground(RED);
-                statusMessageTextArea.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
+                statusMessageLabel.setForeground(RED);
+                statusMessageLabel.setText(NbBundle.getMessage(this.getClass(), "ReportProgressPanel.cancel.procLbl.text"));
                 break;
         }
     }
@@ -368,8 +368,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
         reportLabel = new javax.swing.JLabel();
         pathLabel = new javax.swing.JLabel();
         separationLabel = new javax.swing.JLabel();
-        javax.swing.JScrollPane statusScrollPane = new javax.swing.JScrollPane();
-        statusMessageTextArea = new javax.swing.JTextArea();
+        statusMessageLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(486, 68));
 
@@ -381,15 +380,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(separationLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.separationLabel.text")); // NOI18N
 
-        statusScrollPane.setBorder(null);
-
-        statusMessageTextArea.setEditable(false);
-        statusMessageTextArea.setBackground(java.awt.SystemColor.menu);
-        statusMessageTextArea.setColumns(20);
-        statusMessageTextArea.setLineWrap(true);
-        statusMessageTextArea.setRows(5);
-        statusMessageTextArea.setWrapStyleWord(true);
-        statusScrollPane.setViewportView(statusMessageTextArea);
+        org.openide.awt.Mnemonics.setLocalizedText(statusMessageLabel, org.openide.util.NbBundle.getMessage(ReportProgressPanel.class, "ReportProgressPanel.statusMessageLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -398,14 +389,14 @@ public class ReportProgressPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(statusMessageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(reportProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(reportLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(separationLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 548, Short.MAX_VALUE))
-                    .addComponent(statusScrollPane))
+                        .addComponent(pathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 548, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -419,7 +410,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
                     .addComponent(pathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(separationLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(statusScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE)
+                .addComponent(statusMessageLabel)
                 .addGap(13, 13, 13))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -430,7 +421,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
     private javax.swing.JLabel reportLabel;
     private javax.swing.JProgressBar reportProgressBar;
     private javax.swing.JLabel separationLabel;
-    private javax.swing.JTextArea statusMessageTextArea;
+    private javax.swing.JLabel statusMessageLabel;
     // End of variables declaration//GEN-END:variables
 
     /**
