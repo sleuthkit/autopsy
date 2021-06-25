@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JPanel;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -167,7 +166,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
                 // TODO: Currently only AbstractFiles have md5 hashes. Here only files matter. 
                 Content content = tag.getContent();
                 if (content instanceof AbstractFile) {
-                    if (!StringUtils.isBlank(((AbstractFile) content).getMd5Hash())) {
+                    if (null != ((AbstractFile) content).getMd5Hash()) {
                         try {
                             hashSet.addHashes(tag.getContent(), openCase.getDisplayName());
                         } catch (TskCoreException ex) {
