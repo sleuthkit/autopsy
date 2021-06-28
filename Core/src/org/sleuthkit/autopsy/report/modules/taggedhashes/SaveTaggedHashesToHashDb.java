@@ -149,6 +149,8 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
         }
 
         ArrayList<String> failedExports = new ArrayList<>();
+        int notAddedCount = 0;
+        int addedCount = 0;
         for (TagName tagName : tagNames) {
             if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
                 break;
@@ -158,6 +160,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
             List<ContentTag> tags = new ArrayList<>();
             try {
                 tags.addAll(tagsManager.getContentTagsByTagName(tagName));
+
             } catch (TskCoreException ex) {
                 Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
                 progressPanel.updateStatusLabel("Error getting selected tags for case.");
@@ -170,15 +173,13 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
                         //if there is a failure to add the file for a reason other than missing an md5 keep going but take note
                         try {
                             hashSet.addHashes(content, openCase.getDisplayName());
+                            addedCount++;
                         } catch (TskCoreException ex) {
                             Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + content.getId() + " to hash set " + hashSet.getHashSetName(), ex);
                             failedExports.add(content.getName());
                         }
                     } else {
-                        //if there are not md5s stop here and indicate the report had an error
-                        progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, "Unable to add the " + (tags.size() > 1 ? "files" : "file")
-                                + " to the hash set. Hashes may not have been calculated. Please configure and run an appropriate ingest module, or untag the file: " + content.getName());
-                        break;
+                        notAddedCount++;
                     }
                 }
             }
@@ -190,7 +191,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
             errorMessage.append(failedExports.get(0));
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, errorMessage.toString());
         } else if (progressPanel.getStatus() != ReportProgressPanel.ReportStatus.ERROR) {
-            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE, addedCount + " files added to hashset. " + notAddedCount + " files without hashes skipped.");
         }
     }
 
