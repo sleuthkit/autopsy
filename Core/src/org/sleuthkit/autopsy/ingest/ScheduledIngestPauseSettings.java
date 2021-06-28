@@ -40,13 +40,13 @@ public class ScheduledIngestPauseSettings {
      */
     private static final Preferences preferences = NbPreferences.forModule(ScheduledIngestPauseSettings.class);
     private static final String PAUSE_ENABLED_KEY = "IngestPauseEnabled";
+    private static final boolean DEFAULT_ENABLED_VALUE = false;
     private static final String PAUSE_DAY_OF_WEEK_KEY = "IngestPauseDayOfWeek";
     private static final String PAUSE_TIME_HOUR_KEY = "IngestPauseTimeHour";
     private static final String PAUSE_TIME_MINUTES_KEY = "IngestPauseTimeMinutes";
     private static final String PAUSE_DURATION_MINUTES_KEY = "IngestPauseDurationMinutes";
-    private static final String PAUSE_WINDOW_MINUTES_KEY = "IngestPauseWindowMinutes";
     private static final int DEFAULT_TIME_VALUE = 0;
-
+    
     /**
      * Gets whether or not a scheduled ingest pause is enabled.
      *
@@ -55,7 +55,7 @@ public class ScheduledIngestPauseSettings {
      * THIS IS A BETA METHOD AND IS SUBJECT TO CHANGE OR DELETION.
      */
     public static boolean getPauseEnabled() {
-        return preferences.getBoolean(PAUSE_ENABLED_KEY, false);
+        return preferences.getBoolean(PAUSE_ENABLED_KEY, DEFAULT_ENABLED_VALUE);
     }
 
     /**
@@ -132,7 +132,7 @@ public class ScheduledIngestPauseSettings {
      * THIS IS A BETA METHOD AND IS SUBJECT TO CHANGE OR DELETION.
      */
     @Beta
-    public static int getPauseStartTimeMinutes() {
+    public static int getPauseStartTimeMinute() {
         return preferences.getInt(PAUSE_TIME_MINUTES_KEY, DEFAULT_TIME_VALUE);
     }
 
@@ -145,7 +145,7 @@ public class ScheduledIngestPauseSettings {
      * THIS IS A BETA METHOD AND IS SUBJECT TO CHANGE OR DELETION.
      */
     @Beta
-    public static void setPauseStartTimeMinutes(int timeInMinutes) {
+    public static void setPauseStartTimeMinute(int timeInMinutes) {
         if (timeInMinutes < 0 || timeInMinutes > 59) {
             throw new IllegalArgumentException("timeInMinutes must be 0-59");
         }
@@ -174,32 +174,6 @@ public class ScheduledIngestPauseSettings {
     @Beta
     public static void setPauseDurationMinutes(int durationInMinutes) {
         preferences.putInt(PAUSE_DURATION_MINUTES_KEY, durationInMinutes);
-    }
-
-    /**
-     * Gets the duration of the window after the specified pause time in which
-     * the pause should still occur.
-     *
-     * @return The duration in minutes. The default value is zero.
-     *
-     * THIS IS A BETA METHOD AND IS SUBJECT TO CHANGE OR DELETION.
-     */
-    @Beta
-    public static int getPauseStartTimeWindowMinutes() {
-        return preferences.getInt(PAUSE_WINDOW_MINUTES_KEY, DEFAULT_TIME_VALUE);
-    }
-
-    /**
-     * Sets the duration of the window after the specified pause time in which
-     * the pause should still occur.
-     *
-     * @param durationInMinutes The duration in minutes.
-     *
-     * THIS IS A BETA METHOD AND IS SUBJECT TO CHANGE OR DELETION.
-     */
-    @Beta
-    public static void setPauseStartTimeWindowMinutes(int durationInMinutes) {
-        preferences.putInt(PAUSE_WINDOW_MINUTES_KEY, durationInMinutes);
     }
 
     /**
