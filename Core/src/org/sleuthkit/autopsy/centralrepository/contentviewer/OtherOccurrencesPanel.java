@@ -284,7 +284,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         }
     }
 
-    @NbBundle.Messages({"OtherOccurrencesPanel_earliestCaseNotAvailable=Not Availble."})
+    @NbBundle.Messages({"OtherOccurrencesPanel_earliestCaseNotAvailable=Not Available."})
     /**
      * Reset the UI and clear cached data.
      */

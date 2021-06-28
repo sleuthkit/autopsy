@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,7 +67,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
     public String getRelativeFilePath() {
         return null;
     }
-    
+
     /**
      * Get default configuration for this report module.
      *
@@ -101,14 +101,14 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
             configPanel.setConfiguration((HashesReportModuleSettings) getDefaultConfiguration());
             return;
         }
-        
+
         if (settings instanceof HashesReportModuleSettings) {
             configPanel.setConfiguration((HashesReportModuleSettings) settings);
             return;
         }
 
         throw new IllegalArgumentException("Expected settings argument to be an instance of HashesReportModuleSettings");
-    }    
+    }
 
     @Messages({
         "AddTaggedHashesToHashDb.error.noHashSetsSelected=No hash set selected for export.",
@@ -136,7 +136,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.AddTaggedHashesToHashDb_error_noHashSetsSelected());
             return;
         }
-        
+
         progressPanel.updateStatusLabel("Adding hashes to " + hashSet.getHashSetName() + " hash set...");
 
         TagsManager tagsManager = openCase.getServices().getTagsManager();
@@ -147,7 +147,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.AddTaggedHashesToHashDb_error_noTagsSelected());
             return;
         }
-        
+
         ArrayList<String> failedExports = new ArrayList<>();
         for (TagName tagName : tagNames) {
             if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
@@ -155,46 +155,47 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
             }
 
             progressPanel.updateStatusLabel("Adding " + tagName.getDisplayName() + " hashes to " + hashSet.getHashSetName() + " hash set...");
+            List<ContentTag> tags = new ArrayList<>();
             try {
-                List<ContentTag> tags = tagsManager.getContentTagsByTagName(tagName);
-                for (ContentTag tag : tags) {
-                    // TODO: Currently only AbstractFiles have md5 hashes. Here only files matter. 
-                    Content content = tag.getContent();
-                    if (content instanceof AbstractFile) {
-                        if (null != ((AbstractFile) content).getMd5Hash()) {
-                            try {
-                                hashSet.addHashes(tag.getContent(), openCase.getDisplayName());
-                            } catch (TskCoreException ex) {
-                                Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash set " + hashSet.getHashSetName(), ex);
-                                failedExports.add(tag.getContent().getName());
-                            }
-                        } else {
-                            progressPanel.updateStatusLabel("Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.");
-                            break;
-                        }
-                    }
-                }
+                tags.addAll(tagsManager.getContentTagsByTagName(tagName));
             } catch (TskCoreException ex) {
                 Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
                 progressPanel.updateStatusLabel("Error getting selected tags for case.");
             }
+            for (ContentTag tag : tags) {
+                // TODO: Currently only AbstractFiles have md5 hashes. Here only files matter. 
+                Content content = tag.getContent();
+                if (content instanceof AbstractFile) {
+                    if (null != ((AbstractFile) content).getMd5Hash()) {
+                        try {
+                            hashSet.addHashes(tag.getContent(), openCase.getDisplayName());
+                        } catch (TskCoreException ex) {
+                            Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash set " + hashSet.getHashSetName(), ex);
+                            failedExports.add(tag.getContent().getName());
+                        }
+                    } else {
+                        progressPanel.updateStatusLabel("Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.");
+                        failedExports.add(tag.getContent().getName());
+                    }
+                }
+            }
         }
+        progressPanel.setIndeterminate(false);
         if (!failedExports.isEmpty()) {
             StringBuilder errorMessage = new StringBuilder("Failed to export hashes for the following files: ");
             for (int i = 0; i < failedExports.size(); ++i) {
                 errorMessage.append(failedExports.get(i));
                 if (failedExports.size() > 1 && i < failedExports.size() - 1) {
-                    errorMessage.append(",");
+                    errorMessage.append(", ");
                 }
                 if (i == failedExports.size() - 1) {
                     errorMessage.append(".");
                 }
             }
-            progressPanel.updateStatusLabel(errorMessage.toString());
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, errorMessage.toString());
+        } else {
+            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
         }
-        
-        progressPanel.setIndeterminate(false);
-        progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }
 
     @Override
@@ -202,7 +203,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
         initializePanel();
         return configPanel;
     }
-    
+
     private void initializePanel() {
         if (configPanel == null) {
             configPanel = new SaveTaggedHashesToHashDbConfigPanel();

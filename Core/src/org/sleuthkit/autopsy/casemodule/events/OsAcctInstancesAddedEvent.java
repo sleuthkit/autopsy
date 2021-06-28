@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule.events;
 
-import java.util.ArrayList;
 import java.util.List;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.OS_ACCT_INSTANCES_ADDED;
 import org.sleuthkit.datamodel.OsAccountInstance;
@@ -26,16 +25,16 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An application event published when OS accounts are added to the Sleuth Kit
- * data model for a case.
+ * An application event published when OS account instances are added to the
+ * Sleuth Kit data model for a case.
  */
 public final class OsAcctInstancesAddedEvent extends TskDataModelChangedEvent<OsAccountInstance, OsAccountInstance> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs an application event published when OS account instances are added to
-     * the Sleuth Kit data model for a case.
+     * Constructs an application event published when OS account instances are
+     * added to the Sleuth Kit data model for a case.
      *
      * @param osAcctInstances The OS account instances that were added.
      */
@@ -44,9 +43,9 @@ public final class OsAcctInstancesAddedEvent extends TskDataModelChangedEvent<Os
     }
 
     /**
-     * Gets the OS accounts that have been added or updated.
+     * Gets the OS account instances that have been added.
      *
-     * @return The OS accounts.
+     * @return The OS account instances.
      */
     public List<OsAccountInstance> getOsAccountInstances() {
         return getNewValue();
@@ -54,11 +53,7 @@ public final class OsAcctInstancesAddedEvent extends TskDataModelChangedEvent<Os
 
     @Override
     protected List<OsAccountInstance> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
-        List<OsAccountInstance> osAccountInstances = new ArrayList<>();
-        for (Long id : ids) {
-            //RJCTODO
-        }
-        return osAccountInstances;
+        return caseDb.getOsAccountManager().getOsAccountInstances(ids);
     }
 
 }
