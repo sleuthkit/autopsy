@@ -398,6 +398,11 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
         
         @Override
+        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, Long osAccountId, long dataSourceId) throws TskCoreException {
+            return content.newDataArtifact(artifactType, attributesList, osAccountId, dataSourceId);
+        }
+        
+        @Override
         public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList) throws TskCoreException {
             return content.newDataArtifact(artifactType, attributesList);
         }
@@ -465,6 +470,11 @@ public final class FileTypes implements AutopsyVisitableItem {
         @Override
         public AnalysisResultAdded newAnalysisResult(BlackboardArtifact.Type type, Score score, String string, String string1, String string2, Collection<BlackboardAttribute> clctn) throws TskCoreException {
             return content.newAnalysisResult(type, score, string, string1, string2, clctn);
+        }
+
+        @Override
+        public AnalysisResultAdded newAnalysisResult(BlackboardArtifact.Type type, Score score, String string, String string1, String string2, Collection<BlackboardAttribute> clctn, long dataSourceId) throws TskCoreException {
+            return content.newAnalysisResult(type, score, string, string1, string2, clctn, dataSourceId);
         }
 
         @Override

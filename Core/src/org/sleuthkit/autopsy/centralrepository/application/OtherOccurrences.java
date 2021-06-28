@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
@@ -52,6 +53,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -69,6 +73,43 @@ public final class OtherOccurrences {
     private OtherOccurrences() {
     }
 
+    public static Collection<CorrelationAttributeInstance> getCorrelationAttributeFromOsAccount(Node node, OsAccount osAccount) {
+        Collection<CorrelationAttributeInstance> ret = new ArrayList<>();
+        Optional<String> osAccountAddr = osAccount.getAddr();
+
+        if (osAccountAddr.isPresent()) {
+            try {
+                for (OsAccountInstance instance : osAccount.getOsAccountInstances()) {
+                    DataSource osAccountDataSource = instance.getDataSource();
+                    try {
+                        CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
+                        CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
+                                CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
+                                osAccountAddr.get(),
+                                correlationCase,
+                                CorrelationDataSource.fromTSKDataSource(correlationCase, instance.getDataSource()),
+                                "",
+                                "",
+                                TskData.FileKnown.KNOWN,
+                                osAccount.getId());
+
+                            ret.add(correlationAttributeInstance);
+                    } catch (CentralRepoException ex) {
+                       logger.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", osAccountAddr.get()), ex);  //NON-NLS
+                    } catch (NoCurrentCaseException ex) {
+                       logger.log(Level.WARNING, String.format("Exception while getting open case looking up osAccount %s.", osAccountAddr.get()), ex);  //NON-NLS
+                    }  catch (CorrelationAttributeNormalizationException ex) {
+                       logger.log(Level.SEVERE, String.format("Exception with Correlation Attribute Normalization for osAccount %s.", osAccountAddr.get()), ex);  //NON-NLS
+                    }
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.INFO, String.format("Unable to check create CorrelationAttribtueInstance for osAccount %s.", osAccountAddr.get()), ex);            
+            }
+        }
+        
+        return ret;        
+    }
+    
     /**
      * Determine what attributes can be used for correlation based on the node.
      * If EamDB is not enabled, get the default Files correlation.

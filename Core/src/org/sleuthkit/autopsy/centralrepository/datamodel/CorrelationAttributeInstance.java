@@ -279,7 +279,8 @@ public class CorrelationAttributeInstance implements Serializable {
         "CorrelationType.IMEI.displayName=IMEI Number",
         "CorrelationType.IMSI.displayName=IMSI Number",
         "CorrelationType.PROG_NAME.displayName=Installed Programs",
-        "CorrelationType.ICCID.displayName=ICCID Number"})
+        "CorrelationType.ICCID.displayName=ICCID Number",
+        "CorrelationType.OS_ACCOUNT.displayName=Os Account"})
     public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws CentralRepoException {
         List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = new ArrayList<>();
         
@@ -294,6 +295,7 @@ public class CorrelationAttributeInstance implements Serializable {
         defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(IMSI_TYPE_ID, Bundle.CorrelationType_IMSI_displayName(), "imsi_number", true, true)); //NON-NLS
         defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(ICCID_TYPE_ID, Bundle.CorrelationType_ICCID_displayName(), "iccid_number", true, true)); //NON-NLS
         defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(INSTALLED_PROGS_TYPE_ID, Bundle.CorrelationType_PROG_NAME_displayName(), "installed_programs", true, true)); //NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(OSACCOUNT_TYPE_ID, Bundle.CorrelationType_OS_ACCOUNT_displayName(), "os_accounts", true, true)); //NON-NLS
         
         // Create Correlation Types for Accounts.
         int correlationTypeId = ADDITIONAL_TYPES_BASE_ID;
