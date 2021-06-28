@@ -191,7 +191,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
             errorMessage.append(failedExports.get(0));
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, errorMessage.toString());
         } else if (progressPanel.getStatus() != ReportProgressPanel.ReportStatus.ERROR) {
-            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE, addedCount + " files added to hashset. " + notAddedCount + " files without hashes skipped.");
+            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE, addedCount + " files added to hash set. " + notAddedCount + " files without hashes skipped.");
         }
     }
 
