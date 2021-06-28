@@ -180,6 +180,9 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
         List<IngestModuleError> errors = new ArrayList<>();
         if (!this.ingestJobPipeline.isCancelled()) {
             pauseIfScheduled();
+            if (ingestJobPipeline.isCancelled()) {
+                return errors;
+            }
             try {
                 prepareTask(task);
             } catch (IngestTaskPipelineException ex) {
@@ -188,6 +191,9 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
             }
             for (PipelineModule<T> module : modules) {
                 pauseIfScheduled();
+                if (ingestJobPipeline.isCancelled()) {
+                    break;
+                }
                 try {
                     currentModule = module;
                     currentModule.setProcessingStartTime();
@@ -228,6 +234,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
             }
             pauseStart = pauseStart.withHour(ScheduledIngestPauseSettings.getPauseStartTimeHour());
             pauseStart = pauseStart.withMinute(ScheduledIngestPauseSettings.getPauseStartTimeMinute());
+            pauseStart = pauseStart.withSecond(0);
 
             /*
              * Calculate the pause end date/time.
@@ -241,11 +248,11 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
              * whatever time remains in the pause interval has expired.
              */
             LocalDateTime timeNow = LocalDateTime.now();
-            long timeRemainingMillis = ChronoUnit.MILLIS.between(timeNow, pauseEnd);
-            if (timeNow.isAfter(pauseStart) && timeNow.isBefore(pauseEnd) && timeRemainingMillis > 0) {
+            if ((timeNow.equals(pauseStart) || timeNow.isAfter(pauseStart)) && timeNow.isBefore(pauseEnd)) {
                 ingestJobPipeline.registerPausedIngestThread(Thread.currentThread());
                 try {
-                    logger.log(Level.INFO, String.format("%s pausing at %s for %d minutes", Thread.currentThread().getName(), LocalDateTime.now(), TimeUnit.MILLISECONDS.toMinutes(timeRemainingMillis)));
+                    long timeRemainingMillis = ChronoUnit.MILLIS.between(timeNow, pauseEnd);
+                    logger.log(Level.INFO, String.format("%s pausing at %s for ~%d minutes", Thread.currentThread().getName(), LocalDateTime.now(), TimeUnit.MILLISECONDS.toMinutes(timeRemainingMillis)));
                     sleep(timeRemainingMillis);
                     logger.log(Level.INFO, String.format("%s resuming at %s", Thread.currentThread().getName(), LocalDateTime.now()));
                 } catch (InterruptedException notLogged) {

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -597,6 +598,14 @@ final class IngestJobPipeline {
             }
         }
 
+        ScheduledIngestPauseSettings.setPauseEnabled(true);
+        LocalDateTime testDateTime = LocalDateTime.now();
+        testDateTime.plusMinutes(2);
+        ScheduledIngestPauseSettings.setPauseDayOfWeek(testDateTime.getDayOfWeek());
+        ScheduledIngestPauseSettings.setPauseStartTimeHour(testDateTime.getHour());
+        ScheduledIngestPauseSettings.setPauseStartTimeMinute(testDateTime.getMinute());
+        ScheduledIngestPauseSettings.setPauseDurationMinutes(2);        
+        
         return errors;
     }
 
