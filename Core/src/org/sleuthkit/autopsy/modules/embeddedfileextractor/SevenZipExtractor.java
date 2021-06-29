@@ -1450,6 +1450,9 @@ class SevenZipExtractor {
          *                        updating
          * @param statusMap       - the map of existing files and their status
          * @param archiveFilePath - the archive file path for the unpacked node
+         * @param parentAr        - the parent archive as an Archive object
+         * @param archiveFile     - the parent archive as an AbstractFile
+         * @param depthMap        - the depth map (to prevent zip bombs)
          *
          * @throws TskCoreException
          */
