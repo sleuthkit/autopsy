@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAcctInstancesAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -56,6 +57,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.datamodel.OsAccountInstance;
 
 /**
  * Listen for case events and update entries in the Central Repository database
@@ -75,7 +77,8 @@ public final class CaseEventListener implements PropertyChangeListener {
             Case.Events.DATA_SOURCE_ADDED,
             Case.Events.TAG_DEFINITION_CHANGED,
             Case.Events.CURRENT_CASE,
-            Case.Events.DATA_SOURCE_NAME_CHANGED);
+            Case.Events.DATA_SOURCE_NAME_CHANGED,
+            Case.Events.OS_ACCT_INSTANCES_ADDED);
 
     public CaseEventListener() {
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(CASE_EVENT_THREAD_NAME).build());
@@ -128,6 +131,14 @@ public final class CaseEventListener implements PropertyChangeListener {
             break;
             case DATA_SOURCE_NAME_CHANGED: {
                 jobProcessingExecutor.submit(new DataSourceNameChangedTask(dbManager, evt));
+            }
+            break;
+            case OS_ACCT_INSTANCES_ADDED: {
+                // STUB, TO BE REPLACED
+                List<OsAccountInstance> osAcctInstances = ((OsAcctInstancesAddedEvent) evt).getOsAccountInstances();
+                for (OsAccountInstance instance : osAcctInstances) {
+                    LOGGER.log(Level.INFO, String.format("Received OS account instance added message (instance ID = %d)", instance.getInstanceId()));
+                }
             }
             break;
         }
