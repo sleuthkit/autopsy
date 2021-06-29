@@ -90,7 +90,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         
         setPauseEnabled(ScheduledIngestPauseSettings.getPauseEnabled());
         spPauseStartHour.setValue(ScheduledIngestPauseSettings.getPauseStartTimeHour());
-        spStarMinutes.setValue(ScheduledIngestPauseSettings.getPauseStartTimeMinute());
+        spPauseStartMinutes.setValue(ScheduledIngestPauseSettings.getPauseStartTimeMinute());
         spDuration.setValue(ScheduledIngestPauseSettings.getPauseDurationMinutes()/60);
         cbPauseDay.setSelectedItem(ScheduledIngestPauseSettings.getPauseDayOfWeek());
     }
@@ -111,7 +111,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
        
         ScheduledIngestPauseSettings.setPauseEnabled(cbEnablePause.isSelected());
         ScheduledIngestPauseSettings.setPauseDayOfWeek((DayOfWeek)cbPauseDay.getSelectedItem());
-        ScheduledIngestPauseSettings.setPauseStartTimeMinute((int)spStarMinutes.getValue());
+        ScheduledIngestPauseSettings.setPauseStartTimeMinute((int)spPauseStartMinutes.getValue());
         ScheduledIngestPauseSettings.setPauseStartTimeHour((int)spPauseStartHour.getValue());
         ScheduledIngestPauseSettings.setPauseDurationMinutes((int)spDuration.getValue() * 60);
     }
@@ -129,7 +129,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
     
     private void setPauseEnabled(boolean enabled) {
         cbEnablePause.setSelected(enabled);
-        spStarMinutes.setEnabled(enabled);
+        spPauseStartMinutes.setEnabled(enabled);
         spPauseStartHour.setEnabled(enabled);
         spDuration.setEnabled(enabled);
         lbpauseDay.setEnabled(enabled);
@@ -176,7 +176,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         cbPauseDay = new javax.swing.JComboBox<>();
         spPauseStartHour = new javax.swing.JSpinner();
         javax.swing.JLabel lbColon = new javax.swing.JLabel();
-        spStarMinutes = new javax.swing.JSpinner();
+        spPauseStartMinutes = new javax.swing.JSpinner();
         spDuration = new javax.swing.JSpinner();
         lbDurationHours = new javax.swing.JLabel();
         cbEnablePause = new javax.swing.JCheckBox();
@@ -418,8 +418,6 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 0);
         pausePanel.add(lbPauseDuration, gridBagConstraints);
-
-        cbPauseDay.setEditable(true);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
@@ -443,13 +441,13 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 2, 5, 2);
         pausePanel.add(lbColon, gridBagConstraints);
 
-        spStarMinutes.setModel(new javax.swing.SpinnerNumberModel(0, 0, 59, 1));
+        spPauseStartMinutes.setModel(new javax.swing.SpinnerNumberModel(0, 0, 59, 1));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
-        pausePanel.add(spStarMinutes, gridBagConstraints);
+        pausePanel.add(spPauseStartMinutes, gridBagConstraints);
 
         spDuration.setModel(new javax.swing.SpinnerNumberModel(1, null, null, 1));
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -539,8 +537,8 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane spMainScrollPane;
     private javax.swing.JSpinner spMaximumRetryAttempts;
     private javax.swing.JSpinner spPauseStartHour;
+    private javax.swing.JSpinner spPauseStartMinutes;
     private javax.swing.JSpinner spSecondsBetweenJobs;
-    private javax.swing.JSpinner spStarMinutes;
     private javax.swing.JSpinner spTimeoutHours;
     private javax.swing.JTextArea tbWarning;
     // End of variables declaration//GEN-END:variables

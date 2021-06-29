@@ -401,9 +401,6 @@
           </Constraints>
         </Component>
         <Component class="javax.swing.JComboBox" name="cbPauseDay">
-          <Properties>
-            <Property name="editable" type="boolean" value="true"/>
-          </Properties>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;DayOfWeek&gt;"/>
           </AuxValues>
@@ -441,7 +438,7 @@
             </Constraint>
           </Constraints>
         </Component>
-        <Component class="javax.swing.JSpinner" name="spStarMinutes">
+        <Component class="javax.swing.JSpinner" name="spPauseStartMinutes">
           <Properties>
             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
               <SpinnerModel initial="0" maximum="59" minimum="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
