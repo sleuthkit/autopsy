@@ -584,6 +584,7 @@ final public class VisualizationPanel extends JPanel {
         progressIndicator.start(Bundle.VisualizationPanel_computingLayout());
 
         try {
+            graph.getModel().beginUpdate();
             layout.execute(graph.getDefaultParent());
             fitGraph();
         } finally {
