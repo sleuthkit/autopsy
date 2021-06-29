@@ -122,7 +122,8 @@ public final class OtherOccurrences {
      * Determine what attributes can be used for correlation based on the node.
      * If EamDB is not enabled, get the default Files correlation.
      *
-     * @param node The node to correlate
+     * @param node The node to correlate.
+     * @param file The file to correlate.
      *
      * @return A list of attributes that can be used for correlation
      */
@@ -244,6 +245,9 @@ public final class OtherOccurrences {
      * artifact. If the central repo is not enabled, this will only return files
      * from the current case with matching MD5 hashes.
      *
+     * @param file      The current file.
+     * @param deviceId  The device ID for the current data source. 
+     * @param dataSourceName The name of the current data source.
      * @param corAttr CorrelationAttribute to query for
      *
      * @return A collection of correlated artifact instances

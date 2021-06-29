@@ -151,6 +151,8 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      * Determines whether or not a file matches a user-defined custom file type.
      *
      * @param file The file to test.
+     * @param startOfFileBuffer  The beginning of the file data.
+     * @param bufLen The length of startOfFileBuffer.
      *
      * @return The file type if a match is found; otherwise null.
      *

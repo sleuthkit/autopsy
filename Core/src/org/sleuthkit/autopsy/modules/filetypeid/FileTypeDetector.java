@@ -361,6 +361,8 @@ public class FileTypeDetector {
      * Determines whether or not a file matches a user-defined custom file type.
      *
      * @param file The file to test.
+     * @param startOfFileBuffer  The beginning of the file data.
+     * @param bufLen The length of startOfFileBuffer.
      *
      * @return The MIME type as a string if a match is found; otherwise null.
      */
@@ -381,7 +383,9 @@ public class FileTypeDetector {
      * Autopsy.
      *
      * @param file The file to test.
-     *
+     * @param startOfFileBuffer  The beginning of the file data.
+     * @param bufLen The length of startOfFileBuffer.
+     * 
      * @return The MIME type as a string if a match is found; otherwise null.
      */
     private String detectAutopsyDefinedType(AbstractFile file, byte[] startOfFileBuffer, int bufLen) {
