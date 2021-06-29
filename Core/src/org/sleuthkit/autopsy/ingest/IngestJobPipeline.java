@@ -596,16 +596,7 @@ final class IngestJobPipeline {
                     break;
                 }
             }
-        }
-
-        ScheduledIngestPauseSettings.setPauseEnabled(true);
-        LocalDateTime testDateTime = LocalDateTime.now();
-        testDateTime.plusMinutes(2);
-        ScheduledIngestPauseSettings.setPauseDayOfWeek(testDateTime.getDayOfWeek());
-        ScheduledIngestPauseSettings.setPauseStartTimeHour(testDateTime.getHour());
-        ScheduledIngestPauseSettings.setPauseStartTimeMinute(testDateTime.getMinute());
-        ScheduledIngestPauseSettings.setPauseDurationMinutes(2);        
-        
+        }            
         return errors;
     }
 
