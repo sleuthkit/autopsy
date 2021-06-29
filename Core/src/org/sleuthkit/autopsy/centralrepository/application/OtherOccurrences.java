@@ -73,6 +73,14 @@ public final class OtherOccurrences {
     private OtherOccurrences() {
     }
 
+    /**
+     * Determine what attributes can be used for correlation based on the node.
+     *
+     * @param node The node to correlate
+     * @param osAccount the osAccount to correlate
+     *
+     * @return A list of attributes that can be used for correlation
+     */
     public static Collection<CorrelationAttributeInstance> getCorrelationAttributeFromOsAccount(Node node, OsAccount osAccount) {
         Collection<CorrelationAttributeInstance> ret = new ArrayList<>();
         Optional<String> osAccountAddr = osAccount.getAddr();
