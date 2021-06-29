@@ -18,8 +18,14 @@
  */
 package org.sleuthkit.autopsy.experimental.configuration;
 
+import java.awt.Component;
 import java.time.DayOfWeek;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.ingest.ScheduledIngestPauseSettings;
 
@@ -36,11 +42,12 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
     AdvancedAutoIngestSettingsPanel(AutoIngestSettingsPanel.OptionsUiMode mode) {
         initComponents();
         // Set up the combo box model before calling load.
-        for(DayOfWeek day: DayOfWeek.values()) {
+        for (DayOfWeek day : DayOfWeek.values()) {
             cbModel.addElement(day);
         }
         cbPauseDay.setModel(cbModel);
-        
+        cbPauseDay.setRenderer(new DayOfTheWeekRenderer());
+
         tbWarning.setLineWrap(true);
         tbWarning.setWrapStyleWord(true);
         load(mode);
@@ -87,11 +94,11 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         int timeOutHrs = UserPreferences.getProcessTimeOutHrs();
         spTimeoutHours.setValue(timeOutHrs);
         setCheckboxEnabledState();
-        
+
         setPauseEnabled(ScheduledIngestPauseSettings.getPauseEnabled());
         spPauseStartHour.setValue(ScheduledIngestPauseSettings.getPauseStartTimeHour());
         spPauseStartMinutes.setValue(ScheduledIngestPauseSettings.getPauseStartTimeMinute());
-        spDuration.setValue(ScheduledIngestPauseSettings.getPauseDurationMinutes()/60);
+        spDuration.setValue(ScheduledIngestPauseSettings.getPauseDurationMinutes() / 60);
         cbPauseDay.setSelectedItem(ScheduledIngestPauseSettings.getPauseDayOfWeek());
     }
 
@@ -108,12 +115,12 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
             int timeOutHrs = (int) spTimeoutHours.getValue();
             UserPreferences.setProcessTimeOutHrs(timeOutHrs);
         }
-       
+
         ScheduledIngestPauseSettings.setPauseEnabled(cbEnablePause.isSelected());
-        ScheduledIngestPauseSettings.setPauseDayOfWeek((DayOfWeek)cbPauseDay.getSelectedItem());
-        ScheduledIngestPauseSettings.setPauseStartTimeMinute((int)spPauseStartMinutes.getValue());
-        ScheduledIngestPauseSettings.setPauseStartTimeHour((int)spPauseStartHour.getValue());
-        ScheduledIngestPauseSettings.setPauseDurationMinutes((int)spDuration.getValue() * 60);
+        ScheduledIngestPauseSettings.setPauseDayOfWeek((DayOfWeek) cbPauseDay.getSelectedItem());
+        ScheduledIngestPauseSettings.setPauseStartTimeMinute((int) spPauseStartMinutes.getValue());
+        ScheduledIngestPauseSettings.setPauseStartTimeHour((int) spPauseStartHour.getValue());
+        ScheduledIngestPauseSettings.setPauseDurationMinutes((int) spDuration.getValue() * 60);
     }
 
     private void setCheckboxEnabledState() {
@@ -126,7 +133,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
             lbTimeoutHours.setEnabled(false);
         }
     }
-    
+
     private void setPauseEnabled(boolean enabled) {
         cbEnablePause.setSelected(enabled);
         spPauseStartMinutes.setEnabled(enabled);
@@ -137,6 +144,65 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         lbPauseDuration.setEnabled(enabled);
         lbPauseTime.setEnabled(enabled);
         cbPauseDay.setEnabled(enabled);
+    }
+
+    @Messages({
+        "DayOfTheWeekRenderer_Monday_Label=Monday",
+        "DayOfTheWeekRenderer_Tuesday_Label=Tuesday",
+        "DayOfTheWeekRenderer_Wednesday_Label=Wednesday",
+        "DayOfTheWeekRenderer_Thursday_Label=Thursday",
+        "DayOfTheWeekRenderer_Friday_Label=Friday",
+        "DayOfTheWeekRenderer_Saturday_Label=Saturday",
+        "DayOfTheWeekRenderer_Sunday_Label=Sunday",})
+    /**
+     * Renderer for the Day of the week combo box.
+     */
+    private final class DayOfTheWeekRenderer implements ListCellRenderer<DayOfWeek> {
+
+        private final ListCellRenderer<? super DayOfWeek> delegate;
+
+        /**
+         * Construct a new Renderer.
+         */
+        DayOfTheWeekRenderer() {
+            JComboBox<DayOfWeek> cb = new JComboBox<>();
+            delegate = cb.getRenderer();
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList<? extends DayOfWeek> list, DayOfWeek value, int index, boolean isSelected, boolean cellHasFocus) {
+            Component comp = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+            String text = "";
+            if (value != null) {
+                text = value.toString();
+                switch (value) {
+                    case MONDAY:
+                        text = Bundle.DayOfTheWeekRenderer_Monday_Label();
+                        break;
+                    case TUESDAY:
+                        text = Bundle.DayOfTheWeekRenderer_Tuesday_Label();
+                        break;
+                    case WEDNESDAY:
+                        text = Bundle.DayOfTheWeekRenderer_Wednesday_Label();
+                        break;
+                    case THURSDAY:
+                        text = Bundle.DayOfTheWeekRenderer_Thursday_Label();
+                        break;
+                    case FRIDAY:
+                        text = Bundle.DayOfTheWeekRenderer_Friday_Label();
+                        break;
+                    case SATURDAY:
+                        text = Bundle.DayOfTheWeekRenderer_Saturday_Label();
+                        break;
+                    case SUNDAY:
+                        text = Bundle.DayOfTheWeekRenderer_Sunday_Label();
+                        break;
+                }
+            }
+            ((JLabel) comp).setText(text);
+            return comp;
+        }
     }
 
     /**
@@ -449,7 +515,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
         pausePanel.add(spPauseStartMinutes, gridBagConstraints);
 
-        spDuration.setModel(new javax.swing.SpinnerNumberModel(1, null, null, 1));
+        spDuration.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 3;
