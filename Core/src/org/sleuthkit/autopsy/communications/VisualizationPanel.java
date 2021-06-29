@@ -582,9 +582,8 @@ final public class VisualizationPanel extends JPanel {
 
         ModalDialogProgressIndicator progressIndicator = new ModalDialogProgressIndicator(windowAncestor, Bundle.VisualizationPanel_computingLayout());
         progressIndicator.start(Bundle.VisualizationPanel_computingLayout());
-
-        try {
-            graph.getModel().beginUpdate();
+        graph.getModel().beginUpdate();
+        try {    
             layout.execute(graph.getDefaultParent());
             fitGraph();
         } finally {
