@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import java.sql.Statement;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
 /**
- * This class updates CR schema to 1.5
+ * This class updates CR schema to 1.6
  * 
  */
 public class CentralRepoDbUpgrader15To16 implements CentralRepoDbUpgrader {
