@@ -662,6 +662,9 @@ public final class CaseEventListener implements PropertyChangeListener {
     @NbBundle.Messages({"CaseEventsListener.module.name=Central Repository",
         "CaseEventsListener.prevCaseComment.text=Users seen in previous cases",
         "CaseEventsListener.prevExists.text=Previously Seen Users (Central Repository)"})
+    /**
+     * Add OsAccount Instance to CR and find interesting items based on the OsAccount
+     */
     private final class OsAccountInstancesAddedTask implements Runnable {
 
         private final CentralRepository dbManager;
