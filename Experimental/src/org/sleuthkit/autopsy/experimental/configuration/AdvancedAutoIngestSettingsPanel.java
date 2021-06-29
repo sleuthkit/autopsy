@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.experimental.configuration;
 
+import java.time.DayOfWeek;
 import javax.swing.DefaultComboBoxModel;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.ingest.ScheduledIngestPauseSettings;
 
 /**
  * Configuration panel for advanced settings, such as number of concurrent jobs,
@@ -29,14 +31,19 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private final DefaultComboBoxModel<DayOfWeek> cbModel = new DefaultComboBoxModel<>();
 
     AdvancedAutoIngestSettingsPanel(AutoIngestSettingsPanel.OptionsUiMode mode) {
         initComponents();
+        // Set up the combo box model before calling load.
+        for(DayOfWeek day: DayOfWeek.values()) {
+            cbModel.addElement(day);
+        }
+        cbPauseDay.setModel(cbModel);
+        
         tbWarning.setLineWrap(true);
         tbWarning.setWrapStyleWord(true);
         load(mode);
-        setPauseEnabled(false);
-        cbEnablePause.setSelected(false);
     }
 
     private void initThreadCount() {
@@ -80,6 +87,12 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         int timeOutHrs = UserPreferences.getProcessTimeOutHrs();
         spTimeoutHours.setValue(timeOutHrs);
         setCheckboxEnabledState();
+        
+        setPauseEnabled(ScheduledIngestPauseSettings.getPauseEnabled());
+        spPauseStartHour.setValue(ScheduledIngestPauseSettings.getPauseStartTimeHour());
+        spStarMinutes.setValue(ScheduledIngestPauseSettings.getPauseStartTimeMinute());
+        spDuration.setValue(ScheduledIngestPauseSettings.getPauseDurationMinutes()/60);
+        cbPauseDay.setSelectedItem(ScheduledIngestPauseSettings.getPauseDayOfWeek());
     }
 
     void store() {
@@ -95,6 +108,12 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
             int timeOutHrs = (int) spTimeoutHours.getValue();
             UserPreferences.setProcessTimeOutHrs(timeOutHrs);
         }
+       
+        ScheduledIngestPauseSettings.setPauseEnabled(cbEnablePause.isSelected());
+        ScheduledIngestPauseSettings.setPauseDayOfWeek((DayOfWeek)cbPauseDay.getSelectedItem());
+        ScheduledIngestPauseSettings.setPauseStartTimeMinute((int)spStarMinutes.getValue());
+        ScheduledIngestPauseSettings.setPauseStartTimeHour((int)spPauseStartHour.getValue());
+        ScheduledIngestPauseSettings.setPauseDurationMinutes((int)spDuration.getValue() * 60);
     }
 
     private void setCheckboxEnabledState() {
@@ -109,6 +128,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
     }
     
     private void setPauseEnabled(boolean enabled) {
+        cbEnablePause.setSelected(enabled);
         spStarMinutes.setEnabled(enabled);
         spPauseStartHour.setEnabled(enabled);
         spDuration.setEnabled(enabled);
@@ -399,7 +419,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 0);
         pausePanel.add(lbPauseDuration, gridBagConstraints);
 
-        cbPauseDay.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }));
+        cbPauseDay.setEditable(true);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
@@ -431,7 +451,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
         pausePanel.add(spStarMinutes, gridBagConstraints);
 
-        spDuration.setModel(new javax.swing.SpinnerNumberModel(1, 0, null, 1));
+        spDuration.setModel(new javax.swing.SpinnerNumberModel(1, null, null, 1));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 3;
@@ -496,7 +516,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox cbEnablePause;
-    private javax.swing.JComboBox<String> cbPauseDay;
+    private javax.swing.JComboBox<DayOfWeek> cbPauseDay;
     private javax.swing.JCheckBox cbTimeoutEnabled;
     private javax.swing.Box.Filler filler1;
     private javax.swing.JPanel jPanelAutoIngestJobSettings;
