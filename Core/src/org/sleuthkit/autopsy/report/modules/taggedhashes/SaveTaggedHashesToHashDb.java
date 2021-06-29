@@ -149,6 +149,8 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
         }
 
         ArrayList<String> failedExports = new ArrayList<>();
+        int notAddedCount = 0;
+        int addedCount = 0;
         for (TagName tagName : tagNames) {
             if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
                 break;
@@ -158,6 +160,7 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
             List<ContentTag> tags = new ArrayList<>();
             try {
                 tags.addAll(tagsManager.getContentTagsByTagName(tagName));
+
             } catch (TskCoreException ex) {
                 Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
                 progressPanel.updateStatusLabel("Error getting selected tags for case.");
@@ -167,34 +170,28 @@ public class SaveTaggedHashesToHashDb implements GeneralReportModule {
                 Content content = tag.getContent();
                 if (content instanceof AbstractFile) {
                     if (null != ((AbstractFile) content).getMd5Hash()) {
+                        //if there is a failure to add the file for a reason other than missing an md5 keep going but take note
                         try {
-                            hashSet.addHashes(tag.getContent(), openCase.getDisplayName());
+                            hashSet.addHashes(content, openCase.getDisplayName());
+                            addedCount++;
                         } catch (TskCoreException ex) {
-                            Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash set " + hashSet.getHashSetName(), ex);
-                            failedExports.add(tag.getContent().getName());
+                            Logger.getLogger(SaveTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + content.getId() + " to hash set " + hashSet.getHashSetName(), ex);
+                            failedExports.add(content.getName());
                         }
                     } else {
-                        progressPanel.updateStatusLabel("Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.");
-                        failedExports.add(tag.getContent().getName());
+                        notAddedCount++;
                     }
                 }
             }
         }
         progressPanel.setIndeterminate(false);
+        //if the failed exports indicate the report had an issue note the files and indicate an error otherwise if there was no error indicate it is complete
         if (!failedExports.isEmpty()) {
-            StringBuilder errorMessage = new StringBuilder("Failed to export hashes for the following files: ");
-            for (int i = 0; i < failedExports.size(); ++i) {
-                errorMessage.append(failedExports.get(i));
-                if (failedExports.size() > 1 && i < failedExports.size() - 1) {
-                    errorMessage.append(", ");
-                }
-                if (i == failedExports.size() - 1) {
-                    errorMessage.append(".");
-                }
-            }
+            StringBuilder errorMessage = new StringBuilder("Failed to export hashes for the following file" + (failedExports.size() > 1 ? " and " + (failedExports.size() - 1) + " others: " : ": "));
+            errorMessage.append(failedExports.get(0));
             progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, errorMessage.toString());
-        } else {
-            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
+        } else if (progressPanel.getStatus() != ReportProgressPanel.ReportStatus.ERROR) {
+            progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE, addedCount + " file(s) added to hash set. " + notAddedCount + " file(s) without a hash skipped.");
         }
     }
 
