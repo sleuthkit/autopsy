@@ -402,20 +402,10 @@
         </Component>
         <Component class="javax.swing.JComboBox" name="cbPauseDay">
           <Properties>
-            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-              <StringArray count="7">
-                <StringItem index="0" value="Sunday"/>
-                <StringItem index="1" value="Monday"/>
-                <StringItem index="2" value="Tuesday"/>
-                <StringItem index="3" value="Wednesday"/>
-                <StringItem index="4" value="Thursday"/>
-                <StringItem index="5" value="Friday"/>
-                <StringItem index="6" value="Saturday"/>
-              </StringArray>
-            </Property>
+            <Property name="editable" type="boolean" value="true"/>
           </Properties>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;DayOfWeek&gt;"/>
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout" value="org.netbeans.modules.form.compat2.layouts.DesignGridBagLayout$GridBagConstraintsDescription">
@@ -466,7 +456,7 @@
         <Component class="javax.swing.JSpinner" name="spDuration">
           <Properties>
             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-              <SpinnerModel initial="1" minimum="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
+              <SpinnerModel initial="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
             </Property>
           </Properties>
           <Constraints>
