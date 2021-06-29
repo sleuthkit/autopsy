@@ -146,7 +146,7 @@ final class ExtractZoneIdentifier extends Extract {
 
         if (downloadFile != null) {
             // Only create a new TSK_WEB_DOWNLOAD artifact if one does not exist for downloadFile
-            if (!knownPathIDs.contains(downloadFile.getDataSourceObjectId())) {
+            if (!knownPathIDs.contains(downloadFile.getId())) {
                 // The zone identifier file is the parent of this artifact 
                 // because it is the file we parsed to get the data
                 BlackboardArtifact downloadBba = createDownloadArtifact(zoneFile, zoneInfo, downloadFile);
