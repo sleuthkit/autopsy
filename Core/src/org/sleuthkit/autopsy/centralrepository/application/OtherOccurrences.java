@@ -170,7 +170,6 @@ public final class OtherOccurrences {
     public static AbstractFile getAbstractFileFromNode(Node node) {
         BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
         ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class);
-        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class);
         AbstractFile nodeAbstractFile = node.getLookup().lookup(AbstractFile.class);
 
         if (nodeBbArtifactTag != null) {
@@ -180,18 +179,6 @@ public final class OtherOccurrences {
             }
         } else if (nodeContentTag != null) {
             Content content = nodeContentTag.getContent();
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeBbArtifact != null) {
-            Content content;
-            try {
-                content = nodeBbArtifact.getSleuthkitCase().getContentById(nodeBbArtifact.getObjectID());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
-                return null;
-            }
-
             if (content instanceof AbstractFile) {
                 return (AbstractFile) content;
             }
