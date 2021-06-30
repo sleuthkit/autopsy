@@ -32,7 +32,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * View correlation results from other cases
