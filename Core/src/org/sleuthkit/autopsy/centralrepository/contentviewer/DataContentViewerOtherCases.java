@@ -31,6 +31,8 @@ import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * View correlation results from other cases
@@ -92,9 +94,10 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
         // Is supported if one of the following is true:
         // - The central repo is enabled and the node is not null
         // - The central repo is disabled and the backing file has a valid MD5 hash
+        // And the node has information which could be correlated on.
         if (CentralRepository.isEnabled() && node != null) {
-            return true;
-        } else if (node != null){
+            return OtherOccurrences.getAbstractFileFromNode(node) != null || OtherOccurrences.getBlackboardArtifactFromNode(node) != null || node.getLookup().lookup(OsAccount.class) != null;
+        } else if (node != null) {
             AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
             return file != null
                     && file.getSize() > 0
