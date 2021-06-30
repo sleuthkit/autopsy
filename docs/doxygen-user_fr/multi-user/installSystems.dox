@@ -26,14 +26,13 @@ Nous recommandons:
 
 \subsection multiuser_system_hw Matériel suggéré
 
-A COMPLETER
+- PostgreSQL/ActiveMQ (Serveur 1):
+ - RAM: 16 Go minimum
+ - Stockage local: SSD à 500 Go
 
-- PostgreSQL/ActiveMQ (serveur 1):
-  - RAM:
-  - Stockage local: assez pour les bases de données
-- Solr (serveur 2):
-  - RAM:
-  - Stockage local: minimal
+- Solr (Serveur 2):
+ - RAM: 32 Go minimum
+ - Stockage local: Un index unique aura à peu près la taille de la source de données analysée. Par exemple, 128 Go de données E01 génère généralement un index de 128 Go.
 
 \subsection multiuser_system_back Sauvegardes
 
