@@ -59,7 +59,7 @@
               <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
               <Component id="titleLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="listsScrollPane" pref="22" max="32767" attributes="0"/>
+              <Component id="listsScrollPane" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="languagesLabel" min="-2" pref="13" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -182,6 +182,7 @@
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="KeywordSearchJobSettingsPanel.limitedOcrCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
+        <Property name="verticalTextPosition" type="int" value="1"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="limitedOcrCheckboxActionPerformed"/>

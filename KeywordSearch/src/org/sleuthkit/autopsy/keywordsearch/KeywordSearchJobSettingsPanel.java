@@ -307,6 +307,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         });
 
         limitedOcrCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.limitedOcrCheckbox.text")); // NOI18N
+        limitedOcrCheckbox.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
         limitedOcrCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 limitedOcrCheckboxActionPerformed(evt);
@@ -353,7 +354,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 .addGap(7, 7, 7)
                 .addComponent(titleLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE)
+                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(languagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
