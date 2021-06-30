@@ -106,7 +106,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      * framework reacts. To avoid significant performance hits, all of the keys
      * need to be added at once.
      *
-     * @param keys A list to contain the keys.
+     * @param list A list to contain the keys.
      *
      * @return True, indicating that the list of keys is complete.
      */
