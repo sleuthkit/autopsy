@@ -227,7 +227,8 @@ final class TikaTextExtractor implements TextExtractor {
         return TESSERACT_PATH != null
                 && tesseractOCREnabled
                 && PlatformUtil.isWindowsOS()
-                && PlatformUtil.is64BitOS();
+                && PlatformUtil.is64BitOS()
+                && isSupported();
     }
 
     /**

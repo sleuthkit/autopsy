@@ -86,6 +86,10 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         displayEncodings();
         keywordListsManager.addPropertyChangeListener(this);
         languagesLabel.setText("<html>" + org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text") + "</html>"); // NOI18N NON-NLS
+        
+        // the gui builder does not explicitly set these to false.
+        listsTable.setShowHorizontalLines(false);
+        listsTable.setShowVerticalLines(false);
     }
 
     private void customizeKeywordListsTable() {
@@ -276,7 +280,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
             }
         ));
         listsTable.setMaximumSize(new java.awt.Dimension(32767, 32767));
-        listsTable.setMinimumSize(new java.awt.Dimension(20, 100));
+        listsTable.setMinimumSize(new java.awt.Dimension(20, 200));
         listsTable.setPreferredSize(null);
         listsScrollPane.setViewportView(listsTable);
         listsTable.setDefaultRenderer(String.class, new SimpleTableCellRenderer());
@@ -349,9 +353,9 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 .addGap(7, 7, 7)
                 .addComponent(titleLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 209, Short.MAX_VALUE)
+                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(languagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(languagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(languagesValLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
