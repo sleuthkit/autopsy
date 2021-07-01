@@ -93,6 +93,7 @@ public class CorrelationAttributeUtil {
             add(ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID());
             add(ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID());
             add(ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID());
+            add(ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID());
         }
     };
 
@@ -189,6 +190,13 @@ public class CorrelationAttributeUtil {
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                     makeCorrAttrFromAcctArtifact(correlationAttrs, sourceArtifact);
 
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
+                    BlackboardAttribute setNameAttr = sourceArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH));
+                    if (setNameAttr != null) {
+                        makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID);                        
+                    } else {
+                        makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID);
+                    }
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
@@ -388,7 +396,18 @@ public class CorrelationAttributeUtil {
             }
 
             CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
-            return new CorrelationAttributeInstance(
+            if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
+                return new CorrelationAttributeInstance(
+                        correlationType,
+                        value,
+                        correlationCase,
+                        CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
+                        "",
+                        "",
+                        TskData.FileKnown.UNKNOWN,
+                        bbSourceFile.getId());
+            } else {
+                return new CorrelationAttributeInstance(
                     correlationType,
                     value,
                     correlationCase,
@@ -397,7 +416,7 @@ public class CorrelationAttributeUtil {
                     "",
                     TskData.FileKnown.UNKNOWN,
                     bbSourceFile.getId());
-
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error getting querying case database (%s)", artifact), ex); // NON-NLS
             return null;

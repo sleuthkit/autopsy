@@ -155,6 +155,8 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         listPanel = new javax.swing.JPanel();
         includeAppCheckbox = new javax.swing.JCheckBox();
 
+        setPreferredSize(new java.awt.Dimension(834, 374));
+
         chunkSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chunkSizeComboBoxActionPerformed(evt);

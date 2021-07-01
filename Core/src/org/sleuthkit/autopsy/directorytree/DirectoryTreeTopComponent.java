@@ -1517,9 +1517,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Returns the credit card artifact's parent node or null if cannot be
      * found.
      *
-     * @param typesChildren The children object of the same category as credit
-     *                      card.
-     * @param art           The artifact.
+     * @param accountRootChildren
+     * @param ccNumberName
      *
      * @return The credit card artifact's parent node or null if cannot be
      *         found.

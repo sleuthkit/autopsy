@@ -21,13 +21,19 @@ package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -37,6 +43,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAcctInstancesAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -54,8 +61,18 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountInstance;
+import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Listen for case events and update entries in the Central Repository database
@@ -75,7 +92,8 @@ public final class CaseEventListener implements PropertyChangeListener {
             Case.Events.DATA_SOURCE_ADDED,
             Case.Events.TAG_DEFINITION_CHANGED,
             Case.Events.CURRENT_CASE,
-            Case.Events.DATA_SOURCE_NAME_CHANGED);
+            Case.Events.DATA_SOURCE_NAME_CHANGED,
+            Case.Events.OS_ACCT_INSTANCES_ADDED);
 
     public CaseEventListener() {
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(CASE_EVENT_THREAD_NAME).build());
@@ -128,6 +146,12 @@ public final class CaseEventListener implements PropertyChangeListener {
             break;
             case DATA_SOURCE_NAME_CHANGED: {
                 jobProcessingExecutor.submit(new DataSourceNameChangedTask(dbManager, evt));
+            }
+            break;
+            case OS_ACCT_INSTANCES_ADDED: {
+                if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                    jobProcessingExecutor.submit(new OsAccountInstancesAddedTask(dbManager, evt));
+                }
             }
             break;
         }
@@ -289,10 +313,10 @@ public final class CaseEventListener implements PropertyChangeListener {
          * Sets the known status for the correlation attribute instance for the
          * given abstract file.
          *
-         * @param af          The abstract file for which to set the correlation
-         *                    attribute instance.
+         * @param af The abstract file for which to set the correlation
+         * attribute instance.
          * @param knownStatus The new known status for the correlation attribute
-         *                    instance.
+         * instance.
          */
         private void setContentKnownStatus(AbstractFile af, TskData.FileKnown knownStatus) {
             final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeCorrAttrFromFile(af);
@@ -385,7 +409,7 @@ public final class CaseEventListener implements PropertyChangeListener {
          * for the item. If there are, set known status as notable. If not set
          * status as unknown.
          *
-         * @param content    The content for the tag that was added or deleted.
+         * @param content The content for the tag that was added or deleted.
          * @param bbArtifact The artifact for the tag that was added or deleted.
          */
         private void handleTagChange(Content content, BlackboardArtifact bbArtifact) {
@@ -430,7 +454,7 @@ public final class CaseEventListener implements PropertyChangeListener {
          * Sets the known status of a blackboard artifact in the central
          * repository.
          *
-         * @param bbArtifact  The blackboard artifact to set known status.
+         * @param bbArtifact The blackboard artifact to set known status.
          * @param knownStatus The new known status.
          */
         private void setArtifactKnownStatus(BlackboardArtifact bbArtifact, TskData.FileKnown knownStatus) {
@@ -633,6 +657,98 @@ public final class CaseEventListener implements PropertyChangeListener {
                 }
             }
         } // CURRENT_CASE
+    }
+
+    @NbBundle.Messages({"CaseEventsListener.module.name=Central Repository",
+        "CaseEventsListener.prevCaseComment.text=Users seen in previous cases",
+        "CaseEventsListener.prevExists.text=Previously Seen Users (Central Repository)"})
+    /**
+     * Add OsAccount Instance to CR and find interesting items based on the OsAccount
+     */
+    private final class OsAccountInstancesAddedTask implements Runnable {
+
+        private final CentralRepository dbManager;
+        private final PropertyChangeEvent event;
+        private final String MODULE_NAME = Bundle.CaseEventsListener_module_name();
+
+        private OsAccountInstancesAddedTask(CentralRepository db, PropertyChangeEvent evt) {
+            dbManager = db;
+            event = evt;
+        }
+
+        @Override
+        public void run() {
+            if (!CentralRepository.isEnabled()) {
+                return;
+            }
+
+            final OsAcctInstancesAddedEvent osAcctInstancesAddedEvent = (OsAcctInstancesAddedEvent) event;
+            List<OsAccountInstance> addedOsAccountNew = osAcctInstancesAddedEvent.getOsAccountInstances();
+            for (OsAccountInstance osAccountInstance : addedOsAccountNew) {
+                try {
+                    OsAccount osAccount = osAccountInstance.getOsAccount();
+                    Optional<String> accountAddr = osAccount.getAddr();
+                    // Check address if it is null or one of the ones below we want to ignore it since they will always be one a windows system
+                    // and they are not unique
+                    if (!accountAddr.isPresent() || accountAddr.get().equals("S-1-5-18") || accountAddr.get().equals("S-1-5-19") || accountAddr.get().equals("S-1-5-20")) {
+                        return;
+                    }
+                    try {
+
+                        CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
+                        CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
+                                CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
+                                accountAddr.get(),
+                                correlationCase,
+                                CorrelationDataSource.fromTSKDataSource(correlationCase, osAccountInstance.getDataSource()),
+                                "",
+                                "",
+                                TskData.FileKnown.KNOWN,
+                                osAccount.getId());
+
+                        dbManager.addArtifactInstance(correlationAttributeInstance);
+
+                        List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID), correlationAttributeInstance.getCorrelationValue());
+                        List<String> caseDisplayNames;
+                        for (CorrelationAttributeInstance instance : previousOccurences) {
+                            if (!instance.getCorrelationCase().getCaseUUID().equals(correlationAttributeInstance.getCorrelationCase().getCaseUUID())) {
+                                caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(correlationAttributeInstance.getCorrelationType(), correlationAttributeInstance.getCorrelationValue());
+                                SleuthkitCase tskCase = osAccount.getSleuthkitCase();
+                                Blackboard blackboard = tskCase.getBlackboard();
+
+                                Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
+                                        new BlackboardAttribute(
+                                                TSK_SET_NAME, MODULE_NAME,
+                                                Bundle.CaseEventsListener_prevExists_text()),
+                                        new BlackboardAttribute(
+                                                TSK_COMMENT, MODULE_NAME,
+                                                Bundle.CaseEventsListener_prevCaseComment_text()));
+                                BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
+                                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE,
+                                        null, Bundle.CaseEventsListener_prevExists_text(), null, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
+                                try {
+                                    // index the artifact for keyword search
+                                    blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
+                                    break;
+                                } catch (Blackboard.BlackboardException ex) {
+                                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
+                                }
+                            }
+                        }
+
+                    } catch (CentralRepoException ex) {
+                        LOGGER.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
+                    } catch (NoCurrentCaseException ex) {
+                        LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);  //NON-NLS
+                    } catch (CorrelationAttributeNormalizationException ex) {
+                        LOGGER.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
+                    }
+
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Cannot get central repository for OsAccount: " + "OsAccount", ex);
+                }
+            }
+        }
     }
 
     private final class DataSourceNameChangedTask implements Runnable {
