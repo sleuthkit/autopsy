@@ -184,7 +184,10 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
                 Optional.ofNullable(getAnchor(attrs.getAnalysisResult())));
 
         // create a table
-        Element table = sectionDiv.appendElement("table");
+        Element table = sectionDiv.appendElement("table")
+                .attr("valign", "top")
+                .attr("align", "left");
+        
         table.attr("class", ContentViewerHtmlStyles.getIndentedClassName());
 
         Element tableBody = table.appendElement("tbody");
@@ -194,11 +197,11 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
             Element row = tableBody.appendElement("tr");
             String keyString = keyVal.getKey() == null ? "" : keyVal.getKey() + ":";
             Element keyTd = row.appendElement("td")
-                    .attr("class", ContentViewerHtmlStyles.getTextClassName());
+                    .attr("class", ContentViewerHtmlStyles.getKeyColumnClassName());
 
             keyTd.appendElement("span")
                     .text(keyString)
-                    .attr("class", ContentViewerHtmlStyles.getKeyColumnClassName());
+                    .attr("class", ContentViewerHtmlStyles.getTextClassName());
 
             String valueString = keyVal.getValue() == null ? "" : keyVal.getValue();
             row.appendElement("td")
