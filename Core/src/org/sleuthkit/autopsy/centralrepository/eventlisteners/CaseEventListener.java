@@ -729,6 +729,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                                 try {
                                     // index the artifact for keyword search
                                     blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
+                                    break;
                                 } catch (Blackboard.BlackboardException ex) {
                                     LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
                                 }

@@ -46,6 +46,7 @@ public class ScheduledIngestPauseSettings {
     private static final String PAUSE_TIME_MINUTES_KEY = "IngestPauseTimeMinutes";
     private static final String PAUSE_DURATION_MINUTES_KEY = "IngestPauseDurationMinutes";
     private static final int DEFAULT_TIME_VALUE = 0;
+    private static final int DEFAULT_PAUSE_DURATION_VALUE = 60;
     
     /**
      * Gets whether or not a scheduled ingest pause is enabled.
@@ -155,13 +156,13 @@ public class ScheduledIngestPauseSettings {
     /**
      * Gets the duration of the ingest pause in minutes.
      *
-     * @return The duration in minutes. The default value is zero.
+     * @return The duration in minutes. The default value is 60.
      *
      * THIS IS A BETA METHOD AND IS SUBJECT TO CHANGE OR DELETION.
      */
     @Beta
     public static int getPauseDurationMinutes() {
-        return preferences.getInt(PAUSE_DURATION_MINUTES_KEY, DEFAULT_TIME_VALUE);
+        return preferences.getInt(PAUSE_DURATION_MINUTES_KEY, DEFAULT_PAUSE_DURATION_VALUE);
     }
 
     /**
