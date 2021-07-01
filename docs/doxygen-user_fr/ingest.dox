@@ -50,7 +50,7 @@ Le panneau "File Filters" peut être ouvert à partir du panneau de sélection d
 
 \image html ingest-file-filters.PNG
 
-Chaque filtre contient une ou plusieurs règles de sélection de fichiers en fonction d'une combinaison du nom du fichier, du chemin et de la date de modification du fichier. Une seule règle doit correspondre pour que le fichier passe. En outre, vous pouvez saisir plusieurs extensions de fichiers séparées par des virgules. Tous les fichiers seront toujours affichés dans l'arborescence, mais les modules d'acquisition ne fonctionneront que sur un sous-ensemble. Si nous utilisons l'exemple précédent et exécutons le module de hachage, seuls les fichiers se terminant par .png verront leur hachage calculé.
+Chaque filtre contient une ou plusieurs règles de sélection de fichiers en fonction d'une combinaison du nom du fichier, du chemin, de la taille et de la date de modification du fichier. Une seule règle doit correspondre pour que le fichier passe. En outre, vous pouvez saisir plusieurs extensions de fichiers séparées par des virgules. Tous les fichiers seront toujours affichés dans l'arborescence, mais les modules d'acquisition ne fonctionneront que sur un sous-ensemble. Si nous utilisons l'exemple précédent et exécutons le module de hachage, seuls les fichiers se terminant par .png verront leur hachage calculé.
 
 \section ingest_profiles Profiles (Profils d'acquisition)
 
