@@ -156,7 +156,12 @@ final class TikaTextExtractor implements TextExtractor {
     // documents where OCR is performed
     private static final ImmutableSet OCR_DOCUMENTS = ImmutableSet.of(
             "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
 
     private static final String IMAGE_MIME_TYPE_PREFIX = "image/";

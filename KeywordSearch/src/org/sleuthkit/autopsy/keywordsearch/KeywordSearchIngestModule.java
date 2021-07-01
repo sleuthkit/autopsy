@@ -153,7 +153,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     // documents where OCR is performed
     private static final ImmutableSet<String> OCR_DOCUMENTS = ImmutableSet.of(
             "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
     
     /**
