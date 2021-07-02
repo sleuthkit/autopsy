@@ -65,6 +65,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -624,50 +625,56 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         protected Map<Persona, ArrayList<CentralRepoAccount>> doInBackground() throws Exception {
 
             Map<Persona, ArrayList<CentralRepoAccount>> uniquePersonas = new HashMap<>();
+                CommunicationsManager commManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+                List<Account> contactAccountsList = commManager.getAccountsRelatedToArtifact(artifact);
 
-            CommunicationsManager commManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            List<Account> contactAccountsList = commManager.getAccountsRelatedToArtifact(artifact);
+                for (Account account : contactAccountsList) {
+                    try{
+                    if (isCancelled()) {
+                        return new HashMap<>();
+                    }
 
-            for (Account account : contactAccountsList) {
-                if (isCancelled()) {
-                    return new HashMap<>();
-                }
+                    // make a list of all unique accounts for this contact
+                    if (!account.getAccountType().equals(Account.Type.DEVICE)) {
+                        Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
+                        if (optCrAccountType.isPresent()) {
+                            CentralRepoAccount crAccount = CentralRepository.getInstance().getAccount(optCrAccountType.get(), account.getTypeSpecificID());
 
-                // make a list of all unique accounts for this contact
-                if (!account.getAccountType().equals(Account.Type.DEVICE)) {
-                    Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
-                    if (optCrAccountType.isPresent()) {
-                        CentralRepoAccount crAccount = CentralRepository.getInstance().getAccount(optCrAccountType.get(), account.getTypeSpecificID());
-
-                        if (crAccount != null && uniqueAccountsList.contains(crAccount) == false) {
-                            uniqueAccountsList.add(crAccount);
+                            if (crAccount != null && uniqueAccountsList.contains(crAccount) == false) {
+                                uniqueAccountsList.add(crAccount);
+                            }
                         }
                     }
-                }
 
-                Collection<PersonaAccount> personaAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
-                if (personaAccounts != null && !personaAccounts.isEmpty()) {
-                    // get personas for the account
-                    Collection<Persona> personas
-                            = personaAccounts
-                                    .stream()
-                                    .map(PersonaAccount::getPersona)
-                                    .collect(Collectors.toList());
+                    Collection<PersonaAccount> personaAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
+                    if (personaAccounts != null && !personaAccounts.isEmpty()) {
+                        // get personas for the account
+                        Collection<Persona> personas
+                                = personaAccounts
+                                        .stream()
+                                        .map(PersonaAccount::getPersona)
+                                        .collect(Collectors.toList());
 
-                    // make a list of unique personas, along with all their accounts
-                    for (Persona persona : personas) {
-                        if (uniquePersonas.containsKey(persona) == false) {
-                            Collection<CentralRepoAccount> accounts = persona.getPersonaAccounts()
-                                    .stream()
-                                    .map(PersonaAccount::getAccount)
-                                    .collect(Collectors.toList());
+                        // make a list of unique personas, along with all their accounts
+                        for (Persona persona : personas) {
+                            if (uniquePersonas.containsKey(persona) == false) {
+                                Collection<CentralRepoAccount> accounts = persona.getPersonaAccounts()
+                                        .stream()
+                                        .map(PersonaAccount::getAccount)
+                                        .collect(Collectors.toList());
 
-                            ArrayList<CentralRepoAccount> personaAccountsList = new ArrayList<>(accounts);
-                            uniquePersonas.put(persona, personaAccountsList);
+                                ArrayList<CentralRepoAccount> personaAccountsList = new ArrayList<>(accounts);
+                                uniquePersonas.put(persona, personaAccountsList);
+                            }
                         }
                     }
+                    } catch(InvalidAccountIDException ex) {
+                        // Do nothing, the account has an identifier that 
+                        // the CR doesn't doesn't like.
+                        logger.warning(String.format("Account has a id that the CR has found invalid (Type specific ID %s) (id=%d)", account.getTypeSpecificID(), account.getAccountID()));
+                    } 
                 }
-            }
+           
 
             return uniquePersonas;
         }
