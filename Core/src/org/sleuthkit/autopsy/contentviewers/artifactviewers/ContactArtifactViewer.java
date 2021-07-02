@@ -625,11 +625,11 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         protected Map<Persona, ArrayList<CentralRepoAccount>> doInBackground() throws Exception {
 
             Map<Persona, ArrayList<CentralRepoAccount>> uniquePersonas = new HashMap<>();
-                CommunicationsManager commManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-                List<Account> contactAccountsList = commManager.getAccountsRelatedToArtifact(artifact);
+            CommunicationsManager commManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            List<Account> contactAccountsList = commManager.getAccountsRelatedToArtifact(artifact);
 
-                for (Account account : contactAccountsList) {
-                    try{
+            for (Account account : contactAccountsList) {
+                try {
                     if (isCancelled()) {
                         return new HashMap<>();
                     }
@@ -668,13 +668,11 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
                             }
                         }
                     }
-                    } catch(InvalidAccountIDException ex) {
-                        // Do nothing, the account has an identifier that 
-                        // the CR doesn't doesn't like.
-                        logger.warning(String.format("Account has a id that the CR has found invalid (Type specific ID %s) (id=%d)", account.getTypeSpecificID(), account.getAccountID()));
-                    } 
+                } catch (InvalidAccountIDException ex) {
+                    // Do nothing, the account has an identifier that not an
+                    // acceptable format for the cr.
                 }
-           
+            }
 
             return uniquePersonas;
         }
