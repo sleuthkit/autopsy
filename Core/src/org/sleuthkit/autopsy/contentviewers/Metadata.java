@@ -136,7 +136,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
     }
 
     private void startTable(StringBuilder sb) {
-        sb.append(MessageFormat.format("<table class=\"{0}\"><tbody>",
+        sb.append(MessageFormat.format("<table class=\"{0}\" valign=\"top\" align=\"left\"><tbody>",
                 ContentViewerHtmlStyles.getIndentedClassName())); //NON-NLS
     }
 
