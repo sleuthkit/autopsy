@@ -382,9 +382,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
              * root context of the child OutlineView, otherwise make an
              * "empty"node the root context.
              */
-            // optimally load children before beginning layout 
-            Node[] childNodes = rootNode.getChildren().getNodes(true);
-            if (rootNode != null && childNodes != null && childNodes.length > 0) {
+            // optimally load children before beginning layout.  This ensures that node 
+            // and node data is available before beginning table column width 
+            // calculations which require data to be present in order to calculate
+            // width metrics.
+            if (rootNode != null && rootNode.getChildren().getNodesCount(true) > 0) {
                 this.getExplorerManager().setRootContext(this.rootNode);
                 outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
                 setupTable();
