@@ -40,8 +40,9 @@ final class DiscoveryExtractAction extends AbstractAction {
      *
      * @param selectedFiles The files to extract from the current case.
      */
+    @NbBundle.Messages({"DiscoveryExtractAction.title.extractFiles.text=Extract File"})
     DiscoveryExtractAction(Collection<AbstractFile> selectedFiles) {
-        super(NbBundle.getMessage(DiscoveryExtractAction.class, "DiscoveryExtractAction.title.extractFiles.text"));
+        super(Bundle.DiscoveryExtractAction_title_extractFiles_text());
         files.addAll(selectedFiles);
     }
 
