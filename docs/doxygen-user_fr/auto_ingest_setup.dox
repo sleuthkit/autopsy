@@ -44,6 +44,8 @@ Le bouton "Advanced Settings" affichera les paramètres des tâches d'acquisitio
 
 \image html AutoIngest/advanced_settings.png
 
+La section "Automated Ingest Pause Setting" vous permet de configurer une période hebdomadaire durant laquelle l'acquisition ne s'exécutera pas. Ceci est utile si l'un de vos services réseau est programmé avec des temps d'arrêt réguliers. Notez que l'acquisition n'est pas immédiatement arrêtée à l'heure spécifiée à "Start Time" - elle s'exécutera jusqu'à ce que le fichier actuel soit traité ou que le module d'acquisition actuel soit terminé. Pour cette raison, nous vous suggérons d'utiliser un délai de deux heures avant que votre système ne soit arrêté. Par exemple, si votre réseau n'est pas accessible tous les dimanches de 16h00 à 17h00, vous devez définir l'heure de début ("Start Time") à 14h00 et la durée ("Duration") à 3 heures (pour couvrir le délai de fin d'exécution du module et le temps d'arrêt).
+
 La section "Automated Ingest Job Settings" contient les options suivantes:
 <dl>
 <dt>System synchronization wait time</dt>
