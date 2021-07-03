@@ -1258,7 +1258,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // We expect 11 total - 10 default and the custom one made earlier
             // Note: this test will need to be updated based on the current default items defined in the correlation_types table
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 28", types.size() == 28);
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 30", types.size() == 30);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());

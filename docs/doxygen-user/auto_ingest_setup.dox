@@ -44,6 +44,8 @@ The "Advanced Settings" button will bring up the automated ingest job settings. 
 
 \image html AutoIngest/advanced_settings.png
 
+The Automated Ingest Pause Setting section lets you configure a weekly time period during which ingest will not run. This is useful if any of your network services has regularly scheduled downtime. Note that ingest isn't immediately stopped at the given "Start Time" - it will run until the current file is processed or the current ingest module is complete. For this reason, we suggest using a lead time of two hours before your system will go down. For example, if the network is not accessible from 4:00 PM to 5:00 PM every Sunday, you should set the start time to 14:00 and the duration to 3 hours (to cover the lead time and the down time). 
+
 The Automated Ingest Job Settings section contains the following options:
 <dl>
 <dt>System synchronization wait time</dt>

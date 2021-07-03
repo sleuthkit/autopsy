@@ -65,7 +65,7 @@ public class ContentViewerHtmlStyles {
                     INDENTED_CLASSNAME, pxToPt(ContentViewerDefaults.getSectionIndent()))
             + String.format(" .%s { padding-top: %dpt } ",
                     SPACED_SECTION_CLASSNAME, pxToPt(ContentViewerDefaults.getSectionSpacing()))
-            + String.format(" .%s { padding-right: %dpt } ",
+            + String.format(" .%s { padding-right: %dpt; white-space: nowrap; } ",
                     KEY_COLUMN_TD_CLASSNAME, pxToPt(ContentViewerDefaults.getColumnSpacing()));
 
     private static final StyleSheet STYLE_SHEET = new StyleSheet();
