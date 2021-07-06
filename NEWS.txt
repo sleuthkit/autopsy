@@ -12,6 +12,12 @@ OS Accounts:
 - OS accounts appear in a dedicated sub-tree of the main tree view and their properties can be viewed in the results view.
 - A new content viewer in the lower right area of the main window was built to display OS account data for the item selected in the result view.
 
+Analysis Result and Data Artifacts
+- All modules make either Analysis Results or Data Artifacts instead of “Blackboard Artifacts”
+- New “Analysis Result”  content viewer shows the results for a given file and its score
+- The table shows an icon for the aggregate score of a file. 
+- The tree organizes results into Analysis Results and Data Artifacts instead of simply “Results”. 
+
 Discovery UI:
 - Domain categorization and account types are displayed in Domain Discovery results.
 - The Domain Discovery results view more explicitly shows when a downloaded file no longer exists. 
@@ -22,16 +28,41 @@ Ingest Modules:
 - Parsing of iLEAPP and aLEAPP output was expanded to create communication relationships which can be displayed in the Communications UI. 
 - EML email parsing handles EML messages that are attachments (and have their own attachments). 
 - Domain categorization within Recent Activity can be customized by user-defined rules that can be imported and exported.
+- Account IDs and Installed Applications are added to the Central Repository
+- Keyword search can be configured to only do OCR and skip non-OCR files.
 
 Miscellaneous:
 - A “Reset Windows” feature was created to help redock windows. 
 - A case-insensitive wordlist of all words in the keyword search index can be exported as a text document.
 - Information from the Data Source Summary panels can be exported as an Excel spreadsheet.
 - More artifacts are added to the timeline and artifacts with multiple time-based attributes are mapped to multiple timeline events.
-- The Auto Ingest Dashboard is resizable.
 - Added option to only perform optical character recognition on certain file types.
 - Heap dumps can be saved to a custom location.
+- More detailed error messages about encrypted disks when they are added.
+- Added file size filter to Ingest Filters
+
+Performance:
+- Keyword search does not make an explicit commit for each report if ingest is running. 
+- Language ID is performed on a small subset of a file instead of the entire file
+- Recent Activity is more efficient because of TSK changes to file searching (using extension)
+- Embedded file extractor module is faster by doing file typing in memory and adding in batches. 
+- Moved Content Viewers setNode() code and isSupported()/isPreferred() to background threads. 
+- Moved Data Source Summary Panel population code to background threads. 
+- Moved Node/Tree queries to background threads.
+
+Bug Fixes:
+- Fixed embedded file extractor file name escaping bug.
+- Detect VHD files by signature and not extension
+- Fixed iLEAPP path error.
+- Content viewers UIs are more consistent
 - Assorted bug fixes are included.
+
+Auto Ingest:
+- The Auto Ingest Dashboard is resizable.
+- Get thread dumps from AID
+- Added beta Pause feature that pauses auto ingest for a set amount of time.
+
+
 
 ---------------- VERSION 4.18.0  --------------
 Keyword Search:
