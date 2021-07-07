@@ -207,7 +207,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                                 Bundle.OsAccounts_accountRealmNameProperty_name(),
                                 Bundle.OsAccounts_accountRealmNameProperty_displayName(),
                                 Bundle.OsAccounts_accountRealmNameProperty_desc(),
-                                ""));
+                                realmNames.get(0)));
                     }
                 }
             }
