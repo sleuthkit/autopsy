@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import java.io.BufferedReader;
 import java.io.FileReader;
 
@@ -71,6 +72,17 @@ public final class JythonModuleLoader {
     public static synchronized List<GeneralReportModule> getGeneralReportModules() {
         return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
     }
+
+     /**
+     * Get data source processors modules implemented using Jython.
+     *
+     * @return A list of objects that implement the DataSourceProcessor
+     *         interface.
+     */
+    public static synchronized List<DataSourceProcessor> getDataSourceProcessorModules() {
+        return getInterfaceImplementations(new DataSourceProcessorDefFilter(), DataSourceProcessor.class);
+    }
+
     @Messages({"JythonModuleLoader.pythonInterpreterError.title=Python Modules",
                 "JythonModuleLoader.pythonInterpreterError.msg=Failed to load python modules, See log for more details"})
     private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class<T> interfaceClass) {
@@ -166,6 +178,9 @@ public final class JythonModuleLoader {
         boolean accept(String line);
     }
 
+    /**
+     * Filter IngestModule interface implementations
+     */
     private static class IngestModuleFactoryDefFilter implements LineFilter {
 
         @Override
@@ -174,11 +189,25 @@ public final class JythonModuleLoader {
         }
     }
 
+    /**
+     * Filter GeneralReportModule interface implementations
+     */
     private static class GeneralReportModuleDefFilter implements LineFilter {
 
         @Override
         public boolean accept(String line) {
             return (line.contains("GeneralReportModuleAdapter") || line.contains("GeneralReportModule")); //NON-NLS
+        }
+    }
+
+    /**
+     * Filter DataSourceProcessor interface implementations
+     */
+    private static class DataSourceProcessorDefFilter implements LineFilter {
+
+        @Override
+        public boolean accept(String line) {
+            return (line.contains("DataSourceProcessor")); //NON-NLS
         }
     }
 }
