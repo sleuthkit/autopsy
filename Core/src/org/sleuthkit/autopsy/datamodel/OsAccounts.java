@@ -308,7 +308,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
             Optional<Long> creationTimeValue = account.getCreationTime();
             String timeDisplayStr
-                    = creationTimeValue.isPresent() ? TimeZoneUtils.getFormattedTime(creationTimeValue.get() * 1000) : "";
+                    = creationTimeValue.isPresent() ? TimeZoneUtils.getFormattedTime(creationTimeValue.get()) : "";
 
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_createdTimeProperty_name(),
