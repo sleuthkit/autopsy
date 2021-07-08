@@ -1270,7 +1270,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // We expect 10 - the custom type is disabled
             // Note: this test will need to be updated based on the current default items defined in the correlation_types table
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 27", types.size() == 27);
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 29", types.size() == 29);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -1282,7 +1282,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // We expect 10 - the custom type is not supported
             // Note: this test will need to be updated based on the current default items defined in the correlation_types table
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 27", types.size() == 27);
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 29", types.size() == 29);
         } catch (CentralRepoException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());

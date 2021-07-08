@@ -42,6 +42,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.contentviewers.osaccount.SectionData.RowData;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
@@ -190,12 +191,8 @@ public class OsAccountDataPanel extends JPanel {
         data.addData(Bundle.OsAccountDataPanel_basic_type(), 
             account.getOsAccountType().isPresent() ? account.getOsAccountType().get().getName() : "");
 
-        Optional<Long> crTime = account.getCreationTime();
-        if (crTime.isPresent()) {
-            data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), DATE_FORMAT.format(new Date(crTime.get() * 1000)));
-        } else {
-            data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), "");
-        }
+        Optional<Long> crTime = account.getCreationTime();        
+        data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), crTime.isPresent() ? TimeZoneUtils.getFormattedTime(crTime.get()) : "");
 
         return data;
     }
