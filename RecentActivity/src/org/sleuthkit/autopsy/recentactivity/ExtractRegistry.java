@@ -1995,7 +1995,7 @@ class ExtractRegistry extends Extract {
         } else {
             osAccount = optional.get();
             if (userName != null && !userName.isEmpty()) {
-                OsAccountUpdateResult updateResult= accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, userName, null, host);
+                OsAccountUpdateResult updateResult= accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, userName, domainName.isEmpty() ? null : domainName, host);
                 osAccount = updateResult.getUpdatedAccount().orElse(osAccount);
             }
         }
@@ -2187,7 +2187,7 @@ class ExtractRegistry extends Extract {
         accountMgr.addExtendedOsAccountAttributes(osAccount, attributes);
          
         // update the loginname
-        accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, loginName, null, host);
+        accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, loginName, domainName.isEmpty() ? null : domainName, host);
         
         // update other standard attributes  -  fullname, creationdate
         accountMgr.updateStandardOsAccountAttributes(osAccount, fullName, null, null, creationTime);
