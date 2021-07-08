@@ -22,6 +22,8 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.Map;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Extracts the text out of Content instances and exposes them as a Reader.
@@ -63,10 +65,10 @@ public interface TextExtractor {
     default void setExtractionSettings(Lookup context) {
         //no-op by default
     }
-    
+
     /**
      * Retrieves content metadata, if any.
-     * 
+     *
      * @return Metadata as key -> value map
      */
     default Map<String, String> getMetadata() {
@@ -74,7 +76,17 @@ public interface TextExtractor {
     }
 
     /**
-     * System level exception for reader initialization. 
+     * Returns true if this text extractor, based on the provided settings, will
+     * perform ocr.
+     *
+     * @return True if will perform OCR.
+     */
+    default boolean willUseOCR() {
+        return false;
+    }
+
+    /**
+     * System level exception for reader initialization.
      */
     public class InitReaderException extends Exception {
 
