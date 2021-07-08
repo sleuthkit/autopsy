@@ -105,11 +105,11 @@ import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.ingest.IngestStream;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleException;
 import org.sleuthkit.autopsy.keywordsearch.Server;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchJobSettings;
 
 /**
  * An auto ingest manager is responsible for processing auto ingest jobs defined
@@ -2295,15 +2295,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 currentJob.setProcessingStage(AutoIngestJob.Stage.UPDATING_SHARED_CONFIG, Date.from(Instant.now()));
                 new SharedConfiguration().downloadConfiguration();
             }
-            
-            // update the OCR enabled/disabled setting
-            if (currentJob.getOcrEnabled()) {
-                sysLogger.log(Level.INFO, "Enabling OCR for job {0}", currentJob.getManifest().getFilePath());
-            } else {
-                sysLogger.log(Level.INFO, "Disabling OCR for job {0}", currentJob.getManifest().getFilePath());
-            }
-            KeywordSearchService kwsService = Lookup.getDefault().lookup(KeywordSearchService.class);
-            kwsService.changeOcrState(currentJob.getOcrEnabled());
         }
 
         /**
@@ -2753,7 +2744,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 sysLogger.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
                 jobLogger.logDataSourceProcessorCancelled();
             }
-        }
+        }      
+
 
         /**
          * Analyzes the data source content returned by the data source
@@ -2798,6 +2790,20 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             throw new AnalysisStartupException("Error(s) in ingest job settings");
                         }
                         
+                        // update the OCR enabled/disabled setting
+                        if (currentJob.getOcrEnabled()) {
+                            sysLogger.log(Level.INFO, "Enabling OCR for job {0}", currentJob.getManifest().getFilePath());
+                        } else {
+                            sysLogger.log(Level.INFO, "Disabling OCR for job {0}", currentJob.getManifest().getFilePath());
+                        }
+                        
+                        // find the KeywordSearchJobSettings instance in the templates, and if present, set ocr enabled
+                        ingestJobSettings.getIngestModuleTemplates().stream()
+                                .filter(template -> template.getModuleSettings() instanceof KeywordSearchJobSettings)
+                                .map(template -> (KeywordSearchJobSettings) template.getModuleSettings())
+                                .findFirst()
+                                .ifPresent((keywordJobSettings) -> keywordJobSettings.setOCREnabled(currentJob.getOcrEnabled()));
+                             
                         
                         ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
                         ingestJob = ingestJobStartResult.getJob();
@@ -2861,6 +2867,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 currentJob.setIngestJob(null);
             }
         }
+                
 
         /**
          * Gather metrics to store in auto ingest job nodes. A SleuthkitCase

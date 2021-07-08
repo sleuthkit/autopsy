@@ -106,14 +106,4 @@ public interface KeywordSearchService extends Closeable {
      * @throws KeywordSearchServiceException if unable to delete.
      */
     void deleteDataSource(Long dataSourceId) throws KeywordSearchServiceException;
-    
-    /**
-     * A flag to enable or disable OCR on all future text indexing.
-     *
-     * @param state Boolean flag to enable/disable OCR. Set to True to enable
-     *              OCR, or False to disable it.
-     */
-    @Beta
-    void changeOcrState(boolean state);
-
 }
