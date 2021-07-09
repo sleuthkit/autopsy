@@ -54,7 +54,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * List item to be used with jlist.
      */
     private static class HostListItem {
-        
+
         private final Host host;
         private final List<DataSource> dataSources;
 
@@ -82,19 +82,19 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         List<DataSource> getDataSources() {
             return dataSources;
         }
-        
+
         @Override
         public String toString() {
             return host == null ? "" : host.getName();
         }
-        
+
         @Override
         public int hashCode() {
             int hash = 5;
             hash = 89 * hash + Objects.hashCode(this.host == null ? 0 : this.host.getHostId());
             return hash;
         }
-        
+
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
@@ -110,15 +110,15 @@ public class ManageHostsDialog extends javax.swing.JDialog {
             if (this.host == null || other.getHost() == null) {
                 return this.host == null && other.getHost() == null;
             }
-            
+
             return this.host.getHostId() == other.getHost().getHostId();
         }
-        
+
     }
-    
+
     private static final Logger logger = Logger.getLogger(ManageHostsDialog.class.getName());
     private static final long serialVersionUID = 1L;
-    
+
     private Map<Host, List<DataSource>> hostChildrenMap = Collections.emptyMap();
 
     /**
@@ -164,7 +164,8 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * Shows add/edit dialog, and if a value is returned, creates a new Host.
      */
     @NbBundle.Messages({"# {0} - hostname",
-        "ManageHostsDialog.failureToAdd.txt=Unable to add new host {0} at this time."})
+        "ManageHostsDialog.failureToAdd.txt=Unable to add new host {0} at this time.",
+        "ManageHostsDialog.seeLog.txt=  See log for more information."})
     private void addHost() {
         String newHostName = getAddEditDialogName(null);
         if (newHostName != null) {
@@ -174,7 +175,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 selectedId = newHost == null ? null : newHost.getHostId();
             } catch (NoCurrentCaseException | TskCoreException e) {
                 logger.log(Level.WARNING, Bundle.ManageHostsDialog_failureToAdd_txt(newHostName), e);
-                MessageNotifyUtil.Message.warn(Bundle.ManageHostsDialog_failureToAdd_txt(newHostName));
+                MessageNotifyUtil.Message.warn(Bundle.ManageHostsDialog_failureToAdd_txt(newHostName) + Bundle.ManageHostsDialog_seeLog_txt());
             }
             refresh();
             setSelectedHostById(selectedId);
@@ -194,7 +195,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().deleteHost(selectedHost.getName());
             } catch (NoCurrentCaseException | TskCoreException e) {
                 logger.log(Level.WARNING, Bundle.ManageHostsDialog_failureToDelete_txt(selectedHost.getName()), e);
-                MessageNotifyUtil.Message.error(Bundle.ManageHostsDialog_failureToDelete_txt(selectedHost.getName()));
+                MessageNotifyUtil.Message.error(Bundle.ManageHostsDialog_failureToDelete_txt(selectedHost.getName()) + Bundle.ManageHostsDialog_seeLog_txt());
             }
             refresh();
         }
@@ -207,28 +208,28 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      */
     private void setSelectedHostById(Long selectedId) {
         ListModel<HostListItem> model = hostList.getModel();
-        
+
         if (selectedId == null) {
             hostList.clearSelection();
         }
-        
+
         for (int i = 0; i < model.getSize(); i++) {
             Object o = model.getElementAt(i);
             if (!(o instanceof HostListItem)) {
                 continue;
             }
-            
+
             Host host = ((HostListItem) o).getHost();
             if (host == null) {
                 continue;
             }
-            
+
             if (host.getHostId() == selectedId) {
                 hostList.setSelectedIndex(i);
                 return;
             }
         }
-        
+
         hostList.clearSelection();
     }
 
@@ -241,7 +242,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         "# {1} - hostId",
         "ManageHostsDialog.failureToEdit.txt=Unable to update host {0} with id: {1} at this time."})
     private void editHost(Host selectedHost) {
-        
+
         if (selectedHost != null) {
             String newHostName = getAddEditDialogName(selectedHost);
             if (newHostName != null) {
@@ -249,14 +250,14 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                     Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHostName(selectedHost, newHostName);
                 } catch (NoCurrentCaseException | TskCoreException e) {
                     logger.log(Level.WARNING, Bundle.ManageHostsDialog_failureToEdit_txt(selectedHost.getName(), selectedHost.getHostId()), e);
-                    MessageNotifyUtil.Message.warn(Bundle.ManageHostsDialog_failureToEdit_txt(selectedHost.getName(), selectedHost.getHostId()));
+                    MessageNotifyUtil.Message.warn(Bundle.ManageHostsDialog_failureToEdit_txt(selectedHost.getName(), selectedHost.getHostId()) + Bundle.ManageHostsDialog_seeLog_txt());
                 }
-                
+
                 HostListItem selectedItem = hostList.getSelectedValue();
                 Long selectedId = selectedItem == null || selectedItem.getHost() == null ? null : selectedItem.getHost().getHostId();
-                
+
                 refresh();
-                
+
                 setSelectedHostById(selectedId);
             }
         }
@@ -274,18 +275,18 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         JFrame parent = (this.getRootPane() != null && this.getRootPane().getParent() instanceof JFrame)
                 ? (JFrame) this.getRootPane().getParent()
                 : null;
-        
+
         AddEditHostDialog addEditDialog = new AddEditHostDialog(parent, hostChildrenMap.keySet(), origValue);
         addEditDialog.setResizable(false);
         addEditDialog.setLocationRelativeTo(parent);
         addEditDialog.setVisible(true);
         addEditDialog.toFront();
-        
+
         if (addEditDialog.isChanged()) {
             String newHostName = addEditDialog.getValue();
             return newHostName;
         }
-        
+
         return null;
     }
 
@@ -302,14 +303,14 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * hosts.
      */
     private void refreshData() {
-        
+
         hostChildrenMap = getHostListData();
-        
+
         Vector<HostListItem> jlistData = hostChildrenMap.entrySet().stream()
                 .sorted((a, b) -> getNameOrEmpty(a.getKey()).compareTo(getNameOrEmpty(b.getKey())))
                 .map(entry -> new HostListItem(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toCollection(Vector::new));
-        
+
         hostList.setListData(jlistData);
     }
 
@@ -338,26 +339,26 @@ public class ManageHostsDialog extends javax.swing.JDialog {
             SleuthkitCase curCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             List<Host> hosts = curCase.getHostManager().getAllHosts();
             List<DataSource> dataSources = curCase.getDataSources();
-            
+
             if (dataSources != null) {
                 for (DataSource ds : dataSources) {
                     List<DataSource> hostDataSources = hostMapping.computeIfAbsent(ds.getHost(), (d) -> new ArrayList<>());
                     hostDataSources.add(ds);
                 }
-                
+
             }
-            
+
             if (hosts != null) {
                 for (Host host : hosts) {
                     hostMapping.putIfAbsent(host, Collections.emptyList());
                 }
             }
-            
+
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, Bundle.ManageHostsDialog_failureToGetHosts_txt(), ex);
-            MessageNotifyUtil.Message.warn(Bundle.ManageHostsDialog_failureToGetHosts_txt());
+            MessageNotifyUtil.Message.warn(Bundle.ManageHostsDialog_failureToGetHosts_txt() + Bundle.ManageHostsDialog_seeLog_txt());
         }
-        
+
         return hostMapping;
     }
 
@@ -372,7 +373,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         this.deleteButton.setEnabled(selectedHost != null && CollectionUtils.isEmpty(dataSources));
         String nameTextFieldStr = selectedHost != null && selectedHost.getName() != null ? selectedHost.getName() : "";
         this.hostNameTextField.setText(nameTextFieldStr);
-        
+
     }
 
     /**
