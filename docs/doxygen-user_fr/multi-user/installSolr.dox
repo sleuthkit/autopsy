@@ -207,7 +207,7 @@ Solr crée deux types de données qui doivent être sauvegardées:
 <ol><li>Dans une installation par défaut les données sont stockées dans \c "C:\solr-8.6.3\server\solr zoo_data" (en supposant que le package ZIP de Solr ait été extrait dans le répertoire \c "C:\solr-8.6.3").</ol>
 </ul>
 
-\section Dépannage
+\section troubleshooting Dépannage / Optimisation des performances
 
 \subsection install_solr_delayed_start Problèmes de démarrage retardé avec un grand nombre de collections Solr
 
@@ -286,5 +286,37 @@ Quelques notes:
 \image html solr_jvm.png
 
 </ul>
+
+\subsection solr_commit_tuning Réglage des opérations de validation du serveur Solr
+
+Lorsque Autopsy s'exécute dans un environnement de cluster multi-utilisateurs avec plusieurs nœuds d'acquisition automatique, il peut être intéressant de régler la configuration des opérations de validation de Solr.
+
+Solr a deux types de validations : les validations "dures" ("hard commits") et les validations "souples" ("soft commits"). Celles-ci sont expliquées en détail sur la page suivante: https://lucidworks.com/post/understanding-transaction-logs-softcommit-and-commit-in-sorlcloud/
+
+En bref:
+<ul>
+<li>Les validations "dures" transferent les documents nouvellement indexés de la RAM vers l'index Solr, sur le disque.
+<li>En fonction de la configuration, les validations "dures" peuvent rendre les documents nouvellement indexés "visibles" ou non pour la recherche.
+<li>Les validations "souples" ne transfèrent pas les documents nouvellement indexés sur le disque, mais ils les rendent "visibles" pour la recherche.
+</ul>
+
+Par défaut (lors de l'utilisation d'AutopsyConfig), les serveurs Solr effectuent une validation "dure" toutes les 5 minutes et rendent également les documents nouvellement indexés "visibles" pour la recherche. Ces opérations peuvent être coûteuses en ressources lorsqu'elles sont effectuées sur un index volumineux situé sur un lecteur réseau partagé. Dans cette situation, il peut être très intéressant de modifier la configuration de Solr (située dans \c "SOLR_INSTALLATION_DIECTORY\server\solr\configsets\AutopsyConfig\conf\solrconfig.xml") avec les changements suivantes :
+<ol>
+<li>Modifiez les validations "dures" pour transférer systématiquement les documents nouvellement créés toutes les 5 minutes sans les rendre "visibles". Ceci peut être fixé en définissant "openSearcher" sur "false" dans la section "autoCommit" du fichier de configuration Solr.
+<li>Activez les validations "souples" à effectuer toutes les 30 minutes, rendant ainsi les documents nouvellement indexés "visibles" pour une recherche toutes les 30 minutes. Ceci peut être fixé en activant la section "autoSoftCommit" du fichier de configuration Solr. L'inconvénient est que la recherche du dernier document peut prendre jusqu'à 30 minutes. Gardez à l'esprit que cela n'a d'incidence que dans le cas où un analyste recherche un dossier alors que l'acquisition est toujours en cours. Autopsy effectue automatiquement une validation une fois l'acquisition terminée afin que tous les documents soient immédiatement visibles à ce moment-là.
+</ol>
+
+L'image suivante montre les modifications de configuration de Solr décrites ci-dessus:
+
+\image html solr_config_autocommit.jpg
+
+Jusqu'à ce qu'une validation "dure" soit effectuée, par défaut Solr maintient également un journal des transactions qui contient le texte brut de chaque document nouvellement indexé depuis la dernière validation "dure". Lorsque l'index Solr est situé sur un partage réseau, cela peut à nouveau être une opération très coûteuse en ressources. Les journaux de transactions peuvent être désactivés en commentant la section "updateLog" du fichier de configuration Solr:
+
+\image html solr_comment_out_updateLog.jpg
+
+Notez bien cependant que cela a pour effet secondaire de créer des erreurs CommitTracker dans les journaux Solr et dans la console d'administration Solr. Ces erreurs peuvent être ignorées si le journal des transactions a été intentionnellement désactivé.
+
+\image html solr_transaction_log_errors.jpg
+
 
 */

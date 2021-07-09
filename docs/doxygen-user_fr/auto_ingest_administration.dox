@@ -34,7 +34,15 @@ Une fois le fichier "admin" en place, l'utilisateur peut cliquer avec le bouton 
 
 \image html AutoIngest/admin_jobs_panel.png
 
-Dans les tableaux "Running Jobs", la progression de l'acquisition peut être visualisée et la tâche en cours peut être annulée. Notez que l'annulation peut prendre un certain temps.
+Vous pouvez également activer de manière sélective \ref keyword_search_ocr_config "la reconnaissance optique de caractères (OCR)" au cas par cas. Cela remplacera les paramètres normaux de la recherche "Keyword Search" pour chaque tâche dans le cas. Les travaux en cours ne seront pas affectés. Pour activer l'OCR pour un cas, faites un clic droit sur un des travaux de ce cas dans le tableau "Pending Jobs" et sélectionnez "Enable OCR For This Case".
+
+\image html admin_jobs_ocr1.png
+
+Une fois activé, une coche verte apparaîtra dans la colonne OCR à côté de chaque tâche en attente pour ce cas.
+
+\image html admin_jobs_ocr2.png
+
+Dans le tableau "Pending Jobs", la progression de l'acquisition peut être visualisée et le travail en cours peut être annulé. Notez que l'annulation peut prendre un certain temps. Vous pouvez également générer une capture du thread d'activité si vous pensez que l'acquisition peut être bloquée.
 
 \image html AutoIngest/admin_jobs_cancel.png
 
@@ -42,9 +50,12 @@ Dans le tableau "Completed Jobs", l'utilisateur peut retraiter une tâche (gén�
 
 \image html AutoIngest/admin_jobs_completed.png
 
+
+
 \section auto_ingest_admin_nodes_panel Panneau "Auto Ingest Nodes"
 
-Ce panneau affiche l'état de chaque "Automated Ingest Node" en ligne. De plus, un administrateur peut mettre en pause ou reprendre un nœud, ou encore arrêter complètement un nœud (c'est-à-dire quitter l'application Autopsy).
+Ce panneau affiche l'état de chaque "Automated Ingest Node" en ligne. De plus, un administrateur peut mettre en pause ou reprendre un nœud, 
+capturer le thread d'activité, ou encore arrêter complètement un nœud (c'est-à-dire quitter l'application Autopsy).
 
 \image html AutoIngest/admin_nodes_panel.png
 
