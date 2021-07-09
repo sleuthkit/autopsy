@@ -129,9 +129,9 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
     }
 
     private void addHeader(StringBuilder sb, String header, boolean spaced) {
-        sb.append(MessageFormat.format("<div class=\"{0}\"><h1 class=\"{1}\">{2}</h1></div>", 
+        sb.append(MessageFormat.format("<div class=\"{0}\"><h1 class=\"{1}\">{2}</h1></div>",
                 (spaced) ? ContentViewerHtmlStyles.getSpacedSectionClassName() : "",
-                ContentViewerHtmlStyles.getHeaderClassName(), 
+                ContentViewerHtmlStyles.getHeaderClassName(),
                 header));
     }
 
@@ -164,7 +164,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     private void addRowWithMultipleValues(StringBuilder sb, String key, String[] values) {
         String[] safeValues = values == null || values.length < 1 ? new String[]{""} : values;
-        
+
         addRow(sb, key, safeValues[0]);
         Stream.of(safeValues)
                 .skip(1)
@@ -324,6 +324,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             this.node = node;
         }
 
+        @Messages("MetadataWorker.doInBackground.noDataMsg=No Data")
         @Override
         protected String doInBackground() throws Exception {
             AbstractFile file = node.getLookup().lookup(AbstractFile.class);
@@ -397,7 +398,6 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                     FsContent fsFile = (FsContent) file;
 
                     addHeader(sb, NbBundle.getMessage(this.getClass(), "Metadata.nodeText.text"), true);
-                    startTable(sb);
 
                     List<String> istatStrings = Collections.emptyList();
                     try {
@@ -406,20 +406,29 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                         istatStrings = Arrays.asList(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text") + ex.getLocalizedMessage());
                     }
 
-                    for (String str : istatStrings) {
-                        addMonospacedRow(sb, str);
+                    if (istatStrings.isEmpty() || (istatStrings.size() == 1 && StringUtils.isEmpty(istatStrings.get(0)))) {
+                        sb.append(MessageFormat.format("<div class=\"{0}\"><p class=\"{1}\">{2}</p><div>",
+                                ContentViewerHtmlStyles.getIndentedClassName(),
+                                ContentViewerHtmlStyles.getTextClassName(),
+                                Bundle.MetadataWorker_doInBackground_noDataMsg()));
+                    } else {
+                        startTable(sb);
 
-                        /*
+                        for (String str : istatStrings) {
+                            addMonospacedRow(sb, str);
+
+                            /*
                              * Very long results can cause the UI to hang before
                              * displaying, so truncate the results if necessary.
-                         */
-                        if (sb.length() > 50000) {
-                            addMonospacedRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
-                            break;
+                             */
+                            if (sb.length() > 50000) {
+                                addMonospacedRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
+                                break;
+                            }
                         }
-                    }
 
-                    endTable(sb);
+                        endTable(sb);
+                    }
                 }
 
             } else {
@@ -461,11 +470,10 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 // Add all the data source paths to the "Local Path" value cell.
                 String[] imagePaths = image.getPaths();
 
-                                
                 if (imagePaths.length > 0) {
                     addRowWithMultipleValues(sb,
-                        NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"),
-                        imagePaths);
+                            NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"),
+                            imagePaths);
                 } else {
                     addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"),
                             NbBundle.getMessage(this.getClass(), "Metadata.nodeText.none"));
