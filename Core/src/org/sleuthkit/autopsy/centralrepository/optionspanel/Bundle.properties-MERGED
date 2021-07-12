@@ -40,7 +40,7 @@ GlobalSettingsPanel.onMultiUserChange.disabledMu.description=The Central Reposit
 GlobalSettingsPanel.onMultiUserChange.disabledMu.description2=Press Configure PostgreSQL to change to a PostgreSQL database.
 GlobalSettingsPanel.onMultiUserChange.disabledMu.title=Central Repository Change Necessary
 # {0} - server name
-GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to update the Central Repository to use PostgreSQL server on {0}?
+GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to update the Central Repository to use the PostgreSQL server on {0}?
 GlobalSettingsPanel.onMultiUserChange.enable.description2=Any data in an existing SQLite Central Repository will not be transferred to the new database.
 GlobalSettingsPanel.onMultiUserChange.enable.title=Central Repository
 GlobalSettingsPanel.testCurrentConfiguration.dbDoesNotExist.message=Database does not exist.
