@@ -1,0 +1,53 @@
+﻿/*! \page data_source_integrity_page Data Source Integrity (Intégrité de la source de données)
+
+[TOC]
+
+
+\section data_source_integrity_overview Aperçu
+
+Le module "Data Source Integrity" a deux objectifs:
+<ul>
+<li>Si la source de données est associée à des hachages (saisis par l'utilisateur ou contenus dans un fichier E01), il vérifiera ces hachages
+<li>Si la source de données n'a pas de hachage associé, il calculera les hachages et les stockera dans la base de données
+</ul>
+
+\section data_source_integrity_running Exécuter le module
+
+Si vous souhaitez vérifier les hachages, la première étape consiste à entrer des hachages pour votre image disque (sauf si vous avez un fichier E01 - le hachage est inclus dans la source de données).
+Vous pouvez le faire dans l'assistant "Add Data Source" dans lequel vous sélectionnez votre image disque.
+
+\image html data_source_integrity_add_ds.png
+
+Vous pouvez saisir n'importe quelle combinaison de hachages à vérifier.
+
+Vous devrez ensuite configurer le module d'acquisition.
+
+\image html data_source_integrity_ingest_settings.png 
+
+Notez qu'il s'agit simplement d'activer un comportement ou les deux, non pas choisir celui à exécuter (calculer ou vérifier). Cela est déterminé uniquement par le fait que la source de données a des hachages associés. Décocher les deux cases mais laisser le module activé entraînera une erreur lors du démarrage du module d'acquisition.
+
+\section data_source_integrity_results Affichage des résultats
+
+\subsection data_source_integrity_verification Vérification du hachage
+
+Au terme du calcul, si la vérification réussit, vous verrez un message dans boîte de notification vous le confirmant. Si vous ouvrez ce message, vous verrez les valeurs de hachage stockées et calculées.
+
+\image html data_source_integrity_pass1.png
+<br>
+\image html data_source_integrity_pass2.png
+
+Si la vérification échoue, vous verrez un message dans boîte de notification en jaune et le même message dans une info bulle d'avertissement.
+
+\image html data_source_integrity_failed_inbox.png
+
+Les messages de la boîte de notification disparaîtront une fois le cas fermé, le module ajoute donc également au cas un artefact "Verification Failed" ("Échec de la vérification"). 
+
+\image html data_source_integrity_failed_artifact.png
+
+\subsection data_source_integrity_computation Calcul de hachage
+
+Pour afficher les hachages calculés, sélectionnez "Data Sources" dans l'arborescence, sélectionnez votre source de données dans la visionneuse de résultats, puis ouvrez l'onglet "File Metadata". Si vous êtes en mode "Group by data source" (voir \ref view_options_page), selectionnez "Data Source Files" sous la source de données que vous souhaitez examiner.
+
+\image html data_source_integrity_metadata.png
+
+*/

@@ -1,0 +1,63 @@
+﻿/*! \page android_analyzer_page Android Analyzer (Analyseur Android)
+
+[TOC]
+
+Qu'est ce que ça fait
+========
+
+Le module "Android Analyzer" vous permet d'analyser des fichiers SQLite et d'autres fichiers à partir d'un appareil Android. Il fonctionne sur les copies physiques de la plupart des appareils Android (notez que nous ne fournissons pas de méthode d'acquisition). Autopsy ne prend pas en charge les anciens appareils Android qui ne disposent pas de système de gestion de volumes. Ces périphériques ne vous permettront souvent d'obtenir qu'un seul fichier d'image physique et il n'y a aucune information dans cette image qui décrit la disposition des systèmes de fichiers. Autopsy ne pourra donc pas détecter de quoi il s'agit. 
+
+
+Le module est capable d'extraire les éléments suivants:
+
+- Messages textes / SMS / MMS
+- Journaux d'appels
+- Contacts
+- GPS du navigateur et Google Maps
+- GPS des fichiers cache.wifi et cache.cell
+
+Le module peut également extraire les données des applications suivantes:
+- Facebook Messenger
+- IMO
+- Line
+- Opera Browser
+- Orux Maps
+- S-Browser
+- ShareIt
+- Skype
+- Tango
+- TextNow
+- Viber
+- WhatsApp
+- Words with Friends
+- Xender
+- Zapya
+
+REMARQUE: les formats des bases de données varient selon la version du système d'exploitation et les différents constructeurs peuvent placer les bases de données à différents endroits. Autopsy peut ne pas prendre en charge toutes les versions et tous les constructeurs.
+
+REMARQUE: ce module n'est pas exhaustif dans sa prise en charge d'Android. Il a été créé comme point de départ pour que d'autres contributeurs puissent créer des plug-ins pour les applications tierces.  Voir la <a href="http://sleuthkit.org/autopsy/docs/api-docs/latest/mod_mobile_page.html">Documentation développeurs</a>  pour plus d'informations sur l'écriture de modules. 
+
+
+Configuration
+=======
+
+Aucune configuration n'est requise.
+
+Utilisation du module
+======
+
+Ajoutez simplement vos images physiques ou vos fichiers de sauvegardes système en tant que sources de données et activez le module Android Analyzer.
+
+Paramètres d'intégration
+------
+Aucun paramètre n'est requis à l'exécution.
+
+Voir les résultats
+------
+Les résultats s'affichent dans l'arborescence sous "Results", "Extracted Content". Les données extraites varient mais peuvent inclure des contacts, des journaux d'appels, des messages et des entrées GPS.
+
+\image html android_analyzer_output.PNG
+
+
+
+*/

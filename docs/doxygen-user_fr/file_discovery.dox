@@ -1,0 +1,236 @@
+﻿/*! \page discovery_page Discovery (Découverte de fichiers)
+
+[TOC]
+
+\section file_disc_overview Aperçu
+
+L'outil "Discovery" affiche des images, des vidéos, des documents ou des domaines qui correspondent à un ensemble de filtres configurés par l'utilisateur. Vous pouvez choisir comment regrouper et classer vos résultats afin de voir d'abord les données les plus pertinentes.
+
+\section file_disc_prereq Conditions préalables
+
+Nous vous suggérons d'exécuter tous les \ref ingest_page "modules d'acquisition" avant de lancer l'outil de découverte, mais si le temps est un facteur déterminant pour vous, les modules suivants sont les plus importants. Vous verrez un avertissement si vous ouvrez l'outil de découverte sans exécuter les modules \ref file_type_identification_page, \ref hash_db_page, et \ref EXIF_parser_page.
+
+Modules d'acquisition requis:
+<ul>
+<li>\ref file_type_identification_page pour les recherches d'images, de vidéos et de documents
+<li>\ref recent_activity_page ou l'un des analyseurs mobiles (\ref android_analyzer_page, \ref ileapp_page, \ref aleapp_page) pour les recherches de domaines
+</ul>
+
+Modules d'acquisition facultatifs:
+<ul>
+<li>\ref cr_ingest_module - Nécessaire pour utiliser le \ref file_disc_occur_filter 
+<li> \ref EXIF_parser_page - Nécessaire pour utiliser le \ref file_disc_user_filter 
+<li>\ref hash_db_page - Nécessaire pour utiliser le \ref file_disc_hash_filter et pour dédupliquer des fichiers
+<li>\ref interesting_files_identifier_page - Nécessaire pour utiliser le \ref file_disc_int_filter 
+<li>\ref object_detection_page - Nécessaire pour utiliser le \ref file_disc_obj_filter 
+<li>\ref keyword_search_page - Améliore les résumés de documents
+<li>\ref embedded_file_extractor_page - Permet d'afficher une image contenue dans un document
+</ul>
+
+\section file_disc_run Exécution de "Discovery"
+
+Pour lancer l'outil de découverte, cliquez sur l'icône "Discovery" en haut de l'interface utilisateur d'Autopsy ou allez dans "Tools", "Discovery". Il y a trois étapes lors de la configuration de cet outil, qui vont du haut du panneau vers le bas:
+<ol>
+<li>\ref file_disc_type "Choose result type" (Choisir le type de résultat)
+<li>\ref file_disc_filtering "Filter which images to show" (Filtrer les images à afficher)
+<li>\ref file_disc_grouping "Choose display settings" (Choisir les paramètres d'affichage)
+</ol>
+
+\image html FileDiscovery/fd_setup.png
+
+Une fois que tout est configuré, utilisez le bouton "Search" en bas à droite pour afficher vos résultats.
+
+\image html FileDiscovery/fd_main.png
+
+\subsection file_disc_type Type de résultat
+
+La première étape consiste à choisir si vous souhaitez afficher des images, des vidéos, des documents ou des domaines. Les trois premiers (images, videos et documents) renverront les résultats des fichiers du type donné. Le type de fichier est déterminé par le type MIME du fichier, c'est pourquoi le module \ref file_type_identification_page doit être exécutée pour voir les résultats. Le basculement entre les types de résultats réinitialisera les filtres.
+
+\image html FileDiscovery/fd_fileType.png
+
+\subsection file_disc_filtering Filtres
+
+La deuxième étape consiste à sélectionner et configurer vos filtres. Les filtres disponibles varient en fonction du type de résultat. Pour la plupart des filtres, activez-les à l'aide de la case à cocher sur la gauche, puis cochez les cases à côté des options que vous souhaitez activer. Les boutons "Check All" et "Uncheck All" peuvent être utilisés pour cocher ou décocher toutes les options de la liste. Les résultats doivent passer tous les filtres activés pour être affichés.
+
+\subsubsection file_disc_size_filter Filtre "File Size" (taille du fichier)
+
+Le filtre "File Size" vous permet de restreindre la quantité de résultats. Les options sont différentes en fonction des différents types de fichiers - une très petite image peut faire moins de 16 Ko tandis qu'une très petite vidéo fait moins de 500 Ko.
+
+\image html FileDiscovery/fd_fileSizeFilter.png
+
+\subsubsection file_disc_ds_filter Filtre "Data Source" (source de données)
+
+Le filtre "Data Source" vous permet de restreindre les sources de données de votre cas à inclure dans les résultats.
+
+\image html FileDiscovery/fd_dataSourceFilter.png
+
+\subsubsection file_disc_occur_filter Filtre "Past Occurrences" (occurrences passées) 
+
+Le filtre "Past Occurrences" utilise le \ref central_repo_page "référentiel central" et le module \ref hash_db_page "de recherche d'ensembles de hachage connus" (pour les recherches de type de fichier) afin de fixer à quel point une entrée doit être considérée comme commune/rare pour être incluse dans les résultats. Pour les recherches de type de fichier, l'option "Known (NSRL)" est désactivée par défaut, ce qui signifie que tout fichier correspondant au NSRL ou à une autre "liste blanche" de hachage ne sera pas affiché.
+
+\image html FileDiscovery/fd_pastOccur.png
+
+Les décomptes pour les autres options sont basés sur le nombre de sources de données dans votre référentiel central contenant une copie de ce fichier (basé sur le hachage) ou de ce domaine. Si un résultat n'apparaît que dans la source de données du cas actuel, il correspondra à "Unique (1)". S'il n'a été vu que dans quelques autres sources de données, il correspondra à "Rare (2-10)". Notez que peu importe le nombre de fois où un résultat apparaît dans chaque source de données - un résultat peut avoir vingt copies dans une source de données et être toujours "unique".
+
+\subsubsection file_disc_user_filter Filtre "Possibly User Created" (peut-être créé par l'utilisateur)
+
+Le filtre "Possibly User Created" limite les résultats aux fichiers soupçonnés d'être des images ou des vidéos brutes.
+
+\image html FileDiscovery/fd_userCreatedFilter.png
+
+Cela signifie que le fichier doit être associé à un résultat "User Content Suspected". Ceux-ci proviennent principalement du module \ref EXIF_parser_page.
+
+\image html FileDiscovery/fd_userContentArtifact.png
+
+\subsubsection file_disc_hash_filter Filtre "Hash Set" (jeu de hachage)
+
+Le filtre "Hash Set" restreint les résultats aux fichiers trouvés dans les ensembles de hachage sélectionnés. Seuls les ensembles de hachage notables qui ont des hits dans le cas actuel sont répertoriés. Voir la page \ref hash_db_page pour plus d'informations sur la création et l'utilisation d'ensembles de hachage.
+
+\image html FileDiscovery/fd_hashSetFilter.png
+
+\subsubsection file_disc_int_filter Filtre "Interesting Item" (élément intéressant)
+
+Le filtre "Interesting Item" restreint les résultats aux fichiers trouvés dans les ensembles de règles d'éléments intéressants sélectionnés. Seuls les ensembles de règles de fichiers intéressants qui ont des résultats dans le cas actuel sont répertoriés. Voir la page \ref interesting_files_identifier_page pour plus d'informations sur la création et l'utilisation d'ensembles de règles d'éléments intéressants.
+
+\image html FileDiscovery/fd_interestingItemsFilter.png
+
+\subsubsection file_disc_obj_filter Filtre "Object Detected" (objet détecté)
+
+Le filtre "Object Detected" restreint les résultats aux fichiers correspondant aux classificateurs sélectionnés. Seuls les classificateurs qui ont des résultats dans le cas actuel sont répertoriés. Notez qu'actuellement, la module d'acquisition intégré \ref object_detection_page ne fonctionne que sur les images, vous ne devez donc généralement pas utiliser ce filtre avec des vidéos. Voir la page \ref object_detection_page pour plus d'informations sur la configuration des classificateurs.
+
+\image html FileDiscovery/fd_objectFilter.png
+
+\subsubsection file_disc_parent_filter Filtre "Parent Folder" (dossier parent)
+
+Le filtre "Parent Folder" restreint le chemin sur lequel les fichiers peuvent se trouver. Ce filtre fonctionne différemment des autres en ce que les options individuelles n'ont pas à être sélectionnées - chaque règle qui a été entrée sera appliquée.
+
+\image html FileDiscovery/fd_parentFilter.png
+
+Vous pouvez entrer les chemins à inclure ("Include") et les chemins à ignorer ("Exclude"). Pour les deux, spécifiez ensuite si le chemin d'accès que vous avez entré est un chemin complet ("Full") ou un sous-chemin ("Substring"). Pour les correspondances de chemin complet, vous devrez inclure les barres obliques de début et de fin. Les correspondances de chemin complet sont également sensibles à la casse.
+
+Les options par défaut, illustrées ci-dessus, excluront tout fichier contenant un dossier "Windows" ou un dossier "Program Files" dans son chemin. Cela exclurait des fichiers comme "/Windows/System32/image1.jpg" mais n'exclurait pas "/Mes Images/Bay Windows/image2.jpg" parce que les barres obliques autour de "Windows" forcent la correspondance avec le nom exact du dossier.
+
+Voici un autre exemple. Cette règle a été créée avec "Full" et "Include" sélectionnés.
+
+\image html FileDiscovery/fd_parentEx2.png
+
+Cela correspond au fichier "/LogicalFileSet2/File Discovery/bird1.tif" mais aucune image située dans les sous-dossiers de "File Discovery".
+
+Lorsqu'il y a plusieurs options de chemin dans le filtre, elles seront appliquées comme suit:
+<ul>
+<li>Le chemin du fichier doit correspondre à toutes les règles "Exclude" pour apparaître
+<li>Si des règles "Include" existent, le chemin du fichier doit correspondre à au moins une règle "Include" pour apparaître
+</ul>
+
+Cela vous permet, par exemple, de créer des règles pour inclure à la fois les dossiers "Mes documents" et "Mes images".
+
+\subsubsection file_disc_prev_notable_filter Filtre "Previously Notable" (remarqué auparavant)
+
+Le filtre "Previously Notable" sert pour les recherches de domaines uniquement et est utilisé pour limiter les résultats aux seuls domaines qui ont déjà été marqués comme "Notable" dans le \ref central_repo_page.
+
+\image html FileDiscovery/fd_notableFilter.png
+
+\subsubsection file_disc_known_account_filter Filtre "Known Account Type" (type de compte connu)
+
+Le filtre "Known Account Type" sert pour les recherches de domaines uniquement et est utilisé pour limiter les résultats aux seuls domaines qui ont un type de compte connu.
+
+\image html FileDiscovery/fd_knownAccountFilter.png
+
+\subsubsection file_disc_result_filter Filtre "Result Type" (type de résultat)
+
+Le filtre "Result Type" sert pour les recherches de domaines uniquement et peut être utilisé pour restreindre les types de résultats Web dont les domaines peuvent provenir.
+
+\image html FileDiscovery/fd_domainResultFilter.png
+
+\subsubsection file_disc_date_filter Filtre "Date"
+
+Le filtre "Date" sert pour les recherches de domaines uniquement et limite la recherche aux domaines qui ont été accédés dans un laps de temps donné. Cette période peut être soit les N derniers jours (par rapport à la date actuelle), soit entre une date de début et/ou de fin spécifique.
+
+\image html FileDiscovery/fd_dateFilter.png
+
+\subsection file_disc_grouping Regroupement et tri
+
+Les dernières options concernent la manière dont vous souhaitez regrouper et trier vos résultats.
+
+\image html FileDiscovery/fd_grouping.png
+
+La première option vous permet de choisir le regroupement de niveau supérieur pour vos résultats et la deuxième option vous permet de choisir comment les trier. Les groupes apparaissent dans la colonne de gauche de la fenêtre de résultats. Notez que certaines des options de regroupement peuvent ne pas toujours apparaître - par exemple, le regroupement par occurrences passées ne sera présent que si le \ref central_repo_page est activé, et le regroupement par jeu de hachage ne sera présent que s'il y a des hits de jeux de hachage dans votre cas actuel. L'exemple ci-dessous montre les groupes créés à l'aide des options par défaut (recherche d'images, regrouper par taille de fichier, classer les groupes par nom de groupe):
+
+\image html FileDiscovery/fd_groupingSize.png
+
+Dans le cas de la taille du fichier et des occurrences passées, le classement par nom de groupe est basé sur l'ordre naturel du groupe (du plus grand au plus petit ou du plus rare au plus courant). Pour les autres groupes, ce sera par ordre alphabétique. Le classement des groupes par taille les triera en fonction du nombre de fichiers que contient chaque groupe, du plus grand au plus petit. Par exemple, ici, nous avons regroupé par ensemble d'éléments intéressants et avons ordonné les groupes en fonction de leur taille.
+
+\image html FileDiscovery/fd_groupingInt.png
+
+Le filtre des éléments intéressants n'était pas activé, donc la plupart des images se sont retrouvées dans le groupe "None", ce qui signifie qu'elles ne sont associées à aucun résultat de fichier intéressant. Le dernier groupe de la liste contient un fichier correspondant à deux ensembles de règles d'éléments intéressants.
+
+La dernière option de regroupement et de tri consiste à choisir comment trier les résultats au sein d'un groupe. Il s'agit de l'ordre des résultats sur le côté droit de la fenêtre de résultats après avoir sélectionné un groupe dans la colonne de gauche. Notez qu'en raison de la fusion des résultats ayant le même hachage dans ce panneau, le classement par nom de fichier, chemin ou source de données peut varier. Voir la section \ref file_disc_dedupe ci-dessous pour plus d'informations.
+
+\section file_disc_results Affichage des résultats
+
+\subsection file_disc_results_overview Aperçu
+
+Une fois que vous aurez sélectionné vos options et cliqué sur "Search", vous verrez une nouvelle fenêtre avec la liste des groupes sur le côté gauche. La sélection de l'un de ces groupes affichera les résultats de ce groupe sur le côté droit. La sélection d'un résultat fera apparaître un panneau affichant plus de détails sur chaque instance de ce résultat. Vous pouvez soulever et abaisser manuellement ce panneau à l'aide des grandes flèches sur le côté droit du séparateur.
+
+Si vos résultats sont des images, vous verrez des miniatures pour chaque image dans la zone supérieure du panneau de droite.
+
+\image html FileDiscovery/fd_resultGroups.png
+
+Si vos résultats sont des vidéos, chaque résultat affichera quatre vignettes de la vidéo.
+
+\image html FileDiscovery/fd_videos.png
+
+Si vos résultats sont des documents, vous verrez une partie du texte du document. Si le module \ref embedded_file_extractor_page a trouvé des images dans le document, vous verrez une vignette de la plus grande d'entre elles affichée sur le côté droit avec un décompte du nombre d'images extraites du document.
+
+\image html FileDiscovery/fd_documents.png
+
+Si vos résultats sont des domaines, vous verrez des informations sur chaque domaine. Si une image est associée à ce domaine, elle sera affichée à droite.
+
+\image html FileDiscovery/fd_domains.png
+
+Pour les recherches d'images, de vidéos et de documents, lorsque vous sélectionnez un résultat en haut du panneau de droite, vous verrez le chemin d'accès au(x) fichier(s) correspondant(s) dans le panneau "Instances" sous les miniatures. Il peut y avoir plus d'une instance de fichier associée à un résultat - voir la section \ref file_disc_dedupe ci-dessous. Vous pouvez cliquer avec le bouton droit sur les fichiers dans le panneau des instances pour utiliser la plupart des options disponibles dans la \ref result_viewer_page.
+
+\image html FileDiscovery/fd_instanceContext.png
+
+La partie inférieure du panneau est identique à la \ref content_viewer_page standard et affiche les données qui correspondent à l'instance du fichier sélectionné dans le milieu du panneau.
+
+Pour les recherches de domaines, lorsque vous sélectionnez un domaine en haut du panneau de droite, vous verrez une zone de détails qui est une variante de la \ref content_viewer_page. Le premier onglet de cette zone de détails affiche une chronologie ("Timeline") simple - la sélection d'une date affichera tous les résultats de cette date au centre du panneau, avec les détails du résultat sélectionné sur la droite. Les autres onglets (Web Bookmarks, Web Cookies, etc...) afficheront les résultats du type sélectionné avec une liste de résultats à gauche et plus de détails à droite. Vous pouvez cliquer avec le bouton droit sur les résultats pour utiliser la plupart des options disponibles dans la \ref result_viewer_page.
+
+\image html FileDiscovery/fd_domainDetails.png
+
+\subsection file_disc_dedupe Déduplication
+
+Cette section s'applique uniquement aux recherches d'images, de vidéos et de documents.
+
+En supposant que le module \ref hash_db_page ait été exécuté, tous les fichiers d'un groupe de résultats avec le même hachage seront fusionnés sous une seule instance. Le chemin du fichier vers l'une des instances sera affiché avec une note telle que "and 1 more" (et 1 de plus) indiquant le nombre de doublons trouvés. La sélection du fichier affichera chaque instance dans la section centrale du panneau.
+
+\image html FileDiscovery/fd_dupeEx.png
+
+Cliquer sur une instance particulière chargera les données de ce fichier dans la zone de visualisation de contenu en bas.
+
+Notez que les fichiers de différents groupes ne seront pas fusionnés ou n'apparaîtront pas dans la liste des instances les uns des autres. Par exemple, si vous choisissez de regrouper par dossier parent et que vous avez deux instances d'un fichier avec le même hachage mais dans des dossiers différents, chacune apparaîtra une fois dans son dossier parent. Le regroupement par taille de fichier (par défaut) fusionnera toujours chaque instance du même fichier.
+
+\subsection file_disc_icons Icônes d'état
+
+Cette section s'applique uniquement aux recherches d'images, de vidéos et de documents.
+
+Un certain nombre d'icônes peuvent être affichées en bas à droite des vignettes pour aider à souligner les résultats notables. Le survol de l'icône affichera un message expliquant pourquoi l'icône est présente. Dans l'image ci-dessous, l'icône jaune est présente car le fichier est associé à un ensemble d'éléments intéressant.
+
+\image html FileDiscovery/fd_icon.png
+
+La plupart des icônes correspondent à ce qui serait affiché dans la colonne "S" de la \ref result_viewer_page normale. 
+
+| Icône | Usage |
+|-------|------|
+\image html FileDiscovery/yellow-circle-yield.png "" | \ref interesting_files_identifier_page "Correspondance avec un jeu de fichiers intéressants" ou un \ref tagging_page "marquage de fichier" normal
+\image html FileDiscovery/red-circle-exclamation.png "" | \ref hash_db_page "Correspondance avec un jeu de hachage" notable ou un \ref tagging_page "marquage de fichier" notable
+\image html FileDiscovery/file-icon-deleted.png "" | Fichier supprimé (chaque instance est supprimée)
+
+
+\subsection file_disc_paging Pagination
+
+Si le groupe que vous sélectionnez a de nombreux résultats, les résultats seront divisés en pages. Vous pouvez utiliser les flèches gauche et droite pour vous déplacer entre les pages ou saisir le numéro de page à laquelle vous souhaitez accéder. Vous pouvez ajuster le nombre de résultats par page à l'aide de la liste déroulante en haut à droite.
+
+\image html FileDiscovery/fd_paging.png
+
+*/

@@ -1,0 +1,10 @@
+﻿/*! \page vm_extractor_page Virtual Machine Extractor (Extracteur de machine virtuelle)
+
+Le module "Virtual Machine Extractor" ajoute au cas toutes les machines virtuelles qu'il trouve dans une source de données en tant que nouvelles sources de données. Cela inclut les fichiers de machines virtuelles (.vmdk) et fichiers de disque dur virtuel (.vhd). Notez que chaque disque virtuel sera extrait dans le dossier du cas.
+
+Dans l'exemple ci-dessous, la source de données d'origine "testImage.img" contenait un fichier VHD. Ce fichier "alphaFiles.vhd" a été ajouté au cas en tant que nouvelle source de données, et il a été
+traité par les mêmes modules d’acquisition que ceux exécutés sur l’image d’origine.
+
+\image html virtual_machine_extractor_results.png
+
+*/

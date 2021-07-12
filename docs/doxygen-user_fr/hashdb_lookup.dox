@@ -1,0 +1,112 @@
+﻿/*! \page hash_db_page  Hash Lookup (Recherche de hachage)
+
+[TOC]
+
+
+Qu'est ce que ça fait
+========
+
+Le module "Hash Lookup" calcule les valeurs de hachage MD5 pour les fichiers et recherche ces valeurs de hachage dans une base de données pour déterminer si le fichier est notable, connu (en général), inclus dans un ensemble spécifique de fichiers ou inconnu. Les hachages SHA-256 sont également calculés, bien qu'ils ne soient pas utilisés dans les recherches de jeux de hachage.
+
+
+Configuration
+=======
+L'onglet "Hash Sets" du panneau Options vous permet de définir et de mettre à jour les informations de votre jeu de hachage. Les jeux de hachage sont utilisés pour identifier les fichiers qui sont connus ("Known"), notables ("Notable") ou sans changement ("No Change").
+\li "Known" : ce sont des fichiers connus qui peuvent être ignorés en toute sécurité. Cet ensemble de fichiers comprend fréquemment des fichiers de système d'exploitation et d'applications standards. Ignorer ces fichiers inintéressants pour l'enquêteur peut réduire considérablement le temps d'analyse des images.
+\li "Notable" (ou connus défavorablement) : ce sont des fichiers qui devraient sensibiliser l'analyste. Cet ensemble variera en fonction du type d'enquête, mais les exemples courants incluent les images de contrebande et les logiciels malveillants.
+\li "No change" : ce sont des fichiers qui peuvent révéler des informations sur le système mais qui ne sont pas notables. Par exemple, savoir qu'une image contient de nombreux fichiers connus pour être des cartes de Londres pourrait être intéressant pour un enquêteur, mais les cartes elles-mêmes ne sont pas notables.
+
+\section adding_hashsets Importation de jeux de hachage
+
+Pour importer un jeu de hachage existant, utilisez le bouton "Import Hash Set" du panneau d'options des jeux de hachage ("Hash Sets"). Cela fera apparaître une boîte de dialogue pour importer le fichier.
+
+\image html hash_import.png
+
+<b>Hash Set Path</b> - Le chemin d'accès au jeu de hachage que vous importez. Autopsy prend en charge les formats suivants:
+\li Texte: Un hachage sur chaque ligne. Par exemple, la sortie de l'exécution du programme md5, md5sum ou md5deep sur un ensemble de fichiers (* .txt)
+\li Index seul: Généré par The Sleuth Kit/Autopsy. Le NSRL est disponible dans ce format pour une utilisation avec Autopsy (\ref using_hashsets "voir ci-dessous") (*.idx)
+\li Base de données de format The Sleuth Kit/Autopsy: jeux de hachage SQLite créé par Autopsy (*.kdb)
+\li EnCase: Un fichier de jeu de hachage EnCase (*.hash)
+\li HashKeeper: Un fichier de jeu de hachage conforme au standard HashKeeper (*.hsh)
+
+<b>Destination</b> - Le champ Destination fait référence à l'endroit où le jeu de hachage sera stocké. 
+\li Local: Le fichier de jeu de hachage sera utilisé à partir de l'emplacement d'origine sur le disque
+\li Remote: Le jeu de hachage sera copié dans le \ref central_repo_page "référentiel central". Lorsque vous utilisez un référentiel central PostgreSQL, cela permet à plusieurs utilisateurs de partager facilement les mêmes ensembles de hachage.
+
+<b>Name</b> - Afficher le nom du jeu de hachage. Un nom sera suggéré en fonction du nom du fichier, mais cela peut être modifié.
+
+<b>Version</b> - La version du jeu de hachage ne peut être saisie que lors de l'importation du jeu de hachage dans le référentiel central. En outre, aucune version ne peut être entrée si le jeu de hachage n'est pas en lecture seule.
+
+<b>Source Organization</b> - L'organisation ne peut être saisie que lors de l'importation du jeu de hachage dans le référentiel central. Voir la section \ref cr_manage_orgs "gestion des organisations" pour plus d'informations.
+
+<b>Type of database set</b> - Toutes les entrées de l'ensemble de hachage doivent être "Known" (peuvent être ignorées en toute sécurité), "Notables" (peuvent être des indicateurs de comportement suspect) ou "No Change" (connues pour être liées à un certain type de fichier).
+
+<b>Make hash set read-only</b> - Le paramètre en lecture seule n'est actif que lors de l'importation du jeu de hachage dans le référentiel central. Une base de données en lecture seule ne peut pas avoir de nouveaux hachages ajoutés via le panneau d'options "Hash Sets" ou le menu contextuel. Pour les ensembles de hachage importés localement, la possibilité d'écrire ou non dépend du type de jeu de hachage. Les bases de données au format Autopsy (* .kdb) peuvent être modifiées, mais tous les autres types seront en lecture seule.
+
+<b>Send ingest inbox message for each hit</b> - Détermine si un message est envoyé dans la boîte de notification pour chaque fichier correspondant. Cela ne peut pas être activé pour un jeu de hachage "Known".
+
+<b>Copy hash set into user configuration folder</b> - Cré une copie du jeu de hachage au lieu d'utiliser celui existant. Ceci est destiné à être utilisé dans le cadre de la \ref live_triage_page.
+
+\subsection hashset_indexing Indexage
+
+Après avoir importé le jeu de hachage, vous devrez peut-être l'indexer avant de pouvoir l'utiliser. Pour la plupart des types de jeux de hachage, Autopsy a besoin d'un index de ce dernier pour l'utiliser réellement. Il peut créer l'index si vous importez uniquement le jeu de hachage. Tous les ensembles de hachage qui nécessitent un index seront affichés en rouge, et "Index Status" indiquera qu'un index doit être créé. Cela se fait simplement en utilisant le bouton "Index".
+
+\image html hash_indexing.png
+
+Autopsy utilise le système de gestion des jeux de hachage de The Sleuth Kit. Vous pouvez créer manuellement un index à l'aide de l'outil de ligne de commande 'hfind' ou vous pouvez utiliser Autopsy. Si vous essayez de continuer sans indexer un jeu de hachage, Autopsy vous proposera de produire automatiquement un index pour vous.
+Vous pouvez également spécifier uniquement le fichier d'index et ne pas utiliser le jeu de hachage complet - le fichier d'index est suffisant pour identifier les fichiers connus. Cela peut économiser de l'espace. Pour ce faire, spécifiez le fichier .idx dans le panneau d'options "Hash Sets".
+
+\section creating_hashsets Création de jeux de hachage
+
+De nouveaux ensembles de hachage peuvent être créés à l'aide du bouton "New Hash Set". Les champs sont pour la plupart les mêmes que dans la \ref adding_hashsets "boîte de dialogue d'importation" décrite ci-dessus.
+
+\image html hash_new_db.png
+
+Dans ce cas, le chemin de la base de données ("Hash Set Path") est l'endroit où la nouvelle base de données sera stockée. Si le référentiel central est utilisé, ce champ n'est pas nécessaire.
+
+\section hash_adding_hashes Ajout de hachages à un ensemble de hachages
+
+Une fois que vous avez créé un ensemble de hachage, vous devrez y ajouter des hachages. La première façon de faire est d'utiliser le bouton "Add Hashes to Hash Set" dans le panneau d'options. Chaque hachage doit être sur sa propre ligne et peut éventuellement être suivi d'une virgule puis d'un commentaire sur le fichier auquel correspond le hachage. Ici, nous créons un ensemble de hachage "No Change" correspondant aux images de chat:
+
+\image html hash_add.png
+
+L'autre façon d'ajouter une entrée à un jeu de hachage consiste à utiliser le menu contextuel. Mettez en surbrillance le fichier que vous souhaitez ajouter à un ensemble de hachage dans la visionneuse de résultats et cliquez avec le bouton droit de la souris, puis sélectionnez "Add File to Hash Set" et enfin l'ensemble auquel vous souhaitez l'ajouter. Notez que cela n'ajoute pas automatiquement le fichier à la liste des hits de l'ensemble de hachage pour le cas actuel - vous devrez réexécuter le module d'acquisition "Hash Lookup" pour le voir apparaître ici.
+
+\image html hash_add_context.png
+
+\section using_hashsets Utilisation d'ensembles de hachage
+Il y a un \ref ingest_page "module d'acquisition" qui hachera les fichiers et les recherchera dans les ensembles de hachage. Il marquera les fichiers qui étaient dans le jeu de hachage comme "Notable" et ces résultats seront affichés dans la section Results de l'\ref tree_viewer_page.
+D'autres modules d'acquisition peuvent utiliser l'état "Known" d'un fichier pour décider s'ils doivent ignorer le fichier ou le traiter.
+Vous pouvez également voir les résultats dans la fenêtre de \ref how_to_open_file_search "recherche de fichiers". Il existe une option pour choisir le "Known Status". De là, vous pouvez effectuer une recherche pour voir tous les fichiers notables ("Notable"). À partir de là, vous pouvez également choisir d'ignorer tous les fichiers connus ("Known") trouvés dans le NSRL. Vous pouvez également voir l'état du fichier dans une colonne lorsque le fichier est répertorié.
+<br>
+NIST NSRL
+------
+Autopsy peut utiliser le <A HREF="http://www.nsrl.nist.gov">NIST NSRL</A> pour détecter les fichiers "connus". Le NSRL contient des hachages de fichiers "connus" qui peuvent être bons ou mauvais en fonction de votre perspective et du type d'enquête. Par exemple, l'existence d'un logiciel financier peut être intéressant pour votre enquête et ce logiciel pourrait être dans le NSRL. Par conséquent, Autopsy traite les fichiers qui se trouvent dans le NSRL comme simplement "Known" (connus) et ne spécifie pas bon ou mauvais. Les modules d'acquisition ont la possibilité d'ignorer les fichiers trouvés dans le NSRL.
+
+Pour utiliser le NSRL, vous pouvez télécharger un index pré-établi à partir de <A HREF="http://sourceforge.net/projects/autopsy/files/NSRL/">http://sourceforge.net/projects/autopsy/files/NSRL</A>. Télécharger le fichier <b>NSRL-XYZm-autopsy.zip </b> (où 'XYZ' est le numéro de version. Au moment d'écrire ces lignes, c'est 270) et décompressez le. Utiliser le menu "Tools", "Options" et sélectionner l'onglet "Hash Sets". Cliquer sur "Import Database" et accédez à l'emplacement du fichier NSRL décompressé. Vous pouvez modifier le nom du jeu de hachage ("Hash Set Name") si vous le souhaitez. Sélectionnez le type de base de données souhaité, et choisissez "Send ingest inbox message for each hit" (un message est envoyé dans la boîte de notification pour chaque fichier correspondant) si vous le souhaitez, puis cliquez sur "OK".
+
+<br>
+\image html nsrl_import_process.PNG
+<br>
+
+Utilisation du module
+======
+
+Paramètres d'intégration
+------
+Lorsque les ensembles de hachage sont configurés, l'utilisateur peut sélectionner quels ensembles utiliser pendant le processus d'acquisition.
+
+\image html hash-lookup.PNG
+
+
+
+Voir les résultats
+------
+
+Les résultats s'affichent dans l'arborescence sous "Hashset Hits", regroupés par le nom du jeu de hachage. Si les hits de l'ensemble de hachage avaient des commentaires associés, vous les verrez dans la colonne "Comment" dans la visionneuse de résultats avec le hachage du fichier.
+
+\image html hashset-hits.PNG
+
+Vous pouvez également afficher les commentaires dans l'onglet "Annotations" de la visionneuse de contenu.
+
+*/

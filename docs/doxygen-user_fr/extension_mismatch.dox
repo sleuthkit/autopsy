@@ -1,0 +1,42 @@
+﻿/*! \page extension_mismatch_detector_page Extension Mismatch Detector (Détecteur de discordance d'extension)
+
+[TOC]
+
+
+Qu'est ce que ça fait
+========
+
+Le module "Extension Mismatch Detector" utilise les résultats de l'identification du type de fichier et marque les fichiers dont l'extension n'est pas traditionnellement associée au type de fichier détecté. Il ignore les fichiers "connus" (NSRL). Vous pouvez personnaliser les types MIME et les extensions de fichier par type MIME dans "Tools", "Options", "File Extension Mismatch".
+
+Cela détecte les fichiers que quelqu'un tente peut-être de cacher.
+
+Configuration
+=======
+On peut ajouter et supprimer des types MIME dans la boîte de dialogue "Tools", "Options", "File Extension Mismatch", ainsi qu'ajouter et supprimer des extensions à des types MIME particuliers.
+<br>
+\image html extension-mismatch-detected-configuration.PNG
+<br>
+
+Si vous souhaitez apporter votre contribution à la communauté, vous devrez télécharger votre fichier %APPDATA%\\autopsy\\dev\\config\\mismatch_config.xml mis à jour puis, au choix:
+- Créer un "Fork" du dépôt Github d'Autopsy et copier le nouveau fichier dans le dossier src\\org\\sleuthkit\\autopsy\\fileextmismatch, avant de soumettre une "Pull Request"
+- Attacher l'intégralité du fichier mismatch_config.xml à une "Issue" (problème relevé) sur Github.
+
+Utilisation du module
+======
+Notez que vous pouvez obtenir beaucoup de faux positifs avec ce module. Vous pouvez ajouter vos propres règles à Autopsy pour réduire les retours indésirables.
+
+Paramètres d'intégration
+------
+
+Dans les paramètres des modules d'acquisition ("Configure Ingest Modules"), l'utilisateur peut choisir d'exécuter ce module sur tous les fichiers, tous les fichiers sauf les fichiers texte, ou uniquement les fichiers multimédias ou exécutables. En outre, l'utilisateur peut choisir d'ignorer tous les fichiers sans extension et d'ignorer tous les fichiers connus identifiés par le module "Hash Lookup" (module de recherche de hachage), s'il est activé.
+
+\image html extension-mismatch-detected-ingest-settings.PNG
+
+
+Voir les résultats
+------
+Les résultats apparaissent dans la zone Results de l'arborescence sous "Extension Mismatch Detected".
+
+\image html extension-mismatch-detected.PNG
+
+*/

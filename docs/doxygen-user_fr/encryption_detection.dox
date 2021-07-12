@@ -1,0 +1,43 @@
+﻿/*! \page encryption_page Encryption Detection (Détection de chiffrement)
+
+[TOC]
+
+
+\section encrypt_overview Aperçu
+
+Le module "Encryption Detection" recherche les fichiers qui pourraient être chiffrés en utilisant à la fois un calcul général d'entropie et des tests plus spécialisés pour certains types de fichiers.
+
+\section encrypt_running Lancement du module
+
+Les paramètres du module peuvent être configurés lors de l'exécution. Ces paramètres n'affectent que les tests basés sur l'entropie.
+
+\image html encrypt_module.png
+
+L'entropie minimale peut être réglée à une valeur supérieure ou inférieure, en fonction du nombre de faux positifs produits. Il existe également une option permettant d'exécuter le test uniquement sur des fichiers dont la taille est un multiple de 512, ce qui est utile pour trouver certains algorithmes de chiffrement.
+
+Le module recherche les types de chiffrement suivants:
+<ul>
+<li> Tout fichier qui a une entropie égale ou supérieure au seuil fixé dans les paramètres du module et qui correspond aux contraintes de taille de fichier
+<li> Fichiers Office, PDF et fichiers de base de données Access protégés par mot de passe
+<li> Volumes BitLocker
+<li> SQLCipher (utilise l'entropie minimale des paramètres du module)
+<li> VeraCrypt (utilise l'entropie minimale des paramètres du module)
+</ul>
+
+\section encrypt_results Voir les résultats
+
+Les fichiers qui réussissent les tests de détection de chiffrement sont affichés dans la zone "Results" de l'arborescence sous "Encryption Detected" ou "Encryption Suspected". Généralement, si le test utilisé impliquait la recherche d'une
+structure d'en-tête/fichier spécifique, le résultat sera "Encryption Detected" et le type de chiffrement sera affiché dans la colonne "Comment". Si le test était basé sur l'entropie du fichier,
+le résultat sera "Encryption Suspected" et l'entropie calculée sera affichée dans la colonne "Comment".
+
+\image html encrypt_tree.png
+
+Chaque découverte de suspicion de chiffrement génère également un message dans la boîte de notification. Ceux-ci sont indiqués grâce à un triangle d'avertissement près du haut de l'écran.
+
+\image html encrypt_inbox.png
+
+La sélection de l'un des résultats de détection de chiffrement affiche l'entropie calculée du fichier.
+
+\image html encrypt_entropy.png
+
+*/

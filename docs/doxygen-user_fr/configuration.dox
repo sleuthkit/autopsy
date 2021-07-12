@@ -1,0 +1,61 @@
+/*! \page config_page Configuration générale
+
+[TOC]
+
+\section config_overview Aperçu
+
+Vous pouvez configurer Autopsy via le panneau d'options principal. Ce dernier est accessible en allant dans Tools->Options. A cet endroit, vous pouvez modifier la façon dont les cas sont affichés, configurer le fonctionnement d’Autopsy, créer des ensembles de hachage, des listes de mots-clés, etc...
+
+Le panneau d'options comporte différents onglets pour chaque fonction. Ces options sont documentées sur les pages principales de chaque fonctionnalité. Par exemple, l'onglet \ref keyword_search_configuration_dialog "Keyword Search" est décrit sur la page principale du \ref keyword_search_page. Les onglets qui ne correspondent pas à une fonctionnalité documentée ailleurs seront décrits ici.
+
+\section config_app Application
+
+Le premier onglet du panneau d'options concerne les paramètres généraux de l'application.
+
+\image html options_application.png
+
+La section supérieure vous permet d'ajuster la quantité de mémoire utilisée par Autopsy et le nombre de fichiers journaux à conserver. En général, chaque session d’Autopsy génère un fichier journal, bien qu’elle puisse en générer davantage si le fichier journal devient trop volumineux. Vous pouvez également spécifier un emplacement personnalisé dans lequel écrire des captures de tas ("heap dump").
+
+La section suivante vous permet de spécifier où Autopsy doit stocker les fichiers temporaires. Ces fichiers seront supprimés lors de la clôture d'un dossier. Il existe trois options:
+<ul>
+<li>Local temp directory - Utilise le dossier temporaire du système (Sur Windows, typiquement C:\\Users\\(nom de l'utilisateur)\\AppData\\Local\\Temp\\Autopsy)
+<li>Temp folder in case directory - Place les fichiers temporaires dans le répertoire "temp" situé dans le dossier de cas
+<li>Custom - Utilisera le dossier donné par l'utilisateur comme base pour les fichiers temporaires
+</ul>
+
+La dernière section vous permet de définir un logo personnalisé. 
+
+\image html options_logo.png
+
+Ce logo sera affiché dans tous les \ref report_html "rapports HTML" générés.
+
+\image html options_logo_report.jpg
+
+La section suivante répertorie les instructions sur la façon de modifier la mise à l'échelle pour les systèmes Windows à PPP élevé.
+
+\section config_view View
+
+Consultez la page \ref view_options_page pour une description de la façon dont vous pouvez personnaliser les données affichées dans Autopsy.
+
+\section config_ext_viewer External Viewers
+
+L'onglet "External Viewer" vous permet d'ajouter des associations de fichiers et de sélectionner un éditeur hexadécimal.
+
+\image html options_ext_viewer.jpg
+
+La section supérieure vous permet de saisir des associations de fichiers personnalisées par extension ou par type MIME. Dans l'image ci-dessus, nous avons associé des fichiers .xml à l'application Bloc-notes. Il est maintenant possible de faire un clic droit sur un fichier .xml dans la visionneuse de résultats et de choisir "Open in External Viewer" pour ouvrir ce fichier .xml dans le Bloc-notes.
+
+\image html options_ext_viewer_context_menu.jpg
+
+La section inférieure vous permet de spécifier un éditeur hexadécimal. HxD a été testé et est la valeur par défaut, mais d'autres éditeurs hexadécimaux fonctionneront également. L'éditeur hexadécimal sélectionné sera lancé en cliquant sur le bouton "Launch in HxD" dans l'onglet «Hex» de la \ref content_viewer_page.
+
+\section config_general General
+
+L'onglet "General" vous permet de configurer les paramètres du proxy.
+
+\image html proxySettings.PNG
+
+
+
+
+*/
