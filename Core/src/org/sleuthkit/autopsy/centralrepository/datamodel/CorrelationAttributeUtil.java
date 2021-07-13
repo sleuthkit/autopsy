@@ -391,7 +391,8 @@ public class CorrelationAttributeUtil {
             Case currentCase = Case.getCurrentCaseThrows();
             AbstractFile bbSourceFile = currentCase.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
             if (null == bbSourceFile) {
-                logger.log(Level.SEVERE, "Error creating artifact instance. Abstract File was null."); // NON-NLS
+                logger.log(Level.WARNING, "Error creating artifact instance of type {0} - source for artifact with ID: {1} is not an AbstractFile", 
+                        new Object[]{correlationType.getDisplayName(), artifact.getId()}); // NON-NLS
                 return null;
             }
 
