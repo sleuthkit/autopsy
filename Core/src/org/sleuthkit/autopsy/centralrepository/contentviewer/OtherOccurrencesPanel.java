@@ -85,7 +85,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     private AbstractFile file = null;
 
     private SwingWorker<?, ?> worker;
-    
+
     // Initializing the JFileChooser in a thread to prevent a block on the EDT
     // see https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
     private final FutureTask<JFileChooser> futureFileChooser = new FutureTask<>(JFileChooser::new);
@@ -101,7 +101,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         this.correlationAttributes = new ArrayList<>();
         initComponents();
         customizeComponents();
-        
+
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(futureFileChooser);
     }
@@ -223,7 +223,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         String caseDisplayName = Bundle.OtherOccurrencesPanel_caseDetailsDialog_noCaseNameError();
         String details = Bundle.OtherOccurrencesPanel_caseDetailsDialog_noDetails();
         try {
-            if (-1 != selectedRowViewIdx) {
+            if (-1 != selectedRowViewIdx && filesTableModel.getRowCount() > 0) {
                 CentralRepository dbManager = CentralRepository.getInstance();
                 int selectedRowModelIdx = filesTable.convertRowIndexToModel(selectedRowViewIdx);
                 List<NodeData> rowList = filesTableModel.getListOfNodesForFile(selectedRowModelIdx);
@@ -253,9 +253,9 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
     private void saveToCSV() throws NoCurrentCaseException {
         if (casesTableModel.getRowCount() > 0) {
-            
-            if(CSVFileChooser == null) {
-                try{
+
+            if (CSVFileChooser == null) {
+                try {
                     CSVFileChooser = futureFileChooser.get();
                 } catch (InterruptedException | ExecutionException ex) {
                     // If something happened with the thread try and 
@@ -264,7 +264,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     CSVFileChooser = new JFileChooser();
                 }
             }
-            
+
             Calendar now = Calendar.getInstance();
             String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_data_sources.csv", now);
             CSVFileChooser.setCurrentDirectory(new File(Case.getCurrentCaseThrows().getExportDirectory()));
@@ -339,12 +339,13 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                         casesTableModel.addCorrelationCase(NO_ARTIFACTS_CASE);
                     } else if (caseCount == 0) {
                         casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
-                    }
-                    String earliestDate = data.getEarliestCaseDate();
-                    earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
-                    foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getTotalCount(), caseCount, data.getDataSourceCount()));
-                    if (caseCount > 0) {
-                        casesTable.setRowSelectionInterval(0, 0);
+                    } else {
+                        String earliestDate = data.getEarliestCaseDate();
+                        earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
+                        foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getTotalCount(), caseCount, data.getDataSourceCount()));
+                        if (caseCount > 0) {
+                            casesTable.setRowSelectionInterval(0, 0);
+                        }
                     }
 
                 } catch (InterruptedException | ExecutionException ex) {
@@ -389,12 +390,13 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             casesTableModel.addCorrelationCase(NO_ARTIFACTS_CASE);
         } else if (caseCount == 0) {
             casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
-        }
-        String earliestDate = data.getEarliestCaseDate();
-        earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
-        foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getInstanceDataCount(), caseCount, data.getDataSourceCount()));
-        if (caseCount > 0) {
-            casesTable.setRowSelectionInterval(0, 0);
+        } else {
+            String earliestDate = data.getEarliestCaseDate();
+            earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
+            foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getInstanceDataCount(), caseCount, data.getDataSourceCount()));
+            if (caseCount > 0) {
+                casesTable.setRowSelectionInterval(0, 0);
+            }
         }
     }
 
@@ -420,7 +422,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
             return;
         }
-        
+
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         worker = new SelectionWorker(correlationAttributes, file, deviceId, dataSourceName) {
@@ -440,31 +442,32 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                         currentCaseName = null;
                         logger.log(Level.WARNING, "Unable to get current case for other occurrences content viewer", ex);
                     }
-
-                    for (NodeData nodeData : correlatedNodeDataMap.values()) {
-                        for (int selectedRow : selectedCaseIndexes) {
-                            try {
-                                if (nodeData.isCentralRepoNode()) {
-                                    if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
-                                            && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                    if (casesTableModel.getRowCount() > 0) {
+                        for (NodeData nodeData : correlatedNodeDataMap.values()) {
+                            for (int selectedRow : selectedCaseIndexes) {
+                                try {
+                                    if (nodeData.isCentralRepoNode()) {
+                                        if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
+                                                && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                                            dataSourcesTableModel.addNodeData(nodeData);
+                                        }
+                                    } else if (currentCaseName != null && (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(currentCaseName))) {
                                         dataSourcesTableModel.addNodeData(nodeData);
                                     }
-                                } else if (currentCaseName != null && (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(currentCaseName))) {
-                                    dataSourcesTableModel.addNodeData(nodeData);
+                                } catch (CentralRepoException ex) {
+                                    logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                                 }
-                            } catch (CentralRepoException ex) {
-                                logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                             }
                         }
                     }
-                    if (dataSourcesTable.getRowCount() > 0) {
+                    if (dataSourcesTableModel.getRowCount() > 0) {
                         dataSourcesTable.setRowSelectionInterval(0, 0);
                     }
-                    
+
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 
                 } catch (InterruptedException | ExecutionException ex) {
-                   logger.log(Level.SEVERE, "Failed to update OtherOccurrencesPanel on data source selection", ex); 
+                    logger.log(Level.SEVERE, "Failed to update OtherOccurrencesPanel on data source selection", ex);
                 }
             }
         };
@@ -496,25 +499,29 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
                 try {
                     Map<UniquePathKey, NodeData> correlatedNodeDataMap = get();
-                    for (NodeData nodeData : correlatedNodeDataMap.values()) {
-                        for (int selectedDataSourceRow : selectedDataSources) {
-                            try {
-                                if (nodeData.isCentralRepoNode()) {
-                                    if (dataSourcesTableModel.getCaseUUIDForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
-                                            && dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                        filesTableModel.addNodeData(nodeData);
+                    if (dataSourcesTableModel.getRowCount() > 0) {
+                        for (NodeData nodeData : correlatedNodeDataMap.values()) {
+                            for (int selectedDataSourceRow : selectedDataSources) {
+                                int rowModelIndex = dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow);
+                                try {
+                                    if (nodeData.isCentralRepoNode()) {
+                                        if (dataSourcesTableModel.getCaseUUIDForRow(rowModelIndex).equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
+                                                && dataSourcesTableModel.getDeviceIdForRow(rowModelIndex).equals(nodeData.getDeviceID())) {
+                                            filesTableModel.addNodeData(nodeData);
+                                        }
+                                    } else {
+                                        if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
+                                            filesTableModel.addNodeData(nodeData);
+                                        }
                                     }
-                                } else {
-                                    if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                        filesTableModel.addNodeData(nodeData);
-                                    }
+                                } catch (CentralRepoException ex) {
+                                    logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                                 }
-                            } catch (CentralRepoException ex) {
-                                logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                             }
                         }
                     }
-                    if (filesTable.getRowCount() > 0) {
+
+                    if (filesTableModel.getRowCount() > 0) {
                         filesTable.setRowSelectionInterval(0, 0);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
@@ -535,18 +542,20 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     private void updateOnFileSelection() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            if (filesTable.getSelectedRowCount() == 1) {
+            if (filesTableModel.getRowCount() > 0 && filesTable.getSelectedRowCount() == 1) {
                 //if there is one file selected update the deatils to show the data for that file
                 occurrencePanel = new OccurrencePanel(filesTableModel.getListOfNodesForFile(filesTable.convertRowIndexToModel(filesTable.getSelectedRow())));
-            } else if (dataSourcesTable.getSelectedRowCount() == 1) {
+            } else if (dataSourcesTableModel.getRowCount() > 0 && dataSourcesTable.getSelectedRowCount() == 1) {
                 //if no files were selected and only one data source is selected update the information to reflect the data source
                 String caseName = dataSourcesTableModel.getCaseNameForRow(dataSourcesTable.convertRowIndexToModel(dataSourcesTable.getSelectedRow()));
                 String dsName = dataSourcesTableModel.getValueAt(dataSourcesTable.convertRowIndexToModel(dataSourcesTable.getSelectedRow()), 0).toString();
                 String caseCreatedDate = "";
-                for (int row : casesTable.getSelectedRows()) {
-                    if (casesTableModel.getValueAt(casesTable.convertRowIndexToModel(row), 0).toString().equals(caseName)) {
-                        caseCreatedDate = getCaseCreatedDate(row);
-                        break;
+                if (casesTableModel.getRowCount() > 0) {
+                    for (int row : casesTable.getSelectedRows()) {
+                        if (casesTableModel.getValueAt(casesTable.convertRowIndexToModel(row), 0).toString().equals(caseName)) {
+                            caseCreatedDate = getCaseCreatedDate(row);
+                            break;
+                        }
                     }
                 }
                 occurrencePanel = new OccurrencePanel(caseName, caseCreatedDate, dsName);
@@ -555,7 +564,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 //update the information to reflect the case
                 String createdDate;
                 String caseName = "";
-                if (casesTable.getRowCount() > 0) {
+                if (casesTableModel.getRowCount() > 0) {
                     caseName = casesTableModel.getValueAt(casesTable.convertRowIndexToModel(casesTable.getSelectedRow()), 0).toString();
                 }
                 if (caseName.isEmpty()) {
@@ -586,7 +595,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      */
     private String getCaseCreatedDate(int caseTableRowIdx) {
         try {
-            if (CentralRepository.isEnabled()) {
+            if (CentralRepository.isEnabled() && casesTableModel.getRowCount() > 0) {
                 CorrelationCase partialCase;
                 partialCase = casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(caseTableRowIdx));
                 if (partialCase == null) {
@@ -614,11 +623,11 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
         /**
          * Construct a new SelectionWorker.
-         * 
+         *
          * @param coAtInstances
          * @param abstractFile
          * @param deviceIdStr
-         * @param dataSourceNameStr 
+         * @param dataSourceNameStr
          */
         SelectionWorker(Collection<CorrelationAttributeInstance> coAtInstances, AbstractFile abstractFile, String deviceIdStr, String dataSourceNameStr) {
             this.coAtInstances = coAtInstances;
@@ -632,12 +641,12 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             Map<UniquePathKey, NodeData> correlatedNodeDataMap = new HashMap<>();
             for (CorrelationAttributeInstance corAttr : coAtInstances) {
                 correlatedNodeDataMap.putAll(OtherOccurrences.getCorrelatedInstances(abstractFile, deviceIdStr, dataSourceNameStr, corAttr));
-                
-                if(isCancelled()) {
+
+                if (isCancelled()) {
                     return new HashMap<>();
                 }
             }
-           
+
             return correlatedNodeDataMap;
         }
     }
