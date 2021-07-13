@@ -242,7 +242,15 @@ public class ViewContextAction extends AbstractAction {
         // Classic view
         // Start the search at the DataSourcesNode
         Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
-        Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesNode.getNameIdentifier());
+        if (rootChildren == null) {
+            return null;
+        }
+
+        Node rootDsNode = Stream.of(rootChildren.getNodes(true))
+                .filter(child -> child != null && DataSourcesNode.getNameIdentifier().equals(child.getName()))
+                .findFirst()
+                .orElse(null);
+
         if (rootDsNode != null) {
             for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
                 DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
@@ -300,7 +308,10 @@ public class ViewContextAction extends AbstractAction {
                 }
 
                 // for this data source, get the "Data Sources" child node
-                Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourceFilesNode.getNameIdentifier());
+                Node datasourceGroupingNode = Stream.of(treeNode.getChildren().getNodes(true))
+                        .filter(child -> child != null && DataSourceFilesNode.getNameIdentifier().equals(child.getName()))
+                        .findFirst()
+                        .orElse(null);
 
                 // check whether this is the data source we are looking for
                 Node parentTreeViewNode = findParentNodeInTree(parentContent, datasourceGroupingNode);
@@ -319,10 +330,11 @@ public class ViewContextAction extends AbstractAction {
 
     /**
      * Set the node selection in the tree.
-     * @param content The content to select.
-     * @param parentTreeViewNode The node that is the parent of the content.
+     *
+     * @param content              The content to select.
+     * @param parentTreeViewNode   The node that is the parent of the content.
      * @param treeViewTopComponent The DirectoryTreeTopComponent.
-     * @param treeViewExplorerMgr The ExplorerManager.
+     * @param treeViewExplorerMgr  The ExplorerManager.
      */
     private void setNodeSelection(Content content, Node parentTreeViewNode, DirectoryTreeTopComponent treeViewTopComponent, ExplorerManager treeViewExplorerMgr) {
         /*
@@ -428,7 +440,7 @@ public class ViewContextAction extends AbstractAction {
         Children ancestorChildren = dummyRootNode.getChildren();
 
         // if content is the data source provided, return that.
-        if (ancestorChildren.getNodesCount() == 1 && StringUtils.equals(ancestorChildren.getNodeAt(0).getName(), node.getName())) {
+        if (ancestorChildren.getNodesCount(true) == 1 && StringUtils.equals(ancestorChildren.getNodes()[0].getName(), node.getName())) {
             return node;
         }
 
@@ -440,18 +452,23 @@ public class ViewContextAction extends AbstractAction {
          */
         Children treeNodeChildren = node.getChildren();
         Node parentTreeViewNode = null;
-        for (int i = 0; i < ancestorChildren.getNodesCount(); i++) {
-            Node ancestorNode = ancestorChildren.getNodeAt(i);
-            Node[] treeNodeChilds = treeNodeChildren.getNodes(true);
-            for (int j = 0; j < treeNodeChilds.length; j++) {
-                Node treeNode = treeNodeChilds[j];
-                if (ancestorNode.getName().equals(treeNode.getName())) {
-                    parentTreeViewNode = treeNode;
-                    treeNodeChildren = treeNode.getChildren();
-                    break;
+        Node[] ancestorNodes = ancestorChildren.getNodes(true);
+
+        if (ancestorNodes != null) {
+            for (int i = 0; i < ancestorNodes.length; i++) {
+                Node ancestorNode = ancestorNodes[i];
+                Node[] treeNodeChilds = treeNodeChildren.getNodes(true);
+                for (int j = 0; j < treeNodeChilds.length; j++) {
+                    Node treeNode = treeNodeChilds[j];
+                    if (ancestorNode.getName().equals(treeNode.getName())) {
+                        parentTreeViewNode = treeNode;
+                        treeNodeChildren = treeNode.getChildren();
+                        break;
+                    }
                 }
             }
         }
+
         return parentTreeViewNode;
     }
 
