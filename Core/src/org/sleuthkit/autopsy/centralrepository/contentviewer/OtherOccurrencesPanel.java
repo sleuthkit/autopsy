@@ -85,7 +85,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     private AbstractFile file = null;
 
     private SwingWorker<?, ?> worker;
-    
+
     // Initializing the JFileChooser in a thread to prevent a block on the EDT
     // see https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
     private final FutureTask<JFileChooser> futureFileChooser = new FutureTask<>(JFileChooser::new);
@@ -101,7 +101,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         this.correlationAttributes = new ArrayList<>();
         initComponents();
         customizeComponents();
-        
+
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(futureFileChooser);
     }
@@ -253,9 +253,9 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
     private void saveToCSV() throws NoCurrentCaseException {
         if (casesTableModel.getRowCount() > 0) {
-            
-            if(CSVFileChooser == null) {
-                try{
+
+            if (CSVFileChooser == null) {
+                try {
                     CSVFileChooser = futureFileChooser.get();
                 } catch (InterruptedException | ExecutionException ex) {
                     // If something happened with the thread try and 
@@ -264,7 +264,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     CSVFileChooser = new JFileChooser();
                 }
             }
-            
+
             Calendar now = Calendar.getInstance();
             String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_data_sources.csv", now);
             CSVFileChooser.setCurrentDirectory(new File(Case.getCurrentCaseThrows().getExportDirectory()));
@@ -339,12 +339,13 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                         casesTableModel.addCorrelationCase(NO_ARTIFACTS_CASE);
                     } else if (caseCount == 0) {
                         casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
-                    }
-                    String earliestDate = data.getEarliestCaseDate();
-                    earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
-                    foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getTotalCount(), caseCount, data.getDataSourceCount()));
-                    if (caseCount > 0) {
-                        casesTable.setRowSelectionInterval(0, 0);
+                    } else {
+                        String earliestDate = data.getEarliestCaseDate();
+                        earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
+                        foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getTotalCount(), caseCount, data.getDataSourceCount()));
+                        if (caseCount > 0) {
+                            casesTable.setRowSelectionInterval(0, 0);
+                        }
                     }
 
                 } catch (InterruptedException | ExecutionException ex) {
@@ -389,12 +390,13 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             casesTableModel.addCorrelationCase(NO_ARTIFACTS_CASE);
         } else if (caseCount == 0) {
             casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
-        }
-        String earliestDate = data.getEarliestCaseDate();
-        earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
-        foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getInstanceDataCount(), caseCount, data.getDataSourceCount()));
-        if (caseCount > 0) {
-            casesTable.setRowSelectionInterval(0, 0);
+        } else {
+            String earliestDate = data.getEarliestCaseDate();
+            earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
+            foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getInstanceDataCount(), caseCount, data.getDataSourceCount()));
+            if (caseCount > 0) {
+                casesTable.setRowSelectionInterval(0, 0);
+            }
         }
     }
 
@@ -420,7 +422,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
             return;
         }
-        
+
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         worker = new SelectionWorker(correlationAttributes, file, deviceId, dataSourceName) {
@@ -457,14 +459,14 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                             }
                         }
                     }
-                    if (dataSourcesTable.getRowCount() > 0) {
+                    if (dataSourcesTableModel.getRowCount() > 0) {
                         dataSourcesTable.setRowSelectionInterval(0, 0);
                     }
-                    
+
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 
                 } catch (InterruptedException | ExecutionException ex) {
-                   logger.log(Level.SEVERE, "Failed to update OtherOccurrencesPanel on data source selection", ex); 
+                    logger.log(Level.SEVERE, "Failed to update OtherOccurrencesPanel on data source selection", ex);
                 }
             }
         };
@@ -514,7 +516,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                             }
                         }
                     }
-                    if (filesTable.getRowCount() > 0) {
+                    if (filesTableModel.getRowCount() > 0) {
                         filesTable.setRowSelectionInterval(0, 0);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
@@ -614,11 +616,11 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
         /**
          * Construct a new SelectionWorker.
-         * 
+         *
          * @param coAtInstances
          * @param abstractFile
          * @param deviceIdStr
-         * @param dataSourceNameStr 
+         * @param dataSourceNameStr
          */
         SelectionWorker(Collection<CorrelationAttributeInstance> coAtInstances, AbstractFile abstractFile, String deviceIdStr, String dataSourceNameStr) {
             this.coAtInstances = coAtInstances;
@@ -632,12 +634,12 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             Map<UniquePathKey, NodeData> correlatedNodeDataMap = new HashMap<>();
             for (CorrelationAttributeInstance corAttr : coAtInstances) {
                 correlatedNodeDataMap.putAll(OtherOccurrences.getCorrelatedInstances(abstractFile, deviceIdStr, dataSourceNameStr, corAttr));
-                
-                if(isCancelled()) {
+
+                if (isCancelled()) {
                     return new HashMap<>();
                 }
             }
-           
+
             return correlatedNodeDataMap;
         }
     }
