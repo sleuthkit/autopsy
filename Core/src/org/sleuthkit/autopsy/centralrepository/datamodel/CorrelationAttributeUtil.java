@@ -36,6 +36,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -192,7 +194,11 @@ public class CorrelationAttributeUtil {
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
                     BlackboardAttribute setNameAttr = sourceArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH));
+                    String pathAttrString = null;
                     if (setNameAttr != null) {
+                        pathAttrString = setNameAttr.getValueString();
+                    }
+                    if (pathAttrString != null && !pathAttrString.isEmpty()) {
                         makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID);                        
                     } else {
                         makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID);
@@ -221,7 +227,7 @@ public class CorrelationAttributeUtil {
         }
         return correlationAttrs;
     }
-
+    
     /**
      * Makes a correlation attribute instance from a phone number attribute of
      * an artifact.
@@ -389,9 +395,17 @@ public class CorrelationAttributeUtil {
     private static CorrelationAttributeInstance makeCorrAttr(BlackboardArtifact artifact, CorrelationAttributeInstance.Type correlationType, String value) {
         try {
             Case currentCase = Case.getCurrentCaseThrows();
-            AbstractFile bbSourceFile = currentCase.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
-            if (null == bbSourceFile) {
-                logger.log(Level.SEVERE, "Error creating artifact instance. Abstract File was null."); // NON-NLS
+            Content sourceContent = currentCase.getSleuthkitCase().getContentById(artifact.getObjectID());
+            if (null == sourceContent) {
+               logger.log(Level.SEVERE, "Error creating artifact instance of type {0}. Failed to load content with ID: {1} associated with artifact with ID: {2}", 
+                        new Object[]{correlationType.getDisplayName(), artifact.getObjectID(), artifact.getId()}); // NON-NLS
+                return null;
+            }
+            
+            Content ds = sourceContent.getDataSource();
+            if (ds == null) {
+                logger.log(Level.SEVERE, "Error creating artifact instance of type {0}. Failed to load data source for content with ID: {1}", 
+                        new Object[]{correlationType.getDisplayName(), artifact.getObjectID()}); // NON-NLS
                 return null;
             }
 
@@ -401,17 +415,24 @@ public class CorrelationAttributeUtil {
                         correlationType,
                         value,
                         correlationCase,
-                        CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
+                        CorrelationDataSource.fromTSKDataSource(correlationCase, ds),
                         "",
                         "",
                         TskData.FileKnown.UNKNOWN,
-                        bbSourceFile.getId());
+                        sourceContent.getId());
             } else {
+                if (! (sourceContent instanceof AbstractFile)) {
+                    logger.log(Level.SEVERE, "Error creating artifact instance of type {0}. Source content of artifact with ID: {1} is not an AbstractFile", 
+                            new Object[]{correlationType.getDisplayName(), artifact.getId()});
+                    return null;
+                }
+                AbstractFile bbSourceFile = (AbstractFile) sourceContent;
+                
                 return new CorrelationAttributeInstance(
                     correlationType,
                     value,
                     correlationCase,
-                    CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
+                    CorrelationDataSource.fromTSKDataSource(correlationCase, ds),
                     bbSourceFile.getParentPath() + bbSourceFile.getName(),
                     "",
                     TskData.FileKnown.UNKNOWN,

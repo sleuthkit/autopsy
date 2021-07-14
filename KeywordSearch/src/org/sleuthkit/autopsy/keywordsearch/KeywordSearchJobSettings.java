@@ -147,7 +147,6 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
     }
 
     /**
-     * @inheritDoc
      */
     @Override
     public long getVersionNumber() {

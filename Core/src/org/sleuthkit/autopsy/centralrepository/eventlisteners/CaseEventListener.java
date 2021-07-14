@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2017-2020 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -64,9 +62,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.OsAccount;
@@ -678,7 +676,9 @@ public final class CaseEventListener implements PropertyChangeListener {
 
         @Override
         public void run() {
-            if (!CentralRepository.isEnabled()) {
+            //Nothing to do here if the central repo is not enabled or if ingest is running but is set to not save data/make artifacts
+            if (!CentralRepository.isEnabled() 
+                    || (IngestManager.getInstance().isIngestRunning() && !(IngestEventsListener.isFlagSeenDevices() || IngestEventsListener.shouldCreateCrProperties()))) {
                 return;
             }
 
@@ -706,32 +706,36 @@ public final class CaseEventListener implements PropertyChangeListener {
                                 TskData.FileKnown.KNOWN,
                                 osAccount.getId());
 
-                        dbManager.addArtifactInstance(correlationAttributeInstance);
+                        // Save to the database if requested
+                        if(IngestEventsListener.shouldCreateCrProperties()) {
+                            dbManager.addArtifactInstance(correlationAttributeInstance);
+                        }
 
-                        List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID), correlationAttributeInstance.getCorrelationValue());
-                        List<String> caseDisplayNames;
-                        for (CorrelationAttributeInstance instance : previousOccurences) {
-                            if (!instance.getCorrelationCase().getCaseUUID().equals(correlationAttributeInstance.getCorrelationCase().getCaseUUID())) {
-                                caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(correlationAttributeInstance.getCorrelationType(), correlationAttributeInstance.getCorrelationValue());
-                                SleuthkitCase tskCase = osAccount.getSleuthkitCase();
-                                Blackboard blackboard = tskCase.getBlackboard();
+                        // Look up and create artifacts for previously seen accounts if requested
+                        if (IngestEventsListener.isFlagSeenDevices()) {
+                            List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID), correlationAttributeInstance.getCorrelationValue());
+                            for (CorrelationAttributeInstance instance : previousOccurences) {
+                                if (!instance.getCorrelationCase().getCaseUUID().equals(correlationAttributeInstance.getCorrelationCase().getCaseUUID())) {
+                                    SleuthkitCase tskCase = osAccount.getSleuthkitCase();
+                                    Blackboard blackboard = tskCase.getBlackboard();
 
-                                Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
-                                        new BlackboardAttribute(
-                                                TSK_SET_NAME, MODULE_NAME,
-                                                Bundle.CaseEventsListener_prevExists_text()),
-                                        new BlackboardAttribute(
-                                                TSK_COMMENT, MODULE_NAME,
-                                                Bundle.CaseEventsListener_prevCaseComment_text()));
-                                BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
-                                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE,
-                                        null, Bundle.CaseEventsListener_prevExists_text(), null, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
-                                try {
-                                    // index the artifact for keyword search
-                                    blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
-                                    break;
-                                } catch (Blackboard.BlackboardException ex) {
-                                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
+                                    Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
+                                            new BlackboardAttribute(
+                                                    TSK_SET_NAME, MODULE_NAME,
+                                                    Bundle.CaseEventsListener_prevExists_text()),
+                                            new BlackboardAttribute(
+                                                    TSK_COMMENT, MODULE_NAME,
+                                                    Bundle.CaseEventsListener_prevCaseComment_text()));
+                                    BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
+                                            BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE,
+                                            null, Bundle.CaseEventsListener_prevExists_text(), null, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
+                                    try {
+                                        // index the artifact for keyword search
+                                        blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
+                                        break;
+                                    } catch (Blackboard.BlackboardException ex) {
+                                        LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
+                                    }
                                 }
                             }
                         }
