@@ -676,8 +676,9 @@ public final class CaseEventListener implements PropertyChangeListener {
 
         @Override
         public void run() {
-            //Nothing to do here if the central repo is not enabled or the ingest is running and the setting to flag previously seen devices and users is not set to true
-            if (!CentralRepository.isEnabled() || (IngestManager.getInstance().isIngestRunning() && !IngestEventsListener.isFlagSeenDevices())) {
+            //Nothing to do here if the central repo is not enabled or if ingest is running but is set to not save data/make artifacts
+            if (!CentralRepository.isEnabled() 
+                    || (IngestManager.getInstance().isIngestRunning() && !(IngestEventsListener.isFlagSeenDevices() || IngestEventsListener.shouldCreateCrProperties()))) {
                 return;
             }
 
@@ -705,30 +706,36 @@ public final class CaseEventListener implements PropertyChangeListener {
                                 TskData.FileKnown.KNOWN,
                                 osAccount.getId());
 
-                        dbManager.addArtifactInstance(correlationAttributeInstance);
+                        // Save to the database if requested
+                        if(IngestEventsListener.shouldCreateCrProperties()) {
+                            dbManager.addArtifactInstance(correlationAttributeInstance);
+                        }
 
-                        List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID), correlationAttributeInstance.getCorrelationValue());
-                        for (CorrelationAttributeInstance instance : previousOccurences) {
-                            if (!instance.getCorrelationCase().getCaseUUID().equals(correlationAttributeInstance.getCorrelationCase().getCaseUUID())) {
-                                SleuthkitCase tskCase = osAccount.getSleuthkitCase();
-                                Blackboard blackboard = tskCase.getBlackboard();
+                        // Look up and create artifacts for previously seen accounts if requested
+                        if (IngestEventsListener.isFlagSeenDevices()) {
+                            List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID), correlationAttributeInstance.getCorrelationValue());
+                            for (CorrelationAttributeInstance instance : previousOccurences) {
+                                if (!instance.getCorrelationCase().getCaseUUID().equals(correlationAttributeInstance.getCorrelationCase().getCaseUUID())) {
+                                    SleuthkitCase tskCase = osAccount.getSleuthkitCase();
+                                    Blackboard blackboard = tskCase.getBlackboard();
 
-                                Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
-                                        new BlackboardAttribute(
-                                                TSK_SET_NAME, MODULE_NAME,
-                                                Bundle.CaseEventsListener_prevExists_text()),
-                                        new BlackboardAttribute(
-                                                TSK_COMMENT, MODULE_NAME,
-                                                Bundle.CaseEventsListener_prevCaseComment_text()));
-                                BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
-                                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE,
-                                        null, Bundle.CaseEventsListener_prevExists_text(), null, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
-                                try {
-                                    // index the artifact for keyword search
-                                    blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
-                                    break;
-                                } catch (Blackboard.BlackboardException ex) {
-                                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
+                                    Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
+                                            new BlackboardAttribute(
+                                                    TSK_SET_NAME, MODULE_NAME,
+                                                    Bundle.CaseEventsListener_prevExists_text()),
+                                            new BlackboardAttribute(
+                                                    TSK_COMMENT, MODULE_NAME,
+                                                    Bundle.CaseEventsListener_prevCaseComment_text()));
+                                    BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
+                                            BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE,
+                                            null, Bundle.CaseEventsListener_prevExists_text(), null, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
+                                    try {
+                                        // index the artifact for keyword search
+                                        blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
+                                        break;
+                                    } catch (Blackboard.BlackboardException ex) {
+                                        LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
+                                    }
                                 }
                             }
                         }
