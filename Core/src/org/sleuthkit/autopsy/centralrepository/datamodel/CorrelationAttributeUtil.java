@@ -194,7 +194,11 @@ public class CorrelationAttributeUtil {
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
                     BlackboardAttribute setNameAttr = sourceArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH));
+                    String pathAttrString = null;
                     if (setNameAttr != null) {
+                        pathAttrString = setNameAttr.getValueString();
+                    }
+                    if (pathAttrString != null && !pathAttrString.isEmpty()) {
                         makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID);                        
                     } else {
                         makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID);
@@ -223,7 +227,7 @@ public class CorrelationAttributeUtil {
         }
         return correlationAttrs;
     }
-
+    
     /**
      * Makes a correlation attribute instance from a phone number attribute of
      * an artifact.
