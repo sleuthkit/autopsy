@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2020 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,18 +27,16 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
 
 @Immutable
 @ServiceProvider(service = ManifestFileParser.class)
@@ -50,6 +47,7 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
     private static final String CASE_NAME_XPATH = "/AutopsyManifest/CaseName/text()";
     private static final String DEVICE_ID_XPATH = "/AutopsyManifest/DeviceId/text()";
     private static final String DATA_SOURCE_NAME_XPATH = "/AutopsyManifest/DataSource/text()";
+    private static final Logger logger = Logger.getLogger(AutopsyManifestFileParser.class.getName());
 
     @Override
     public boolean fileIsManifest(Path filePath) {
@@ -78,6 +76,7 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
             } catch (Exception ex) {
                 // If the above call to createManifestDOM threw an exception
                 // try to fix the given XML file.
+                logger.log(Level.WARNING, String.format("Failed to create DOM for manifest at %s, attempting repair", filePath), ex);                
                 tempPath = ManifestFileParser.makeTidyManifestFile(filePath);
                 doc = ManifestFileParser.createManifestDOM(tempPath);
             }
