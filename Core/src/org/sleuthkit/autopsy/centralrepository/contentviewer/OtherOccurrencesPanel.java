@@ -329,8 +329,9 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     }
 
                     casesTableModel.clearTable();
-
-                    OtherOccurrenceOneTypeWorker.OneTypeData data = get();
+                    
+                    OtherOccurrenceOneTypeWorker.OneTypeData data = get();   
+                    correlationAttributes.addAll(data.getCorrelationAttributesToAdd());
                     for (CorrelationCase corCase : data.getCaseNames().values()) {
                         casesTableModel.addCorrelationCase(new CorrelationCaseWrapper(corCase));
                     }
