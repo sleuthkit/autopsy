@@ -75,9 +75,9 @@ Les fichiers des ruches de la Base de registre peuvent être affichés dans un f
 
 \image html content_viewer_registry.png
 
-\section cv_metadata File Metadata
+\section cv_metadata File Metadata / Source File Metadata
 
-L'onglet "File Metadata" affiche des informations de base sur le fichier, telles que le type, la taille et le hachage. Il affiche également la sortie de l'outil istat du Sleuth Kit.
+L'onglet "File Metadata" affiche des informations de base sur le fichier sélectionné ou le fichier associé au résultat, telles que le type, la taille et le hachage. Il affiche également la sortie de l'outil istat du Sleuth Kit.
 
 \image html content_viewer_metadata.png
 
@@ -87,13 +87,19 @@ L'onglet "OS Accounts" affiche des informations sur le compte du système d'expl
 
 \image html content_viewer_os_account.png
 
-\section cv_results Results
+\section cv_results Data Artifacts
 
-L'onglet "Results" est activé lors de la sélection d'éléments avec des résultats associés tels que des hits sur des mots clés, des journaux d'appels et des messages. Les champs exacts affichés dépendent du type de résultat. Les deux images ci-dessous montrent l'onglet "Results" pour un journal d'appels et un signet Web.
+L'onglet "Data Artifacts" affiche les artefacts associés à l'élément sélectionné dans la visionneuse de résultats, tels que des signets Web, des journaux d'appels et des messages. Les champs exacts affichés dépendent du type d'artefact de données. Les deux images ci-dessous montrent l'onglet "Data Artifacts" pour un journal d'appels et un signet Web.
 
 \image html content_viewer_results_call.png
 <br>
 \image html content_viewer_results_bookmark.png
+
+\section cv_analysis_results Analysis Results
+
+L'onglet "Analysis Results" affiche tous les résultats d'analyse associés à l'élément sélectionné dans la visionneuse de résultats. Si vous sélectionnez un résultat d'analyse, la liste défilera automatiquement jusqu'à ce résultat. Ces résultats d'analyse proviennent de données telles que les résultats de recherches de hachage, les éléments intéressants et les résultats de recherches de mots clés. L'image ci-dessous montre les résultats de l'analyse des catégories Web.
+
+\image html content_viewer_analysis_result_webcat.png
 
 \section cv_context Context
 
