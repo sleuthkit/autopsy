@@ -141,11 +141,14 @@ public class PortableCaseReportModule implements ReportModule {
     // Map of old artifact ID to new artifact
     private final Map<Long, BlackboardArtifact> oldArtifactIdToNewArtifact = new HashMap<>();
     
-    // Map of old OS account id to new OS account id
-    private final Map<Long, Long> oldOsAccountIdToNewOsAccountId = new HashMap<>();
+    // Map of old OS account id to new OS account
+    private final Map<Long, OsAccount> oldOsAccountIdToNewOsAccount = new HashMap<>();
     
      // Map of old OS account realm id to new OS account ream id
     private final Map<Long, OsAccountRealm> oldRealmIdToNewRealm = new HashMap<>();   
+    
+    // Map of the old host id to the new host
+    private final Map<Long, Host> oldHostIdToNewHost = new HashMap<>();
 
     public PortableCaseReportModule() {
     }
@@ -988,6 +991,24 @@ public class PortableCaseReportModule implements ReportModule {
                     throw new TskCoreException("Unexpected attribute value type found: " + oldAttr.getValueType().getLabel()); // NON-NLS
             }
         }
+        
+        // Figure out the data source ID. We can't always get it from newContent because it could be null
+        // for OS accounts, which means we also can't assume it's been added to the case already.
+        Long newDataSourceId;
+        if (newIdToContent.get(newContentId).getDataSource() != null) {
+            // We can use the new content to get the id since the data source is in its parent hierarchy.
+            // Everything would have already been copied to the portable case.
+            newDataSourceId = newIdToContent.get(newContentId).getDataSource().getId();
+        } else {
+            // The newContent has no data source parent, so we'll have to use the old artifact.
+            if (artifactToCopy.getDataSource() == null) {
+                // Shouldn't happen with the current code
+                throw new TskCoreException("Can not copy artifact with ID: " + artifactToCopy.getArtifactID() + " because it is not associated with a data source");
+            }
+            newDataSourceId = copyContent(artifactToCopy.getDataSource());
+        }
+        
+        
         // Create the new artifact
         int newArtifactTypeId = getNewArtifactTypeId(artifactToCopy);
         BlackboardArtifact.Type newArtifactType = portableSkCase.getBlackboard().getArtifactType(newArtifactTypeId);
@@ -1017,7 +1038,7 @@ public class PortableCaseReportModule implements ReportModule {
             if (artifactToCopy instanceof AnalysisResult) {
                 AnalysisResult analysisResultToCopy = (AnalysisResult) artifactToCopy;
                 newArtifact = portableSkCase.getBlackboard().newAnalysisResult(newArtifactType, newContentId,
-                        newIdToContent.get(newContentId).getDataSource().getId(), analysisResultToCopy.getScore(), 
+                        newDataSourceId, analysisResultToCopy.getScore(), 
                         analysisResultToCopy.getConclusion(), analysisResultToCopy.getConfiguration(), 
                         analysisResultToCopy.getJustification(), newAttrs).getAnalysisResult();
             } else if (artifactToCopy instanceof DataArtifact) {
@@ -1025,19 +1046,19 @@ public class PortableCaseReportModule implements ReportModule {
                 Long newOsAccountId = null;
                 if (dataArtifactToCopy.getOsAccountObjectId().isPresent()) {
                     copyOsAccount(dataArtifactToCopy.getOsAccountObjectId().get());
-                    newOsAccountId = oldOsAccountIdToNewOsAccountId.get((dataArtifactToCopy.getOsAccountObjectId().get()));
+                    newOsAccountId = oldOsAccountIdToNewOsAccount.get((dataArtifactToCopy.getOsAccountObjectId().get())).getId();
                 }
                 newArtifact = portableSkCase.getBlackboard().newDataArtifact(newArtifactType, newContentId, 
-                        newIdToContent.get(newContentId).getDataSource().getId(), 
+                        newDataSourceId, 
                         newAttrs, newOsAccountId);
             } else {
                 if (newArtifactType.getCategory().equals(BlackboardArtifact.Category.ANALYSIS_RESULT)) {
                     newArtifact = portableSkCase.getBlackboard().newAnalysisResult(newArtifactType, newContentId,
-                        newIdToContent.get(newContentId).getDataSource().getId(), Score.SCORE_NONE, 
+                        newDataSourceId, Score.SCORE_NONE, 
                         null, null, null, newAttrs).getAnalysisResult();
                 } else {
                     newArtifact = portableSkCase.getBlackboard().newDataArtifact(newArtifactType, newContentId, 
-                        newIdToContent.get(newContentId).getDataSource().getId(), 
+                        newDataSourceId, 
                         newAttrs, null);
                 }
             }    
@@ -1144,13 +1165,13 @@ public class PortableCaseReportModule implements ReportModule {
         if (content instanceof BlackboardArtifact) {
             BlackboardArtifact artifactToCopy = (BlackboardArtifact) content;
             newContent = copyArtifact(parentId, artifactToCopy);
+        } else if (content instanceof OsAccount) {
+            newContent = copyOsAccount(content.getId());
         } else {
-            
             // Get or create the host (if needed) before beginning transaction.
             Host newHost = null;
             if (content instanceof DataSource) {
-                Host oldHost = ((DataSource)content).getHost();
-                newHost = portableSkCase.getHostManager().newHost(oldHost.getName());
+                newHost = copyHost(((DataSource)content).getHost());
             }
             
             // Copy the associated OS account (if needed) before beginning transaction.
@@ -1161,12 +1182,22 @@ public class PortableCaseReportModule implements ReportModule {
                 }
             }
             
+            // Load the hashes if we have an image to avoid getting new connections with an open transaction.
+            String md5 = "";
+            String sha1 = "";
+            String sha256 = "";
+            if (content instanceof Image) {
+                md5 = ((Image) content).getMd5();
+                sha1 = ((Image) content).getSha1();
+                sha256 = ((Image) content).getSha256();
+            }
+            
             CaseDbTransaction trans = portableSkCase.beginTransaction();
             try {
                 if (content instanceof Image) {
                     Image image = (Image) content;
                     newContent = portableSkCase.addImage(image.getType(), image.getSsize(), image.getSize(), image.getName(),
-                            new ArrayList<>(), image.getTimeZone(), image.getMd5(), image.getSha1(), image.getSha256(), image.getDeviceId(), newHost, trans);
+                            new ArrayList<>(), image.getTimeZone(), md5, sha1, sha256, image.getDeviceId(), newHost, trans);
                 } else if (content instanceof VolumeSystem) {
                     VolumeSystem vs = (VolumeSystem) content;
                     newContent = portableSkCase.addVolumeSystem(parentId, vs.getType(), vs.getOffset(), vs.getBlockSize(), trans);
@@ -1215,7 +1246,7 @@ public class PortableCaseReportModule implements ReportModule {
 
                                 Long newOsAccountId = null;
                                 if (abstractFile.getOsAccountObjectId().isPresent()) {
-                                    newOsAccountId = oldOsAccountIdToNewOsAccountId.get(abstractFile.getOsAccountObjectId().get());
+                                    newOsAccountId = oldOsAccountIdToNewOsAccount.get(abstractFile.getOsAccountObjectId().get()).getId();
                                 }
                                 
                                 newContent = portableSkCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
@@ -1247,15 +1278,34 @@ public class PortableCaseReportModule implements ReportModule {
     }
     
     /**
+     * Copy a host into the portable case and add it to the oldHostIdToNewHost map.
+     * 
+     * @param oldHost The host to copy
+     * 
+     * @return The new host
+     * @throws TskCoreException 
+     */
+    private Host copyHost(Host oldHost) throws TskCoreException {
+        Host newHost;
+        if (oldHostIdToNewHost.containsKey(oldHost.getHostId())) {
+            newHost = oldHostIdToNewHost.get(oldHost.getHostId());
+        } else {
+            newHost = portableSkCase.getHostManager().newHost(oldHost.getName());
+            oldHostIdToNewHost.put(oldHost.getHostId(), newHost);
+        }
+        return newHost;
+    }
+    
+    /**
      * Copy an OS Account to the new case and add it to the oldOsAccountIdToNewOsAccountId map.
      * Will also copy the associated realm.
      * 
      * @param oldOsAccountId The OS account id in the current case.
      */
-    private void copyOsAccount(Long oldOsAccountId) throws TskCoreException {
+    private OsAccount copyOsAccount(Long oldOsAccountId) throws TskCoreException {
         // If it has already been copied, we're done.
-        if (oldOsAccountIdToNewOsAccountId.containsKey(oldOsAccountId)) {
-            return;
+        if (oldOsAccountIdToNewOsAccount.containsKey(oldOsAccountId)) {
+            return oldOsAccountIdToNewOsAccount.get(oldOsAccountId);
         }
         
         // Load the OS account from the current case.
@@ -1270,18 +1320,16 @@ public class PortableCaseReportModule implements ReportModule {
         if (!oldRealmIdToNewRealm.containsKey(oldOsAccount.getRealmId())) {
             OsAccountRealmManager newRealmManager = portableSkCase.getOsAccountRealmManager();
             
-            Host host = null;
+            Host newHost = null;
             if (oldRealm.getScopeHost().isPresent()) {
-                host = oldRealm.getScopeHost().get();
+                Host host = oldRealm.getScopeHost().get();
+                newHost = copyHost(host);
             } else {
                 if (oldRealm.getScope().equals(OsAccountRealm.RealmScope.DOMAIN)) {
-                    // This is a workaround to get around needing a new method for copying the realm.
-                    // The host won't be stored since it's a domain-scoped realm.
-                    List<Host> hosts = portableSkCase.getHostManager().getAllHosts();
-                    if (hosts.isEmpty()) {
-                        throw new TskCoreException("Failed to copy OsAccountRealm with ID=" + oldOsAccount.getRealmId() + " because there are no hosts in the case");
-                    }
-                    host = hosts.get(0);
+                    // There is currently no way to get a domain-scoped host in Autopsy. When this changes
+                    // we will need to update this code. This will require a new version of newWindowsRealm() that
+                    // does not require a host, or some other way to create a realm with no host.
+                    throw new TskCoreException("Failed to copy OsAccountRealm with ID=" + oldOsAccount.getRealmId() + " - can not currently handle domain-scoped hosts");
                 } else {
                     throw new TskCoreException("Failed to copy OsAccountRealm with ID=" + oldOsAccount.getRealmId() + " because it is non-domain scoped but has no scope host");
                 }
@@ -1295,7 +1343,7 @@ public class PortableCaseReportModule implements ReportModule {
             }
 
             try {
-                OsAccountRealm newRealm = newRealmManager.newWindowsRealm(oldRealm.getRealmAddr().orElse(null), realmName, host, oldRealm.getScope());
+                OsAccountRealm newRealm = newRealmManager.newWindowsRealm(oldRealm.getRealmAddr().orElse(null), realmName, newHost, oldRealm.getScope());
                 oldRealmIdToNewRealm.put(oldOsAccount.getRealmId(), newRealm);
             } catch (NotUserSIDException ex) {
                 throw new TskCoreException("Failed to copy OsAccountRealm with ID=" + oldOsAccount.getRealmId(), ex);
@@ -1306,7 +1354,8 @@ public class PortableCaseReportModule implements ReportModule {
         try {
             OsAccount newOsAccount = newOsAcctManager.newWindowsOsAccount(oldOsAccount.getAddr().orElse(null), 
                 oldOsAccount.getLoginName().orElse(null), oldRealmIdToNewRealm.get(oldOsAccount.getRealmId()));
-            oldOsAccountIdToNewOsAccountId.put(oldOsAccountId, newOsAccount.getId());
+            oldOsAccountIdToNewOsAccount.put(oldOsAccountId, newOsAccount);
+            return newOsAccount;
         } catch (NotUserSIDException ex) {
             throw new TskCoreException("Failed to copy OsAccount with ID=" + oldOsAccount.getId(), ex);
         }
@@ -1489,8 +1538,9 @@ public class PortableCaseReportModule implements ReportModule {
         oldArtTypeIdToNewArtTypeId.clear();
         oldAttrTypeIdToNewAttrType.clear();
         oldArtifactIdToNewArtifact.clear();
-        oldOsAccountIdToNewOsAccountId.clear();
+        oldOsAccountIdToNewOsAccount.clear();
         oldRealmIdToNewRealm.clear();
+        oldHostIdToNewHost.clear();
 
         closePortableCaseDatabase();
 
