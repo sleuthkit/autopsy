@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 
@@ -153,7 +154,7 @@ final class AddRawImageTask implements Runnable {
             /*
              * Get Image that will be added to case
              */
-            Image dataSource = caseDatabase.addImageInfo(0, imageFilePaths, timeZone, host); //TODO: change hard coded deviceId.
+            Image dataSource = SleuthkitJNI.addImageToDatabase(caseDatabase, imageFilePaths.stream().toArray(String[]::new), 0, timeZone, null, null, null, deviceId);
             dataSources.add(dataSource);
             List<TskFileRange> fileRanges = new ArrayList<>();
             
