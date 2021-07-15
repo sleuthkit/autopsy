@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,9 +79,9 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
     }
 
     /**
-     * Determine whether the content viewer which displays this panel isSupported.
-     * This panel is supported if any of the TextViewer's displayed in it are
-     * supported.
+     * Determine whether the content viewer which displays this panel
+     * isSupported. This panel is supported if any of the TextViewer's displayed
+     * in it are supported.
      *
      * @param node
      *
@@ -213,7 +213,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
 
         // Get and set current selected tab
         int currentTab = pane.getSelectedIndex();
-        if (currentTab != -1) {
+        if (currentTab != -1 && pane.isEnabledAt(currentTab)) {
             UpdateWrapper dcv = textViewers.get(currentTab);
             if (dcv.isOutdated()) {
                 // change the cursor to "waiting cursor" for this operation

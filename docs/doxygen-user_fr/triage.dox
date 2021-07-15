@@ -1,0 +1,104 @@
+﻿/*! \page triage_page Triage
+
+[TOC]
+
+
+\section triage_overview Aperçu
+
+Parfois, vous devez prendre une décision rapide sur un ou plusieurs systèmes et vous n'avez ni le temps ni les ressources pour créer des images complètes. Par exemple, lors d'une perquisition, vous voulez savoir s'il existe des données notables sur le système. Ou vous êtes à un endroit avec de nombreux systèmes et vous voulez savoir lesquels doivent être analysés en premier. Autopsy a des fonctionnalités qui vous permettront de trouver rapidement les données d'intérêt sans faire des images complètes des appareils. Ces fonctionnalités seront décrites ci-dessous, suivies de quelques exemples de scénarios qui montrent comment tout assembler.
+
+\section triage_features Caractéristiques liées au triage
+
+Il existe de nombreuses fonctionnalités d'Autopsy qui peuvent entrer en jeu dans une situation de triage. Certaines vous aident à traiter au plus tôt les fichiers les plus susceptibles d'être pertinents, et d'autres vous permettent de continuer à analyser les données après la déconnexion du système cible.
+
+\subsection triage_prioritization Priorisation
+
+L'objectif est de trouver d'abord les fichiers les plus importants lorsque le temps d'analyse d'un système est limité. Autopsy s'exécute toujours en premier sur les dossiers de l'utilisateur (le cas échéant), car dans de nombreuses situations, ce sont les dossiers les plus susceptibles de contenir des données d'intérêt.
+
+\image html triage/pipelineFolders.png
+
+\subsection triage_file_filter Filtres de fichiers
+
+Dans certains cas particuliers, vous pouvez connaître les types de fichiers spécifiques qui vous intéressent. Par exemple, si vous êtes uniquement intéressé par la recherche d'images, vous pouvez gagner du temps en n'analysant aucun fichier non image. Cela permettra à un système d'être traité beaucoup plus rapidement que si vous analysiez chaque fichier.
+
+\image html triage/fileFilterImage.png
+
+Les filtres de fichiers vous permettent de limiter les types de fichiers qui seront traités. La section \ref file_filters de la page relative aux \ref ingest_page montre comment créer un filtre de fichiers. Vous pouvez filtrer sur le nom/l'extension du fichier, le chemin ou la date à laquelle le fichier a été récemment modifié. Une fois enregistré, votre nouveau filtre de fichiers peut être sélectionné lors de la configuration des modules d'acquisition.
+
+\image html triage/fileFilter.png
+
+\subsection triage_profile Profils d'acquisition
+
+Une autre façon d'accélérer l'analyse consiste à n'exécuter que certains des modules d'acquisition. Par exemple, si nous ne nous intéressons qu'aux images, il peut être inutile d'exécuter le module \ref keyword_search_page ou le module \ref encryption_page. Vous pouvez sélectionner et configurer manuellement et à chaque fois les modules que vous souhaitez exécuter, mais comme de nombreuses sessions sont similaires, il peut être plus facile de configurer un profil d'acquisition. Un profil d'acquisition vous permet de stocker le filtre de fichiers que vous souhaitez exécuter, les modules d'acquisition qui doivent être activés et votre configuration pour chaque module d'acquisition.
+
+\image html triage/ingestProfile.png
+
+Une fois que vous avez configuré au moins un profil d'acquisition, un nouvel écran apparaîtra avant le panneau de configuration normal des modules d'acquisition. Si vous choisissez votre profil défini par l'utilisateur, le panneau de configuration des modules d'acquisition sera entièrement ignoré et les modules d'acquisition de ce profil seront exécutés sur la source de données.
+
+\image html triage/profileSelect.png
+
+Voir la section \ref ingest_profiles de la page \ref ingest_page pour plus d'informations sur la configuration et l'utilisation d'un profil d'acquisition.
+
+\subsection triage_no_image Exécution sur des systèmes et des périphériques en fonctionnement
+
+Dans une situation de triage, il n'y a généralement pas le temps de faire une image complète du système en question. Il existe plusieurs façons de traiter des systèmes et des appareils allumés avec Autopsy:
+
+<ul>
+<li> Les périphériques tels que les clés USB peuvent être analysés en tant que disques locaux sans avoir besoin de créer un fichier image. Voir la section \ref ds_local pour plus de détails.
+<li> Un lecteur de triage en direct peut être créé qui vous permettra d'exécuter Autopsy à partir d'un lecteur USB sur un système allumé. Toutes les données du cas seront enregistrées sur la clé USB avec des modifications minimes sur le système analysé. Voir \ref live_triage_page pour plus de détails.
+<li> L'ordinateur cible peut être démarré à partir d'une clé USB Linux ou Windows de confiance et Autopsy peut être exécutée à partir de celle-ci. <a href="https://sumuri.com/software/paladin/">Paladin</a> inclut Autopsy dans sa clé USB Linux bootable et une image Windows FE peut également être créée. 
+</ul>
+
+\subsubsection triage_vhd Créer une image sparse
+
+Avec les méthodes énumérées ci-dessus pour analyser les systèmes et les périphériques en direct, un problème persiste: votre cas Autopsy ne sera pas très utile après la déconnexion du lecteur. Il fera référence à un appareil qui n'existe plus et, plus important encore, vous pourriez ne pas avoir de copie des fichiers d'intérêt que vous avez observés lors du triage.
+
+Pour résoudre ce problème, vous pouvez choisir de faire un "sparse VHD" lorsque Autopsie traite l’appareil. Cela enregistrera une copie de chaque secteur lu par Autopsy, qui comprendra les structures du système de fichiers (telles que les Master File Tables) et les fichiers qui ont été analysés par les filtres d'acquisition (telles que toutes les images).
+
+VHD est un format de fichier utilisé par les machines virtuelles Microsoft qui est lisible par Windows et d'autres outils d'investigation. La taille du disque dur virtuel augmentera au fur et à mesure qu'Autopsy lit les données à partir du lecteur cible.
+
+Pour créer un VHD sparse, cochez la case "Make a VHD image..." lors de la sélection du disque à analyser.
+
+\image html triage/createVHD.png
+
+\section triage_scenarios Scénarios
+
+\subsection triage_scen1 Scénario: Prévisualisation d'un ordinateur pour la recherche de contenu pédo-pornographique
+
+Dans ce scénario, vous essayez de déterminer si des images d'exploitation d'enfants existent dans une situation de perquisition où vous disposerez d'un temps limité avec le système cible.
+
+<b>Préparation au bureau:</b>
+<ul>
+<li> Créez un \ref live_triage_page "support de triage en direct" sur votre clé USB
+<li> Lancez Autopsy à partir de cette clé USB et créez un \ref ingest_profiles "profil d'acquisition" qui:
+<ul>
+<li> Utilise un \ref file_filters "filtre de fichiers" qui ne s'appliquera que sur les extensions d'image et ZIP
+<li> Exécute uniquement les modules \ref hash_db_page, \ref EXIF_parser_page, \ref file_type_identification_page et \ref embedded_file_extractor_page 
+<li> Utilise les ensembles de hachage connus de fichiers pédo-pornographiques, en suivant les instructions de la section \ref live_triage_hash_db pour les copier sur la clé USB
+</ul>
+</ul>
+
+<b>Sur les lieux de la perquisition:</b>
+<ul>
+<li>Démarrez l'analyse:
+<ul>
+ <li>Branchez le lecteur de triage en direct que vous avez créé au bureau sur l'ordinateur du suspect
+ <li>Lancer Autopsy à partir du fichier .bat
+ <li>\ref cases_page "Créer un cas" (enregistrement sur votre clé USB)
+ <li>Ajouter en \ref ds_local "source de données le lecteur local"
+ <ul>
+  <li>"C:"
+  <li>Choisissez de créer un VHD et de conserver l'emplacement par défaut
+ </ul>
+</ul>
+<li>Au fur et à mesure que l'analyse automatisée se poursuit:
+<ul>
+ <li>Choisissez View->File Types->Images dans l'\ref tree_viewer_page "arborescence" et passez en revue les miniatures
+ <li>Attendez les hits de l'ensemble de hachage
+ <li>Examinez les fichiers EXIF
+ <li>\ref tagging_page "Marquez" tous les fichiers notables trouvés
+</ul>
+<li>Vous pouvez arrêter l'analyse à tout moment. Toutes les données lues jusqu'à présent seront dans le fichier VHD.
+</ul>
+
+*/

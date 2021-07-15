@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
-import java.awt.Insets;
 import java.util.List;
 
 /**
@@ -71,11 +70,6 @@ public interface GuiCellModel extends CellModel {
             return action;
         }
     }
-
-    /**
-     * @return The insets for the cell text.
-     */
-    Insets getInsets();
 
     /**
      * @return The popup menu associated with this cell or null if no popup menu

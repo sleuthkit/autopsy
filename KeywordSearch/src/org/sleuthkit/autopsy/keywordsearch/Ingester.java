@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
@@ -63,6 +64,7 @@ class Ingester {
     private static Ingester instance;
     private final LanguageSpecificContentIndexingHelper languageSpecificContentIndexingHelper
         = new LanguageSpecificContentIndexingHelper();
+    private static final int LANGUAGE_DETECTION_STRING_SIZE = 4096;
 
     private Ingester() {
     }
@@ -197,6 +199,7 @@ class Ingester {
         int numChunks = 0; //unknown until chunking is done
         
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
+        Optional<Language> language = Optional.empty();
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
@@ -211,11 +214,15 @@ class Ingester {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
-                Optional<Language> language = Optional.empty();
+
                 if (doLanguageDetection) {
-                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk);
-                    language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
+                    int size = Math.min(chunk.getBaseChunkLength(), LANGUAGE_DETECTION_STRING_SIZE);
+                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
+                    
+                    // only do language detection on the first chunk of the document
+                    doLanguageDetection = false;
                 }
+                language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
                 try {
                     //add the chunk text to Solr index
                     indexChunk(chunk.toString(), chunk.geLowerCasedChunk(), sourceName, fields);
@@ -389,10 +396,10 @@ class Ingester {
          */
         private Map<String, String> getCommonAndMACTimeFields(AbstractFile file) {
             Map<String, String> params = getCommonFields(file);
-            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCtime(), file));
-            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(file.getAtime(), file));
-            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTimeISO8601(file.getMtime(), file));
-            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCrtime(), file));
+            params.put(Server.Schema.CTIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getCtime()));
+            params.put(Server.Schema.ATIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getAtime()));
+            params.put(Server.Schema.MTIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getMtime()));
+            params.put(Server.Schema.CRTIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getCrtime()));
             return params;
         }
 

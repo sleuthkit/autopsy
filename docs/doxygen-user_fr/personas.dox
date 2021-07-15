@@ -1,0 +1,109 @@
+/*! \page personas_page Personas (Personnages)
+
+[TOC]
+
+\section personas_overview Aperçu
+
+Autopsy peut stocker et organiser les informations de compte en fonction des "Personas", qui représentent une identité en ligne. Une personne peut avoir plusieurs identités en ligne et donc plusieurs "Personas". À titre d'exemple, une seule personne peut avoir un ensemble de comptes qui publient en ligne sur l'amour des chats et un autre ensemble de comptes semblant sans rapport et publiant sur la haine des chats.
+
+\section personas_concepts Concepts
+
+Voici quelques concepts de base sur ces "Personas":
+<ul>
+<li>Pour créer un "Persona", vous devez avoir un nom et au moins un compte.
+<li>Un "Persona" peut avoir plusieurs comptes - un numéro de téléphone, un e-mail, un compte Facebook, un compte Skype, etc...
+<li>Les "Personas" portent sur les cas et sont donc stockées dans le \ref central_repo_page "Référentiel central".
+<li>Vous pouvez créer manuellement un "Persona" ou en créer un en fonction d'une entrée du carnet de contacts, d'un journal d'appels ou d'un message.
+<li>Un compte peut faire partie de plusieurs "Personas". Cela peut se produire si quelqu'un utilise le même numéro de téléphone portable de récupération pour les comptes de plusieurs personnes.
+<li>Un "Persona" peut être associé à des métadonnées supplémentaires sous forme de paires nom/valeur.
+<li>Un "Persona" peut avoir un ou plusieurs alias.
+<li>Autopsy vous montrera si un compte fait partie d'un "Persona", le cas échéant.
+</ul>
+
+Les "Personas" sont stockées dans le référentiel central en fonction des comptes trouvés dans les résultats. Ces résultats sont générés par divers modules d'acquisition tels que \ref recent_activity_page et \ref android_analyzer_page.
+
+Autopsy fournit un outil dédié, le \ref personas_editor "Personas Editor", pour créer, afficher, modifier et supprimer des "Personas".
+
+\section personas_editor Personas Editor (Editeur de "Personas")
+
+Le "Personas Editor" est chargé via le menu Tools -> Personas.
+
+Le panneau de gauche du "Personas Editor" est un tableau qui répertorie les "Personas", en fonction des critères sélectionnés. Le panneau de droite affiche les détails du personnage actuellement sélectionné dans le panneau de gauche.
+ 
+Par défaut, lorsque l'éditeur de "Personas" est lancé, tous les "Personas" du référentiel central sont répertoriés dans le tableau. Vous pouvez filtrer cette liste en cochant la case "Filter personas by Keyword". Tapez un nom de personne ou un identifiant de compte dans la zone de texte et sélectionnez le bouton radio "Name" ou "Account" de manière appropriée. Cliquez ensuite sur le bouton "Show" pour n'afficher que les "Personas" qui correspondent aux critères de filtrage.
+
+\image html Personas/personas_main.png
+
+\subsection personas_create Créer des "Personas"
+
+Pour créer un nouveau "Persona", cliquez sur le bouton "New Persona". Une boîte de dialogue "Create Persona" apparaîtra. Voici une description de chaque champ:
+
+<ul>
+<li><b>Name</b>: Le nom du personnage
+<li><b>Created by</b>: Sera automatiquement renseigné avec de nom de l'utilisateur actuel
+<li><b>Created on</b>: Sera automatiquement renseigné après avoir enregistré le "Persona"
+<li><b>Comment</b>: Une description du personnage
+<li><b>Accounts</b>: Au moins un compte appartenant au "Persona"
+<li><b>Metadata</b>: (Facultatif) Paires de données nom/valeur liées au "Persona"
+<li><b>Aliases</b>: (Facultatif) Tous les alias pour ce "Persona"
+<li><b>Cases found in</b>: Sera automatiquement renseigné lors de la modification d'un "Persona"
+</ul>
+
+Chaque "Persona" a besoin d'au moins un compte qui lui est associé. Ces comptes doivent avoir été préalablement enregistrés dans le \ref central_repo_page "référentiel central". Cliquez sur "Add" sous "Accounts" pour ouvrir une autre boîte de dialogue avec quatre champs, tous obligatoires:
+
+<ul>
+<li><b>Identifier</b>: L'identifiant du compte (numéro de téléphone, adresse e-mail, identifiant de compte Facebook, etc...)
+<li><b>Type</b>: Le type d'identifiant
+<li><b>Confidence</b>: Degré de confiance générale sur le fait que ce compte va avec le "Persona" donné
+<li><b>Justification</b>: Pourquoi ce compte est ajouté au "Persona"
+</ul>
+
+\image html Personas/personas_create.png
+
+Lorsque vous avez terminé d'ajouter au moins un compte et de remplir les champs requis, cliquez sur OK pour créer le "Persona". Un "Persona" avec le nom spécifié sera créé et associé au(x) compte(s) spécifié(s).
+
+\subsection personas_edit Modifier les "Personas"
+
+Pour modifier un "Persona", cliquez sur le bouton "Edit Persona". Vous pourrez modifier toutes les données sur le "Persona".
+
+\image html Personas/persona_edit.png
+
+\subsection personas_delete Supprimer des "Personas"
+
+Pour supprimer un "Persona", sélectionnez ce dernier dans le tableau et cliquez sur le bouton "Delete Persona". Cliquez sur "Yes" dans la fenêtre de confirmation pour supprimer le "Persona" sélectionné.
+
+\subsection personas_account_create Créer un compte
+
+Tous les "Personas" doivent être associés à au moins un compte. Normalement, ces comptes seront ajoutés au référentiel central par divers modules d'acquisition, mais vous pouvez également les créer manuellement avec le bouton "Create Account".
+
+\image html Personas/personas_create_account.png
+
+\section personas_artifact_viewers Intégration de "Persona" dans les visionneuses de contenu
+
+Autopsy montre les "Personas" associés aux comptes, le cas échéant. Lors de l'affichage des résultats de contacts, de journal des appels et de messages, Autopsy affiche les "Personas" associés aux comptes dans ces panneaux. Si aucun "Persona" n'existe pour un compte, Autopsy fournit un bouton permettant à l'utilisateur d'en créer un.
+ 
+Comme indiqué ci-dessous, lorsque vous affichez le résultat d'un contact, vous pouvez voir les données personnelles. Lorsqu'un ou plusieurs "Personas" sont trouvés associés aux comptes dans le résultat, le nom du "Persona" est affiché dans la visionneuse de contenu du contact. Il y aura un bouton "View" pour voir les détails du "Persona".
+
+\image html Personas/personas_contact_found.png
+
+Si aucun "Persona" correspondant n'est trouvé, un bouton "Create" s'affiche pour créer un "Persona" pour le(s) compte(s). Cela vous amènera au panneau \ref personas_create "Create Personas" avec le(s) compte(s) déjà ajouté(s), en supposant que des comptes existent dans le référentiel central. Si le compte souhaité n'apparaît pas, fermez le panneau des "Personas", puis copiez le compte dans le presse-papiers, soit en mettant en surbrillance le compte et en appuyant sur contrôle + c, soit en faisant un clic droit dessus et en sélectionnant "Copy". Puis allez sur Tools->Personas pour ouvrir l'éditeur de "Personas", et cliquez sur "Create Account". Collez les éléments copiés dans le compte et sélectionnez le type, puis validez avec OK. Fermez maintenant l'éditeur et cliquez à nouveau sur "Create". Le compte doit maintenant être rempli automatiquement.
+
+\image html Personas/personas_contact_not_found.png
+
+Les "Personas" sont intégrés de la même manière dans la visionneuse de contenus pour les journaux d'appels et les messages/e-mails.
+
+\image html Personas/personas_calllog.png
+<br>
+\image html Personas/personas_message.png
+
+\section personas_cvt Intégration de "Personas" dans l'outil de visualisation des communications
+
+Les "Personas" sont intégrées à la visionneuse \ref communications_page.  Lorsque vous affichez des comptes dans la partie "Accounts" de l'outil de visualisation des communications, les informations de "Personas" associés sont affichées dans l'info-bulle si vous survolez le compte.
+
+\image html Personas/personas_cvt_hover.png
+
+Comme dans la fenêtre principale d'Autopsy, vous pouvez également créer ou afficher des "Personas" lors de l'examen des contacts, des journaux d'appels et des messages dans l'outil de visualisation des communications.
+
+\image html Personas/personas_cvt_accounts.png
+
+*/

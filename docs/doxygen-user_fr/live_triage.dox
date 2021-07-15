@@ -1,0 +1,49 @@
+/*! \page live_triage_page Création d'un lecteur de triage en direct
+
+[TOC]
+
+
+\section live_triage_overview Aperçu
+
+La fonction "Live Triage" vous permet de charger Autopsy sur un lecteur amovible pour l'exécuter sur les systèmes cibles tout en apportant des modifications minimes à ces systèmes cibles. Cela ne fonctionnera actuellement que sur les systèmes Windows.
+
+\section live_triage_create_drive Créer un lecteur de triage en direct
+
+Pour créer un lecteur de triage en direct, allez dans Tools->Make Live Triage Drive pour afficher la boîte de dialogue principale.
+
+\image html live_triage_dialog.png
+
+Sélectionnez le lecteur que vous souhaitez utiliser - tout type de périphérique de stockage USB fonctionnera. Pour de meilleurs résultats, utilisez le lecteur le plus rapide disponible. Une fois le processus terminé, le dossier racine contiendra un dossier Autopsy et un fichier RunFromUSB.bat.
+
+\section live_triage_usage Exécution d'Autopsy à partir du lecteur de triage en direct
+
+Insérez votre lecteur dans la machine cible et accédez à ce lecteur dans l'explorateur Windows. Faites un clic droit sur RunFromUSB.bat et sélectionnez "Exécuter en tant qu'administrateur". Ceci est nécessaire pour analyser les lecteurs locaux.
+
+\image html live_triage_script.png
+
+L'exécution du script générera quelques répertoires supplémentaires sur la clé USB. Le répertoire configData stocke toutes les données utilisées par Autopsy - principalement les fichiers de configuration et les fichiers temporaires. Vous pouvez apporter des modifications aux paramètres d'Autopsy et ils persisteront d'une analyse à l'autre. Le répertoire des cas est créé comme emplacement par défaut pour enregistrer vos données de cas. Vous devrez y accéder lors de la création d'un cas dans Autopsy.
+
+Une fois Autopsy en cours d'exécution, créez un cas comme d'habitude, en veillant à le sauvegarder sur la clé USB.
+
+\image html live_triage_case.png
+
+Ensuite, choisissez la source de données "Local Disk" et sélectionnez le lecteur souhaité.                                 
+
+\image html live_triage_ds.png
+
+Voir la page \ref ds_local pour plus d'informations sur les sources de données de disque local.
+
+\section live_triage_hash_db Utilisation d'ensembles de hachage
+
+Suivez ces étapes pour importer un ensemble de hachage à utiliser avec le module \ref hash_db_page :
+<ol>
+<li> Exécutez Autopsy à partir du lecteur de triage en direct, comme décrit précédemment
+<li> Allez sur Tools->Options puis sur l'onglet "Hash Set"
+<li> Importez le jeu de hachage comme d'habitude (en utilisant la destination "Local") mais cochez l'option "Copy hash set into user configuration folder" en bas
+
+\image html live_triage_import_hash.png
+</ol>
+
+Cela permettra d'utiliser le jeu de hachage quelle que soit la lettre de lecteur affectée au lecteur de triage en direct.
+
+*/

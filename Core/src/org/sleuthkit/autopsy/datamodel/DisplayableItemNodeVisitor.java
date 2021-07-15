@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2018 Basis Technology Corp.
+ * Copyright 2011 - 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Data Sources Area
      */
-    T visit(DataSourcesNode in);
+    T visit(DataSourceFilesNode in);
 
     T visit(LayoutFileNode lfn);
 
@@ -192,16 +192,18 @@ public interface DisplayableItemNodeVisitor<T> {
     
     T visit(OsAccounts.OsAccountListNode node);
 
-    T visit(PersonGroupingNode node);
+    T visit(PersonNode node);
 
     T visit(HostNode node);
 
-    T visit(DataSourcesByTypeNode node);
+    T visit(DataSourcesNode node);
     
     /*
      * Unsupported node
      */
     T visit(UnsupportedContentNode ucn);
+    
+    T visit(LocalFilesDataSourceNode lfdsn);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -406,7 +408,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(DataSourcesNode in) {
+        public T visit(DataSourceFilesNode in) {
             return defaultVisit(in);
         }
 
@@ -561,17 +563,22 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(DataSourcesByTypeNode node) {
+        public T visit(DataSourcesNode node) {
             return defaultVisit(node);
         }
 
         @Override
-        public T visit(PersonGroupingNode node) {
+        public T visit(PersonNode node) {
             return defaultVisit(node);
         }
         
         @Override
         public T visit(UnsupportedContentNode node) {
+            return defaultVisit(node);
+        }
+        
+        @Override
+        public T visit(LocalFilesDataSourceNode node) {
             return defaultVisit(node);
         }
     }

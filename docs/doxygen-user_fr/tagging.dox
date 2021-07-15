@@ -1,0 +1,141 @@
+﻿/*! \page tagging_page Marquages et commentaires
+
+[TOC]
+
+
+Le marquage (ou bookmarking) vous permet de créer une référence sur un fichier ou un objet et de le retrouver facilement plus tard ou de l'inclure dans un \ref reporting_page "rapport". Il est également utilisé par le \ref central_repo_page "référentiel central" pour marquer les éléments "notables". Vous pouvez ajouter des commentaires aux fichiers et aux résultats marqués par des balises ou via le référentiel central.
+
+\section tagging_items Marquage des éléments
+
+Lorsqu'un élément intéressant est découvert, l'utilisateur peut le baliser en faisant un clic droit sur l'élément et en sélectionnant l'une des options de marquage.
+
+Lorsque vous marquez un résultat d'artefact du Blackboard, vous avez le choix entre:
+- Add File Tag -- utilisez ceci lorsque le fichier lui-même est intéressant
+- Add Result Tag -- utilisez ceci lorsque le résultat est intéressant
+
+Le choix dépend du contexte et de ce que vous désirez faire apparaître dans le rapport final.
+
+\image html tagging-1.PNG
+
+À ce stade, il existe trois options:
+- Utilisez l'une des balises existantes pour l'ajouter au fichier/résultat sans commentaire
+- Tag and Comment -- utilisez ceci si vous avez besoin d'ajouter un commentaire sur ce marquage
+
+\image html tagging-2.PNG
+
+- New tag -- Créez une nouvelle balise et ajoutez-la au fichier/résultat
+
+\image html tagging_new_tag.PNG
+
+Il existe plusieurs noms de balises par défaut:
+- Bookmark - Balise par défaut pour marquer les fichiers d'intérêt
+- Project Vic - À l'usage des forces de l'ordre
+- Follow Up - Balise par défaut pour le marquage des fichiers à suivre
+- Notable item - Balise par défaut pour indiquer qu'un élément doit être marqué comme "notable" dans le référentiel central
+
+Vous pouvez également créer des noms de balises personnalisés. Ces noms de balises seront automatiquement enregistrés pour une utilisation future et seront affichés au-dessus des noms de balises par défaut.
+
+Si vous souhaitez simplement marquer l'élément avec la balise "Bookmark" par défaut, vous pouvez également utiliser le raccourci clavier Control + B au lieu de parcourir les menus.
+
+Vous pouvez également appliquer des balises à des groupes de plusieurs éléments à la fois. Sélectionnez ces éléments dans le Blackboard, cliquez avec le bouton droit de la souris et ajoutez la balise appropriée.
+Les éléments peuvent avoir plus d'une balise.
+
+Les résultats marqués sont affichés dans la partie "Results" de l'arborescence sous la zone "Tags". Les éléments marqués sont également mis en surbrillance dans la visionneuse de résultats.
+
+\image html tagging-4.PNG
+
+\section image_tagging Marquage d'une image
+
+Lorsque vous avez sélectionné une image dans la \ref result_viewer_page, vous verrez une option "Tags Menu" dans la partie supérieure droite de la \ref content_viewer_page "Visionneuse de contenu", sous l'onglet "Application". Cela vous permet de marquer uniquement une zone sélectionnée de l'image. Le marquage d'une image n'est actuellement activé que sur Windows.
+
+\image html tagging_image_menu.png
+
+\subsection image_tagging_creation Créer un marquage d'une image
+
+Pour commencer, sélectionnez l'option "Create" dans le "Tags Menu". Vous pouvez ensuite faire un clic gauche et glisser le curseur de la souris sur l'image pour créer un rectangle (qui sera votre "tag"). Lorsque vous relâchez la souris, vous pourrez appliquer un nom de balise (et éventuellement un commentaire) à votre marquage d'image.
+
+\image html tagging_image_select.png
+
+Vous pouvez ajouter un nouveau nom de balise à l'aide du bouton "New Tag".
+
+\image html tagging_image_create_tag.png
+
+Une fois que vous avez choisi le nom de la balise, vous verrez un contour rouge dans l'image autour de la section que vous avez choisie.
+
+\image html tagging_image_one_tag.png
+
+Vous pouvez créer plusieurs marquages dans la même image.
+
+\image html tagging_image_multiple.png
+
+Si vous souhaitez masquer temporairement les contours des balises, sélectionnez "Hide" dans le "Tags Menu". Vous pouvez ensuite sélectionner "Show" pour les revoir. Les contours réapparaissent également si vous passez à un élément différent dans la visionneuse de résultats et que vous revenez sur l'image.
+
+\subsection image_tagging_editing Sélection, redimensionnement et suppression du marquage d'une image
+
+Pour redimensionner ou supprimer le marquage d'une image, vous devrez d'abord le sélectionner. Vous pouvez le faire en cliquant avec le bouton gauche de la souris n'importe où à l'intérieur de (ou sur) la balise d'image. Les balises sélectionnées peuvent être redimensionnées en faisant glisser l'une des 8 poignées qui apparaissent. Les cotes redimensionnées seront automatiquement enregistrées lorsque la souris sera relâchée.
+
+\image html tagging_image_edit_tag.png
+
+La sélection d'une balise activera également l'option "Delete" dans le "Tags Menu". La suppression d'un marquage est une opération irréversible, donc soyez prudent.
+
+\subsection image_tagging_report Exportation et création de rapports sur les marquages d'une image
+
+Si vous souhaitez enregistrer l'image avec le contour du marquage, sélectionnez "Export" dans le "Tags Menu". Le résultat sera toujours un fichier PNG. Notez que l'utilisation de l'option "Extract File(s)" du menu contextuel de la visionneuse de résultats exportera l'image d'origine.
+
+Vous pourrez également voir les marquages d'images dans le \ref report_html "Rapport HTML".
+
+\image html tagging_image_report.png
+
+\section managing_tags Gérer les balises
+
+La liste des balises peut être modifiée via l'onglet "Custom Tags" du menu Options. 
+
+\image html tagging-5.PNG
+
+
+De là, de nouvelles balises peuvent être ajoutées, les balises existantes peuvent être modifiées et les balises créées par l'utilisateur peuvent être supprimées. Notez que la suppression d'une balise ne la supprime d'aucun élément marqué, et cette balise sera toujours utilisable dans tous les cas où elle a été utilisée pour marquer un élément.
+
+\image html tagging-6.PNG
+
+
+Si vous utilisez le référentiel central, la modification du statut "notable" affectera les éléments marqués (dans le cas actuel uniquement) de la manière suivante:
+- Si "Fichier A" est marqué avec "Tag A", qui n'est pas "notable", et que "Tag A" est remplacé par "notable", "Fichier A" sera marqué comme "notable" dans le référentiel central
+- Si "Fichier B" est étiqueté avec "Tag B", qui est "notable", puis "Tag B" est remplacé par une catégorie "non-notable", s'il n'y a pas d'autres balises "notables" sur "Fichier B", alors son statut "notable" dans le référentiel central sera supprimé.
+
+\subsection user_tags Masquer les marquages des autres utilisateurs
+
+Les marquages sont associés au nom du compte de l'utilisateur qui les a mis en place. Ces informations sont visibles en sélectionnant les éléments dans la section "Tags" de l'arborescence:
+
+\image html tagging_user_name.png
+
+ou via l'onglet \ref cv_annotations de la visionneuse de contenu:
+
+\image html content_viewer_annotations.png
+
+Il est possible de masquer tous les fichiers et résultats présents dans la zone "Tags" de l'arborescence et ayant été marqués par d'autres utilisateurs. Ouvrez les \ref view_options_page, soit via l'icône en forme d'engrenage au-dessus de l'arborescence, soit via Tools->Options. Puis, dans la zone "Hide other users' tags in the:"  cochez la case "Tags area in the tree".
+
+\image html tagging_view_options.png
+
+\section tagging_commenting Commenter
+
+Il existe deux méthodes pour ajouter des commentaires aux fichiers et aux résultats. La première méthode a été abordée dans la section \ref tagging_items. Faites un clic droit sur le fichier ou le résultat qui vous intéresse, choisissez "Add File Tag" ou "Add Result Tag" puis "Tag and Comment". Cela vous permet d'ajouter un commentaire sur l'élément. Vous pouvez ajouter plusieurs balises avec des commentaires au même fichier ou résultat.
+
+\image html tagging_comment_context.png
+
+Si vous avez activé un \ref central_repo_page "référentiel central", vous pouvez également l'utiliser pour enregistrer des commentaires sur les fichiers. Faites un clic droit sur le fichier et sélectionnez "Add/Edit Central Repository Comment". S'il y avait déjà un commentaire pour ce fichier, il apparaîtra dans la boîte de dialogue et peut être modifié - un seul commentaire peut être stocké à la fois dans le référentiel central.
+
+\image html tagging_cr_comment.png
+
+Si un fichier ou un résultat est associé à un commentaire, vous verrez une icône en forme de bloc-notes dans la colonne "C" de la visionneuse de résultats. Le survol vous indiquera le type de commentaires sur cet élément.
+
+\image html tagging_comment_icon.png
+
+Vous pouvez afficher les commentaires associés aux balises en allant dans la section "Tags" de l'arborescence et en sélectionnant l'une de vos balises. Tous les commentaires apparaîtront dans la colonne "Comment" de la visionneuse de résultats.
+
+\image html tagging_comment_in_result_viewer.png
+
+Vous pouvez afficher tous les commentaires sur un élément via l'onglet "Annotation" de la visionneuse de contenu.
+
+\image html tagging_comment_anno.png
+
+*/

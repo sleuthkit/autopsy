@@ -1,0 +1,119 @@
+﻿/*! \page reporting_page Rapports
+
+[TOC]
+
+
+\section reporting_overview Aperçu
+
+Les modules de rapport permettent à l'utilisateur d'extraire les informations clés d'un cas dans une variété de formats, incluant la création de rapport HTML ou Excel contenant tout le contenu extrait d'un cas, les correspondances de mots clés dans ce cas, etc... , ou la création d'un fichier KML contenant
+toutes les coordonnées trouvées pour les charger dans un logiciel comme Google Earth.
+
+\image html reports_select.png
+
+La plupart des types de rapports vous permettront de sélectionner les sources de données à inclure dans le rapport. Notez que les noms des sources de données exclues peuvent toujours être présents dans le rapport. Par exemple, le \ref report_html listera toutes les sources de données dans le cas sur la page principale mais ne contiendra pas les résultats, les fichiers balisés, etc... de la ou des sources de données exclue(s).
+
+\image html reports_datasource_select.png
+
+Les différents types de rapports seront décrits ci-dessous. La majorité des modules de rapport génèreront un fichier de rapport qui
+sera affiché dans le cas sous le nœud "Reports" de l'\ref tree_viewer_page.
+
+\image html reports_result_viewer.png
+
+Si le type de rapport est associé à une visionneuse (tel qu'un navigateur Web pour un rapport HTML), vous pouvez double-cliquer sur le rapport pour l'ouvrir
+dans une application externe. Vous pouvez également parcourir le dossier "Reports" dans le dossier du cas et ouvrir le rapport à partir de là.
+
+\image html reports_folder.png
+
+\section report_types Types de rapports
+
+\subsection report_html HTML Report (Rapport HTML)
+
+Pour les rapports HTML, vous pouvez d'abord choisir de saisir un en-tête et un pied de page qui seront affichés dans vos résultats. Par exemple, vous souhaiterez peut-être ajouter une bannière de classification.
+
+\image html reports_html_header.png
+
+Il existe deux options lors de la génération d'un rapport: inclure tous les résultats ("All Results") ou inclure uniquement les résultats balisés ("Tagged Results").
+
+\image html reports_html_all_results.png
+
+Si vous choisissez "All Results", vous pouvez alors éventuellement utiliser le bouton "Data Types" pour choisir les types de données à inclure dans le rapport.
+
+\image html reports_html_art_select.png
+
+Si vous choisissez "Tagged Results", vous pouvez limiter les fichiers et les résultats qui s'affichent dans le rapport aux seuls balisés avec les balises que vous sélectionnerez.
+Notez que vous ne pouvez pas filtrer sur le type de données lorsque vous utilisez cette option.
+
+\image html reports_html_tagged.png
+
+Le rapport terminé ressemblera à ceci:
+
+\image html reports_html_display.png
+
+Vous pouvez utiliser les liens sur le côté gauche pour voir les résultats pour chaque type de données.
+
+\subsection report_excel Excel Report (Rapport Excel)
+
+La génération d'un rapport Excel est très similaire à un \ref report_html. Vous sélectionnez les balises ou les types de données à exporter et Autopsy créera un fichier .xlsx.
+
+\image html reports_excel.png
+
+\subsection report_files Files - Text (Fichiers - Texte)
+
+Ce module de rapport vous permet de créer un fichier texte délimité par des tabulations ou des virgules contenant la liste de tous les fichiers dans le cas actuel. Commencez par sélectionner le délimiteur que vous souhaitez utiliser.
+
+\image html reports_files_delimiter.png
+
+Vous pouvez ensuite sélectionner les champs à inclure au rapport.
+
+\image html reports_files_config.png
+<br>
+\image html reports_files_results.png
+
+\subsection report_tagged_hashes Save Tagged Hashes (Enregistrer les hachages balisés)
+
+C'est l'un des modules de rapport qui ne génère pas de rapport réel. Le but de ce module est d'ajouter facilement les hachages
+de certains/tous les fichiers balisés vers un jeu de hachage Autopsy qui pourra être utilisé par le module \ref hash_db_page. Vous pouvez utiliser le bouton "Configure Hash Sets" pour créer un nouveau
+jeu de hachage ou utiliser un jeu de hachage existant.
+
+\image html reports_hashes_config.png
+
+Après avoir exécuté ce module, si vous utilisez le même jeu de hachage dans les cas futurs, tout ce qui a été marqué avec l'une des balises sélectionnées dans ce cas 
+apparaîtra dans la section "Hashset Hits" de l'arborescence.
+
+\subsection report_body_file TSK Body File
+
+Ce module génère un fichier <a href="https://wiki.sleuthkit.org/index.php?title=Body_file">TSK Body File</a> à partir des fichiers de votre cas, qui ressemble à ce qui suit:
+
+<pre>7ff498a44e45e77374cc7c962b1b92f2|/img_image1.vhd/vol_vol2/$UpCase|10|rr-xr-xr-x|0|0|131072|1498757218|1498757218|1498757218|1498757218
+d41d8cd98f00b204e9800998ecf8427e|/img_image1.vhd/vol_vol2/$Volume|3|rr-xr-xr-x|48|0|0|1498757218|1498757218|1498757218|1498757218
+43fffda5c5edd8e9c647f1df476717de|/img_image1.vhd/vol_vol2/0000/0000_a.txt|63|rrwxrwxrwx|0|0|11|1498757454|1498176989|1498757454|1498757454
+411c8024a7c38ee3843ba8a07d048ec2|/img_image1.vhd/vol_vol2/0000/0000_b.txt|64|rrwxrwxrwx|0|0|11|1498757454|1498176990|1498757454|1498757454
+fcc958c5096889a222785ddb8c4bff80|/img_image1.vhd/vol_vol2/0000/0000_c.txt|65|rrwxrwxrwx|0|0|11|1498757454|1498176990|1498757454|1498757454
+b7cde263cc1b5df5a13aeec742637a89|/img_image1.vhd/vol_vol2/0000/0000_d.txt|66|rrwxrwxrwx|0|0|11|1498757454|1498176990|1498757454|1498757454</pre>
+
+\subsection report_kml Google Earth KML
+
+Ce module de rapport génère un fichier KML à partir de toutes les données GPS du cas. Ce fichier peut ensuite être utilisé avec Google Earth.
+
+\image html reports_kml.png
+
+\subsection report_stix STIX
+
+Le module STIX vous permet de générer un rapport et des artefacts "Interesting File" en exécutant un fichier (ou des fichiers) STIX sur les sources de données du cas.
+Pour plus d'informations, consultez la page \ref stix_page.
+
+\subsection report_case_uco CASE-UCO
+
+Ce module cré un fichier de sortie JSON dans un format <a href="https://github.com/ucoProject/CASE/wiki">CASE-UCO</a> pour une seule source de données.
+
+\image html reports_case.png
+
+\subsection report_portable_case Portable Case (Cas portable)
+
+Ce module de rapport génère un nouveau cas Autopsy qui comprend les éléments marqués et/ou intéressants. Voir la page \ref portable_case_page pour plus d'informations.
+
+\subsection reports_unique_words Extract Unique Words (Extraire des mots uniques)
+
+Ce module de rapport vous permet d'exporter tous les "mots" uniques trouvés dans un cas. Ces mots proviennent de l'index Solr créé par le module \ref keyword_search_page.
+
+*/

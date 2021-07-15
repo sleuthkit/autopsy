@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @NbBundle.Messages({"CannotRunFileTypeDetection=Unable to run file type detection."})
 public class FileTypeIdIngestModule implements FileIngestModule {
-
+    
     private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -128,12 +128,44 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      *                                  of CustomFileTypesManager.
      */
     private FileType detectUserDefinedFileType(AbstractFile file) throws CustomFileTypesManager.CustomFileTypesException {
+        
+        if (CustomFileTypesManager.getInstance().getUserDefinedFileTypes().isEmpty()) {
+            return null;
+        }
+        
+        /*
+         * Read in the beginning of the file once.
+         */
+        byte[] buf = new byte[1024];
+        int bufLen;
+        try {
+            bufLen = file.read(buf, 0, 1024);
+        } catch (TskCoreException ex) {
+            // Proceed for now - the error will likely get logged next time the file is read.
+            bufLen = 0; 
+        }
+        return detectUserDefinedFileType(file, buf, bufLen);
+    }
+
+    /**
+     * Determines whether or not a file matches a user-defined custom file type.
+     *
+     * @param file The file to test.
+     * @param startOfFileBuffer  The beginning of the file data.
+     * @param bufLen The length of startOfFileBuffer.
+     *
+     * @return The file type if a match is found; otherwise null.
+     *
+     * @throws CustomFileTypesException If there is an issue getting an instance
+     *                                  of CustomFileTypesManager.
+     */
+    private FileType detectUserDefinedFileType(AbstractFile file, byte[] startOfFileBuffer, int bufLen) throws CustomFileTypesManager.CustomFileTypesException {    
         FileType retValue = null;
 
         CustomFileTypesManager customFileTypesManager = CustomFileTypesManager.getInstance();
         List<FileType> fileTypesList = customFileTypesManager.getUserDefinedFileTypes();
         for (FileType fileType : fileTypesList) {
-            if (fileType.matches(file)) {
+            if (fileType.matches(file, startOfFileBuffer, bufLen)) {
                 retValue = fileType;
                 break;
             }
@@ -164,9 +196,10 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             // Create artifact if it doesn't already exist.
             if (!tskBlackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
                 BlackboardArtifact artifact = file.newAnalysisResult(
-                        new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
+                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                        null, fileType.getInterestingFilesSetName(), null, 
+                        attributes)
                         .getAnalysisResult();
-                
                 try {
                     /*
                      * post the artifact which will index the artifact for

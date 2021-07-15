@@ -34,6 +34,9 @@ import java.util.Collections;
 import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
@@ -150,7 +153,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final JMenuItem exportTagsMenuItem;
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private final JFileChooser exportChooser;
+    private JFileChooser exportChooser;
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final JFXPanel fxPanel;
 
@@ -189,10 +192,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private Task<Image> readImageFileTask;
     private volatile ImageTransforms imageTransforms;
-
-    static {
-        ImageIO.scanForPlugins();
-    }
+    
+    // Initializing the JFileChooser in a thread to prevent a block on the EDT
+    // see https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
+    private final FutureTask<JFileChooser> futureFileChooser = new FutureTask<>(JFileChooser::new);
 
     /**
      * Constructs a media image file viewer implemented as a Swing panel that
@@ -210,9 +213,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         initComponents();
 
         imageTransforms = new ImageTransforms(0, 0, true);
-
-        exportChooser = new JFileChooser();
-        exportChooser.setDialogTitle(Bundle.MediaViewImagePanel_fileChooserTitle());
+        
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(futureFileChooser);
 
         //Build popupMenu when Tags Menu button is pressed.
         imageTaggingOptions = new JPopupMenu();
@@ -1043,6 +1046,18 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             final AbstractFile file = imageFile;
             tagsGroup.clearFocus();
             SwingUtilities.invokeLater(() -> {
+                
+                if(exportChooser == null) {
+                    try {
+                        exportChooser = futureFileChooser.get();
+                    } catch (InterruptedException | ExecutionException ex) {
+                        // If something happened with the thread try and 
+                        // initalized the chooser now
+                        logger.log(Level.WARNING, "A failure occurred in the JFileChooser background thread");
+                        exportChooser = new JFileChooser();
+                    } 
+                }
+                
                 exportChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 //Always base chooser location to export folder
                 exportChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));

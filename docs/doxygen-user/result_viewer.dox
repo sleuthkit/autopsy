@@ -25,8 +25,8 @@ These columns display the following information:
 <ul>
 <li> (S)core column - indicates whether the item is interesting or notable.
    <ul>
-     <li>Displays a red icon if the file is a match for a notable hashset or has been tagged with a notable tag.
-     <li>Displays a yellow icon if the file has an interesting item match or has been tagged with a non-notable tag.
+     <li>Displays a red icon if at least one child analysis result is notable or the file is tagged with a notable tag.
+     <li>Displays a yellow icon if at least one child analysis result is likely notable or the file has a tag.
    </ul>
 <li> (C)omment column - indicates whether the item has a comment in the Central Repository or has a comment associated with a tag.
 <li> (O)ther occurrences column - indicates how many data sources in the Central Repository contain this item. The count will include the selected item.

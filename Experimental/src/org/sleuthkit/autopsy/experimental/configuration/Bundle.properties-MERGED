@@ -56,21 +56,24 @@ AutoIngestSettingsPanel.CheckPermissions=Ensure that the user account {0} has wr
 AutoIngestSettingsPanel.Success=Success
 AutoIngestSettingsPanel.TestRunning=Test in progress...
 AutoIngestSettingsPanel.servicesDown=Some of the Multi User services are down
+DayOfTheWeekRenderer_Friday_Label=Friday
+DayOfTheWeekRenderer_Monday_Label=Monday
+DayOfTheWeekRenderer_Saturday_Label=Saturday
+DayOfTheWeekRenderer_Sunday_Label=Sunday
+DayOfTheWeekRenderer_Thursday_Label=Thursday
+DayOfTheWeekRenderer_Tuesday_Label=Tuesday
+DayOfTheWeekRenderer_Wednesday_Label=Wednesday
 GeneralOptionsPanelController.moduleErr.msg=A module caused an error listening to GeneralOptionsPanelController updates. See log to determine which module. Some data could be incomplete.
 GeneralOptionsPanelController.moduleErr=Module Error
-# {0} - errorMessage
 MultiUserTestTool.criticalError=Critical error running data source processor on test data source: {0}
 MultiUserTestTool.errorStartingIngestJob=Ingest manager error while starting ingest job
-# {0} - cancellationReason
 MultiUserTestTool.ingestCancelled=Ingest cancelled due to {0}
 MultiUserTestTool.ingestSettingsError=Failed to analyze data source due to ingest settings errors
 MultiUserTestTool.noContent=Test data source failed to produce content
-# {0} - serviceName
 MultiUserTestTool.serviceDown=Multi User service is down: {0}
 MultiUserTestTool.startupError=Failed to analyze data source due to ingest job startup error
 MultiUserTestTool.unableAddFileAsDataSource=Unable to add test file as data source to case
 MultiUserTestTool.unableCreatFile=Unable to create a file in case output directory
-# {0} - serviceName
 MultiUserTestTool.unableToCheckService=Unable to check Multi User service state: {0}
 MultiUserTestTool.unableToCreateCase=Unable to create case
 MultiUserTestTool.unableToInitializeDatabase=Case database was not successfully initialized
@@ -162,3 +165,10 @@ AutoIngestSettingsPanel.bnFileExport.text=File Export Settings
 AutoIngestSettingsPanel.bnAdvancedSettings.text=Advanced Settings
 AutoIngestSettingsPanel.bnEditIngestSettings.toolTipText=Ingest job settings for the automated processing mode context.
 AutoIngestSettingsPanel.bnEditIngestSettings.text=Ingest Module Settings
+AdvancedAutoIngestSettingsPanel.pausePanel.border.title=Automated Ingest Pause Settings
+AdvancedAutoIngestSettingsPanel.lbpauseDay.text=Day Of Week:
+AdvancedAutoIngestSettingsPanel.lbPauseTime.text=Start Time:
+AdvancedAutoIngestSettingsPanel.lbPauseDuration.text=Duration:
+AdvancedAutoIngestSettingsPanel.lbColon.text=:
+AdvancedAutoIngestSettingsPanel.cbEnablePause.text=Enable Pause
+AdvancedAutoIngestSettingsPanel.lbDurationHours.text=hours

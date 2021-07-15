@@ -152,13 +152,12 @@ class RecentDocumentsByLnk extends Extract {
      * @returnv BlackboardArtifact or a null value 
      */  
     private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
-        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         String normalizePathName = FilenameUtils.normalize(filePathName, true);
         String fileName = FilenameUtils.getName(normalizePathName);
         String filePath = FilenameUtils.getPath(normalizePathName);
         List<AbstractFile> sourceFiles;
         try {
-            sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
+            sourceFiles = currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, fileName, filePath);
             for (AbstractFile sourceFile : sourceFiles) {
                 if (sourceFile.getParentPath().endsWith(filePath)) {
                     return createAssociatedArtifact(sourceFile, bba);

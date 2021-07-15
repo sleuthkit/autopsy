@@ -35,7 +35,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * ChildFactory for ContactNodes.
  */
-final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
+final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact> {
+
     private static final Logger logger = Logger.getLogger(ContactsChildNodeFactory.class.getName());
 
     private SelectionInfo selectionInfo;
@@ -47,12 +48,13 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
      *                      accounts
      */
     ContactsChildNodeFactory(SelectionInfo selectionInfo) {
-        this.selectionInfo = selectionInfo;    
+        this.selectionInfo = selectionInfo;
     }
-    
+
     /**
-     * Updates the current instance of selectionInfo and calls the refresh method.
-     * 
+     * Updates the current instance of selectionInfo and calls the refresh
+     * method.
+     *
      * @param selectionInfo New instance of the currently selected accounts
      */
     public void refresh(SelectionInfo selectionInfo) {
@@ -63,13 +65,15 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     /**
      * Creates a list of Keys (BlackboardArtifact) for only contacts of the
      * currently selected accounts
+     *
      * @param list List of BlackboardArtifact to populate
+     *
      * @return True on success
      */
     @Override
     protected boolean createKeys(List<BlackboardArtifact> list) {
-        
-        if(selectionInfo == null) {
+
+        if (selectionInfo == null) {
             return true;
         }
 
@@ -80,7 +84,7 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
             logger.log(Level.SEVERE, "Failed to load relationship sources.", ex); //NON-NLS
             return false;
         }
-  
+
         relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
 
             BlackboardArtifact bba = (BlackboardArtifact) content;

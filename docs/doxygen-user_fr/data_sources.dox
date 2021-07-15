@@ -1,0 +1,154 @@
+﻿/*! \page ds_page Data Sources (Sources de données)
+
+
+[TOC]
+
+
+Une source de données est ce que vous souhaitez analyser. Il peut s'agir d'une image disque, de certains fichiers logiques, d'un disque local, etc... Vous devez ouvrir un cas avant d'ajouter une source de données à Autopsy.
+
+Autopsy prend en charge plusieurs types de sources de données:
+- Disk Image or VM File: Un fichier (ou un ensemble de fichiers) qui est une copie bit à bit d'un disque dur ou d'une carte multimédia, ou une image de machine virtuelle.  (voir \ref ds_img)
+- Local Disk: Périphérique de stockage local (lecteur local, lecteur USB, etc...).  (voir \ref ds_local)
+- Logical Files: Fichiers ou dossiers locaux. (voir \ref ds_log)
+- Unallocated Space Image Files: Tout type de fichier qui ne contient pas de système de fichiers mais que vous souhaitez analyser via les modules d'acquisition (voir \ref ds_unalloc)
+- Autopsy Logical Imager Results: Les résultats de l'exécution du Logical Imager (imageur logique) d'Autopsy. (voir \ref ds_logical_imager)
+- XRY Text Export: Les résultats de l'exportation de fichiers texte depuis XRY. (voir \ref ds_xry)
+
+\section ds_add Ajouter une source de données
+
+Vous pouvez ajouter une source de données de plusieurs manières:
+- Une fois que vous avez créé un cas, Autopsy vous invite automatiquement à ajouter une source de données.
+- Il existe un élément de la barre d'outils "Add Data Source" pour ajouter une source de données lorsqu'un cas est ouvert.
+- Le menu "Cases", "Add Data Source" lorsqu'un cas est ouvert.
+
+La source de données doit rester accessible pendant toute la durée de l'analyse car le cas contient une référence à la source de données. Il ne copie <b>pas</b> la source de données dans le dossier de cas.
+
+Quel que soit le type de source de données, le processus comporte certaines étapes courantes:
+<ol>
+
+<li> Vous choisirez l'hôte de la source de données que vous allez ajouter. Voir la page \ref host_page "Hôtes" pour plus d'informations sur les hôtes.
+
+\image html data_source_host_select.png
+
+Il existe trois options:
+<ul>
+<li> <b>Generate new host based on data source name</b> - cela créera typiquement un hôte avec un nom similaire à votre source de données avec l'ID utilisé dans la base de données ajouté pour l'unicité.
+<li> <b>Specify new host name</b> - cela vous permet de saisir un nom d'hôte.
+<li> <b>Use existing host</b> - cela vous permet de choisir un nom d'hôte déjà utilisé dans le cas actuel.
+</ul>
+
+<li> Vous sélectionnerez le type de source de données.
+
+\image html select-data-source-type.PNG
+
+<li> Vous serez invité à spécifier la source de données à ajouter. Cet écran varie en fonction du type de source de données. Les détails sur l'ajout de chaque type de source de données sont fournis ci-dessous.
+
+REMARQUE: Si vous ajoutez une source de données à un cas multi-utilisateur, assurez-vous que tous les clients Autopsy auront accès à la source de données sur le même chemin. Nous vous recommandons d'utiliser des chemins UNC pour garantir un mappage cohérent.
+
+<li> Ensuite, vous serez invité à activer une liste de modules d'acquisition. Si un ou plusieurs profils d'acquisition ont été enregistrés, il y aura un écran avant cela vous demandant s'il faut utiliser l'un des profils enregistrés ou effectuer une configuration personnalisée. Voir \ref ingest_page pour plus d'informations sur la configuration des profils d'acquisition.
+
+\image html select-ingest-modules.PNG
+
+<li> Vous devrez attendre qu'Autopsy effectue un examen de base de la source de données et remplit la base de données intégrée avec une entrée pour chaque fichier de la source de données.
+
+\image html data-source-progress-bar.PNG
+
+<li> Une fois l'examen de base de la source de données terminé, les modules d'acquisition seront probablement toujours en cours d'exécution, mais vous pouvez commencer à parcourir les fichiers de votre source de données.
+</ol>
+
+Les sources de données peuvent être supprimées des cas créés avec Autopsy 4.14.0 et versions ultérieures. Voir la section \ref data_source_deletion "ci-dessous".
+
+\section ds_img Ajout d'une image disque
+
+Autopsy prend en charge les images disque dans les formats suivants:
+- Raw Single (*.img, *.dd, *.raw, *.bin)
+- Raw Split (*.001, *.aa)
+- EnCase (*.e01)
+- Virtual Machine Disk (*.vmdk)
+- Virtual Hard Disk (*.vhd)
+
+\image html data_source_disk_image.png
+
+Pour ajouter une image disque:
+
+<ol>
+<li>Choisissez "Disk Image or VM File" parmi les types de source de données.
+<li>Accédez au premier fichier de l'image disque. Vous devez spécifier uniquement le premier fichier et Autopsy trouvera le reste.  <li>Choisissez d'effectuer la recherche de fichiers orphelins sur les systèmes de fichiers FAT. Cela peut prendre beaucoup de temps, car il faudra qu'Autopsy examine chaque secteur de l'appareil. 
+<li>Choisissez le fuseau horaire d'où provient l'image disque. Ceci est le plus important lors de l'ajout de systèmes de fichiers FAT car ils ne stockent pas les informations de fuseau horaire et Autopsy ne saura pas comment se normaliser en UTC.
+<li>Choisissez éventuellement la taille du secteur. Le mode de détection automatique fonctionnera correctement sur la majorité des images, mais si l'ajout de la source de données échoue, vous souhaiterez peut-être essayer les autres tailles de secteur.
+<li>Entrez éventuellement un ou plusieurs hachages pour l'image. Ceux-ci seront enregistrés dans les métadonnées de l'image et pourront être vérifiés à l'aide du module \ref data_source_integrity_page.
+</ol>
+
+\section ds_local Ajout d'un disque local
+
+Autopsy peut analyser un disque local sans avoir besoin d'en faire d'abord une image. Ceci est très utile lors de l'analyse d'un périphérique USB via un bloqueur en écriture.
+
+Notez que si vous analysez un disque local en cours de mise à jour, Autopsy ne verra pas les fichiers ajoutés après l'avoir ajouté en tant que source de données.
+
+Vous devrez exécuter Autopsy en tant qu'administrateur pour afficher tous les appareils.
+
+Il existe une option pour faire une copie du disque local en tant que disque dur virtuel pendant l'analyse. Ce VHD peut être chargé dans Windows ou analysé par Autopsy. Il existe une option supplémentaire pour mettre à jour le chemin de l'image dans la base de données de cas vers ce fichier nouvellement créé. L'activation de cette option vous permettra de parcourir les données de cas normalement, même après la suppression du disque local. Notez qu'au moins un module d'acquisition doit être exécuté avec succès pour générer la copie d'image complète.
+
+\image html local-disk-data-source.PNG
+
+Pour ajouter un lecteur local:
+-# Choisissez "Local Disk" parmi les types de source de données.
+-# Utilisez le bouton "Select Disk" pour ouvrir une boîte de dialogue affichant les disques locaux. Le chargement peut prendre une minute. Sélectionnez ensuite l'appareil dans la liste.
+-# Choisissez d'effectuer la recherche de fichiers orphelins.  Voir le commentaire dans \ref ds_img à propos de ce paramètre.
+-# Choisissez de créer une copie VHD du disque local et de mettre à jour le chemin de l'image.
+-# Choisissez éventuellement la taille du secteur. Le mode de détection automatique fonctionnera correctement sur la majorité des images, mais si l'ajout de la source de données échoue, vous souhaiterez peut-être essayer les autres tailles de secteur.
+
+\section ds_log Ajout d'un fichier logique
+
+Vous pouvez ajouter des fichiers ou des dossiers qui se trouvent sur votre ordinateur local (ou sur un lecteur partagé) sans les placer dans une image disque. Ceci est utile si vous ne disposez que d'une collection de fichiers que vous souhaitez analyser.
+
+Quelques points à noter lors de cette opération:
+- Autopsy ignore les horodatages sur les fichiers qu'il ajoute de cette façon, car ce pourraient être les horodatages lorsque ces éléments ont été copiés sur votre appareil d'examen.
+- Si vous possédez un périphérique USB que vous analysez et que vous choisissez d'ajouter le contenu du périphérique à l'aide de cette méthode, notez qu'Autopsy ne regardera pas l'espace non alloué ou les fichiers supprimés. Autopsy ne pourra voir que les fichiers alloués. Vous devez ajouter le périphérique en tant que "Logical Drive" pour analyser l'espace non alloué.
+- Vous pouvez modifier le nom de l'ensemble de fichiers logiques par défaut LogicalFileSet# en cliquant sur le bouton "Change" comme indiqué dans la capture d'écran ci-dessous:
+
+\image html change_logical_file_set_display_name.PNG
+
+Pour ajouter des fichiers logiques:
+-# Choisissez "Logical Files" parmi les types de source de données.
+-# Laissez la liste déroulante du haut sur "Local files and folders"
+-# Cliquez sur le bouton "Add" et accédez au dossier ou fichier à ajouter. Le choix d'un dossier entraînera l'ajout de tout son contenu (y compris les sous-dossiers).
+-# Continuez de cliquer sur "Add" jusqu'à ce que tous les fichiers et dossiers aient été sélectionnés.
+
+Tous les fichiers que vous avez ajoutés dans le panneau seront regroupés dans une seule source de données, appelée "LogicalFileSet" dans l'interface utilisateur principale. 
+
+La prise en charge limitée des fichiers de preuves logiques (L01) est également possible. Pour en ajouter un comme source de données, sélectionnez "Logical evidence file (L01)" dans la liste déroulante du haut, puis accédez à votre fichier. 
+
+\section ds_unalloc Ajout d'un fichier image d'espace non alloué
+
+\image html unallocated_space_options.PNG
+
+Pour ajouter des fichiers image d'espace non alloué:
+-# Choisissez "Unallocated Space Image File" parmi les types de source de données.
+-# Accédez au fichier.
+-# Choisissez de diviser l'image en morceaux. Le fractionnement de l'image donnera de meilleures performances car les blocs peuvent être traités en parallèle, mais il est possible que des mots-clés ou des résidus de fichiers qui dépassent les limites des blocs soient manquants.
+
+\section ds_logical_imager Ajout d'un résultat du "Logical Imager" (imageur logique) d'Autopsy
+
+Cette option vous permet d'ajouter les résultats d'une collecte de l'imageur logique. Voir la page \ref logical_imager_page pour plus de détails.
+
+\section ds_xry Ajout de données d'exportation de texte XRY
+Un dossier d'exportation de fichiers texte XRY devrait ressembler à ceci:
+
+\image html xry_folder.png
+
+Pour ajouter des fichiers texte exportés:
+-# Choisissez "XRY Text Export" parmi les types de source de données.
+-# Naviguez jusqu'au dossier contenant les fichiers texte.
+
+\image html xry_dsp.png
+
+\section data_source_deletion Suppression de sources de données
+
+Depuis Autopsy 4.14.0, les sources de données peuvent être supprimées des cas. La suppression d'une source de données supprimera tous les fichiers associés à celle-ci, ainsi que tous les résultats de l'exécution des modules d'acquisition, les marquages et les données de chronologie. \ref reporting_page "Les rapports" ne seront pas supprimés, car la plupart ne sont pas associés à une source de données spécifique. Si une nouvelle source de données a été créée lors du traitement d'une source de données initiale (par le module \ref vm_extractor_page par exemple), cette nouvelle source de données sera également supprimée si son parent est supprimé.
+
+Pour supprimer une source de données, faites un clic-droit sur celle-ci dans l'\ref tree_viewer_page ou la \ref result_viewer_page et sélectionnez "Remove Data Source". Si le cas a été créé à l'origine avec une version d'Autopsy antérieure à 4.14.0, cette option sera désactivée. Après une boîte de dialogue de confirmation, le cas se fermera puis se rouvrira une fois la source de données supprimée.
+
+\image html data_source_delete.png
+
+*/

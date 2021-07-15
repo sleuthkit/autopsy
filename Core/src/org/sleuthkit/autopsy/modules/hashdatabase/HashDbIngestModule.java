@@ -49,6 +49,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.Score.Significance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -382,9 +383,8 @@ public class HashDbIngestModule implements FileIngestModule {
 
                     totalCount.incrementAndGet();
                     file.setKnown(statusIfFound);
-                    String hashSetName = db.getDisplayName();
                     String comment = generateComment(hashInfo);
-                    if (!createArtifactIfNotExists(hashSetName, file, comment, db)) {
+                    if (!createArtifactIfNotExists(file, comment, db)) {
                         wasError = true;
                     }
                 }
@@ -427,24 +427,23 @@ public class HashDbIngestModule implements FileIngestModule {
     /**
      * Creates a BlackboardArtifact if artifact does not already exist.
      *
-     * @param hashSetName The name of the hashset found.
      * @param file        The file that had a hash hit.
      * @param comment     The comment to associate with this artifact.
      * @param db          the database in which this file was found.
      *
      * @return True if the operation occurred successfully and without error.
      */
-    private boolean createArtifactIfNotExists(String hashSetName, AbstractFile file, String comment, HashDb db) {
+    private boolean createArtifactIfNotExists(AbstractFile file, String comment, HashDb db) {
         /*
          * We have a match. Now create an artifact if it is determined that one
          * hasn't been created yet.
          */
         List<BlackboardAttribute> attributesList = new ArrayList<>();
-        attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, HashLookupModuleFactory.getModuleName(), hashSetName));
+        attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, HashLookupModuleFactory.getModuleName(), db.getDisplayName()));
         try {
             Blackboard tskBlackboard = skCase.getBlackboard();
             if (tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, attributesList) == false) {
-                postHashSetHitToBlackboard(file, file.getMd5Hash(), hashSetName, comment, db.getSendIngestMessages());
+                postHashSetHitToBlackboard(file, file.getMd5Hash(), db, comment);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format(
@@ -502,32 +501,52 @@ public class HashDbIngestModule implements FileIngestModule {
     }
 
     /**
+     * Converts HashDb.KnownFilesType to a Score to be used to create an analysis result.
+     * @param knownFilesType The HashDb KnownFilesType to convert.
+     * @return The Score to use when creating an AnalysisResult.
+     */
+    private Score getScore(HashDb.KnownFilesType knownFilesType) {
+        if (knownFilesType == null) {
+            return Score.SCORE_UNKNOWN;
+        }
+        switch (knownFilesType) {
+            case KNOWN:
+                return Score.SCORE_NONE;
+            case KNOWN_BAD:
+                return Score.SCORE_NOTABLE;
+            default:
+            case NO_CHANGE:
+                return Score.SCORE_UNKNOWN;
+        }
+    }
+    /**
      * Post a hash set hit to the blackboard.
      *
      * @param abstractFile     The file to be processed.
      * @param md5Hash          The MD5 hash value of the file.
-     * @param hashSetName      The name of the hash set with which to associate
-     *                         the hit.
+     * @param db               The database in which this file was found.
      * @param comment          A comment to be attached to the artifact.
-     * @param showInboxMessage Show a message in the inbox?
      */
     @Messages({
         "HashDbIngestModule.indexError.message=Failed to index hashset hit artifact for keyword search."
     })
-    private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, String comment, boolean showInboxMessage) {
+    private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, HashDb db, String comment) {
         try {
             String moduleName = HashLookupModuleFactory.getModuleName();
             
-            Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            //TODO Revisit usage of deprecated constructor as per TSK-583
-            //BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, moduleName, hashSetName));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, moduleName, md5Hash));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, comment));
+            List<BlackboardAttribute> attributes = Arrays.asList(
+                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, moduleName, db.getDisplayName()),
+                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, moduleName, md5Hash),
+                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, comment)
+            );
 
+            // BlackboardArtifact.Type artifactType, Score score, String conclusion, String configuration, String justification, Collection<BlackboardAttribute> attributesList
             BlackboardArtifact badFile = abstractFile.newAnalysisResult(
-                    new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_HASHSET_HIT), Score.SCORE_UNKNOWN, null, null, null, attributes)
-                    .getAnalysisResult();
+                    BlackboardArtifact.Type.TSK_HASHSET_HIT, getScore(db.getKnownFilesType()), 
+                    null, db.getDisplayName(), null,
+                    attributes
+            ).getAnalysisResult();
+
             try {
                 /*
                  * post the artifact which will index the artifact for keyword
@@ -540,7 +559,7 @@ public class HashDbIngestModule implements FileIngestModule {
                         Bundle.HashDbIngestModule_indexError_message(), badFile.getDisplayName());
             }
 
-            if (showInboxMessage) {
+            if (db.getSendIngestMessages()) {
                 StringBuilder detailsSb = new StringBuilder();
                 //details
                 detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
@@ -565,7 +584,7 @@ public class HashDbIngestModule implements FileIngestModule {
                 detailsSb.append("<th>") //NON-NLS
                         .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.postToBB.hashsetName"))
                         .append("</th>"); //NON-NLS
-                detailsSb.append("<td>").append(hashSetName).append("</td>"); //NON-NLS
+                detailsSb.append("<td>").append(db.getDisplayName()).append("</td>"); //NON-NLS
                 detailsSb.append("</tr>"); //NON-NLS
 
                 detailsSb.append("</table>"); //NON-NLS

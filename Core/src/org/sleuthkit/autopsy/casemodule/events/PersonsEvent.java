@@ -19,69 +19,52 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.sleuthkit.datamodel.Person;
-import org.sleuthkit.datamodel.PersonManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Base event class for when something pertaining to persons changes.
+ * A base class for application events published when persons in the Sleuth Kit
+ * data model for a case have been added or updated.
  */
-public class PersonsEvent extends TskDataModelChangeEvent<Person> {
+public class PersonsEvent extends TskDataModelChangedEvent<Person, Person> {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Retrieves a list of ids from a list of persons.
-     *
-     * @param persons The persons.
-     * @return The list of ids.
-     */
-    private static List<Long> getIds(List<Person> persons) {
-        return getSafeList(persons).stream()
-                .filter(h -> h != null)
-                .map(h -> h.getPersonId()).collect(Collectors.toList());
-    }
-
-    /**
-     * Returns the persons or an empty list.
-     *
-     * @param persons The person list.
-     * @return The person list or an empty list if the parameter is null.
-     */
-    private static List<Person> getSafeList(List<Person> persons) {
-        return persons == null ? Collections.emptyList() : persons;
-    }
-
-    /**
-     * Main constructor.
+     * Constructs the base class part of an application event published when
+     * persons in the Sleuth Kit data model for a case have been added or
+     * updated.
      *
      * @param eventName The name of the Case.Events enum value for the event
-     * type.
-     * @param dataModelObjects The list of persons for the event.
+     *                  type.
+     * @param persons   The persons.
      */
-    protected PersonsEvent(String eventName, List<Person> dataModelObjects) {
-        super(eventName, getIds(dataModelObjects), new ArrayList<>(getSafeList(dataModelObjects)));
+    PersonsEvent(String eventName, List<Person> persons) {
+        super(eventName, null, null, persons, Person::getPersonId);
+    }
+
+    /**
+     * Gets the persons that have been added or updated.
+     *
+     * @return The persons.
+     */
+    public List<Person> getPersons() {
+        return getNewValue();
     }
 
     @Override
-    protected List<Person> getDataModelObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
-        PersonManager personManager = caseDb.getPersonManager();
-        List<Person> toRet = new ArrayList<>();
-        if (ids != null) {
-            for (Long id : ids) {
-                if (id == null) {
-                    continue;
-                }
-
-                Optional<Person> thisPersonOpt = personManager.getPerson(id);
-                thisPersonOpt.ifPresent((h) -> toRet.add(h));
+    protected List<Person> getNewValueObjects(SleuthkitCase caseDb, List<Long> ids) throws TskCoreException {
+        List<Person> persons = new ArrayList<>();
+        for (Long id : ids) {
+            Optional<Person> person = caseDb.getPersonManager().getPerson(id);
+            if (person.isPresent()) {
+                persons.add(person.get());
             }
         }
-
-        return toRet;
+        return persons;
     }
 
 }

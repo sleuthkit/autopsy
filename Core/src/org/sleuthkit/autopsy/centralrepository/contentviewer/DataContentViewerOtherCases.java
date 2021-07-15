@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.datamodel.OsAccount;
 
 /**
  * View correlation results from other cases
@@ -90,17 +91,18 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
     public boolean isSupported(Node node) {
 
         // Is supported if one of the following is true:
-        // - The central repo is enabled and the node has correlatable content
-        //   (either through the MD5 hash of the associated file or through a BlackboardArtifact)
+        // - The central repo is enabled and the node is not null
         // - The central repo is disabled and the backing file has a valid MD5 hash
-        AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
-        if (CentralRepository.isEnabled()) {
-            return !OtherOccurrences.getCorrelationAttributesFromNode(node, file).isEmpty();
-        } else {
+        // And the node has information which could be correlated on.
+        if (CentralRepository.isEnabled() && node != null) {
+            return OtherOccurrences.getAbstractFileFromNode(node) != null || OtherOccurrences.getBlackboardArtifactFromNode(node) != null || node.getLookup().lookup(OsAccount.class) != null;
+        } else if (node != null) {
+            AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
             return file != null
                     && file.getSize() > 0
                     && ((file.getMd5Hash() != null) && (!file.getMd5Hash().isEmpty()));
         }
+        return false;
     }
 
     @Override

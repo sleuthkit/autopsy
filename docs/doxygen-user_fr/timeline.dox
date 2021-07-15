@@ -1,0 +1,188 @@
+﻿/*! \page timeline_page Timeline (Chronologie)
+
+[TOC]
+
+
+\section timeline_overview Aperçu
+
+Ce document décrit l'utilisation de la fonction Timeline d'Autopsy. Cette fonctionnalité a été financée par le DHS S&T pour aider à fournir des outils de criminalistique numérique gratuits et open source aux forces de l'ordre. La fonction Timeline peut aider à répondre à des questions telles que celles-ci:
+
+- Quand une activité Web majeure s'est-elle produite sur un système?
+- Quand des périphériques externes ont-ils été connectés au système?
+- Quand les images contenant des informations EXIF ont-elles été ajoutées?
+- Quels sites Web ont été consultés qui ont entraîné des modifications du système de fichiers immédiatement après?
+
+Notez qu'à partir d'Autopsy 4.13, les événements de la Timeline sont désormais générés lors de l'acquisition et stockés dans la base de données du cas au lieu d'une base de données distincte. Pour cette raison, les cas plus anciens ne fonctionneront plus avec la Timeline.
+
+\section timeline_quickstart Démarrage rapide
+
+Utilisez cette section pour apprendre les bases de la Timeline. Vous trouverez plus de détails sur les options d'affichage plus loin dans ce document.
+
+Vous devez d'abord ouvrir un cas dans Autopsy. Pour tirer le meilleur parti de la Timeline, vous devez effectuer les opérations suivantes lors de l'acquisition:
+- Activer le module \ref hash_db_page "Hash Lookup" et utilisez le NSRL pour ignorer les fichiers connus
+- Activer le module \ref recent_activity_page "Recent Activity" pour générer des événements liés au Web et d'autres types d'événements divers
+- Activer le module \ref EXIF_parser_page "Picture Analyzer" pour générer des événements sur l'horodatage des images 
+- Activez d'autres modules d'acquisition qui s'appliquent à vos données. Si vous avez des données de messagerie, assurez-vous que le module \ref email_parser_page "Email Parser" est activé. Si vous analysez des appareils mobiles, assurez-vous que le module \ref android_analyzer_page "Android Analyzer" et tous les autres modules pertinents sont activés.
+
+Pour ouvrir la chronologie, utilisez le bouton "Timeline" ou allez dans le menu "Tools" puis "Timeline". Vous pouvez ouvrir la Timeline pendant le traitement d'une image, mais les données ne seront pas complètes tant qu'il ne sera pas terminé. La chronologie s'ouvrira sur la vue \ref timeline_counts_view "Counts" avec un graphique montrant le nombre d'événements dans chaque période. 
+
+\image html timeline_counts_view.png
+
+Vous pouvez cliquer sur l'un des segments des graphiques pour voir la liste des événements en bas à gauche. Cliquer sur un seul événement affichera les détails dans la section inférieure droite.
+
+Vous pouvez changer le mode d'affichage à l'aide des boutons situés dans la partie supérieure centrale de la fenêtre. Le deuxième mode d'affichage, la vue \ref timeline_details_view "Details", affiche des informations sur les événements survenus au cours d'une période donnée. Ce mode est plus efficient avec un filtre sur une petite fenêtre de temps.
+
+\image html timeline_details_view.png
+
+Le mode d'affichage final est la vue \ref timeline_list_view "List". Cette vue montre chaque événement dans l'ordre dans lequel il s'est produit. Cela peut être utile pour voir quels autres événements se sont produits dans le même laps de temps qu'un événement d'intérêt. Comme pour le mode Details, ce mode est plus efficient avec des filtres pour réduire le nombre d'événements affichés.
+
+\image html timeline_list_view.png
+
+
+\section timeline_basic_concepts Concepts de base
+Cette section couvre quelques concepts de base de l'interface. 
+
+\subsection timeline_events Evènements
+
+L'outil Timeline est organisé autour d'événements ("Event"). Un événement a un horodatage, un type et une description. Remarque: tous les événements sont distincts, mais peuvent être regroupés pour former des clusters avec une durée dans la vue Details en fonction du niveau de description ("Description") activé dans l'interface utilisateur.
+
+La Timeline collecte des données à partir de plusieurs sources et organise les événements dans la taxonomie suivante:
+
+- File System (Fichiers Système)
+    - Modified (Modification)
+    - Access (Accès)
+    - Created (Création)
+    - Changed (Changement)
+- Web Activity (Activités Web)
+    - Web Downloads (Téléchargements)
+    - Web Cookies (Cookies)
+    - Web Bookmarks (creation) (Création de signets)
+    - Web History (Historique)
+    - Web Searches (Recherches)
+    - Web Form Auto Fill (Remplissage automatique de formulaire)
+    - Web Form Address (Adresse de formulaire)
+- Miscellaneous (Divers)
+    - Messages
+    - GPS Routes (Routes GPS) 
+    - Location History (Historique de localisation)
+    - Calls (Appels)
+    - Email (Courriels)
+    - Recent Documents (Documents récents)
+    - Installed Programs (Programmes installés)
+    - Exif metadata (Métadonnées EXIF)
+    - Devices Attached (Périphériques connectés)
+    - Log Entry (Entrées de journaux)
+    - Registry (Base de registre)
+
+
+\subsection timeline_viz_types Types de visualisation
+
+Il existe trois types de graphiques différents fournis par la visionneuse d'Autopsy. Chacun est mieux adapté à un type de question différent auquel l'enquêteur tente de répondre. Vous pouvez naviguer entre les trois types dans la partie supérieure de l'interface.
+
+La vue \ref timeline_counts_view "Counts" affiche un graphique en histogrammes. Utilisez ce type de graphique pour afficher combien d'activités se sont produites dans un laps de temps donné. Cependant, il ne vous montrera pas d’événements spécifiques. Il peut être utile de déterminer quand l'ordinateur a été utilisé pour la dernière fois ou à quelle fréquence il a été utilisé. Lorsque vous démarez une Timeline, elle s'ouvrira avec ce style de graphique.
+
+La vue \ref timeline_details_view "Details" affiche des événements liés individuellement ou en groupe. Les dates/heures sont représentées horizontalement le long de l'axe horizonal, mais l'axe vertical ne représente aucune unité spécifique. Vous utiliseriez cette interface pour déterminer les événements spécifiques qui se sont produits dans un laps de temps donné ou sur les événements survenus avant ou après un événement donné. Vous utiliserez généralement ce type d'interface après avoir utilisé la vue Counts pour identifier une période de temps sur laquelle vous souhaitez obtenir des détails. Il peut y avoir beaucoup de détails dans cette vue et nous avons introduit les concepts de zoom, comme décrit dans la section suivante, pour vous aider. 
+
+La vue \ref timeline_list_view "List" affiche tous les événements dans l'ordre dans lequel ils se sont produits. Cela peut être utile pour savoir ce qui s'est passé avant et après un certain événement. Par exemple, si vous avez un téléchargement Web, vous pouvez trouver d'autres fichiers qui ont été créés avant ou après cela. La vue List peut comporter trop de données car il peut y avoir des milliers d'événements dans une plage de temps donnée. Utilisez les filtres décrits ci-dessous pour ramener le nombre d'événements à une taille appropriée.
+
+Le tableau en bas à gauche du panneau a une fonctionnalité \ref ui_quick_search qui peut être utilisée pour trouver rapidement un nœud dans le tableau. 
+
+\subsection timeline_viz_settings Paramètres de visualisation
+
+La barre d'outils au-dessus de la zone de visualisation affiche les paramètres spécifiques à la visualisation active. Ces paramètres affectent la façon dont les événements sont affichés et/ou la disposition de la visualisation.
+
+
+
+\subsection timeline_zooming Zoom
+
+Un défi courant avec l'analyse chronologique est la surcharge d'informations. Pour vous aider, l'interface d'Autopsy dispose de trois méthodes de zoom qui vous aideront à identifier les données correctes. Celles-ci peuvent être contrôlées à partir d'une seule zone dans le coin supérieur gauche de l'interface.
+
+
+- __Time Units__: Ce niveau de zoom contrôle le détail temporel affiché sur l'axe horizontal. Il dicte l'échelle des marqueurs sur un créneau d'une année à une seconde. Si vous voulez plus de détails sur ce qui s'est passé dans une plage de temps donnée, vous zoomerez davantage avec cette commande.
+- __Event Type__: Ce niveau de zoom contrôle les types d'événements que vous voyez. Par exemple, il existe un type principal d'événement "File System" avec des sous-types pour les horodatages des modifications, des accès ou des créations. Si vous voulez plus de détails sur un type d'évènement donné, vous zoomerez davantage avec cette commande.
+- __Description Detail__: Ce niveau de zoom est propre à Autopsy et regroupe les événements similaires en fonction de leur description. Par exemple, il regroupera les événements du système de fichiers s'ils se trouvent dans le même dossier racine lorsque vous effectuez un zoom arrière complet. Cela vous permet de voir généralement où il y a une activité sans avoir à analyser chaque fichier individuellement.
+
+Dans le cadre d'une approche de démarrage rapide, vous devez garder ceci à l'esprit: un double-clic sur quelque chose ne changera qu'un de ces niveaux de zoom. Nous avons essayé de choisir ce qui serait le plus intuitif pour la plupart des cas d'utilisation.
+Si vous souhaitez choisir une approche de zoom différente, utilisez les curseurs en haut à gauche ou faites un clic droite sur le graphique.
+
+\subsection timeline_history Historique
+
+A tout moment vous pouvez revenir à quelque chose que vous avez vu auparavant, utilisez les boutons d'historique "Back" (précédent) "Forward" (suivant) en haut à gauche ou le raccourci clavier "Alt + Gauche/Droite". 
+
+
+
+
+
+\section timeline_interaction Détails de l'interaction et de la configuration de la Timeline
+
+\subsection timeline_filters Filters (Filtres)
+
+La zone "Filters" permet à l'utilisateur d'appliquer des filtres pour limiter les événements affichés dans la visionneuse. Lorsque la vue Details est active, un onglet dans cette zone permet également de naviguer dans la visionneuse par descriptions d'événements (voir la section sur la vue \ref timeline_details_view "Details" pour en savoir plus)
+
+
+Lorsque le filtre __Must include text__ est actif, seuls les événements contenant la chaîne de caractères fournie en tant que sous-chaîne seront affichés.
+
+Lorsque le filtre __Must be tagged__ est activé, seuls les éléments marqués par l'analyste seront inclus dans la visionneuse de la Timeline.
+
+Lorsque le filtre __Must have hash hit__ est activé, seuls les fichiers avec des hachages connus seront inclus dans la visionneuse de la Timeline. Pour que ce filtre fonctionne, le module d'acquisition Hash Lookup doit avoir été exécuté avec un jeu de hachage connu activé.
+
+Lorsque le filtre __Limit data sources to__ est activé, seuls les éléments de la source de données séléctionnée seront inclus dans la visionneuse de la Timeline.
+
+Le filtre __Limit file types to__ permet à l'utilisateur de sélectionner les types de fichiers à afficher. Un clic droit sur un type de fichier fait apparaître un menu contextuel avec des options pour sélectionner différents ensembles de types ("all": tous les types, "none": aucun des types, "only": seulement ce type, "others": les autres types).
+
+Le filtre __Limit event types to__ permet à l'utilisateur de sélectionner les types d'évènements à afficher. Un clic droit sur un type d'évènement fait apparaître un menu contextuel avec des options pour sélectionner différents ensembles de types ("all": tous les types, "none": aucun des types, "only": seulement ce type, "others": les autres types).
+
+La hiérarchie des types d'événement affichée dans l'onglet de filtre fonctionne également comme __légende__ pour les visionneuses. Les événements sont codés par couleur pour correspondre à leur type et ont l'icône correspondante affichée à plusieurs endroits.
+
+\subsection timeline_time_range Sélection de la plage de temps
+
+
+La zone de sélection de la plage de temps offre plusieurs moyens d'ajuster la plage affichée. Les champs Date/Time indiquent la date et l'heure exactes du début ("Start" - à gauche) et de la fin ("End" - à droite) de la plage affichée. L'utilisateur peut taper directement dans ces champs ou utiliser un sélecteur de date/heure graphique pour modifier l'heure de début ou de fin.
+Les boutons "loupes" moins et plus agrandissent la plage de temps visible selon un pourcentage défini. Le menu déroulant à leur droite permet de sélectionner une plage de temps prédéfinie. Ces méthodes ajusteront la plage de temps visible autour de son centre.
+La dernière méthode pour ajuster la plage de temps visible consiste à utiliser le curseur de plage. L'utilisateur peut positionner chaque extrémité indépendamment pour ajuster respectivement l'heure de début et de fin ou faire glisser la section bleue en surbrillance pour déplacer la plage visible sans changer sa longueur. Dans les deux visionneuses (Counts et Details), l'utilisateur peut également cliquer sur une zone du graphique (en commençant dans un espace vide) puis glisser la souris sur un intervalle de temps, représenté par un cadre bleu pâle, et double-cliquer dessus pour agrandir l'intervalle de temps visible. Un clic droit sur la zone bleue de la période la désactive.
+
+\subsection timeline_histogram Histogramme
+
+Derrière le curseur de plage de temps se trouve un histogramme de tous les événements du cas. L'histogramme peut aider à mettre la visualisation principale en perspective en affichant un résumé global de tous les événements du cas, avec une représentation de la plage de temps visible superposée via le curseur de plage de temps. L'histogramme divise la durée totale de tous les événements du cas en intervalles égaux et montre le nombre d'événements dans chaque intervalle via la hauteur de la barre correspondante. L'histogramme ne doit être utilisé qu'à des fins de comparaison et de contexte relatifs et non pour déterminer le nombre exact ou l'heure des événements. Remarque: cet histogramme n'est pas affecté par les filtres ou le zoom.
+
+\subsection timeline_time_zone Fuseau horaire
+
+
+L'utilisateur peut choisir entre l'affichage des événements dans son fuseau horaire local ou en UTC.
+
+\subsection timeline_counts_view Zone de visualisation: vue Counts
+
+La vue "Counts" affiche un graphique en histogrammes avec des périodes le long de l'axe horizontal et des décomptes d'événements le long de l'axe vertical. La hauteur de chaque barre représente le nombre d'événements qui se sont produits au cours de cette période. Les différents segments colorés représentent différents types d'événements. Un clic droit sur les barres fait apparaître un menu contextuel avec des actions de sélection et de zoom.
+
+Le seul paramètre spécifique à la vue Counts est le type d'échelle (Scale) verticale à utiliser: l'échelle linéaire (Linear) convient à de nombreux cas d'utilisation. Lorsque cette échelle est sélectionnée, la hauteur des barres représente les décomptes de manière linéaire, un à un, et l'axe vertical est étiqueté avec des valeurs. Lorsque la plage de valeurs est très large, les périodes avec des nombres faibles peuvent avoir une barre trop petite pour être visualisée. Pour aider l'utilisateur à détecter cela, les étiquettes des plages de dates avec des événements sont en gras. Pour voir les barres trop petites, il existe trois options: ajustez la taille de la fenêtre afin que la zone de visualisation ait plus d'espace vertical, ajustez la plage de temps affichée de sorte que les périodes avec des barres plus grandes soient exclues, ou ajustez le paramètre d'échelle sur logarithmique.
+
+L'échelle logarithmique représente le nombre d'événements d'une manière non linéaire qui compresse la différence entre les grands et les petits nombres. Notez que même avec l'échelle logarithmique, une très grande différence de comptage peut toujours produire des barres trop petites pour être visibles. Dans ce cas, la seule option peut être de filtrer les événements pour réduire la différence de comptage. REMARQUE: étant donné que l'échelle logarithmique est appliquée à chaque type d'événement séparément, la signification de la hauteur de l'histogramme n'est pas intuitive et, pour le souligner, aucune étiquette n'est affichée sur l'axe vertical avec l'échelle logarithmique. L'échelle logarithmique doit être utilisée pour comparer rapidement les décomptes *dans le temps au sein d'un type, ou entre les types pour une période de temps, mais pas les deux.* Les décomptes réels (disponibles dans les infobulles ou dans le visualiseur de résultats) doivent être utilisés pour des comparaisons absolues. Utilisez l'échelle logarithmique avec précaution.
+
+
+\subsection timeline_details_view Zone de visualisation: vue Details
+
+
+La vue "Detais" affiche les événements regroupés par leur description. Les dates/heures sont représentés le long de l'axe horizonal, mais l'axe vertical ne représente rien et n'est utilisé que comme espace pour mettre en page les événements qui se chevauchent. Les événements avec le même type et la même description qui se produisent à proximité dans le temps peuvent être regroupés. Les curseurs "Time Unit" (Unité de temps), "Event Type" (Type d'évènement) et "Description Detail" (Détail de description) contrôlent la manière dont les événements sont regroupés. Lorsque le niveau de "Description Detail" est au maximum, il est probable que très peu d'événements seront regroupés, ce qui entraînera l'affichage d'une énorme quantité de détails. Cela peut entraîner un ralentissement important de l'interface utilisateur, __il n'est donc pas recommandé d'utiliser la description complète à moins que la plage de temps n'ait été réduite et/ou que des filtres n'aient été appliqués pour réduire le nombre d'événements affichés__. La projection des clusters sélectionnés est affichée sur l'axe horizontal pour aider à visualiser les relations temporelles entre ces derniers.
+
+La vue Details comporte quatre paramètres qui affectent les informations visibles et la disposition des clusters d'événements. Ces quatre paramètres sont indépendants. Ils sont situés dans le menu déroulant "Advanced Layout Options" et peuvent être combinés pour obtenir une variété d'effets avec différentes densités d'informations et différents modèles de mise en page.
+
+__Band by Type__:  Si cette option n'est pas sélectionnée, tous les clusters d'événements de différents types seront mélangés, dans une mise en page compacte. Si elle est sélectionnée, chaque type d'événement aura une bande horizontale qui lui sera réservée et les événements de différents types ne seront pas mélangés. Cette option est utile lorsque l'utilisateur souhaite comparer principalement des événements du même type.
+
+__One event per Row__:  Si cette option est sélectionnés, aucun cluster d'événements ne se superposera verticalement, cela rendra la visualisation plus semblable à un diagramme de Gantt mais utilisera beaucoup plus d'espace vertical.
+
+__Truncate Descriptions__:  L'utilisateur peut sélectionner cette option et choisir une longueur (en pixels) pour tronquer le libellé de texte affiché pour chaque cluster. Ceci est utile si les descriptions sont longues et empêchent une mise en page compacte.
+
+L'utilisateur peut choisir un niveau de visibilité de la description :
+
+__Show Full Description__:  c'est la valeur d'affichage par défaut - __Show Counts Only__:  seul le décompte entre parenthèses est affiché - __Hide Description__:  l'intégralité de l'étiquette de texte est masquée
+
+ "Show Counts Only" et "Hide Description" sont utiles si l'utilisateur souhaite obtenir une vue moins encombrée, se concentrer davantage sur le moment où les clusters d'événements se sont produits ainsi que sur leur type, et n'est pas intéressé par les descriptions.
+
+Cliquer sur le petit bouton vert [+] dans un cluster l'élargira avec le niveau de détail supérieur. Les événements du cluster seront affichés en cluster à une échelle de temps appropriée à leur étendue et au niveau de détail choisi. Cela peut être répété pour les sous-clusters, afin de créer une hiérarchie imbriquée de clusters. Cliquez sur le bouton rouge [-] pour réduire un cluster à un niveau de détail inférieur. Comme pour le niveau de description global, il convient d'être prudent lors de l'expansion complète de grands clusters, car cela peut entraîner l'affichage d'une énorme quantité de détails, ralentissant l'outil.
+
+
+\subsection timeline_list_view Zone de visualisation: vue List
+
+La vue "List" affiche tous les événements de la plage horaire que vous avez sélectionnée. Vous pouvez contrôler cette plage de temps à l'aide des entrées "Start" et "End" sous la liste, ou en déplaçant les extrémités du curseur de la ligne bleue qui s'affiche sous la liste. La sélection d'un événement dans la liste affichera ses détails dans la section inférieure de l'écran.
+
+*/

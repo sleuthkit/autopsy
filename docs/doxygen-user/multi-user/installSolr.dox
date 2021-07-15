@@ -207,7 +207,7 @@ Solr creates two types of data that need to be backed up:
 <ol><li>In a default installation that data is stored in \c "C:\solr-8.6.3\server\solr zoo_data" (assuming that the Solr package ZIP was extracted into \c "C:\solr-8.6.3" directory).</ol>
 </ul>
 
-\section Troubleshooting
+\section troubleshooting Troubleshooting / Performance Tuning
 
 \subsection install_solr_delayed_start Delayed Start Problems With Large Number Of Solr Collections
 
@@ -286,5 +286,37 @@ Some notes:
 \image html solr_jvm.png
 
 </ul>
+
+\subsection solr_commit_tuning Tuning Solr Server Commit Operations
+
+When Autopsy is running in a multi-user cluster environment with multiple auto ingest nodes, it may be beneficial to tune the configuration of Solr "commit" operations. 
+
+Solr has two types of "commits" – hard commits and soft commits. These are explained in detail the following link: https://lucidworks.com/post/understanding-transaction-logs-softcommit-and-commit-in-sorlcloud/
+
+In short:
+<ul>
+<li>Hard commits flush newly indexed documents from RAM to Solr index on disk.
+<li>Depending on configuration, hard commits may or may not make the newly indexed documents "visible" to search.
+<li>Soft commits do not flush newly indexed documents to disk but they make the newly indexed documents "visible" to search.
+</ul>
+
+By default (when using AutopsyConfig) the Solr servers are performing a "hard" commit every 5 minutes and are also making the newly indexed documents "visible" to search. These operations can be costly when performed on a large index which is located on a shared network drive. In this stuation it can be very beneficial to modify Solr configuration (located in \c "SOLR_INSTALLATION_DIECTORY\server\solr\configsets\AutopsyConfig\conf\solrconfig.xml") with the following changes:
+<ol>
+<li>Modify "hard commits" to still flush the newly created documents every 5 minutes but not make them "visible". This is accomplished by setting “openSearcher" to "false" in the "autoCommit" section of Solr configuration file.
+<li>Enable "soft commits" to be performed every 30 minutes thus making the newly indexed documents "visible" to search every 30 minutes. This is accomplished by enabling the "autoSoftCommit" section of Solr configuration file. The downside is that it may take up to 30 minutes to be able to search the latest document. Keep in mind that this only affects the scenario where an examiner is searching a case while the ingest is still ongoing. Autopsy automatically performs a commit after the ingest is complete so all the documents are immediately visible at that time.
+</ol>
+
+The following image shows the Solr configuration changes discussed above:
+
+\image html solr_config_autocommit.jpg
+
+Until a hard commit is performed, by default Solr also maintains a transaction log which contains the raw text of every newly indexed document since last hard commit. When the Solr index is located on a network share, this again can be a very costly operation. Transaction logs can be disabled by commenting out the "updateLog" section of Solr configuration file:
+
+\image html solr_comment_out_updateLog.jpg
+
+Keep in mind that this has an unfortunate side effect of creating CommitTracker errors in Solr logs and Solr admin console. These errors can be ignored if transaction log has been intentionally disabled. 
+
+\image html solr_transaction_log_errors.jpg
+
 
 */

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,10 +42,12 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -436,7 +438,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void removeNotify() {
+        protected void finalize() throws Throwable {
+            super.finalize();
             keywordResults.deleteObserver(this);
         }
 
@@ -503,22 +506,24 @@ public class KeywordHits implements AutopsyVisitableItem {
 
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             keywordResults.update();
             super.addNotify();
         }
 
         @Override
-        protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
-            super.removeNotify();
+        protected void finalize() throws Throwable{
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            super.finalize();
         }
 
         @Override
@@ -889,17 +894,17 @@ public class KeywordHits implements AutopsyVisitableItem {
                 KeywordHits_createNodeForKey_modTime_name(),
                 KeywordHits_createNodeForKey_modTime_displayName(),
                 KeywordHits_createNodeForKey_modTime_desc(),
-                ContentUtils.getStringTime(file.getMtime(), file)));
+                TimeZoneUtils.getFormattedTime(file.getMtime())));
         n.addNodeProperty(new NodeProperty<>(
                 KeywordHits_createNodeForKey_accessTime_name(),
                 KeywordHits_createNodeForKey_accessTime_displayName(),
                 KeywordHits_createNodeForKey_accessTime_desc(),
-                ContentUtils.getStringTime(file.getAtime(), file)));
+                TimeZoneUtils.getFormattedTime(file.getAtime())));
         n.addNodeProperty(new NodeProperty<>(
                 KeywordHits_createNodeForKey_chgTime_name(),
                 KeywordHits_createNodeForKey_chgTime_displayName(),
                 KeywordHits_createNodeForKey_chgTime_desc(),
-                ContentUtils.getStringTime(file.getCtime(), file)));
+                TimeZoneUtils.getFormattedTime(file.getCtime())));
         return n;
     }
 

@@ -24,6 +24,7 @@ DateFilterPanel.invalidRange.text=Range or Only Last must be selected.
 DateFilterPanel.startAfterEnd.text=Start date should be before the end date when both are enabled.
 DateFilterPanel.startOrEndNeeded.text=A start or end date must be specified to use the range filter.
 DiscoveryDialog.name.text=Discovery
+DiscoveryExtractAction.title.extractFiles.text=Extract File
 DiscoveryTopComponent.additionalFilters.text=; 
 DiscoveryTopComponent.cancelButton.text=Cancel Search
 DiscoveryTopComponent.domainSearch.text=Type: Domain
