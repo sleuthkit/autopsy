@@ -1,4 +1,4 @@
-﻿/*! \page keyword_search_page Keyword Search (Recherches par mots clés)
+/*! \page keyword_search_page Keyword Search (Recherches par mots clés)
 
 [TOC]
 
@@ -18,11 +18,11 @@ Référez vous à la page \ref ad_hoc_keyword_search_page pour plus de détails 
 \section keyword_search_configuration_dialog Configuration de la recherche par mot-clé 
 
 L'option de configuration de la recherche par mot-clé ("Keyword Search") comporte trois onglets, chacun ayant son propre objectif:
-\li L'\ref keywordLists est utilisé pour ajouter, supprimer et modifier des listes de recherche par mot-clé.
-\li L'\ref stringExtraction est utilisé pour activer les scripts de langage et le type d'extraction.
-\li L'\ref generalSettings est utilisé pour configurer les horaires d'acquisition et afficher les informations.
+\li L'\ref keyword_keywordListsTab est utilisé pour ajouter, supprimer et modifier des listes de recherche par mot-clé.
+\li L'\ref keyword_stringExtractionTab est utilisé pour activer les scripts de langage et le type d'extraction.
+\li L'\ref keyword_generalSettingsTab est utilisé pour configurer les horaires d'acquisition et afficher les informations.
 
-\subsection keywordLists Onglet "Lists"
+\subsection keyword_keywordListsTab Onglet "Lists"
 
 L'onglet "Lists" est utilisé pour créer/importer et ajouter du contenu aux listes de mots clés. Pour créer une liste, sélectionnez le bouton "New List" et choisissez un nom pour la nouvelle liste de mots clés. Une fois la liste créée, des mots clés peuvent y être ajoutés (voir la section \ref ad_hoc_kw_types_section pour plus d'informations sur les types de mots-clés). Des listes peuvent être ajoutées au processus d'acquisition de la recherche par mot-clé; les recherches auront lieu à intervalles réguliers au fur et à mesure que le contenu est ajouté à l'index.
 
@@ -40,7 +40,7 @@ Sous la liste "Keywords", vous pouvez solliciter la réception d'un messages dan
 
 \image html keyword-search-inbox.PNG
 
-\subsection stringExtraction Onglet "String Extraction"
+\subsection keyword_stringExtractionTab Onglet "String Extraction"
 Le paramètre "String Extraction" définit comment les chaînes de caractères sont extraites des fichiers dont le texte ne peut pas être extrait normalement car les formats de ces fichier ne sont pas pris en charge. C'est le cas des fichiers binaires arbitraires (tels que les fichiers d'échanges) et des morceaux d'espace non alloué qui représentent des fichiers supprimés.
 Lorsque nous extrayons des chaînes de caractères de fichiers binaires, nous devons interpréter les séquences d'octets comme du texte différemment en fonction du codage de texte possible et du script/langage utilisé. Dans de nombreux cas, nous ne savons pas à l'avance dans quel encodage/langue spécifique le texte est encodé. Cependant, cela peut être intéressant si l'enquêteur recherche une langue spécifique, car en sélectionnant moins de langues, les performances d'indexation seront améliorées et le nombre des faux positifs seront réduits.
 
@@ -50,20 +50,36 @@ Le paramètre par défaut consiste à rechercher uniquement les chaînes anglais
 L'utilisateur peut également utiliser en premier le "String Viewer" et essayer différents paramètres de script/langue, et voir quels paramètres donnent des résultats satisfaisants pour le type de texte pertinent pour l'enquête. Ensuite, ce même paramètre qui fonctionne pour l'enquête peut être appliqué au module d'acquisition de recherche par mot-clé.
 
 
-\subsection generalSettings Onglet "General"
+\subsection keyword_generalSettingsTab Onglet "General"
 
 \image html keyword-search-configuration-dialog-general.PNG
 
-### Prise en charge du NIST NSRL
+\subsubsection keyword_nsrl Prise en charge du NIST NSRL
 Le module d'acquisition "Hash Lookup" peut être configuré pour utiliser l'ensemble de hachage NIST NSRL de fichiers connus. L'onglet "General" de la boîte de dialogue de configuration avancée de la recherche par mot-clé contient une option permettant d'ignorer l'indexation par mot-clé et de rechercher des fichiers précédemment marqués comme "connus" ("Known") et sans intérêt. La sélection de cette option peut réduire considérablement la taille de l'index et améliorer les performances d'acquisition. Dans la plupart des cas, l'utilisateur n'a pas besoin de rechercher par mot-clé les fichiers "connus".
 
-### Fréquence de mise à jour des résultats lors de l'acquisition
+\subsubsection keyword_update_freq Fréquence de mise à jour des résultats lors de l'acquisition
 Pour contrôler la fréquence à laquelle les recherches sont exécutées pendant l'acquisition, l'utilisateur peut ajuster le paramètre de synchronisation disponible dans l'onglet "General" de la boîte de dialogue de configuration avancée de la recherche par mot-clé. La réduction du nombre de minutes entraînera des mises à jour d'index et des recherches plus fréquentes et l'utilisateur pourra voir les résultats davantage en temps réel. Cependant, des mises à jour plus fréquentes peuvent affecter les performances globales, en particulier sur les systèmes peu performants, et peuvent potentiellement allonger le temps total nécessaire à l'acquisition.
 
 On peut également choisir de ne pas effectuer de recherches périodiques. Cela accélérera l'acquisition. Les utilisateurs qui choisissent cette option peuvent exécuter leurs recherches par mots-clés une fois que l'index de recherche par mots-clés est complet.
 
-### Reconnaissance optique de caractères (OCR)
-Il existe également un paramètre pour activer le Optical Character Recognition (OCR). Si cette option est activée, le texte peut être extrait des types d'images pris en charge. L'activation de cette fonctionnalité rendra le module de recherche par mot-clé plus long à exécuter et les résultats ne sont pas parfaits. La deuxième case à cocher peut accélérer l'exécution de l'OCR en ne traitant que les grandes images et les images extraites de documents.
+\section keyword_usage Utilisation du module
+
+Les recherche peuvent être exécutées manuellement par l'utilisateur à tout moment, tant qu'il existe des fichiers déjà indexés et prêts à être analysés. Une recherche effectuée avant la fin de l'indexation ne s'exécutera naturellement que les index déjà compilés.
+
+Voir la page sur les \ref ingest_page "Ingest Modules" pour plus d'information sur les modules d'acquisition en général.
+
+Une fois qu'il y a des fichiers dans l'index, la \ref ad_hoc_keyword_search_page sera disponible pour une recherche manuelle à tout moment.
+
+\subsection keyword_ingest_settings Ingest Settings
+
+Les options de paramétrages "Ingest Settings" pour le module de recherches par mots clés permettent à l'utilisateur d'activer ou de désactiver les expressions de recherche intégrées spécifiques : Phone Numbers (numéros de téléphone), IP Addresses (adresses IP), Email Addresses (adresses mail), et URLs. En utilisant le bouton "Advanced" (expliqué ci-dessous), on peut ajouter des ensembles de mots clés personnalisés.
+
+\image html keyword-search-ingest-settings.PNG
+
+\subsubsection keyword_ocr Optical Character Recognition (reconnaissance optique de caractères)
+\anchor keyword_search_ocr_config
+
+Il y a aussi un paramètre pour activer la reconnaissance optique de caractères (ou Optical Character Recognition - OCR). S'il est activé, le texte peut être extrait des types d'images pris en charge. L'activation de cette fonctionnalité rendra l'exécution du module de recherche par mot-clé plus longue et les résultats pourront ne pas être parfaits.
 
 Voici un exemple d'image contenant du texte:
 
@@ -73,7 +89,12 @@ L'onglet "Indexed Text" affiche les résultats lors de l'exécution du module de
 
 \image html keyword-search-ocr-indexed-text.png
 
-\anchor keyword_search_ocr_config
+Les deux options liées à l'OCR sont les suivantes:
+<ul>
+<li>Only index text extracted from an image. Cela empêchera la recherche par mot-clé d'indexer le texte trouvé dans les fichiers texte, les documents, etc...
+<li>Only run on large images and documents and extracted files. Avec cette option sélectionnée, l'OCR ne sera effectuée que sur les images de plus de 100 Ko et les documents PDF/Office. Il fonctionnera également sur des images de toute taille extraites d'un autre fichier.
+</ul>
+
 Par défaut, l'OCR n'est configuré que pour le texte anglais. Sa configuration dépend de la présence de fichiers de langue (appelés fichiers "traineddata")
 qui existent dans un endroit qu'Autopsy peut atteindre. Pour ajouter la prise en charge de plusieurs langues, vous devrez télécharger des "traineddata" supplémentaires
 et les déplacer au bon endroit. Les étapes suivantes décrivent ce processus:
@@ -88,28 +109,7 @@ et les déplacer au bon endroit. Les étapes suivantes décrivent ce processus:
 
 Les fichiers de langue seront désormais pris en charge lorsque l'OCR est activé dans les paramètres de "Keyword Search".
 
-<!----------------------------------------->
-
-<br>
-Utilisation du module
-======
-Les requêtes de recherche peuvent être exécutées manuellement par l'utilisateur à tout moment, à condition que certains fichiers soient déjà indexés et prêts à être recherchés. La recherche avant que l'indexation ne soit terminée ne prendra naturellement en compte que les index déjà compilés.
-
-Voir la page \ref ingest_page "Modules d'acquisition" pour plus d'informations sur l'acquisition en général.
-
-Une fois qu'il y a des fichiers dans l'index, la \ref ad_hoc_keyword_search_page sera disponible pour une recherche manuelle à tout moment.
-
-<!----------------------------------->
-
-Paramètres d'acquisition
-------
-Les paramètres d'acquisition du module "Keyword Search" permettent à l'utilisateur d'activer ou de désactiver les expressions de recherche intégrées spécifiques : Phone Numbers, IP Addresses, Email Addresses, and URLs. En utilisant le bouton "Global Settings" (voir ci-dessous), on peut ajouter des groupes de mots clés personnalisés.
-
-\image html keyword-search-ingest-settings.PNG
-
-
-Voir les résultats
-------
+\section keyword_results Voir les résultats
 
 Le module "Keyword Search" enregistrera les résultats de la recherche, que celle-ci ait été effectuée par le processus d'acquisition ou manuellement par l'utilisateur. Les résultats enregistrés sont disponibles dans l'arborescence des répertoires dans le panneau de gauche.
 
