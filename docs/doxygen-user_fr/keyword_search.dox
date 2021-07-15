@@ -70,9 +70,9 @@ Voir la page sur les \ref ingest_page "Ingest Modules" pour plus d'information s
 
 Une fois qu'il y a des fichiers dans l'index, la \ref ad_hoc_keyword_search_page sera disponible pour une recherche manuelle à tout moment.
 
-\subsection keyword_ingest_settings Ingest Settings
+\subsection keyword_ingest_settings Paramétrages
 
-Les options de paramétrages "Ingest Settings" pour le module de recherches par mots clés permettent à l'utilisateur d'activer ou de désactiver les expressions de recherche intégrées spécifiques : Phone Numbers (numéros de téléphone), IP Addresses (adresses IP), Email Addresses (adresses mail), et URLs. En utilisant le bouton "Advanced" (expliqué ci-dessous), on peut ajouter des ensembles de mots clés personnalisés.
+Les options de paramétrages du module de recherches par mots clés permettent à l'utilisateur d'activer ou de désactiver les expressions de recherche intégrées spécifiques : Phone Numbers (numéros de téléphone), IP Addresses (adresses IP), Email Addresses (adresses mail), et URLs. En utilisant le bouton "Global Settings" (expliqué ci-dessous), on peut ajouter des ensembles de mots clés personnalisés.
 
 \image html keyword-search-ingest-settings.PNG
 
@@ -91,8 +91,8 @@ L'onglet "Indexed Text" affiche les résultats lors de l'exécution du module de
 
 Les deux options liées à l'OCR sont les suivantes:
 <ul>
-<li>Only index text extracted from an image. Cela empêchera la recherche par mot-clé d'indexer le texte trouvé dans les fichiers texte, les documents, etc...
-<li>Only run on large images and documents and extracted files. Avec cette option sélectionnée, l'OCR ne sera effectuée que sur les images de plus de 100 Ko et les documents PDF/Office. Il fonctionnera également sur des images de toute taille extraites d'un autre fichier.
+<li>Only index text extracted using OCR. Cela n'indexera que le texte détecté par l'OCR et empêchera l'indexation de texte trouvé dans les fichiers texte, les documents, etc...
+<li>Only process PDFs, MS Office docs and images which are over 100KB in size or extracted from another file. Avec cette option sélectionnée, l'OCR ne sera effectuée que sur les images de plus de 100 Ko et les documents PDF/Office. Il fonctionnera également sur des images de toute taille extraites d'un autre fichier.
 </ul>
 
 Par défaut, l'OCR n'est configuré que pour le texte anglais. Sa configuration dépend de la présence de fichiers de langue (appelés fichiers "traineddata")
