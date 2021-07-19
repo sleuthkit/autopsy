@@ -1312,7 +1312,7 @@ class SevenZipExtractor {
                 }
             }
 
-            List<byte[]> byteTokens = null;
+            List<byte[]> byteTokens;
             if (filePathBytes == null) {
                 return addNode(rootNode, tokens, null);
             } else {
@@ -1321,9 +1321,11 @@ class SevenZipExtractor {
                 for (int i = 0; i < filePathBytes.length; i++) {
                     if (filePathBytes[i] == '/') {
                         int len = i - last;
-                        byte[] arr = new byte[len];
-                        System.arraycopy(filePathBytes, last, arr, 0, len);
-                        byteTokens.add(arr);
+                        if (len > 0) {
+                            byte[] arr = new byte[len];
+                            System.arraycopy(filePathBytes, last, arr, 0, len);
+                            byteTokens.add(arr);
+                        }
                         last = i + 1;
                     }
                 }
@@ -1335,8 +1337,13 @@ class SevenZipExtractor {
                 }
 
                 if (tokens.size() != byteTokens.size()) {
-                    logger.log(Level.WARNING, "Could not map path bytes to path string (path string: \"{0}\", bytes: {1})", 
-                            new Object[]{filePath, bytesToString(filePathBytes)});
+                    String rootFileInfo = "";
+                    if (rootNode.getFile() != null) {
+                        rootFileInfo = rootNode.getFile().getParentPath() + rootNode.getFile().getName() 
+                                + "(ID: " + rootNode.getFile().getId() + ")";
+                    }
+                    logger.log(Level.WARNING, "Could not map path bytes to path string while extracting archive {0} (path string: \"{1}\", bytes: {2})", 
+                            new Object[]{rootFileInfo, this.rootNode.getFile().getId(), filePath, bytesToString(filePathBytes)});
                     return addNode(rootNode, tokens, null);
                 }
             }
