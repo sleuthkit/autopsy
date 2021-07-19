@@ -1337,7 +1337,7 @@ class SevenZipExtractor {
                 }
 
                 if (tokens.size() != byteTokens.size()) {
-                    String rootFileInfo = "";
+                    String rootFileInfo = "(unknown)";
                     if (rootNode.getFile() != null) {
                         rootFileInfo = rootNode.getFile().getParentPath() + rootNode.getFile().getName() 
                                 + "(ID: " + rootNode.getFile().getId() + ")";
