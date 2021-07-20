@@ -53,9 +53,8 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
-from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.datamodel import Score
-from java.util import ArrayList
+from java.util import Arrays
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the analysis.
@@ -140,13 +139,15 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artfiact.  Refer to the developer docs for other examples.
-            attrs = ArrayList()
-            attrs.add(BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME, SampleJythonDataSourceIngestModuleFactory.moduleName, "Test file"))
-            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, None, "Test file", None, attrs).getAnalysisResult()
+            attrs = Arrays.asList(BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
+                                                      SampleJythonDataSourceIngestModuleFactory.moduleName,
+                                                      "Test file"))
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE,
+                                         None, "Test file", None, attrs).getAnalysisResult()
 
             try:
-                # index the artifact for keyword search
-                blackboard.indexArtifact(art)
+                # post the artifact for listeners of artifact events.
+                blackboard.postArtifact(art)
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 

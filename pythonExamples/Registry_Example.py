@@ -45,7 +45,7 @@ from java.lang import Class
 from java.lang import System
 from java.sql  import DriverManager, SQLException
 from java.util.logging import Level
-from java.util import ArrayList
+from java.util import Arrays
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import ReadContentInputStream
@@ -171,11 +171,12 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
        
         # Setup Artifact and Attributes
         try:
-            artID = skCase.addArtifactType( "TSK_REGISTRY_RUN_KEYS", "Registry Run Keys")
+            skCase.addBlackboardArtifactType("TSK_REGISTRY_RUN_KEYS", "Registry Run Keys",
+                                                     BlackboardArtifact.Category.DATA_ARTIFACT)
         except:		
             self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
             
-        artId = skCase.getArtifactTypeID("TSK_REGISTRY_RUN_KEYS")
+        artType = skCase.getArtifactType("TSK_REGISTRY_RUN_KEYS")
 
         try:
            attributeIdRunKeyName = skCase.addArtifactAttributeType("TSK_REG_RUN_KEY_NAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Run Key Name")
@@ -198,17 +199,15 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
         
         # RefistryKeysFound is a list that contains a list with the following records abstractFile, Registry Key Location, Key Name, Key value
         for registryKey in self.registryKeysFound:
-            attributes = ArrayList()
-            art = registryKey[0].newArtifact(artId)
-            
-            attributes.add(BlackboardAttribute(attributeIdRegKeyLoc, moduleName, registryKey[1]))           
-            attributes.add(BlackboardAttribute(attributeIdRunKeyName, moduleName, registryKey[2]))
-            attributes.add(BlackboardAttribute(attributeIdRunKeyValue, moduleName, registryKey[3]))
-            art.addAttributes(attributes)
+            art = registryKey[0].newDataArtifact(artType, Arrays.asList(
+                BlackboardAttribute(attributeIdRegKeyLoc, moduleName, registryKey[1]),
+                BlackboardAttribute(attributeIdRunKeyName, moduleName, registryKey[2]),
+                BlackboardAttribute(attributeIdRunKeyValue, moduleName, registryKey[3])
+            ))
 
-            # index the artifact for keyword search
+            # post the artifact for listeners of artifact events
             try:
-                blackboard.indexArtifact(art)
+                skCase.getBlackboard().postArtifact(art)
             except:
                 self._logger.log(Level.WARNING, "Error indexing artifact " + art.getDisplayName())
         
@@ -278,7 +277,7 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
             return currentKey
         except:
         # Key not found
-            return null        
+            return None
         
 
 
