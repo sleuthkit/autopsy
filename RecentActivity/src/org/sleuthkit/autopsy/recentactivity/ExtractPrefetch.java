@@ -116,9 +116,9 @@ final class ExtractPrefetch extends Extract {
             return;
         }
 
-        String modOutFile = modOutPath + File.separator + dataSource.getName() + "-" + PREFETCH_PARSER_DB_FILE;
+        String modOutFile = modOutPath + File.separator + dataSource.getId() + "-" + PREFETCH_PARSER_DB_FILE;
         try {
-            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME, ingestJobId);
+            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getId() + "-" + PREFETCH_DIR_NAME, ingestJobId);
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
             File prefetchDatabase = new File(modOutFile);
             if (prefetchDatabase.exists()) {
