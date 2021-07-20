@@ -45,7 +45,7 @@ from java.lang import Class
 from java.lang import System
 from java.sql  import DriverManager, SQLException
 from java.util.logging import Level
-from java.util import Arrays
+from java.util import ArrayList
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import ReadContentInputStream
@@ -171,24 +171,23 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
        
         # Setup Artifact and Attributes
         try:
-            skCase.addBlackboardArtifactType("TSK_REGISTRY_RUN_KEYS", "Registry Run Keys",
-                                                     BlackboardArtifact.Category.DATA_ARTIFACT)
+            artID = skCase.addArtifactType( "TSK_REGISTRY_RUN_KEYS", "Registry Run Keys")
         except:		
             self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
             
-        artType = skCase.getArtifactType("TSK_REGISTRY_RUN_KEYS")
+        artId = skCase.getArtifactTypeID("TSK_REGISTRY_RUN_KEYS")
 
         try:
            attributeIdRunKeyName = skCase.addArtifactAttributeType("TSK_REG_RUN_KEY_NAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Run Key Name")
-        except:
+        except:		
            self.log(Level.INFO, "Attributes Creation Error, TSK_REG_RUN_KEY_NAME, May already exist. ")
         try:
            attributeIdRunKeyValue = skCase.addArtifactAttributeType("TSK_REG_RUN_KEY_VALUE", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Run Key Value")
-        except:
+        except:		
            self.log(Level.INFO, "Attributes Creation Error, TSK_REG_RUN_KEY_VALUE, May already exist. ")
         try:
            attributeIdRegKeyLoc = skCase.addArtifactAttributeType("TSK_REG_KEY_LOCATION", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Registry Key Location")
-        except:
+        except:		
            self.log(Level.INFO, "Attributes Creation Error, TSK_REG_KEY_LOCATION, May already exist. ")
 
         attributeIdRunKeyName = skCase.getAttributeType("TSK_REG_RUN_KEY_NAME")
@@ -199,15 +198,17 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
         
         # RefistryKeysFound is a list that contains a list with the following records abstractFile, Registry Key Location, Key Name, Key value
         for registryKey in self.registryKeysFound:
-            art = registryKey[0].newDataArtifact(artType, Arrays.asList(
-                BlackboardAttribute(attributeIdRegKeyLoc, moduleName, registryKey[1]),
-                BlackboardAttribute(attributeIdRunKeyName, moduleName, registryKey[2]),
-                BlackboardAttribute(attributeIdRunKeyValue, moduleName, registryKey[3])
-            ))
+            attributes = ArrayList()
+            art = registryKey[0].newArtifact(artId)
+            
+            attributes.add(BlackboardAttribute(attributeIdRegKeyLoc, moduleName, registryKey[1]))           
+            attributes.add(BlackboardAttribute(attributeIdRunKeyName, moduleName, registryKey[2]))
+            attributes.add(BlackboardAttribute(attributeIdRunKeyValue, moduleName, registryKey[3]))
+            art.addAttributes(attributes)
 
-            # post the artifact for listeners of artifact events
+            # index the artifact for keyword search
             try:
-                skCase.getBlackboard().postArtifact(art, moduleName)
+                blackboard.indexArtifact(art)
             except:
                 self._logger.log(Level.WARNING, "Error indexing artifact " + art.getDisplayName())
         
@@ -277,7 +278,7 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
             return currentKey
         except:
         # Key not found
-            return None
+            return null        
         
 
 
