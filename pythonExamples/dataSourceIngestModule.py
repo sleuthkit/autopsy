@@ -86,8 +86,6 @@ class SampleJythonDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 # Data Source-level ingest module.  One gets created per data source.
 # TODO: Rename this to something more specific. Could just remove "Factory" from above name.
 class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
-    LIKELY_NOTABLE_SCORE = Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO)
-
     _logger = Logger.getLogger(SampleJythonDataSourceIngestModuleFactory.moduleName)
 
     def log(self, level, msg):
@@ -143,8 +141,8 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artfiact.  Refer to the developer docs for other examples.
             attrs = ArrayList()
-            attrs.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, SampleJythonDataSourceIngestModuleFactory.moduleName, "Test file"))
-            art = file.newAnalysisResult(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, self.LIKELY_NOTABLE_SCORE, None, "Test file", None, attrs)
+            attrs.add(BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME, SampleJythonDataSourceIngestModuleFactory.moduleName, "Test file"))
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, None, "Test file", None, attrs).getAnalysisResult()
 
             try:
                 # index the artifact for keyword search

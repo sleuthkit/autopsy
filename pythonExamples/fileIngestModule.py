@@ -89,7 +89,6 @@ class SampleJythonFileIngestModuleFactory(IngestModuleFactoryAdapter):
 # TODO: Rename this to something more specific. Could just remove "Factory" from above name.
 # Looks at the attributes of the passed in file.
 class SampleJythonFileIngestModule(FileIngestModule):
-    LIKELY_NOTABLE_SCORE = Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO)
 
     _logger = Logger.getLogger(SampleJythonFileIngestModuleFactory.moduleName)
 
@@ -130,9 +129,9 @@ class SampleJythonFileIngestModule(FileIngestModule):
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artifact.  Refer to the developer docs for other examples.
             attrs = ArrayList()
-            attrs.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
+            attrs.add(BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
                   SampleJythonFileIngestModuleFactory.moduleName, "Text Files"))
-            art = file.newAnalysisResult(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, self.LIKELY_NOTABLE_SCORE, None, "Text Files", None, attrs)
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, None, "Text Files", None, attrs).getAnalysisResult()
 
 
             try:
