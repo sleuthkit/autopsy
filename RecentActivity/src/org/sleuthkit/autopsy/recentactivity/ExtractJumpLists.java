@@ -94,13 +94,13 @@ final class ExtractJumpLists extends Extract {
 
         List<AbstractFile> derivedFiles = new ArrayList<>();
         String derivedPath = null;
-        String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + JUMPLIST_DIR_NAME, ingestJobId);
+        String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), JUMPLIST_DIR_NAME + "_" + dataSource.getId(), ingestJobId);
         for (AbstractFile jumplistFile : jumpListFiles) {
             if (!jumplistFile.getName().toLowerCase().contains("-slack") && !jumplistFile.getName().equals("..") && 
                     !jumplistFile.getName().equals(".") && jumplistFile.getSize() > 0) {
-                String jlFile =  Paths.get(baseRaTempPath, jumplistFile.getName()).toString();
-                String moduleOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + RA_DIR_NAME + File.separator + JUMPLIST_DIR_NAME + File.separator + jumplistFile.getName();
-                derivedPath = RA_DIR_NAME + File.separator + JUMPLIST_DIR_NAME + File.separator + jumplistFile.getName();
+                String jlFile =  Paths.get(baseRaTempPath, jumplistFile.getName() + "_" + jumplistFile.getId()).toString();
+                String moduleOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + RA_DIR_NAME + File.separator + JUMPLIST_DIR_NAME + "_" + dataSource.getId() + File.separator + jumplistFile.getName() + "_" + jumplistFile.getId();
+                derivedPath = RA_DIR_NAME + File.separator + JUMPLIST_DIR_NAME + "_" + dataSource.getId() + File.separator + jumplistFile.getName()  + "_" + jumplistFile.getId();
                 File jlDir = new File(moduleOutPath);
                 if (jlDir.exists() == false) {
                     boolean dirMade = jlDir.mkdirs();
@@ -149,8 +149,8 @@ final class ExtractJumpLists extends Extract {
 
             if (!jumpListFile.getName().toLowerCase().contains("-slack") && !jumpListFile.getName().equals("..") && 
                     !jumpListFile.getName().equals(".") && jumpListFile.getSize() > 0) {
-                String fileName = jumpListFile.getName();
-                String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + JUMPLIST_DIR_NAME, ingestJobId);
+                String fileName = jumpListFile.getName() + "_" + jumpListFile.getId();
+                String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), JUMPLIST_DIR_NAME+ "_" + dataSource.getId(), ingestJobId);
                 String jlFile =  Paths.get(baseRaTempPath, fileName).toString();
                 try {
                     ContentUtils.writeToFile(jumpListFile, new File(jlFile));
@@ -212,7 +212,7 @@ final class ExtractJumpLists extends Extract {
                                 derivedFiles.add(derivedFile);
 
                             } catch (IOException | JLnkParserException e) {
-                                logger.log(Level.WARNING, String.format("No such document, or the Entry represented by documentName is not a DocumentEntry link file is %s", lnkFileName), e); //NON-NLS
+                                logger.log(Level.WARNING, String.format("No such document, or the Entry represented by documentName is not a DocumentEntry link file is %s", jumpListFile), e); //NON-NLS
                             }
                         }
                     } else {
