@@ -179,20 +179,16 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
         artType = skCase.getArtifactType("TSK_REGISTRY_RUN_KEYS")
 
         try:
-            addArtifactAttributeType(String
-            attrTypeString, TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE
-            valueType, String
-            displayName)
            attributeIdRunKeyName = skCase.addArtifactAttributeType("TSK_REG_RUN_KEY_NAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Run Key Name")
-        except:		
+        except:
            self.log(Level.INFO, "Attributes Creation Error, TSK_REG_RUN_KEY_NAME, May already exist. ")
         try:
            attributeIdRunKeyValue = skCase.addArtifactAttributeType("TSK_REG_RUN_KEY_VALUE", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Run Key Value")
-        except:		
+        except:
            self.log(Level.INFO, "Attributes Creation Error, TSK_REG_RUN_KEY_VALUE, May already exist. ")
         try:
            attributeIdRegKeyLoc = skCase.addArtifactAttributeType("TSK_REG_KEY_LOCATION", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Registry Key Location")
-        except:		
+        except:
            self.log(Level.INFO, "Attributes Creation Error, TSK_REG_KEY_LOCATION, May already exist. ")
 
         attributeIdRunKeyName = skCase.getAttributeType("TSK_REG_RUN_KEY_NAME")

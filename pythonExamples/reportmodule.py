@@ -70,7 +70,7 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
     # The 'baseReportDir' object being passed in is a string with the directory that reports are being stored in.   Report should go into baseReportDir + getRelativeFilePath().
     # The 'progressBar' object is of type ReportProgressPanel.
     #   See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1report_1_1_report_progress_panel.html
-    def generateReport(self, baseReportDir, progressBar):
+    def generateReport(self, reportSettings, progressBar):
 
         # For an example, we write a file with the number of files created in the past 2 weeks
         # Configure progress bar for 2 tasks
@@ -95,7 +95,7 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
         progressBar.increment()
 
         # Write the count to the report file.
-        fileName = os.path.join(baseReportDir, self.getRelativeFilePath())
+        fileName = os.path.join(reportSettings.getReportDirectoryPath(), self.getRelativeFilePath())
         report = open(fileName, 'w')
         report.write("file count = %d" % fileCount)
         report.close()
