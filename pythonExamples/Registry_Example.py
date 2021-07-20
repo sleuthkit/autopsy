@@ -179,6 +179,10 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
         artType = skCase.getArtifactType("TSK_REGISTRY_RUN_KEYS")
 
         try:
+            addArtifactAttributeType(String
+            attrTypeString, TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE
+            valueType, String
+            displayName)
            attributeIdRunKeyName = skCase.addArtifactAttributeType("TSK_REG_RUN_KEY_NAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Run Key Name")
         except:		
            self.log(Level.INFO, "Attributes Creation Error, TSK_REG_RUN_KEY_NAME, May already exist. ")
@@ -207,7 +211,7 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
 
             # post the artifact for listeners of artifact events
             try:
-                skCase.getBlackboard().postArtifact(art)
+                skCase.getBlackboard().postArtifact(art, moduleName)
             except:
                 self._logger.log(Level.WARNING, "Error indexing artifact " + art.getDisplayName())
         

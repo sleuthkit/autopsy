@@ -115,7 +115,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         progressBar.switchToIndeterminate()
 
         # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
 
         # For our example, we will use FileManager to get all
         # files with the word "test"
@@ -147,7 +147,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
             try:
                 # post the artifact for listeners of artifact events.
-                blackboard.postArtifact(art)
+                blackboard.postArtifact(art, SampleJythonDataSourceIngestModuleFactory.moduleName)
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 

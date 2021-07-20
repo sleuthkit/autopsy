@@ -113,7 +113,7 @@ class ContactsDbIngestModule(DataSourceIngestModule):
         progressBar.switchToIndeterminate()
 
         # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
 
         # Find files named contacts.db, regardless of parent path
         fileManager = Case.getCurrentCase().getServices().getFileManager()

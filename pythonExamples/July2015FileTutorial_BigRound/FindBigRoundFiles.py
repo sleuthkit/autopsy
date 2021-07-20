@@ -109,7 +109,7 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
     def process(self, file):
 
         # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
 
         # Skip non-files
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or 
@@ -131,7 +131,7 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
 
             try:
                 # post the artifact for listeners of artifact events
-                blackboard.postArtifact(art)
+                blackboard.postArtifact(art, FindBigRoundFilesIngestModuleFactory.moduleName)
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 

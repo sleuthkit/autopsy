@@ -117,7 +117,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
             return IngestModule.ProcessResult.OK
 
         # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
 
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
         if file.getName().lower().endswith(".txt"):
@@ -135,7 +135,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
             try:
                 # post the artifact for listeners of artifact events
-                blackboard.postArtifact(art)
+                blackboard.postArtifact(art, SampleJythonFileIngestModuleFactory.moduleName)
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 
