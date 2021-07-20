@@ -67,7 +67,9 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
         return "sampleReport.txt"
 
     # TODO: Update this method to make a report
-    # The 'baseReportDir' object being passed in is a string with the directory that reports are being stored in.   Report should go into baseReportDir + getRelativeFilePath().
+    # The 'reportSettings' object being passed in is an instance of org.sleuthkit.autopsy.report.GeneralReportSettings.
+    # GeneralReportSettings.getReportDirectoryPath() is the directory that reports are being stored in.
+    # Report should go into GeneralReportSettings.getReportDirectoryPath() + getRelativeFilePath().
     # The 'progressBar' object is of type ReportProgressPanel.
     #   See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1report_1_1_report_progress_panel.html
     def generateReport(self, reportSettings, progressBar):
