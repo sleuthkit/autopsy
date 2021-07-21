@@ -145,7 +145,7 @@ class RunExeIngestModule(DataSourceIngestModule):
         # Add each argument in its own line.  I.e. "-f foo" would be two calls to .add()
         cmd.add(imagePaths[0])
         
-        processBuilder = ProcessBuilder(cmd);
+        processBuilder = ProcessBuilder(cmd)
         processBuilder.redirectOutput(reportFile)
         ExecUtil.execute(processBuilder, DataSourceIngestModuleProcessTerminator(self.context))
         

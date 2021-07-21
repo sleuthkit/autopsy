@@ -37,6 +37,7 @@
 
 
 import os
+import codecs
 from java.lang import System
 from java.util.logging import Level
 from org.sleuthkit.datamodel import TskData
@@ -72,11 +73,11 @@ class CSVReportModule(GeneralReportModuleAdapter):
     # The 'baseReportDir' object being passed in is a string with the directory that reports are being stored in.   Report should go into baseReportDir + getRelativeFilePath().
     # The 'progressBar' object is of type ReportProgressPanel.
     #   See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1report_1_1_report_progress_panel.html
-    def generateReport(self, baseReportDir, progressBar):
+    def generateReport(self, reportSettings, progressBar):
 
         # Open the output file.
-        fileName = os.path.join(baseReportDir, self.getRelativeFilePath())
-        report = open(fileName, 'w')
+        fileName = os.path.join(reportSettings.getReportDirectoryPath(), self.getRelativeFilePath())
+        report = codecs.open(fileName, "w", "utf-8")
 
         # Query the database for the files (ignore the directories)
         sleuthkitCase = Case.getCurrentCase().getSleuthkitCase()
