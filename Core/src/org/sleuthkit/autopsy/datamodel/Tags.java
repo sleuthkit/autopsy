@@ -20,12 +20,11 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
@@ -96,11 +95,27 @@ public class Tags implements AutopsyVisitableItem {
      * other nodes can listen to. This mimics what other nodes have (keword
      * search, etc.), but theirs stores data.
      */
-    private class TagResults extends Observable {
+    private class TagResults {
+        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+     
+        /**
+         * Adds a property change listener listening for changes in data.
+         * @param pcl The property change listener to be subscribed.
+         */
+        void addListener(PropertyChangeListener pcl) {
+            pcs.addPropertyChangeListener(pcl);
+        }
+
+        /**
+         * Removes a property change listener listening for changes in data.
+         * @param pcl The property change listener to be removed from subscription.
+         */        
+        void removeListener(PropertyChangeListener pcl) {
+            pcs.removePropertyChangeListener(pcl);
+        }
 
         public void update() {
-            setChanged();
-            notifyObservers();
+            pcs.firePropertyChange(TagResults.class.getName(), null, this);
         }
     }
 
@@ -156,7 +171,7 @@ public class Tags implements AutopsyVisitableItem {
 
     }
 
-    private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
+    private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> {
 
         private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
@@ -214,8 +229,10 @@ public class Tags implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+
+        private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         /**
          * Constructor
@@ -225,21 +242,21 @@ public class Tags implements AutopsyVisitableItem {
         TagNameNodeFactory(long objId) {
             this.filteringDSObjId = objId;
         }
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
             tagResults.update();
-            tagResults.addObserver(this);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
-            tagResults.deleteObserver(this);
+            tagResults.removeListener(tagResultsWeakPcl);
+            super.finalize();
         }
 
         @Override
@@ -273,11 +290,6 @@ public class Tags implements AutopsyVisitableItem {
         protected Node createNodeForKey(TagName key) {
             return new TagNameNode(key);
         }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
     }
 
     /**
@@ -285,11 +297,13 @@ public class Tags implements AutopsyVisitableItem {
      * content and blackboard artifact tags, grouped first by tag type, then by
      * tag name.
      */
-    public class TagNameNode extends DisplayableItemNode implements Observer {
+    public class TagNameNode extends DisplayableItemNode {
 
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
         private final String BOOKMARK_TAG_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png"; //NON-NLS
         private final TagName tagName;
+
+        private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         public TagNameNode(TagName tagName) {
             super(Children.create(new TagTypeNodeFactory(tagName), true), Lookups.singleton(NbBundle.getMessage(TagNameNode.class, "TagNameNode.namePlusTags.text", tagName.getDisplayName())));
@@ -301,7 +315,7 @@ public class Tags implements AutopsyVisitableItem {
             } else {
                 setIconBaseWithExtension(ICON_PATH);
             }
-            tagResults.addObserver(this);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -358,13 +372,14 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
+        public String getItemType() {
+            return getClass().getName();
         }
 
         @Override
-        public String getItemType() {
-            return getClass().getName();
+        protected void finalize() throws Throwable {
+            tagResults.removeListener(tagResultsWeakPcl);
+            super.finalize();
         }
     }
 
@@ -411,7 +426,9 @@ public class Tags implements AutopsyVisitableItem {
      * and blackboard artifact tags, grouped first by tag type, then by tag
      * name.
      */
-    public class ContentTagTypeNode extends DisplayableItemNode implements Observer {
+    public class ContentTagTypeNode extends DisplayableItemNode {
+
+        private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
         private final TagName tagName;
@@ -422,7 +439,7 @@ public class Tags implements AutopsyVisitableItem {
             super.setName(CONTENT_DISPLAY_NAME);
             updateDisplayName();
             this.setIconBaseWithExtension(ICON_PATH);
-            tagResults.addObserver(this);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -469,24 +486,27 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
         public String getItemType() {
             return getClass().getName();
         }
+
+        @Override
+        protected void finalize() throws Throwable {
+            tagResults.removeListener(tagResultsWeakPcl);
+            super.finalize();
+        }
     }
 
-    private class ContentTagNodeFactory extends ChildFactory<ContentTag> implements Observer {
+    private class ContentTagNodeFactory extends ChildFactory.Detachable<ContentTag> {
+
+        private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         private final TagName tagName;
 
         ContentTagNodeFactory(TagName tagName) {
             super();
             this.tagName = tagName;
-            tagResults.addObserver(this);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         @Override
@@ -519,8 +539,9 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
+        protected void finalize() throws Throwable {
+            tagResults.removeListener(tagResultsWeakPcl);
+            super.finalize();
         }
     }
 
@@ -532,7 +553,9 @@ public class Tags implements AutopsyVisitableItem {
      * content and blackboard artifact tags, grouped first by tag type, then by
      * tag name.
      */
-    public class BlackboardArtifactTagTypeNode extends DisplayableItemNode implements Observer {
+    public class BlackboardArtifactTagTypeNode extends DisplayableItemNode {
+
+        private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         private final TagName tagName;
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
@@ -543,7 +566,7 @@ public class Tags implements AutopsyVisitableItem {
             super.setName(ARTIFACT_DISPLAY_NAME);
             this.setIconBaseWithExtension(ICON_PATH);
             updateDisplayName();
-            tagResults.addObserver(this);
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -589,24 +612,31 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
         public String getItemType() {
             return getClass().getName();
         }
+
+        @Override
+        protected void finalize() throws Throwable {
+            tagResults.removeListener(tagResultsWeakPcl);
+            super.finalize();
+        }
     }
 
-    private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> implements Observer {
+    private class BlackboardArtifactTagNodeFactory extends ChildFactory.Detachable<BlackboardArtifactTag> {
+
+        private final PropertyChangeListener tagResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         private final TagName tagName;
 
         BlackboardArtifactTagNodeFactory(TagName tagName) {
             super();
             this.tagName = tagName;
-            tagResults.addObserver(this);
+        }
+
+        @Override
+        protected void addNotify() {
+            tagResults.addListener(tagResultsWeakPcl);
         }
 
         @Override
@@ -639,8 +669,9 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
+        protected void finalize() throws Throwable {
+            tagResults.removeListener(tagResultsWeakPcl);
+            super.finalize();
         }
     }
 }

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -28,8 +29,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
@@ -121,13 +120,34 @@ public class EmailExtracted implements AutopsyVisitableItem {
         return visitor.visit(this);
     }
 
-    private final class EmailResults extends Observable {
+    private final class EmailResults {
 
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
 
+        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
         EmailResults() {
             update();
+        }
+
+        /**
+         * Adds a property change listener listening for changes in data.
+         *
+         * @param pcl The property change listener to be subscribed.
+         */
+        void addListener(PropertyChangeListener pcl) {
+            pcs.addPropertyChangeListener(pcl);
+        }
+
+        /**
+         * Removes a property change listener listening for changes in data.
+         *
+         * @param pcl The property change listener to be removed from
+         *            subscription.
+         */
+        void removeListener(PropertyChangeListener pcl) {
+            pcs.removePropertyChangeListener(pcl);
         }
 
         public Set<String> getAccounts() {
@@ -196,8 +216,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 accounts.putAll(newMapping);
             }
 
-            setChanged();
-            notifyObservers();
+            pcs.firePropertyChange(EmailResults.class.getSimpleName(), null, accounts);
         }
     }
 
@@ -255,84 +274,81 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Mail root child node creating each account node
      */
-    private class AccountFactory extends ChildFactory.Detachable<String> implements Observer {
+    private class AccountFactory extends ChildFactory.Detachable<String> {
+
+        private final PropertyChangeListener weakEmailResultsListener = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         /*
          * The pcl is in the class because it has the easiest mechanisms to add
          * and remove itself during its life cycles.
          */
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
                     /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
                      */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Even with the check above, it is still possible that
-                         * the case will be closed in a different thread before
-                         * this code executes. If that happens, it is possible
-                         * for the event to have a null oldValue.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
-                            emailResults.update();
-                        }
-                    } catch (NoCurrentCaseException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
-                    }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
                         emailResults.update();
-                    } catch (NoCurrentCaseException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
                     }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    emailResults.update();
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                if (evt.getNewValue() == null) {
+                    removeNotify();
+                    skCase = null;
                 }
             }
-        };
-
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            emailResults.addListener(weakEmailResultsListener);
             emailResults.update();
-            emailResults.addObserver(this);
         }
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            emailResults.deleteObserver(this);
+            emailResults.removeListener(weakEmailResultsListener);
+            super.finalize();
         }
 
         @Override
@@ -345,19 +361,16 @@ public class EmailExtracted implements AutopsyVisitableItem {
         protected Node createNodeForKey(String key) {
             return new AccountNode(key);
         }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
     }
 
     /**
      * Account node representation
      */
-    public class AccountNode extends DisplayableItemNode implements Observer {
+    public class AccountNode extends DisplayableItemNode {
 
         private final String accountName;
+
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         public AccountNode(String accountName) {
             super(Children.create(new FolderFactory(accountName), true), Lookups.singleton(accountName));
@@ -365,7 +378,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             this.accountName = accountName;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account-icon-16.png"); //NON-NLS
             updateDisplayName();
-            emailResults.addObserver(this);
+            emailResults.addListener(weakListener);
         }
 
         private void updateDisplayName() {
@@ -400,27 +413,35 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
         public String getItemType() {
             return getClass().getName();
         }
+
+        @Override
+        protected void finalize() throws Throwable {
+            emailResults.removeListener(weakListener);
+            super.finalize();
+        }
+
     }
 
     /**
      * Account node child creating sub nodes for every folder
      */
-    private class FolderFactory extends ChildFactory<String> implements Observer {
+    private class FolderFactory extends ChildFactory.Detachable<String> {
+
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         private final String accountName;
 
         private FolderFactory(String accountName) {
             super();
             this.accountName = accountName;
-            emailResults.addObserver(this);
+        }
+
+        @Override
+        protected void addNotify() {
+            emailResults.addListener(weakListener);
         }
 
         @Override
@@ -435,8 +456,9 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
+        protected void finalize() throws Throwable {
+            emailResults.removeListener(weakListener);
+            super.finalize();
         }
     }
 
@@ -460,7 +482,9 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Node representing mail folder
      */
-    public class FolderNode extends DisplayableItemNode implements Observer {
+    public class FolderNode extends DisplayableItemNode {
+
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         private final String accountName;
         private final String folderName;
@@ -472,7 +496,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             this.accountName = accountName;
             this.folderName = folderName;
             updateDisplayName();
-            emailResults.addObserver(this);
+            emailResults.addListener(weakListener);
         }
 
         private void updateDisplayName() {
@@ -508,21 +532,23 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
+        public String getItemType() {
+            return getClass().getName();
         }
 
         @Override
-        public String getItemType() {
-            return getClass().getName();
+        protected void finalize() throws Throwable {
+            emailResults.removeListener(weakListener);
+            super.finalize();
         }
     }
 
     /**
      * Node representing mail folder content (mail messages)
      */
-    private class MessageFactory extends BaseChildFactory<DataArtifact> implements Observer {
+    private class MessageFactory extends BaseChildFactory<DataArtifact> {
 
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange((pce) -> refresh(true), null);
         private final String accountName;
         private final String folderName;
 
@@ -530,17 +556,11 @@ public class EmailExtracted implements AutopsyVisitableItem {
             super(getFolderKey(accountName, folderName));
             this.accountName = accountName;
             this.folderName = folderName;
-            emailResults.addObserver(this);
         }
 
         @Override
         protected Node createNodeForKey(DataArtifact art) {
             return new BlackboardArtifactNode(art);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
         }
 
         @Override
@@ -565,12 +585,12 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected void onAdd() {
-            // No-op
+            emailResults.addListener(weakListener);
         }
 
         @Override
         protected void onRemove() {
-            // No-op
+            emailResults.removeListener(weakListener);
         }
     }
 }

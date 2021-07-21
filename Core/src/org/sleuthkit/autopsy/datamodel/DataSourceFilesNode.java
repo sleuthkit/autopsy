@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -105,24 +106,22 @@ public class DataSourceFilesNode extends DisplayableItemNode {
             this.datasourceObjId = dsObjId;
         }
 
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                    refresh(true);
-                }
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((pce) -> {
+            String eventType = pce.getPropertyName();
+            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                refresh(true);
             }
-        };
+        }, null);
+                
 
         @Override
         protected void onAdd() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), weakPcl);
         }
 
         @Override
         protected void onRemove() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), weakPcl);
             currentKeys.clear();
         }
 

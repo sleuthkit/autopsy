@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -30,8 +31,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
@@ -89,11 +88,29 @@ public class InterestingHits implements AutopsyVisitableItem {
         interestingResults.update();
     }
 
-    private class InterestingResults extends Observable {
+    private class InterestingResults {
 
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, Set<Long>>> interestingItemsMap = new LinkedHashMap<>();
+        
+        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
+        /**
+         * Adds a property change listener listening for changes in data.
+         * @param pcl The property change listener to be subscribed.
+         */
+        void addListener(PropertyChangeListener pcl) {
+            pcs.addPropertyChangeListener(pcl);
+        }
+
+        /**
+         * Removes a property change listener listening for changes in data.
+         * @param pcl The property change listener to be removed from subscription.
+         */        
+        void removeListener(PropertyChangeListener pcl) {
+            pcs.removePropertyChangeListener(pcl);
+        }
+        
         public List<String> getSetNames() {
             List<String> setNames;
             synchronized (interestingItemsMap) {
@@ -115,8 +132,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             }
             loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT);
             loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT);
-            setChanged();
-            notifyObservers();
+            pcs.firePropertyChange(InterestingResults.class.getSimpleName(), null, interestingItemsMap);
         }
 
         /*
@@ -214,14 +230,14 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
-    private class SetNameFactory extends ChildFactory.Detachable<String> implements Observer {
+    private class SetNameFactory extends ChildFactory.Detachable<String> {
 
         /*
          * This should probably be in the top-level class, but the factory has
          * nice methods for its startup and shutdown, so it seemed like a
          * cleaner place to register the property change listener.
          */
-        private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                 /**
@@ -271,26 +287,26 @@ public class InterestingHits implements AutopsyVisitableItem {
                     skCase = null;
                 }
             }
-        };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
-        
+        }, null);
+
+        private final PropertyChangeListener interestingResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            interestingResults.addListener(interestingResultsWeakPcl);
             interestingResults.update();
-            interestingResults.addObserver(this);
         }
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            interestingResults.deleteObserver(this);
+            interestingResults.removeListener(interestingResultsWeakPcl);
+            super.finalize();
         }
 
         @Override
@@ -303,14 +319,11 @@ public class InterestingHits implements AutopsyVisitableItem {
         protected Node createNodeForKey(String key) {
             return new SetNameNode(key);
         }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
     }
 
-    public class SetNameNode extends DisplayableItemNode implements Observer {
+    public class SetNameNode extends DisplayableItemNode {
+
+        private final PropertyChangeListener interestingResultsWeakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         private final String setName;
 
@@ -320,7 +333,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             super.setName(setName);
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
-            interestingResults.addObserver(this);
+            interestingResults.addListener(interestingResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -352,16 +365,6 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
         public String getItemType() {
             /**
              * For custom settings for each rule set, return
@@ -369,17 +372,30 @@ public class InterestingHits implements AutopsyVisitableItem {
              */
             return getClass().getName();
         }
+
+        @Override
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            interestingResults.removeListener(interestingResultsWeakPcl);
+            super.finalize();
+        }
+
     }
 
-    private class HitTypeFactory extends ChildFactory<String> implements Observer {
+    private class HitTypeFactory extends ChildFactory<String> {
+
+        private final PropertyChangeListener interestingResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         private final String setName;
-        private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
 
         private HitTypeFactory(String setName) {
             super();
             this.setName = setName;
-            interestingResults.addObserver(this);
+            interestingResults.addListener(interestingResultsWeakPcl);
         }
 
         @Override
@@ -395,12 +411,15 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
+        protected void finalize() throws Throwable {
+            interestingResults.removeListener(interestingResultsWeakPcl);
+            super.finalize();
         }
     }
 
-    public class InterestingItemTypeNode extends DisplayableItemNode implements Observer {
+    public class InterestingItemTypeNode extends DisplayableItemNode {
+
+        private final PropertyChangeListener interestingResultsWeakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
 
         private final String typeName;
         private final String setName;
@@ -417,7 +436,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             super.setName(setName + "_" + typeName);
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
-            interestingResults.addObserver(this);
+            interestingResults.addListener(interestingResultsWeakPcl);
         }
 
         private void updateDisplayName() {
@@ -450,11 +469,6 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
         public String getItemType() {
             /**
              * For custom settings for each rule set, return
@@ -462,9 +476,17 @@ public class InterestingHits implements AutopsyVisitableItem {
              */
             return getClass().getName();
         }
+
+        @Override
+        protected void finalize() throws Throwable {
+            interestingResults.removeListener(interestingResultsWeakPcl);
+            super.finalize();
+        }
     }
 
-    private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
+    private class HitFactory extends BaseChildFactory<AnalysisResult> {
+
+        private final PropertyChangeListener interestingResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         private final String setName;
         private final String typeName;
@@ -479,7 +501,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             super(setName + "_" + typeName);
             this.setName = setName;
             this.typeName = typeName;
-            interestingResults.addObserver(this);
+            interestingResults.addListener(interestingResultsWeakPcl);
         }
 
         @Override
@@ -511,11 +533,6 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
-
-        @Override
         protected void onAdd() {
             // No-op
         }
@@ -523,6 +540,12 @@ public class InterestingHits implements AutopsyVisitableItem {
         @Override
         protected void onRemove() {
             // No-op
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            interestingResults.removeListener(interestingResultsWeakPcl);
+            super.finalize();
         }
     }
 }

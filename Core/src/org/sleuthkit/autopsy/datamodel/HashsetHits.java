@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -30,8 +31,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
@@ -101,14 +100,35 @@ public class HashsetHits implements AutopsyVisitableItem {
      * Stores all of the hashset results in a single class that is observable
      * for the child nodes
      */
-    private class HashsetResults extends Observable {
+    private class HashsetResults {
 
         // maps hashset name to list of artifacts for that set
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
 
+        private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
         HashsetResults() {
             update();
+        }
+
+        /**
+         * Adds a property change listener listening for changes in data.
+         *
+         * @param pcl The property change listener to be subscribed.
+         */
+        void addListener(PropertyChangeListener pcl) {
+            pcs.addPropertyChangeListener(pcl);
+        }
+
+        /**
+         * Removes a property change listener listening for changes in data.
+         *
+         * @param pcl The property change listener to be removed from
+         *            subscription.
+         */
+        void removeListener(PropertyChangeListener pcl) {
+            pcs.removePropertyChangeListener(pcl);
         }
 
         List<String> getSetNames() {
@@ -163,8 +183,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
             }
 
-            setChanged();
-            notifyObservers();
+            pcs.firePropertyChange(HashsetResults.class.getSimpleName(), null, hashSetHitsMap);
         }
     }
 
@@ -220,84 +239,80 @@ public class HashsetHits implements AutopsyVisitableItem {
     /**
      * Creates child nodes for each hashset name
      */
-    private class HashsetNameFactory extends ChildFactory.Detachable<String> implements Observer {
+    private class HashsetNameFactory extends ChildFactory.Detachable<String> {
 
         /*
          * This should probably be in the HashsetHits class, but the factory has
          * nice methods for its startup and shutdown, so it seemed like a
          * cleaner place to register the property change listener.
          */
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
                     /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
+                     * Due to some unresolved issues with how cases are closed,
+                     * it is possible for the event to have a null oldValue if
+                     * the event is a remote event.
                      */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Due to some unresolved issues with how cases are
-                         * closed, it is possible for the event to have a null
-                         * oldValue if the event is a remote event.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == TSK_HASHSET_HIT.getTypeID()) {
-                            hashsetResults.update();
-                        }
-                    } catch (NoCurrentCaseException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
-                    }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == TSK_HASHSET_HIT.getTypeID()) {
                         hashsetResults.update();
-                    } catch (NoCurrentCaseException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
                     }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    hashsetResults.update();
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                if (evt.getNewValue() == null) {
+                    removeNotify();
+                    skCase = null;
                 }
             }
-        };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
+        private final PropertyChangeListener hashsetResultsWeakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
 
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            hashsetResults.addListener(hashsetResultsWeakPcl);
             hashsetResults.update();
-            hashsetResults.addObserver(this);
         }
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            hashsetResults.deleteObserver(this);
+            hashsetResults.removeListener(hashsetResultsWeakPcl);
+            super.finalize();
         }
 
         @Override
@@ -310,18 +325,14 @@ public class HashsetHits implements AutopsyVisitableItem {
         protected Node createNodeForKey(String key) {
             return new HashsetNameNode(key);
         }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
     }
 
     /**
      * Node for a hash set name
      */
-    public class HashsetNameNode extends DisplayableItemNode implements Observer {
+    public class HashsetNameNode extends DisplayableItemNode {
 
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((pce) -> updateDisplayName(), null);
         private final String hashSetName;
 
         public HashsetNameNode(String hashSetName) {
@@ -330,7 +341,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             this.hashSetName = hashSetName;
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
-            hashsetResults.addObserver(this);
+            hashsetResults.addListener(weakPcl);
         }
 
         /**
@@ -368,11 +379,6 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
         public String getItemType() {
             /**
              * For custom settings for each hash set, return
@@ -380,13 +386,20 @@ public class HashsetHits implements AutopsyVisitableItem {
              */
             return getClass().getName();
         }
+
+        @Override
+        protected void finalize() throws Throwable {
+            hashsetResults.removeListener(weakPcl);
+            super.finalize();
+        }
     }
 
     /**
      * Creates the nodes for the hits in a given set.
      */
-    private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
+    private class HitFactory extends BaseChildFactory<AnalysisResult> {
 
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((pce) -> refresh(true), null);
         private final String hashsetName;
         private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
 
@@ -397,22 +410,17 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         @Override
         protected void onAdd() {
-            hashsetResults.addObserver(this);
+            hashsetResults.addListener(weakPcl);
         }
 
         @Override
         protected void onRemove() {
-            hashsetResults.deleteObserver(this);
+            hashsetResults.removeListener(weakPcl);
         }
 
         @Override
         protected Node createNodeForKey(AnalysisResult key) {
             return new BlackboardArtifactNode(key);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
         }
 
         @Override

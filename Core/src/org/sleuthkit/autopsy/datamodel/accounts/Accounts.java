@@ -21,11 +21,10 @@ package org.sleuthkit.autopsy.datamodel.accounts;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -55,6 +54,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.WeakListeners;
@@ -98,6 +98,7 @@ final public class Accounts implements AutopsyVisitableItem {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     private static final String DISPLAY_NAME = Bundle.Accounts_RootNode_displayName();
+    private static final String REVIEW_STATUS_EVENT_KEY = "ReviewStatusBus";
 
     @NbBundle.Messages("AccountsRootNode.name=Accounts")  //used for the viewArtifact navigation
     final public static String NAME = Bundle.AccountsRootNode_name();
@@ -105,7 +106,7 @@ final public class Accounts implements AutopsyVisitableItem {
     private SleuthkitCase skCase;
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
 
-    private final EventBus reviewStatusBus = new EventBus("ReviewStatusBus");
+    private final PropertyChangeSupport reviewStatusBus = new PropertyChangeSupport(this);
 
     /*
      * Should rejected accounts be shown in the accounts section of the tree.
@@ -184,13 +185,53 @@ final public class Accounts implements AutopsyVisitableItem {
         return new ToggleShowRejected();
     }
 
+    private interface ReviewStatusObserver {
+
+        /**
+         * Handle a ReviewStatusChangeEvent
+         *
+         * @param event the ReviewStatusChangeEvent to handle.
+         */
+        default void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        }
+
+        default void handleDataAdded(ModuleDataEvent event) {
+        }
+    }
+
+    private class ReviewStatusListener implements PropertyChangeListener {
+
+        private final ReviewStatusObserver observer;
+
+        public ReviewStatusListener(ReviewStatusObserver observer) {
+            this.observer = observer;
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent pce) {
+            if (pce == null) {
+                return;
+            }
+
+            Object event = pce.getNewValue();
+            if (event instanceof ReviewStatusChangeEvent) {
+                observer.handleReviewStatusChange((ReviewStatusChangeEvent) event);
+            } else if (event instanceof ModuleDataEvent) {
+                observer.handleDataAdded((ModuleDataEvent) event);
+            }
+        }
+
+    }
+
     /**
      * Base class for children that are also observers of the reviewStatusBus.
      * It
      *
      * @param <X> The type of keys used by this factory.
      */
-    private abstract class ObservingChildren<X> extends ChildFactory.Detachable<X> {
+    private abstract class ObservingChildren<X> extends ChildFactory.Detachable<X> implements ReviewStatusObserver {
+
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange(new ReviewStatusListener(this), null);
 
         /**
          * Override of default constructor to force lazy creation of nodes, by
@@ -207,28 +248,36 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         abstract protected boolean createKeys(List<X> list);
 
-        /**
-         * Handle a ReviewStatusChangeEvent
-         *
-         * @param event the ReviewStatusChangeEvent to handle.
-         */
-        @Subscribe
-        abstract void handleReviewStatusChange(ReviewStatusChangeEvent event);
-
-        @Subscribe
-        abstract void handleDataAdded(ModuleDataEvent event);
-
         @Override
         protected void finalize() throws Throwable {
+            reviewStatusBus.removePropertyChangeListener(weakListener);
             super.finalize();
-            reviewStatusBus.unregister(ObservingChildren.this);
         }
 
         @Override
         protected void addNotify() {
             super.addNotify();
             refresh(true);
-            reviewStatusBus.register(ObservingChildren.this);
+            reviewStatusBus.addPropertyChangeListener(weakListener);
+        }
+    }
+
+    private abstract class ObservingNode extends DisplayableItemNode implements ReviewStatusObserver {
+
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange(new ReviewStatusListener(this), null);
+
+        public ObservingNode(Children children, Lookup lookup) {
+            super(children, lookup);
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            reviewStatusBus.removePropertyChangeListener(weakListener);
+            super.finalize();
+        }
+
+        protected void initializeReviewListener() {
+            reviewStatusBus.addPropertyChangeListener(weakListener);
         }
     }
 
@@ -365,69 +414,62 @@ final public class Accounts implements AutopsyVisitableItem {
          * The pcl is in this class because it has the easiest mechanisms to add
          * and remove itself during its life cycles.
          */
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
                     /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
                      */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Even with the check above, it is still possible that
-                         * the case will be closed in a different thread before
-                         * this code executes. If that happens, it is possible
-                         * for the event to have a null oldValue.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
-                            accountTypeResults.update();
-                            reviewStatusBus.post(eventData);
-                        }
-                    } catch (NoCurrentCaseException notUsed) {
-                        // Case is closed, do nothing.
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData
+                            && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
+                        accountTypeResults.update();
+                        reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
                     }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        refresh(true);
-                    } catch (NoCurrentCaseException notUsed) {
-                        // Case is closed, do nothing.
-                    }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    refresh(true);
+                } catch (NoCurrentCaseException notUsed) {
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                if (evt.getNewValue() == null) {
+                    removeNotify();
+                    skCase = null;
                 }
             }
-        };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
-        @Subscribe
         @Override
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             refresh(true);
         }
 
-        @Subscribe
         @Override
-        void handleDataAdded(ModuleDataEvent event) {
+        public void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
 
@@ -437,30 +479,17 @@ final public class Accounts implements AutopsyVisitableItem {
             return true;
         }
 
-        /**
-         * Registers the given node with the reviewStatusBus and returns the
-         * node wrapped in an array.
-         *
-         * @param node The node to be wrapped.
-         *
-         * @return The array containing this node.
-         */
-        private Node[] getNodeArr(Node node) {
-            reviewStatusBus.register(node);
-            return new Node[]{node};
-        }
-
         @Override
         protected Node[] createNodesForKey(String accountTypeName) {
 
             if (Account.Type.CREDIT_CARD.getTypeName().equals(accountTypeName)) {
-                return getNodeArr(new CreditCardNumberAccountTypeNode());
+                return new Node[]{new CreditCardNumberAccountTypeNode()};
             } else {
 
                 try {
                     Account.Type accountType = skCase.getCommunicationsManager().getAccountType(accountTypeName);
                     if (accountType != null) {
-                        return getNodeArr(new DefaultAccountTypeNode(accountType));
+                        return new Node[]{new DefaultAccountTypeNode(accountType)};
                     } else {
                         // This can only happen if a TSK_ACCOUNT artifact was created not using CommunicationManager
                         LOGGER.log(Level.SEVERE, "Unknown account type '" + accountTypeName + "' found - account will not be displayed.\n"
@@ -524,7 +553,7 @@ final public class Accounts implements AutopsyVisitableItem {
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                         if (null != eventData
                                 && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
-                            reviewStatusBus.post(eventData);
+                            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
                         }
                     } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
@@ -553,9 +582,9 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -565,10 +594,10 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            super.finalize();
         }
 
         @Override
@@ -606,15 +635,13 @@ final public class Accounts implements AutopsyVisitableItem {
             }
         }
 
-        @Subscribe
         @Override
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             refresh(true);
         }
 
-        @Subscribe
         @Override
-        void handleDataAdded(ModuleDataEvent event) {
+        public void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
     }
@@ -623,7 +650,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * Default Node class for unknown account types and account types that have
      * no special behavior.
      */
-    final public class DefaultAccountTypeNode extends DisplayableItemNode {
+    final public class DefaultAccountTypeNode extends ObservingNode {
 
         private final Account.Type accountType;
 
@@ -634,6 +661,7 @@ final public class Accounts implements AutopsyVisitableItem {
             this.setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);   //NON-NLS
             setName(accountType.getTypeName());
             updateName();
+            this.initializeReviewListener();
         }
 
         @Override
@@ -651,13 +679,13 @@ final public class Accounts implements AutopsyVisitableItem {
             return getClass().getName();
         }
 
-        @Subscribe
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        @Override
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateName();
         }
 
-        @Subscribe
-        void handleDataAdded(ModuleDataEvent event) {
+        @Override
+        public void handleDataAdded(ModuleDataEvent event) {
             updateName();
         }
 
@@ -702,7 +730,7 @@ final public class Accounts implements AutopsyVisitableItem {
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                         if (null != eventData
                                 && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
-                            reviewStatusBus.post(eventData);
+                            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
                         }
                     } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
@@ -731,22 +759,19 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
-
-        @Subscribe
         @Override
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             refresh(true);
         }
 
-        @Subscribe
         @Override
-        void handleDataAdded(ModuleDataEvent event) {
+        public void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -757,11 +782,10 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            super.removeNotify();
+            super.finalize();
         }
 
         /**
@@ -790,7 +814,7 @@ final public class Accounts implements AutopsyVisitableItem {
     /**
      * Node for the Credit Card account type. *
      */
-    final public class CreditCardNumberAccountTypeNode extends DisplayableItemNode {
+    final public class CreditCardNumberAccountTypeNode extends ObservingNode {
 
         /**
          * ChildFactory that makes nodes for the different account organizations
@@ -800,6 +824,7 @@ final public class Accounts implements AutopsyVisitableItem {
             super(Children.create(new ViewModeFactory(), true), Lookups.singleton(Account.Type.CREDIT_CARD.getDisplayName()));
             setName(Account.Type.CREDIT_CARD.getDisplayName());
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png");   //NON-NLS
+            this.initializeReviewListener();
         }
 
         /**
@@ -810,13 +835,13 @@ final public class Accounts implements AutopsyVisitableItem {
             setName(String.format("%s (%d)", Account.Type.CREDIT_CARD.getDisplayName(), accountTypeResults.getCount(Account.Type.CREDIT_CARD.getTypeName())));
         }
 
-        @Subscribe
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        @Override
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateName();
         }
 
-        @Subscribe
-        void handleDataAdded(ModuleDataEvent event) {
+        @Override
+        public void handleDataAdded(ModuleDataEvent event) {
             updateName();
         }
 
@@ -838,59 +863,54 @@ final public class Accounts implements AutopsyVisitableItem {
 
     final private class FileWithCCNFactory extends ObservingChildren<FileWithCCN> {
 
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
                     /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
                      */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Even with the check above, it is still possible that
-                         * the case will be closed in a different thread before
-                         * this code executes. If that happens, it is possible
-                         * for the event to have a null oldValue.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
-                            reviewStatusBus.post(eventData);
-                        }
-                    } catch (NoCurrentCaseException notUsed) {
-                        // Case is closed, do nothing.
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData
+                            && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
+                        reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
                     }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        refresh(true);
+                } catch (NoCurrentCaseException notUsed) {
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    refresh(true);
 
-                    } catch (NoCurrentCaseException notUsed) {
-                        // Case is closed, do nothing.
-                    }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                if (evt.getNewValue() == null) {
+                    removeNotify();
+                    skCase = null;
                 }
             }
-        };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
         @Override
         protected void addNotify() {
@@ -902,21 +922,19 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected void finalize() throws Throwable {
-            super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            super.finalize();
         }
 
-        @Subscribe
         @Override
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             refresh(true);
         }
 
-        @Subscribe
         @Override
-        void handleDataAdded(ModuleDataEvent event) {
+        public void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
 
@@ -983,7 +1001,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * Node that is the root of the "by file" accounts tree. Its children are
      * FileWithCCNNodes.
      */
-    final public class ByFileNode extends DisplayableItemNode {
+    final public class ByFileNode extends ObservingNode {
 
         /**
          * Factory for the children of the ByFiles Node.
@@ -993,7 +1011,7 @@ final public class Accounts implements AutopsyVisitableItem {
             setName("By File");   //NON-NLS
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon.png");   //NON-NLS
-            reviewStatusBus.register(this);
+            this.initializeReviewListener();
         }
 
         @NbBundle.Messages({
@@ -1042,71 +1060,64 @@ final public class Accounts implements AutopsyVisitableItem {
             return getClass().getName();
         }
 
-        @Subscribe
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateDisplayName();
         }
 
-        @Subscribe
-        void handleDataAdded(ModuleDataEvent event) {
+        public void handleDataAdded(ModuleDataEvent event) {
             updateDisplayName();
         }
     }
 
     final private class BINFactory extends ObservingChildren<BinResult> {
 
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange((evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
                     /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
                      */
-                    try {
-                        Case.getCurrentCaseThrows();
-                        /**
-                         * Even with the check above, it is still possible that
-                         * the case will be closed in a different thread before
-                         * this code executes. If that happens, it is possible
-                         * for the event to have a null oldValue.
-                         */
-                        ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData
-                                && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
-                            reviewStatusBus.post(eventData);
-                        }
-                    } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
-                        // Case is closed, do nothing.
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData
+                            && eventData.getBlackboardArtifactType().getTypeID() == Type.TSK_ACCOUNT.getTypeID()) {
+                        reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null, eventData);
                     }
-                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-                    /**
-                     * Checking for a current case is a stop gap measure until a
-                     * different way of handling the closing of cases is worked
-                     * out. Currently, remote events may be received for a case
-                     * that is already closed.
-                     */
-                    try {
-                        Case.getCurrentCaseThrows();
-
-                        refresh(true);
-                    } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
-                        // Case is closed, do nothing.
-                    }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())
-                        && (evt.getNewValue() == null)) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    removeNotify();
-                    skCase = null;
+                } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
+                    // Case is closed, do nothing.
                 }
+            } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+
+                    refresh(true);
+                } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
+                    // Case is closed, do nothing.
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())
+                    && (evt.getNewValue() == null)) {
+                // case was closed. Remove listeners so that we don't get called with a stale case handle
+                removeNotify();
+                skCase = null;
             }
-        };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+        }, null);
 
         @Override
         protected void addNotify() {
@@ -1117,22 +1128,20 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void finalize() throws Throwable{
-            super.finalize();
+        protected void finalize() throws Throwable {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            super.finalize();
         }
 
-        @Subscribe
         @Override
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             refresh(true);
         }
 
-        @Subscribe
         @Override
-        void handleDataAdded(ModuleDataEvent event) {
+        public void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
 
@@ -1191,7 +1200,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * Node that is the root of the "By BIN" accounts tree. Its children are
      * BINNodes.
      */
-    final public class ByBINNode extends DisplayableItemNode {
+    final public class ByBINNode extends ObservingNode {
 
         /**
          * Factory that generates the children of the ByBin node.
@@ -1202,7 +1211,7 @@ final public class Accounts implements AutopsyVisitableItem {
             setName(Bundle.Accounts_ByBINNode_name());  //NON-NLS
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
-            reviewStatusBus.register(this);
+            this.initializeReviewListener();
         }
 
         @NbBundle.Messages({
@@ -1242,13 +1251,11 @@ final public class Accounts implements AutopsyVisitableItem {
             return getClass().getName();
         }
 
-        @Subscribe
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateDisplayName();
         }
 
-        @Subscribe
-        void handleDataAdded(ModuleDataEvent event) {
+        public void handleDataAdded(ModuleDataEvent event) {
             updateDisplayName();
         }
     }
@@ -1489,15 +1496,13 @@ final public class Accounts implements AutopsyVisitableItem {
             this.bin = bin;
         }
 
-        @Subscribe
         @Override
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             refresh(true);
         }
 
-        @Subscribe
         @Override
-        void handleDataAdded(ModuleDataEvent event) {
+        public void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
 
@@ -1550,7 +1555,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    final public class BINNode extends DisplayableItemNode {
+    final public class BINNode extends ObservingNode {
 
         /**
          * Creates the nodes for the credit card numbers
@@ -1563,17 +1568,15 @@ final public class Accounts implements AutopsyVisitableItem {
             setName(getBinRangeString(bin));
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
-            reviewStatusBus.register(this);
+            this.initializeReviewListener();
         }
 
-        @Subscribe
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateDisplayName();
             updateSheet();
         }
 
-        @Subscribe
-        void handleDataAdded(ModuleDataEvent event) {
+        public void handleDataAdded(ModuleDataEvent event) {
             updateDisplayName();
         }
 
@@ -1805,16 +1808,16 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    final private class AccountArtifactNode extends BlackboardArtifactNode {
+    final private class AccountArtifactNode extends BlackboardArtifactNode implements ReviewStatusObserver {
 
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange(new ReviewStatusListener(this), null);
         private final BlackboardArtifact artifact;
 
         private AccountArtifactNode(BlackboardArtifact artifact) {
             super(artifact, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
             this.artifact = artifact;
             setName(Long.toString(this.artifact.getArtifactID()));
-
-            reviewStatusBus.register(this);
+            reviewStatusBus.addPropertyChangeListener(weakListener);
         }
 
         @Override
@@ -1844,8 +1847,8 @@ final public class Accounts implements AutopsyVisitableItem {
             return sheet;
         }
 
-        @Subscribe
-        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        @Override
+        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
 
             // Update the node if event includes this artifact
             event.artifacts.stream().filter((art) -> (art.getArtifactID() == this.artifact.getArtifactID())).map((_item) -> {
@@ -1872,7 +1875,8 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public void actionPerformed(ActionEvent e) {
             showRejected = !showRejected;
-            reviewStatusBus.post(new ReviewStatusChangeEvent(Collections.emptySet(), null));
+            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null,
+                    new ReviewStatusChangeEvent(Collections.emptySet(), null));
         }
     }
 
@@ -1883,7 +1887,8 @@ final public class Accounts implements AutopsyVisitableItem {
      */
     public void setShowRejected(boolean showRejected) {
         this.showRejected = showRejected;
-        reviewStatusBus.post(new ReviewStatusChangeEvent(Collections.emptySet(), null));
+        reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null,
+                new ReviewStatusChangeEvent(Collections.emptySet(), null));
     }
 
     private abstract class ReviewStatusAction extends AbstractAction {
@@ -1947,7 +1952,8 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             });
             //post event
-            reviewStatusBus.post(new ReviewStatusChangeEvent(artifacts, newStatus));
+            reviewStatusBus.firePropertyChange(REVIEW_STATUS_EVENT_KEY, null,
+                    new ReviewStatusChangeEvent(artifacts, newStatus));
 
             final DataResultTopComponent directoryListing = DirectoryTreeTopComponent.findInstance().getDirectoryListing();
             final Node rootNode = directoryListing.getRootNode();

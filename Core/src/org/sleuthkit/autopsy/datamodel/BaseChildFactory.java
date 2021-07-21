@@ -19,20 +19,22 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.prefs.PreferenceChangeEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
+import org.openide.util.BaseUtilities;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.Content;
 
@@ -56,7 +58,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * This static map is used to facilitate communication between the UI and
      * the child factory.
      */
-    private static Map<String, EventBus> nodeNameToEventBusMap = new ConcurrentHashMap<>();
+    private static final PropertyChangeSupport nodeNameToEventBusMap = new PropertyChangeSupport(BaseChildFactory.class);
 
     @Messages({
         "# {0} - node name", "BaseChildFactory.NoSuchEventBusException.message=No event bus for node: {0}"
@@ -75,13 +77,17 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * @param nodeName   The name of the node.
      * @param subscriber The subscriber to register.
      */
-    public static void register(String nodeName, Object subscriber) {
-        EventBus bus = nodeNameToEventBusMap.get(nodeName);
-        if (bus == null) {
-            bus = new EventBus(nodeName);
-            nodeNameToEventBusMap.put(nodeName, bus);
-        }
-        bus.register(subscriber);
+    public static void register(String nodeName, PropertyChangeListener subscriber) {
+        nodeNameToEventBusMap.addPropertyChangeListener(nodeName, subscriber);
+    }
+
+    /**
+     * Removes subscriber from receiving events.
+     *
+     * @param subscriber The property change listener.
+     */
+    public static void unregister(PropertyChangeListener subscriber) {
+        nodeNameToEventBusMap.removePropertyChangeListener(subscriber);
     }
 
     /**
@@ -94,11 +100,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException
      */
     public static void post(String nodeName, Object event) throws NoSuchEventBusException {
-        EventBus bus = nodeNameToEventBusMap.get(nodeName);
-        if (bus == null) {
-            throw new NoSuchEventBusException(nodeName);
-        }
-        bus.post(event);
+        nodeNameToEventBusMap.firePropertyChange(nodeName, null, event);
     }
 
     public BaseChildFactory(String nodeName) {
@@ -115,7 +117,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
         isPageSizeChangeEvent = false;
         this.filter = filter;
     }
-    
+
     @Override
     protected void addNotify() {
         onAdd();
@@ -123,8 +125,8 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
         onRemove();
+        super.finalize();
     }
 
     /**
@@ -228,6 +230,27 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      */
     private class PagingSupport {
 
+        private final PropertyChangeListener weakListener = WeakListeners.propertyChange((pce) -> {
+            if (pce == null) {
+                return;
+            }
+
+            Object event = pce.getNewValue();
+            if (event instanceof PageChangeEvent) {
+                subscribeToPageChange((PageChangeEvent) event);
+            } else if (event instanceof PageSizeChangeEvent) {
+                subscribeToPageSizeChange((PageSizeChangeEvent) event);
+            } else if (event instanceof RefreshKeysEvent) {
+                subscribeToRefreshKeys((RefreshKeysEvent) event);
+            }
+        }, null);
+
+        private final PreferenceChangeListener preferenceListener = new WeakPreferenceChangeListener((evt) -> {
+            if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
+                pageSize = UserPreferences.getResultsTablePageSize();
+            }
+        });
+
         private final String nodeName;
         private int pageSize;
         private int currentPage;
@@ -253,13 +276,15 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
              * Set up a change listener so we know when the user changes the
              * page size.
              */
-            UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
-                if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
-                    pageSize = UserPreferences.getResultsTablePageSize();
-                }
-            });
+            UserPreferences.addChangeListener(preferenceListener);
+            register(nodeName, weakListener);
+        }
 
-            register(nodeName, this);
+        @Override
+        protected void finalize() throws Throwable {
+            UserPreferences.removeChangeListener(preferenceListener);
+            unregister(weakListener);
+            super.finalize();
         }
 
         /**
@@ -290,8 +315,8 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
             if (keys.isEmpty() && !pages.isEmpty()) {
                 /**
                  * If we previously had keys (i.e. pages is not empty) and now
-                 * we don't have keys, reset pages to an empty list.
-                 * Cannot use a call to List.clear() here because the call to
+                 * we don't have keys, reset pages to an empty list. Cannot use
+                 * a call to List.clear() here because the call to
                  * Lists.partition() below returns an unmodifiable list.
                  */
                 pages = new ArrayList<>();
@@ -315,13 +340,10 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
          *
          * @param event
          */
-        @Subscribe
         private void subscribeToPageChange(PageChangeEvent event) {
-            if (event != null) {
-                currentPage = event.getPageNumber();
-                isPageChangeEvent = true;
-                refresh(true);
-            }
+            currentPage = event.getPageNumber();
+            isPageChangeEvent = true;
+            refresh(true);
         }
 
         /**
@@ -330,29 +352,63 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
          *
          * @param event
          */
-        @Subscribe
         private void subscribeToPageSizeChange(PageSizeChangeEvent event) {
-            if (event != null) {
-                int newPageSize = event.getPageSize();
-                if (pageSize == newPageSize) {
-                    // No change...nothing to do.
-                    return;
-                }
+            int newPageSize = event.getPageSize();
+            if (pageSize == newPageSize) {
+                // No change...nothing to do.
+                return;
+            }
 
-                pageSize = newPageSize;
-                splitKeysIntoPages(pages.stream().flatMap(List::stream).collect(Collectors.toList()));
+            pageSize = newPageSize;
+            splitKeysIntoPages(pages.stream().flatMap(List::stream).collect(Collectors.toList()));
 
-                currentPage = 1;
-                isPageSizeChangeEvent = true;
-                refresh(true);
+            currentPage = 1;
+            isPageSizeChangeEvent = true;
+            refresh(true);
+        }
+
+        private void subscribeToRefreshKeys(RefreshKeysEvent event) {
+            refresh(true);
+        }
+    }
+
+    /**
+     * An implementation of a PreferenceChangeListener with a weak reference.
+     */
+    private static class WeakPreferenceChangeListener implements PreferenceChangeListener {
+
+        private final ListenerRef delegate;
+
+        /**
+         * Main constructor.
+         *
+         * @param delegateListener The concrete listener that will receive
+         *                         updates.
+         */
+        WeakPreferenceChangeListener(PreferenceChangeListener delegateListener) {
+            this.delegate = new ListenerRef(delegateListener);
+        }
+
+        @Override
+        public void preferenceChange(PreferenceChangeEvent evt) {
+            PreferenceChangeListener delegateListener = this.delegate.get();
+            if (delegateListener != null) {
+                delegateListener.preferenceChange(evt);
             }
         }
 
-        @Subscribe
-        private void subscribeToRefreshKeys(RefreshKeysEvent event) {
-            if (event != null) {
-                refresh(true);
+        private static class ListenerRef extends WeakReference<PreferenceChangeListener> implements Runnable {
+
+            public ListenerRef(PreferenceChangeListener listener) {
+                super(listener, BaseUtilities.activeReferenceQueue());
             }
+
+            @Override
+            public void run() {
+                // This is NO OP but to satisfy requirements for use in BaseUtilities.activeReferenceQueue.
+                // This listener will be cleaned manually.
+            }
+
         }
     }
 }
