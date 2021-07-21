@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
@@ -327,7 +327,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     }
 
     /**
-     * Post a new interesting artifact for the file marked bad.
+     * Post a new "previously seen" artifact for the file marked bad.
      *
      * @param abstractFile     The file from which to create an artifact.
      * @param caseDisplayNames Case names to be added to a TSK_COMMON attribute.
@@ -343,9 +343,9 @@ final class CentralRepoIngestModule implements FileIngestModule {
         try {
 
             // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_FILE_HIT, attributes)) {
+            if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_SEEN, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                        BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE, 
                         null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), null, attributes)
                         .getAnalysisResult();
                 try {

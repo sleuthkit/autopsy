@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2017-2020 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
@@ -199,7 +199,7 @@ public class IngestEventsListener {
     }
 
     /**
-     * Make an Interesting Item artifact based on a new artifact being
+     * Make a "previously seen" artifact based on a new artifact being
      * previously seen.
      *
      * @param originalArtifact Original artifact that we want to flag
@@ -219,14 +219,14 @@ public class IngestEventsListener {
                 new BlackboardAttribute(
                         TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
                         originalArtifact.getArtifactID()));
-        makeAndPostInterestingArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text());
+        makeAndPostPreviouslySeenArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text());
     }
 
     /**
-     * Create an Interesting Artifact hit for a device which was previously seen
+     * Create a "previously seen" hit for a device which was previously seen
      * in the central repository.
      *
-     * @param originalArtifact the artifact to create the interesting item for
+     * @param originalArtifact the artifact to create the "previously seen" item for
      * @param caseDisplayNames the case names the artifact was previously seen
      *                         in
      */
@@ -244,35 +244,35 @@ public class IngestEventsListener {
                 new BlackboardAttribute(
                         TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
                         originalArtifact.getArtifactID()));
-        makeAndPostInterestingArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
+        makeAndPostPreviouslySeenArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
     }
     
     
     /**
-     * Make an interesting item artifact to flag the passed in artifact.
+     * Make a "previously seen" artifact to flag the passed in artifact.
      *
      * @param originalArtifact         Artifact in current case we want to flag
      * @param attributesForNewArtifact Attributes to assign to the new
-     *                                 Interesting items artifact
-     * @param configuration            The configuration to be specified for the new interesting artifact hit
+     *                                 "previously seen" artifact
+     * @param configuration            The configuration to be specified for the new "previously seen" artifact hit
      */
-    private static void makeAndPostInterestingArtifact(BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration) {
+    private static void makeAndPostPreviouslySeenArtifact(BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration) {
         try {
             SleuthkitCase tskCase = originalArtifact.getSleuthkitCase();
             AbstractFile abstractFile = tskCase.getAbstractFileById(originalArtifact.getObjectID());
             Blackboard blackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_ARTIFACT_HIT, attributesForNewArtifact)) {
-                  BlackboardArtifact newInterestingArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE, 
+            if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_SEEN, attributesForNewArtifact)) {
+                  BlackboardArtifact newPreviouslySeenArtifact = abstractFile.newAnalysisResult(
+                        BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE, 
                         null, configuration, null, attributesForNewArtifact)
                         .getAnalysisResult();
 
                 try {
                     // index the artifact for keyword search
-                    blackboard.postArtifact(newInterestingArtifact, MODULE_NAME);
+                    blackboard.postArtifact(newPreviouslySeenArtifact, MODULE_NAME);
                 } catch (Blackboard.BlackboardException ex) {
-                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newInterestingArtifact.getArtifactID(), ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newPreviouslySeenArtifact.getArtifactID(), ex); //NON-NLS
                 }
             }
         } catch (TskCoreException ex) {
@@ -299,7 +299,8 @@ public class IngestEventsListener {
                 }
                 switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                     case DATA_ADDED: {
-                        //if ingest isn't running create the interesting items otherwise use the ingest module setting to determine if we create interesting items
+                        //if ingest isn't running create the "previously seen" items, 
+                        // otherwise use the ingest module setting to determine if we create "previously seen" items
                         boolean flagNotable = !IngestManager.getInstance().isIngestRunning() || isFlagNotableItems();
                         boolean flagPrevious = !IngestManager.getInstance().isIngestRunning() || isFlagSeenDevices();
                         boolean createAttributes = !IngestManager.getInstance().isIngestRunning() || shouldCreateCrProperties();
@@ -474,7 +475,7 @@ public class IngestEventsListener {
                             // Was it previously marked as bad?
                             // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
                             // if getKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
-                            // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
+                            // create TSK_PREVIOUSLY_SEEN artifact on BB.
                             if (flagNotableItemsEnabled) {
                                 List<String> caseDisplayNames;
                                 try {
