@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,8 +40,9 @@ final class DiscoveryExtractAction extends AbstractAction {
      *
      * @param selectedFiles The files to extract from the current case.
      */
+    @NbBundle.Messages({"DiscoveryExtractAction.title.extractFiles.text=Extract File"})
     DiscoveryExtractAction(Collection<AbstractFile> selectedFiles) {
-        super(NbBundle.getMessage(DiscoveryExtractAction.class, "DiscoveryExtractAction.title.extractFiles.text"));
+        super(Bundle.DiscoveryExtractAction_title_extractFiles_text());
         files.addAll(selectedFiles);
     }
 

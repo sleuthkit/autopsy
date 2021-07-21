@@ -36,6 +36,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.DialogDisplayer;
@@ -271,15 +272,34 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
     private void initComponents() {
 
         reportModulesLabel = new javax.swing.JLabel();
+        javax.swing.JSplitPane modulesSplitPane = new javax.swing.JSplitPane();
+        javax.swing.JPanel detailsPanel = new javax.swing.JPanel();
         configurationPanel = new javax.swing.JPanel();
         descriptionScrollPane = new javax.swing.JScrollPane();
         descriptionTextPane = new javax.swing.JTextPane();
         modulesScrollPane = new javax.swing.JScrollPane();
         modulesJList = new javax.swing.JList<>();
 
-        setPreferredSize(new java.awt.Dimension(650, 250));
+        setPreferredSize(new java.awt.Dimension(834, 374));
 
         org.openide.awt.Mnemonics.setLocalizedText(reportModulesLabel, org.openide.util.NbBundle.getMessage(ReportVisualPanel1.class, "ReportVisualPanel1.reportModulesLabel.text")); // NOI18N
+
+        //Make border on split pane invisible to maintain previous style
+        modulesSplitPane.setUI(new javax.swing.plaf.basic.BasicSplitPaneUI() {
+            @Override
+            public javax.swing.plaf.basic.BasicSplitPaneDivider createDefaultDivider() {
+                javax.swing.plaf.basic.BasicSplitPaneDivider divider = new javax.swing.plaf.basic.BasicSplitPaneDivider(this) {
+                    @Override
+                    public void setBorder(Border border){
+                        //do nothing so border is not visible
+                    }
+                };
+                return divider;
+            }
+        });
+        modulesSplitPane.setBorder(null);
+        modulesSplitPane.setDividerSize(8);
+        modulesSplitPane.setResizeWeight(0.5);
 
         configurationPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(125, 125, 125)));
         configurationPanel.setOpaque(false);
@@ -288,11 +308,11 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         configurationPanel.setLayout(configurationPanelLayout);
         configurationPanelLayout.setHorizontalGroup(
             configurationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 432, Short.MAX_VALUE)
+            .addGap(0, 546, Short.MAX_VALUE)
         );
         configurationPanelLayout.setVerticalGroup(
             configurationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 168, Short.MAX_VALUE)
+            .addGap(0, 290, Short.MAX_VALUE)
         );
 
         descriptionScrollPane.setBorder(null);
@@ -301,6 +321,29 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         descriptionTextPane.setBorder(null);
         descriptionTextPane.setOpaque(false);
         descriptionScrollPane.setViewportView(descriptionTextPane);
+
+        javax.swing.GroupLayout detailsPanelLayout = new javax.swing.GroupLayout(detailsPanel);
+        detailsPanel.setLayout(detailsPanelLayout);
+        detailsPanelLayout.setHorizontalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(detailsPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(descriptionScrollPane)
+                    .addComponent(configurationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(0, 0, 0))
+        );
+        detailsPanelLayout.setVerticalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(detailsPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(configurationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
+        );
+
+        modulesSplitPane.setRightComponent(detailsPanel);
 
         modulesJList.setBackground(new java.awt.Color(240, 240, 240));
         modulesJList.setModel(new javax.swing.AbstractListModel<ReportModule>() {
@@ -311,6 +354,8 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         modulesJList.setOpaque(false);
         modulesScrollPane.setViewportView(modulesJList);
 
+        modulesSplitPane.setLeftComponent(modulesScrollPane);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -318,12 +363,10 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(reportModulesLabel)
-                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(configurationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(descriptionScrollPane))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(reportModulesLabel)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(modulesSplitPane))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -332,12 +375,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
                 .addContainerGap()
                 .addComponent(reportModulesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(configurationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE))
+                .addComponent(modulesSplitPane)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents

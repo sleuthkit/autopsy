@@ -42,7 +42,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 class StixArtifactData {
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     private static final String MODULE_NAME = "Stix";
 
     private AbstractFile file;
@@ -89,7 +88,7 @@ class StixArtifactData {
         // Create artifact if it doesn't already exist.
         if (!blackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
             BlackboardArtifact bba = file.newAnalysisResult(
-                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, LIKELY_NOTABLE_SCORE, 
+                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
                     null, setName, null, 
                     attributes)
                     .getAnalysisResult();

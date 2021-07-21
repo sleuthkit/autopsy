@@ -69,7 +69,6 @@ import org.sleuthkit.datamodel.blackboardutils.WebBrowserArtifactsHelper;
  * Chromium recent activity extraction
  */
 class Chromium extends Extract {
-    private static final Score NOTABLE_SCORE = new Score(Score.Significance.NOTABLE, Score.Priority.NORMAL);
     
     private static final String HISTORY_QUERY = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, " //NON-NLS
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) AS from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url"; //NON-NLS
@@ -634,7 +633,7 @@ class Chromium extends Extract {
                     BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
                     bbartifacts.add(webDownloadArtifact);
                     String normalizedFullPath = FilenameUtils.normalize(fullPath, true);
-                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(normalizedFullPath), FilenameUtils.getPath(normalizedFullPath))) {
+                    for (AbstractFile downloadedFile : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, FilenameUtils.getName(normalizedFullPath), FilenameUtils.getPath(normalizedFullPath))) {
                         bbartifacts.add(createAssociatedArtifact(downloadedFile, webDownloadArtifact));
                         break;
                     }
@@ -833,7 +832,7 @@ class Chromium extends Extract {
 
                    bbartifacts.add(
                            webDataFile.newAnalysisResult(
-                                   BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, NOTABLE_SCORE, 
+                                   BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NOTABLE, 
                                    null, null, comment, bbattributes).getAnalysisResult()); 
                 }
             } catch (NoCurrentCaseException | TskCoreException | Blackboard.BlackboardException ex) {

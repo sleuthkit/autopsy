@@ -51,7 +51,6 @@ import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModule
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_USER_CONTENT_SUSPECTED;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -155,9 +154,13 @@ public class EXIFProcessor implements PictureProcessor {
 
             if (!attributes.isEmpty() && !blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
                 List<BlackboardArtifact> artifacts = new ArrayList<>();
-                final DataArtifact exifArtifact = file.newDataArtifact(BlackboardArtifact.Type.TSK_METADATA_EXIF, attributes);
-                artifacts.add(exifArtifact);
-                final AnalysisResult userSuspectedArtifact = file.newAnalysisResult(
+                final BlackboardArtifact exifArtifact = (file.newAnalysisResult(
+                        BlackboardArtifact.Type.TSK_METADATA_EXIF,
+                        Score.SCORE_NONE,
+                        null, null, null,
+                        attributes)).getAnalysisResult();
+                
+                final BlackboardArtifact userSuspectedArtifact = file.newAnalysisResult(
                         BlackboardArtifact.Type.TSK_USER_CONTENT_SUSPECTED, Score.SCORE_UNKNOWN, null, null, null,
                         Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, Bundle.ExifProcessor_userContent_description())))
                         .getAnalysisResult();
@@ -170,8 +173,6 @@ public class EXIFProcessor implements PictureProcessor {
                     MessageNotifyUtil.Notify.error(
                             Bundle.ExifProcessor_indexError_message(), exifArtifact.getDisplayName());
                 }
-
-                context.addDataArtifactsToJob(Collections.singletonList(exifArtifact));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for " //NON-NLS

@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.awt.Cursor;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -92,6 +93,7 @@ import org.sleuthkit.autopsy.casemodule.events.HostsRemovedFromPersonEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAcctInstancesAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsDeletedEvent;
@@ -448,6 +450,10 @@ public class Case {
          */
         OS_ACCOUNTS_DELETED,
         /**
+         * One or more OS account instances have been added to the case.
+         */
+        OS_ACCT_INSTANCES_ADDED,
+        /**
          * One or more hosts have been added to the case.
          */
         HOSTS_ADDED,
@@ -534,6 +540,11 @@ public class Case {
             eventPublisher.publish(new OsAccountsDeletedEvent(event.getOsAccountObjectIds()));
         }
 
+        @Subscribe
+        public void publishOsAccountInstancesAddedEvent(TskEvent.OsAcctInstancesAddedTskEvent event) {
+            eventPublisher.publish(new OsAcctInstancesAddedEvent(event.getOsAccountInstances()));            
+        }
+        
         /**
          * Publishes an autopsy event from the sleuthkit HostAddedEvent
          * indicating that hosts have been created.
@@ -1324,12 +1335,14 @@ public class Case {
              * opened via the DirectoryTreeTopComponent 'propertyChange()'
              * method on a DATA_SOURCE_ADDED event.
              */
+            mainFrame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             if (hasData) {
                 CoreComponentControl.openCoreWindows();
             } else {
                 //ensure that the DirectoryTreeTopComponent is open so that it's listener can open the core windows including making it visible.
                 DirectoryTreeTopComponent.findInstance();
             }
+            mainFrame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 
             /*
              * Reset the main window title to:

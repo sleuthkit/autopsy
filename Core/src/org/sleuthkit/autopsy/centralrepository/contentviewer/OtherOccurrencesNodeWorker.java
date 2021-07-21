@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +38,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -60,7 +62,11 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
 
     @Override
     protected OtherOccurrencesData doInBackground() throws Exception {
+        OsAccount osAccount = node.getLookup().lookup(OsAccount.class);
         AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
+        if (osAccount != null) {
+            file = node.getLookup().lookup(AbstractFile.class);
+        }
         String deviceId = "";
         String dataSourceName = "";
         Map<String, CorrelationCase> caseNames = new HashMap<>();
@@ -77,8 +83,12 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
             // @@@ Review this behavior
             return null;
         }
-        Collection<CorrelationAttributeInstance> correlationAttributes = OtherOccurrences.getCorrelationAttributesFromNode(node, file);
-
+        Collection<CorrelationAttributeInstance> correlationAttributes = new ArrayList<>();
+        if (osAccount != null) {
+            correlationAttributes = OtherOccurrences.getCorrelationAttributeFromOsAccount(node, osAccount);    
+        } else {
+            correlationAttributes = OtherOccurrences.getCorrelationAttributesFromNode(node, file);
+        }
         int totalCount = 0;
         Set<String> dataSources = new HashSet<>();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {

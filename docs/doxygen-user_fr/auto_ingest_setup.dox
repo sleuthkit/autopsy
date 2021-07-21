@@ -1,0 +1,114 @@
+/*! \page auto_ingest_setup_page Configuration de l'acquisition automatisée
+
+[TOC]
+
+
+\section auto_ingest_setup_overview Aperçu
+
+Une installation multi-utilisateurs nécessite plusieurs services réseau, tels qu'une base de données centrale et un système de messagerie, et l'acquisition automatisée nécessite un ou plusieurs "Automated Ingest Node". Bien que vous puissiez exécuter tous les services externes sur un seul nœud, ce n'est probablement pas l'idéal - la répartition des services sur plusieurs machines peut améliorer le débit. En gardant à l'esprit que toutes les machines suivantes doivent pouvoir communiquer entre elles avec une visibilité réseau sur le lecteur partagé, voici une description d'une configuration possible:
+
+<table>
+<tr><th>Nombre de machines</th><th>Services</th></tr>
+<tr><td>Une</td><td><ul><li><b>Solr</b> - Installez Solr sur la machine la plus puissante; plus il y a de processeurs, mieux c'est.</li>
+<li>Les <b>dossiers de sortie des cas partagés</b> peuvent également être mis sur cette machine.</li></ul></td></tr>
+<tr><td>Une</td><td><ul><li><b>ActiveMQ</b> - Ce service a des exigences minimales en matière de mémoire et de disque.</li>
+<li><b>PostgreSQL</b> - Ce service a des exigences minimales en matière de mémoire et de disque.</li></ul></td></tr>
+<tr><td>Une</td><td><ul><li><b>Dossier d'image partagé</b> - Cette machine a besoin d'une grande quantité d'espace disque mais n'a pas besoin du matériel le plus rapide.</li></ul></td></tr>
+<tr><td>Une ou plus</td><td><ul><li><b>Automated Ingest Node(s)</b> - Ces machines n'ont pas besoin de beaucoup d'espace disque mais doivent bénéficier d'une mémoire et d'une puissance de processeur supplémentaires.</li></ul></td></tr>
+<tr><td>Une ou plus</td><td><ul><li><b>Examiner Node(s)</b> - Voir la page \ref installation_page pour connaître les exigences système recommandées.</li></ul></td></tr>
+</table>
+
+Solr va être un gros consommateur de ressources. Une grande augmentation des performances sera constatée si vous placez des disques SSD dans la machine exécutant Solr et que cette machine héberge également le grand lecteur réseau sur des SSD dédiés pour le stockage de la sortie des cas. Les images source peuvent être sur des disques SAS (plus lents que les SSD) avec un impact très faible sur les performances. L'idée ici est d'avoir les opérations les plus gourmandes en ressources sur le matériel le plus rapide. En utilisant cette stratégie, il existe en fait deux grands stockages réseau, un pour les images en entrée et un pour les sorties des cas.
+
+\section auto_ingest_setup_services Installation des services et configuration d'Autopsy
+Suivez les instructions de la page \ref install_multiuser_page pour mettre en place les services nécessaires et configurer vos clients Autopsy pour les utiliser. Une fois cette opération terminée, vous devriez pouvoir \ref multiuser_page "créer et utiliser des cas multi-utilisateurs".
+
+\section auto_ingest_setup_ain_config Configuration des "Automated Ingest Node"
+
+Alors que les "Examiner Node" ne nécessitent que la configuration des cas multi-utilisateurs, les "Automated Ingest Node" nécessitent une configuration supplémentaire. Pour commencer, allez dans l'onglet "Auto Ingest" du menu Options et sélectionnez le bouton radio "Auto Ingest mode". Si vous n'avez pas enregistré vos paramètres multi-utilisateurs, un message d'avertissement s'affichera ici - si vous le voyez, revenez à l'onglet "Multi-User" et assurez-vous d'avoir saisi tous les champs obligatoires, puis cliquez sur le bouton "Apply".
+
+\image html AutoIngest/auto_ingest_mode_setup.png
+
+\subsection auto_ingest_config_folders Configuration des dossiers
+
+La première chose à faire est de définir deux emplacements de dossiers. Le dossier des images partagées est le dossier de base de toutes les données qui seront acquises via les "Automated Ingest Nodes". Le dossier des cas partagés est le dossier de base des cas qui seront créés par les "Automated Ingest Nodes". 
+
+\subsection auto_ingest_config_ingest_settings Bouton "Ingest Module Settings"
+Le bouton "Ingest Module Settings" est utilisé pour configurer les \ref ingest_page que vous souhaitez exécuter pendant l'acquisition automatisée. Notez bien que pour les "Automated Ingest Node", nous vous recommandons de configurer le module de recherche par mot-clé pour qu'il n'effectue pas de recherches périodiques. Lorsqu'un utilisateur gère l'analyse devant son ordinateur, cette fonctionnalité existe afin de fournir des mises à jour fréquentes, mais elle n'est pas nécessaire sur ces nœuds. Pour configurer cela, choisissez la rubrique "Keyword Search" dans la fenêtre Options. Sélectionnez l'onglet "General" et choisissez l'option "No periodic searches".
+
+\image html AutoIngest/no_periodic_searches.png
+
+\subsection auto_ingest_advanced_settings Bouton "Advanced Settings"
+
+Le bouton "Advanced Settings" affichera les paramètres des tâches d'acquisition automatisées. Comme indiqué dans l'avertissement, il faut faire preuve de prudence lors de la modification de ce panneau.
+
+\image html AutoIngest/advanced_settings.png
+
+La section "Automated Ingest Pause Setting" vous permet de configurer une période hebdomadaire durant laquelle l'acquisition ne s'exécutera pas. Ceci est utile si l'un de vos services réseau est programmé avec des temps d'arrêt réguliers. Notez que l'acquisition n'est pas immédiatement arrêtée à l'heure spécifiée à "Start Time" - elle s'exécutera jusqu'à ce que le fichier actuel soit traité ou que le module d'acquisition actuel soit terminé. Pour cette raison, nous vous suggérons d'utiliser un délai de deux heures avant que votre système ne soit arrêté. Par exemple, si votre réseau n'est pas accessible tous les dimanches de 16h00 à 17h00, vous devez définir l'heure de début ("Start Time") à 14h00 et la durée ("Duration") à 3 heures (pour couvrir le délai de fin d'exécution du module et le temps d'arrêt).
+
+La section "Automated Ingest Job Settings" contient les options suivantes:
+<dl>
+<dt>System synchronization wait time</dt>
+<dd>Un temps d'attente utilisé par les "Automated Ingest Node" pour assurer une synchronisation correcte des opérations des nœuds dans des circonstances où des retards peuvent survenir, comme par exemple une attente pour compenser les effets de latence du système de fichiers réseau sur la visibilité des répertoires et fichiers partagés nouvellement créés.</dd>
+<dt>External processes time out</dt>
+<dd>Les composants d'Autopsy qui génèrent des processus potentiellement longs ont la possibilité d'utiliser ce paramètre, s'il est activé, pour mettre fin à ces processus si le délai d'expiration spécifié s'est écoulé. Chaque composant qui utilise cette fonctionnalité est responsable de la mise en œuvre de sa propre stratégie pour le traitement des processus incomplets, lorsqu'un délai de processus externe se produit. Les composants de base qui utilisent des délais d'expiration de processus externes incluent les modules d'acquisition \ref recent_activity_page et \ref photorec_carver_page.</dd>
+<dt>Interval between input scans</dt>
+<dd>Intervalle entre les analyses des répertoires d'entrée d'acquisition automatisée pour les fichiers Manifest. Notez que la synchronisation réelle des analyses d'entrée par chaque nœud dépend à la fois de ce paramètre et de l'heure de démarrage du nœud.</dd>
+<dt>Maximum job retries allowed</dt>
+<dd>Nombre maximum de fois qu'une tâche d'acquisition automatisée en panne sera automatiquement relancée. Aucune distinction n'est faite entre les tâches qui se bloquent en raison de conditions d'erreur système telles que les pannes de courant et les tâches qui se bloquent en raison de la corruption de la source de données d'entrée. En général, la corruption de la source de données d'entrée peut être gérée correctement par Autopsy, mais ce paramètre offre une assurance contre les problèmes imprévus de viabilité des données d'entrée.</dd>
+<dt>Target concurrent jobs per case</dt>
+<dd>Une limite souple sur le nombre de tâches simultanées par cas lorsque plusieurs cas sont traités simultanément par un groupe de "Automated Ingest Node". Ce paramètre spécifie une cible plutôt qu'une limite stricte, car les nœuds ne sont jamais inactifs s'il y a des tâches d'acquisition à effectuer et les nœuds fonctionnent en coopération plutôt qu'en s'appuyant sur un service de planification de tâches centralisé à équilibrage de charge.</dd>
+<dt>Number of threads to use for file ingest</dt>
+<dd>Nombre de threads qu'un "Automated Ingest Node" consacre à l'analyse des fichiers à partir de sources de données parallèle. Notez que l'analyse des fichiers de source de données est toujours mono-thread.</dd>
+</dl>
+
+\subsection auto_ingest_file_export Bouton "File Export Settings"
+
+Le bouton "File Export Settings" fera apparaître la fenêtre de paramètrages \ref file_export_page. Cela permet à certains types de fichiers d'être automatiquement exportés lors de l'acquisition automatisée. La configuration de cette fonction nécessite une connaissance des structures de données internes d'Autopsy et peut être ignorée pour les utilisateurs.
+
+\subsection auto_ingest_shared_config Configuration partagée
+
+Lors de l'utilisation de plusieurs "Automated Ingest Node", la configuration peut être centralisée et partagée avec n'importe quel "Automated Ingest Node" qui souhaite l'utiliser. C'est ce qu'on appelle la configuration partagée. L'idée générale est que vous alliez configurer un nœud (le "maître") et télécharger cette configuration vers un emplacement central. Ensuite, les autres "Automated Ingest Node" (les nœuds "secondaires") téléchargeront cette configuration chaque fois qu'ils démarreront un nouveau travail. Cela permet de gagner du temps car vous n'avez besoin de configurer qu'un seul nœud et garantit la cohérence entre les "Automated Ingest Node".
+
+\subsubsection auto_ingest_shared_config_master Nœud maître
+
+Sur l'ordinateur qui sera le "Automated Ingest Node" configuré comme maître, suivez les étapes de configuration décrites ci-dessus pour configurer le nœud.
+Si vous souhaitez que chaque "Automated Ingest Node" partagent les paramètres de configuration, cochez la première case dans la section "Shared Configuration" du panneau des options "Auto Ingest". Sélectionnez ensuite un dossier dans lequel stocker la configuration partagée. Ce dossier doit être un chemin vers un partage réseau auquel les autres machines du système auront accès. Utilisez un chemin UNC si possible. Ensuite, cochez la case "Use this node as a master node that can upload settings" qui devrait activer le bouton "Save & Upload Config". Si cela ne se produit pas, recherchez un message d'erreur rouge expliquant les paramètres manquants.
+
+\image html AutoIngest/master_node.png
+
+Après avoir enregistré et téléchargé la configuration, cliquez sur le bouton "Save" pour quitter le panneau Options.
+
+\subsubsection auto_ingest_shared_config_secondary Nœud secondaire
+
+Une fois qu'un nœud a téléchargé les données de configuration partagées, les nœuds restants peuvent être configurés pour les télécharger, en ignorant certaines des étapes de configuration ci-dessus.
+
+Pour configurer un nœud secondaire, commencez par parcourir la page \ref install_multiuser_page "configuration multi-utilisateurs." Appliquez les modifications, puis passez à l'onglet "Auto Ingest" du panneau Options. Cochez la case pour activer l'acquisition automatique ("Auto Ingest mode"), puis la case pour activer la configuration partagée ("Use shared configuration in folder") et entrez le même dossier que celui utilisé sur le nœud maître. Le bouton "Download Config" devrait maintenant être activé et peut être utilisé pour obtenir le reste de la configuration automatiquement. Ensuite, une boîte de dialogue apparaîtra probablement vous demandant de redémarrer Autopsy.
+
+\subsubsection auto_ingest_shared_config_notes Remarques
+
+Quelques remarques sur la configuration partagée:
+<ul><li>La \ref auto_ingest_error_suppression "modification de la base de regsitre pour la suppression des erreurs", vue ci-dessous, devra être faite sur chaque nœud
+<li>Après la configuration initiale, les données de configuration partagées actuelles seront mises à jour avant chaque tâches (pas besoin de les télécharger à nouveau manuellement)
+<li>Quelques options nécessitent un redémarrage pour prendre effet (par exemple, la plupart des paramètres multi-utilisateurs). Si celles-ci sont téléchargées automatiquement pendant l'exécution de l'acquisition automatique, elles ne seront pas utilisées tant que le "Automated Ingest Node" n'aura pas été redémarré.
+<li>Il existe actuellement une limitation sur l'emplacement où les bases de données de hachage peuvent être enregistrées. Chaque base de données sera téléchargée dans le même dossier que celui dans lequel elle se trouvait sur le nœud maître, ce qui entraînera des erreurs si la lettre de ce lecteur n'est pas présente ou si le dossier n'a pas des droits d'écriture pour chaque nœud.
+<li>Les copies partagées des bases de données de hachage ne sont pas non plus prises en charge actuellement. Chaque nœud téléchargera sa propre copie de chaque base de données.
+</ul>
+
+\subsection auto_ingest_test_button Test
+
+Une fois que tout est configuré, vous pouvez utiliser le bouton "Test" en bas du panneau pour tester si tout est correctement configuré. Le bouton testera si les services sont disponibles, si un cas peut être créé et si les paramètres d'acquisition sont valides. Si le test réussit, vous verrez une coche verte. En cas d'échec, vous verrez un message donnant une brève description de l'erreur qui s'est produite. En fonction de l'erreur, vous pouvez également voir un message contextuel. Vous pouvez consulter les journaux pour obtenir des informations supplémentaires (fermez le panneau Options et cliquez sur "Help" puis "Open Log Folder").
+
+\image html AutoIngest/test_button_failure.png
+
+\subsection auto_ingest_error_suppression Suppression d'erreurs
+
+Sur un "Automated Ingest Node", nous vous recommandons également fortement de configurer le système pour supprimer les boîtes de dialogue d'erreur que Windows peut afficher si une application se bloque. Certains des modules exécutés par Autopsy se sont bloqués sur certains tests effectués dans le passé et lorsqu'une une boîte de dialogue d'erreur s'affichait, tout le traitement s'arrêtait.
+
+La désactivation des messages d'erreur est effectuée en définissant la clé de registre suivante sur "1", comme illustré dans la capture d'écran ci-dessous.
+\verbatim HKCU\Software\Microsoft\Windows\Windows Error Reporting\DontShowUI\endverbatim
+
+\image html AutoIngest/error_suppression.png
+
+
+*/

@@ -1,0 +1,37 @@
+﻿/*! \page volatility_dsp_page Processeur de source de données Volatility
+
+[TOC]
+
+
+\section Aperçu
+
+Le processeur de source de données Volatility exécute Volatility sur une image mémoire et enregistre les résultats individuels du module Volatility. Si l'image disque associée à l'image mémoire est également disponible, elle créera des artefacts d'élément intéressant reliant les résultats de Volatility aux fichiers de l'image disque.
+
+Le module \ref experimental_page doit être activé pour exécuter ce module.
+
+\section Usage
+
+Si une image disque est associée à votre image mémoire, commencez par intégrer l'image disque dans le cas. Ensuite allez sur "Add Data Source" et sélectionnez "Memory Image File". 
+
+\image html volatility_dsp_select.png
+
+Sur l'écran suivant, vous pouvez sélectionner votre image mémoire, puis ajuster les paramètres pour choisir un profil et les plugins de Volatility à exécuter.
+
+\image html volatility_dsp_config.PNG
+
+Ensuite, vous verrez le panneau de configuration des modules d'acquisition. Aucun module d'acquisition ne sera exécuté lors de l'utilisation du processeur de source de données Volatility, il vous suffit donc de cliquer sur le bouton "Next". Quand il se termine, vous pouvez avoir des erreurs non critiques. Celles-ci proviennent souvent du fait que le processeur de source de données est incapable de trouver des fichiers dans l'image disque d'origine. Si vous n'avez pas ajouté d'image disque associée avant d'exécuter le processeur de source de données Volatility sur l'image mémoire, il y aura un grand nombre d'erreurs mais la sortie du module Volatility sera toujours disponible.
+
+\section Résultats
+
+Il existe deux types de résultats qui proviennent de l'exécution du processeur de source de données Volatility: "Module Output" (sortie du module) et "Interesting Items" (éléments intéressants) (si l'image disque a été ajoutée). La section "Module Output" se trouve sous l'image mémoire dans l'arborescence.
+
+\image html volatility_dsp_module_output.PNG
+
+Vous pouvez également voir la sortie de Volatility sous "ModuleOutput/Volatility" dans le dossier du cas d'Autopsy. La section "Interesting Items" lie les chemins d'éléments trouvés par Volatility avec les fichiers de l'image disque. Si aucune image disque n'a été ajoutée, il n'y aura pas de "Interesting Items".
+
+\image html volatility_dsp_interesting_items.PNG
+
+
+
+
+*/

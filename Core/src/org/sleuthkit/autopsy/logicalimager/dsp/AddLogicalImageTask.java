@@ -99,8 +99,6 @@ final class AddLogicalImageTask implements Runnable {
             return fileId;
         }
     }
-
-    private static final Score LIKELY_NOTABLE_SCORE = new Score(Score.Significance.LIKELY_NOTABLE, Score.Priority.NORMAL);
     
     private final static Logger LOGGER = Logger.getLogger(AddLogicalImageTask.class.getName());
     private final static String SEARCH_RESULTS_TXT = "SearchResults.txt"; //NON-NLS
@@ -446,7 +444,7 @@ final class AddLogicalImageTask implements Runnable {
         try {
             artifact = this.blackboard.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, fileId, dataSourceId,
-                    LIKELY_NOTABLE_SCORE,
+                    Score.SCORE_LIKELY_NOTABLE,
                     null, ruleSetName, null,
                     Arrays.asList(
                             new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, ruleSetName),

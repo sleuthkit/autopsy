@@ -34,7 +34,15 @@ With the admin file in place, the user can right-click on jobs in each of the ta
 
 \image html AutoIngest/admin_jobs_panel.png
 
-In the Running Jobs tables, the ingest progress can be viewed and the current job can be cancelled. Note that cancellation can take some time.
+You can also selectively enable \ref keyword_search_ocr_config "optical character recognition (OCR)" on a case-by-case basis. This will override the normal Keyword Search settings for every job in the case. Jobs in progress will not be affected. To enable OCR for a case, right-click on a job from that case in the Pending Jobs table and select "Enable OCR For This Case".
+
+\image html admin_jobs_ocr1.png
+
+Once enabled, a green checkmark will appear in the OCR column next to every pending job for that case. 
+
+\image html admin_jobs_ocr2.png
+
+In the Running Jobs tables, the ingest progress can be viewed and the current job can be cancelled. Note that cancellation can take some time. You can also generate a thread dump if you suspect ingest may be stuck.
 
 \image html AutoIngest/admin_jobs_cancel.png
 
@@ -42,9 +50,11 @@ In the Completed Jobs table, the user can reprocess a job (generally useful when
 
 \image html AutoIngest/admin_jobs_completed.png
 
+ 
+
 \section auto_ingest_admin_nodes_panel Auto Ingest Nodes Panel
 
-The Nodes panel displays the status of every online auto ingest node. Additionally, an admin can pause or resume a node, or shut down a node entirely (i.e., exit the Autopsy app).
+The Nodes panel displays the status of every online auto ingest node. Additionally, an admin can pause or resume a node, generate a thread dump, or shut down a node entirely (i.e., exit the Autopsy app).
 
 \image html AutoIngest/admin_nodes_panel.png
 

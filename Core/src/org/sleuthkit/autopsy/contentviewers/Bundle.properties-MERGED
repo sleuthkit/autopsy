@@ -70,6 +70,7 @@ MediaViewVideoPanel.progressLabel.text=00:00
 MediaViewVideoPanel.infoLabel.text=info
 MediaViewImagePanel.imgFileTooLarge.msg=Could not load image file (too large): {0}
 
+Metadata.headerTitle=Metadata
 Metadata.nodeText.loading=Metadata loading...
 Metadata.nodeText.none=None
 Metadata.nodeText.truncated=(results truncated)
@@ -106,6 +107,7 @@ MessageArtifactViewer.textbodyScrollPane.TabConstraints.tabTitle=Text
 JPEGViewerDummy.jLabel1.text=You are looking at a JPEG file:
 JPEGViewerDummy.jTextField1.text=jTextField1
 Metadata_dataArtifactTitle=Source File Metadata
+MetadataWorker.doInBackground.noDataMsg=No Data
 PDFViewer.encryptedDialog=This document is password protected.
 PDFViewer.errorDialog=An error occurred while opening this PDF document. Check the logs for more information. You may continue to use this feature on other PDF documents.
 PListNode.KeyCol=Key

@@ -26,14 +26,13 @@ We recommend:
 
 \subsection multiuser_system_hw Suggested Hardware
 
-TODO
+- PostgreSQL/ActiveMQ (Server 1):
+ - RAM: 16GB or more
+ - Local Storage: 500GB SSD
 
-- PostgreSQL/ActiveMQ (server 1):
- - RAM: 
- - Local Storage: Enough for databases
-- Solr (server 2):
- - RAM: 
- - Local Storage: Minimal 
+- Solr (Server 2):
+ - RAM: 32GB or more
+ - Local Storage: A single index will be roughly the size of the data source being ingested. For example 128GB E01 will usually generate  a 128 GB index.
 
 \subsection multiuser_system_back Backups
 

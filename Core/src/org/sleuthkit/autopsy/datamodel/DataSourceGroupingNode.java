@@ -80,8 +80,7 @@ class DataSourceGroupingNode extends DisplayableItemNode {
                     new DataArtifacts(dsObjId),
                     new AnalysisResults(dsObjId),
                     new OsAccounts(Case.getCurrentCaseThrows().getSleuthkitCase(), dsObjId),
-                    new Tags(dsObjId),
-                    new Reports()
+                    new Tags(dsObjId)
             ));
 
         } catch (NoCurrentCaseException ex) {

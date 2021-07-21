@@ -35,6 +35,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
@@ -46,7 +49,6 @@ import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -71,7 +73,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
     private static final CorrelationCaseWrapper NO_ARTIFACTS_CASE = new CorrelationCaseWrapper(Bundle.OtherOccurrencesPanel_table_noArtifacts());
     private static final CorrelationCaseWrapper NO_RESULTS_CASE = new CorrelationCaseWrapper(Bundle.OtherOccurrencesPanel_table_noResultsFound());
-    private static final CorrelationCaseWrapper LOADING_CASE = new CorrelationCaseWrapper(Bundle.OtherOccurrencesPanel_table_loadingResults());
     private static final Logger logger = Logger.getLogger(OtherOccurrencesPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final OtherOccurrencesFilesTableModel filesTableModel;
@@ -85,6 +86,11 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
     private SwingWorker<?, ?> worker;
 
+    // Initializing the JFileChooser in a thread to prevent a block on the EDT
+    // see https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
+    private final FutureTask<JFileChooser> futureFileChooser = new FutureTask<>(JFileChooser::new);
+    private JFileChooser CSVFileChooser;
+
     /**
      * Creates new form OtherOccurrencesPanel
      */
@@ -93,9 +99,11 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         this.casesTableModel = new OtherOccurrencesCasesTableModel();
         this.dataSourcesTableModel = new OtherOccurrencesDataSourcesTableModel();
         this.correlationAttributes = new ArrayList<>();
-        occurrencePanel = new OccurrencePanel();
         initComponents();
         customizeComponents();
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(futureFileChooser);
     }
 
     private void customizeComponents() {
@@ -215,7 +223,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         String caseDisplayName = Bundle.OtherOccurrencesPanel_caseDetailsDialog_noCaseNameError();
         String details = Bundle.OtherOccurrencesPanel_caseDetailsDialog_noDetails();
         try {
-            if (-1 != selectedRowViewIdx) {
+            if (-1 != selectedRowViewIdx && filesTableModel.getRowCount() > 0) {
                 CentralRepository dbManager = CentralRepository.getInstance();
                 int selectedRowModelIdx = filesTable.convertRowIndexToModel(selectedRowViewIdx);
                 List<NodeData> rowList = filesTableModel.getListOfNodesForFile(selectedRowModelIdx);
@@ -245,6 +253,18 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
     private void saveToCSV() throws NoCurrentCaseException {
         if (casesTableModel.getRowCount() > 0) {
+
+            if (CSVFileChooser == null) {
+                try {
+                    CSVFileChooser = futureFileChooser.get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    // If something happened with the thread try and 
+                    // initalized the chooser now
+                    logger.log(Level.WARNING, "A failure occurred in the JFileChooser background thread");
+                    CSVFileChooser = new JFileChooser();
+                }
+            }
+
             Calendar now = Calendar.getInstance();
             String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_data_sources.csv", now);
             CSVFileChooser.setCurrentDirectory(new File(Case.getCurrentCaseThrows().getExportDirectory()));
@@ -258,13 +278,13 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 if (!selectedFile.getName().endsWith(".csv")) { // NON-NLS
                     selectedFile = new File(selectedFile.toString() + ".csv"); // NON-NLS
                 }
-                CSVWorker worker = new CSVWorker(selectedFile, file, dataSourceName, deviceId, Collections.unmodifiableCollection(correlationAttributes));
-                worker.execute();
+                CSVWorker csvWorker = new CSVWorker(selectedFile, file, dataSourceName, deviceId, Collections.unmodifiableCollection(correlationAttributes));
+                csvWorker.execute();
             }
         }
     }
 
-    @NbBundle.Messages({"OtherOccurrencesPanel_earliestCaseNotAvailable=Not Availble."})
+    @NbBundle.Messages({"OtherOccurrencesPanel_earliestCaseNotAvailable=Not Available."})
     /**
      * Reset the UI and clear cached data.
      */
@@ -309,8 +329,9 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     }
 
                     casesTableModel.clearTable();
-
-                    OtherOccurrenceOneTypeWorker.OneTypeData data = get();
+                    
+                    OtherOccurrenceOneTypeWorker.OneTypeData data = get();   
+                    correlationAttributes.addAll(data.getCorrelationAttributesToAdd());
                     for (CorrelationCase corCase : data.getCaseNames().values()) {
                         casesTableModel.addCorrelationCase(new CorrelationCaseWrapper(corCase));
                     }
@@ -319,12 +340,13 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                         casesTableModel.addCorrelationCase(NO_ARTIFACTS_CASE);
                     } else if (caseCount == 0) {
                         casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
-                    }
-                    String earliestDate = data.getEarliestCaseDate();
-                    earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
-                    foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getTotalCount(), caseCount, data.getDataSourceCount()));
-                    if (caseCount > 0) {
-                        casesTable.setRowSelectionInterval(0, 0);
+                    } else {
+                        String earliestDate = data.getEarliestCaseDate();
+                        earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
+                        foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getTotalCount(), caseCount, data.getDataSourceCount()));
+                        if (caseCount > 0) {
+                            casesTable.setRowSelectionInterval(0, 0);
+                        }
                     }
 
                 } catch (InterruptedException | ExecutionException ex) {
@@ -369,12 +391,13 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             casesTableModel.addCorrelationCase(NO_ARTIFACTS_CASE);
         } else if (caseCount == 0) {
             casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
-        }
-        String earliestDate = data.getEarliestCaseDate();
-        earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
-        foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getInstanceDataCount(), caseCount, data.getDataSourceCount()));
-        if (caseCount > 0) {
-            casesTable.setRowSelectionInterval(0, 0);
+        } else {
+            String earliestDate = data.getEarliestCaseDate();
+            earliestCaseDate.setText(earliestDate.isEmpty() ? Bundle.OtherOccurrencesPanel_earliestCaseNotAvailable() : earliestDate);
+            foundInLabel.setText(String.format(Bundle.OtherOccurrencesPanel_foundIn_text(), data.getInstanceDataCount(), caseCount, data.getDataSourceCount()));
+            if (caseCount > 0) {
+                casesTable.setRowSelectionInterval(0, 0);
+            }
         }
     }
 
@@ -400,7 +423,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
             return;
         }
-        
+
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         worker = new SelectionWorker(correlationAttributes, file, deviceId, dataSourceName) {
@@ -420,31 +443,32 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                         currentCaseName = null;
                         logger.log(Level.WARNING, "Unable to get current case for other occurrences content viewer", ex);
                     }
-
-                    for (NodeData nodeData : correlatedNodeDataMap.values()) {
-                        for (int selectedRow : selectedCaseIndexes) {
-                            try {
-                                if (nodeData.isCentralRepoNode()) {
-                                    if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
-                                            && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                    if (casesTableModel.getRowCount() > 0) {
+                        for (NodeData nodeData : correlatedNodeDataMap.values()) {
+                            for (int selectedRow : selectedCaseIndexes) {
+                                try {
+                                    if (nodeData.isCentralRepoNode()) {
+                                        if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
+                                                && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                                            dataSourcesTableModel.addNodeData(nodeData);
+                                        }
+                                    } else if (currentCaseName != null && (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(currentCaseName))) {
                                         dataSourcesTableModel.addNodeData(nodeData);
                                     }
-                                } else if (currentCaseName != null && (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(currentCaseName))) {
-                                    dataSourcesTableModel.addNodeData(nodeData);
+                                } catch (CentralRepoException ex) {
+                                    logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                                 }
-                            } catch (CentralRepoException ex) {
-                                logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                             }
                         }
                     }
-                    if (dataSourcesTable.getRowCount() > 0) {
+                    if (dataSourcesTableModel.getRowCount() > 0) {
                         dataSourcesTable.setRowSelectionInterval(0, 0);
                     }
-                    
+
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 
                 } catch (InterruptedException | ExecutionException ex) {
-                   logger.log(Level.SEVERE, "Failed to update OtherOccurrencesPanel on data source selection", ex); 
+                    logger.log(Level.SEVERE, "Failed to update OtherOccurrencesPanel on data source selection", ex);
                 }
             }
         };
@@ -476,25 +500,29 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
                 try {
                     Map<UniquePathKey, NodeData> correlatedNodeDataMap = get();
-                    for (NodeData nodeData : correlatedNodeDataMap.values()) {
-                        for (int selectedDataSourceRow : selectedDataSources) {
-                            try {
-                                if (nodeData.isCentralRepoNode()) {
-                                    if (dataSourcesTableModel.getCaseUUIDForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
-                                            && dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                        filesTableModel.addNodeData(nodeData);
+                    if (dataSourcesTableModel.getRowCount() > 0) {
+                        for (NodeData nodeData : correlatedNodeDataMap.values()) {
+                            for (int selectedDataSourceRow : selectedDataSources) {
+                                int rowModelIndex = dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow);
+                                try {
+                                    if (nodeData.isCentralRepoNode()) {
+                                        if (dataSourcesTableModel.getCaseUUIDForRow(rowModelIndex).equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
+                                                && dataSourcesTableModel.getDeviceIdForRow(rowModelIndex).equals(nodeData.getDeviceID())) {
+                                            filesTableModel.addNodeData(nodeData);
+                                        }
+                                    } else {
+                                        if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
+                                            filesTableModel.addNodeData(nodeData);
+                                        }
                                     }
-                                } else {
-                                    if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                        filesTableModel.addNodeData(nodeData);
-                                    }
+                                } catch (CentralRepoException ex) {
+                                    logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                                 }
-                            } catch (CentralRepoException ex) {
-                                logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                             }
                         }
                     }
-                    if (filesTable.getRowCount() > 0) {
+
+                    if (filesTableModel.getRowCount() > 0) {
                         filesTable.setRowSelectionInterval(0, 0);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
@@ -515,18 +543,20 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     private void updateOnFileSelection() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            if (filesTable.getSelectedRowCount() == 1) {
+            if (filesTableModel.getRowCount() > 0 && filesTable.getSelectedRowCount() == 1) {
                 //if there is one file selected update the deatils to show the data for that file
                 occurrencePanel = new OccurrencePanel(filesTableModel.getListOfNodesForFile(filesTable.convertRowIndexToModel(filesTable.getSelectedRow())));
-            } else if (dataSourcesTable.getSelectedRowCount() == 1) {
+            } else if (dataSourcesTableModel.getRowCount() > 0 && dataSourcesTable.getSelectedRowCount() == 1) {
                 //if no files were selected and only one data source is selected update the information to reflect the data source
                 String caseName = dataSourcesTableModel.getCaseNameForRow(dataSourcesTable.convertRowIndexToModel(dataSourcesTable.getSelectedRow()));
                 String dsName = dataSourcesTableModel.getValueAt(dataSourcesTable.convertRowIndexToModel(dataSourcesTable.getSelectedRow()), 0).toString();
                 String caseCreatedDate = "";
-                for (int row : casesTable.getSelectedRows()) {
-                    if (casesTableModel.getValueAt(casesTable.convertRowIndexToModel(row), 0).toString().equals(caseName)) {
-                        caseCreatedDate = getCaseCreatedDate(row);
-                        break;
+                if (casesTableModel.getRowCount() > 0) {
+                    for (int row : casesTable.getSelectedRows()) {
+                        if (casesTableModel.getValueAt(casesTable.convertRowIndexToModel(row), 0).toString().equals(caseName)) {
+                            caseCreatedDate = getCaseCreatedDate(row);
+                            break;
+                        }
                     }
                 }
                 occurrencePanel = new OccurrencePanel(caseName, caseCreatedDate, dsName);
@@ -535,7 +565,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 //update the information to reflect the case
                 String createdDate;
                 String caseName = "";
-                if (casesTable.getRowCount() > 0) {
+                if (casesTableModel.getRowCount() > 0) {
                     caseName = casesTableModel.getValueAt(casesTable.convertRowIndexToModel(casesTable.getSelectedRow()), 0).toString();
                 }
                 if (caseName.isEmpty()) {
@@ -566,7 +596,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
      */
     private String getCaseCreatedDate(int caseTableRowIdx) {
         try {
-            if (CentralRepository.isEnabled()) {
+            if (CentralRepository.isEnabled() && casesTableModel.getRowCount() > 0) {
                 CorrelationCase partialCase;
                 partialCase = casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(caseTableRowIdx));
                 if (partialCase == null) {
@@ -594,11 +624,11 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
         /**
          * Construct a new SelectionWorker.
-         * 
+         *
          * @param coAtInstances
          * @param abstractFile
          * @param deviceIdStr
-         * @param dataSourceNameStr 
+         * @param dataSourceNameStr
          */
         SelectionWorker(Collection<CorrelationAttributeInstance> coAtInstances, AbstractFile abstractFile, String deviceIdStr, String dataSourceNameStr) {
             this.coAtInstances = coAtInstances;
@@ -612,12 +642,12 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             Map<UniquePathKey, NodeData> correlatedNodeDataMap = new HashMap<>();
             for (CorrelationAttributeInstance corAttr : coAtInstances) {
                 correlatedNodeDataMap.putAll(OtherOccurrences.getCorrelatedInstances(abstractFile, deviceIdStr, dataSourceNameStr, corAttr));
-                
-                if(isCancelled()) {
+
+                if (isCancelled()) {
                     return new HashMap<>();
                 }
             }
-           
+
             return correlatedNodeDataMap;
         }
     }
@@ -685,7 +715,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         exportToCSVMenuItem = new javax.swing.JMenuItem();
         showCaseDetailsMenuItem = new javax.swing.JMenuItem();
         showCommonalityMenuItem = new javax.swing.JMenuItem();
-        CSVFileChooser = new javax.swing.JFileChooser();
         tableContainerPanel = new javax.swing.JPanel();
         tablesViewerSplitPane = new javax.swing.JSplitPane();
         caseDatasourceFileSplitPane = new javax.swing.JSplitPane();
@@ -704,12 +733,12 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
 
         rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
-            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {
-                rightClickPopupMenuPopupMenuWillBecomeVisible(evt);
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
             }
             public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent evt) {
             }
-            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {
+                rightClickPopupMenuPopupMenuWillBecomeVisible(evt);
             }
         });
 
@@ -857,7 +886,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JFileChooser CSVFileChooser;
     private javax.swing.JSplitPane caseDatasourceFileSplitPane;
     private javax.swing.JSplitPane caseDatasourceSplitPane;
     private javax.swing.JScrollPane caseScrollPane;

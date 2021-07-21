@@ -1,0 +1,30 @@
+﻿/*! \page object_detection_page Object Detection (Détection d'objets)
+
+[TOC]
+
+
+\section object_overview Aperçu
+
+Le module "Object Detection" utilise OpenCV pour essayer de détecter des objets dans les images.
+
+\ref experimental_page doit être activé pour exécuter ce module.
+
+\section object_setup Installation
+
+Pour commencer, vous aurez besoin de quelques classificateurs, qui sont des fichiers xml. Autopsy ne peut pas créer de classificateurs - effectuez une recherche sur le Web pour "train OpenCV classifiers" pour trouver des informations sur la création de classificateurs, ou visitez la page <a href="https://docs.opencv.org/2.4/doc/user_guide/ug_traincascade.html">OpenCV</a>.
+
+Une fois que vous avez votre ensemble de classificateurs, copiez-les dans le dossier "object_detection_classifiers" de votre répertoire utilisateur Autopsy. Sous Windows, cela se trouve normalement dans "C:\Users\<nom d'utilisateur>\AppData\Roaming\Autopsy". Si vous ne trouvez pas le répertoire, essayez d'exécuter le module comme décrit dans la section suivante. Le message d'avertissement vous indiquera où le module s'attend à ce que les classificateurs soient stockés.
+
+\image html object_detection_classifier_dir.PNG
+
+\section object_running Exécution du module d'acquisition
+
+Vous pouvez exécuter le module de détection d'objets en l'activant lors de l'exécution des modules d'acquisition. Aucune configuration supplémentaire n'est nécessaire. Si vous n'avez ajouté aucun classificateur ou si vous avez mis les classificateurs au mauvais endroit, vous verrez une info-bulle d'avertissement.
+
+\image html object_detection_warning.PNG
+
+Tous les fichiers contenant des objets détectés apparaîtront sous "Objects Detected". L'arborescence des résultats montrera quels classificateurs correspondaient à chaque image.
+
+\image html object_detection_results.PNG
+
+*/

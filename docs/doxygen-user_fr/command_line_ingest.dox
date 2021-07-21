@@ -1,0 +1,208 @@
+﻿/*! \page command_line_ingest_page Command Line Ingest (Acquisition en ligne de commande)
+
+[TOC]
+
+
+\section command_line_ingest_overview Aperçu
+
+La fonction "Command Line Ingest" vous permet d'exécuter de nombreuses fonctions d'Autopsy à partir de la ligne de commande. Vous pouvez ajouter des sources de données aux cas, choisir les modules d'acquisition à exécuter et générer automatiquement un rapport. Une fois terminés, ces cas peuvent être ouverts normalement ou vous pouvez simplement utiliser les rapports et autres sorties sans ouvrir Autopsy.
+
+\section command_line_ingest_config Configuration
+
+Pour configurer l'acquisition en ligne de commande, accédez à Tools->Options puis sélectionnez l'onglet "Command Line Ingest". Si vous souhaitez créer ou ouvrir des cas multi-utilisateurs, vous devrez \ref install_multiuser_page "configurer les paramètres multi-utilisateurs".
+
+\image html command_line_ingest_options.png
+
+\subsection command_line_ingest_profile Configuration des profils d'acquisition
+
+À partir du panneau d'options, vous pouvez configurer le profil d'acquisition par défaut. C'est la même chose que pour la configuration normale des \ref ingest_page "modules d'acquisition" - choisissez un filtre de fichier, puis activez ou désactivez les modules d'acquisition individuels, en modifiant leurs paramètres si vous le souhaitez. Appuyez sur "OK" pour enregistrer vos paramètres.
+
+Actuellement, les profils d'acquisition personnalisés ne peuvent pas être configurés dans le panneau d'options de l'acquisition en ligne de commande, mais ils peuvent être créés via le \ref ingest_page "panneau d'option Ingest" puis utilisés avec la ligne de commande. Ici, nous avons créé un profil d'acquisition qui ne traitera que les types de fichiers image et n'exécutera que certains modules d'acquisition. 
+
+\image html command_line_ingest_profile.png
+
+Voir la section sur \ref command_line_ds "l'exécution des modules d'acquisition" ci-dessous pour obtenir des instructions sur la spécification d'un profil d'acquisition avec la ligne de commande.
+
+\subsection command_line_report_profile Configuration des profils de rapport
+
+Vous pouvez configurer des profils de rapport à utiliser avec l'acquisition en ligne de commande. Vous commencerez avec un profil "default" et pourrez créer des profils supplémentaires. Chaque profil vous permettra de générer un type de rapport. La configuration est généralement la même que la \ref reporting_page "génération de rapports" normale avec quelques légères différences. Cela se voit principalement lorsque vos options dépendent du cas ouvert, comme le choix des \ref tagging_page "marquages" à intégrer au rapport ou les définitions des noms de \ref interesting_files_identifier_page "fichiers intéressants" à inclure. Par exemple, le rapport HTML vous permet normalement de choisir des balises spécifiques à inclure, mais pour l'acquisition en ligne de commande, il n'y aura que la possibilité d'inclure toutes les balises.
+
+Si vous souhaitez créer des profils de rapport supplémentaires, sélectionnez "Make new profile" dans le menu déroulant puis cliquez sur le bouton "Configure". Vous serez invité à nommer votre nouveau profil de rapport, puis vous passerez par la configuration de rapport normale. Avoir plusieurs profils de rapport vous permettra de générer facilement différents types de rapport à partir de la ligne de commande. Par exemple, vous pouvez avoir un profil de rapport "htmlReport" qui cré les rapports HTML et un autre profil de rapport pour générer des rapports KML. Voir la section \ref command_line_report "génération de rapports" ci-dessous pour savoir comment spécifier un profil de rapport en ligne de commande.
+
+\section command_line_ingest_commands Options de commande
+
+Dans une invite de commande, accédez au dossier "bin" d'Autopsy. Celui-ci est normalement situé à "C:\Program Files\Autopsy-version\bin".
+
+\image html command_line_ingest_bin_dir.png
+
+Le tableau ci-dessous présente un résumé des opérations en ligne de commande. Vous pouvez en exécuter une ou plusieurs à la fois, mais vous devez toujours créer un cas ou ouvrir un cas existant.
+
+<br>
+<table>
+<tr><th>Opération</th><th>Commande(s)</th><th>Paramètre(s)</th><th>Exemple</th></tr>
+<tr><td><b>Créer un nouveau cas</b><td><pre>--createCase</pre></td><td><pre>--caseName
+--caseBaseDir
+--caseType (facultatif)</pre></td><td><pre>--createCase --caseName="test5" --caseBaseDir="C:\work\cases"
+--createCase --caseName="test_multi" --caseBaseDir="\\WIN-2913\work\cases" --caseType="multi"</pre></td></tr>
+
+<tr><td><b>Ouvrir un cas existant</b></td><td>&nbsp;</td><td><pre>--caseDir</pre></td><td><pre>--caseDir="C:\work\Cases\test5_2019_09_20_11_01_29"</pre></td></tr>
+
+<tr><td><b>Ajouter une source de données</b></td><td><pre>--addDataSource
+--runIngest (facultatif)
+--runIngest=(nom du profil d'acquisition) (facultatif)</pre></td><td><pre>--dataSourcePath</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest</pre></td></tr>
+
+<tr><td><b>Exécuter l'acquisition sur une source de données existante</b><td><pre>--runIngest
+--runIngest=(nom du profil d'acquisition)</pre></td><td><pre>--dataSourceObjectId</pre></td><td><pre>--runIngest --dataSourceObjectId=1
+--runIngest="imageAnalysis" --dataSourceObjectId=1</pre></td></tr>
+
+<tr><td><b>Générer des rapports</b></td><td><pre>--generateReports
+--generateReports=(nom du profil de rapport)</pre></td><td>&nbsp;</td><td><pre>--generateReports
+--generateReports="kmlReport"</pre></td></tr>
+
+<tr><td><b>Créer une liste de sources de données</b></td><td><pre>--listAllDataSources</pre></td><td>&nbsp;</td><td></td><pre>--listAllDataSources</pre></tr>
+</table>
+
+
+Plus de détails sur chaque opération ainsi que des exemples supplémentaires sont donnés ci-dessous.
+
+\subsection command_line_cases Création et ouverture de cas
+
+Vous devrez toujours créer un cas ou donner le chemin vers un cas existant. Lors de la création d'un cas, l'horodatage actuel sera ajouté au nom du cas. Par exemple, exécutez cette commande:
+
+\verbatim
+autopsy64.exe --createCase --caseName="test5" --caseBaseDir="C:\work\cases"
+\endverbatim
+
+pourrait créer un dossier de cas "test5_2019_09_20_11_01_29". Notez que même si un horodatage est ajouté au nom, le champ --caseName doit être unique pour chaque exécution.
+
+\image html command_line_ingest_case_folder.png
+
+Par défaut, tous les cas seront mono-utilisateur. Si vous souhaitez créer un cas multi-utilisateur, vous aurez besoin du champ --caseType. Vous devez également utiliser le chemin d'accès réseau de votre dossier de cas afin que les services puissent y accéder:
+
+\verbatim
+autopsy64.exe --createCase --caseName="test_multi" --caseBaseDir="\\WIN-2913\work\cases" --caseType="multi"
+\endverbatim
+
+Une fois qu'un cas est créé, vous devrez utiliser le chemin d'accès complet au cas au lieu du nom du cas et du dossier de base. Par exemple, si nous avons créé le cas vide "test5" comme ci-dessus, nous pourrions utiliser la commande suivante pour y ajouter une source de données:
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\Cases\test5_2019_09_20_11_01_29" --addDataSource 
+   --dataSourcePath="R:\work\images\small2.img"
+\endverbatim
+
+Le type de dossier (mono ou multi-utilisateur) n'a pas à être spécifié lors de l'ouverture d'un cas.
+
+\subsection command_line_ds Ajout d'une nouvelle source de données et exécution de l'acquisition
+
+Vous pouvez ajouter une source de données à un nouveau cas ou un cas existant à l'aide de l'option --addDataSource, puis en indiquant le chemin d'accès à la source de données. Si vous utilisez l'option --runIngest, les modules d'acquisition que vous avez sélectionnés dans l'\ref command_line_ingest_config "étape de configuration" seront exécutés sur la source de données. Les \ref ds_img "images disque" et les \ref ds_log "fichiers logiques" sont pris en charge. Vous ne pouvez ajouter qu'une seule source de données à la fois.
+
+Dans cet exemple, nous allons créer un nouveau cas nommé "test6" et ajouter la source de données "blue_images.img".
+
+\verbatim
+autopsy64.exe --createCase --caseName="test6" --caseBaseDir="C:\work\cases" --addDataSource 
+   --dataSourcePath="R:\work\images\blue_images.img"
+\endverbatim
+
+Et ici, nous allons ajouter une autre source de données ("green_images.img") au cas que nous venons de créer et exécuter une acquisition dessus. Notez que l'acquisition ne s'exécutera que sur la nouvelle source de données ("green_images.img"), pas sur celle déjà présente dans le cas ("blue_images.img").
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest 
+   --dataSourcePath="R:\work\images\green_images.img"
+\endverbatim
+
+Ensuite, nous allons ajouter une troisième source de données ("red_images.img") au cas et exécuter l'acquisition à l'aide d'un profil d'acquisition personnalisé "imageAnalysis" créé comme décrit dans la section \ref command_line_ingest_profile "Configuration des profils d'acquisition" ci-dessus. 
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest="imageAnalysis"
+   --dataSourcePath="R:\work\images\red_images.img"
+\endverbatim
+
+Enfin, nous ajouterons un dossier ("Test files") en tant que fichier logique défini dans un nouveau cas ("test9"). 
+
+\verbatim
+autopsy64.exe --createCase --caseName="test9" --caseBaseDir="C:\work\Cases" --addDataSource 
+   --dataSourcePath="R:\work\images\Test files" --runIngest
+\endverbatim
+
+\subsection command_line_existing_ds Exécution de l'acquisition sur une source de données existante
+
+Vous pouvez exécuter l'acquisition sur une source de données déjà dans le cas si vous connaissez son identifiant ("Object ID"). Pour le trouver, allez dans le dossier du cas et ouvrez le dossier "Command Output".
+
+\image html command_line_ingest_output_folder.png
+
+Si vous avez l'exécutée avec l'option --listAllDataSources, il y aura au moins un fichier commençant par "listAllDataSources". Ouvrez le plus récent - le format sera similaire à celui-ci:
+
+\verbatim
+{
+  "@dataSourceName" : "blue_images.img",
+  "@dataSourceObjectId" : "1"
+} {
+  "@dataSourceName" : "green_images.img",
+  "@dataSourceObjectId" : "84"
+}
+\endverbatim
+
+Vous pouvez également parcourir les fichiers addDataSource pour trouver celui correspondant au fichier que vous souhaitez acquérir. Le format sera le même. Une fois que vous connaissez l'identifiant de la source de données, vous pouvez utiliser l'option --dataSourceObjectId pour le spécifier. Par exemple, ceci exécutera l'acquisition sur "blue_images.img":
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --runIngest --dataSourceObjectId=1
+\endverbatim
+
+\subsection command_line_report Générer des rapports
+
+Vous pouvez générer un rapport sur le cas à l'aide de l'option --generateReports. Vous pouvez sélectionner le type de rapport à exporter via le panneau d'options d'Autopsy (voir la section \ref command_line_ingest_config "configuration"). Cette option peut être exécutée seule ou en même temps que vous traitez une source de données. Dans cet exemple, nous ajoutons une nouvelle source de données ("small2.img") et générons un rapport.
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource
+   --dataSourcePath="R:\work\images\small2.img" --runIngest --generateReports
+\endverbatim
+
+L'exemple ci-dessus utilise le profil de rapport par défaut. Si vous configurez un profil de rapport personnalisé comme décrit dans la section \ref command_line_report_profile "Configuration des profils d'acquisition" ci-dessus, vous pouvez spécifier ce profil après l'option --generateReports.
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --generateReports="html"
+\endverbatim
+
+\subsection command_line_listds Liste de toutes les sources de données
+
+Vous pouvez ajouter --listAllDataSources à tout moment pour afficher une liste de toutes les sources de données actuellement dans le cas avec leurs identifiants, à utiliser lors de l'\ref command_line_existing_ds "exécution de l'acquisition sur une source de données existante". Cette commande peut même être exécutée seule avec uniquement le chemin d'accès au cas.
+
+\verbatim
+autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --listAllDataSources
+\endverbatim
+
+
+\section command_line_ingest_run Exécution d'Autopsy
+
+Une fois que vous avez déterminé les paramètres dont vous avez besoin, il est temps d'exécuter Autopsy. Dans l'exemple ci-dessous, nous créons un nouveau cas ("xpCase"), en y ajoutant une source de données ("xp-sp3-v4.001"), en exécutant l'acquisition et en générant un rapport. Le type de rapport était \ref command_line_ingest_config "configuré" précédemment pour être un rapport HTML.
+
+\image html command_line_ingest_command_entry.png
+
+Si vous avez tout saisi correctement, Autopsy se chargera et vous verrez cette boîte de dialogue au milieu de l'écran:
+
+\image html command_line_ingest_dialog.png
+
+Si vous avez entré quelque chose de manière incorrecte, vous verrez probablement une erreur dans la sortie. Vous pourrez comparer ce que vous avez exécuté avec les descriptions et exemples ci-dessus pour essayer de corriger l'erreur.
+
+Si tout fonctionne correctement, vous verrez un journal du traitement en cours et Autopsy se fermera une fois terminé.
+
+\image html command_line_ingest_console_output.png
+
+
+\section command_line_ingest_results Affichage des résultats
+
+Vous pouvez ouvrir le cas que vous avez créé directement à partir de la ligne de commande en spécifiant soit le dossier du cas, soit le chemin d'accès au fichier ".aut". N'oubliez pas que le dossier sera nommé avec l'horodatage ajouté au nom de votre cas.
+\verbatim
+autopsy64.exe "C:\work\cases\xpCase_2019_09_20_14_39_25"
+autopsy64.exe "C:\work\cases\xpCase_2019_09_20_14_39_25\xpCase.aut"
+\endverbatim
+
+Vous pouvez également ouvrir le cas normalement via Autopsy. Allez simplement dans "Open Case", puis accédez au dossier de sortie que vous avez configuré dans la section \ref command_line_ingest_config et recherchez le dossier commençant par le nom de votre cas. Il sera nommé avec l'horodatage ajouté au nom que vous avez spécifié.
+
+\image html command_line_ingest_open_case.png
+
+Si vous n'êtes intéressé que par les rapports, vous n'avez pas besoin d'ouvrir Autopsy. Vous pouvez simplement parcourir le dossier "Reports" dans le répertoire du cas et accéder directement aux rapports.
+
+\image html command_line_ingest_report.png
+
+*/

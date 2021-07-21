@@ -80,6 +80,7 @@ import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.Score;
 
 /**
@@ -110,17 +111,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             Case.Events.CURRENT_CASE);
 
     /*
-     * Artifact types for which the unique path of the artifact's source content
-     * should be displayed in the node's property sheet.
-     */
-    private static final Integer[] SHOW_UNIQUE_PATH = new Integer[]{
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-    };
-
-    /*
      * Artifact types for which the file metadata of the artifact's source file
      * should be displayed in the node's property sheet.
      */
@@ -129,6 +119,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     };
 
     private final BlackboardArtifact artifact;
+    private final BlackboardArtifact.Type artifactType;
     private Content srcContent;
     private volatile String translatedSourceName;
 
@@ -237,6 +228,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
+        this.artifactType = getType(artifact);
+                        
         for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
             if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
                 srcContent = lookupContent;
@@ -278,6 +271,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
         super(artifact, createLookup(artifact, lookupIsAssociatedFile));
         this.artifact = artifact;
+        this.artifactType = getType(artifact);
+        
         try {
             //The lookup for a file may or may not exist so we define the srcContent as the parent.
             srcContent = artifact.getParent();
@@ -316,6 +311,20 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
+    }
+    
+    /**
+     * Returns the artifact type of the artifact.
+     * @param artifact The artifact.
+     * @return The artifact type or null if no type could be retrieved.
+     */
+    private static BlackboardArtifact.Type getType(BlackboardArtifact artifact) {
+        try {
+            return artifact.getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the artifact type for artifact (artifact objID={0})", artifact.getId()), ex);
+            return null;
+        }
     }
 
     /**
@@ -655,7 +664,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * If the type of the artifact represented by this node dictates the
          * addition of the source content's unique path, add it to the sheet.
          */
-        if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
+        if (artifactType != null && artifactType.getCategory() == Category.ANALYSIS_RESULT) {
             String sourcePath = ""; //NON-NLS
             try {
                 sourcePath = srcContent.getUniquePath();

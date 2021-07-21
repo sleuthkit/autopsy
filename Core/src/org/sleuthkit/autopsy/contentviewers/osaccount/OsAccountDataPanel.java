@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.contentviewers.osaccount;
 
 import java.awt.BorderLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -38,9 +37,12 @@ import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
+import javax.swing.border.EmptyBorder;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.contentviewers.osaccount.SectionData.RowData;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
@@ -61,7 +63,11 @@ public class OsAccountDataPanel extends JPanel {
 
     private static final int KEY_COLUMN = 0;
     private static final int VALUE_COLUMN = 1;
-
+    
+    private final static Insets FIRST_HEADER_INSETS = new Insets(0, 0, 0, 0);
+    private final static Insets HEADER_INSETS = new Insets(ContentViewerDefaults.getSectionSpacing(), 0, ContentViewerDefaults.getLineSpacing(), 0);
+    private final static Insets VALUE_COLUMN_INSETS = new Insets(0, ContentViewerDefaults.getColumnSpacing(), ContentViewerDefaults.getLineSpacing(), 0);
+    private final static Insets KEY_COLUMN_INSETS = new Insets(0, ContentViewerDefaults.getSectionIndent(), ContentViewerDefaults.getLineSpacing(), 0);
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd yyyy", US);
 
     private PanelDataFetcher dataFetcher = null;
@@ -76,6 +82,7 @@ public class OsAccountDataPanel extends JPanel {
      */
     private void initialize() {
         this.setLayout(new GridBagLayout());
+        this.setBorder(new EmptyBorder(ContentViewerDefaults.getPanelInsets()));
     }
 
     /**
@@ -184,12 +191,8 @@ public class OsAccountDataPanel extends JPanel {
         data.addData(Bundle.OsAccountDataPanel_basic_type(), 
             account.getOsAccountType().isPresent() ? account.getOsAccountType().get().getName() : "");
 
-        Optional<Long> crTime = account.getCreationTime();
-        if (crTime.isPresent()) {
-            data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), DATE_FORMAT.format(new Date(crTime.get() * 1000)));
-        } else {
-            data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), "");
-        }
+        Optional<Long> crTime = account.getCreationTime();        
+        data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), crTime.isPresent() ? TimeZoneUtils.getFormattedTime(crTime.get()) : "");
 
         return data;
     }
@@ -269,7 +272,7 @@ public class OsAccountDataPanel extends JPanel {
     private void addTitle(String title, int row) {
         JLabel label = new JLabel(title);
         // Make the title bold.
-        label.setFont(label.getFont().deriveFont(Font.BOLD));
+        label.setFont(ContentViewerDefaults.getHeaderFont());
         add(label, getTitleContraints(row));
     }
 
@@ -312,7 +315,9 @@ public class OsAccountDataPanel extends JPanel {
         constraints.anchor = GridBagConstraints.NORTHWEST;
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.weightx = 1;
-        constraints.insets = new Insets(5, 5, 5, 9);
+        constraints.insets = (row == 0)
+                ? FIRST_HEADER_INSETS 
+                : HEADER_INSETS;
 
         return constraints;
     }
@@ -332,7 +337,7 @@ public class OsAccountDataPanel extends JPanel {
         constraints.gridwidth = 1; // The title goes across the other columns
         constraints.gridheight = 1;
         constraints.anchor = GridBagConstraints.WEST;
-        constraints.insets = new Insets(0, 13, 5, 5);
+        constraints.insets = KEY_COLUMN_INSETS;
 
         return constraints;
     }
@@ -352,8 +357,8 @@ public class OsAccountDataPanel extends JPanel {
         constraints.gridwidth = 1; // The title goes across the other columns
         constraints.gridheight = 1;
         constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.insets = VALUE_COLUMN_INSETS;
         constraints.weightx = 1;
-        constraints.insets = new Insets(0, 5, 5, 5);
 
         return constraints;
     }
