@@ -385,7 +385,6 @@ public class DataArtifactContentViewer extends javax.swing.JPanel implements Dat
             case DATA_ARTIFACT:
                 return MORE_PREFERRED;
             // everything else is less preferred
-            case ANALYSIS_RESULT:
             default:
                 return LESS_PREFERRED;
         }
