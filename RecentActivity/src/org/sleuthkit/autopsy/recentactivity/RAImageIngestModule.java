@@ -84,8 +84,10 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract prefetch = new ExtractPrefetch();
         Extract webAccountType = new ExtractWebAccountType();
         Extract messageDomainType = new DomainCategoryRunner();
+        Extract jumpList = new ExtractJumpLists();
 
         extractors.add(recycleBin); 
+        extractors.add(jumpList);
         extractors.add(recentDocuments);
         extractors.add(registry); //  needs to run before the DataSourceUsageAnalyzer
         extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
