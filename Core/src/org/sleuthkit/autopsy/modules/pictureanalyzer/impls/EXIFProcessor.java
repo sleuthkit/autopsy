@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,9 +31,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
@@ -56,6 +58,8 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
 
 /**
@@ -68,6 +72,7 @@ import org.sleuthkit.datamodel.Score;
 public class EXIFProcessor implements PictureProcessor {
 
     private static final Logger logger = Logger.getLogger(EXIFProcessor.class.getName());
+    private static final BlackboardArtifact.Type EXIF_METADATA = new BlackboardArtifact.Type(TSK_METADATA_EXIF);
 
     @Override
     @NbBundle.Messages({
@@ -148,7 +153,7 @@ public class EXIFProcessor implements PictureProcessor {
             final Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
             if (!attributes.isEmpty() && !blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
-
+                List<BlackboardArtifact> artifacts = new ArrayList<>();
                 final BlackboardArtifact exifArtifact = (file.newAnalysisResult(
                         BlackboardArtifact.Type.TSK_METADATA_EXIF,
                         Score.SCORE_NONE,
@@ -159,13 +164,12 @@ public class EXIFProcessor implements PictureProcessor {
                         BlackboardArtifact.Type.TSK_USER_CONTENT_SUSPECTED, Score.SCORE_UNKNOWN, null, null, null,
                         Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, Bundle.ExifProcessor_userContent_description())))
                         .getAnalysisResult();
-                
+                artifacts.add(userSuspectedArtifact);
+
                 try {
-                    // index the artifact for keyword search
-                    blackboard.postArtifact(exifArtifact, MODULE_NAME);
-                    blackboard.postArtifact(userSuspectedArtifact, MODULE_NAME);
+                    blackboard.postArtifacts(artifacts, MODULE_NAME);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + exifArtifact.getArtifactID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error posting TSK_METADATA_EXIF and TSK_USER_CONTENT_SUSPECTED artifacts for %s (object ID = %d)", file.getName(), file.getId()), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.ExifProcessor_indexError_message(), exifArtifact.getDisplayName());
                 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2021 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,17 +18,16 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
- * Interface that must be implemented by all data source ingest modules. See
- * description of IngestModule for more details on interface behavior.
+ * Interface that must be implemented by all ingest modules that process data
+ * artifacts.
  */
-public interface DataSourceIngestModule extends IngestModule {
+public interface DataArtifactIngestModule extends IngestModule {
 
     /**
-     * Processes a data source. Called once between calls to startUp() and
-     * shutDown().
+     * Processes a data artifact.
      *
      * IMPORTANT: In addition to returning ProcessResult.OK or
      * ProcessResult.ERROR, modules should log all errors using methods provided
@@ -38,11 +37,10 @@ public interface DataSourceIngestModule extends IngestModule {
      * the Logger along with the log message so that a stack trace will appear
      * in the application log.
      *
-     * @param dataSource  The data source to process.
-     * @param progressBar A progress bar to be used to report progress.
+     * @param artifact The artifact to process.
      *
      * @return A result code indicating success or failure of the processing.
      */
-    ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar);
+    ProcessResult process(DataArtifact artifact);
 
 }
