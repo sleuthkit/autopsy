@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,16 +41,16 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Provides information about how a datasource relates to a previous case. NOTE:
+ * Provides information about how a data source relates to a previous case. NOTE:
  * This code is fragile and has certain expectations about how the central
  * repository handles creating artifacts. So, if the central repository changes
  * ingest process, this code could break. This code expects that the central
  * repository ingest module:
  *
- * a) Creates a TSK_INTERESTING_FILE_HIT artifact for a file whose hash is in
+ * a) Creates a TSK_PREVIOUSLY_SEEN artifact for a file whose hash is in
  * the central repository as a notable file.
  *
- * b) Creates a TSK_INTERESTING_ARTIFACT_HIT artifact for a matching id in the
+ * b) Creates a TSK_PREVIOUSLY_SEEN artifact for a matching id in the
  * central repository.
  *
  * c) The created artifact will have a TSK_COMMENT attribute attached where one
@@ -99,8 +99,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
     }
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-            ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
+            ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID()
     ));
 
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
