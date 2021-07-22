@@ -294,7 +294,7 @@ final class IngestTasksScheduler {
         if (!ingestPipeline.isCancelled()) {
             Blackboard blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard();
             try {
-                List<DataArtifact> artifacts = blackboard.getDataArtifacts(ingestPipeline.getDataSource());
+                List<DataArtifact> artifacts = blackboard.getDataArtifacts(ingestPipeline.getDataSource().getId(), null);
                 scheduleDataArtifactIngestTasks(ingestPipeline, artifacts);
             } catch (TskCoreException ex) {
                 DataSource dataSource = ingestPipeline.getDataSource();
