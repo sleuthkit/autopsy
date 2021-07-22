@@ -306,8 +306,8 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
 
         List<String> deviceArtifactCases = new ArrayList<>();
         List<String> nonDeviceArtifactCases = new ArrayList<>();
-
-        for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(), dataSource.getId())) {
+        
+        for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID(), dataSource.getId())) {
             List<String> cases = getCasesFromArtifact(artifact);
             if (cases == null || cases.isEmpty()) {
                 continue;
@@ -319,13 +319,10 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
                 nonDeviceArtifactCases.addAll(cases);
             }
         }
-
-        Stream<String> filesCases = skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(), dataSource.getId()).stream()
-                .flatMap((art) -> getCasesFromArtifact(art).stream());
-
+        
         return new PastCasesResult(
                 getCaseCounts(deviceArtifactCases.stream()),
-                getCaseCounts(Stream.concat(filesCases, nonDeviceArtifactCases.stream()))
+                getCaseCounts(nonDeviceArtifactCases.stream())
         );
     }
 }

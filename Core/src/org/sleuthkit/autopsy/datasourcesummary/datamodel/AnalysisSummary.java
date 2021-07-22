@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,8 +49,7 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
     private static final Set<String> EXCLUDED_KEYWORD_SEARCH_ITEMS = new HashSet<>();
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-            ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
+            ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID(),
             ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
             ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
     ));
@@ -122,7 +121,7 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getInterestingItemCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
-        return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+        return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN);
     }
 
     /**
