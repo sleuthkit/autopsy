@@ -19,18 +19,24 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import static javax.swing.SwingUtilities.isDescendingFrom;
+import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
@@ -39,6 +45,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AbstractContent;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -57,6 +64,8 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     private final ModifiableProxyLookup proxyLookup;
 
     private final MessageDataContent contentViewer;
+
+    private MediaViewerWorker worker;
 
     @Messages({
         "MediaViewer_Name=Media Attachments"
@@ -97,24 +106,17 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        Set<Content> relationshipSources;
-        Set<BlackboardArtifact> artifactList = new HashSet<>();
         contentViewer.setNode(null);
-        if (info != null) {
-            try {
-                relationshipSources = info.getRelationshipSources();
-
-                relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
-                    artifactList.add((BlackboardArtifact) content);
-                });
-
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to update selection.", ex);
-            }
-        }
         thumbnailViewer.resetComponent();
 
-        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentThumbnailsChildren(artifactList)), tableEM), true, this.getClass().getName()));
+        if (worker != null) {
+            worker.cancel(true);
+        }
+
+        worker = new MediaViewerWorker(info);
+
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        worker.execute();
     }
 
     @Override
@@ -196,6 +198,56 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
         } else {
             contentViewer.setNode(null);
         }
+    }
+
+    /**
+     * Swing worker for gathering the data needed to populate the media viewer.
+     */
+    private class MediaViewerWorker extends SwingWorker<Set<BlackboardArtifact>, Void> {
+
+        private final SelectionInfo selectionInfo;
+
+        MediaViewerWorker(SelectionInfo info) {
+            selectionInfo = info;
+        }
+
+        @Override
+        protected Set<BlackboardArtifact> doInBackground() throws Exception {
+            Set<Content> relationshipSources;
+            Set<BlackboardArtifact> artifactList = new HashSet<>();
+
+            if (selectionInfo != null) {
+                relationshipSources = selectionInfo.getRelationshipSources();
+
+                relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
+                    artifactList.add((BlackboardArtifact) content);
+                });
+            }
+
+            return artifactList;
+        }
+
+        @Messages({
+            "MediaViewer_selection_failure_msg=Failed to get media attachments for selected accounts.",
+            "MediaViewer_selection_failure_title=Selection Failed"
+        })
+        @Override
+        protected void done() {
+            try {
+                if (isCancelled()) {
+                    return;
+                }
+                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentThumbnailsChildren(get())), tableEM), true, this.getClass().getName()));
+            } catch (ExecutionException | InterruptedException ex) {
+                String accounts = selectionInfo.getAccounts().stream().map(Account::getTypeSpecificID).collect(Collectors.joining(","));
+                logger.log(Level.WARNING, "Unable to update cvt media viewer for " + accounts, ex);
+                
+                JOptionPane.showMessageDialog(MediaViewer.this, Bundle.MediaViewer_selection_failure_msg(), Bundle.MediaViewer_selection_failure_title(), JOptionPane.ERROR_MESSAGE);
+            } finally {
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+        }
+
     }
 
     /**
