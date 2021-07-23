@@ -87,6 +87,10 @@ final class ExtractJumpLists extends Extract {
         long ingestJobId = context.getJobId();
 
         List<AbstractFile> jumpListFiles = extractJumplistFiles(dataSource, ingestJobId);
+        
+        if (jumpListFiles.isEmpty()) {
+            return;
+        }
 
         if (context.dataSourceIngestIsCancelled()) {
             return;
@@ -177,7 +181,7 @@ final class ExtractJumpLists extends Extract {
                 DirectoryEntry root = fs.getRoot();
                 for (Entry entry : root) {
                     if (entry instanceof DirectoryEntry) {
-                        //If this data structure needed to recurse this is where it would do it but jjumplists do not need to at this time
+                        //If this data structure needed to recurse this is where it would do it but jumplists do not need to at this time
                         continue;
                     } else if (entry instanceof DocumentEntry) {
                         String jmpListFileName = entry.getName();
