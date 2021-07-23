@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
@@ -68,8 +69,11 @@ import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -257,9 +261,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         });
     }
 
-    /*
-     * Handles a current case opened event by clearing the ingest messages inbox
-     * and opening a remote event channel for the current case.
+    /**
+     * Handles a current case opened event by clearing the ingest messages
+     * inbox, opening a remote event channel for the current case, and
+     * registering to receive events from the event bus for the case database.
      *
      * Note that current case change events are published in a strictly
      * serialized manner, i.e., one event at a time, synchronously.
@@ -274,6 +279,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 jobEventPublisher.openRemoteEventChannel(String.format(INGEST_JOB_EVENT_CHANNEL_NAME, channelPrefix));
                 moduleEventPublisher.openRemoteEventChannel(String.format(INGEST_MODULE_EVENT_CHANNEL_NAME, channelPrefix));
             }
+            openedCase.getSleuthkitCase().registerForEvents(this);
         } catch (NoCurrentCaseException | AutopsyEventException ex) {
             logger.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.Title"),
@@ -281,10 +287,23 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         }
     }
 
-    /*
+    /**
+     * Subscribe to artifacts posted events from the event bus for the case
+     * database.
+     */
+    @Subscribe
+    void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent event) {
+        for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
+            ModuleDataEvent moduleEvent = new ModuleDataEvent(event.getModuleName(), artifactType, event.getArtifacts(artifactType));
+            fireIngestModuleDataEvent(moduleEvent);
+        }
+    }
+
+    /**
      * Handles a current case closed event by cancelling all ingest jobs for the
-     * case, closing the remote event channel for the case, and clearing the
-     * ingest messages inbox.
+     * case, unregistering from receiving events from the case database, closing
+     * the remote event channel for the case, and clearing the ingest messages
+     * inbox.
      *
      * Note that current case change events are published in a strictly
      * serialized manner, i.e., one event at a time, synchronously.
@@ -294,7 +313,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
          * TODO (JIRA-2227): IngestManager should wait for cancelled ingest jobs
          * to complete when a case is closed.
          */
-        this.cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
+        cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
+        Case.getCurrentCase().getSleuthkitCase().unregisterForEvents(this);
         jobEventPublisher.closeRemoteEventChannel();
         moduleEventPublisher.closeRemoteEventChannel();
         caseIsOpen = false;
