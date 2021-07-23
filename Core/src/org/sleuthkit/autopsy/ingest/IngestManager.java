@@ -288,14 +288,18 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Subscribe to artifacts posted events from the event bus for the case
-     * database.
+     * Handles artifacts posted events published by the Sleuth Kit layer
+     * blackboard via the event bus for the case database.
+     *
+     * @param tskEvent A Sleuth Kit data model ArtifactsPostedEvent from the
+     *                 case database event bus.
      */
     @Subscribe
-    void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent event) {
-        for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
-            ModuleDataEvent moduleEvent = new ModuleDataEvent(event.getModuleName(), artifactType, event.getArtifacts(artifactType));
-            fireIngestModuleDataEvent(moduleEvent);
+    void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent tskEvent) {
+        for (BlackboardArtifact.Type artifactType : tskEvent.getArtifactTypes()) {
+            ModuleDataEvent legacyEvent = new ModuleDataEvent(tskEvent.getModuleName(), artifactType, tskEvent.getArtifacts(artifactType));
+            AutopsyEvent autopsyEvent = new BlackboardPostEvent(legacyEvent);
+            eventPublishingExecutor.submit(new PublishEventTask(autopsyEvent, moduleEventPublisher));
         }
     }
 
@@ -731,18 +735,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     void fireFileIngestDone(AbstractFile file) {
         AutopsyEvent event = new FileAnalyzedEvent(file);
-        eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
-    }
-
-    /**
-     * Publishes an ingest module event signifying a blackboard post by an
-     * ingest module.
-     *
-     * @param moduleDataEvent A ModuleDataEvent with the details of the
-     *                        blackboard post.
-     */
-    void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        AutopsyEvent event = new BlackboardPostEvent(moduleDataEvent);
         eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
     }
 
