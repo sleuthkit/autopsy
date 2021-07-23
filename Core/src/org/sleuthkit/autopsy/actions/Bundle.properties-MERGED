@@ -1,18 +1,24 @@
 AddBlackboardArtifactTagAction.pluralTagResult=Add Result Tags
 AddBlackboardArtifactTagAction.singularTagResult=Add Result Tag
 AddBlackboardArtifactTagAction.taggingErr=Tagging Error
+# {0} - artifactName
 AddBlackboardArtifactTagAction.unableToTag.msg=Unable to tag {0}.
 AddContentTagAction.cannotApplyTagErr=Cannot Apply Tag
 AddContentTagAction.pluralTagFile=Add File Tags
 AddContentTagAction.singularTagFile=Add File Tag
+# {0} - fileName
+# {1} - tagName
 AddContentTagAction.tagExists={0} has been tagged as {1}. Cannot reapply the same tag.
 AddContentTagAction.taggingErr=Tagging Error
+# {0} - fileName
 AddContentTagAction.unableToTag.msg=Unable to tag {0}, not a regular file.
+# {0} - fileName
 AddContentTagAction.unableToTag.msg2=Unable to tag {0}.
 CTL_DumpThreadAction=Thread Dump
 CTL_ShowIngestProgressSnapshotAction=Ingest Status Details
 DeleteBlackboardArtifactTagAction.deleteTag=Remove Selected Tag(s)
 DeleteBlackboardArtifactTagAction.tagDelErr=Tag Deletion Error
+# {0} - tagName
 DeleteBlackboardArtifactTagAction.unableToDelTag.msg=Unable to delete tag {0}.
 DeleteContentTagAction.deleteTag=Remove Selected Tag(s)
 DeleteContentTagAction.tagDelErr=Tag Deletion Error
@@ -78,6 +84,8 @@ CTL_OpenOutputFolder=Open Case Folder
 OpenOutputFolder.error1=Case Folder Not Found: {0}
 OpenOutputFolder.noCaseOpen=No open case, therefore no current case folder available.
 OpenOutputFolder.CouldNotOpenOutputFolder=Could not open case folder 
+# {0} - old tag name
+# {1} - artifactID
 ReplaceBlackboardArtifactTagAction.replaceTag.alert=Unable to replace tag {0} for artifact {1}.
 # {0} - old tag name
 # {1} - content obj id
