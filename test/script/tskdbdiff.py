@@ -1121,7 +1121,8 @@ def write_normalized(guid_utils: TskGuidUtils, output_file, db_conn, table: str,
             # show row as json-like value
             entries = []
             for column in column_names:
-                value = get_sql_insert_value(row_dict[column] if column in row_dict and row_dict[column] else None)
+                dict_value = row_dict[column] if column in row_dict and row_dict[column] is not None else None
+                value = get_sql_insert_value(dict_value)
                 if value is not None:
                     entries.append((column, value))
             insert_values = ", ".join([f"{pr[0]}: {pr[1]}" for pr in entries])
