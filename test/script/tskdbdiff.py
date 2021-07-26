@@ -1027,7 +1027,8 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
         "added_date_time": "{dateTime}"
     }),
     "image_gallery_groups": NormalizeColumns({
-        "group_id": MASKED_ID
+        "group_id": MASKED_ID,
+        "data_source_obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value=None),
     }),
     "image_gallery_groups_seen": IGNORE_TABLE,
     "ingest_jobs": NormalizeRow(normalize_ingest_jobs),
@@ -1053,8 +1054,7 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
     "tsk_event_descriptions": NormalizeRow(normalize_tsk_event_descriptions),
     "tsk_events": NormalizeColumns({
         "event_id": "MASKED_EVENT_ID",
-        "event_description_id": None,
-        "time": None,
+        "event_description_id": 'ID OMITTED'
     }),
     "tsk_examiners": NormalizeColumns({
         "login_name": "{examiner_name}"
