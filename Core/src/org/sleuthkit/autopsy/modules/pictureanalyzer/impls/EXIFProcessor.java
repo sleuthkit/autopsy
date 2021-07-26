@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 import java.util.HashSet;
@@ -46,7 +45,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModuleFactory;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -58,8 +56,6 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
-import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
 
 /**
@@ -76,7 +72,6 @@ public class EXIFProcessor implements PictureProcessor {
 
     @Override
     @NbBundle.Messages({
-        "ExifProcessor.indexError.message=Failed to post EXIF Metadata artifact(s).",
         "ExifProcessor.userContent.description=EXIF metadata data exists for this file."
     })
     public void process(IngestJobContext context, AbstractFile file) {
@@ -159,10 +154,16 @@ public class EXIFProcessor implements PictureProcessor {
                         Score.SCORE_NONE,
                         null, null, null,
                         attributes)).getAnalysisResult();
-                
+                artifacts.add(exifArtifact);
+
                 final BlackboardArtifact userSuspectedArtifact = file.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_USER_CONTENT_SUSPECTED, Score.SCORE_UNKNOWN, null, null, null,
-                        Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, Bundle.ExifProcessor_userContent_description())))
+                        BlackboardArtifact.Type.TSK_USER_CONTENT_SUSPECTED,
+                        Score.SCORE_UNKNOWN,
+                        null, null, null,
+                        Arrays.asList(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                                MODULE_NAME,
+                                Bundle.ExifProcessor_userContent_description())))
                         .getAnalysisResult();
                 artifacts.add(userSuspectedArtifact);
 
@@ -170,19 +171,14 @@ public class EXIFProcessor implements PictureProcessor {
                     blackboard.postArtifacts(artifacts, MODULE_NAME);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, String.format("Error posting TSK_METADATA_EXIF and TSK_USER_CONTENT_SUSPECTED artifacts for %s (object ID = %d)", file.getName(), file.getId()), ex); //NON-NLS
-                    MessageNotifyUtil.Notify.error(
-                            Bundle.ExifProcessor_indexError_message(), exifArtifact.getDisplayName());
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to create blackboard artifact for " //NON-NLS
-                    + "exif metadata ({0}).", ex.getLocalizedMessage()); //NON-NLS
-        } catch (IOException | ImageProcessingException unused) {
-            // In this case the stack trace is not needed in the log.
-            logger.log(Level.WARNING, String.format("Error parsing " //NON-NLS
-                    + "image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId())); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error creating TSK_METADATA_EXIF and TSK_USER_CONTENT_SUSPECTED artifacts for %s (object ID = %d)", file.getName(), file.getId()), ex); //NON-NLS
+        } catch (IOException | ImageProcessingException ex) {
+            logger.log(Level.WARNING, String.format("Error parsing %s (object ID = %d), presumed corrupt", file.getName(), file.getId()), ex); //NON-NLS
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error processing %s (object ID = %d)", file.getName(), file.getId()), ex); //NON-NLS
         }
     }
 
