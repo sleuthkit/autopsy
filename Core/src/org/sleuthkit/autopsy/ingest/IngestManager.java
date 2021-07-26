@@ -338,30 +338,27 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Queues an ingest job for for one or more data sources.
+     * Queues batch mode ingest jobs for one or more data sources.
      *
      * @param dataSources The data sources to analyze.
-     * @param settings    The settings for the ingest job.
+     * @param settings    The settings for the ingest jobs.
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings);
-            if (job.hasIngestPipeline()) {
-                long taskId = nextIngestManagerTaskId.incrementAndGet();
-                Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
-                synchronized (startIngestJobFutures) {
-                    startIngestJobFutures.put(taskId, task);
-                }
+            List<AbstractFile> emptyFilesSubset = new ArrayList<>();
+            for (Content dataSource : dataSources) {
+                queueIngestJob(dataSource, emptyFilesSubset, settings);
             }
         }
     }
 
     /**
-     * Queues an ingest job for for a data source. Either all of the files in
-     * the data source or a given subset of the files will be analyzed.
+     * Queues a batch mode ingest job for a data source. Either all of the files
+     * in the data source or a given subset of the files will be analyzed.
      *
      * @param dataSource The data source to analyze.
-     * @param files      A subset of the files for the data source.
+     * @param files      A subset of the files for the data source. May be
+     *                   empty.
      * @param settings   The settings for the ingest job.
      */
     public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
@@ -378,21 +375,34 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Immediately starts an ingest job for one or more data sources.
+     * Immediately starts ingest jobs for one or more data sources. If any of
+     * the jobs fails to start, any jobs already started are cancelled and any
+     * remaining jobs are not attempted.
      *
      * @param dataSources The data sources to process.
-     * @param settings    The settings for the ingest job.
+     * @param settings    The settings for the ingest jobs.
      *
-     * @return The IngestJobStartResult describing the results of attempting to
-     *         start the ingest job.
+     * @return An IngestJobStartResult object describing the results of
+     *         attempting to start the ingest jobs.
      */
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings);
-            if (job.hasIngestPipeline()) {
-                return startIngestJob(job);
+            for (Content dataSource : dataSources) {
+                List<IngestJob> startedJobs = new ArrayList<>();
+                IngestJob job = new IngestJob(dataSource, IngestJob.Mode.BATCH, settings);
+                if (job.hasIngestPipeline()) {
+                    IngestJobStartResult startResult = startIngestJob(job);
+                    if (startResult.getModuleErrors().isEmpty() && startResult.getStartupException() == null) {
+                        startedJobs.add(job);
+                    } else {
+                        for (IngestJob jobToCancel : startedJobs) {
+                            jobToCancel.cancel(IngestJob.CancellationReason.INGEST_MODULES_STARTUP_FAILED);
+                        }
+                        return startResult;
+                    }
+                }
+                return new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled"), null); //NON-NLS
             }
-            return new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled"), null); //NON-NLS
         }
         return new IngestJobStartResult(null, new IngestManagerException("No case open"), null); //NON-NLS
     }
@@ -909,7 +919,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         List<Snapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
-                snapShots.addAll(job.getDataSourceIngestJobSnapshots());
+                snapShots.add(job.getProgressSnapshot());
             });
         }
         return snapShots;
