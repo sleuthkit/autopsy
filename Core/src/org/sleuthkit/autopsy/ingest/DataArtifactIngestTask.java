@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2021 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,27 +18,42 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import org.sleuthkit.datamodel.DataArtifact;
+
 /**
- * A data source level ingest task that will be executed by an ingest thread
- * using a given ingest job pipeline.
+ * A data artifact ingest task that will be executed by an ingest thread using a
+ * given ingest job pipeline.
  */
-final class DataSourceIngestTask extends IngestTask {
+final class DataArtifactIngestTask extends IngestTask {
+
+    private final DataArtifact artifact;
 
     /**
-     * Constructs a data source level ingest task that will be executed by an
-     * ingest thread using a given ingest job pipeline.
+     * Constructs a data artifact ingest task that will be executed by an ingest
+     * thread using a given ingest job pipeline.
      *
      * @param ingestJobPipeline The ingest job pipeline to use to execute the
      *                          task.
+     * @param artifact          The data artifact to be processed.
      */
-    DataSourceIngestTask(IngestJobPipeline ingestJobPipeline) {
+    DataArtifactIngestTask(IngestJobPipeline ingestJobPipeline, DataArtifact artifact) {
         super(ingestJobPipeline);
+        this.artifact = artifact;
+    }
+
+    /**
+     * Gets the data artifact for this task.
+     *
+     * @return The data artifact.
+     */
+    DataArtifact getDataArtifact() {
+        return artifact;
     }
 
     @Override
     void execute(long threadId) {
         super.setThreadId(threadId);
         getIngestJobPipeline().execute(this);
-    }        
+    }    
     
 }

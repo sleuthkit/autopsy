@@ -80,7 +80,7 @@ Les résultats apparaitront dans une visionneuse de résultats distincte pour ch
 
 \section ad_hoc_kw_lists Keyword Lists (Listes de mots-clés)
 
-En plus d'être sélectionnées lors de l'acquisition, les listes de mots-clés peuvent également être exécutées via le bouton "Keyword Lists". Pour plus d'informations sur la configuration de ces listes de mots clés, consultez la section \ref keywordListsTab de la documentation du module d'acquisition.
+En plus d'être sélectionnées lors de l'acquisition, les listes de mots-clés peuvent également être exécutées via le bouton "Keyword Lists". Pour plus d'informations sur la configuration de ces listes de mots clés, consultez la section \ref keyword_keywordListsTab de la documentation du module d'acquisition.
 
 Les listes créées à l'aide de la boîte de dialogue "Keyword Search Configuration" peuvent être recherchées manuellement par l'utilisateur en appuyant sur le bouton "Keyword Lists" et en cochant les cases correspondant aux listes à rechercher. La recherche peut être limitée à certaines sources de données uniquement en cochant la case située en bas, puis en mettant en surbrillance les sources de données dans lesquelles effectuer la recherche. Plusieurs sources de données peuvent être sélectionnées en utilisant les touches Maj+clic gauche ou Ctrl+clic gauche. Une fois que tout a été configuré, appuyez sur "Search" pour lancer la recherche. La case à cocher "Save search results" détermine si les résultats de la recherche seront enregistrés dans la base de données du cas.
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,7 +154,7 @@ final class TikaTextExtractor implements TextExtractor {
     private static final String TESSERACT_OUTPUT_FILE_NAME = "tess_output"; //NON-NLS
 
     // documents where OCR is performed
-    private static final ImmutableSet OCR_DOCUMENTS = ImmutableSet.of(
+    private static final ImmutableSet<String> OCR_DOCUMENTS = ImmutableSet.of(
             "application/pdf",
             "application/msword",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

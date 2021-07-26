@@ -1,4 +1,4 @@
-﻿/*! \page file_search_page Recherche de fichier
+/*! \page file_search_page Recherche de fichier
 
 [TOC]
 
@@ -21,7 +21,7 @@ ou sélectionnez le menu "Tools", "File Search by Attributes".
 Il existe plusieurs catégories que vous pouvez utiliser pour filtrer et afficher les répertoires et les fichiers dans les images du cas ouvert actuellement.
 Ces catégories sont:
 \li Name:
-Recherchez tous les fichiers et répertoires dont le nom contient le modèle donné.
+Recherchez tous les fichiers et répertoires dont le nom contient le modèle donné. La recherche porte uniquement sur le nom du fichier/répertoire et ne prends pas en compte le chemin parent.
 Remarque: il ne prend pas en charge la correspondance d'expressions régulières et de mots clés.
 \li Size:
 Recherchez tous les fichiers et répertoires dont la taille correspond au modèle donné. Le motif peut être "equal to" (égal à), "greater than" (supérieur à) et "less than" (inférieur à). L'unité pour la taille peut être "Octet(s)", "Ko", "Mo", "Go" et "To".
@@ -32,7 +32,7 @@ Recherchez tous les fichiers avec le hachage MD5 donné.
 \li Date:
 Recherchez tous les fichiers et répertoires dont la propriété "date" est comprise dans la plage de dates indiquée. Les propriétés de date sont "Modified Date" (Date de modification), "Accessed Date" (Date d'accès), "Changed Date" (Date de changement), and "Created Date" (Date de création). Vous devez également spécifier le fuseau horaire de la date donnée.
 \li Known Status:
-Recherchez tous les fichiers et répertoires dont l'état est reconnu comme "Unknown" (Inconnu), "Known" (Connu) ou "Notable" (Connu défavorablement). Pour plus d'informations sur ces états, consultez la page \ref hash_db_page.
+Recherchez tous les fichiers dont l'état est reconnu comme "Unknown" (Inconnu), "Known" (Connu) ou "Notable" (Connu défavorablement). Pour plus d'informations sur ces états, consultez la page \ref hash_db_page.
 Pour utiliser l'un de ces filtres, cochez la case à côté de la catégorie et cliquez sur le bouton "Search" pour démarrer le processus de recherche. Le résultat apparaîtra dans la visionneuse de résultats.
 \li Data Source:
 Rechercher uniquement dans la source de données spécifiée au lieu de l'ensemble du cas. Notez que plusieurs sources de données peuvent être sélectionnées en maintenant MAJ ou CTRL pendant la sélection. 

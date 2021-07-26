@@ -129,8 +129,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     private final Map<Long, Future<Void>> startIngestJobFutures = new ConcurrentHashMap<>();
     @GuardedBy("ingestJobsById")
     private final Map<Long, IngestJob> ingestJobsById = new HashMap<>();
-    private final ExecutorService dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;
+    private final ExecutorService dataSourceLevelIngestJobTasksExecutor;
     private final ExecutorService fileLevelIngestJobTasksExecutor;
+    private final ExecutorService resultIngestTasksExecutor;
     private final ExecutorService eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS;
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
@@ -168,6 +169,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
          * source level ingest job tasks to the data source level ingest job
          * tasks executor.
          */
+        dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;        
         long threadId = nextIngestManagerTaskId.incrementAndGet();
         dataSourceLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
@@ -184,6 +186,13 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             fileLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
             ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
         }
+
+        resultIngestTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-results-ingest-%d").build()); //NON-NLS;        
+        threadId = nextIngestManagerTaskId.incrementAndGet();
+        resultIngestTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getResultIngestTaskQueue()));
+        // RJCTODO
+        // ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
+        // RJCTODO: Where is the shut down code?
     }
 
     /**
@@ -455,7 +464,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             ingestJobsById.put(job.getId(), job);
         }
         IngestManager.logger.log(Level.INFO, "Starting ingest job {0}", job.getId()); //NON-NLS
-        errors = job.start();
+        try {
+            errors = job.start();
+        } catch (InterruptedException ex) {
+            return new IngestJobStartResult(null, new IngestManagerException("Interrupted while starting ingest", ex), errors); //NON-NLS
+        }
         if (errors.isEmpty()) {
             this.fireIngestJobStarted(job.getId());
         } else {
@@ -492,7 +505,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *
      * @param job The completed job.
      */
-    void finishIngestJob(IngestJob job) {
+    void finishIngestJob(IngestJob job
+    ) {
         long jobId = job.getId();
         synchronized (ingestJobsById) {
             ingestJobsById.remove(jobId);
