@@ -261,7 +261,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
             return skCase.getArtifactByArtifactId(parentId);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING,
-                    String.format("There was an error fetching the parent artifact of a TSK_INTERESTING_ARTIFACT_HIT (parent id: %d)", parentId),
+                    String.format("There was an error fetching the parent artifact of a TSK_PREVIOUSLY SEEN (parent id: %d)", parentId),
                     ex);
             return null;
         }

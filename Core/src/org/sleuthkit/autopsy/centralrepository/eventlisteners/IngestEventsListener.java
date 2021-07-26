@@ -215,10 +215,7 @@ public class IngestEventsListener {
                         Bundle.IngestEventsListener_prevTaggedSet_text()),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
-                new BlackboardAttribute(
-                        TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
-                        originalArtifact.getArtifactID()));
+                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
         makeAndPostPreviouslySeenArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text());
     }
 
@@ -240,10 +237,7 @@ public class IngestEventsListener {
                 Bundle.IngestEventsListener_prevExists_text()),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
-                new BlackboardAttribute(
-                        TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
-                        originalArtifact.getArtifactID()));
+                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
         makeAndPostPreviouslySeenArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
     }
     
@@ -263,7 +257,7 @@ public class IngestEventsListener {
             Blackboard blackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_SEEN, attributesForNewArtifact)) {
-                  BlackboardArtifact newPreviouslySeenArtifact = abstractFile.newAnalysisResult(
+                  BlackboardArtifact newPreviouslySeenArtifact = originalArtifact.newAnalysisResult(
                         BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE, 
                         null, configuration, null, attributesForNewArtifact)
                         .getAnalysisResult();

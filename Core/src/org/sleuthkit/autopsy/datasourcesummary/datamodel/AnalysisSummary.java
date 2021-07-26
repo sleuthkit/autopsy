@@ -121,7 +121,7 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getInterestingItemCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
-        return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN);
+        return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
     }
 
     /**
