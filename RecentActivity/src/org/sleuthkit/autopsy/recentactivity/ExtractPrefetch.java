@@ -88,6 +88,16 @@ final class ExtractPrefetch extends Extract {
         super(Bundle.ExtractPrefetch_module_name());
     }
 
+    /**
+     * Get the temp folder name.
+     * 
+     * @param dataSource Current data source
+     * @return The folder name
+     */
+    private String getPrefetchTempFolder(Content dataSource) {
+        return dataSource.getId() + "-" + PREFETCH_PARSER_DB_FILE;
+    }
+    
     @Override
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
 
@@ -116,9 +126,9 @@ final class ExtractPrefetch extends Extract {
             return;
         }
 
-        String modOutFile = modOutPath + File.separator + dataSource.getId() + "-" + PREFETCH_PARSER_DB_FILE;
+        String modOutFile = modOutPath + File.separator + getPrefetchTempFolder(dataSource);
         try {
-            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getId() + "-" + PREFETCH_DIR_NAME, ingestJobId);
+            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), getPrefetchTempFolder(dataSource), ingestJobId);
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
             File prefetchDatabase = new File(modOutFile);
             if (prefetchDatabase.exists()) {
@@ -159,7 +169,7 @@ final class ExtractPrefetch extends Extract {
                 String ext = FilenameUtils.getExtension(origFileName);
                 String baseName = FilenameUtils.getBaseName(origFileName);
                 String fileName = escapeFileName(String.format("%s_%d.%s", baseName, pFile.getId(), ext));
-                String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME, ingestJobId);
+                String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), getPrefetchTempFolder(dataSource), ingestJobId);
                 String prefetchFile =  Paths.get(baseRaTempPath, fileName).toString();
                 try {
                     ContentUtils.writeToFile(pFile, new File(prefetchFile));

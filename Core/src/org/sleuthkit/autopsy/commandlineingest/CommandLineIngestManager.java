@@ -62,7 +62,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
-import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.report.infrastructure.ReportGenerator;
 import org.sleuthkit.autopsy.report.infrastructure.ReportProgressIndicator;
 import org.sleuthkit.datamodel.Content;
