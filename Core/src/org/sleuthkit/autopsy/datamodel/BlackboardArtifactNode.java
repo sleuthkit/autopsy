@@ -120,7 +120,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     private final BlackboardArtifact artifact;
     private final BlackboardArtifact.Type artifactType;
-    private Content srcContent;
+    private static Content srcContent = null;
     private volatile String translatedSourceName;
 
     /*
@@ -226,30 +226,26 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param iconPath The path to the icon for the artifact type.
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
-        super(artifact, createLookup(artifact, false));
+        super(artifact, createLookup(artifact, false)); // this also finds srcContent
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-                        
-        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
-            if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
-                srcContent = lookupContent;
-                try {
-                    /*
-                     * Calling this getter causes the unique path of the source
-                     * content to be cached in the Content object. This is
-                     * advantageous as long as this node is constructed in a
-                     * background thread instead of a UI thread.
-                     */
-                    srcContent.getUniquePath();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
-                }
-                break;
-            }
-        }
+        
         if (srcContent == null) {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
+
+        try {
+            /*
+             * Calling this getter causes the unique path of the source content
+             * to be cached in the Content object. This is advantageous as long
+             * as this node is constructed in a background thread instead of a
+             * UI thread.
+             */
+            srcContent.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
+        }
+
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -269,15 +265,17 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     @Beta
     public BlackboardArtifactNode(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
-        super(artifact, createLookup(artifact, lookupIsAssociatedFile));
+        super(artifact, createLookup(artifact, lookupIsAssociatedFile)); // this also finds srcContent
         this.artifact = artifact;
         this.artifactType = getType(artifact);
         
-        try {
-            //The lookup for a file may or may not exist so we define the srcContent as the parent.
-            srcContent = artifact.getParent();
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, MessageFormat.format("Error getting the parent of the artifact for (artifact objID={0})", artifact.getId()), ex);
+        if (srcContent == null) {
+            try {
+                //The lookup for a file may or may not exist so we define the srcContent as the parent.
+                srcContent = artifact.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, MessageFormat.format("Error getting the parent of the artifact for (artifact objID={0})", artifact.getId()), ex);
+            }
         }
         if (srcContent != null) {
             try {
@@ -342,6 +340,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             if (content == null) {
                 return Lookups.fixed(artifact);
             } else {
+                srcContent = content;
                 return Lookups.fixed(artifact, content);
             }
         } catch (ExecutionException ex) {
@@ -373,6 +372,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             if (content == null) {
                 return Lookups.fixed(artifact);
             } else {
+                srcContent = content;
                 return Lookups.fixed(artifact, content);
             }
         } else {
