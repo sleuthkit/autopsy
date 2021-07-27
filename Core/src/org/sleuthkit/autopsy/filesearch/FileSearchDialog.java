@@ -27,12 +27,12 @@ import org.openide.windows.WindowManager;
  * File search dialog
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-class FileSearchDialog extends javax.swing.JDialog {
+final class FileSearchDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form FileSearchDialog
      */
-    public FileSearchDialog() {
+    FileSearchDialog() {
         super(WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.frame.msg"), true);
         initComponents();
@@ -43,7 +43,7 @@ class FileSearchDialog extends javax.swing.JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                dispose();
+                setVisible(false);
             }
         });
     }

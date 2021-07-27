@@ -31,9 +31,11 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
 
     private static final long serialVersionUID = 1L;
     private static FileSearchAction instance = null;
+    private static final FileSearchDialog searchDialog = new FileSearchDialog();
 
     FileSearchAction() {
         super();
+        searchDialog.setVisible(false);
         setEnabled(Case.isCaseOpen());
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
@@ -51,12 +53,12 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new FileSearchDialog().setVisible(true);
+        searchDialog.setVisible(true);
     }
 
     @Override
     public void performAction() {
-        new FileSearchDialog().setVisible(true);
+        searchDialog.setVisible(true);
     }
 
     @Override
