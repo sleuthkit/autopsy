@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,22 +28,28 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
 
     /**
      * Construct DataSourceFilter with the DataSourcePanel
+     *
      * @param component A DataSourcePanel
      */
-    public DataSourceFilter(DataSourcePanel component) {
+    DataSourceFilter(DataSourcePanel component) {
         super(component);
     }
 
     /**
-     * Default constructor to construct a new DataSourceFilter with a new DataSourcePanel
+     * Default constructor to construct a new DataSourceFilter with a new
+     * DataSourcePanel
      */
-    public DataSourceFilter() {
+    DataSourceFilter() {
         this(new DataSourcePanel());
     }
 
     @Override
     public boolean isEnabled() {
         return this.getComponent().isSelected();
+    }
+
+    void setSelectedDataSource(long dataSourceId) {
+        this.getComponent().setDataSourceSelected(dataSourceId);
     }
 
     @Override
@@ -64,11 +70,11 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
     }
 
     @Override
-    @Messages ({
+    @Messages({
         "DataSourceFilter.errorMessage.emptyDataSource=At least one data source must be selected."
     })
     public boolean isValid() {
-        if(this.getComponent().getDataSourcesSelected().isEmpty()){
+        if (this.getComponent().getDataSourcesSelected().isEmpty()) {
             setLastError(Bundle.DataSourceFilter_errorMessage_emptyDataSource());
             return false;
         }

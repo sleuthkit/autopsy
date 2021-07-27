@@ -32,6 +32,7 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
     private static final long serialVersionUID = 1L;
     private static FileSearchAction instance = null;
     private static FileSearchDialog searchDialog;
+    private static Long selectedDataSourceId;
 
     FileSearchAction() {
         super();
@@ -54,8 +55,9 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
     public void actionPerformed(ActionEvent e) {
         if (searchDialog == null) {
             searchDialog = new FileSearchDialog();
-            
         }
+        //Preserve whatever the previously selected data source was
+        selectedDataSourceId = null;
         searchDialog.setVisible(true);
     }
 
@@ -64,6 +66,8 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
         if (searchDialog == null) {
             searchDialog = new FileSearchDialog();
         }
+        //
+        searchDialog.setSelectedDataSourceFilter(selectedDataSourceId);
         searchDialog.setVisible(true);
     }
 
@@ -83,7 +87,15 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
     }
 
     @Override
+    public void showDialog(long dataSourceId) {
+        selectedDataSourceId = dataSourceId;
+        performAction();
+
+    }
+
+    @Override
     public void showDialog() {
+        selectedDataSourceId = null;
         performAction();
     }
 }

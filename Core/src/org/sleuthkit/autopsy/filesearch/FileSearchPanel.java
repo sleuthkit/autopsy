@@ -59,6 +59,7 @@ class FileSearchPanel extends javax.swing.JPanel {
     private final List<FileSearchFilter> filters = new ArrayList<>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
+    private static DataSourceFilter dataSourceFilter;
 
     enum EVENT {
         CHECKED
@@ -101,7 +102,7 @@ class FileSearchPanel extends javax.swing.JPanel {
         KnownStatusSearchFilter knowStatusFilter = new KnownStatusSearchFilter();
         HashSearchFilter hashFilter = new HashSearchFilter();
         MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
-        DataSourceFilter dataSourceFilter = new DataSourceFilter();
+        dataSourceFilter = new DataSourceFilter();
         
         panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"),nameFilter));
         
@@ -145,6 +146,10 @@ class FileSearchPanel extends javax.swing.JPanel {
         searchButton.setEnabled(isValidSearch());
     }
 
+    void setDataSourceFilter(long dataSourceId){
+        dataSourceFilter.setSelectedDataSource(dataSourceId);
+    }
+    
     /**
      * @return true if any of the filters in the panel are enabled (checked)
      */
