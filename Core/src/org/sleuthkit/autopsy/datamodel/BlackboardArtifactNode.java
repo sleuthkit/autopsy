@@ -394,7 +394,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             /*
              * NOTE: createLookup() saves the artifact and its source content
              * (if one exists). However, createLookup() has to be static because
-             * it is being called by supre(), therefore it can't store the
+             * it is being called by super(), therefore it can't store the
              * source content in this.srcContent class variable. That's why we
              * have to have the logic below, which reads the Lookup contents,
              * and decides that the source content is the entry in Lookup that
