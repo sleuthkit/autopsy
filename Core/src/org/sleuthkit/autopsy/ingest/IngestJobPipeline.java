@@ -1041,7 +1041,7 @@ final class IngestJobPipeline {
             }
         }
 
-        ingestJob.notifyIngestPipelineShutDown(this);
+        ingestJob.notifyIngestPipelineShutDown();
     }
 
     /**

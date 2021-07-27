@@ -174,7 +174,7 @@ public final class IngestJob {
         }
 
         /*
-         * Try to start up the ingest job pipeline.
+         * Try to start up the ingest pipeline.
          */
         List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(ingestJobPipeline.startUp());
@@ -207,7 +207,8 @@ public final class IngestJob {
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
-     * @param getIngestTasksSnapshot
+     * @param getIngestTasksSnapshot Whether or not to include an ingest tasks
+     *                               snapshot.
      *
      * @return The snapshot.
      */
@@ -216,9 +217,10 @@ public final class IngestJob {
     }
 
     /**
-     * Gets a snapshot of the progress of this ingest job.
+     * Gets a snapshot of the progress of this ingest job's ingest module
+     * pipelines.
      *
-     * @return The ingest job progress snapshot.
+     * @return The snapshot.
      */
     Snapshot getProgressSnapshot() {
         return ingestJobPipeline.getSnapshot(true);
@@ -226,9 +228,9 @@ public final class IngestJob {
 
     /**
      * Requests cancellation of this ingest job, which means discarding
-     * unfinished tasks and stopping the ingest pipelines. Returns immediately,
-     * but there may be a delay before all of the ingest modules in the
-     * pipelines respond by stopping processing.
+     * unfinished tasks and stopping the ingest module pipelines. Returns
+     * immediately, but there may be a delay before all of the ingest modules in
+     * the pipelines respond by stopping processing.
      *
      * @deprecated Use cancel(CancellationReason reason) instead
      */
@@ -283,10 +285,8 @@ public final class IngestJob {
     /**
      * Provides a callback for when the ingest pipeline shuts down, allowing
      * this ingest job to notify the ingest manager when it is complete.
-     *
-     * @param ingestJobPipeline A completed ingestJobPipeline.
      */
-    void notifyIngestPipelineShutDown(IngestJobPipeline ingestJobPipeline) {
+    void notifyIngestPipelineShutDown() {
         IngestManager ingestManager = IngestManager.getInstance();
         if (!ingestJobPipeline.isCancelled()) {
             ingestManager.fireDataSourceAnalysisCompleted(id, ingestJobPipeline.getDataSource());
@@ -309,13 +309,20 @@ public final class IngestJob {
         private final IngestJob.CancellationReason jobCancellationReason;
 
         /**
-         * A snapshot of the progress of an ingest job on the processing of a
-         * data source.
+         * A partial snapshot of the progress of an ingest job. This class is an
+         * artifact of a time when an ingest job could involve the analysis of
+         * multiple data sources.
          */
         public final class DataSourceProcessingSnapshot {
 
+            /*
+             * Stores basic diagnostic statistics for the ingest job.
+             */
             private final Snapshot snapshot;
 
+            /**
+             * Constructs a partial snapshot of the progress of an ingest job.
+             */
             private DataSourceProcessingSnapshot(Snapshot snapshot) {
                 this.snapshot = snapshot;
             }
@@ -363,7 +370,7 @@ public final class IngestJob {
         }
 
         /**
-         * Constructs a snapshot of ingest job progress.
+         * Constructs a snapshot of the progress of an ingest job.
          */
         private ProgressSnapshot(boolean getIngestTasksSnapshot) {
             dataSourceModule = null;
@@ -418,8 +425,8 @@ public final class IngestJob {
         }
 
         /**
-         * Queries whether or not an ingest job level cancellation request had
-         * been issued at the time the snapshot was taken.
+         * Queries whether or not an ingest job cancellation request had been
+         * issued at the time the snapshot was taken.
          *
          * @return True or false.
          */
@@ -428,7 +435,7 @@ public final class IngestJob {
         }
 
         /**
-         * Gets the reason this job was cancelled.
+         * Gets the reason the ingest job was cancelled.
          *
          * @return The cancellation reason, may be not cancelled.
          */
@@ -437,9 +444,11 @@ public final class IngestJob {
         }
 
         /**
-         * Gets snapshots of the progress processing individual data sources.
+         * Gets a partial snapshot of the progress of an ingest job. This
+         * DataSourceProcessingSnapshot is an artifact of a time when an ingest
+         * job could involve the analysis of multiple data sources.
          *
-         * @return The list of snapshots.
+         * @return The partial snapshot.
          */
         public DataSourceProcessingSnapshot getDataSourceProcessingSnapshot() {
             return dataSourceProcessingSnapshot;
