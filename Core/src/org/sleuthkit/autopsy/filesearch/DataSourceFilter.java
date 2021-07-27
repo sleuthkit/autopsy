@@ -48,6 +48,11 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
         return this.getComponent().isSelected();
     }
 
+    /**
+     * Set the data source filter to select the specified data source initially.
+     *
+     * @param dataSourceId - The data source to select.
+     */
     void setSelectedDataSource(long dataSourceId) {
         this.getComponent().setDataSourceSelected(dataSourceId);
     }
