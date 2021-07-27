@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,11 +31,10 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
 
     private static final long serialVersionUID = 1L;
     private static FileSearchAction instance = null;
-    private static final FileSearchDialog searchDialog = new FileSearchDialog();
+    private static FileSearchDialog searchDialog;
 
     FileSearchAction() {
         super();
-        searchDialog.setVisible(false);
         setEnabled(Case.isCaseOpen());
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
@@ -53,11 +52,18 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (searchDialog == null) {
+            searchDialog = new FileSearchDialog();
+            
+        }
         searchDialog.setVisible(true);
     }
 
     @Override
     public void performAction() {
+        if (searchDialog == null) {
+            searchDialog = new FileSearchDialog();
+        }
         searchDialog.setVisible(true);
     }
 
