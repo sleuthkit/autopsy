@@ -76,19 +76,12 @@ final class IngestJobPipeline {
     private static final Pattern JYTHON_MODULE_REGEX = Pattern.compile("org\\.python\\.proxies\\.(.+?)\\$(.+?)(\\$[0-9]*)?$");
 
     /*
-     * These fields define an ingest pipeline: the parent ingest job, a pipeline
-     * ID, the user's ingest job settings, and the data source to be analyzed.
-     * Optionally, there is a set of files to be analyzed instead of analyzing
-     * all of the files in the data source.
-     *
-     * The pipeline ID is used to associate the pipeline with the ingest tasks
-     * that the ingest task scheduler creates for the ingest job. The ingest job
-     * ID cannot be used for this purpose because the parent ingest job may have
-     * more than one data source and each data source gets its own pipeline.
+     * These fields define an ingest pipeline: the ingest job that owns the
+     * pipeline, the user's ingest job settings, and the data source to be
+     * analyzed. Optionally, there is a set of files to be analyzed instead of
+     * analyzing all of the files in the data source.
      */
-    private final IngestJob parentJob;
-    private static final AtomicLong nextPipelineId = new AtomicLong(0L);
-    private final long pipelineId;
+    private final IngestJob ingestJob;
     private final IngestJobSettings settings;
     private DataSource dataSource;
     private final List<AbstractFile> files;
@@ -246,7 +239,7 @@ final class IngestJobPipeline {
      * sources in an ingest job. The ingest modules are organized into child
      * pipelines by ingest module type and are run in stages.
      *
-     * @param parentJob  The ingest job.
+     * @param ingestJob  The ingest job.
      * @param dataSource The data source.
      * @param files      A subset of the files from the data source. If the list
      *                   is empty, ALL of the files in the data source are an
@@ -256,12 +249,11 @@ final class IngestJobPipeline {
      * @throws InterruptedException Exception thrown if the thread in which the
      *                              pipeline is being created is interrupted.
      */
-    IngestJobPipeline(IngestJob parentJob, Content dataSource, List<AbstractFile> files, IngestJobSettings settings) throws InterruptedException {
+    IngestJobPipeline(IngestJob ingestJob, Content dataSource, List<AbstractFile> files, IngestJobSettings settings) throws InterruptedException {
         if (!(dataSource instanceof DataSource)) {
             throw new IllegalArgumentException("Passed dataSource that does not implement the DataSource interface"); //NON-NLS
         }
-        this.parentJob = parentJob;
-        pipelineId = IngestJobPipeline.nextPipelineId.getAndIncrement();
+        this.ingestJob = ingestJob;
         this.dataSource = (DataSource) dataSource;
         this.files = new ArrayList<>();
         this.files.addAll(files);
@@ -439,12 +431,12 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Gets the ID of this ingest pipeline.
+     * Gets the ID of the ingest job that owns this ingest pipeline.
      *
      * @return The ID.
      */
     long getId() {
-        return pipelineId;
+        return ingestJob.getId();
     }
 
     /**
@@ -561,7 +553,7 @@ final class IngestJobPipeline {
         if (errors.isEmpty()) {
             recordIngestJobStartUpInfo();
             if (hasFirstStageDataSourceIngestModules() || hasFileIngestModules() || hasDataArtifactIngestModules()) {
-                if (parentJob.getIngestMode() == IngestJob.Mode.STREAMING) {
+                if (ingestJob.getIngestMode() == IngestJob.Mode.STREAMING) {
                     startFirstStageInStreamingMode();
                 } else {
                     startFirstStageInBatchMode();
@@ -840,7 +832,7 @@ final class IngestJobPipeline {
     private void startSecondStage() {
         synchronized (stageTransitionLock) {
             if (hasSecondStageDataSourceIngestModules()) {
-                logInfoMessage(String.format("Starting second stage ingest task pipelines for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), parentJob.getId())); //NON-NLS
+                logInfoMessage(String.format("Starting second stage ingest task pipelines for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), ingestJob.getId())); //NON-NLS
                 stage = IngestJobPipeline.Stages.SECOND_STAGE;
 
                 if (doUI) {
@@ -1050,7 +1042,7 @@ final class IngestJobPipeline {
             }
         }
 
-        parentJob.notifyIngestPipelineShutDown(this);
+        ingestJob.notifyIngestPipelineShutDown(this);
     }
 
     /**
@@ -1438,7 +1430,7 @@ final class IngestJobPipeline {
             }
             pausedIngestThreads.clear();
         }
-        
+
         // If a data source had no tasks in progress it may now be complete.
         checkForStageCompleted();
     }
@@ -1469,7 +1461,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logInfoMessage(String message) {
-        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), pipelineId, ingestJobInfo.getIngestJobId())); //NON-NLS        
+        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), getId(), ingestJobInfo.getIngestJobId())); //NON-NLS        
     }
 
     /**
@@ -1481,7 +1473,7 @@ final class IngestJobPipeline {
      * @param throwable The throwable associated with the error.
      */
     private void logErrorMessage(Level level, String message, Throwable throwable) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), pipelineId, ingestJobInfo.getIngestJobId()), throwable); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), getId(), ingestJobInfo.getIngestJobId()), throwable); //NON-NLS
     }
 
     /**
@@ -1492,7 +1484,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logErrorMessage(Level level, String message) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id %d)", message, this.dataSource.getName(), this.dataSource.getId(), pipelineId, ingestJobInfo.getIngestJobId())); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id %d)", message, this.dataSource.getName(), this.dataSource.getId(), getId(), ingestJobInfo.getIngestJobId())); //NON-NLS
     }
 
     /**
@@ -1551,15 +1543,15 @@ final class IngestJobPipeline {
                 estimatedFilesToProcessCount = this.estimatedFilesToProcess;
                 snapShotTime = new Date().getTime();
             }
-            tasksSnapshot = taskScheduler.getTasksSnapshotForJob(pipelineId);
+            tasksSnapshot = taskScheduler.getTasksSnapshotForJob(getId());
         }
 
-        return new Snapshot(dataSource.getName(),
-                pipelineId, createTime,
+        return new Snapshot(dataSource.getName(), getId(), createTime,
                 getCurrentDataSourceIngestModule(),
                 fileIngestRunning, fileIngestStartTime,
                 cancelled, cancellationReason, cancelledDataSourceIngestModules,
-                processedFilesCount, estimatedFilesToProcessCount, snapShotTime, tasksSnapshot);
+                processedFilesCount, estimatedFilesToProcessCount, 
+                snapShotTime, tasksSnapshot);
     }
 
     /**

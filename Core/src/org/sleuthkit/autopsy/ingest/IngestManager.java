@@ -679,11 +679,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * started.
      *
      * @param ingestJobId           The ingest job id.
-     * @param dataSourceIngestJobId The data source ingest job id.
      * @param dataSource            The data source.
      */
-    void fireDataSourceAnalysisStarted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSourceIngestJobId, dataSource);
+    void fireDataSourceAnalysisStarted(long ingestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSource);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -692,11 +691,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * finished.
      *
      * @param ingestJobId           The ingest job id.
-     * @param dataSourceIngestJobId The data source ingest job id.
      * @param dataSource            The data source.
      */
-    void fireDataSourceAnalysisCompleted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
+    void fireDataSourceAnalysisCompleted(long ingestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -705,11 +703,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * canceled.
      *
      * @param ingestJobId           The ingest job id.
-     * @param dataSourceIngestJobId The data source ingest job id.
      * @param dataSource            The data source.
      */
-    void fireDataSourceAnalysisCancelled(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
+    void fireDataSourceAnalysisCancelled(long ingestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 

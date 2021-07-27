@@ -169,7 +169,7 @@ public final class IngestJob {
         List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(ingestJobPipeline.startUp());
         if (errors.isEmpty()) {
-            IngestManager.getInstance().fireDataSourceAnalysisStarted(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
+            IngestManager.getInstance().fireDataSourceAnalysisStarted(id, ingestJobPipeline.getDataSource());
         } else {
             cancel(CancellationReason.INGEST_MODULES_STARTUP_FAILED);
         }
@@ -281,9 +281,9 @@ public final class IngestJob {
     void notifyIngestPipelineShutDown(IngestJobPipeline ingestJobPipeline) {
         IngestManager ingestManager = IngestManager.getInstance();
         if (!ingestJobPipeline.isCancelled()) {
-            ingestManager.fireDataSourceAnalysisCompleted(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
+            ingestManager.fireDataSourceAnalysisCompleted(id, ingestJobPipeline.getDataSource());
         } else {
-            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
+            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, ingestJobPipeline.getDataSource());
         }
         ingestManager.finishIngestJob(this);
     }

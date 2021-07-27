@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -237,7 +237,7 @@ final class CollaborationMonitor {
             Content dataSource = event.getDataSource();
             if (dataSource != null) {
                 String status = NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.analyzingDataSourceStatus.msg", hostName, dataSource.getName());
-                jobIdsTodataSourceAnalysisTasks.put(event.getDataSourceIngestJobId(), new Task(++nextTaskId, status));
+                jobIdsTodataSourceAnalysisTasks.put(event.getIngestJobId(), new Task(++nextTaskId, status));
                 eventPublisher.publishRemotely(new CollaborationEvent(hostName, getCurrentTasks()));
             }
         }
@@ -250,7 +250,7 @@ final class CollaborationMonitor {
          * @param event A data source analysis completed event.
          */
         synchronized void removeDataSourceAnalysisTask(DataSourceAnalysisCompletedEvent event) {
-            jobIdsTodataSourceAnalysisTasks.remove(event.getDataSourceIngestJobId());
+            jobIdsTodataSourceAnalysisTasks.remove(event.getIngestJobId());
             eventPublisher.publishRemotely(new CollaborationEvent(hostName, getCurrentTasks()));
         }
 

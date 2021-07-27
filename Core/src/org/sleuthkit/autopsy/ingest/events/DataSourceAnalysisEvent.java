@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,45 +37,59 @@ public abstract class DataSourceAnalysisEvent extends AutopsyEvent implements Se
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataSourceAnalysisEvent.class.getName());
     private final long ingestJobId;
-    private final long dataSourceIngestJobId;
+    private final long dataSourceIngestJobId; // Obsolete, same as ingestJobId
     private transient Content dataSource;
-    private final long dataSourceObjectId;
+    private final long dataSourceObjectId; 
 
+    public DataSourceAnalysisEvent(IngestManager.IngestJobEvent eventType, long ingestJobId, Content dataSource) {
+        super(eventType.toString(), null, null);
+        this.ingestJobId = ingestJobId;
+        this.dataSourceIngestJobId = ingestJobId;
+        this.dataSource = dataSource;
+        this.dataSourceObjectId = dataSource.getId();
+    }    
+    
     /**
      * Constructs an instance of the base class for events published in
      * connection with the analysis (ingest) of a data source.
      *
      * @param eventType             The event string for the subtype.
-     * @param ingestJobId           The identifier of the ingest job, specific
-     *                              to this node.
-     * @param dataSourceIngestJobId The identifier of the data source ingest
-     *                              job,specific to this node.
+     * @param ingestJobId           The identifier of the ingest job. For a
+     *                              mulit-user case, this ID is only unique on
+     *                              the node where the ingest job is running.
+     * @param dataSourceIngestJobId The identifier of the ingest job. For a
+     *                              mulit-user case, this ID is only unique on
+     *                              the node where the ingest job is running.
      * @param dataSource            The data source.
+     * 
+     * @deprecated Do not use.
      */
+    @Deprecated
     public DataSourceAnalysisEvent(IngestManager.IngestJobEvent eventType, long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        super(eventType.toString(), null, null);
-        this.ingestJobId = ingestJobId;
-        this.dataSourceIngestJobId = dataSourceIngestJobId;
-        this.dataSource = dataSource;
-        this.dataSourceObjectId = dataSource.getId();
+        this(eventType, ingestJobId, dataSource);
     }
 
     /**
-     * Gets the id of the ingest job of which the analysis of this data source
-     * is a part.
+     * Gets the ID of the ingest job of which the analysis of this data source
+     * is a part. For a mulit-user case, this ID is only unique on the node
+     * where the ingest job is running.
      *
-     * @return The id.
+     * @return The ID.
      */
     public long getIngestJobId() {
         return ingestJobId;
     }
 
     /**
-     * Gets the id of the data source ingest job of which the analysis of this
-     * data source is a part.
+     * Gets the ID of the ingest job of which the analysis of this data source
+     * is a part. For a mulit-user case, this ID is only unique on the node
+     * where the ingest job is running.
      *
-     * @return The id.
+     * @return The ID.
+     *
+     * @deprecated Use getIngestJobId() instead.
      */
+    @Deprecated
     public long getDataSourceIngestJobId() {
         return dataSourceIngestJobId;
     }
