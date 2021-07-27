@@ -238,15 +238,13 @@ public final class IngestJob {
     public void cancel(CancellationReason reason) {
         cancellationReason = reason;
         /*
-         * Cancel the ingest module pipeline. This is done in a separate thread
-         * to avoid a potential deadlock. The deadlock is possible because this
-         * method can be called in a thread that acquires the ingest manager's
-         * ingest jobs list lock and then tries to acquire the ingest pipeline
-         * stage transition lock, while an ingest thread that has acquired the
-         * stage transition lock is trying to acquire the ingest manager's
-         * ingest jobs list lock.
-         *
-         * RC: What?
+         * Cancels the running of the ingest module pipelines. This is done in a
+         * separate thread to avoid a potential deadlock. The deadlock is
+         * possible because this method can be called in a thread that acquires
+         * the ingest manager's ingest jobs list lock and then tries to acquire
+         * the ingest pipeline stage transition lock, while an ingest thread
+         * that has acquired the stage transition lock is trying to acquire the
+         * ingest manager's ingest jobs list lock.
          */
         new Thread(() -> {
             ingestJobPipeline.cancel(reason);
@@ -273,8 +271,8 @@ public final class IngestJob {
     }
 
     /**
-     * Provides a callback for completed ingest job pipeline, allowing this
-     * ingest job to notify the ingest manager when it is complete.
+     * Provides a callback for when the ingest pipeline shuts down, allowing
+     * this ingest job to notify the ingest manager when it is complete.
      *
      * @param ingestJobPipeline A completed ingestJobPipeline.
      */
@@ -501,17 +499,6 @@ public final class IngestJob {
          * ingest module responds by stopping processing.
          */
         public void cancel() {
-            /**
-             * TODO: Cancellation needs to be more precise. The long-term
-             * solution is to add a cancel() method to IngestModule and do away
-             * with the cancellation queries of IngestJobContext. However, until
-             * an API change is legal, a cancel() method can be added to the
-             * DataSourceIngestModuleAdapter and FileIngestModuleAdapter classes
-             * and an instanceof check can be used to call it, with this code as
-             * the default implementation and the fallback. All of the ingest
-             * modules participating in this workaround will need to consult the
-             * cancelled flag in the adapters.
-             */
             if (this.ingestJobPipeline.getCurrentDataSourceIngestModule() == this.module) {
                 this.ingestJobPipeline.cancelCurrentDataSourceIngestModule();
             }
