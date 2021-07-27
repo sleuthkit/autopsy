@@ -853,8 +853,8 @@ def normalize_ingest_jobs(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[
     start_time = row['start_date_time']
     end_time = row['end_date_time']
     if start_time <= end_time:
-        row_copy['start_date_time'] = 0
-        row_copy['end_date_time'] = 0
+        row_copy['start_date_time'] = MASKED_TIME
+        row_copy['end_date_time'] = MASKED_TIME
 
     return row_copy
 
@@ -1009,6 +1009,7 @@ def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[
     return row_copy
 
 
+MASKED_TIME = "MASKED_TIME"
 MASKED_OBJ_ID = "MASKED_OBJ_ID"
 MASKED_ID = "MASKED_ID"
 
@@ -1035,7 +1036,7 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
     "reports": NormalizeColumns({
         "obj_id": MASKED_OBJ_ID,
         "path": "AutopsyTestCase",
-        "crtime": 0
+        "crtime": MASKED_TIME
     }),
     "tsk_aggregate_score": NormalizeColumns({
        "obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Object ID Omitted"),
