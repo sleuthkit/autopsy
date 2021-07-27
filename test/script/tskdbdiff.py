@@ -853,8 +853,8 @@ def normalize_ingest_jobs(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[
     start_time = row['start_date_time']
     end_time = row['end_date_time']
     if start_time <= end_time:
-        row_copy['start_date_time'] = 0
-        row_copy['end_date_time'] = 0
+        row_copy['start_date_time'] = MASKED_TIME
+        row_copy['end_date_time'] = MASKED_TIME
 
     return row_copy
 
@@ -1009,6 +1009,7 @@ def normalize_tsk_objects(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[
     return row_copy
 
 
+MASKED_TIME = "MASKED_TIME"
 MASKED_OBJ_ID = "MASKED_OBJ_ID"
 MASKED_ID = "MASKED_ID"
 
@@ -1027,14 +1028,15 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
         "added_date_time": "{dateTime}"
     }),
     "image_gallery_groups": NormalizeColumns({
-        "group_id": MASKED_ID
+        "group_id": MASKED_ID,
+        "data_source_obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value=None),
     }),
     "image_gallery_groups_seen": IGNORE_TABLE,
     "ingest_jobs": NormalizeRow(normalize_ingest_jobs),
     "reports": NormalizeColumns({
         "obj_id": MASKED_OBJ_ID,
         "path": "AutopsyTestCase",
-        "crtime": 0
+        "crtime": MASKED_TIME
     }),
     "tsk_aggregate_score": NormalizeColumns({
        "obj_id": lambda guid_util, col: guid_util.get_guid_for_objid(col, omitted_value="Object ID Omitted"),
@@ -1053,8 +1055,7 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
     "tsk_event_descriptions": NormalizeRow(normalize_tsk_event_descriptions),
     "tsk_events": NormalizeColumns({
         "event_id": "MASKED_EVENT_ID",
-        "event_description_id": None,
-        "time": None,
+        "event_description_id": 'ID OMITTED'
     }),
     "tsk_examiners": NormalizeColumns({
         "login_name": "{examiner_name}"
