@@ -252,10 +252,9 @@ public class IngestEventsListener {
     private static void makeAndPostPreviouslySeenArtifact(BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration) {
         try {
             SleuthkitCase tskCase = originalArtifact.getSleuthkitCase();
-            AbstractFile abstractFile = tskCase.getAbstractFileById(originalArtifact.getObjectID());
             Blackboard blackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_SEEN, attributesForNewArtifact)) {
+            if (!blackboard.artifactExists(originalArtifact, TSK_PREVIOUSLY_SEEN, attributesForNewArtifact)) {
                   BlackboardArtifact newPreviouslySeenArtifact = originalArtifact.newAnalysisResult(
                         BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE, 
                         null, configuration, null, attributesForNewArtifact)

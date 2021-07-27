@@ -120,7 +120,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     private final BlackboardArtifact artifact;
     private final BlackboardArtifact.Type artifactType;
-    private static Content srcContent = null;
+    private Content srcContent;
     private volatile String translatedSourceName;
 
     /*
@@ -226,10 +226,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param iconPath The path to the icon for the artifact type.
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
-        super(artifact, createLookup(artifact, false)); // this also finds srcContent
+        super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
         
+        srcContent = getSourceContentFromLookup(artifact);
         if (srcContent == null) {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
@@ -265,10 +266,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     @Beta
     public BlackboardArtifactNode(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
-        super(artifact, createLookup(artifact, lookupIsAssociatedFile)); // this also finds srcContent
+        super(artifact, createLookup(artifact, lookupIsAssociatedFile));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-        
+
+        srcContent = getSourceContentFromLookup(artifact);
         if (srcContent == null) {
             try {
                 //The lookup for a file may or may not exist so we define the srcContent as the parent.
@@ -340,7 +342,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             if (content == null) {
                 return Lookups.fixed(artifact);
             } else {
-                srcContent = content;
                 return Lookups.fixed(artifact, content);
             }
         } catch (ExecutionException ex) {
@@ -372,13 +373,38 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             if (content == null) {
                 return Lookups.fixed(artifact);
             } else {
-                srcContent = content;
                 return Lookups.fixed(artifact, content);
             }
         } else {
             return createLookup(artifact);
         }
 
+    }
+    
+    /**
+     * Finds the source content in the Lookup created by createLookup() method.
+     *
+     * @param artifact Artifact who's source Content we are trying to find.
+     *
+     * @return Source Content of the input artifact, if one exists. Null
+     *         otherwise.
+     */
+    private Content getSourceContentFromLookup(BlackboardArtifact artifact) {
+        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
+            /*
+             * NOTE: createLookup() saves the artifact and its source content
+             * (if one exists). However, createLookup() has to be static because
+             * it is being called by supre(), therefore it can't store the
+             * source content in this.srcContent class variable. That's why we
+             * have to have the logic below, which reads the Lookup contents,
+             * and decides that the source content is the entry in Lookup that
+             * is NOT the input artifact.
+             */
+            if ((lookupContent != null) && (lookupContent.getId() != artifact.getId())) {
+                return lookupContent;
+            }
+        }
+        return null;
     }
 
     /**
