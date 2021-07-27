@@ -23,8 +23,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Event published when analysis (ingest) of a data source included in an ingest
- * job is completed.
+ * Event published when analysis (ingest) of a data source is completed.
  */
 public final class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEvent implements Serializable {
 
@@ -41,8 +40,8 @@ public final class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEv
     private final Reason reason;
 
     /**
-     * Constructs an event published when analysis (ingest) of a data source
-     * included in an ingest job is completed.
+     * Constructs an event published when analysis (ingest) of a data source is
+     * completed.
      *
      * @param ingestJobId The identifier of the ingest job. For a mulit-user
      *                    case, this ID is only unique on the node where the
@@ -56,8 +55,8 @@ public final class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEv
     }
 
     /**
-     * Constructs an event published when analysis (ingest) of a data source
-     * included in an ingest job is completed.
+     * Constructs an event published when analysis (ingest) of a data source is
+     * completed.
      *
      * @param ingestJobId           The identifier of the ingest job. For a
      *                              mulit-user case, this ID is only unique on

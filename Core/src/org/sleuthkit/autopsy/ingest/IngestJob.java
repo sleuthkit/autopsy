@@ -58,7 +58,7 @@ public final class IngestJob {
     }
 
     /**
-     * Ingest job mode.
+     * Ingest job modes.
      */
     enum Mode {
         BATCH,
@@ -76,7 +76,7 @@ public final class IngestJob {
     private volatile CancellationReason cancellationReason;
 
     /**
-     * Constructs an ingest job that analyzes one data source using a set of
+     * Constructs an ingest job that analyzes a data source using a set of
      * ingest modules specified via ingest job settings. Either all of the files
      * in the data source or a given subset of the files will be analyzed.
      *
@@ -90,7 +90,8 @@ public final class IngestJob {
     }
 
     /**
-     * Constructs an ingest job that analyzes one data source, possibly using an
+     * Constructs an ingest job that analyzes a data source using a set of
+     * ingest modules specified via ingest job settings, possibly using an
      * ingest stream.
      *
      * @param settings The ingest job settings.
@@ -114,8 +115,7 @@ public final class IngestJob {
 
     /**
      * Checks to see if this ingest job has at least one non-empty ingest module
-     * pipeline (first or second stage data-source-level pipeline or file-level
-     * pipeline).
+     * pipeline.
      *
      * @return True or false.
      */
@@ -124,26 +124,36 @@ public final class IngestJob {
     }
 
     /**
-     * Add a set of files (by object ID) to be ingested.
+     * Adds a set of files to this ingest job if it is running in streaming
+     * ingest mode.
      *
-     * @param fileObjIds the list of file IDs
+     * @param fileObjIds The object IDs of the files.
      */
     void addStreamingIngestFiles(List<Long> fileObjIds) {
-        if (ingestJobPipeline != null) {
-            ingestJobPipeline.addStreamedFiles(fileObjIds);
+        if (ingestMode == Mode.STREAMING) {
+            if (ingestJobPipeline != null) {
+                ingestJobPipeline.addStreamedFiles(fileObjIds);
+            } else {
+                logger.log(Level.SEVERE, "Attempted to add streamed ingest files with no ingest pipeline");
+            }
         } else {
-            logger.log(Level.SEVERE, "Attempted to add streaming ingest files with no IngestJobPipeline");
+            logger.log(Level.SEVERE, "Attempted to add streamed ingest files to batch ingest job");
         }
     }
 
     /**
-     * Start data source processing for streaming ingest.
+     * Starts data source level analysis for this job if it is running in
+     * streaming ingest mode.
      */
     void processStreamingIngestDataSource() {
-        if (ingestJobPipeline != null) {
-            ingestJobPipeline.addStreamedDataSource();
+        if (ingestMode == Mode.STREAMING) {
+            if (ingestJobPipeline != null) {
+                ingestJobPipeline.addStreamedDataSource();
+            } else {
+                logger.log(Level.SEVERE, "Attempted to start data source analaysis with no ingest pipeline");
+            }
         } else {
-            logger.log(Level.SEVERE, "Attempted to start data source ingest with no IngestJobPipeline");
+            logger.log(Level.SEVERE, "Attempted to add streamed ingest files to batch ingest job");
         }
     }
 
@@ -155,7 +165,7 @@ public final class IngestJob {
      */
     List<IngestModuleError> start() throws InterruptedException {
         /*
-         * Set up the ingest job pipeline.
+         * Set up the ingest pipeline.
          */
         if (files.isEmpty()) {
             ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
