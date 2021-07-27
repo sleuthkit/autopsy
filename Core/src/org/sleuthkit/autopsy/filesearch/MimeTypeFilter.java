@@ -53,4 +53,11 @@ class MimeTypeFilter extends AbstractFileSearchFilter<MimeTypePanel> {
         }
         return true;
     }
+    
+    /**
+     * Reset the mime type filter to be up to date with the current case.
+     */
+    void resetMimeTypeFilter() {
+         this.getComponent().resetMimeTypePanel();
+    }
 }

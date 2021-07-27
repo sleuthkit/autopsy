@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionEvent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -92,6 +93,32 @@ public class DataSourcePanel extends javax.swing.JPanel {
     }
 
     /**
+     * Reset the data source panel to be up to date with the current case.
+     * 
+     */
+    void resetDataSourcePanel() {
+        ((DefaultListModel) dataSourceList.getModel()).removeAllElements();
+        dataSourceMap.clear();
+        for (String dataSource : getDataSourceArray()) {
+            ((DefaultListModel<String>) dataSourceList.getModel()).addElement(dataSource);
+        }
+        this.dataSourceList.setEnabled(false);
+        dataSourceCheckBox.setSelected(false);
+        dataSourceNoteLabel.setEnabled(false);
+        if (this.dataSourceList.getModel().getSize() > 1) {
+            this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            });
+        } else {
+            /*
+             * Disable data source filtering since there aren't multiple data
+             * sources to choose from.
+             */
+            this.dataSourceCheckBox.setEnabled(false);
+        }
+    }
+
+    /**
      * Get a set of data source object ids that are selected.
      *
      * @return A set of selected object ids.
@@ -145,7 +172,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
         setMinimumSize(new java.awt.Dimension(150, 150));
         setPreferredSize(new java.awt.Dimension(150, 150));
 
-        dataSourceList.setModel(new javax.swing.AbstractListModel<String>() {
+        dataSourceList.setModel(new DefaultListModel<String>() {
             List<String> strings  = getDataSourceArray();
             public int getSize() { return strings.size(); }
             public String getElementAt(int idx) { return strings.get(idx); }

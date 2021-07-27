@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.filesearch;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
@@ -146,4 +147,17 @@ public class MimeTypePanel extends javax.swing.JPanel {
     private javax.swing.JList<String> mimeTypeList;
     private javax.swing.JLabel noteLabel;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Reset the mime type panel to be up to date with the current case.
+     */
+    void resetMimeTypePanel() {
+        ((DefaultListModel) mimeTypeList.getModel()).removeAllElements();
+        for (String dataSource : getMimeTypeArray()) {
+            ((DefaultListModel<String>) mimeTypeList.getModel()).addElement(dataSource);
+        }
+        this.mimeTypeList.setEnabled(false);
+        mimeTypeCheckBox.setSelected(false);
+        noteLabel.setEnabled(false);
+    }
 }

@@ -28,6 +28,7 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
 
     /**
      * Construct DataSourceFilter with the DataSourcePanel
+     *
      * @param component A DataSourcePanel
      */
     public DataSourceFilter(DataSourcePanel component) {
@@ -35,7 +36,8 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
     }
 
     /**
-     * Default constructor to construct a new DataSourceFilter with a new DataSourcePanel
+     * Default constructor to construct a new DataSourceFilter with a new
+     * DataSourcePanel
      */
     public DataSourceFilter() {
         this(new DataSourcePanel());
@@ -44,6 +46,13 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
     @Override
     public boolean isEnabled() {
         return this.getComponent().isSelected();
+    }
+
+    /**
+     * Reset the data source filter to be up to date with the current case.
+     */
+    void resetDataSourceFilter() {
+        this.getComponent().resetDataSourcePanel();
     }
 
     @Override
@@ -64,11 +73,11 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
     }
 
     @Override
-    @Messages ({
+    @Messages({
         "DataSourceFilter.errorMessage.emptyDataSource=At least one data source must be selected."
     })
     public boolean isValid() {
-        if(this.getComponent().getDataSourcesSelected().isEmpty()){
+        if (this.getComponent().getDataSourcesSelected().isEmpty()) {
             setLastError(Bundle.DataSourceFilter_errorMessage_emptyDataSource());
             return false;
         }

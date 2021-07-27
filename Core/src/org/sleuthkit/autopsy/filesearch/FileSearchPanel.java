@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,6 +58,8 @@ class FileSearchPanel extends javax.swing.JPanel {
 
     private final List<FileSearchFilter> filters = new ArrayList<>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
+    private static final MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
+    private static final DataSourceFilter dataSourceFilter = new DataSourceFilter();
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
 
     enum EVENT {
@@ -77,39 +79,37 @@ class FileSearchPanel extends javax.swing.JPanel {
      * This method is called from within the constructor to initialize the form.
      */
     private void customizeComponents() {
-        
+
         JLabel label = new JLabel(NbBundle.getMessage(this.getClass(), "FileSearchPanel.custComp.label.text"));
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         label.setBorder(new EmptyBorder(0, 0, 10, 0));
-        
+
         JPanel panel1 = new JPanel();
-        panel1.setLayout(new GridLayout(1,2));
+        panel1.setLayout(new GridLayout(1, 2));
         panel1.add(new JLabel(""));
         JPanel panel2 = new JPanel();
-        panel2.setLayout(new GridLayout(1,2, 20, 0));
+        panel2.setLayout(new GridLayout(1, 2, 20, 0));
         JPanel panel3 = new JPanel();
-        panel3.setLayout(new GridLayout(1,2, 20, 0));
+        panel3.setLayout(new GridLayout(1, 2, 20, 0));
         JPanel panel4 = new JPanel();
-        panel4.setLayout(new GridLayout(1,2, 20, 0));
+        panel4.setLayout(new GridLayout(1, 2, 20, 0));
         JPanel panel5 = new JPanel();
-        panel5.setLayout(new GridLayout(1,2, 20, 0));
+        panel5.setLayout(new GridLayout(1, 2, 20, 0));
 
         // Create and add filter areas
-        NameSearchFilter nameFilter =  new NameSearchFilter();
+        NameSearchFilter nameFilter = new NameSearchFilter();
         SizeSearchFilter sizeFilter = new SizeSearchFilter();
         DateSearchFilter dateFilter = new DateSearchFilter();
         KnownStatusSearchFilter knowStatusFilter = new KnownStatusSearchFilter();
         HashSearchFilter hashFilter = new HashSearchFilter();
-        MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
-        DataSourceFilter dataSourceFilter = new DataSourceFilter();
-        
-        panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"),nameFilter));
-        
-        panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"),sizeFilter));
-        
-        panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), dateFilter)); 
+
+        panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"), nameFilter));
+
+        panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), sizeFilter));
+
+        panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), dateFilter));
         panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), knowStatusFilter));
-        
+
         panel5.add(new FilterArea(NbBundle.getMessage(this.getClass(), "HashSearchPanel.md5CheckBox.text"), hashFilter));
         panel5.add(new JLabel(""));
         panel4.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), mimeTypeFilter));
@@ -119,7 +119,7 @@ class FileSearchPanel extends javax.swing.JPanel {
         filterPanel.add(panel3);
         filterPanel.add(panel4);
         filterPanel.add(panel5);
-        
+
         filters.add(nameFilter);
         filters.add(sizeFilter);
         filters.add(dateFilter);
@@ -127,7 +127,7 @@ class FileSearchPanel extends javax.swing.JPanel {
         filters.add(hashFilter);
         filters.add(mimeTypeFilter);
         filters.add(dataSourceFilter);
-        
+
         for (FileSearchFilter filter : this.getFilters()) {
             filter.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
@@ -141,7 +141,7 @@ class FileSearchPanel extends javax.swing.JPanel {
             public void actionPerformed(ActionEvent e) {
                 search();
             }
-        });        
+        });
         searchButton.setEnabled(isValidSearch());
     }
 
@@ -200,10 +200,10 @@ class FileSearchPanel extends javax.swing.JPanel {
                 if (contentList.isEmpty()) {
                     Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text()), true);
                     searchResultWin = DataResultTopComponent.createInstance(title, pathText,
-                        emptyNode, 0);
+                            emptyNode, 0);
                 } else {
                     searchResultWin = DataResultTopComponent.createInstance(title, pathText,
-                        tableFilterNode, contentList.size());
+                            tableFilterNode, contentList.size());
                 }
                 searchResultWin.requestActive(); // make it the active top component
 
@@ -286,6 +286,15 @@ class FileSearchPanel extends javax.swing.JPanel {
         }
 
         return enabledFilters;
+    }
+    
+    /**
+     * Reset the filters which are populated with options based on the contents
+     * of the current case.
+     */
+    void resetCaseDependentFilters() {
+        dataSourceFilter.resetDataSourceFilter();
+        mimeTypeFilter.resetMimeTypeFilter();
     }
 
     void addListenerToAll(ActionListener l) {
