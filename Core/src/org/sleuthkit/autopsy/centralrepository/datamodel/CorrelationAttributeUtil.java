@@ -293,7 +293,6 @@ public class CorrelationAttributeUtil {
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID() == artifact.getArtifactTypeID()) {
             Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
             if (content instanceof DataArtifact) {
-                // ELTODO: FOR SOME REASON WE NEVER GET HERE. THAT'S WHY THE "O" COLUMN IS EMPTY FOR "PREVIOUSLY SEEN" ARTIFACTS
                 sourceArtifact = (BlackboardArtifact) content;
             }
         }
