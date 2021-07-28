@@ -220,15 +220,15 @@ public final class IngestJob {
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
-     * @param getIngestTasksSnapshot Whether or not to include an ingest tasks
-     *                               snapshot.
+     * @param includeIngestTasksSnapshot Whether or not to include ingest task
+     *                                   stats in the snapshot.
      *
      * @return The snapshot, will be null if the job is not started yet.
      */
-    public ProgressSnapshot getSnapshot(boolean getIngestTasksSnapshot) {
+    public ProgressSnapshot getSnapshot(boolean includeIngestTasksSnapshot) {
         ProgressSnapshot snapshot = null;
         if (ingestJobPipeline != null) {
-            return new ProgressSnapshot(getIngestTasksSnapshot);
+            return new ProgressSnapshot(includeIngestTasksSnapshot);
         }
         return snapshot;
     }
@@ -241,7 +241,7 @@ public final class IngestJob {
     Snapshot getDiagnosticStatsSnapshot() {
         Snapshot snapshot = null;
         if (ingestJobPipeline != null) {
-            snapshot = ingestJobPipeline.getSnapshot(true);
+            snapshot = ingestJobPipeline.getDiagnosticStatsSnapshot(true);
         }
         return snapshot;
     }
@@ -410,13 +410,16 @@ public final class IngestJob {
 
         /**
          * Constructs a snapshot of the progress of an ingest job.
+         *
+         * @param includeIngestTasksSnapshot Whether or not to include ingest
+         *                                   task stats in the snapshot.
          */
-        private ProgressSnapshot(boolean getIngestTasksSnapshot) {
+        private ProgressSnapshot(boolean includeIngestTasksSnapshot) {
             /*
              * Note that the getSnapshot() will not construct a ProgressSnapshot
              * if ingestJobPipeline is null.
              */
-            Snapshot snapshot = ingestJobPipeline.getSnapshot(getIngestTasksSnapshot);
+            Snapshot snapshot = ingestJobPipeline.getDiagnosticStatsSnapshot(includeIngestTasksSnapshot);
             dataSourceProcessingSnapshot = new DataSourceProcessingSnapshot(snapshot);
             jobCancellationRequested = IngestJob.this.isCancelled();
             jobCancellationReason = IngestJob.this.getCancellationReason();

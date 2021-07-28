@@ -1516,11 +1516,14 @@ final class IngestJobPipeline {
     }
 
     /**
-     * Gets a snapshot of this ingest pipelines current state.
+     * Gets a snapshot of some basic diagnostic statistics for this ingest
+     * pipeline.
      *
-     * @return An ingest job statistics object.
+     * @param includeIngestTasksSnapshot
+     *
+     * @return The snapshot.
      */
-    Snapshot getSnapshot(boolean getIngestTasksSnapshot) {
+    Snapshot getDiagnosticStatsSnapshot(boolean includeIngestTasksSnapshot) {
         /**
          * Determine whether file ingest is running at the time of this snapshot
          * and determine the earliest file ingest level pipeline start time, if
@@ -1542,7 +1545,7 @@ final class IngestJobPipeline {
         long estimatedFilesToProcessCount = 0;
         long snapShotTime = new Date().getTime();
         IngestJobTasksSnapshot tasksSnapshot = null;
-        if (getIngestTasksSnapshot) {
+        if (includeIngestTasksSnapshot) {
             synchronized (fileIngestProgressLock) {
                 processedFilesCount = this.processedFiles;
                 estimatedFilesToProcessCount = this.estimatedFilesToProcess;
@@ -1551,7 +1554,7 @@ final class IngestJobPipeline {
             tasksSnapshot = taskScheduler.getTasksSnapshotForJob(getIngestJobId());
         }
 
-        return new Snapshot(dataSource.getName(), 
+        return new Snapshot(dataSource.getName(),
                 getIngestJobId(), createTime,
                 getCurrentDataSourceIngestModule(),
                 fileIngestRunning, fileIngestStartTime,
