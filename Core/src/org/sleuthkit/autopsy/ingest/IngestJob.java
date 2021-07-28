@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -97,6 +98,15 @@ public final class IngestJob {
      *
      * @param settings The ingest job settings.
      */
+    /**
+     * Constructs an ingest job that analyzes a data source using a set of
+     * ingest modules specified via ingest job settings, possibly using an
+     * ingest stream.
+     *
+     * @param dataSource The data source to be analyzed.
+     * @param ingestMode The ingest job mode.
+     * @param settings   The ingest job settings.
+     */
     IngestJob(Content dataSource, Mode ingestMode, IngestJobSettings settings) {
         this.id = IngestJob.nextId.getAndIncrement();
         this.dataSource = dataSource;
@@ -166,24 +176,20 @@ public final class IngestJob {
      * @return A collection of ingest module start up errors, empty on success.
      */
     synchronized List<IngestModuleError> start() throws InterruptedException {
-        List<IngestModuleError> errors = new ArrayList<>();
         if (ingestJobPipeline != null) {
             logger.log(Level.SEVERE, "Attempt to start ingest job that has already been started");
-            return errors;
+            return Collections.emptyList();
         }
 
         /*
-         * Set up the ingest pipeline.
+         * Try to start up the ingest pipeline.
          */
         if (files.isEmpty()) {
             ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
         } else {
             ingestJobPipeline = new IngestJobPipeline(this, dataSource, files, settings);
         }
-
-        /*
-         * Try to start up the ingest pipeline.
-         */
+        List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(ingestJobPipeline.startUp());
         if (errors.isEmpty()) {
             IngestManager.getInstance().fireDataSourceAnalysisStarted(id, ingestJobPipeline.getDataSource());
@@ -228,12 +234,11 @@ public final class IngestJob {
     }
 
     /**
-     * Gets a snapshot of the progress of this ingest job's ingest module
-     * pipelines.
+     * Gets a snapshot of some basic diagnostic statistics for this ingest job.
      *
      * @return The snapshot, will be null if the job is not started yet.
      */
-    Snapshot getProgressSnapshot() {
+    Snapshot getDiagnosticStatsSnapshot() {
         Snapshot snapshot = null;
         if (ingestJobPipeline != null) {
             snapshot = ingestJobPipeline.getSnapshot(true);

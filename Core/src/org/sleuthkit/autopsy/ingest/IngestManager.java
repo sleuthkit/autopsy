@@ -932,7 +932,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         List<Snapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
-                Snapshot snapshot = job.getProgressSnapshot();
+                Snapshot snapshot = job.getDiagnosticStatsSnapshot();
                 if (snapshot != null) {
                     snapShots.add(snapshot);
                 }
