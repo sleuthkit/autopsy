@@ -49,7 +49,8 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
     private static final Set<String> EXCLUDED_KEYWORD_SEARCH_ITEMS = new HashSet<>();
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID(),
+            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+            ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
             ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
             ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
     ));

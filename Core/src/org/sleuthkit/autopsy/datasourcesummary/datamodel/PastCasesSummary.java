@@ -25,10 +25,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
@@ -36,6 +37,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -104,7 +106,6 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
 
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
     private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COMMENT);
-    private static final BlackboardAttribute.Type TYPE_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
 
     private static final Set<Integer> CR_DEVICE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(),
@@ -241,30 +242,23 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
-     * Given an artifact with a TYPE_ASSOCIATED_ARTIFACT attribute, retrieves
-     * the related artifact.
+     * Given a TSK_PREVIOUSLY_SEEN artifact, retrieves it's parent artifact.
      *
-     * @param artifact The artifact with the TYPE_ASSOCIATED_ARTIFACT attribute.
+     * @param artifact The input TSK_PREVIOUSLY_SEEN artifact.
      *
      * @return The artifact if found or null if not.
      *
-     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
      */
-    private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
-        Long parentId = DataSourceInfoUtilities.getLongOrNull(artifact, TYPE_ASSOCIATED_ARTIFACT);
-        if (parentId == null) {
-            return null;
-        }
+    private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
 
-        SleuthkitCase skCase = caseProvider.get();
-        try {
-            return skCase.getArtifactByArtifactId(parentId);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING,
-                    String.format("There was an error fetching the parent artifact of a TSK_PREVIOUSLY SEEN (parent id: %d)", parentId),
-                    ex);
-            return null;
+        BlackboardArtifact sourceArtifact = null;
+        Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());        
+        if (content instanceof BlackboardArtifact) {
+            sourceArtifact = (BlackboardArtifact) content;
         }
+        return sourceArtifact;
     }
 
     /**
@@ -274,9 +268,10 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @return True if there is a device associated artifact.
      *
-     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
      */
-    private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
+    private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
         BlackboardArtifact parent = getParentArtifact(artifact);
         if (parent == null) {
             return false;
@@ -294,9 +289,10 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
+     * @throws NoCurrentCaseException
      */
     public PastCasesResult getPastCasesData(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NoCurrentCaseException {
 
         if (dataSource == null) {
             return null;
