@@ -452,7 +452,8 @@ class TskGuidUtils:
         guid_vs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, vs_type, img_offset FROM tsk_vs_info", "_")
         guid_fs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, img_offset, fs_type FROM tsk_fs_info", "_")
         guid_image_names = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, name FROM tsk_image_names "
-                                                                "WHERE sequence=0")
+                                                                "WHERE sequence=0",
+                                                       normalizer=get_filename)
         guid_os_accounts = TskGuidUtils._get_guid_dict(db_conn, "SELECT os_account_obj_id, addr FROM tsk_os_accounts")
         guid_reports = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, path FROM reports",
                                                    normalizer=normalize_file_path)
@@ -621,6 +622,22 @@ def get_path_segs(path: Union[str, None]) -> Union[List[str], None]:
     if path:
         # split on backslash or forward slash
         return list(filter(lambda x: len(x.strip()) > 0, [s for s in re.split(r"[\\/]", path)]))
+    else:
+        return None
+
+
+def get_filename(path: Union[str, None]) -> Union[str, None]:
+    """
+    Returns the last segment of a file path.
+    Args:
+        path: The path.
+
+    Returns: The last segment of the path
+
+    """
+    path_segs = get_path_segs(path)
+    if path_segs is not None and len(path_segs) > 0:
+        return path_segs[-1]
     else:
         return None
 
@@ -827,7 +844,9 @@ def normalize_tsk_event_descriptions(guid_util: TskGuidUtils, row: Dict[str, any
     # replace object ids with information that is deterministic
     row_copy['event_description_id'] = MASKED_ID
     row_copy['content_obj_id'] = guid_util.get_guid_for_file_objid(row['content_obj_id'])
-    row_copy['artifact_id'] = guid_util.get_guid_for_artifactid(row['artifact_id']) if row['artifact_id'] else None
+    row_copy['artifact_id'] = guid_util.get_guid_for_artifactid(row['artifact_id']) \
+        if row['artifact_id'] is not None else None
+    row_copy['data_source_obj_id'] = guid_util.get_guid_for_file_objid(row['data_source_obj_id'])
 
     if row['full_description'] == row['med_description'] == row['short_description']:
         row_copy['full_description'] = _mask_event_desc(row['full_description'])
@@ -916,6 +935,7 @@ def normalize_tsk_files(guid_util: TskGuidUtils, row: Dict[str, any]) -> Dict[st
         row_copy['md5'] = "MD5_IGNORED"
         row_copy['sha256'] = "SHA256_IGNORED"
 
+    row_copy['data_source_obj_id'] = guid_util.get_guid_for_file_objid(row['data_source_obj_id'])
     row_copy['obj_id'] = MASKED_OBJ_ID
     row_copy['os_account_obj_id'] = 'MASKED_OS_ACCOUNT_OBJ_ID'
     row_copy['parent_path'] = normalize_file_path(row['parent_path'])
@@ -1065,6 +1085,9 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
         "obj_id": lambda guid_util, col: guid_util.get_guid_for_file_objid(col)
     }),
     "tsk_files_path": NormalizeRow(normalize_tsk_files_path),
+    "tsk_image_names": NormalizeColumns({
+       "name": lambda guid_util, col: get_filename(col)
+    }),
     "tsk_objects": NormalizeRow(normalize_tsk_objects),
     "tsk_os_account_attributes": NormalizeColumns({
         "id": MASKED_ID,
