@@ -1551,12 +1551,12 @@ final class IngestJobPipeline {
             tasksSnapshot = taskScheduler.getTasksSnapshotForJob(getIngestJobId());
         }
 
-        return new Snapshot(dataSource.getName(), getIngestJobId(), createTime,
+        return new Snapshot(dataSource.getName(), 
+                getIngestJobId(), createTime,
                 getCurrentDataSourceIngestModule(),
                 fileIngestRunning, fileIngestStartTime,
                 cancelled, cancellationReason, cancelledDataSourceIngestModules,
-                processedFilesCount, estimatedFilesToProcessCount,
-                snapShotTime, tasksSnapshot);
+                processedFilesCount, estimatedFilesToProcessCount, snapShotTime, tasksSnapshot);
     }
 
     /**
