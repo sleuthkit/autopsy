@@ -1519,7 +1519,8 @@ final class IngestJobPipeline {
      * Gets a snapshot of some basic diagnostic statistics for this ingest
      * pipeline.
      *
-     * @param includeIngestTasksSnapshot
+     * @param includeIngestTasksSnapshot Whether or not to include ingest task
+     *                                   stats in the snapshot.
      *
      * @return The snapshot.
      */

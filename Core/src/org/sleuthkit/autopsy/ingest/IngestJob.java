@@ -314,24 +314,22 @@ public final class IngestJob {
         private final CancellationReason jobCancellationReason;
 
         /**
-         * A snapshot of the state of the ingest pipeline of an ingest job. This
-         * class is an artifact of a time when an ingest job could involve the
-         * analysis of multiple data sources, each of which had its own
-         * dedictaed ingest pipeline. It is currently nothing more than a
-         * wrapper around a Snapshot object, another type of legacy partial
-         * snaphot.
+         * A snapshot of some basic diagnostic statistics for an ingest job.
+         * This thin wrapper around a Snapshot object is an artifact of a time
+         * when an ingest job could involve the analysis of multiple data
+         * sources, each of which had its own basic diagnostic statistics
+         * snapshot.
          */
         public final class DataSourceProcessingSnapshot {
 
             private final Snapshot snapshot;
 
             /**
-             * Constructs a partial snapshot of the progress of an ingest job.
-             * The partial snapshot is an artifact of a time when an ingest job
-             * could involve the analysis of multiple data sources, each of
-             * which had its own dedictaed ingest pipleine. It is currently
-             * nothing more than a wrapper around a Snapshot object, another
-             * type of legacy partial snaphot.
+             * Constructs a snapshot of some basic diagnostic statistics for an
+             * ingest job. This thin wrapper around a Snapshot object is an
+             * artifact of a time when an ingest job could involve the analysis
+             * of multiple data sources, each of which had its own basic
+             * diagnostic statistics snapshot.
              */
             private DataSourceProcessingSnapshot(Snapshot snapshot) {
                 this.snapshot = snapshot;
@@ -412,7 +410,8 @@ public final class IngestJob {
          * Constructs a snapshot of the progress of an ingest job.
          *
          * @param includeIngestTasksSnapshot Whether or not to include ingest
-         *                                   task stats in the snapshot.
+         *                                   task stats in basic diagnostic
+         *                                   stats part of the snapshot.
          */
         private ProgressSnapshot(boolean includeIngestTasksSnapshot) {
             /*
