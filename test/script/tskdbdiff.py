@@ -452,7 +452,8 @@ class TskGuidUtils:
         guid_vs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, vs_type, img_offset FROM tsk_vs_info", "_")
         guid_fs_info = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, img_offset, fs_type FROM tsk_fs_info", "_")
         guid_image_names = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, name FROM tsk_image_names "
-                                                                "WHERE sequence=0")
+                                                                "WHERE sequence=0",
+                                                       normalizer=get_filename)
         guid_os_accounts = TskGuidUtils._get_guid_dict(db_conn, "SELECT os_account_obj_id, addr FROM tsk_os_accounts")
         guid_reports = TskGuidUtils._get_guid_dict(db_conn, "SELECT obj_id, path FROM reports",
                                                    normalizer=normalize_file_path)
@@ -621,6 +622,22 @@ def get_path_segs(path: Union[str, None]) -> Union[List[str], None]:
     if path:
         # split on backslash or forward slash
         return list(filter(lambda x: len(x.strip()) > 0, [s for s in re.split(r"[\\/]", path)]))
+    else:
+        return None
+
+
+def get_filename(path: Union[str, None]) -> Union[str, None]:
+    """
+    Returns the last segment of a file path.
+    Args:
+        path: The path.
+
+    Returns: The last segment of the path
+
+    """
+    path_segs = get_path_segs(path)
+    if path_segs is not None and len(path_segs) > 0:
+        return path_segs[-1]
     else:
         return None
 
@@ -1065,6 +1082,9 @@ TABLE_NORMALIZATIONS: Dict[str, TableNormalization] = {
         "obj_id": lambda guid_util, col: guid_util.get_guid_for_file_objid(col)
     }),
     "tsk_files_path": NormalizeRow(normalize_tsk_files_path),
+    "tsk_image_names": NormalizeColumns({
+       "name": lambda guid_util, col: get_filename(col)
+    }),
     "tsk_objects": NormalizeRow(normalize_tsk_objects),
     "tsk_os_account_attributes": NormalizeColumns({
         "id": MASKED_ID,
