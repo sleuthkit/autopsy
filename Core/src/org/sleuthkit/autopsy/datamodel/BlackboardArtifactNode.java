@@ -229,27 +229,24 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-                        
-        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
-            if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
-                srcContent = lookupContent;
-                try {
-                    /*
-                     * Calling this getter causes the unique path of the source
-                     * content to be cached in the Content object. This is
-                     * advantageous as long as this node is constructed in a
-                     * background thread instead of a UI thread.
-                     */
-                    srcContent.getUniquePath();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
-                }
-                break;
-            }
-        }
+        
+        srcContent = getSourceContentFromLookup(artifact);
         if (srcContent == null) {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
+
+        try {
+            /*
+             * Calling this getter causes the unique path of the source content
+             * to be cached in the Content object. This is advantageous as long
+             * as this node is constructed in a background thread instead of a
+             * UI thread.
+             */
+            srcContent.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
+        }
+
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -272,7 +269,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact, lookupIsAssociatedFile));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-        
+
         try {
             //The lookup for a file may or may not exist so we define the srcContent as the parent.
             srcContent = artifact.getParent();
@@ -379,6 +376,32 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             return createLookup(artifact);
         }
 
+    }
+    
+    /**
+     * Finds the source content in the Lookup created by createLookup() method.
+     *
+     * @param artifact Artifact who's source Content we are trying to find.
+     *
+     * @return Source Content of the input artifact, if one exists. Null
+     *         otherwise.
+     */
+    private Content getSourceContentFromLookup(BlackboardArtifact artifact) {
+        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
+            /*
+             * NOTE: createLookup() saves the artifact and its source content
+             * (if one exists). However, createLookup() has to be static because
+             * it is being called by super(), therefore it can't store the
+             * source content in this.srcContent class variable. That's why we
+             * have to have the logic below, which reads the Lookup contents,
+             * and decides that the source content is the entry in Lookup that
+             * is NOT the input artifact.
+             */
+            if ((lookupContent != null) && (lookupContent.getId() != artifact.getId())) {
+                return lookupContent;
+            }
+        }
+        return null;
     }
 
     /**

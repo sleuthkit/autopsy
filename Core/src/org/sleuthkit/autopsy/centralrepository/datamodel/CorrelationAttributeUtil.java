@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -271,8 +271,8 @@ public class CorrelationAttributeUtil {
     }
 
     /**
-     * Gets the associated artifact of a "meta-artifact" such as an interesting
-     * artifact hit artifact.
+     * Gets the associated artifact of a "meta-artifact" such as an "interesting
+     * artifact hit" or "previously seen" artifact.
      *
      * @param artifact An artifact.
      *
@@ -290,7 +290,14 @@ public class CorrelationAttributeUtil {
             if (assocArtifactAttr != null) {
                 sourceArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(assocArtifactAttr.getValueLong());
             }
-        } else {
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID() == artifact.getArtifactTypeID()) {
+            Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
+            if (content instanceof DataArtifact) {
+                sourceArtifact = (BlackboardArtifact) content;
+            }
+        }
+        
+        if (sourceArtifact == null) {
             sourceArtifact = artifact;
         }
         return sourceArtifact;

@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2017-2020 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,14 +47,13 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_UNSEEN;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
@@ -199,7 +199,7 @@ public class IngestEventsListener {
     }
 
     /**
-     * Make an Interesting Item artifact based on a new artifact being
+     * Make a "previously seen" artifact based on a new artifact being
      * previously seen.
      *
      * @param originalArtifact Original artifact that we want to flag
@@ -215,18 +215,15 @@ public class IngestEventsListener {
                         Bundle.IngestEventsListener_prevTaggedSet_text()),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
-                new BlackboardAttribute(
-                        TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
-                        originalArtifact.getArtifactID()));
-        makeAndPostInterestingArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text());
+                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
+        makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text());
     }
 
     /**
-     * Create an Interesting Artifact hit for a device which was previously seen
+     * Create a "previously seen" hit for a device which was previously seen
      * in the central repository.
      *
-     * @param originalArtifact the artifact to create the interesting item for
+     * @param originalArtifact the artifact to create the "previously seen" item for
      * @param caseDisplayNames the case names the artifact was previously seen
      *                         in
      */
@@ -240,39 +237,46 @@ public class IngestEventsListener {
                 Bundle.IngestEventsListener_prevExists_text()),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
-                new BlackboardAttribute(
-                        TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
-                        originalArtifact.getArtifactID()));
-        makeAndPostInterestingArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
+                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
+        makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
     }
     
-    
     /**
-     * Make an interesting item artifact to flag the passed in artifact.
+     * Create a "previously unseen" hit for an application which was never seen in
+     * the central repository.
+     *
+     * @param originalArtifact the artifact to create the "previously unseen" item
+     *                         for
+     */
+    static private void makeAndPostPreviouslyUnseenArtifact(BlackboardArtifact originalArtifact) {
+        Collection<BlackboardAttribute> attributesForNewArtifact = new ArrayList<>();
+        makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, originalArtifact, attributesForNewArtifact, "");
+    }
+
+    /**
+     * Make an artifact to flag the passed in artifact.
      *
      * @param originalArtifact         Artifact in current case we want to flag
-     * @param attributesForNewArtifact Attributes to assign to the new
-     *                                 Interesting items artifact
-     * @param configuration            The configuration to be specified for the new interesting artifact hit
+     * @param attributesForNewArtifact Attributes to assign to the new artifact
+     * @param configuration            The configuration to be specified for the new artifact hit
      */
-    private static void makeAndPostInterestingArtifact(BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration) {
+    private static void makeAndPostArtifact(BlackboardArtifact.Type newArtifactType, BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration) {
         try {
             SleuthkitCase tskCase = originalArtifact.getSleuthkitCase();
-            AbstractFile abstractFile = tskCase.getAbstractFileById(originalArtifact.getObjectID());
             Blackboard blackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_ARTIFACT_HIT, attributesForNewArtifact)) {
-                  BlackboardArtifact newInterestingArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE, 
+            BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(newArtifactType.getTypeID());
+            if (!blackboard.artifactExists(originalArtifact, type, attributesForNewArtifact)) {
+                  BlackboardArtifact newArtifact = originalArtifact.newAnalysisResult(
+                        newArtifactType, Score.SCORE_LIKELY_NOTABLE, 
                         null, configuration, null, attributesForNewArtifact)
                         .getAnalysisResult();
 
                 try {
                     // index the artifact for keyword search
-                    blackboard.postArtifact(newInterestingArtifact, MODULE_NAME);
+                    blackboard.postArtifact(newArtifact, MODULE_NAME);
                 } catch (Blackboard.BlackboardException ex) {
-                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newInterestingArtifact.getArtifactID(), ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newArtifact.getArtifactID(), ex); //NON-NLS
                 }
             }
         } catch (TskCoreException ex) {
@@ -299,7 +303,8 @@ public class IngestEventsListener {
                 }
                 switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                     case DATA_ADDED: {
-                        //if ingest isn't running create the interesting items otherwise use the ingest module setting to determine if we create interesting items
+                        //if ingest isn't running create the "previously seen" items, 
+                        // otherwise use the ingest module setting to determine if we create "previously seen" items
                         boolean flagNotable = !IngestManager.getInstance().isIngestRunning() || isFlagNotableItems();
                         boolean flagPrevious = !IngestManager.getInstance().isIngestRunning() || isFlagSeenDevices();
                         boolean createAttributes = !IngestManager.getInstance().isIngestRunning() || shouldCreateCrProperties();
@@ -474,7 +479,7 @@ public class IngestEventsListener {
                             // Was it previously marked as bad?
                             // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
                             // if getKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
-                            // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
+                            // create TSK_PREVIOUSLY_SEEN artifact on BB.
                             if (flagNotableItemsEnabled) {
                                 List<String> caseDisplayNames;
                                 try {
@@ -487,6 +492,8 @@ public class IngestEventsListener {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
                                 }
                             }
+                            
+                            // flag previously seen devices
                             if (flagPreviousItemsEnabled
                                     && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.USBID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.ICCID_TYPE_ID
@@ -494,7 +501,7 @@ public class IngestEventsListener {
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMSI_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.MAC_TYPE_ID)) {
                                 try {
-                                    //only alert to previous instances when they were in another case
+                                    // only alert to previous instances when they were in another case
                                     List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                     List<String> caseDisplayNames;
                                     for (CorrelationAttributeInstance instance : previousOccurences) {
@@ -505,8 +512,29 @@ public class IngestEventsListener {
                                         }
                                     }
                                 } catch (CorrelationAttributeNormalizationException ex) {
-                                    LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
+                                    LOGGER.log(Level.INFO, String.format("Unable to flag previously seen device: %s.", eamArtifact.toString()), ex);
                                 }
+                            }
+                            
+                            // flag previously unseen apps
+                            if (flagPreviousItemsEnabled
+                                    && eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID) {
+                                try {
+                                    List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                    // make sure the previous instances do not contain current case
+                                    for (Iterator<CorrelationAttributeInstance> iterator = previousOccurences.iterator(); iterator.hasNext();) {
+                                        CorrelationAttributeInstance instance = iterator.next();
+                                        if (instance.getCorrelationCase().getCaseUUID().equals(eamArtifact.getCorrelationCase().getCaseUUID())) {
+                                            // this is the current case - remove the instace from the previousOccurences list
+                                            iterator.remove();
+                                        }
+                                    }
+                                    if (previousOccurences.isEmpty()) {
+                                        makeAndPostPreviouslyUnseenArtifact(bbArtifact);
+                                    }
+                                } catch (CorrelationAttributeNormalizationException ex) {
+                                    LOGGER.log(Level.INFO, String.format("Unable to flag previously unseen application: %s.", eamArtifact.toString()), ex);
+                                }                                
                             }
                             if (createCorrelationAttributes) {
                                 eamArtifacts.add(eamArtifact);

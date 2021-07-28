@@ -727,7 +727,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                                                     TSK_COMMENT, MODULE_NAME,
                                                     Bundle.CaseEventsListener_prevCaseComment_text()));
                                     BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
-                                            BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE,
+                                            BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE,
                                             null, Bundle.CaseEventsListener_prevExists_text(), null, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
                                     try {
                                         // index the artifact for keyword search
