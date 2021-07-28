@@ -500,25 +500,6 @@ public class Case {
             eventPublisher.publish(new TimelineEventAddedEvent(event));
         }
 
-        @SuppressWarnings("deprecation")
-        @Subscribe
-        public void publishArtifactsPostedEvent(Blackboard.ArtifactsPostedEvent event) {
-            for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
-                /*
-                 * IngestServices.fireModuleDataEvent is deprecated to
-                 * discourage ingest module writers from using it (they should
-                 * use org.sleuthkit.datamodel.Blackboard.postArtifact(s)
-                 * instead), but a way to publish
-                 * Blackboard.ArtifactsPostedEvents from the SleuthKit layer as
-                 * Autopsy ModuleDataEvents is still needed.
-                 */
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                        event.getModuleName(),
-                        artifactType,
-                        event.getArtifacts(artifactType)));
-            }
-        }
-
         @Subscribe
         public void publishOsAccountsAddedEvent(TskEvent.OsAccountsAddedTskEvent event) {
             hasData = true;
