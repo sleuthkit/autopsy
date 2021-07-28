@@ -432,7 +432,12 @@ public final class IngestJob {
          * @return The handle, may be null.
          */
         public DataSourceIngestModuleHandle runningDataSourceIngestModule() {
-            return new DataSourceIngestModuleHandle(ingestJobPipeline, dataSourceProcessingSnapshot.getDataSourceLevelIngestModule());
+            DataSourceIngestModuleHandle moduleHandle = null;
+            DataSourceIngestPipeline.DataSourcePipelineModule module = dataSourceProcessingSnapshot.getDataSourceLevelIngestModule();
+            if (module != null) {
+                moduleHandle = new DataSourceIngestModuleHandle(ingestJobPipeline, module);
+            }
+            return moduleHandle;
         }
 
         /**
@@ -475,9 +480,10 @@ public final class IngestJob {
         }
 
         /**
-         * Gets a snapshot of the state of the ingest pipeline of an ingest job.
+         * Gets a snapshot of some basic diagnostic statistics for an ingest
+         * job.
          *
-         * @return The ingest pipeline state snapshot.
+         * @return The snapshot.
          */
         public DataSourceProcessingSnapshot getDataSourceProcessingSnapshot() {
             return dataSourceProcessingSnapshot;
