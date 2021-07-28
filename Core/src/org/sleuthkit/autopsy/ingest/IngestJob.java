@@ -71,8 +71,8 @@ public final class IngestJob {
     private final Content dataSource;
     private final List<AbstractFile> files = new ArrayList<>();
     private final Mode ingestMode;
-    private IngestJobPipeline ingestJobPipeline;
     private final IngestJobSettings settings;
+    private volatile IngestJobPipeline ingestJobPipeline;
     private volatile CancellationReason cancellationReason;
 
     /**
@@ -163,7 +163,13 @@ public final class IngestJob {
      *
      * @return A collection of ingest module start up errors, empty on success.
      */
-    List<IngestModuleError> start() throws InterruptedException {
+    synchronized List<IngestModuleError> start() throws InterruptedException {
+        List<IngestModuleError> errors = new ArrayList<>();
+        if (ingestJobPipeline != null) {
+            logger.log(Level.SEVERE, "Attempt to start ingest job that has already been started");
+            return errors;
+        }
+
         /*
          * Set up the ingest pipeline.
          */
@@ -176,7 +182,6 @@ public final class IngestJob {
         /*
          * Try to start up the ingest pipeline.
          */
-        List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(ingestJobPipeline.startUp());
         if (errors.isEmpty()) {
             IngestManager.getInstance().fireDataSourceAnalysisStarted(id, ingestJobPipeline.getDataSource());
@@ -198,10 +203,10 @@ public final class IngestJob {
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
-     * @return The snapshot.
+     * @return The snapshot, will be null if the job is not started yet.
      */
     public ProgressSnapshot getSnapshot() {
-        return new ProgressSnapshot(true);
+        return getSnapshot(true);
     }
 
     /**
@@ -210,20 +215,28 @@ public final class IngestJob {
      * @param getIngestTasksSnapshot Whether or not to include an ingest tasks
      *                               snapshot.
      *
-     * @return The snapshot.
+     * @return The snapshot, will be null if the job is not started yet.
      */
     public ProgressSnapshot getSnapshot(boolean getIngestTasksSnapshot) {
-        return new ProgressSnapshot(getIngestTasksSnapshot);
+        ProgressSnapshot snapshot = null;
+        if (ingestJobPipeline != null) {
+            return new ProgressSnapshot(getIngestTasksSnapshot);
+        }
+        return snapshot;
     }
 
     /**
      * Gets a snapshot of the progress of this ingest job's ingest module
      * pipelines.
      *
-     * @return The snapshot.
+     * @return The snapshot, will be null if the job is not started yet.
      */
     Snapshot getProgressSnapshot() {
-        return ingestJobPipeline.getSnapshot(true);
+        Snapshot snapshot = null;
+        if (ingestJobPipeline != null) {
+            snapshot = ingestJobPipeline.getSnapshot(true);
+        }
+        return snapshot;
     }
 
     /**
@@ -259,7 +272,9 @@ public final class IngestJob {
          * ingest manager's ingest jobs list lock.
          */
         new Thread(() -> {
-            ingestJobPipeline.cancel(reason);
+            if (ingestJobPipeline != null) {
+                ingestJobPipeline.cancel(reason);
+            }
         }).start();
     }
 
@@ -283,45 +298,106 @@ public final class IngestJob {
     }
 
     /**
-     * Provides a callback for when the ingest pipeline shuts down, allowing
-     * this ingest job to notify the ingest manager when it is complete.
-     */
-    void notifyIngestPipelineShutDown() {
-        IngestManager ingestManager = IngestManager.getInstance();
-        if (!ingestJobPipeline.isCancelled()) {
-            ingestManager.fireDataSourceAnalysisCompleted(id, ingestJobPipeline.getDataSource());
-        } else {
-            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, ingestJobPipeline.getDataSource());
-        }
-        ingestManager.finishIngestJob(this);
-    }
-
-    /**
      * A snapshot of the progress of an ingest job.
      */
     public final class ProgressSnapshot {
 
         private final DataSourceProcessingSnapshot dataSourceProcessingSnapshot;
-        private DataSourceIngestModuleHandle dataSourceModule;
-        private boolean fileIngestRunning;
-        private Date fileIngestStartTime;
-        private final boolean jobCancelled;
-        private final IngestJob.CancellationReason jobCancellationReason;
+        private final boolean jobCancellationRequested;
+        private final CancellationReason jobCancellationReason;
 
         /**
-         * A partial snapshot of the progress of an ingest job. This class is an
-         * artifact of a time when an ingest job could involve the analysis of
-         * multiple data sources.
+         * Constructs a snapshot of the progress of an ingest job.
+         */
+        private ProgressSnapshot(boolean getIngestTasksSnapshot) {
+            /*
+             * Note that the getSnapshot() will not construct a ProgressSnapshot
+             * if ingestJobPipeline is null.
+             */
+            Snapshot snapshot = ingestJobPipeline.getSnapshot(getIngestTasksSnapshot);
+            dataSourceProcessingSnapshot = new DataSourceProcessingSnapshot(snapshot);
+            jobCancellationRequested = IngestJob.this.isCancelled();
+            jobCancellationReason = IngestJob.this.getCancellationReason();
+        }
+
+        /**
+         * Gets a handle to the currently running data source level ingest
+         * module at the time the snapshot was taken. This handle can be used to
+         * cancel the module, if it is still running.
+         *
+         * @return The handle, may be null.
+         */
+        public DataSourceIngestModuleHandle runningDataSourceIngestModule() {
+            return new DataSourceIngestModuleHandle(ingestJobPipeline, dataSourceProcessingSnapshot.getDataSourceLevelIngestModule());
+        }
+
+        /**
+         * Queries whether or not file level ingest was running at the time the
+         * snapshot was taken.
+         *
+         * @return True or false.
+         */
+        public boolean fileIngestIsRunning() {
+            return dataSourceProcessingSnapshot.fileIngestIsRunning();
+        }
+
+        /**
+         * Gets the time that file level ingest started.
+         *
+         * @return The start time, may be null.
+         */
+        public Date fileIngestStartTime() {
+            return new Date(dataSourceProcessingSnapshot.fileIngestStartTime().getTime());
+        }
+
+        /**
+         * Queries whether or not an ingest job cancellation request had been
+         * issued at the time the snapshot was taken.
+         *
+         * @return True or false.
+         */
+        public boolean isCancelled() {
+            return jobCancellationRequested;
+        }
+
+        /**
+         * Gets the reason the ingest job was cancelled.
+         *
+         * @return The cancellation reason, which may indicate that the job had
+         *         not been cancelled at the time the snapshot was taken.
+         */
+        public CancellationReason getCancellationReason() {
+            return jobCancellationReason;
+        }
+
+        /**
+         * Gets a snapshot of the state of the ingest pipeline of an ingest job.
+         *
+         * @return The ingest pipeline state snapshot.
+         */
+        public DataSourceProcessingSnapshot getDataSourceProcessingSnapshot() {
+            return dataSourceProcessingSnapshot;
+        }
+
+        /**
+         * A snapshot of the state of the ingest pipeline of an ingest job. This
+         * class is an artifact of a time when an ingest job could involve the
+         * analysis of multiple data sources, each of which had its own
+         * dedictaed ingest pipeline. It is currently nothing more than a
+         * wrapper around a Snapshot object, another type of legacy partial
+         * snaphot.
          */
         public final class DataSourceProcessingSnapshot {
 
-            /*
-             * Stores basic diagnostic statistics for the ingest job.
-             */
             private final Snapshot snapshot;
 
             /**
              * Constructs a partial snapshot of the progress of an ingest job.
+             * The partial snapshot is an artifact of a time when an ingest job
+             * could involve the analysis of multiple data sources, each of
+             * which had its own dedictaed ingest pipleine. It is currently
+             * nothing more than a wrapper around a Snapshot object, another
+             * type of legacy partial snaphot.
              */
             private DataSourceProcessingSnapshot(Snapshot snapshot) {
                 this.snapshot = snapshot;
@@ -335,6 +411,35 @@ public final class IngestJob {
              */
             public String getDataSource() {
                 return snapshot.getDataSource();
+            }
+
+            /**
+             * Queries whether or not file level ingest was running at the time
+             * the snapshot was taken.
+             *
+             * @return True or false.
+             */
+            public boolean fileIngestIsRunning() {
+                return snapshot.getFileIngestIsRunning();
+            }
+
+            /**
+             * Gets the time that file level ingest started.
+             *
+             * @return The start time, may be null.
+             */
+            public Date fileIngestStartTime() {
+                return new Date(snapshot.getFileIngestStartTime().getTime());
+            }
+
+            /**
+             * Gets the currently running data source level ingest module at the
+             * time the snapshot was taken.
+             *
+             * @return The module.
+             */
+            DataSourceIngestPipeline.DataSourcePipelineModule getDataSourceLevelIngestModule() {
+                return snapshot.getDataSourceLevelIngestModule();
             }
 
             /**
@@ -367,91 +472,6 @@ public final class IngestJob {
                 return snapshot.getCancelledDataSourceIngestModules();
             }
 
-        }
-
-        /**
-         * Constructs a snapshot of the progress of an ingest job.
-         */
-        private ProgressSnapshot(boolean getIngestTasksSnapshot) {
-            dataSourceModule = null;
-            fileIngestRunning = false;
-            fileIngestStartTime = null;
-            Snapshot snapshot = ingestJobPipeline.getSnapshot(getIngestTasksSnapshot);
-            dataSourceProcessingSnapshot = new DataSourceProcessingSnapshot(snapshot);
-            if (dataSourceModule == null) {
-                DataSourceIngestPipeline.DataSourcePipelineModule module = snapshot.getDataSourceLevelIngestModule();
-                if (module != null) {
-                    dataSourceModule = new DataSourceIngestModuleHandle(ingestJobPipeline, module);
-                }
-            }
-            if (snapshot.getFileIngestIsRunning()) {
-                fileIngestRunning = true;
-            }
-            Date childFileIngestStartTime = snapshot.getFileIngestStartTime();
-            if (childFileIngestStartTime != null && (fileIngestStartTime == null || childFileIngestStartTime.before(fileIngestStartTime))) {
-                fileIngestStartTime = childFileIngestStartTime;
-            }
-            jobCancelled = isCancelled();
-            jobCancellationReason = cancellationReason;
-        }
-
-        /**
-         * Gets a handle to the currently running data source level ingest
-         * module at the time the snapshot was taken.
-         *
-         * @return The handle, may be null.
-         */
-        public DataSourceIngestModuleHandle runningDataSourceIngestModule() {
-            return this.dataSourceModule;
-        }
-
-        /**
-         * Queries whether or not file level ingest was running at the time the
-         * snapshot was taken.
-         *
-         * @return True or false.
-         */
-        public boolean fileIngestIsRunning() {
-            return this.fileIngestRunning;
-        }
-
-        /**
-         * Gets the time that file level ingest started.
-         *
-         * @return The start time, may be null.
-         */
-        public Date fileIngestStartTime() {
-            return new Date(this.fileIngestStartTime.getTime());
-        }
-
-        /**
-         * Queries whether or not an ingest job cancellation request had been
-         * issued at the time the snapshot was taken.
-         *
-         * @return True or false.
-         */
-        public boolean isCancelled() {
-            return this.jobCancelled;
-        }
-
-        /**
-         * Gets the reason the ingest job was cancelled.
-         *
-         * @return The cancellation reason, may be not cancelled.
-         */
-        public CancellationReason getCancellationReason() {
-            return this.jobCancellationReason;
-        }
-
-        /**
-         * Gets a partial snapshot of the progress of an ingest job. This
-         * DataSourceProcessingSnapshot is an artifact of a time when an ingest
-         * job could involve the analysis of multiple data sources.
-         *
-         * @return The partial snapshot.
-         */
-        public DataSourceProcessingSnapshot getDataSourceProcessingSnapshot() {
-            return dataSourceProcessingSnapshot;
         }
 
     }

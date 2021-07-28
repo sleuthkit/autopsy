@@ -1041,7 +1041,13 @@ final class IngestJobPipeline {
             }
         }
 
-        ingestJob.notifyIngestPipelineShutDown();
+        IngestManager ingestManager = IngestManager.getInstance();
+        if (isCancelled()) {
+            ingestManager.fireDataSourceAnalysisCompleted(getId(), getDataSource());
+        } else {
+            IngestManager.getInstance().fireDataSourceAnalysisCancelled(getId(), getDataSource());
+        }
+        ingestManager.finishIngestJob(ingestJob);
     }
 
     /**
@@ -1549,7 +1555,7 @@ final class IngestJobPipeline {
                 getCurrentDataSourceIngestModule(),
                 fileIngestRunning, fileIngestStartTime,
                 cancelled, cancellationReason, cancelledDataSourceIngestModules,
-                processedFilesCount, estimatedFilesToProcessCount, 
+                processedFilesCount, estimatedFilesToProcessCount,
                 snapShotTime, tasksSnapshot);
     }
 

@@ -702,8 +702,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Publishes an ingest job event signifying analysis of a data source
      * started.
      *
-     * @param ingestJobId           The ingest job id.
-     * @param dataSource            The data source.
+     * @param ingestJobId The ingest job id.
+     * @param dataSource  The data source.
      */
     void fireDataSourceAnalysisStarted(long ingestJobId, Content dataSource) {
         AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSource);
@@ -714,8 +714,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Publishes an ingest job event signifying analysis of a data source
      * finished.
      *
-     * @param ingestJobId           The ingest job id.
-     * @param dataSource            The data source.
+     * @param ingestJobId The ingest job id.
+     * @param dataSource  The data source.
      */
     void fireDataSourceAnalysisCompleted(long ingestJobId, Content dataSource) {
         AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
@@ -726,8 +726,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Publishes an ingest job event signifying analysis of a data source was
      * canceled.
      *
-     * @param ingestJobId           The ingest job id.
-     * @param dataSource            The data source.
+     * @param ingestJobId The ingest job id.
+     * @param dataSource  The data source.
      */
     void fireDataSourceAnalysisCancelled(long ingestJobId, Content dataSource) {
         AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
@@ -928,7 +928,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         List<Snapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
-                snapShots.add(job.getProgressSnapshot());
+                Snapshot snapshot = job.getProgressSnapshot();
+                if (snapshot != null) {
+                    snapShots.add(snapshot);
+                }
             });
         }
         return snapShots;
