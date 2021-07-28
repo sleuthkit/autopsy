@@ -33,8 +33,8 @@ public final class DataSourceAnalysisStartedEvent extends DataSourceAnalysisEven
      * Constructs an event published when analysis (ingest) of a data source is
      * started.
      *
-     * @param ingestJobId The identifier of the ingest job. For a mulit-user
-     *                    case, this ID is only unique on the node where the
+     * @param ingestJobId The identifier of the ingest job. For a multi-user
+     *                    case, this ID is only unique on the host where the
      *                    ingest job is running.
      * @param dataSource  The data source.
      */
@@ -46,18 +46,16 @@ public final class DataSourceAnalysisStartedEvent extends DataSourceAnalysisEven
      * Constructs an event published when analysis (ingest) of a data source is
      * started.
      *
-     * @param ingestJobId           The identifier of the ingest job. For a
-     *                              mulit-user case, this ID is only unique on
-     *                              the node where the ingest job is running.
-     * @param dataSourceIngestJobId The identifier of the ingest job. For a
-     *                              mulit-user case, this ID is only unique on
-     *                              the node where the ingest job is running.
-     * @param dataSource            The data source.
+     * @param ingestJobId The identifier of the ingest job. For a multi-user
+     *                    case, this ID is only unique on the host where the
+     *                    ingest job is running.
+     * @param unused      Unused.
+     * @param dataSource  The data source.
      *
      * @deprecated Do not use.
      */
     @Deprecated
-    public DataSourceAnalysisStartedEvent(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
+    public DataSourceAnalysisStartedEvent(long ingestJobId, long unused, Content dataSource) {
         super(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_STARTED, ingestJobId, dataSource);
     }
 

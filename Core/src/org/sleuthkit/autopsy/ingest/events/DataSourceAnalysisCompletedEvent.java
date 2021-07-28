@@ -43,8 +43,8 @@ public final class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEv
      * Constructs an event published when analysis (ingest) of a data source is
      * completed.
      *
-     * @param ingestJobId The identifier of the ingest job. For a mulit-user
-     *                    case, this ID is only unique on the node where the
+     * @param ingestJobId The identifier of the ingest job. For a multi-user
+     *                    case, this ID is only unique on the host where the
      *                    ingest job is running.
      * @param dataSource  The data source.
      * @param reason      The reason analysis completed.
@@ -58,19 +58,17 @@ public final class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEv
      * Constructs an event published when analysis (ingest) of a data source is
      * completed.
      *
-     * @param ingestJobId           The identifier of the ingest job. For a
-     *                              mulit-user case, this ID is only unique on
-     *                              the node where the ingest job is running.
-     * @param dataSourceIngestJobId The identifier of the ingest job. For a
-     *                              mulit-user case, this ID is only unique on
-     *                              the node where the ingest job is running.
-     * @param dataSource            The data source.
-     * @param reason                The reason analysis completed.
+     * @param ingestJobId The identifier of the ingest job. For a multi-user
+     *                    case, this ID is only unique on the host where the
+     *                    ingest job is running.
+     * @param unused      Unused.
+     * @param dataSource  The data source.
+     * @param reason      The reason analysis completed.
      *
      * @deprecated Do not use.
      */
     @Deprecated
-    public DataSourceAnalysisCompletedEvent(long ingestJobId, long dataSourceIngestJobId, Content dataSource, Reason reason) {
+    public DataSourceAnalysisCompletedEvent(long ingestJobId, long unused, Content dataSource, Reason reason) {
         this(ingestJobId, dataSource, reason);
     }
 

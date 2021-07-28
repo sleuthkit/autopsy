@@ -73,7 +73,6 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -399,9 +398,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Immediately starts ingest jobs for one or more data sources. If any of
-     * the jobs fails to start, any jobs already started are cancelled and any
-     * remaining jobs are not attempted.
+     * Immediately starts bathc mode ingest jobs for one or more data sources.
+     * If any of the jobs fails to start, any jobs already started are cancelled
+     * and any remaining jobs are not attempted.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest jobs.
@@ -410,25 +409,30 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *         attempting to start the ingest jobs.
      */
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
+        IngestJobStartResult startResult = null;
         if (caseIsOpen) {
             for (Content dataSource : dataSources) {
                 List<IngestJob> startedJobs = new ArrayList<>();
                 IngestJob job = new IngestJob(dataSource, IngestJob.Mode.BATCH, settings);
                 if (job.hasIngestPipeline()) {
-                    IngestJobStartResult startResult = startIngestJob(job);
+                    startResult = startIngestJob(job);
                     if (startResult.getModuleErrors().isEmpty() && startResult.getStartupException() == null) {
                         startedJobs.add(job);
                     } else {
                         for (IngestJob jobToCancel : startedJobs) {
                             jobToCancel.cancel(IngestJob.CancellationReason.INGEST_MODULES_STARTUP_FAILED);
                         }
-                        return startResult;
+                        break;
                     }
+                } else {
+                    startResult = new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled"), null); //NON-NLS
+                    break;
                 }
-                return new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled"), null); //NON-NLS
             }
+        } else {
+            startResult = new IngestJobStartResult(null, new IngestManagerException("No case open"), null); //NON-NLS
         }
-        return new IngestJobStartResult(null, new IngestManagerException("No case open"), null); //NON-NLS
+        return startResult;
     }
 
     /**
