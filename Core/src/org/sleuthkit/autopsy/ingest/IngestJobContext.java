@@ -65,7 +65,7 @@ public final class IngestJobContext {
      * @return The ID.
      */
     public long getJobId() {
-        return ingestJobPipeline.getId();
+        return ingestJobPipeline.getIngestJobId();
     }
 
     /**

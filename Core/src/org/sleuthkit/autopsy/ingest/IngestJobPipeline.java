@@ -434,7 +434,7 @@ final class IngestJobPipeline {
      *
      * @return The ID.
      */
-    long getId() {
+    long getIngestJobId() {
         return ingestJob.getId();
     }
 
@@ -1043,9 +1043,9 @@ final class IngestJobPipeline {
 
         IngestManager ingestManager = IngestManager.getInstance();
         if (isCancelled()) {
-            ingestManager.fireDataSourceAnalysisCompleted(getId(), getDataSource());
+            ingestManager.fireDataSourceAnalysisCompleted(getIngestJobId(), getDataSource());
         } else {
-            IngestManager.getInstance().fireDataSourceAnalysisCancelled(getId(), getDataSource());
+            IngestManager.getInstance().fireDataSourceAnalysisCancelled(getIngestJobId(), getDataSource());
         }
         ingestManager.finishIngestJob(ingestJob);
     }
@@ -1466,7 +1466,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logInfoMessage(String message) {
-        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), getId(), ingestJobInfo.getIngestJobId())); //NON-NLS        
+        logger.log(Level.INFO, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), getIngestJobId(), ingestJobInfo.getIngestJobId())); //NON-NLS        
     }
 
     /**
@@ -1478,7 +1478,7 @@ final class IngestJobPipeline {
      * @param throwable The throwable associated with the error.
      */
     private void logErrorMessage(Level level, String message, Throwable throwable) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), getId(), ingestJobInfo.getIngestJobId()), throwable); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id = %d)", message, this.dataSource.getName(), this.dataSource.getId(), getIngestJobId(), ingestJobInfo.getIngestJobId()), throwable); //NON-NLS
     }
 
     /**
@@ -1489,7 +1489,7 @@ final class IngestJobPipeline {
      * @param message The message.
      */
     private void logErrorMessage(Level level, String message) {
-        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id %d)", message, this.dataSource.getName(), this.dataSource.getId(), getId(), ingestJobInfo.getIngestJobId())); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, objId = %d, pipeline id = %d, ingest job id %d)", message, this.dataSource.getName(), this.dataSource.getId(), getIngestJobId(), ingestJobInfo.getIngestJobId())); //NON-NLS
     }
 
     /**
@@ -1548,10 +1548,10 @@ final class IngestJobPipeline {
                 estimatedFilesToProcessCount = this.estimatedFilesToProcess;
                 snapShotTime = new Date().getTime();
             }
-            tasksSnapshot = taskScheduler.getTasksSnapshotForJob(getId());
+            tasksSnapshot = taskScheduler.getTasksSnapshotForJob(getIngestJobId());
         }
 
-        return new Snapshot(dataSource.getName(), getId(), createTime,
+        return new Snapshot(dataSource.getName(), getIngestJobId(), createTime,
                 getCurrentDataSourceIngestModule(),
                 fileIngestRunning, fileIngestStartTime,
                 cancelled, cancellationReason, cancelledDataSourceIngestModules,
