@@ -83,6 +83,9 @@ public class IngestEventsListener {
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
+    
+    static final int MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE = 10;
+    static final int MAX_NUM_PREVIOUS_CASES_FOR_PREV_SEEN_ARTIFACT_CREATION = 20;
 
     public IngestEventsListener() {
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(INGEST_EVENT_THREAD_NAME).build());
@@ -211,7 +214,7 @@ public class IngestEventsListener {
     static private void makeAndPostPreviousNotableArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames,
             CorrelationAttributeInstance.Type aType, String value) {
         String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
-        String justification = "Previously marked as notable in " + prevCases;
+        String justification = "Previously marked as notable in cases " + prevCases;
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
                 TSK_SET_NAME, MODULE_NAME,
                 Bundle.IngestEventsListener_prevTaggedSet_text()),
@@ -223,14 +226,14 @@ public class IngestEventsListener {
                         value),
                 new BlackboardAttribute(
                         TSK_OTHER_CASES, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + prevCases));
+                        prevCases));
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text(),
                 Score.SCORE_NOTABLE, justification);
     }
 
     /**
      * Create a "previously seen" hit for a device which was previously seen
-     * in the central repository.
+     * in the central repository. NOTE: Artifacts that are too common will be skipped.
      *
      * @param originalArtifact the artifact to create the "previously seen" item for
      * @param caseDisplayNames the case names the artifact was previously seen
@@ -242,8 +245,21 @@ public class IngestEventsListener {
         "IngestEventsListener.prevCount.text=Number of previous {0}: {1}"})
     static private void makeAndPostPreviousSeenArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames,
             CorrelationAttributeInstance.Type aType, String value) {
+        
+        // calculate score
+        Score score;
+        int numCases = caseDisplayNames.size();
+        if (numCases <= MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE) {
+            score = Score.SCORE_LIKELY_NOTABLE;
+        } else if (numCases > MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE && numCases <= MAX_NUM_PREVIOUS_CASES_FOR_PREV_SEEN_ARTIFACT_CREATION) {
+            score = Score.SCORE_NONE; 
+        } else {
+            // don't make an Analysis Result, the artifact is too common.
+            return;
+        }
+        
         String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
-        String justification = "Previously seen in " + prevCases;
+        String justification = "Previously seen in cases " + prevCases;
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
                 TSK_SET_NAME, MODULE_NAME,
                 Bundle.IngestEventsListener_prevExists_text()),
@@ -255,10 +271,9 @@ public class IngestEventsListener {
                         value),
                 new BlackboardAttribute(
                         TSK_OTHER_CASES, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + prevCases));
-        // ELTODO calculate score        
+                        prevCases));     
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text(),
-                Score.SCORE_LIKELY_NOTABLE, justification);
+                score, justification);
     }
     
     /**
@@ -517,6 +532,9 @@ public class IngestEventsListener {
                                     if (!caseDisplayNames.isEmpty()) {
                                         makeAndPostPreviousNotableArtifact(bbArtifact,
                                                 caseDisplayNames, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                        
+                                        // if we have marked this artifact as notable, then skip the analysis of whether it was previously seen
+                                        continue;
                                     }
                                 } catch (CorrelationAttributeNormalizationException ex) {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);

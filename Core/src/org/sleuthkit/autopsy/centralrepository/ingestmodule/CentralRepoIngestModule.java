@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
@@ -335,6 +335,8 @@ final class CentralRepoIngestModule implements FileIngestModule {
      * @param caseDisplayNames Case names to be added to a TSK_COMMON attribute.
      */
     private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames, CorrelationAttributeInstance.Type aType, String value) {
+        String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
+        String justification = "Previously marked as notable in cases " + prevCases;
         Collection<BlackboardAttribute> attributes = Arrays.asList(
                 new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
@@ -347,14 +349,13 @@ final class CentralRepoIngestModule implements FileIngestModule {
                         value),
                 new BlackboardAttribute(
                         TSK_OTHER_CASES, MODULE_NAME,
-                        caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
+                        prevCases));
         try {
-
             // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_SEEN, attributes)) {
+            if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_NOTABLE, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE, 
-                        null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), null, attributes)
+                        BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, Score.SCORE_NOTABLE, 
+                        null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), justification, attributes)
                         .getAnalysisResult();
                 try {
                     // index the artifact for keyword search
