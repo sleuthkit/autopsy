@@ -66,7 +66,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
@@ -735,7 +735,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                                                     TSK_CORRELATION_VALUE, MODULE_NAME,
                                                     correlationAttributeInstance.getCorrelationValue()),
                                             new BlackboardAttribute(
-                                                    TSK_COMMENT, MODULE_NAME,
+                                                    TSK_OTHER_CASES, MODULE_NAME,
                                                     caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
                                     BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
                                             BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE,

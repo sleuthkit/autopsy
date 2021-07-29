@@ -55,7 +55,7 @@ import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -222,7 +222,7 @@ public class IngestEventsListener {
                         TSK_CORRELATION_VALUE, MODULE_NAME,
                         value),
                 new BlackboardAttribute(
-                        TSK_COMMENT, MODULE_NAME,
+                        TSK_OTHER_CASES, MODULE_NAME,
                         Bundle.IngestEventsListener_prevCaseComment_text() + prevCases));
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text(),
                 Score.SCORE_NOTABLE, justification);
@@ -254,7 +254,7 @@ public class IngestEventsListener {
                         TSK_CORRELATION_VALUE, MODULE_NAME,
                         value),
                 new BlackboardAttribute(
-                        TSK_COMMENT, MODULE_NAME,
+                        TSK_OTHER_CASES, MODULE_NAME,
                         Bundle.IngestEventsListener_prevCaseComment_text() + prevCases));
         // ELTODO calculate score        
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text(),
