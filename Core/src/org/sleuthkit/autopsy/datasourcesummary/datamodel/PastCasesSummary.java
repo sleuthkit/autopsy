@@ -37,33 +37,32 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Provides information about how a data source relates to a previous case. NOTE:
- * This code is fragile and has certain expectations about how the central
+ * Provides information about how a data source relates to a previous case.
+ * NOTE: This code is fragile and has certain expectations about how the central
  * repository handles creating artifacts. So, if the central repository changes
  * ingest process, this code could break. This code expects that the central
  * repository ingest module:
  *
- * a) Creates a TSK_PREVIOUSLY_NOTABLE artifact for a file whose hash is in
- * the central repository as a notable file.
+ * a) Creates a TSK_PREVIOUSLY_NOTABLE artifact for a file whose hash is in the
+ * central repository as a notable file.
  *
- * b) Creates a TSK_PREVIOUSLY_SEEN artifact for a matching id in the
- * central repository.
+ * b) Creates a TSK_PREVIOUSLY_SEEN artifact for a matching id in the central
+ * repository.
  *
- * c) The created artifact will have a TSK_COMMENT attribute attached where one
- * of the sources for the attribute matches
+ * c) The created artifact will have a TSK_OTHER_CASES attribute attached where
+ * one of the sources for the attribute matches
  * CentralRepoIngestModuleFactory.getModuleName(). The module display name at
  * time of ingest will match CentralRepoIngestModuleFactory.getModuleName() as
  * well.
  *
- * d) The content of that TSK_COMMENT attribute will be of the form "Previous
- * Case: case1,case2...caseN"
+ * d) The content of that TSK_OTHER_CASES attribute will be of the form
+ * "case1,case2...caseN"
  */
 public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
 
