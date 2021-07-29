@@ -49,8 +49,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_UNSEEN;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
@@ -209,14 +207,17 @@ public class IngestEventsListener {
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
         "IngestEventsListener.prevCaseComment.text=Previous Case: "})
     static private void makeAndPostPreviousNotableArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames) {
+        String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
+        String justification = "Previously marked as notable in " + prevCases;
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
                 new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
                         Bundle.IngestEventsListener_prevTaggedSet_text()),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
-        makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text());
+                        Bundle.IngestEventsListener_prevCaseComment_text() + prevCases));
+        makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text(),
+                Score.SCORE_NOTABLE, justification);
     }
 
     /**
@@ -232,13 +233,17 @@ public class IngestEventsListener {
         "# {1} - count",
         "IngestEventsListener.prevCount.text=Number of previous {0}: {1}"})
     static private void makeAndPostPreviousSeenArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames) {
+        String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
+        String justification = "Previously seen in " + prevCases;
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
                 TSK_SET_NAME, MODULE_NAME,
                 Bundle.IngestEventsListener_prevExists_text()),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
-        makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
+                        Bundle.IngestEventsListener_prevCaseComment_text() + prevCases));
+        // ELTODO calculate score        
+        makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text(), 
+                Score.SCORE_LIKELY_NOTABLE, justification);
     }
     
     /**
@@ -250,7 +255,8 @@ public class IngestEventsListener {
      */
     static private void makeAndPostPreviouslyUnseenArtifact(BlackboardArtifact originalArtifact) {
         Collection<BlackboardAttribute> attributesForNewArtifact = new ArrayList<>();
-        makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, originalArtifact, attributesForNewArtifact, "");
+        makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, originalArtifact, attributesForNewArtifact, "",
+                Score.SCORE_LIKELY_NOTABLE, "This application has not been previously seen before");
     }
 
     /**
@@ -259,8 +265,11 @@ public class IngestEventsListener {
      * @param originalArtifact         Artifact in current case we want to flag
      * @param attributesForNewArtifact Attributes to assign to the new artifact
      * @param configuration            The configuration to be specified for the new artifact hit
+     * @param score                    sleuthkit.datamodel.Score to be assigned to this artifact
+     * @param justification            Justification string
      */
-    private static void makeAndPostArtifact(BlackboardArtifact.Type newArtifactType, BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration) {
+    private static void makeAndPostArtifact(BlackboardArtifact.Type newArtifactType, BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration,
+            Score score, String justification) {
         try {
             SleuthkitCase tskCase = originalArtifact.getSleuthkitCase();
             Blackboard blackboard = tskCase.getBlackboard();
@@ -268,8 +277,8 @@ public class IngestEventsListener {
             BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(newArtifactType.getTypeID());
             if (!blackboard.artifactExists(originalArtifact, type, attributesForNewArtifact)) {
                   BlackboardArtifact newArtifact = originalArtifact.newAnalysisResult(
-                        newArtifactType, Score.SCORE_LIKELY_NOTABLE, 
-                        null, configuration, null, attributesForNewArtifact)
+                        newArtifactType, score, 
+                        null, configuration, justification, attributesForNewArtifact)
                         .getAnalysisResult();
 
                 try {
@@ -516,9 +525,11 @@ public class IngestEventsListener {
                                 }
                             }
                             
-                            // flag previously unseen apps
+                            // flag previously unseen apps and domains
+                            // ELTODO use new flag instead of flagPreviousItemsEnabled
                             if (flagPreviousItemsEnabled
-                                    && eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID) {
+                                    && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID
+                                    || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.DOMAIN_TYPE_ID)) {
                                 try {
                                     List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                     // make sure the previous instances do not contain current case
