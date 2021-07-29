@@ -78,6 +78,7 @@ public class IngestEventsListener {
     private static boolean flagNotableItems;
     private static boolean flagSeenDevices;
     private static boolean createCrProperties;
+    private static boolean flagUniqueArtifacts;
     private static final String INGEST_EVENT_THREAD_NAME = "Ingest-Event-Listener-%d";
     private final ExecutorService jobProcessingExecutor;
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
@@ -190,6 +191,24 @@ public class IngestEventsListener {
      */
     public synchronized static void setFlagSeenDevices(boolean value) {
         flagSeenDevices = value;
+    }
+    
+    /**
+     * Configure the listener to flag unique apps or not.
+     *
+     * @param value True to flag unique apps; otherwise false.
+     */
+    public synchronized static void setFlagUniqueArtifacts(boolean value) {
+        flagUniqueArtifacts = value;
+    }
+    
+    /**
+     * Are unique apps being flagged?
+     *
+     * @return True if flagging unique apps; otherwise false.
+     */
+    public synchronized static boolean isFlagUniqueArtifacts() {
+        return flagUniqueArtifacts;
     }
 
     /**
@@ -567,8 +586,7 @@ public class IngestEventsListener {
                             }
                             
                             // flag previously unseen apps and domains
-                            // ELTODO use new flag instead of flagPreviousItemsEnabled
-                            if (flagPreviousItemsEnabled
+                            if (flagUniqueArtifacts
                                     && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.DOMAIN_TYPE_ID)) {
                                 try {

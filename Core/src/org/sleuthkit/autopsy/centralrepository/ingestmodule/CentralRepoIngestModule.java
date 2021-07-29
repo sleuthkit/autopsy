@@ -71,6 +71,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = false;
     static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = false;
+    static final boolean DEFAULT_FLAG_UNIQUE_DEVICES = false;
     static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
 
     private final static Logger logger = Logger.getLogger(CentralRepoIngestModule.class.getName());
@@ -85,6 +86,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private final boolean flagPreviouslySeenDevices;
     private Blackboard blackboard;
     private final boolean createCorrelationProperties;
+    private final boolean flagUniqueArtifacts;
 
     /**
      * Instantiate the Central Repository ingest module.
@@ -95,6 +97,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
         flagPreviouslySeenDevices = settings.isFlagPreviousDevices();
         createCorrelationProperties = settings.shouldCreateCorrelationProperties();
+        flagUniqueArtifacts = settings.isFlagUniqueArtifacts();
     }
 
     @Override
@@ -251,6 +254,9 @@ final class CentralRepoIngestModule implements FileIngestModule {
         if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.shouldCreateCrProperties()) {
             IngestEventsListener.setCreateCrProperties(createCorrelationProperties);
         }
+        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagUniqueArtifacts()) {
+            IngestEventsListener.setFlagUniqueArtifacts(flagUniqueArtifacts);
+        }        
 
         if (CentralRepository.isEnabled() == false) {
             /*
