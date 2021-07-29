@@ -56,6 +56,8 @@ import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -208,11 +210,18 @@ public class IngestEventsListener {
      */
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
         "IngestEventsListener.prevCaseComment.text=Previous Case: "})
-    static private void makeAndPostPreviousNotableArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames) {
+    static private void makeAndPostPreviousNotableArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames,
+            CorrelationAttributeInstance.Type aType, String value) {
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
                 new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
                         Bundle.IngestEventsListener_prevTaggedSet_text()),
+               new BlackboardAttribute(
+                    TSK_CORRELATION_TYPE, MODULE_NAME,
+                    aType.getDisplayName()),
+                new BlackboardAttribute(
+                    TSK_CORRELATION_VALUE, MODULE_NAME,
+                    value),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
                         Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
@@ -231,10 +240,17 @@ public class IngestEventsListener {
         "# {0} - typeName",
         "# {1} - count",
         "IngestEventsListener.prevCount.text=Number of previous {0}: {1}"})
-    static private void makeAndPostPreviousSeenArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames) {
+    static private void makeAndPostPreviousSeenArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames,
+            CorrelationAttributeInstance.Type aType, String value) {
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
-                TSK_SET_NAME, MODULE_NAME,
-                Bundle.IngestEventsListener_prevExists_text()),
+                    TSK_SET_NAME, MODULE_NAME,
+                    Bundle.IngestEventsListener_prevExists_text()),
+               new BlackboardAttribute(
+                    TSK_CORRELATION_TYPE, MODULE_NAME,
+                    aType.getDisplayName()),
+                new BlackboardAttribute(
+                    TSK_CORRELATION_VALUE, MODULE_NAME,
+                    value),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
                         Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
@@ -248,8 +264,14 @@ public class IngestEventsListener {
      * @param originalArtifact the artifact to create the "previously unseen" item
      *                         for
      */
-    static private void makeAndPostPreviouslyUnseenArtifact(BlackboardArtifact originalArtifact) {
-        Collection<BlackboardAttribute> attributesForNewArtifact = new ArrayList<>();
+    static private void makeAndPostPreviouslyUnseenArtifact(BlackboardArtifact originalArtifact, CorrelationAttributeInstance.Type aType, String value) {
+                Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
+                new BlackboardAttribute(
+                    TSK_CORRELATION_TYPE, MODULE_NAME,
+                    aType.getDisplayName()),
+                new BlackboardAttribute(
+                    TSK_CORRELATION_VALUE, MODULE_NAME,
+                    value));
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, originalArtifact, attributesForNewArtifact, "");
     }
 
@@ -486,7 +508,7 @@ public class IngestEventsListener {
                                     caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                     if (!caseDisplayNames.isEmpty()) {
                                         makeAndPostPreviousNotableArtifact(bbArtifact,
-                                                caseDisplayNames);
+                                                caseDisplayNames, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                     }
                                 } catch (CorrelationAttributeNormalizationException ex) {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
@@ -507,7 +529,7 @@ public class IngestEventsListener {
                                     for (CorrelationAttributeInstance instance : previousOccurences) {
                                         if (!instance.getCorrelationCase().getCaseUUID().equals(eamArtifact.getCorrelationCase().getCaseUUID())) {
                                             caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
-                                            makeAndPostPreviousSeenArtifact(bbArtifact, caseDisplayNames);
+                                            makeAndPostPreviousSeenArtifact(bbArtifact, caseDisplayNames, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                             break;
                                         }
                                     }
@@ -530,7 +552,7 @@ public class IngestEventsListener {
                                         }
                                     }
                                     if (previousOccurences.isEmpty()) {
-                                        makeAndPostPreviouslyUnseenArtifact(bbArtifact);
+                                        makeAndPostPreviouslyUnseenArtifact(bbArtifact, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                     }
                                 } catch (CorrelationAttributeNormalizationException ex) {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag previously unseen application: %s.", eamArtifact.toString()), ex);
