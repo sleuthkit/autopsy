@@ -372,7 +372,8 @@ public class IngestEventsListener {
                         boolean flagNotable = !IngestManager.getInstance().isIngestRunning() || isFlagNotableItems();
                         boolean flagPrevious = !IngestManager.getInstance().isIngestRunning() || isFlagSeenDevices();
                         boolean createAttributes = !IngestManager.getInstance().isIngestRunning() || shouldCreateCrProperties();
-                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable, flagPrevious, createAttributes));
+                        boolean flagUnique = !IngestManager.getInstance().isIngestRunning() || isFlagUniqueArtifacts();
+                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable, flagPrevious, createAttributes, flagUnique));
                         break;
                     }
                     default:
@@ -512,13 +513,15 @@ public class IngestEventsListener {
         private final boolean flagNotableItemsEnabled;
         private final boolean flagPreviousItemsEnabled;
         private final boolean createCorrelationAttributes;
+        private final boolean flagUniqueItemsEnabled;
 
-        private DataAddedTask(CentralRepository db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled, boolean createCorrelationAttributes) {
+        private DataAddedTask(CentralRepository db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled, boolean createCorrelationAttributes, boolean flagUnique) {
             this.dbManager = db;
             this.event = evt;
             this.flagNotableItemsEnabled = flagNotableItemsEnabled;
             this.flagPreviousItemsEnabled = flagPreviousItemsEnabled;
             this.createCorrelationAttributes = createCorrelationAttributes;
+            this.flagUniqueItemsEnabled = flagUnique;
         }
 
         @Override
@@ -586,7 +589,7 @@ public class IngestEventsListener {
                             }
                             
                             // flag previously unseen apps and domains
-                            if (flagUniqueArtifacts
+                            if (flagUniqueItemsEnabled
                                     && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.DOMAIN_TYPE_ID)) {
                                 try {
