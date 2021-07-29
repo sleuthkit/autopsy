@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -67,6 +68,8 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.Score;
@@ -713,19 +716,27 @@ public final class CaseEventListener implements PropertyChangeListener {
 
                         // Look up and create artifacts for previously seen accounts if requested
                         if (IngestEventsListener.isFlagSeenDevices()) {
-                            List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID), correlationAttributeInstance.getCorrelationValue());
+                            CorrelationAttributeInstance.Type osAcctType = CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID);
+                            List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(osAcctType, correlationAttributeInstance.getCorrelationValue());
                             for (CorrelationAttributeInstance instance : previousOccurences) {
                                 if (!instance.getCorrelationCase().getCaseUUID().equals(correlationAttributeInstance.getCorrelationCase().getCaseUUID())) {
                                     SleuthkitCase tskCase = osAccount.getSleuthkitCase();
                                     Blackboard blackboard = tskCase.getBlackboard();
 
+                                    List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(osAcctType, correlationAttributeInstance.getCorrelationValue());
                                     Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
                                             new BlackboardAttribute(
                                                     TSK_SET_NAME, MODULE_NAME,
                                                     Bundle.CaseEventsListener_prevExists_text()),
                                             new BlackboardAttribute(
+                                                    TSK_CORRELATION_TYPE, MODULE_NAME,
+                                                    osAcctType.getDisplayName()),
+                                            new BlackboardAttribute(
+                                                    TSK_CORRELATION_VALUE, MODULE_NAME,
+                                                    correlationAttributeInstance.getCorrelationValue()),
+                                            new BlackboardAttribute(
                                                     TSK_COMMENT, MODULE_NAME,
-                                                    Bundle.CaseEventsListener_prevCaseComment_text()));
+                                                    caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
                                     BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
                                             BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE,
                                             null, Bundle.CaseEventsListener_prevExists_text(), null, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
