@@ -52,6 +52,8 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVI
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -151,7 +153,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
                 List<String> caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
                 HealthMonitor.submitTimingMetric(timingMetric);
                 if (!caseDisplayNamesList.isEmpty()) {
-                    postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
+                    postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList, filesType, md5);
                 }
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
@@ -332,11 +334,17 @@ final class CentralRepoIngestModule implements FileIngestModule {
      * @param abstractFile     The file from which to create an artifact.
      * @param caseDisplayNames Case names to be added to a TSK_COMMON attribute.
      */
-    private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
+    private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames, CorrelationAttributeInstance.Type aType, String value) {
         Collection<BlackboardAttribute> attributes = Arrays.asList(
                 new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
                         Bundle.CentralRepoIngestModule_prevTaggedSet_text()),
+                new BlackboardAttribute(
+                    TSK_CORRELATION_TYPE, MODULE_NAME,
+                    aType.getDisplayName()),
+                new BlackboardAttribute(
+                    TSK_CORRELATION_VALUE, MODULE_NAME,
+                    value),
                 new BlackboardAttribute(
                         TSK_COMMENT, MODULE_NAME,
                         Bundle.CentralRepoIngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
