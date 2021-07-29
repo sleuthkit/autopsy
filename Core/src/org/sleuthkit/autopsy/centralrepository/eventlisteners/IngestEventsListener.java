@@ -54,10 +54,10 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVI
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -212,8 +212,7 @@ public class IngestEventsListener {
         "IngestEventsListener.prevCaseComment.text=Previous Case: "})
     static private void makeAndPostPreviousNotableArtifact(BlackboardArtifact originalArtifact, List<String> caseDisplayNames,
             CorrelationAttributeInstance.Type aType, String value) {
-        Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
-                new BlackboardAttribute(
+        Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
                         Bundle.IngestEventsListener_prevTaggedSet_text()),
                new BlackboardAttribute(
@@ -223,8 +222,8 @@ public class IngestEventsListener {
                     TSK_CORRELATION_VALUE, MODULE_NAME,
                     value),
                 new BlackboardAttribute(
-                        TSK_COMMENT, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
+                        TSK_OTHER_CASES, MODULE_NAME,
+                        caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text());
     }
 
@@ -252,8 +251,8 @@ public class IngestEventsListener {
                     TSK_CORRELATION_VALUE, MODULE_NAME,
                     value),
                 new BlackboardAttribute(
-                        TSK_COMMENT, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
+                        TSK_OTHER_CASES, MODULE_NAME,
+                        caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
     }
     

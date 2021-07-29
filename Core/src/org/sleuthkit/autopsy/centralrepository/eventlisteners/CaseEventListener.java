@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -69,6 +70,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COM
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.Score;
@@ -722,6 +724,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                                     SleuthkitCase tskCase = osAccount.getSleuthkitCase();
                                     Blackboard blackboard = tskCase.getBlackboard();
 
+                                    List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(osAcctType, correlationAttributeInstance.getCorrelationValue());
                                     Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
                                             new BlackboardAttribute(
                                                     TSK_SET_NAME, MODULE_NAME,
@@ -733,8 +736,8 @@ public final class CaseEventListener implements PropertyChangeListener {
                                                     TSK_CORRELATION_VALUE, MODULE_NAME,
                                                     correlationAttributeInstance.getCorrelationValue()),
                                             new BlackboardAttribute(
-                                                    TSK_COMMENT, MODULE_NAME,
-                                                    Bundle.CaseEventsListener_prevCaseComment_text()));
+                                                    TSK_OTHER_CASES, MODULE_NAME,
+                                                    caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
                                     BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
                                             BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE,
                                             null, Bundle.CaseEventsListener_prevExists_text(), null, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
