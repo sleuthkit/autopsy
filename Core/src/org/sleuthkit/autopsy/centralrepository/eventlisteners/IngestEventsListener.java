@@ -199,10 +199,6 @@ public class IngestEventsListener {
     public synchronized static void setCreateCrProperties(boolean value) {
         createCrProperties = value;
     }
-    
-    static private String createOtherCasesAttrString(List<String> caseDisplayNames) {
-        return caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
-    }
 
     /**
      * Make a "previously seen" artifact based on a new artifact being
@@ -227,7 +223,7 @@ public class IngestEventsListener {
                     value),
                 new BlackboardAttribute(
                         TSK_OTHER_CASES, MODULE_NAME,
-                        createOtherCasesAttrString(caseDisplayNames)));
+                        caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevTaggedSet_text());
     }
 
@@ -256,7 +252,7 @@ public class IngestEventsListener {
                     value),
                 new BlackboardAttribute(
                         TSK_OTHER_CASES, MODULE_NAME,
-                        createOtherCasesAttrString(caseDisplayNames)));
+                        caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
     }
     
