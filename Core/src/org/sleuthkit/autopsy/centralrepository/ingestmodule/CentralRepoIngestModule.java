@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -346,8 +346,8 @@ final class CentralRepoIngestModule implements FileIngestModule {
                         TSK_CORRELATION_VALUE, MODULE_NAME,
                         value),
                 new BlackboardAttribute(
-                        TSK_COMMENT, MODULE_NAME,
-                        Bundle.CentralRepoIngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
+                        TSK_OTHER_CASES, MODULE_NAME,
+                        caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
         try {
 
             // Create artifact if it doesn't already exist.
