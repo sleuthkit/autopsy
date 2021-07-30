@@ -57,6 +57,13 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
         this.getComponent().setDataSourceSelected(dataSourceId);
     }
 
+    /**
+     * Reset the data source filter to be up to date with the current case.
+     */
+    void resetDataSourceFilter() {
+        this.getComponent().resetDataSourcePanel();
+    }
+
     @Override
     public String getPredicate() throws FilterValidationException {
         String predicate = "";

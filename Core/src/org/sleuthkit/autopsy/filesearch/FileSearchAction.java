@@ -40,6 +40,9 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 setEnabled(evt.getNewValue() != null);
+                if (searchDialog != null && evt.getNewValue() != null) {
+                    searchDialog.resetCaseDependentFilters();
+                }
             }
         });
     }

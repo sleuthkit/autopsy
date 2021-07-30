@@ -29,6 +29,8 @@ import org.openide.windows.WindowManager;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class FileSearchDialog extends javax.swing.JDialog {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Creates new form FileSearchDialog
      */
@@ -55,6 +57,14 @@ final class FileSearchDialog extends javax.swing.JDialog {
      */
     void setSelectedDataSourceFilter(long dataSourceId) {
         fileSearchPanel1.setDataSourceFilter(dataSourceId);
+    }
+
+    /**
+     * Reset the filters which are populated with options based on the contents
+     * of the current case.
+     */
+    void resetCaseDependentFilters() {
+        fileSearchPanel1.resetCaseDependentFilters();
     }
 
     /**
