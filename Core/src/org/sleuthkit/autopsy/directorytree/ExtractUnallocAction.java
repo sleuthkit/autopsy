@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -40,6 +41,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -63,6 +65,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 final class ExtractUnallocAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
+    private static final long serialVersionUID = 1L;
 
     private final List<OutputFileData> filesToExtract = new ArrayList<>();
     private static final Set<String> volumesInProgress = new HashSet<>();
@@ -70,6 +73,9 @@ final class ExtractUnallocAction extends AbstractAction {
     private static String userDefinedExportPath;
     private long currentImage = 0L;
     private final boolean isImage;
+    
+    private final Volume volume;
+    private final Image image;
 
     /**
      * Create an instance of ExtractUnallocAction with a volume.
@@ -77,17 +83,12 @@ final class ExtractUnallocAction extends AbstractAction {
      * @param title The title
      * @param volume The volume set for extraction.
      */
-    public ExtractUnallocAction(String title, Volume volume) {
+    ExtractUnallocAction(String title, Volume volume) {
         super(title);
+        
+        this.volume = volume;
+        this.image = null;
         isImage = false;
-        try {
-            OutputFileData outputFileData = new OutputFileData(volume);
-            filesToExtract.add(outputFileData);
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            setEnabled(false);
-        }
-
     }
 
     /**
@@ -97,19 +98,12 @@ final class ExtractUnallocAction extends AbstractAction {
      * @param image The image set for extraction.
      * @throws NoCurrentCaseException If no case is open.
      */
-    public ExtractUnallocAction(String title, Image image) throws NoCurrentCaseException {
+    ExtractUnallocAction(String title, Image image) {
         super(title);
+        
+        this.volume = null;
+        this.image = image;
         isImage = true;
-        currentImage = image.getId();
-        if (hasVolumeSystem(image)) {
-            for (Volume v : getVolumes(image)) {
-                OutputFileData outputFileData = new OutputFileData(v);
-                filesToExtract.add(outputFileData);
-            }
-        } else {
-            OutputFileData outputFileData = new OutputFileData(image);
-            filesToExtract.add(outputFileData);
-        }
     }
 
     /**
@@ -126,6 +120,32 @@ final class ExtractUnallocAction extends AbstractAction {
         "ExtractUnallocAction.noOpenCase.errMsg=No open case available."})
     @Override
     public void actionPerformed(ActionEvent event) {
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            if (volume != null) {
+                OutputFileData outputFileData = new OutputFileData(volume);
+                filesToExtract.add(outputFileData);
+
+            } else {
+                currentImage = image.getId();
+                if (hasVolumeSystem(image)) {
+                    for (Volume v : getVolumes(image)) {
+                        OutputFileData outputFileData = new OutputFileData(v);
+                        filesToExtract.add(outputFileData);
+                    }
+                } else {
+                    OutputFileData outputFileData = new OutputFileData(image);
+                    filesToExtract.add(outputFileData);
+                }
+            }
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+             MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "EExtractUnallocAction.noOpenCase.errMsg"));
+            return;
+        } finally {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        }
+
         if (filesToExtract != null && filesToExtract.isEmpty() == false) {
             // This check doesn't absolutely guarantee that the image won't be in progress when we make the worker, 
             // but in general it will suffice.

@@ -73,13 +73,8 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     @Override
     public List<? extends Action> visit(final Image img) {
         List<Action> lst = new ArrayList<>();
-        //TODO lst.add(new ExtractAction("Extract Image", img));
-        try {
-            lst.add(new ExtractUnallocAction(
-                NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFiles"), img));
-        } catch (NoCurrentCaseException ex) { 
-            Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-        }
+        lst.add(new ExtractUnallocAction(
+            NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFiles"), img));
         return lst;
     }
 
