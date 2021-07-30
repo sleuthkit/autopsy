@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -56,12 +57,15 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.datamodel.Score;
 
 /**
@@ -313,7 +317,72 @@ public class IngestEventsListener {
         makeAndPostArtifact(BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, originalArtifact, attributesForNewArtifact, "",
                 Score.SCORE_LIKELY_NOTABLE, "This application has not been previously seen before");
     }
+    
+    /**
+     * *TEMPORARY* Create a "matching persona" hit for an artifact with an account identifier 
+     * associated with a persona
+     *
+     * @param originalArtifact the artifact to create the "previously unseen" item
+     *                         for
+     */
+    static private void makeAndPostMatchingPersonaArtifact(BlackboardArtifact originalArtifact, Persona persona, CorrelationAttributeInstance.Type aType, String value) {
+                Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
+                new BlackboardAttribute(
+                    TSK_NAME, MODULE_NAME,
+                    persona.getName()),  
+                new BlackboardAttribute(
+                    TSK_COMMENT, MODULE_NAME,
+                    persona.getComment()),      
+                new BlackboardAttribute(
+                    TSK_CORRELATION_TYPE, MODULE_NAME,
+                    aType.getDisplayName()),
+                new BlackboardAttribute(
+                    TSK_CORRELATION_VALUE, MODULE_NAME,
+                    value)
+                );
+        makeAndPostPersonaArtifact(BlackboardArtifact.Type.TSK_MATCHING_PERSONA, originalArtifact, attributesForNewArtifact, "",
+                Score.SCORE_LIKELY_NOTABLE, "This account is associated with a persona");
+    }
+    
+    /**
+     * *TEMPORARY* Hack to get all the flagged personas associated with the same file to prevent
+     * duplicates (associate with source file not the account instance artifact).
+     * Make an artifact to flag the passed in content.
+     *
+     * @param originalArtifact         Artifact in current case we want to flag
+     * @param attributesForNewArtifact Attributes to assign to the new artifact
+     * @param configuration            The configuration to be specified for the new artifact hit
+     * @param score                    sleuthkit.datamodel.Score to be assigned to this artifact
+     * @param justification            Justification string
+     */
+    private static void makeAndPostPersonaArtifact(BlackboardArtifact.Type newArtifactType, BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration,
+            Score score, String justification) {
+        try {
+            SleuthkitCase tskCase = originalArtifact.getSleuthkitCase();
+            Content originalContent = originalArtifact.getParent(); // Associate artifact with file instead of artifact
+            Blackboard blackboard = tskCase.getBlackboard();
+            // Create artifact if it doesn't already exist.
+            BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(newArtifactType.getTypeID());
+            if (!blackboard.artifactExists(originalContent, type, attributesForNewArtifact)) {
+                  BlackboardArtifact newArtifact = originalContent.newAnalysisResult(
+                        newArtifactType, score, 
+                        null, configuration, justification, attributesForNewArtifact)
+                        .getAnalysisResult();
 
+                try {
+                    // index the artifact for keyword search
+                    blackboard.postArtifact(newArtifact, MODULE_NAME);
+                } catch (Blackboard.BlackboardException ex) {
+                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newArtifact.getArtifactID(), ex); //NON-NLS
+                }
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
+        } catch (IllegalStateException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+        }
+    }    
+    
     /**
      * Make an artifact to flag the passed in artifact.
      *
@@ -585,6 +654,22 @@ public class IngestEventsListener {
                                     }
                                 } catch (CorrelationAttributeNormalizationException ex) {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag previously seen device: %s.", eamArtifact.toString()), ex);
+                                }
+                            }
+                            
+                            // *TEMPORARY* If we have a field that could be associated with a persona, check whether it is
+                            // and make an artifact if so. Applicable types should be expanded later.
+                            if (flagPreviousItemsEnabled && 
+                                    ((eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID)
+                                    || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.PHONE_TYPE_ID)) {
+                                String accountId = eamArtifact.getCorrelationValue();
+                                Collection<Persona> personaMatches = Persona.getPersonaByAccountIdentifierLike(accountId);
+                                for (Persona persona : personaMatches) {
+                                    for (PersonaAccount personaAccount : persona.getPersonaAccounts()) {
+                                        if (accountId.equalsIgnoreCase(personaAccount.getAccount().getIdentifier())) {
+                                            makeAndPostMatchingPersonaArtifact(bbArtifact, persona, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                        }
+                                    }
                                 }
                             }
                             
