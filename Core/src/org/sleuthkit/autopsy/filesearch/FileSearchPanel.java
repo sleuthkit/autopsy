@@ -225,10 +225,10 @@ class FileSearchPanel extends javax.swing.JPanel {
                             if (tableFilterNode == null) {  //just incase this get() gets modified to return null or somehow can return null
                                 tableFilterNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text()), true);
                             }
-
-                            searchResultWin.setNode(tableFilterNode);
-                            searchResultWin.requestActive(); // make it the active top component
-
+                            if (searchResultWin != null && searchResultWin.isOpened()) {
+                                searchResultWin.setNode(tableFilterNode);
+                                searchResultWin.requestActive(); // make it the active top component
+                            }
                             /**
                              * If total matches more than 1000, pop up a dialog
                              * box that say the performance maybe be slow and to
@@ -244,26 +244,32 @@ class FileSearchPanel extends javax.swing.JPanel {
                         } catch (InterruptedException | ExecutionException ex) {
                             logger.log(Level.SEVERE, "Error while performing file search by attributes", ex);
                         } catch (CancellationException ex) {
-                            Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_cancelledSearch_text()), true);
-                            searchResultWin.setNode(emptyNode);
-                            pathText = Bundle.FileSearchPanel_cancelledSearch_text();
+                            if (searchResultWin != null && searchResultWin.isOpened()) {
+                                Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_cancelledSearch_text()), true);
+                                searchResultWin.setNode(emptyNode);
+                                pathText = Bundle.FileSearchPanel_cancelledSearch_text();
+                            }
                             logger.log(Level.INFO, "File search by attributes was cancelled", ex);
                         } finally {
-                            searchResultWin.setPath(pathText);
-                            searchResultWin.requestActive(); // make it the active top component
-                            searchResultWin.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                            if (searchResultWin != null && searchResultWin.isOpened()) {
+                                searchResultWin.setPath(pathText);
+                                searchResultWin.requestActive(); // make it the active top component
+                                searchResultWin.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                            }
                         }
                     }
                 };
-                searchResultWin.addPropertyChangeListener(new PropertyChangeListener() {
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (evt.getPropertyName().equals("tcClosed") && !searchWorker.isDone() && evt.getOldValue() == null) {
-                            searchWorker.cancel(true);
-                            logger.log(Level.INFO, "User has closed the results window while search was in progress, search will be cancelled");
+                if (searchResultWin != null && searchResultWin.isOpened()) {
+                    searchResultWin.addPropertyChangeListener(new PropertyChangeListener() {
+                        @Override
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            if (evt.getPropertyName().equals("tcClosed") && !searchWorker.isDone() && evt.getOldValue() == null) {
+                                searchWorker.cancel(true);
+                                logger.log(Level.INFO, "User has closed the results window while search was in progress, search will be cancelled");
+                            }
                         }
-                    }
-                });
+                    });
+                }
                 searchWorker.execute();
             } else {
                 throw new FilterValidationException(
