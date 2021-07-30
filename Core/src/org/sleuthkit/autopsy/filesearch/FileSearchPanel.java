@@ -65,7 +65,7 @@ class FileSearchPanel extends javax.swing.JPanel {
     private final List<FileSearchFilter> filters = new ArrayList<>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
-    private static SwingWorker<Void, Void> searchWorker = null;
+    private static SwingWorker<TableFilterNode, Void> searchWorker = null;
 
     enum EVENT {
         CHECKED
@@ -175,23 +175,30 @@ class FileSearchPanel extends javax.swing.JPanel {
      * Action when the "Search" button is pressed.
      *
      */
-    @NbBundle.Messages("FileSearchPanel.emptyNode.display.text=No results found.")
+    @NbBundle.Messages({"FileSearchPanel.emptyNode.display.text=No results found.",
+        "FileSearchPanel.searchingNode.display.text=Performing file search by attributes. Please wait.",
+        "FileSearchPanel.searchingPath.text=File Search In Progress",
+        "FileSearchPanel.cancelledSearch.text=Search Was Cancelled"})
     private void search() {
         if (searchWorker != null && searchWorker.isDone()) {
             searchWorker.cancel(true);
         }
         try {
             if (this.isValidSearch()) {
-                // change the cursor to "waiting cursor" for this operation
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 // try to get the number of matches first
                 Case currentCase = Case.getCurrentCaseThrows(); // get the most updated case
-                searchWorker = new SwingWorker<Void, Void>() {
+                Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text()), true);
+                String title = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.title", ++resultWindowCount);
+                String pathText = Bundle.FileSearchPanel_searchingPath_text();
+                final DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText,
+                        emptyNode, 0);
+                searchResultWin.requestActive(); // make it the active top component
+                searchResultWin.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                searchWorker = new SwingWorker<TableFilterNode, Void>() {
                     List<AbstractFile> contentList = null;
-                    TableFilterNode tableFilterNode = null;
 
                     @Override
-                    protected Void doInBackground() throws Exception {
+                    protected TableFilterNode doInBackground() throws Exception {
                         try {
                             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
                             contentList = tskDb.findAllFilesWhere(getQuery());
@@ -203,27 +210,23 @@ class FileSearchPanel extends javax.swing.JPanel {
                         if (contentList == null) {
                             contentList = Collections.<AbstractFile>emptyList();
                         }
+                        if (contentList.isEmpty()) {
+                            return new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text()), true);
+                        }
                         SearchNode sn = new SearchNode(contentList);
-                        tableFilterNode = new TableFilterNode(sn, true, sn.getName());
-                        return null;
+                        return new TableFilterNode(sn, true, sn.getName());
                     }
 
                     @Override
                     protected void done() {
-
+                        String pathText = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.pathText");
                         try {
-                            get();
-                            String title = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.title", ++resultWindowCount);
-                            String pathText = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.pathText");
-                            final TopComponent searchResultWin;
-                            if (contentList.isEmpty() || tableFilterNode == null) {
-                                Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text()), true);
-                                searchResultWin = DataResultTopComponent.createInstance(title, pathText,
-                                        emptyNode, 0);
-                            } else {
-                                searchResultWin = DataResultTopComponent.createInstance(title, pathText,
-                                        tableFilterNode, contentList.size());
+                            TableFilterNode tableFilterNode = get();
+                            if (tableFilterNode == null) {  //just incase this get() gets modified to return null or somehow can return null
+                                tableFilterNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text()), true);
                             }
+
+                            searchResultWin.setNode(tableFilterNode);
                             searchResultWin.requestActive(); // make it the active top component
 
                             /**
@@ -241,12 +244,25 @@ class FileSearchPanel extends javax.swing.JPanel {
                         } catch (InterruptedException | ExecutionException ex) {
                             logger.log(Level.SEVERE, "Error while performing file search by attributes", ex);
                         } catch (CancellationException ex) {
+                            Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_cancelledSearch_text()), true);
+                            searchResultWin.setNode(emptyNode);
+                            pathText = Bundle.FileSearchPanel_cancelledSearch_text();
                             logger.log(Level.INFO, "File search by attributes was cancelled", ex);
                         } finally {
-                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                            searchResultWin.setPath(pathText);
+                            searchResultWin.requestActive(); // make it the active top component
+                            searchResultWin.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                         }
                     }
                 };
+                searchResultWin.addPropertyChangeListener(new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (evt.getPropertyName().equals("tcClosed") && !searchWorker.isDone() && evt.getOldValue() == null) {
+                            searchWorker.cancel(true);
+                        }
+                    }
+                });
                 searchWorker.execute();
             } else {
                 throw new FilterValidationException(

@@ -1,7 +1,10 @@
 DataSourceFilter.errorMessage.emptyDataSource=At least one data source must be selected.
 DateSearchFilter.errorMessage.endDateBeforeStartDate=The end date should be after the start date.
 DateSearchFilter.errorMessage.noCheckboxSelected=At least one date type checkbox must be selected.
+FileSearchPanel.cancelledSearch.text=Search Was Cancelled
 FileSearchPanel.emptyNode.display.text=No results found.
+FileSearchPanel.searchingNode.display.text=Performing file search by attributes. Please wait.
+FileSearchPanel.searchingPath.text=File Search In Progress
 HashSearchFilter.errorMessage.emptyHash=Hash data is empty.
 HashSearchFilter.errorMessage.wrongCharacter=MD5 contains invalid hex characters.
 # {0} - hash data length
