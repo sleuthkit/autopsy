@@ -58,6 +58,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COR
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -327,14 +328,18 @@ public class IngestEventsListener {
     static private void makeAndPostMatchingPersonaArtifact(BlackboardArtifact originalArtifact, Persona persona, CorrelationAttributeInstance.Type aType, String value) {
                 Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
                 new BlackboardAttribute(
+                    TSK_NAME, MODULE_NAME,
+                    persona.getName()),  
+                new BlackboardAttribute(
+                    TSK_COMMENT, MODULE_NAME,
+                    persona.getComment()),      
+                new BlackboardAttribute(
                     TSK_CORRELATION_TYPE, MODULE_NAME,
                     aType.getDisplayName()),
                 new BlackboardAttribute(
                     TSK_CORRELATION_VALUE, MODULE_NAME,
-                    value),
-                new BlackboardAttribute(
-                    TSK_NAME, MODULE_NAME,
-                    persona.getName()));
+                    value)
+                );
         makeAndPostPersonaArtifact(BlackboardArtifact.Type.TSK_MATCHING_PERSONA, originalArtifact, attributesForNewArtifact, "",
                 Score.SCORE_LIKELY_NOTABLE, "This account is associated with a persona");
     }
