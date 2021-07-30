@@ -66,11 +66,10 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.Score;
@@ -725,6 +724,21 @@ public final class CaseEventListener implements PropertyChangeListener {
                                     Blackboard blackboard = tskCase.getBlackboard();
 
                                     List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(osAcctType, correlationAttributeInstance.getCorrelationValue());
+
+                                    // calculate score
+                                    Score score;
+                                    int numCases = caseDisplayNames.size();
+                                    if (numCases <= IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE) {
+                                        score = Score.SCORE_LIKELY_NOTABLE;
+                                    } else if (numCases > IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE && numCases <= IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_PREV_SEEN_ARTIFACT_CREATION) {
+                                        score = Score.SCORE_NONE;
+                                    } else {
+                                        // don't make an Analysis Result, the artifact is too common.
+                                        continue;
+                                    }
+
+                                    String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
+                                    String justification = "Previously seen in cases " + prevCases;
                                     Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
                                             new BlackboardAttribute(
                                                     TSK_SET_NAME, MODULE_NAME,
@@ -737,10 +751,10 @@ public final class CaseEventListener implements PropertyChangeListener {
                                                     correlationAttributeInstance.getCorrelationValue()),
                                             new BlackboardAttribute(
                                                     TSK_OTHER_CASES, MODULE_NAME,
-                                                    caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
+                                                    prevCases));
                                     BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
-                                            BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, Score.SCORE_LIKELY_NOTABLE,
-                                            null, Bundle.CaseEventsListener_prevExists_text(), null, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
+                                            BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, score,
+                                            null, Bundle.CaseEventsListener_prevExists_text(), justification, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
                                     try {
                                         // index the artifact for keyword search
                                         blackboard.postArtifact(newAnalysisResult, MODULE_NAME);

@@ -43,26 +43,26 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Provides information about how a data source relates to a previous case. NOTE:
- * This code is fragile and has certain expectations about how the central
+ * Provides information about how a data source relates to a previous case.
+ * NOTE: This code is fragile and has certain expectations about how the central
  * repository handles creating artifacts. So, if the central repository changes
  * ingest process, this code could break. This code expects that the central
  * repository ingest module:
  *
- * a) Creates a TSK_PREVIOUSLY_SEEN artifact for a file whose hash is in
- * the central repository as a notable file.
+ * a) Creates a TSK_PREVIOUSLY_NOTABLE artifact for a file whose hash is in the
+ * central repository as a notable file.
  *
- * b) Creates a TSK_PREVIOUSLY_SEEN artifact for a matching id in the
- * central repository.
+ * b) Creates a TSK_PREVIOUSLY_SEEN artifact for a matching id in the central
+ * repository.
  *
- * c) The created artifact will have a TSK_COMMENT attribute attached where one
- * of the sources for the attribute matches
+ * c) The created artifact will have a TSK_OTHER_CASES attribute attached where
+ * one of the sources for the attribute matches
  * CentralRepoIngestModuleFactory.getModuleName(). The module display name at
  * time of ingest will match CentralRepoIngestModuleFactory.getModuleName() as
  * well.
  *
- * d) The content of that TSK_COMMENT attribute will be of the form "Previous
- * Case: case1,case2...caseN"
+ * d) The content of that TSK_OTHER_CASES attribute will be of the form
+ * "case1,case2...caseN"
  */
 public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
 
@@ -101,11 +101,12 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
     }
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID()
+            ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID(), 
+            ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE.getTypeID()
     ));
 
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
-    private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COMMENT);
+    private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_OTHER_CASES);
 
     private static final Set<Integer> CR_DEVICE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(),
@@ -115,7 +116,6 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
     ));
 
     private static final String CASE_SEPARATOR = ",";
-    private static final String PREFIX_END = ":";
 
     private final SleuthkitCaseProvider caseProvider;
     private final java.util.logging.Logger logger;
@@ -172,9 +172,8 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
-     * Gets a list of cases from the TSK_COMMENT of an artifact. The cases
-     * string is expected to be of a form of "Previous Case:
-     * case1,case2...caseN".
+     * Gets a list of cases from the TSK_OTHER_CASES of an artifact. The cases
+     * string is expected to be of a form of "case1,case2...caseN".
      *
      * @param artifact The artifact.
      *
@@ -200,14 +199,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
             return Collections.emptyList();
         }
 
-        String commentStr = commentAttr.getValueString();
-
-        int prefixCharIdx = commentStr.indexOf(PREFIX_END);
-        if (prefixCharIdx < 0 || prefixCharIdx >= commentStr.length() - 1) {
-            return Collections.emptyList();
-        }
-
-        String justCasesStr = commentStr.substring(prefixCharIdx + 1).trim();
+        String justCasesStr = commentAttr.getValueString().trim();
         return Stream.of(justCasesStr.split(CASE_SEPARATOR))
                 .map(String::trim)
                 .collect(Collectors.toList());
@@ -242,9 +234,9 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
     }
 
     /**
-     * Given a TSK_PREVIOUSLY_SEEN artifact, retrieves it's parent artifact.
+     * Given a TSK_PREVIOUSLY_SEEN or TSK_PREVIOUSLY_NOTABLE artifact, retrieves it's parent artifact.
      *
-     * @param artifact The input TSK_PREVIOUSLY_SEEN artifact.
+     * @param artifact The input artifact.
      *
      * @return The artifact if found or null if not.
      *
@@ -315,6 +307,19 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
                 nonDeviceArtifactCases.addAll(cases);
             }
         }
+        
+        for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE.getTypeID(), dataSource.getId())) {
+            List<String> cases = getCasesFromArtifact(artifact);
+            if (cases == null || cases.isEmpty()) {
+                continue;
+            }
+
+            if (hasDeviceAssociatedArtifact(artifact)) {
+                deviceArtifactCases.addAll(cases);
+            } else {
+                nonDeviceArtifactCases.addAll(cases);
+            }
+        }        
         
         return new PastCasesResult(
                 getCaseCounts(deviceArtifactCases.stream()),

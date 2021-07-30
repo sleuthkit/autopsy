@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,11 +44,13 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
         flagTaggedNotableItemsCheckbox.setSelected(settings.isFlagTaggedNotableItems());
         flagPreviouslySeenDevicesCheckbox.setSelected(settings.isFlagPreviousDevices());
         createCorrelationPropertiesCheckbox.setSelected(settings.shouldCreateCorrelationProperties());
+        flagUniqueAppsCheckbox.setSelected(settings.isFlagUniqueArtifacts());
     }
     
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new IngestSettings(flagTaggedNotableItemsCheckbox.isSelected(), flagPreviouslySeenDevicesCheckbox.isSelected(), createCorrelationPropertiesCheckbox.isSelected());
+        return new IngestSettings(flagTaggedNotableItemsCheckbox.isSelected(), flagPreviouslySeenDevicesCheckbox.isSelected(), 
+                createCorrelationPropertiesCheckbox.isSelected(), flagUniqueAppsCheckbox.isSelected());
     }
 
     /**
@@ -64,6 +66,7 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
         flagTaggedNotableItemsCheckbox = new javax.swing.JCheckBox();
         flagPreviouslySeenDevicesCheckbox = new javax.swing.JCheckBox();
         createCorrelationPropertiesCheckbox = new javax.swing.JCheckBox();
+        flagUniqueAppsCheckbox = new javax.swing.JCheckBox();
 
         ingestSettingsLabel.setFont(ingestSettingsLabel.getFont().deriveFont(ingestSettingsLabel.getFont().getStyle() | java.awt.Font.BOLD));
         org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.ingestSettingsLabel.text")); // NOI18N
@@ -73,6 +76,8 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
         org.openide.awt.Mnemonics.setLocalizedText(flagPreviouslySeenDevicesCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.flagPreviouslySeenDevicesCheckbox.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(createCorrelationPropertiesCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.createCorrelationPropertiesCheckbox.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(flagUniqueAppsCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.flagUniqueAppsCheckbox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -87,8 +92,9 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(flagTaggedNotableItemsCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(flagPreviouslySeenDevicesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(createCorrelationPropertiesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(createCorrelationPropertiesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(flagUniqueAppsCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -101,7 +107,9 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
                 .addComponent(flagTaggedNotableItemsCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(flagPreviouslySeenDevicesCheckbox)
-                .addContainerGap(47, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(flagUniqueAppsCheckbox)
+                .addContainerGap(24, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -109,6 +117,7 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
     private javax.swing.JCheckBox createCorrelationPropertiesCheckbox;
     private javax.swing.JCheckBox flagPreviouslySeenDevicesCheckbox;
     private javax.swing.JCheckBox flagTaggedNotableItemsCheckbox;
+    private javax.swing.JCheckBox flagUniqueAppsCheckbox;
     private javax.swing.JLabel ingestSettingsLabel;
     // End of variables declaration//GEN-END:variables
 
