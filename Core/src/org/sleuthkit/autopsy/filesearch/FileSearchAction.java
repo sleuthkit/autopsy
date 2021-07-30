@@ -90,15 +90,15 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
     }
 
     @Override
-    public void showDialog(long dataSourceId) {
+    public void showDialog(Long dataSourceId) {
         selectedDataSourceId = dataSourceId;
         performAction();
 
     }
 
     @Override
+    @Deprecated
     public void showDialog() {
-        selectedDataSourceId = null;
-        performAction();
+        showDialog(null);
     }
 }
