@@ -187,7 +187,7 @@ class FileSearchPanel extends javax.swing.JPanel {
             if (this.isValidSearch()) {
                 // try to get the number of matches first
                 Case currentCase = Case.getCurrentCaseThrows(); // get the most updated case
-                Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text()), true);
+                Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_searchingNode_display_text()), true);
                 String title = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.title", ++resultWindowCount);
                 String pathText = Bundle.FileSearchPanel_searchingPath_text();
                 final DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText,
@@ -260,6 +260,7 @@ class FileSearchPanel extends javax.swing.JPanel {
                     public void propertyChange(PropertyChangeEvent evt) {
                         if (evt.getPropertyName().equals("tcClosed") && !searchWorker.isDone() && evt.getOldValue() == null) {
                             searchWorker.cancel(true);
+                            logger.log(Level.INFO, "User has closed the results window while search was in progress, search will be cancelled");
                         }
                     }
                 });
