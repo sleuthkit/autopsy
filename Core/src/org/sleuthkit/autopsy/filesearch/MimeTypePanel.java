@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
@@ -30,7 +31,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
  * Enter MIME types for search.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class MimeTypePanel extends javax.swing.JPanel {
+public final class MimeTypePanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(MimeTypePanel.class.getName());
     private static final long serialVersionUID = 1L;
@@ -40,10 +41,7 @@ public class MimeTypePanel extends javax.swing.JPanel {
      */
     public MimeTypePanel() {
         initComponents();
-        setComponentsEnabled();
-        this.mimeTypeList.addListSelectionListener((ListSelectionEvent e) -> {
-            firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
-        });
+        resetMimeTypePanel();
     }
 
     private String[] getMimeTypeArray() {
@@ -66,7 +64,7 @@ public class MimeTypePanel extends javax.swing.JPanel {
     }
 
     void setComponentsEnabled() {
-        boolean enabled = this.isSelected();
+        boolean enabled = isSelected();
         this.mimeTypeList.setEnabled(enabled);
         this.noteLabel.setEnabled(enabled);
     }
@@ -88,11 +86,7 @@ public class MimeTypePanel extends javax.swing.JPanel {
         setMinimumSize(new java.awt.Dimension(150, 150));
         setPreferredSize(new java.awt.Dimension(150, 150));
 
-        mimeTypeList.setModel(new DefaultListModel<String>() {
-            String[] strings = getMimeTypeArray();
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
+        mimeTypeList.setModel(new DefaultListModel<String>());
         mimeTypeList.setMinimumSize(new java.awt.Dimension(0, 200));
         jScrollPane1.setViewportView(mimeTypeList);
 
@@ -152,11 +146,19 @@ public class MimeTypePanel extends javax.swing.JPanel {
      * Reset the mime type panel to be up to date with the current case.
      */
     void resetMimeTypePanel() {
-        ((DefaultListModel) mimeTypeList.getModel()).removeAllElements();
+        //remove all list selection listeners
+        for (ListSelectionListener listener : mimeTypeList.getListSelectionListeners()) {
+            mimeTypeList.removeListSelectionListener(listener);
+        }
+        mimeTypeList.clearSelection();
+        ((DefaultListModel<String>) mimeTypeList.getModel()).clear();
         for (String dataSource : getMimeTypeArray()) {
             ((DefaultListModel<String>) mimeTypeList.getModel()).addElement(dataSource);
         }
-        this.mimeTypeList.setEnabled(false);
+        mimeTypeList.addListSelectionListener((ListSelectionEvent e) -> {
+            firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+        });
+        mimeTypeList.setEnabled(false);
         mimeTypeCheckBox.setSelected(false);
         noteLabel.setEnabled(false);
     }

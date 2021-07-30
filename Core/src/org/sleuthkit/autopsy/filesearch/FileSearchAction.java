@@ -32,7 +32,6 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
     private static final long serialVersionUID = 1L;
     private static FileSearchAction instance = null;
     private static FileSearchDialog searchDialog;
-    private static boolean shouldReset = false;
 
     FileSearchAction() {
         super();
@@ -40,7 +39,9 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 setEnabled(evt.getNewValue() != null);
-                shouldReset = evt.getNewValue() != null;
+                if (searchDialog != null && evt.getNewValue() != null){
+                    searchDialog.resetCaseDependentFilters();
+                }
             }
         });
     }
@@ -56,10 +57,7 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
     public void actionPerformed(ActionEvent e) {
         if (searchDialog == null) {
             searchDialog = new FileSearchDialog();
-        } else if (shouldReset) {
-            searchDialog.resetCaseDependentFilters();
-            shouldReset = false;
-        }
+        } 
         searchDialog.setVisible(true);
     }
 
@@ -67,9 +65,6 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
     public void performAction() {
         if (searchDialog == null) {
             searchDialog = new FileSearchDialog();
-        } else if (shouldReset) {
-            searchDialog.resetCaseDependentFilters();
-            shouldReset = false;
         }
         searchDialog.setVisible(true);
     }

@@ -58,8 +58,8 @@ class FileSearchPanel extends javax.swing.JPanel {
 
     private final List<FileSearchFilter> filters = new ArrayList<>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
-    private static final MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
-    private static final DataSourceFilter dataSourceFilter = new DataSourceFilter();
+    private static MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
+    private static DataSourceFilter dataSourceFilter = new DataSourceFilter();
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
 
     enum EVENT {
@@ -72,7 +72,6 @@ class FileSearchPanel extends javax.swing.JPanel {
     FileSearchPanel() {
         initComponents();
         customizeComponents();
-
     }
 
     /**
@@ -159,7 +158,6 @@ class FileSearchPanel extends javax.swing.JPanel {
                 }
             }
         }
-
         errorLabel.setText("");
         return enabled;
     }

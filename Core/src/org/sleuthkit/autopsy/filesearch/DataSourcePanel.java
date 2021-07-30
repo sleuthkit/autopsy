@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -51,17 +52,38 @@ public class DataSourcePanel extends javax.swing.JPanel {
      */
     public DataSourcePanel() {
         initComponents();
-        if (this.dataSourceList.getModel().getSize() > 1) {
-            this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
+        resetDataSourcePanel();
+    }
+
+    /**
+     * Reset the data source panel to be up to date with the current case.
+     *
+     */
+    final void resetDataSourcePanel() {
+        dataSourceList.clearSelection();
+        //remove all list selection listeners
+        for (ListSelectionListener listener :  dataSourceList.getListSelectionListeners()){
+            dataSourceList.removeListSelectionListener(listener);
+        }    
+        ((DefaultListModel<String>) dataSourceList.getModel()).clear();
+        List<String> strings = getDataSourceArray();
+        for (String dataSource : strings) {
+            ((DefaultListModel<String>) dataSourceList.getModel()).addElement(dataSource);
+        }
+        dataSourceList.setEnabled(false);
+        dataSourceCheckBox.setSelected(false);
+        dataSourceNoteLabel.setEnabled(false);
+        if (dataSourceList.getModel().getSize() > 1) {
+            dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
                 firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
             });
+            dataSourceCheckBox.setEnabled(true);
         } else {
             /*
              * Disable data source filtering since there aren't multiple data
              * sources to choose from.
              */
             this.dataSourceCheckBox.setEnabled(false);
-            this.dataSourceList.setEnabled(false);
         }
     }
 
@@ -93,41 +115,16 @@ public class DataSourcePanel extends javax.swing.JPanel {
     }
 
     /**
-     * Reset the data source panel to be up to date with the current case.
-     * 
-     */
-    void resetDataSourcePanel() {
-        ((DefaultListModel) dataSourceList.getModel()).removeAllElements();
-        dataSourceMap.clear();
-        for (String dataSource : getDataSourceArray()) {
-            ((DefaultListModel<String>) dataSourceList.getModel()).addElement(dataSource);
-        }
-        this.dataSourceList.setEnabled(false);
-        dataSourceCheckBox.setSelected(false);
-        dataSourceNoteLabel.setEnabled(false);
-        if (this.dataSourceList.getModel().getSize() > 1) {
-            this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
-                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
-            });
-        } else {
-            /*
-             * Disable data source filtering since there aren't multiple data
-             * sources to choose from.
-             */
-            this.dataSourceCheckBox.setEnabled(false);
-        }
-    }
-
-    /**
      * Get a set of data source object ids that are selected.
      *
      * @return A set of selected object ids.
      */
     Set<Long> getDataSourcesSelected() {
         Set<Long> dataSourceObjIdSet = new HashSet<>();
+        List<String> dataSources = dataSourceList.getSelectedValuesList();
         for (Long key : dataSourceMap.keySet()) {
             String value = dataSourceMap.get(key);
-            for (String dataSource : this.dataSourceList.getSelectedValuesList()) {
+            for (String dataSource : dataSources) {
                 if (value.equals(dataSource)) {
                     dataSourceObjIdSet.add(key);
                 }
@@ -172,11 +169,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
         setMinimumSize(new java.awt.Dimension(150, 150));
         setPreferredSize(new java.awt.Dimension(150, 150));
 
-        dataSourceList.setModel(new DefaultListModel<String>() {
-            List<String> strings  = getDataSourceArray();
-            public int getSize() { return strings.size(); }
-            public String getElementAt(int idx) { return strings.get(idx); }
-        });
+        dataSourceList.setModel(new DefaultListModel<String>());
         dataSourceList.setEnabled(false);
         dataSourceList.setMinimumSize(new java.awt.Dimension(0, 200));
         jScrollPane1.setViewportView(dataSourceList);
