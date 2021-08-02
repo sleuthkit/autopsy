@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -119,9 +119,9 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
                 updateOutlineViewPanel();
             }
         });
-        
+
         TableColumn column = outline.getColumnModel().getColumn(2);
-        column.setCellRenderer(new NodeTableCellRenderer() );
+        column.setCellRenderer(new NodeTableCellRenderer());
 
     }
 
@@ -164,7 +164,9 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
+        callLogDataViewer.setNode(null);
         nodeFactory.refresh(info);
+
     }
 
     @Override
@@ -229,7 +231,7 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
         }
     }
 
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane bottomScrollPane;
     private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel outlineViewPanel;

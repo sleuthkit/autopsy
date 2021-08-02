@@ -114,14 +114,15 @@ public abstract class BaseChildFactory<T> extends ChildFactory.Detachable<T> {
         isPageSizeChangeEvent = false;
         this.filter = filter;
     }
-
+    
     @Override
     protected void addNotify() {
         onAdd();
     }
 
     @Override
-    protected void removeNotify() {
+    protected void finalize() throws Throwable {
+        super.finalize();
         onRemove();
     }
 

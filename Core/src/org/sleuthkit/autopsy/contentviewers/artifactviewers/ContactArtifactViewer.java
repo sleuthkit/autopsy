@@ -65,6 +65,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -130,19 +131,15 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         // Reset the panel.
         resetComponent();
 
-        if (artifact == null) {
-            return;
+        if (artifact != null) {
+            try {
+                extractArtifactData(artifact);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
+                return;
+            }
+            updateView();
         }
-
-        try {
-            extractArtifactData(artifact);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
-            return;
-        }
-
-        updateView();
-
         this.setLayout(this.m_gridBagLayout);
         this.revalidate();
         this.repaint();
@@ -164,6 +161,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * Extracts data from the artifact to be displayed in the panel.
      *
      * @param artifact Artifact to show.
+     *
      * @throws TskCoreException
      */
     private void extractArtifactData(BlackboardArtifact artifact) throws TskCoreException {
@@ -235,7 +233,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     /**
      * Updates the contact image in the view.
      *
-     * @param contactPanelLayout Panel layout.
+     * @param contactPanelLayout      Panel layout.
      * @param contactPanelConstraints Layout constraints.
      *
      */
@@ -267,7 +265,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     /**
      * Updates the contact name in the view.
      *
-     * @param contactPanelLayout Panel layout.
+     * @param contactPanelLayout      Panel layout.
      * @param contactPanelConstraints Layout constraints.
      *
      */
@@ -294,9 +292,9 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * Updates the view by displaying the given list of attributes in the given
      * section panel.
      *
-     * @param sectionAttributesList List of attributes to display.
-     * @param sectionHeader Section name label.
-     * @param contactPanelLayout Panel layout.
+     * @param sectionAttributesList   List of attributes to display.
+     * @param sectionHeader           Section name label.
+     * @param contactPanelLayout      Panel layout.
      * @param contactPanelConstraints Layout constraints.
      *
      */
@@ -418,12 +416,12 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     /**
      * Displays the given persona in the persona panel.
      *
-     * @param persona Persona to display.
-     * @param matchNumber Number of matches.
+     * @param persona             Persona to display.
+     * @param matchNumber         Number of matches.
      * @param missingAccountsList List of contact accounts this persona may be
-     * missing.
-     * @param gridBagLayout Layout to use.
-     * @param constraints layout constraints.
+     *                            missing.
+     * @param gridBagLayout       Layout to use.
+     * @param constraints         layout constraints.
      *
      * @throws CentralRepoException
      */
@@ -567,7 +565,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      * @param artifact
      *
      * @return Image from a TSK_CONTACT artifact or default image if none was
-     * found or the artifact is not a TSK_CONTACT
+     *         found or the artifact is not a TSK_CONTACT
      */
     private ImageIcon getImageFromArtifact(BlackboardArtifact artifact) {
         ImageIcon imageIcon = defaultImage;
@@ -617,7 +615,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
          * Creates a persona searcher task.
          *
          * @param accountAttributesList List of attributes that may map to
-         * accounts.
+         *                              accounts.
          */
         ContactPersonaSearcherTask(BlackboardArtifact artifact) {
             this.artifact = artifact;
@@ -627,48 +625,52 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         protected Map<Persona, ArrayList<CentralRepoAccount>> doInBackground() throws Exception {
 
             Map<Persona, ArrayList<CentralRepoAccount>> uniquePersonas = new HashMap<>();
-
             CommunicationsManager commManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
             List<Account> contactAccountsList = commManager.getAccountsRelatedToArtifact(artifact);
 
             for (Account account : contactAccountsList) {
-                if (isCancelled()) {
-                    return new HashMap<>();
-                }
+                try {
+                    if (isCancelled()) {
+                        return new HashMap<>();
+                    }
 
-                // make a list of all unique accounts for this contact
-                if (!account.getAccountType().equals(Account.Type.DEVICE)) {
-                    Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
-                    if (optCrAccountType.isPresent()) {
-                        CentralRepoAccount crAccount = CentralRepository.getInstance().getAccount(optCrAccountType.get(), account.getTypeSpecificID());
+                    // make a list of all unique accounts for this contact
+                    if (!account.getAccountType().equals(Account.Type.DEVICE)) {
+                        Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = CentralRepository.getInstance().getAccountTypeByName(account.getAccountType().getTypeName());
+                        if (optCrAccountType.isPresent()) {
+                            CentralRepoAccount crAccount = CentralRepository.getInstance().getAccount(optCrAccountType.get(), account.getTypeSpecificID());
 
-                        if (crAccount != null && uniqueAccountsList.contains(crAccount) == false) {
-                            uniqueAccountsList.add(crAccount);
+                            if (crAccount != null && uniqueAccountsList.contains(crAccount) == false) {
+                                uniqueAccountsList.add(crAccount);
+                            }
                         }
                     }
-                }
-                
-                Collection<PersonaAccount> personaAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
-                if (personaAccounts != null && !personaAccounts.isEmpty()) {
-                    // get personas for the account
-                    Collection<Persona> personas
-                            = personaAccounts
-                                    .stream()
-                                    .map(PersonaAccount::getPersona)
-                                    .collect(Collectors.toList());
 
-                    // make a list of unique personas, along with all their accounts
-                    for (Persona persona : personas) {
-                        if (uniquePersonas.containsKey(persona) == false) {
-                            Collection<CentralRepoAccount> accounts = persona.getPersonaAccounts()
-                                    .stream()
-                                    .map(PersonaAccount::getAccount)
-                                    .collect(Collectors.toList());
+                    Collection<PersonaAccount> personaAccounts = PersonaAccount.getPersonaAccountsForAccount(account);
+                    if (personaAccounts != null && !personaAccounts.isEmpty()) {
+                        // get personas for the account
+                        Collection<Persona> personas
+                                = personaAccounts
+                                        .stream()
+                                        .map(PersonaAccount::getPersona)
+                                        .collect(Collectors.toList());
 
-                            ArrayList<CentralRepoAccount> personaAccountsList = new ArrayList<>(accounts);
-                            uniquePersonas.put(persona, personaAccountsList);
+                        // make a list of unique personas, along with all their accounts
+                        for (Persona persona : personas) {
+                            if (uniquePersonas.containsKey(persona) == false) {
+                                Collection<CentralRepoAccount> accounts = persona.getPersonaAccounts()
+                                        .stream()
+                                        .map(PersonaAccount::getAccount)
+                                        .collect(Collectors.toList());
+
+                                ArrayList<CentralRepoAccount> personaAccountsList = new ArrayList<>(accounts);
+                                uniquePersonas.put(persona, personaAccountsList);
+                            }
                         }
                     }
+                } catch (InvalidAccountIDException ex) {
+                    // Do nothing, the account has an identifier that not an
+                    // acceptable format for the cr.
                 }
             }
 
@@ -716,7 +718,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         /**
          * Constructor.
          *
-         * @param personaNameLabel Persona name label.
+         * @param personaNameLabel    Persona name label.
          * @param personaActionButton Persona action button.
          */
         PersonaUIComponents(JLabel personaNameLabel, JButton personaActionButton) {
@@ -784,8 +786,8 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
             for (CentralRepoAccount account : contactUniqueAccountsList) {
                 personaPanel.addAccount(account, Bundle.ContactArtifactViewer_persona_account_justification(), Persona.Confidence.HIGH);
             }
-            
-            if(contactName != null && contactUniqueAccountsList.isEmpty()) {
+
+            if (contactName != null && contactUniqueAccountsList.isEmpty()) {
                 createPersonaDialog.setStartupPopupMessage(Bundle.ContactArtifactViewer_id_not_found_in_cr(contactName));
             }
 

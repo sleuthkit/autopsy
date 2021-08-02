@@ -1,0 +1,47 @@
+﻿/*! \page embedded_file_extractor_page Embedded File Extractor (Extraction de fichiers intégrés)
+
+[TOC]
+
+\section embedded_files_overview Qu'est ce que ça fait
+
+
+Le module "Embedded File Extractor" ouvre les fichiers ZIP, RAR, ainsi que d'autres formats d'archive, DOC, DOCX, PPT, PPTX, XLS et XLSX et renvoie les fichiers intégrés dans ces derniers via le pipeline d'acquisition pour analyse.
+
+Ce module développe les fichiers d'archive pour permettre à Autopsy d'analyser tous les fichiers du système. Il permet la recherche par mot-clé et la recherche de hachage pour analyser les fichiers à l'intérieur des archives.
+
+REMARQUE: Certains contenus multimédias intégrés dans des fichiers DOC, DOCX, PPT, PPTX, XLS et XLSX peuvent ne pas être extraits.
+
+\section embedded_files_config Configuration
+
+Aucune configuration n'est requise.
+
+\section embedded_files_usage Utilisation du module
+Cochez la case dans l'écran de paramétrage des modules d'acquisition ("Configure Ingest Modules") pour activer le module Embedded File Extractor.
+
+\subsection embedded_files_settings Paramètres d'intégration
+Aucun paramètre à l'exécution de ce module n'est requis.
+
+\subsection embedded_files_results Voir les résultats
+Chaque fichier extrait apparaît dans l'arborescence de la source de données en tant qu'enfant de l'archive qui le contient,
+
+\image html zipped_children_1.PNG
+<br>
+<br>
+et en tant qu'archive sous "Views", "File Types", "Archives".
+\image html zipped_children_2.PNG
+
+\subsection embedded_files_encryption Archives chiffrées
+
+Lorsque le module Embedded File Extractor rencontre une archive chiffrée, il génère une info-bulle d'avertissement en bas à droite de l'écran principal: 
+
+\image html zipped_encryption_detected.png
+
+Après l'acquisition, vous pouvez tenter de déchiffrer ces archives si vous connaissez le mot de passe. Recherchez l'archive (dans \ref tree_viewer_page "l'arborescence" ou dans \ref result_viewer_page "la visionneuse de résultats") et faites un clic droit dessus, puis sélectionnez "Unzip contents with password".
+
+\image html zipped_context_menu.png
+
+Après avoir entré le mot de passe, vous pouvez sélectionner les modules d'acquisition à exécuter sur les fichiers nouvellement extraits. Une fois terminé, vous pouvez accéder à l'archive chiffrée dans l'arborescence pour voir les fichiers nouvellement extraits. Si l'archive était déjà ouverte dans l'arborescence, vous devrez peut-être fermer et ré-ouvrir le cas afin de voir les nouvelles données.
+
+\image html zipped_tree.png
+
+*/

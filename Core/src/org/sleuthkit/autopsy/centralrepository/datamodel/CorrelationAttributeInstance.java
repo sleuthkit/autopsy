@@ -257,6 +257,8 @@ public class CorrelationAttributeInstance implements Serializable {
     public static final int IMEI_TYPE_ID = 7;
     public static final int IMSI_TYPE_ID = 8;
     public static final int ICCID_TYPE_ID = 9;
+    public static final int INSTALLED_PROGS_TYPE_ID = 10;
+    public static final int OSACCOUNT_TYPE_ID = 11;
     
     // An offset to assign Ids for additional  correlation types.
     public static final int ADDITIONAL_TYPES_BASE_ID = 1000;
@@ -276,7 +278,9 @@ public class CorrelationAttributeInstance implements Serializable {
         "CorrelationType.MAC.displayName=MAC Addresses",
         "CorrelationType.IMEI.displayName=IMEI Number",
         "CorrelationType.IMSI.displayName=IMSI Number",
-        "CorrelationType.ICCID.displayName=ICCID Number"})
+        "CorrelationType.PROG_NAME.displayName=Installed Programs",
+        "CorrelationType.ICCID.displayName=ICCID Number",
+        "CorrelationType.OS_ACCOUNT.displayName=Os Account"})
     public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws CentralRepoException {
         List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = new ArrayList<>();
         
@@ -290,6 +294,8 @@ public class CorrelationAttributeInstance implements Serializable {
         defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(IMEI_TYPE_ID, Bundle.CorrelationType_IMEI_displayName(), "imei_number", true, true)); //NON-NLS
         defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(IMSI_TYPE_ID, Bundle.CorrelationType_IMSI_displayName(), "imsi_number", true, true)); //NON-NLS
         defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(ICCID_TYPE_ID, Bundle.CorrelationType_ICCID_displayName(), "iccid_number", true, true)); //NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(INSTALLED_PROGS_TYPE_ID, Bundle.CorrelationType_PROG_NAME_displayName(), "installed_programs", true, true)); //NON-NLS
+        defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(OSACCOUNT_TYPE_ID, Bundle.CorrelationType_OS_ACCOUNT_displayName(), "os_accounts", true, true)); //NON-NLS
         
         // Create Correlation Types for Accounts.
         int correlationTypeId = ADDITIONAL_TYPES_BASE_ID;

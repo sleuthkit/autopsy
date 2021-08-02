@@ -1,0 +1,125 @@
+/*! \page image_gallery_page Images/Vidéos
+
+[TOC]
+
+
+Aperçu
+========
+Ce document décrit l'utilisation de la fonction "Images/Videos" d'Autopsy. Cette fonctionnalité a été financée par le DHS S&T pour aider à fournir des outils de criminalistique numérique gratuits et open source aux forces de l'ordre.
+
+La fonction "Images/Videos" a été spécialement conçue pour les cas de pédo-pornographie, mais peut être utilisée pour une variété d'autres types d'enquêtes impliquant des images et des vidéos. Elle offre les fonctionnalités suivantes au-delà de la traditionnelle longue liste de vignettes qu'Autopsy et d'autres outils fournissent généralement.
+- Regroupe les images par dossier (et autres attributs) pour aider l'examinateur à diviser un grand ensemble d'images en groupes plus petits et à se concentrer sur les zones contenant des images d'intérêt.
+- Permet à l'examinateur de commencer à visualiser les images immédiatement après les avoir ajoutées au cas. Au fur et à mesure que les images sont hachées, elles sont mises à jour dans l'interface. Vous n'avez pas besoin d'attendre que la source de données entière soit traitée.
+
+Ce document suppose une connaissance de base d'Autopsy.
+Démarrage rapide
+================
+1. L'outil "Images/Videos" peut être configuré pour collecter des données sur les images/vidéos lors de l'acquisition mais également après l'acquisition. Pour modifier ce paramètre, accédez à "Tools", "Options", "Image /Video Gallery".  Ce paramètre est enregistré par cas, mais ne peut pas être modifié pendant l'acquisition. Voir la fenêtre Options pour plus de détails.
+2. Créez un cas comme d'habitude et ajoutez une image disque (ou un dossier de fichiers) comme source de données. Assurez-vous que le module "Hash Lookup" est activé avec les NSRL et les jeux de hachage défavorablement connus, que le module "Picture Analyzer" est activé ainsi que le module "File Type Identification". 
+3. Cliquez sur le bouton "Images/Videos" ou sélectionnez "Images/Videos" dans le menu "Tools".  Cela ouvrira l'outil "Image/Video Gallery" d'Autopsy dans une nouvelle fenêtre.
+4. Des groupes d'images seront présentés au fur et à mesure de leur analyse par les modules d'acquisition s'exécutant en arrière-plan. Vous pouvez y revenir plus tard et les regrouper, mais il est nécessaire de les garder groupés par dossier pendant que l'acquisition est toujours en cours.
+5. Au fur et à mesure que chaque groupe est examiné, le groupe suivant par ordre de priorité la plus élevée est présenté, selon un critère de tri (la valeur par défaut est la densité des hits de l'ensemble de hachage).
+6. Les images qui étaient des hits de l'ensemble de hachage, auront une bordure en pointillés autour d'elles.
+7. Vous pouvez utiliser la barre de menus en haut du groupe pour classer l'ensemble du groupe.
+8. Vous pouvez faire un clic droit sur une image pour catégoriser ou marquer l'image individuelle.
+9. Marquer les fichiers avec des balises personnalisables. Une balise "Follow Up" est déjà intégrée à l'outil et dans les options de filtre. Les balises peuvent être appliquées en plus de la catégorisation. Une image ne peut avoir qu'une seule catégorisation, mais peut avoir plusieurs balises pour prendre en charge votre flux de travail.
+10. Créez un rapport contenant les détails de chaque fichier balisé et/ou catégorisé, via la fonction standard de génération de rapport d'Autopsy.
+
+Détails d'un cas d'utilisation 
+==============================
+En plus de l'utilisation de base présentée dans la section précédente, voici quelques conseils sur les cas d'utilisation qui ont été conçus dans l'outil.
+- Lorsque vous visualisez les groupes, ils sont présentés dans un ordre basé sur la densité des hits de hachage (par défaut). Si vous trouvez un groupe qui contient beaucoup de fichiers intéressants et que vous voulez voir ce qu'il y a dans le dossier parent ou les dossiers voisins, utilisez l'arborescence de navigation sur la gauche.
+- A tout moment, vous pouvez utiliser la liste sur le côté gauche pour voir les groupes avec le plus grand nombre de hits du le jeu de hachage.
+- Pour voir quels dossiers contiennent le plus d'images, triez les groupes par taille de groupe (décroissante).
+- Les fichiers qui ont des hits de hachage ne sont pas automatiquement marqués ou catégorisés. Vous devez le faire après les avoir examinés. Le moyen le plus simple de le faire est d'attendre la fin de l'acquisition, puis de grouper par jeu de hachage. Vous pouvez ensuite passer en revue chaque groupe et classer le groupe entier en une seule fois à l'aide de l'en-tête de groupe.
+
+Catégories
+==========
+L'outil a été conçu spécifiquement pour les cas de pornographie infantile et a une notion de catégorisation. Nous allons modifier cela à l'avenir pour être plus flexible avec des noms de catégories personnalisés, mais actuellement, il est codé en dur pour utiliser les noms qu'utilise le Project Vic (et d'autres groupes internationaux). Nous avons attribué des couleurs à chaque catégorie pour mettre en valeur chaque image.
+
+
+Nom|Description|Couleur
+----|-----------------|--------
+CAT-0|Uncategorized|![gray](ImageGallery/gray.PNG)
+CAT-1|Child Abuse Material  |![red](ImageGallery/red.PNG)
+CAT-2|Child Exploitative / Age Difficult|![orange](ImageGallery/orange.PNG)
+CAT-3|CGI / Animation|![yellow](ImageGallery/yellow.PNG)
+CAT-4|Comparison Images |![bisque](ImageGallery/bisque.PNG)
+CAT-5|Non-pertinent|![green](ImageGallery/green.PNG)
+
+Contrôles graphiques
+====================
+Vous pouvez effectuer l'intégralité de vos investigations à l'aide de la souris, mais de nombreux analystes aiment utiliser des raccourcis clavier pour traiter rapidement de grandes quantités d'images.
+
+Raccourcis clavier
+------------------
+raccourcis | action
+------------|------
+touches 0-5 | attribuer la catégorie numérotée correspondante au(x) fichier(s) sélectionné(s)
+alt + 0-5   | attribuer la catégorie numérotée correspondante à tous les fichiers du groupe ciblé
+flèches | sélectionner le fichier suivant dans le sens de la flèche
+page haut/bas | faire défiler la liste des fichiers
+
+Commandes supplémentaires de la souris
+-------------------------
+action de la souris| action
+----------|----------
+ctrl + clic gauche|basculer la sélection du fichier cliqué, sélectionner plusieurs fichiers
+clic droit sur un fichier|afficher le menu contextuel permettant des actions sur le fichier (baliser, catégoriser, extraire le fichier en local, afficher dans une visionneuse externe, afficher dans la visionneuse de contenu Autopsy, ajouter un fichier à la base de données de hachage)
+clic droit sur l'espace vide d'un groupe|afficher le menu contextuel permettant des actions par groupe (baliser, catégoriser, extraire le(s) fichier(s) en local, ajouter le(s) fichier(s) à la base de données de hachage)
+double clic sur un fichier|ouvrir le fichier sélectionné en mode diaporama
+
+Détails de l'interface utilisateur
+==================================
+Zone d'affichage du groupe
+--------------------------
+La zone d'affichage centrale contient la liste des fichiers du groupe actuel. Les images du groupe peuvent être affichées en mode miniature ou en mode diaporama. Le mode diaporama fournit des images plus grandes et la lecture de fichiers vidéo. À droite de l'en-tête du groupe se trouve deux boutons pour changer le mode d'affichage du groupe (vignettes/diaporama).
+
+Tuiles Image/Vidéo
+------------------
+
+Chaque fichier est représenté dans la zone d'affichage principale par une petite vignette. La vignette montre:
+- La vignette de l'image/vidéo
+- Le nom du fichier
+- Des indicateurs d'autres détails importants:
+
+| image | description | signification|
+|----|----|-----|
+| | bordure de couleur unie | catégorie attribuée au fichier.|
+| ![](ImageGallery/purpledash.PNG) | bordure pointillée violette |   Le fichier a un hit de hachage défavorablement connu, mais n'a pas encore été catégorisé. |
+| ![](ImageGallery/hashset_hits.PNG) |punaise |  Le fichier a un hit de hachage défavorablement connu|
+| ![](ImageGallery/video-file.PNG) | clap de cinéma sur document | fichier vidéo|
+| ![](ImageGallery/flag_red.PNG) | un drapeau rouge | le fichier a été "marqué" ainsi avec une balise de suivi|
+
+
+Mode diaporama
+--------------
+En mode diaporama, un groupe affiche un seul fichier à la fois avec une taille accrue. Les contrôles de balise/catégorie de fichier au-dessus du coin supérieur droit de l'image et les gros boutons gauche et droit permettent de parcourir les fichiers du groupe. Si le fichier actif est un format vidéo pris en charge par Autopsy, les commandes de lecture vidéo apparaissent sous la vidéo. 
+
+Tableau/arborescence du contenu
+-------------------------------
+La section en haut à gauche avec les onglets intitulés "All Groups" et "Only Hash Hits" donne un aperçu des groupes de fichiers dans le cas. Il change pour refléter le paramètre "Group By" actuel: pour les regroupements hiérarchiques (chemin), il affiche une arborescence de dossiers (les dossiers contenant des images/vidéos (groupes) sont marqués d'une icône distinctive), et pour les autres regroupements, il affiche uniquement une liste.
+
+Chaque groupe affiche le nombre de fichiers qui correpondent aux bases de données de hachage configurées lors de l'acquisition (hits de hachage) et le nombre total de fichiers image/vidéo sous forme de rapport (hits de hachage/total) après son nom. En sélectionnant des groupes dans l'arborescence/la liste, vous pouvez y accéder directement dans la zone d'affichage principale. Si l'onglet "Only Hash Hits" est sélectionné, seuls les groupes contenant des fichiers qui ont des hits de hachage sont affichés.   
+
+
+À l'écoute des changements
+==========================
+La galerie d'images maintient sa propre base de données, qui doit être mise à jour au fur et à mesure que les fichiers sont analysés par Autopsy. Par exemple, elle doit savoir quand un fichier a été haché ou si des données EXIF ont été extraites. Par défaut, la galerie d'images est toujours à l'écoute de ces changements dans les cas mono-utilisateur et maintient sa base de données à jour. Si cela a un impact sur les performances, vous pouvez désactiver cette fonctionnalité dans le panneau Options.
+
+Vous pouvez désactiver l'écoute pour le cas actuel et vous pouvez modifier le comportement par défaut pour les cas futurs. 
+
+
+
+Cas multi-utilisateurs
+======================
+Si un cas a été créé dans un environnement multi-utilisateurs, il devient alors beaucoup plus difficile de garder la base de données de la galerie d'images synchronisée car de nombreux autres examinateurs pourraient analyser les données de ce cas. Par conséquent, la galerie d'images a des comportements de mise à jour différents dans un cas multi-utilisateur et dans un cas mono-utilisateur. Notamment:
+- Si votre système exécute l'acquisition sur la source de données, vous continuerez à obtenir des mises à jour en temps réel, comme dans un cas mono-utilisateur. Ainsi, dès qu'un dossier de fichiers a été haché et que des données EXIF ont été extraites, il vous sera possible de le visualiser.
+- Si un autre système du cluster exécute l'acquisition sur la source de données, vous risquez de ne pas voir ses résultats tant que l'acquisition n'est pas terminée. Vous n'obtiendrez pas de mises à jour en temps réel et, à la place, vous obtiendrez des mises à jour uniquement après avoir fermé la galerie d'images et l'avoir ouverte à nouveau.
+- Chaque fois que vous ouvrez la galerie d'images, elle vérifiera la base de données locale pour voir si elle est synchronisée avec la base de données de cas. Si ce n'est pas le cas, elle vous demandera de la reconstruire. En effet, des données supplémentaires peuvent avoir été ajoutées à la base de données de cas par un autre système et votre base de données "Images/Videos" n'est plus exacte.
+
+Vous avez également la possibilité de voir les groupes (ou dossiers) qui sont nouveaux pour vous ou pour tout le monde. Lorsque vous appuyez sur "Next Unseen Group", le comportement par défaut est de vous montrer le groupe de priorité le plus élevé que vous n'avez pas encore vu. Mais vous pouvez également choisir de voir des groupes que personne d'autre n'a vus. Ce choix peut être fait en utilisant la case à cocher à côté du bouton "Next Unseen Group".
+
+
+
+*/

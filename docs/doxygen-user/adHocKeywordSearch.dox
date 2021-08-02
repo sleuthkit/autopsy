@@ -82,7 +82,7 @@ Results will be opened in a separate Results Viewer for every search executed. I
 
 \section ad_hoc_kw_lists Keyword Lists
 
-In addition to being selected during ingest, keyword lists can also be run through the Keyword Lists button. For information on setting up these keyword lists, see the \ref keywordListsTab section of the ingest module documentation.
+In addition to being selected during ingest, keyword lists can also be run through the Keyword Lists button. For information on setting up these keyword lists, see the \ref keyword_keywordListsTab section of the ingest module documentation.
 
 Lists created using the Keyword Search Configuration Dialog can be manually searched by the user by pressing on the 'Keyword Lists' button and selecting the check boxes corresponding to the lists to be searched. The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+left click or control+left click. Once everything has been configured, press "Search" to begin the search. The "Save search results" checkbox determines whether the search results will be saved to the case database.
 

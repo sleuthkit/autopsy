@@ -1,0 +1,46 @@
+/*! \page file_type_identification_page File Type Identification (Identification du type de fichier)
+
+[TOC]
+
+
+Qu'est ce que ça fait
+========
+
+Le module "File Type Identification" identifie les fichiers en fonction de leurs signatures internes et ne repose pas sur les extensions de fichier. Autopsy utilise la bibliothèque <a href="http://tika.apache.org/">Tika</a> pour faire la principale détection d'identification de fichier, et ceci peut être personnalisable avec des règles définies par l'utilisateur.
+
+Vous devez activer ce module car de nombreux autres modules dépendent de ses résultats pour déterminer s'ils doivent analyser un fichier. Voici quelques exemples de modules dépendant de ce dernier:
+
+- \subpage extension_mismatch_detector_page
+- \subpage keyword_search_page
+
+
+Configuration
+=======
+
+Vous n'avez pas besoin de configurer quoi que ce soit pour ce module, sauf si vous souhaitez définir vos propres types. Pour définir vos propres types, allez dans le panneau "Tools", "Options", "File Types". 
+
+À partir de là, vous pouvez définir des règles basées sur l'offset de la signature et si la signature est une séquence d'octets d'une chaîne ASCII.
+
+\image html filetype.PNG
+
+Utilisation du module
+======
+
+Paramètres d'intégration
+------
+Il n'y a pas de paramètres d'exécution pour ce module lorsque vous l'exécutez sur
+une source de données.  Toutes les règles définies par l'utilisateur et celles de Tika sont toujours appliquées.
+
+
+Voir les résultats
+------
+
+Les résultats apparaissent dans l'arborescence, sous Views->File Types->By MIME Type.
+
+\image html mime-type-tree.PNG
+
+Notez que seuls les types MIME définis par l'utilisateur sous la forme (type de fichier)/(sous-type de fichier) seront affichés dans l'arborescence.
+
+Pour voir le type d'un fichier particulier, affichez l'onglet "File Metadata" en bas à droite lorsque vous accédez au fichier. Vous devriez voir une page qui mentionne le type de ce fichier.
+
+*/

@@ -3,10 +3,12 @@
 [TOC]
 
 
-The tree on the left-hand side of the main window is where you can browse the files in the data sources in the case and find saved results from automated analyis (ingest). The tree has five main areas:
+The tree on the left-hand side of the main window is where you can browse the files in the data sources in the case and find saved results from automated analyis (ingest). The tree has seven main areas:
 - <b>Persons / Hosts / Data Sources:</b> This shows the directory tree hierarchy of the data sources. You can navigate to a specific file or directory here. Each data source added to the case is represented as a distinct sub tree. If you add a data source multiple times, it shows up multiple times.
-- <b>Views:</b> Specific types of files from the data sources are shown here, aggregated by type or other properties. Files here can come from more than one data source.
-- <b>Results:</b> This is where you can see the results from both the automated analysis (ingest) running in the background and your search results.
+- <b>File Views:</b> Specific types of files from the data sources are shown here, aggregated by type or other properties. Files here can come from more than one data source.
+- <b>Data Artifacts:</b> This isone of the main places where results from running \ref ingest_page appear.
+- <b>Analysis Results:</b> This is the other main place where results from running \ref ingest_page appear.
+- <b>OS Accounts:</b> This is where you can see the results from both the automated analysis (ingest) running in the background and your search results.
 - <b>Tags:</b> This is where files and results that have been \ref tagging_page "tagged" are shown.
 - <b>Reports:</b> Reports that you have generated, or that ingest modules have created, show up here.
 
@@ -43,22 +45,28 @@ Unallocated space is the chunks of a file system that are currently not being us
 An example of the single file extraction option is shown below.
 \image html extracting-unallocated-space.PNG
 
-\section ui_tree_views Views
+\section ui_tree_views File Views
 
 Views filter all the files in the case by some property of the file. 
 - <b>File Types</b>  Sorts files by file extension or by MIME type, and shows them in the appropriate group. For example, files with .mp3 and .wav extensions end up in the "Audio" group. 
 - <b>Deleted Files</b>  Displays files that have been deleted, but the names have been recovered.
 - <b>File Size</b>  Sorts files based on size.
 
+\section ui_tree_results Data Artifacts
 
-\section ui_tree_results Results
-- <b>Extracted Content:</b> Many ingest modules will place results here; EXIF metadata, GPS locations, or Web history for example.
-- <b>Keyword Hits:</b> Keyword search hits show up here.
-- <b>Hashset Hits:</b> Hashset hits show up here. 
-- <b>E-Mail Messages:</b> Email messages show up here.
-- <b>Interesting Items:</b> Things deemed interesting show up here.
-- <b>Accounts:</b> Credit card accounts show up here.
-- <b>Tags:</b> Any item you tag shows up here so you can find it again easily.
+This section shows the data artifacts created by running ingest. In general, data artifacts contain concrete information extracted from the data source. For example, call logs and messages from communication logs or web bookmarks extracted from a browser database. 
+
+\section ui_tree_analysis_results Analysis Results
+
+This section shows the analysis results created by running ingest. In general, analysis results contain information that the user has indicated they are interested in. For example, if the user sets up a list of \ref hash_db_page "notable hashes", any hash set hits will appear here. 
+
+\section ui_tree_os_accounts OS Accounts
+
+This section shows the OS accounts found in the case. See \ref host_os_accounts for an example.
+
+\section ui_tree_tags Tags
+
+Any item you tag shows up here so you can find it again easily. See \ref tagging_page for more information.
 
 \section ui_tree_reports Reports
 

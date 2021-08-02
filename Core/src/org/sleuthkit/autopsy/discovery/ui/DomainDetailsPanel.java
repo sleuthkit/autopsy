@@ -96,6 +96,17 @@ final class DomainDetailsPanel extends JPanel {
                             runDomainWorker((DomainArtifactsTabPanel) selectedComponent, true);
                         } else if (!StringUtils.isBlank(domain) && selectedComponent instanceof MiniTimelinePanel) {
                             runMiniTimelineWorker((MiniTimelinePanel) selectedComponent, true);
+                        } else if (selectedComponent instanceof OtherOccurrencesPanel) {
+                            if (CentralRepository.isEnabled()) {
+                                try {
+                                    ((OtherOccurrencesPanel) selectedComponent).populateTableForOneType(CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID), domain);
+                                } catch (CentralRepoException ex) {
+                                    logger.log(Level.INFO, "Central repository exception while trying to get instances by type and value for domain: " + domain, ex);
+                                    ((OtherOccurrencesPanel) selectedComponent).reset();
+                                }
+                            } else {
+                                ((OtherOccurrencesPanel) selectedComponent).reset();
+                            }
                         }
                     }
                 }

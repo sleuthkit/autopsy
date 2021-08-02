@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications.relationships;
 
-import java.awt.Component;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
@@ -37,15 +36,15 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
      */
     public RelationshipBrowser() {
         initComponents();
-        
+
         MessageViewer messagesViewer = new MessageViewer();
         ContactsViewer contactsViewer = new ContactsViewer();
         SummaryViewer summaryViewer = new SummaryViewer();
         MediaViewer mediaViewer = new MediaViewer();
         CallLogViewer callLogViewer = new CallLogViewer();
-        
+
         proxyLookup = new ModifiableProxyLookup(messagesViewer.getLookup());
- 
+
         tabPane.add(summaryViewer.getDisplayName(), summaryViewer);
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(callLogViewer.getDisplayName(), callLogViewer);
@@ -95,13 +94,11 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
     }// </editor-fold>//GEN-END:initComponents
 
     private void tabPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneStateChanged
-        if(currentSelection != null) {
-            ((RelationshipsViewer) tabPane.getSelectedComponent()).setSelectionInfo(currentSelection);
-        }
-        
-        Component selectedComponent = tabPane.getSelectedComponent();
-        if(selectedComponent instanceof Lookup.Provider) {
-            Lookup lookup = ((Lookup.Provider)selectedComponent).getLookup();
+        RelationshipsViewer viewer = ((RelationshipsViewer) tabPane.getSelectedComponent());
+        //clear old values
+        viewer.setSelectionInfo(currentSelection);
+        if (viewer instanceof Lookup.Provider) {
+            Lookup lookup = viewer.getLookup();
             proxyLookup.setNewLookups(lookup);
         }
     }//GEN-LAST:event_tabPaneStateChanged

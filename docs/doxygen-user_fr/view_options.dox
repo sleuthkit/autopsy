@@ -1,0 +1,91 @@
+﻿/*! \page view_options_page Options d'affichage
+
+[TOC]
+
+
+Les options "View" vous permettent de configurer la façon dont les données sont affichées dans l'interface utilisateur Autopsy.
+
+Il existe deux façons d'accéder aux options. La première méthode consiste à utiliser l'icône "engrenage" au-dessus de l'arborescence des répertoires:
+
+\image html view_options_gear.png
+
+La deuxième façon consiste à aller dans Tools->Options puis sélectionner l'onglet "Views":
+
+\image html view_options_options_panel.png
+
+
+\section view_options_global Paramètres globaux ("Global Settings")
+
+Les paramètres de cette section persistent jusqu'à la fermeture de l'application.
+
+\subsection view_options_hide_known Masquer les fichiers connus ("Hide known files")
+
+Cette option vous permet de masquer les fichiers marqués comme "known" par le module \ref hash_db_page. L'option permettant de masquer les fichiers connus dans la zone des sources de données empêchera ces fichiers d'être affichés dans la vue des résultats. De même, l'option permettant de masquer le slack dans la zone des vues empêchera les fichiers slack d'apparaître sous la section "Views" de l'arborescence.
+
+\subsection view_options_hide_slack Masquer les fichiers slack ("Hide slack files")
+
+Autopsy cré des fichiers slack (avec l'extension "-slack") à partir de tout espace supplémentaire à la fin d'un fichier. Ces fichiers peuvent être affichés ou masqués dans la zone des sources de données et/ou dans la zone des vues. Ce qui suit montre un fichier slack dans la visionneuse de résultats:
+
+\image html view_options_show_slack.png
+
+Cochez l'option permettant de masquer le slack dans la zone des sources de données ("Data Sources area") empêchera l'affichage du fichier de slack:
+
+\image html view_options_hide_slack.png
+
+De même, l'option permettant de masquer le slack dans la zone des vues ("Views area") empêchera les fichiers slack d'apparaître sous la section "Views" de l'arborescence.
+
+\subsection view_options_hide_tags Masquer les balises des autres utilisateurs ("Hide other user's tags")
+
+Cette option vous permet de masquer les balises des autres utilisateurs dans la section "Tags" de l'arborescence. Voir \ref user_tags pour plus de détails.
+
+\subsection view_options_cr_columns Ne pas ajouter les colonnes pour ("Do not add columns for") S(core), C(omments) et (O)ccurrences
+
+Par défaut, les trois premières colonnes de la visionneuse de résultats après le nom de fichier sont nommées "S", "C" et "O". Le remplissage de ces colonnes peut augmenter les temps de chargement. Voir la section \ref result_viewer_sco pour plus d'informations.
+
+\subsection view_options_paging Pagination ("Maximum number of Results to show in table")
+
+Par défaut, seuls 10 000 résultats seront affichés dans la visionneuse de résultats. Vous pouvez modifier ce seuil ici. Le mettre à zéro désactivera la pagination.
+
+\subsection view_options_content_viewer Sélection de la visionneuse de contenu ("When selecting a file")
+
+Par défaut, la \ref content_viewer_page tente de sélectionner l'onglet le plus pertinent à afficher lors du choix d'un nœud. Si vous souhaitez modifier ce comportement pour rester sur la même visionneuse de contenu lors du changement de nœuds, choisissez l'option "Stay on the same file viewer".
+
+\subsection view_options_time Format de l'heure ("When displaying times")
+
+Les horodatages peuvent être affichés en heure locale ou dans un fuseau horaire sélectionné dans la liste déroulante.
+
+\image html view_options_local_time.png
+<br>
+\image html view_options_gmt.png
+
+\subsection view_options_translate Traduire du texte ("Translate text")
+
+Si vous avez une module de \ref machine_translation_page installé, cette option ajoutera une colonne à la \ref result_viewer_page pour afficher le nom traduit des fichiers et des dossiers. 
+
+\section view_options_case Paramètres de cas actuels ("Current Case Settings")
+
+Les paramètres de cette section s'appliquent uniquement au cas actuel.
+
+\subsection view_options_group Regroupement des sources de données
+
+Les options ici vous permettent de choisir comment afficher les données dans l'\ref ui_tree "Arborescence". La première option ("Group by Data Type") affiche les résultats combinés pour toutes les sources de données. Tous les nœuds de l'arborescence contiendront des résultats combinés pour toutes les sources de données du cas.
+
+\image html views_standard_tree.png
+
+La deuxième option ("Group by Person/Host") sépare les résultats de chaque source de données et organise les sources de données en \ref ui_tree_persons "personne" et \ref ui_tree_hosts "hôte". 
+
+\image html views_grouped_tree.png
+
+\section view_options_session Paramètres de session actuels ("Current Session Settings")
+
+Les paramètres de la session en cours seront en vigueur jusqu'à ce que vous fermiez l'application.
+
+\subsection view_options_rejected Masquer les résultats rejetés ("Hide redjected results")
+
+Les comptes peuvent être approuvés ou rejetés par l'utilisateur, comme indiqué dans la capture d'écran ci-dessous.
+
+\image html view_options_reject_account.png
+
+Les comptes rejetés ne seront pas inclus dans le rapport et seront par défaut masqués dans l'interface utilisateur. Si vous rejetez accidentellement un compte et devez changer son statut, ou si vous souhaitez simplement afficher les comptes rejetés, vous pouvez décocher l'option "Hide rejected results".
+
+*/

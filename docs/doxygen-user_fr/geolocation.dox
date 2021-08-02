@@ -1,0 +1,152 @@
+﻿/*! \page geolocation_page  Geolocation (Géolocalisation)
+
+[TOC]
+
+
+\section geo_overview Aperçu
+
+La fenêtre "Geolocation" affiche les artefacts qui ont des attributs de longitude et de latitude comme points de cheminement sur une carte. En pratique, lorsque l'accès aux serveurs de tuiles de carte en ligne peut ne pas être disponible, la fenêtre de géolocalisation prend en charge les sources de données de tuiles de carte hors ligne.
+
+\image html geo_main.png
+
+\section geo_usage Usage
+
+Pour ouvrir la fenêtre de géolocalisation, cliquez sur le bouton "Geolocation" près du haut de la fenêtre principale, ou allez sur "Tools" puis sélectionnez "Geolocation".
+
+\subsection geo_navigation Usage général
+
+Vous pouvez déplacer la carte en cliquant et en faisant glisser, et zoomer à l'aide de la molette de la souris ou du curseur en bas à gauche de la carte. Si une tuile de carte n'est pas disponible, la tuile apparaîtra grise mais les points géocodés seront toujours affichés. Cela est susceptible de se produire lors de la modification de la valeur par défaut des \ref geo_map_options. Différents types de points géocodés seront affichés dans différentes couleurs. Vous pouvez utiliser la touche en bas à gauche pour identifier facilement le type de chaque point géocodé. Certains types utiliseront également différentes icônes sur la carte. Par exemple, les points de suivi individuels seront affichés sous forme de cercles plus petits. La piste entière sera mise en surbrillance lors de la sélection d'un point de piste individuel.
+
+\image html geo_track_points.png
+
+Vous pouvez faire un clic gauche sur un point géocodé pour mettre ce point en surbrillance et afficher une fenêtre contextuelle de détails dans le coin supérieur droit de la carte. La fenêtre contextuelle des détails sera mise à jour lorsque vous cliquez sur différents points géocodés. Les données affichées varient en fonction du type de point géocodé. Par exemple, s'il s'agit d'un signet GPS:
+
+\image html geo_details_bookmark.png
+
+Ou bien s'il s'agit d'une image avec des coordonnées GPS trouvées par le module \ref EXIF_parser_page :
+
+\image html geo_details.png
+
+Vous pouvez également faire un clic droit sur un point géocodé pour afficher un menu similaire à ce que vous verriez dans la \ref result_viewer_page. 
+
+\image html geo_context_menu.png
+
+\subsection geo_filter Filtes
+
+Les filtres sont affichés sur le côté gauche de l'écran. Le filtre supérieur vous permet de filtrer les points de cheminement en fonction de l'horodatage. Si cette option est activée, vous ne verrez que les points géocodés avec un horodatage dans les N jours du point géocodé le plus récent (pas la date actuelle). Lorsque vous utilisez ce filtre, vous pouvez également choisir si vous souhaitez voir les points géocodés sans horodatage.
+
+\image html geo_filter_time.png
+
+Le deuxième filtre vous permet d'afficher les points géocodés uniquement pour les sources de données sélectionnées. Notez que seules les sources de données contenant des données de géolocalisation sont affichées ici.
+
+\image html geo_filter_datasource.png
+
+Le dernier filtre vous permet d'afficher uniquement certains types de points géocodés. Le nombre à côté du type indique le nombre de points de ce type dans votre cas.
+
+\image html geo_filter_type.png
+
+Une fois que vous avez terminé la configuration de vos filtres, cliquez sur le bouton "Apply" en haut du panneau des filtres.
+
+Si vous le souhaitez, le panneau de filtre peut être masqué en cliquant sur l'onglet vertical "Filters" sur le bord supérieur droit du panneau de filtre. Cliquer sur cet onglet une seconde fois restaurera le panneau des filtres.
+
+\subsection geo_report Générer un rapport
+
+Vous pouvez générer un rapport KML en utilisant le bouton "KML Report" dans le coin inférieur droit de la fenêtre. Le rapport n'inclura que les points géocodés actuellement visibles et se trouvera dans le dossier "Reports" de votre cas. 
+
+\image html geo_report.png
+
+Comme avec les autres \ref reporting_page "modules de rapports", le rapport généré apparaîtra sous la section "Reports" dans l'\ref tree_viewer_page. Notez que vous pouvez également utiliser le module de rapport \ref report_kml pour générer un rapport contenant toutes les données de géolocalisation dans le cas.
+
+\section geo_map_options Options de tuiles de carte
+
+<p>La fenêtre de géolocalisation d'Autopsy prend en charge plusieurs options de source de données de tuiles de carte. La source de données des tuiles de carte peut être modifiée
+dans le panneau "Geolocation" de la boîte de dialogue Options. Il existe quatre options pour les données de tuiles de géolocalisation, dont deux peuvent être utilisées hors ligne.
+<ul>
+<li><b>Default online tile server</b>
+<ul>
+<li>La source de données de tuiles de la fenêtre de géolocalisation par défaut est le serveur Microsoft Virtual Earth https://www.bing.com/maps.
+</ul>
+<li><b>OpenStreetMap server</b>
+<ul>
+<li>Vous pouvez spécifier l'adresse d'un serveur de tuiles OSM. Une liste des serveurs de tuiles en ligne peut être trouvée ici: https://wiki.openstreetmap.org/wiki/Tile_servers. 
+Les serveurs de tuiles peuvent avoir des restrictions qui empêchent Autopsy d'accéder à leurs tuiles. Si l'URL des tuiles est quelque chose de la forme "http://tiles.example.org/${z}/${x}/${y}.png", 
+alors vous devrez entrer "http://tiles.example.org" dans le panneau des options.
+
+\image html geo_openstreetmap.png
+</ul>
+<li><b>OpenStreetMap zip file</b>
+<ul>
+<li>Permet l'utilisation hors ligne d'un fichier zip d'images de tuiles OSM
+<li>Les détails sur la façon de générer des fichiers zip de tuiles sont abordés \ref geo_generate_zip "ci-dessous".
+</ul>
+<li><b>MBTiles file</b>
+<ul>
+<li>Permet l'utilisation hors ligne d'un fichier MBTiles contenant des tuiles matricielles.
+<li>Les fichiers de tuiles matricielles MBTiles peuvent être téléchargés de <a href="https://openmaptiles.com/downloads/planet/">OpenMapTiles</a>.
+<li>OpenMapTiles fournit des téléchargements de fichiers MBTile pour des zones aussi grandes que la planète entière à aussi petites que des régions de pays.
+<li>Pour chacune de ces régions, au moins quatre MBTiles sont disponibles au téléchargement, assurez-vous de télécharger l'un des fichiers "Raster Tile",
+pas les "Vector Tiles".
+</ul>
+</ul>
+
+\subsection geo_generate_zip Utilisation de Maperative pour générer des fichiers zip d'images de tuiles
+
+Maperative est un outil pour dessiner des cartes, mais il peut également être utilisé pour créer des images de tuiles. Les téléchargements et les documentations de Maperative peuvent être trouvés sur http://maperitive.net/ .
+
+Par défaut, Maperative utilise un serveur de tuiles en ligne pour générer une carte. Pour une utilisation hors ligne, vous pouvez utiliser un extrait de données brutes OpenStreetMap.
+
+
+\subsubsection geo_generate_tile_image Génération de fichiers zip d'images de tuiles à l'aide de n'importe quelle source de données cartographiques:
+<ol>
+<li>Téléchargez et exécutez Maperative.
+<li>Centrez et zoomez sur une zone d'intérêt. Plus la zone est grande, plus il y aura de tuiles générées. Des tuiles seront générées pour la zone visible dans la fenêtre de la carte.
+<li>Choisissez si vous souhaitez utiliser les niveaux de zoom par défaut ou personnalisés. Les niveaux de zoom dans Mapertive commencent à 1. Au fur et à mesure que le niveau de zoom augmente, la quantité de tuiles générées ainsi que le détail de chaque tuile augmentent également. La création de tuiles, en particulier pour les zones très peuplées, peut prendre du temps. Veuillez être patient avec l'une ou l'autre des méthodes.
+<ul>
+<li>Pour générer des tuiles à l'aide des niveaux de zoom par défaut, sélectionnez Tools->Generate Tiles
+
+\image html geo_gen_tiles.png
+
+Maperative générera des tuiles pour les niveaux de zoom en fonction de la zone d'intérêt et du niveau de zoom. Par exemple, si vous commencez à effectuer un zoom arrière complet, vous générerez probablement les niveaux 1 à 10. Si vous commencez à zoomer, vous pouvez avoir les niveaux 10 à 14.
+
+<li>Maperative fournit une interface en ligne de commande qui vous permet de générer des tuiles pour des niveaux de zoom spécifiques. Les commandes peuvent être exécutées dans le champ de texte de l'invite de commande au bas de la fenêtre Maperative. Pour une liste complète des commandes, consultez la documentation de Maperative ou <a href="http://maperitive.net/docs/">http://maperitive.net/docs/</a>. La commande <tt>generate-tiles</tt> peut être utilisée pour générer des tuiles pour la zone visible dans la fenêtre de la carte. Pour plus de détails sur <tt>generate-tiles</tt> voir la documentation fournie avec Maperative ou <a href="http://maperitive.net/docs/Commands/GenerateTiles.html">http://maperitive.net/docs/Commands/GenerateTiles.html</a>. Voici un exemple de commande pour générer des tuiles pour les niveaux de zoom 2 à 3 dans le dossier Tiles:
+\verbatim generate-tiles minzoom=2 maxzoom=3 tilesdir=C:\Tiles \endverbatim
+
+\image html geo_command_line.png
+
+</ul>
+<li>Pour une utilisation avec Autopsy, les images de tuiles générées doivent être dans un fichier zip. Pour créer un zip de tuiles à utiliser dans Autopsy, compresser tous les dossiers dans le répertoire de sortie du fichier de tuiles. N'incluez pas le répertoire parent, mais uniquement les dossiers numérotés qu'il contient. Si vous utilisez l'option de la barre de menus ou si vous n'avez pas spécifié de dossier dans votre commande, les tuiles générées seront situées dans le dossier d'installation &lt;Maperative&gt;\\Tiles.
+
+\image html geo_tile_folder.png
+
+Assurez-vous de compresser uniquement le contenu du dossier, pas le dossier de niveau supérieur.
+</ol>
+
+
+\subsubsection geo_add_ds Ajout d'une source de données à Maperative
+
+Maperative peut être utilisé pour générer des tuiles en utilisant des extraits de données brutes d'OpenStreetMap. Les fichiers d'extraits de données (*.osm ou *.osm.pbf) peuvent être téléchargés à partir de divers emplacements. Voir https://wiki.openstreetmap.org/wiki/Planet.osm pour une liste d'emplacements. Le serveur de téléchargement de Geofabrik a des extraits gratuits de données OpenStreetMap pour de nombreuses régions. Lors de l'utilisation d'extraits de données brutes OSM dans Maperative, il est recommandé d'utiliser des fichiers plus petits (.osm).
+
+Pour ajouter une source de données à Maperative:
+<ol>
+<li>Sélectionnez dans la barre de menu File->Open Map Source... 
+
+\image html geo_add_ds.png
+
+<li>La nouvelle source de données apparaîtra dans le coin inférieur droit de la fenêtre dans la liste "Map Sources".
+<li>Pour désactiver une  entrée de "Map Sources", sélectionnez la source de carte dans la liste et cliquez sur le bouton X.
+</ol>
+
+\subsubsection geo_merge_osm Fusion d'extraits de données brutes OSM
+
+Pour faciliter l'utilisation, les utilisateurs peuvent s'ils le souhaitent fusionner des extraits de données brutes OSM. OSMConvert est un outil qui peut être utilisé pour fusionner des extraits de données brutes OSM.
+
+Pour fusionner deux extraits de données brutes OSM country1.osm.pbf et country2.osm.pbf, utilisez les commandes suivantes. Notez que cela suppose que osmcovert et les fichiers se trouvent dans le même répertoire; s'ils ne le sont pas, assurez-vous d'utiliser des chemins complets.
+\verbatim
+osmconvert country1.osm.pbf -o=country1.o5m
+osmconvert country2.osm.pbf -o=country2.o5m
+osmconvert country1.o5m country2.o5m -o=together.o5m
+osmconvert together.o5m -o=together.osm.pbf
+\endverbatim
+
+
+*/

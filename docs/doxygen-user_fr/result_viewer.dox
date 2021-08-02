@@ -1,0 +1,64 @@
+/*! \page result_viewer_page Visionneuse de résultats
+
+[TOC]
+
+
+La visionneuse de résultats est située en haut à droite de l'écran d'Autopsy et affiche le contenu de ce qui a été sélectionné dans l'\ref tree_viewer_page. 
+
+\section result_viewer_table La visionneuse "Table"
+
+La visionneuse principale dans l'onglet "Listing" affiche le contenu de la sélection actuelle sous forme de tableau avec les détails (propriétés) de chaque élément sélectionnés. Pour les fichiers, voici quelques exemples des propriétés que cette visionneuse montre: nom ("Name"), heures (modification = "Modified Time", changement = "Change Time", consultation = "Access Time" et création = "Created Time"), taille ("Size"), indicateurs ("Flags" - répertoire et méta), mode, ID utilisateur, ID de groupe, adresse de métadonnées ("Metadata Address"), adresse d'attribut ("Attribute Address") et type (répertoire et méta). Pour les autres types de données, les colonnes seront différentes. Cliquez sur l'onglet "Table" pour sélectionner cette vue.
+
+La capture écran suivante montre la visionneuse "Table" lorsqu'un dossier est sélectionné dans la section "Data Source" de l'\ref tree_viewer_page.
+\image html result-viewer-example-1.PNG
+
+Comme mentionné ci-dessus, la visionneuse "Table" est sensible au contexte, ce qui signifie qu'elle affichera les colonnes applicables pour le type de données sélectionné. La capture écran suivante montre les données du nœud "Web Bookmarks" dans l'\ref tree_viewer_page.
+
+\image html result-viewer-example-3.PNG
+
+\subsection result_viewer_sco Colonnes SCO
+Par défaut, les trois premières colonnes après le nom de fichier dans une visionneuse "Table" sont nommées "S", "C" et "O". 
+
+\image html view_options_sco.png
+
+Ces colonnes affichent les informations suivantes:
+<ul>
+<li> (S)core - indique si l'élément est intéressant ou notable.
+   <ul>
+     <li>Affiche une icône rouge si au moins un résultat d'analyse enfant est notable ou si le fichier est marqué avec une balise notable.
+     <li>Affiche une icône jaune si au moins un résultat d'analyse enfant est probablement notable ou si le fichier est marqué.
+   </ul>
+<li> (C)omment - indique si l'élément a un commentaire dans le référentiel central ou si un commentaire est associé à une balise.
+<li> (O)ther occurrences - indique combien de sources de données dans le référentiel central contiennent cet élément. Le décompte comprendra l'élément sélectionné.
+</ul>
+
+Pour afficher plus d'informations sur la raison pour laquelle une icône est apparue, vous pouvez la survoler. Ces colonnes interrogent le référentiel central ainsi que la base de données de cas. Si cela semble avoir un impact sur les performances, vous pouvez les désactiver via le panneau des \ref view_options_page. Cela supprimera entièrement la colonne "(O)ther occurrences", la colonne "(C)omment" sera basée uniquement sur les balises et la colonne "(S)core" ne pourra plus refléter les éléments notables.
+
+\subsection export_csv Export au format CSV
+
+Vous pouvez exporter le contenu d'une visionneuse "Table" vers un fichier CSV de deux manières. Le bouton "Save table as CSV" dans le coin supérieur gauche enregistre tout le contenu de la visionneuse "Table" dans un fichier CSV. Vous pouvez également sélectionner des lignes dans la visionneuse "Table", puis faire un clic-droit et sélectionner "Export selected rows to CSV" pour enregistrer uniquement un sous-ensemble des lignes:
+
+\image html result_viewer_csv.PNG
+
+\subsection right_click_functions Fonctions du clic droit
+L'onglet "Table" dans la visionneuse de résultats a certaines fonctions de clic droit intégrées qui sont accessibles lorsqu'une ligne d'un type particulier est sélectionnée (un fichier, un répertoire ou un résultat).
+Voici quelques exemples que vous pouvez voir:
+\li Open File in External Viewer: Ouvre le fichier sélectionné dans une application "externe" telle que définie par le système d'exploitation local ou via l'onglet "External Viewer" dans lequel vous pouvez vous rendre via le panneau Options du menu Tools. Par exemple, les fichiers HTML peuvent être ouverts par Chrome ou Firefox ou un autre navigateur, selon la configuration du système local pour l'utilisation de navigateurs Web.
+\li View in New Window: Ouvre l'élément sélectionné dans une nouvelle visionneuse de contenu (au lieu de l'emplacement par défaut dans la zone inférieure droite de la fenêtre principale).
+\li Extract: Crée une copie locale du fichier ou du répertoire sélectionné pour une analyse plus approfondie.
+
+
+\section thumbnail_result_viewer La visionneuse "Thumbnail"
+L'onglet "Thumbnail" afficher les éléments sélectionnés dans l'\ref tree_viewer_page sous forme d'un tableau d'images miniatures dans des tailles ajustables. Cette visionneuse ne prend en charge que les fichiers "image" (elle ne prend actuellement en charge que les formats JPG, GIF et PNG). Cliquez sur l'onglet "Thumbnail" dans l'onglet principal "Listing" pour sélectionner cette vue. Notez que pour un grand nombre d'images dans un répertoire sélectionné dans la zone "Data Sources" de l'\ref tree_viewer_page, ou pour une sélection dans la zone "Views" de l'\ref tree_viewer_page qui contient un grand nombre d'images, cela peut prendre un certain temps pour remplir la visionneuse de vignettes pour la première fois, c'est-à-dire avant que les vignettes ne soient mises en cache.
+
+\image html thumbnail-result-viewer-tab.PNG
+
+\section result_viewer_paging Pagination
+
+La visionneuse "Table" peut fonctionner lentement lors de l'affichage d'un grand nombre de lignes. Pour résoudre ce problème, lorsqu'il y a plus d'un certain nombre de lignes (10 000 par défaut), les résultats seront divisés en pages. Les commandes de pagination en haut à droite de la vue tableau vous permettent de parcourir les différentes pages.
+
+\image html result_viewer_paging.PNG
+
+Vous pouvez ajuster les tailles de page via les \ref view_options_page ou désactiver complètement la pagination.
+
+*/

@@ -291,11 +291,18 @@ public class DataResultFilterNode extends FilterNode {
                             NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), ban));
                 }
             } else if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-                //action to go to the source artifact
-                actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
-                // action to go to the source file of the artifact
-                actionsList.add(new ViewContextAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
+                try {
+                    if (ba.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT) != null) {
+                        //action to go to the source artifact
+                        actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
+                        
+                        // action to go to the source file of the artifact
+                        actionsList.add(new ViewContextAction(
+                                NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
+                    }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.WARNING, "Error looking up attributes for artifact with ID=" + ba.getId());
+                }
             } else {
                 // if the artifact links to another file, add an action to go to
                 // that file

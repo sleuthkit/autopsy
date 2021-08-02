@@ -1,0 +1,35 @@
+﻿/*! \page drone_page DJI Drone Analyzer (Analyseur de drone DJI)
+
+[TOC]
+
+
+\section drone_overview Aperçu
+
+Le module "DJI Drone Analyzer" vous permet d'analyser les fichiers d'un drone.
+
+Actuellement, ce module fonctionne sur les images obtenues à partir de la carte SD interne des modèles de drones DJI suivants:
+- Phantom 3
+- Phantom 4
+- Phantom 4 Pro
+- Inspire 1
+- Inspire 2
+- Mavic Pro
+- Mavic Air
+
+Le module trouvera les fichiers DAT et les traitera à l'aide de DatCon (https://datfile.net/DatCon/intro.html). 
+
+\section drone_config Exécution du module
+
+Pour activer le module d'acquisition DJI Drone Analyzer, cochez la case dans \ref ingest_configure "l'écran de configuration des Ingest Modules". 
+
+\section drone_results Affichage des résultats
+
+Les résultats sont affichés dans l'arborescence des résultats sous "Extracted Content".
+
+\image html gps_track_artifact.png 
+
+Les résultats GPS peuvent également être consultés dans la fenêtre \ref geolocation_page et dans le rapport KML.
+
+\image html geolocation_drone_path.png
+
+*/

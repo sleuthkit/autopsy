@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.SleuthkitJNI;
 
 /*
  * A runnable that adds a memory image data source to a case database.
@@ -167,7 +168,7 @@ final class AddMemoryImageTask implements Runnable {
          * will need to be changed when a Device abstraction is added to the
          * SleuthKit data model.
          */
-        Image dataSource = caseDatabase.addImageInfo(0, new ArrayList<>(Arrays.asList(memoryImagePath)), timeZone, host);
+        Image dataSource = SleuthkitJNI.addImageToDatabase(caseDatabase, new String[]{memoryImagePath}, 0, timeZone, null, null, null, deviceId);
         return dataSource;
     }
 

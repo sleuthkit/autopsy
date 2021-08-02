@@ -91,6 +91,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAM
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HOME_DIR;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.HostManager;
@@ -817,7 +818,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, value));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, itemMtime));
-                                            BlackboardArtifact bbart = regFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_DELETED_PROG), bbattributes);
+                                            BlackboardArtifact bbart = regFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_INSTALLED_PROG), bbattributes);
                                             newArtifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.", ex); //NON-NLS
@@ -1769,6 +1770,7 @@ class ExtractRegistry extends Extract {
      */
     void createShellBagArtifacts(AbstractFile regFile, List<ShellBag> shellbags) throws TskCoreException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
+        List<DataArtifact> dataArtifacts = new ArrayList<>();
         try {
             for (ShellBag bag : shellbags) {
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
@@ -1796,11 +1798,14 @@ class ExtractRegistry extends Extract {
                     attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
                 }
 
-                artifacts.add(createArtifactWithAttributes(getShellBagArtifact(), regFile, attributes));
+                BlackboardArtifact artifact = createArtifactWithAttributes(getShellBagArtifact(), regFile, attributes); 
+                artifacts.add(artifact);
+                dataArtifacts.add((DataArtifact)artifact);
             }
         } finally {
             if(!context.dataSourceIngestIsCancelled()) {
-                postArtifacts(artifacts);
+                postArtifacts(artifacts);                
+                context.addDataArtifactsToJob(dataArtifacts);
             }
         }
     }
@@ -1995,7 +2000,7 @@ class ExtractRegistry extends Extract {
         } else {
             osAccount = optional.get();
             if (userName != null && !userName.isEmpty()) {
-                OsAccountUpdateResult updateResult= accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, userName, null, host);
+                OsAccountUpdateResult updateResult= accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, userName, domainName.isEmpty() ? null : domainName, host);
                 osAccount = updateResult.getUpdatedAccount().orElse(osAccount);
             }
         }
@@ -2187,7 +2192,7 @@ class ExtractRegistry extends Extract {
         accountMgr.addExtendedOsAccountAttributes(osAccount, attributes);
          
         // update the loginname
-        accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, loginName, null, host);
+        accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, loginName, domainName.isEmpty() ? null : domainName, host);
         
         // update other standard attributes  -  fullname, creationdate
         accountMgr.updateStandardOsAccountAttributes(osAccount, fullName, null, null, creationTime);

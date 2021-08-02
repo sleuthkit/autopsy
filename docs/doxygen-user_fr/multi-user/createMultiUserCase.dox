@@ -1,0 +1,30 @@
+/*! \page multiuser_page Utilisation de cas multi-utilisateurs
+
+\section creating_multi_user_cases Créer des cas multi-utilisateurs
+
+Les cas multi-utilisateurs permettent à plusieurs instances d'Autopsy d'avoir le même cas ouvert en même temps. Lors de la création d'un cas, les utilisateurs ont le choix entre un cas mono-utilisateur ou multi-utilisateurs, comme indiqué dans la capture d'écran ci-dessous.
+
+\image html case-newcase.PNG
+
+Pour créer un cas multi-utilisateurs, les opérations suivantes doivent avoir été réalisées:
+- Les services réseau doivent être installés, configurés et en cours d'exécution. Voir \ref multiuser_install_install.
+- Le dossier "Case" doit se trouver dans un dossier partagé auquel tous les autres clients peuvent également accéder via le même chemin (UNC ou lettre de lecteur).
+- Les sources de données ajoutées avec l'assistant "Add Data Source" doivent se trouver dans un dossier partagé auquel tous les clients peuvent accéder via le même chemin.
+
+\section multi_user_other Autres informations multi-utilisateurs
+
+- Lors de l'utilisation d'un cas multi-utilisateurs, d'autres nœuds peuvent exécuter une acquisition de données sur le même cas. Pendant ce temps, vous verrez une barre de progression étiquetée avec le nom d'hôte de la machine effectuant l'acquisition en bas à droite d'Autopsy. La barre de progression continuera à se déplacer d'avant en arrière jusqu'à ce que l'acquisition soit terminée ou annulée. Vous pouvez toujours exécuter une acquisition sur votre ordinateur local pendant que cela est en cours. Ceci est montré dans la capture d'écran ci-dessous.
+
+\image html othernodeingesting.PNG
+
+- Lorsque des problèmes surviennent, une "info-bulle" apparait en bas à droite de l'écran. Il a un "i" à l'intérieur d'un cercle, avec une couleur de cercle différente en fonction du message. Rouge pour signaler un problème et bleue pour une information. Voir la capture d'écran ci-dessous.
+
+\image html messagebubbles.PNG
+
+- Cliquer sur cette "info-bulle" fait apparaître la liste des notifications précédentes qui n'ont pas été rejetées en cliquant sur le "x". Comme vous pouvez le voir dans la capture d'écran ci-dessous, le câble réseau a été débranché de la machine et elle a perdu toute connexion aux trois services. Lorsque le câble a été reconnecté, les services ont été retrouvés.
+
+\image html messagebubblesbigger.PNG
+
+- Lors de la création de cas multi-utilisateurs, nous vous recommandons d'utiliser des chemins UNC pour spécifier les noms des lecteurs. Le mappage de lecteur fonctionnera, mais il est parfois difficile de faire correspondre toutes les machines participant à un cas aux mêmes lettres de lecteur pour les mêmes ressources. Il est beaucoup plus simple d'utiliser des chemins UNC entièrement spécifiés sous la forme <i>\\\\nom-hote\\nom-partage\\dossier</i>.
+
+*/

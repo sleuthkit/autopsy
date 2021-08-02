@@ -208,7 +208,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         int currentTab = pane.getSelectedIndex();
         if (currentTab != -1) {
             UpdateWrapper dcv = viewers.get(currentTab);
-            if (dcv.isOutdated()) {
+            if (dcv.isOutdated() || dcv.getViewer() instanceof DataArtifactContentViewer) {
                 // change the cursor to "waiting cursor" for this operation
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
@@ -254,6 +254,10 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         
         String getTitle(Node node) {
             return this.wrapped.getTitle(node);
+        }
+        
+        DataContentViewer getViewer() {
+            return wrapped;
         }
     }
 
