@@ -26,11 +26,21 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 /**
  * Ingest job settings for the keywords search module.
  */
-final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
+public final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
+
     private HashSet<String> namesOfEnabledKeywordLists;
     private HashSet<String> namesOfDisabledKeywordLists; // Added in version 1.1
+
+    /**
+     * These are nullable so that if no serialized setting, the setting can
+     * defer to legacy KeywordSearchSettings.
+     */
+    private Boolean ocrEnabled;
+    private Boolean limitedOCREnabled;
+
+    private boolean ocrOnly;
 
     /**
      * Constructs ingest job settings for the keywords search module.
@@ -38,7 +48,13 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
      * @param namesOfEnabledKeywordLists A list of enabled keywords lists.
      */
     KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists) {
-        this(namesOfEnabledKeywordLists, new ArrayList<String>());
+        this.namesOfEnabledKeywordLists = new HashSet<>(namesOfEnabledKeywordLists);
+        this.namesOfDisabledKeywordLists = new HashSet<>();
+        
+        // explicitly set to default value
+        this.ocrEnabled = null;
+        this.limitedOCREnabled = null;
+        this.ocrOnly = false;
     }
 
     /**
@@ -46,14 +62,91 @@ final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
      *
      * @param namesOfEnabledKeywordLists  A list of enabled keywords lists.
      * @param namesOfDisabledKeywordLists A list of disabled keywords lists.
+     * @param ocrEnabled                  Whether or not OCR is enabled for
+     *                                    keyword search.
+     * @param limitedOCREnabled           If true, OCR is to be performed only
+     *                                    on images larger than 100KB.
+     * @param ocrOnly                     True if keyword search ingest should
+     *                                    be solely limited to OCR.
      */
-    KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists, List<String> namesOfDisabledKeywordLists) {
+    KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists, List<String> namesOfDisabledKeywordLists, boolean ocrEnabled, boolean limitedOCREnabled, boolean ocrOnly) {
         this.namesOfEnabledKeywordLists = new HashSet<>(namesOfEnabledKeywordLists);
         this.namesOfDisabledKeywordLists = new HashSet<>(namesOfDisabledKeywordLists);
+        this.ocrEnabled = ocrEnabled;
+        this.limitedOCREnabled = limitedOCREnabled;
+        this.ocrOnly = ocrOnly;
     }
 
     /**
-     * @inheritDoc
+     * Whether or not OCR is enabled for keyword search.
+     *
+     * @return Whether or not OCR is enabled for keyword search.
+     */
+    @SuppressWarnings("deprecation")
+    public boolean isOCREnabled() {
+        if (ocrEnabled == null) {
+            ocrEnabled = KeywordSearchSettings.getOcrOption();
+        }
+        
+        return ocrEnabled;
+    }
+
+    /**
+     * Sets whether or not OCR is enabled for keyword search.
+     *
+     * @param ocrEnabled Whether or not OCR is enabled for keyword search.
+     */
+    public void setOCREnabled(boolean ocrEnabled) {
+        this.ocrEnabled = ocrEnabled;
+    }
+
+    /**
+     * Returns true if OCR is to be performed only on images larger than 100KB.
+     * May defer to KeywordSearchSettings if no setting serialized.
+     *
+     * @return If true, OCR is to be performed only on images larger than 100KB.
+     */
+    @SuppressWarnings("deprecation")
+    boolean isLimitedOCREnabled() {
+        if (limitedOCREnabled == null) {
+            limitedOCREnabled = KeywordSearchSettings.getLimitedOcrOption();
+        }
+        
+        return limitedOCREnabled;
+    }
+
+    /**
+     * Sets whether or not OCR should be performed only on images larger than
+     * 100KB.
+     *
+     * @param limitedOCREnabled Whether or not OCR should be performed only on
+     *                          images larger than 100KB.
+     */
+    void setLimitedOCREnabled(boolean limitedOCREnabled) {
+        this.limitedOCREnabled = limitedOCREnabled;
+    }
+
+    /**
+     * Returns true if keyword search ingest should be solely limited to OCR.
+     *
+     * @return True if keyword search ingest should be solely limited to OCR.
+     */
+    boolean isOCROnly() {
+        return ocrOnly;
+    }
+
+    /**
+     * Sets whether or not keyword search ingest should be solely limited to
+     * OCR.
+     *
+     * @param ocrOnly Whether or not keyword search ingest should be solely
+     *                limited to OCR.
+     */
+    void setOCROnly(boolean ocrOnly) {
+        this.ocrOnly = ocrOnly;
+    }
+
+    /**
      */
     @Override
     public long getVersionNumber() {

@@ -1,0 +1,60 @@
+/*! \page installation_page Installation d'Autopsy
+
+[TOC]
+
+
+\section install Types de déploiement
+
+Il existe deux façons de déployer Autopsy:
+- **Mono-utilisateur**: les cas ne peuvent être ouverts que par une seule instance d'Autopsy à la fois. Les installations d'Autopsy ne communiquent pas entre elles. C'est le plus simple à installer et à déployer. Cette page décrit ce processus d'installation.
+- **Multi-utilisateurs**: les cas peuvent être ouverts par plusieurs utilisateurs en même temps et les utilisateurs peuvent voir ce que font les autres. Ce déploiement collaboratif nécessite l'installation et la configuration d'autres services réseau. L'installation de ce déploiement est traitée dans la section \ref install_multiuser_page.
+
+
+\section download Télécharger
+Quel que soit le type de déploiement, vous pouvez télécharger Autopsy à partir du site Web:
+
+https://www.autopsy.com/download/
+
+Nous distribuons un programme d'installation Windows et des fichiers ZIP à exécuter sous Linux et MacOS X.
+
+
+
+\section install_reqs Configuration requise
+
+\subsection prereqs_av AntiVirus
+
+Vous devez soit désactiver le logiciel antivirus installé sur vos ordinateurs qui exécuteront Autopsy ou configurer votre logiciel antivirus pour qu’il ignore le contenu de votre répertoire d’export de cas. Un logiciel antivirus peut mettre en quarantaine ou même supprimer certains de vos résultats avant que vous n'ayez la possibilité de les consulter. Autopsy encode certains des fichiers qu'il extrait afin qu'ils ne puissent pas être exécutés ou analysés, mais certains modules (comme notre module d'extraction ZIP) écriront directement les fichiers sur le disque dans un format non codé.
+
+Bien entendu, la désactivation du logiciel antivirus présente le risque que votre ordinateur soit infecté par des logiciels malveillants provenant de vos médias.
+
+
+
+\subsection sysreqs Mémoire
+
+Nous recommandons un minimum de 16 Go de RAM.
+
+Par défaut, Autopsy utilisera un maximum de 4 Go de RAM (sans compter la mémoire utilisée par le serveur d'indexation de texte Solr). Vous pouvez augmenter cette taille après l'installation en modifiant la valeur de la mémoire JVM maximale dans la section Runtime du menu Tools -> Options -> Application.
+
+\image html runtime_settings.PNG
+
+
+
+\section install_standalone Installation mono-utilisateur
+Pour installer Autopsy, procédez comme suit:
+1.	Exécutez le fichier msi Autopsy
+2. 	Si une fenêtre Windows de contrôle de compte d'utilisateur apparait, cliquez sur Oui
+3. 	Cliquez sur les boîtes de dialogue jusqu'à ce que vous puissiez cliquer sur un bouton indiquant Terminer
+4. 	Autopsy devrait maintenant être entièrement installé
+
+
+\section install_proxy Proxies
+
+Si vous êtes derrière un proxy et avez besoin d'accéder à un réseau avec Autopsy ou l'un des ses modules, vous pouvez définir vos informations de proxy dans l'onglet Tools, Options, General comme indiqué dans la capture d'écran ci-dessous.
+
+\image html proxySettings.PNG
+
+\section install_file_association Association de fichiers Windows
+
+Si vous le souhaitez, vous pouvez configurer une association de fichiers Windows entre les fichiers .aut et l'exécutable d’Autopsy (normalement situé sous C:\\Program Files\\Autopsy-(version actuelle)\\bin\\autopsy64.exe). Cela vous permettra de double-cliquer sur le fichier .aut d'un cas pour lancer Autopsy avec l’ouverture de ce cas. Vous trouverez des instructions pour configurer les associations de fichiers en effectuant une recherche sur le Web pour savoir "comment définir les associations de fichiers Windows".
+
+*/

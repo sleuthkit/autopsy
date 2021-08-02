@@ -19,7 +19,7 @@ Hosts are displayed in the \ref tree_viewer_page. Depending on the \ref view_opt
 
 \subsection host_os_accounts OS Accounts
 
-OS accounts can be viewed in the OS Accounts node under Results. Each OS account is associated with a host, and the host information is displayed in the OS Account tab of the content viewer.
+OS accounts can be viewed in the OS Accounts node of the tree viewer. Each OS account is associated with a host, and the host information is displayed in the OS Account tab of the content viewer.
 
 \image html host_os_accounts.png
 

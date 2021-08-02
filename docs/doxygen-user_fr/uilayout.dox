@@ -1,0 +1,44 @@
+﻿/*! \page uilayout_page Dispositions de l'interface utilisateur
+
+
+[TOC]
+
+
+<br>
+\section ui_overview Aperçu
+
+Les principales zones de l'interface utilisateur (UI) d'Autopsy sont les suivants:
+- \ref ui_tree, encadrée en vert sur le côté gauche
+- \ref ui_results, encadrée en bleu sur le côté supérieur droit
+- \ref ui_content, encadrée en rouge en bas à droite
+- \ref ui_keyword, encadrée en magenta dans le coin supérieur droit
+- \ref ui_status, encadrée en violet dans le coin inférieur droit
+
+Vous pouvez personnaliser l'affichage des données dans l'interface utilisateur via le panneau \ref view_options_page.
+
+\image html ui-layout-1.PNG
+
+\section ui_tree Tree Viewer (Arborescence)
+
+L'arborescence sur le côté gauche est le niveau supérieur de l'interface utilisateur. La sélection d'éléments dans l'arborescence entraînera l'affichage de leur contenu dans la visionneuse de résultats à droite. Vous pouvez parcourir les fichiers de l'image, trouver les résultats enregistrés générés par les \ref ingest_page "modules d'acquisition", et voir les résultats de \ref tagging_page et les \ref reporting_page. Voir la page \subpage tree_viewer_page pour plus d'informations.
+
+\section ui_results Result Viewer (Visionneuse de résultats)
+
+Les fenêtres de la visionneuse de résultats se trouvent dans la zone supérieure droite de l'interface et affichent les résultats de la sélection d'un élément dans l'arborescence. Les colonnes affichées dépendront de ce qui a été sélectionné dans l'arborescence - les fichiers afficheront des éléments tels que le chemin, la taille et la date de création tandis qu'un contact affichera son nom, son numéro de téléphone et son adresse e-mail. La sélection d'un élément dans la visionneuse de résultats affichera des détails sur l'élément dans la visionneuse de contenu ci-dessous. Voir la page \ref result_viewer_page pour plus d'informations.
+
+\section ui_content Content Viewer (Visionneuse de contenu)
+
+La visionneuse de contenu se trouve dans la zone inférieure droite de l'interface. Cette zone est utilisée pour afficher un fichier spécifique dans une variété de formats. Il existe différents onglets pour différents visualiseurs. Tous les onglets ne prennent pas en charge tous les types de fichiers, seuls certains d'entre eux seront donc activés. Pour afficher les données dans cette zone, un fichier doit être sélectionné dans la fenêtre de la visionneuse de résultats.
+
+Cette zone fait partie d'un framework de plug-ins, ce qui signifie que vous pouvez installer des modules qui ajouteront plus de types de visualiseurs.
+
+Pour plus d'informations, voir la page \ref content_viewer_page page.
+
+\section ui_keyword Keyword Search (Recherche par mots clés)
+La fonction de recherche par mot-clé permet à l'utilisateur de rechercher des mots-clés dans une ou plusieurs sources de données contenues dans le cas actuel. Elle est traitée plus en détail ici: \ref keyword_search_page
+
+\section ui_status Status Area (Zone d'Etat)
+La zone d'état affichera des barres de progression pendant l'exécution des modules d'acquisition. Cela indique visuellement quelle partie du traitement est déjà terminée. Vous pouvez cliquer sur les barres de progression pour voir plus de détails ou pour annuler les travaux d'acquisition.
+<br>
+
+*/

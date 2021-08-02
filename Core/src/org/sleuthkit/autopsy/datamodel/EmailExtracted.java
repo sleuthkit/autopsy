@@ -37,6 +37,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -314,20 +315,23 @@ public class EmailExtracted implements AutopsyVisitableItem {
             }
         };
 
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             emailResults.update();
             emailResults.addObserver(this);
         }
 
         @Override
-        protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
+        protected void finalize() throws Throwable {
+            super.finalize();
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             emailResults.deleteObserver(this);
         }
 
@@ -437,6 +441,23 @@ public class EmailExtracted implements AutopsyVisitableItem {
     }
 
     /**
+     * Ensures that the key for the parent node and child factory is the same to
+     * ensure that the BaseChildFactory registered listener node name
+     * (BaseChildFactory.register and DataResultViewerTable.setNode with event
+     * registration) is the same as the factory name that will post events from
+     * BaseChildFactory.post called in BaseChildFactory.makeKeys. See JIRA-7752
+     * for more details.
+     *
+     * @param accountName The account name.
+     * @param folderName  The folder name.
+     *
+     * @return The generated key.
+     */
+    private static String getFolderKey(String accountName, String folderName) {
+        return accountName + "_" + folderName;
+    }
+
+    /**
      * Node representing mail folder
      */
     public class FolderNode extends DisplayableItemNode implements Observer {
@@ -446,7 +467,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         public FolderNode(String accountName, String folderName) {
             super(Children.create(new MessageFactory(accountName, folderName), true), Lookups.singleton(accountName));
-            super.setName(folderName);
+            super.setName(getFolderKey(accountName, folderName));
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-16.png"); //NON-NLS
             this.accountName = accountName;
             this.folderName = folderName;
@@ -506,7 +527,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         private final String folderName;
 
         private MessageFactory(String accountName, String folderName) {
-            super(accountName + "_" + folderName);
+            super(getFolderKey(accountName, folderName));
             this.accountName = accountName;
             this.folderName = folderName;
             emailResults.addObserver(this);

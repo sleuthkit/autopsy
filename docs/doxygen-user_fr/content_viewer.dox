@@ -1,0 +1,123 @@
+/*! \page content_viewer_page Visionneuse de contenu
+
+[TOC]
+
+
+La visionneuse de contenu se trouve dans le coin inférieur droit de l'écran principal d'Autopsy et affiche des images, des vidéos, de l'hexadécimal, du texte, des chaînes de caractères extraites, des métadonnées, etc... La visionneuse de contenu est activée lorsque vous sélectionnez une entrée dans la \ref ui_results "visionneuse de résultats".
+
+La visionneuse de contenu est sensible au contexte, ce qui signifie que les différents onglets seront activés en fonction du type de contenu sélectionné et des modules d'acquisition exécutés. Elle adoptera par défaut ce qu'elle considère comme l'onglet "le plus représentatif". Par exemple, en sélectionnant un JPG, la visionneuse de contenu sélectionnera automatiquement l'onglet "Application" et y affichera l'image. Si vous souhaitez plutôt que la visionneuse de contenu reste sur l'onglet précédemment sélectionné lorsque vous passez à un autre objet, accédez aux \ref view_options_page en allant sur Tools->Options->Application Tab et en sélectionnant l'option "Stay on the same file viewer".
+
+\image html content_viewer_options_panel.png
+
+Lorsqu'un élément de résultat (et non un fichier) est sélectionné dans la visionneuse de résultats, la plupart des onglets correspondront au fichier associé au résultat et non au résultat lui-même. Par exemple, lors de la sélection d'un hit de mot-clé, les onglets "Hex", "Strings" et "File Metadata" afficheront les données du fichier dans lequel le mot-clé a été trouvé. Les descriptions ci-dessous supposeront généralement qu'un fichier a été sélectionné, mais la plupart s'appliquent également lorsqu'un fichier est associé à un résultat sélectionné.
+
+\section cv_hex Hex
+
+L'onglet "Hex" est presque toujours disponible et vous montre le contenu brut et exact d'un fichier. Dans cet onglet, les données du fichier sont représentées sous forme de valeurs hexadécimales regroupées en 2 groupes de 8 octets, suivis d'un groupe de 16 caractères ASCII qui sont dérivés de chaque paire de valeurs hexadécimales (chaque octet). Les caractères ASCII non imprimables et les caractères qui prendraient plus d'un espace de caractère sont généralement représentés par un point (".") dans le champ ASCII suivant.
+
+\image html content_viewer_hex.png
+
+Si vous le souhaitez, vous pouvez ouvrir le fichier dans un éditeur hexadécimal externe. Ceci est configurable via l'onglet \ref config_ext_viewer du panneau des options. HxD a été vérifié pour fonctionner avec Autopsy, mais d'autres éditeurs hexadécimaux peuvent également être compatibles.
+
+Notez que ce processus enregistre le fichier sur le disque avant de lancer l'éditeur hexadécimal. Un indicateur de progression sera affiché dans le coin inférieur droit de l'application. Si vous souhaitez annuler l'exportation du fichier, cliquez sur le 'X' à droite de la barre de progression.
+
+\image html content_viewer_hxd_progress.png
+
+\section cv_text Text
+
+L'onglet "Text" comporte trois sous-onglets pour afficher le texte contenu dans l'élément sélectionné.
+
+\subsection cv_strings Strings
+
+Le sous-onglet "Strings" affiche toutes les chaînes de caractères trouvées dans le fichier avec le script donné sélectionné en haut à droite. Par défaut, le "Latin" est utilisé.
+
+\image html content_viewer_strings_latin.png
+
+Différents scripts peuvent être choisis dans le menu déroulant pour afficher les résultats pour les alphabets non latins.
+
+\image html content_viewer_strings_cyrillic.png
+
+\subsection cv_indexed_text Indexed Text
+
+Le sous-onglet "Indexed Text" affiche le texte qui a été indexé par le module \ref keyword_search_page. Vous pouvez basculer le champ "Text Source" sur "Result Text" pour afficher le texte qui a été indexé pour les résultats associés à un fichier.
+
+\image html content_viewer_indexed_text.png
+
+\subsection cv_translation Translation
+
+Si un service de traduction est activé, le sous-onglet "Translation" vous permet de traduire le texte. Voir la page \ref machine_translation_page pour plus d'informations.
+
+\section cv_app Application
+
+Pour certains types de fichiers, l'onglet "Application" peut afficher le contenu dans un format convivial. Les captures d'écran suivantes montrent quelques exemples de ce que l'onglet "Application" va afficher.
+
+Il affichera la plupart des types d'images, qui peuvent être mises à l'échelle et pivotées:
+
+\image html content_viewer_app_image.png
+
+Il affiche les fichiers vidéo, vous permettant de mettre en lecture/pause, d'avancer ou de reculer de 30 secondes, de régler le volume et de modifier la vitesse de lecture.
+
+\image html content_viewer_video.png
+
+Il vous permet également de parcourir les tables SQLite et d'exporter leur contenu au format CSV:
+
+\image html content_viewer_app_sqlite.png 
+
+Et les données de fichiers plist seront affichées et peuvent être exportées:
+
+\image html content_viewer_app_plist.png
+
+Les fichiers HTML peuvent être affichés au plus près de leur forme d'origine:
+
+\image html content_viewer_html.png
+
+Les fichiers des ruches de la Base de registre peuvent être affichés dans un format similaire à celui d'un éditeur de registre.
+
+\image html content_viewer_registry.png
+
+\section cv_metadata File Metadata / Source File Metadata
+
+L'onglet "File Metadata" affiche des informations de base sur le fichier sélectionné ou le fichier associé au résultat, telles que le type, la taille et le hachage. Il affiche également la sortie de l'outil istat du Sleuth Kit.
+
+\image html content_viewer_metadata.png
+
+\section cv_os_account OS Accounts
+
+L'onglet "OS Accounts" affiche des informations sur le compte du système d'exploitation associé à un résultat donné, le cas échéant. Il est également utilisé pour donner des détails sur les comptes répertoriés sous le nœud "OS Accounts" dans l'arborescence.
+
+\image html content_viewer_os_account.png
+
+\section cv_results Data Artifacts
+
+L'onglet "Data Artifacts" affiche les artefacts associés à l'élément sélectionné dans la visionneuse de résultats, tels que des signets Web, des journaux d'appels et des messages. Les champs exacts affichés dépendent du type d'artefact de données. Les deux images ci-dessous montrent l'onglet "Data Artifacts" pour un journal d'appels et un signet Web.
+
+\image html content_viewer_results_call.png
+<br>
+\image html content_viewer_results_bookmark.png
+
+\section cv_analysis_results Analysis Results
+
+L'onglet "Analysis Results" affiche tous les résultats d'analyse associés à l'élément sélectionné dans la visionneuse de résultats. Si vous sélectionnez un résultat d'analyse, la liste défilera automatiquement jusqu'à ce résultat. Ces résultats d'analyse proviennent de données telles que les résultats de recherches de hachage, les éléments intéressants et les résultats de recherches de mots clés. L'image ci-dessous montre les résultats de l'analyse des catégories Web.
+
+\image html content_viewer_analysis_result_webcat.png
+
+\section cv_context Context
+
+L'onglet "Context" affiche des informations sur l'origine d'un fichier et vous permet d'accéder au résultat d'origine. Par exemple, il peut afficher l'URL des fichiers téléchargés et le message électronique auquel un fichier était joint. Dans l'image ci-dessous, vous pouvez voir le contexte d'une image qui a été envoyée en tant que pièce jointe à un e-mail.
+
+\image html content_viewer_context.png
+
+\section cv_annotations Annotations
+
+L'onglet "Annotations" affiche les informations ajoutées par un analyste sur un fichier ou un résultat. Il affiche toutes les balises et commentaires associés au fichier ou au résultat, et si le \ref central_repo_page est activé, il affichera également tous les commentaires enregistrés dans le référentiel central.
+
+\image html content_viewer_annotations.png
+
+\section cv_other_occurrences Other Occurrences
+
+L'onglet "Other Occurrences" affiche d'autres instances de ce fichier ou résultat. L'activation du \ref central_repo_page ajoute des fonctionnalités supplémentaires à cet onglet. Voir la section \ref cr_content_viewer pour plus d'informations.
+
+\image html content_viewer_other_occurrences.png
+
+
+*/

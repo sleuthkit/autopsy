@@ -1,6 +1,5 @@
 /*
  * Autopsy Forensic Browser
- *
  * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
@@ -20,7 +19,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -32,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -83,16 +82,18 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         }
     };
 
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+    
     @Override
     protected void addNotify() {
         super.addNotify();
-        Case.addEventTypeSubscriber(EVENTS_OF_INTEREST, pcl);
+        Case.addEventTypeSubscriber(EVENTS_OF_INTEREST, weakPcl);
     }
-
+    
     @Override
-    protected void removeNotify() {
-        super.removeNotify();
-        Case.removeEventTypeSubscriber(EVENTS_OF_INTEREST, pcl);
+    protected void finalize() throws Throwable {
+        super.finalize();
+        Case.removeEventTypeSubscriber(EVENTS_OF_INTEREST, weakPcl);
     }
 
     /**
@@ -105,7 +106,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      * framework reacts. To avoid significant performance hits, all of the keys
      * need to be added at once.
      *
-     * @param keys A list to contain the keys.
+     * @param list A list to contain the keys.
      *
      * @return True, indicating that the list of keys is complete.
      */
@@ -128,7 +129,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                             .sorted()
                             .collect(Collectors.toList());
 
-                    if (CollectionUtils.isNotEmpty(personManager.getHostsForPerson(null))) {
+                    if (CollectionUtils.isNotEmpty(personManager.getHostsWithoutPersons())) {
                         nodes.add(new PersonGrouping(null));
                     }
                 } else {

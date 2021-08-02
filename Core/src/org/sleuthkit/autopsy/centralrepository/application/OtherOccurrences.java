@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
@@ -52,6 +53,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -63,7 +67,7 @@ import org.sleuthkit.datamodel.TskData;
 public final class OtherOccurrences {
 
     private static final Logger logger = Logger.getLogger(OtherOccurrences.class.getName());
-    
+
     private static final String UUID_PLACEHOLDER_STRING = "NoCorrelationAttributeInstance";
 
     private OtherOccurrences() {
@@ -71,9 +75,55 @@ public final class OtherOccurrences {
 
     /**
      * Determine what attributes can be used for correlation based on the node.
+     *
+     * @param node      The node to correlate
+     * @param osAccount the osAccount to correlate
+     *
+     * @return A list of attributes that can be used for correlation
+     */
+    public static Collection<CorrelationAttributeInstance> getCorrelationAttributeFromOsAccount(Node node, OsAccount osAccount) {
+        Collection<CorrelationAttributeInstance> ret = new ArrayList<>();
+        Optional<String> osAccountAddr = osAccount.getAddr();
+
+        if (osAccountAddr.isPresent()) {
+            try {
+                for (OsAccountInstance instance : osAccount.getOsAccountInstances()) {
+                    DataSource osAccountDataSource = instance.getDataSource();
+                    try {
+                        CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
+                        CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
+                                CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
+                                osAccountAddr.get(),
+                                correlationCase,
+                                CorrelationDataSource.fromTSKDataSource(correlationCase, instance.getDataSource()),
+                                "",
+                                "",
+                                TskData.FileKnown.KNOWN,
+                                osAccount.getId());
+
+                        ret.add(correlationAttributeInstance);
+                    } catch (CentralRepoException ex) {
+                        logger.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", osAccountAddr.get()), ex);  //NON-NLS
+                    } catch (NoCurrentCaseException ex) {
+                        logger.log(Level.WARNING, String.format("Exception while getting open case looking up osAccount %s.", osAccountAddr.get()), ex);  //NON-NLS
+                    } catch (CorrelationAttributeNormalizationException ex) {
+                        logger.log(Level.SEVERE, String.format("Exception with Correlation Attribute Normalization for osAccount %s.", osAccountAddr.get()), ex);  //NON-NLS
+                    }
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.INFO, String.format("Unable to check create CorrelationAttribtueInstance for osAccount %s.", osAccountAddr.get()), ex);
+            }
+        }
+
+        return ret;
+    }
+
+    /**
+     * Determine what attributes can be used for correlation based on the node.
      * If EamDB is not enabled, get the default Files correlation.
      *
-     * @param node The node to correlate
+     * @param node The node to correlate.
+     * @param file The file to correlate.
      *
      * @return A list of attributes that can be used for correlation
      */
@@ -170,7 +220,6 @@ public final class OtherOccurrences {
     public static AbstractFile getAbstractFileFromNode(Node node) {
         BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
         ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class);
-        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class);
         AbstractFile nodeAbstractFile = node.getLookup().lookup(AbstractFile.class);
 
         if (nodeBbArtifactTag != null) {
@@ -180,18 +229,6 @@ public final class OtherOccurrences {
             }
         } else if (nodeContentTag != null) {
             Content content = nodeContentTag.getContent();
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeBbArtifact != null) {
-            Content content;
-            try {
-                content = nodeBbArtifact.getSleuthkitCase().getContentById(nodeBbArtifact.getObjectID());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
-                return null;
-            }
-
             if (content instanceof AbstractFile) {
                 return (AbstractFile) content;
             }
@@ -208,7 +245,10 @@ public final class OtherOccurrences {
      * artifact. If the central repo is not enabled, this will only return files
      * from the current case with matching MD5 hashes.
      *
-     * @param corAttr CorrelationAttribute to query for
+     * @param file           The current file.
+     * @param deviceId       The device ID for the current data source.
+     * @param dataSourceName The name of the current data source.
+     * @param corAttr        CorrelationAttribute to query for
      *
      * @return A collection of correlated artifact instances
      */
@@ -240,12 +280,12 @@ public final class OtherOccurrences {
                     UniquePathKey uniquePathKey = new UniquePathKey(newNode);
                     nodeDataMap.put(uniquePathKey, newNode);
                 }
-                if (file != null && corAttr.getCorrelationType().getDisplayName().equals("Files")) {
-                    List<AbstractFile> caseDbFiles = getCaseDbMatches(corAttr, openCase, file);
+            }
+            if (file != null && corAttr.getCorrelationType().getDisplayName().equals("Files")) {
+                List<AbstractFile> caseDbFiles = getCaseDbMatches(corAttr, openCase, file);
 
-                    for (AbstractFile caseDbFile : caseDbFiles) {
-                        addOrUpdateNodeData(openCase, nodeDataMap, caseDbFile);
-                    }
+                for (AbstractFile caseDbFile : caseDbFiles) {
+                    addOrUpdateNodeData(openCase, nodeDataMap, caseDbFile);
                 }
             }
             return nodeDataMap;
@@ -347,7 +387,7 @@ public final class OtherOccurrences {
     public static String makeDataSourceString(String caseUUID, String deviceId, String dataSourceName) {
         return caseUUID + deviceId + dataSourceName;
     }
-    
+
     /**
      * Gets the list of Eam Cases and determines the earliest case creation
      * date. Sets the label to display the earliest date string to the user.
@@ -377,8 +417,8 @@ public final class OtherOccurrences {
 
         return dateStringDisplay;
     }
-    
-       @NbBundle.Messages({
+
+    @NbBundle.Messages({
         "OtherOccurrences.csvHeader.case=Case",
         "OtherOccurrences.csvHeader.device=Device",
         "OtherOccurrences.csvHeader.dataSource=Data Source",

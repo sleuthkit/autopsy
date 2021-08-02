@@ -92,6 +92,7 @@ public class PersonNode extends DisplayableItemNode {
          */
         PersonChildren(Person person) {
             this.person = person;
+            
         }
 
         /**
@@ -111,17 +112,20 @@ public class PersonNode extends DisplayableItemNode {
                 }
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(hostAddedDeletedPcl, null);
 
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, hostAddedDeletedPcl);
+            Case.addEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, weakPcl);
         }
-
+        
         @Override
-        protected void removeNotify() {
-            Case.removeEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, hostAddedDeletedPcl);
+        protected void finalize() throws Throwable {
+            super.finalize();
+            Case.removeEventTypeSubscriber(HOST_EVENTS_OF_INTEREST, weakPcl);
         }
-
+        
         @Override
         protected HostNode createNodeForKey(HostGrouping key) {
             return key == null ? null : new HostNode(key);
@@ -173,6 +177,8 @@ public class PersonNode extends DisplayableItemNode {
             }
         }
     };
+    
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(personChangePcl, null);
 
     /**
      * Gets the display name for this person or "Unknown Persons".
@@ -210,8 +216,7 @@ public class PersonNode extends DisplayableItemNode {
         this.setIconBaseWithExtension(ICON_PATH);
         this.person = person;
         this.personId = person == null ? null : person.getPersonId();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_UPDATED),
-                WeakListeners.propertyChange(personChangePcl, this));
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.PERSONS_UPDATED), weakPcl);
     }
 
     @Override

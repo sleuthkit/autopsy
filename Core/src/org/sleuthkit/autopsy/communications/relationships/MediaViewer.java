@@ -101,18 +101,19 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     public void setSelectionInfo(SelectionInfo info) {
         Set<Content> relationshipSources;
         Set<BlackboardArtifact> artifactList = new HashSet<>();
+        contentViewer.setNode(null);
+        if (info != null) {
+            try {
+                relationshipSources = info.getRelationshipSources();
 
-        try {
-            relationshipSources = info.getRelationshipSources();
+                relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
+                    artifactList.add((BlackboardArtifact) content);
+                });
 
-            relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
-                artifactList.add((BlackboardArtifact) content);
-            });
-
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to update selection.", ex);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to update selection.", ex);
+            }
         }
-
         thumbnailViewer.resetComponent();
 
         thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentThumbnailsChildren(artifactList)), tableEM), true, this.getClass().getName()));

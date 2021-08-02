@@ -326,6 +326,16 @@ final class CustomFileTypesManager {
             signatureList.add(new Signature(byteArray, 0L));
             fileType = new FileType("application/x.windows-registry", signatureList); //NON-NLS
             autopsyDefinedFileTypes.add(fileType);
+            
+            /*
+            * Add custom file type for hdb files that can be found in android os on the system volume
+            * in the hdic folder
+            */
+            byteArray = DatatypeConverter.parseHexBinary("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+            signatureList.clear();
+            signatureList.add(new Signature(byteArray, 8L));
+            fileType = new FileType("application/x.android-hdb", signatureList);
+            autopsyDefinedFileTypes.add(fileType);
 
         } catch (IllegalArgumentException ex) {
             /*

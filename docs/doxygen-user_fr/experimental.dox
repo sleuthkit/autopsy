@@ -1,0 +1,16 @@
+/*! \page experimental_page Experimental Module (Module expérimental)
+
+[TOC]
+
+
+\section exp_overview Aperçu
+
+Le module "Experimental Module", comme son nom l'indique, contient du code qui ne fait pas encore partie de la version officielle d'Autopsy. Ces fonctionnalités expérimentales peuvent être utilisées mais peuvent être moins perfectionnées que d'autres fonctionnalités et auront moins de documentation. Ces modules peuvent être modifiés à tout moment.
+
+\section exp_setup Activation du module expérimental
+
+Pour commencer, allez dans Tools->Plugins et sélectionnez l'onglet "Installed", puis cochez la case à côté de "Experimental", cliquez sur "Activate" et passez les deux écrans suivants. Un redémarrage ne devrait pas être nécessaire.
+
+\image html experimental_plugins_menu.png
+
+*/

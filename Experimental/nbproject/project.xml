@@ -144,7 +144,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.23</specification-version>
+                        <specification-version>10.24</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>

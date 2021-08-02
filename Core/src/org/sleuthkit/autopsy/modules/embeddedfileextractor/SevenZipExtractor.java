@@ -78,6 +78,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -800,18 +801,19 @@ class SevenZipExtractor {
             // intermediate nodes since the order is not guaranteed
             try {
                 unpackedTree.updateOrAddFileToCaseRec(statusMap, archiveFilePath, parentAr, archiveFile, depthMap);
-                if (checkForIngestCancellation(archiveFile)) {
-                    return false;
-                }
-
-            } catch (TskCoreException | NoCurrentCaseException e) {
-                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure", e); //NON-NLS
-                //TODO decide if anything to cleanup, for now bailing
+                unpackedTree.commitCurrentTransaction();
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure", ex); //NON-NLS
+                //TODO decide if anything to cleanup, for now bailing               
+                unpackedTree.rollbackCurrentTransaction();
+            }
+                
+            if (checkForIngestCancellation(archiveFile)) {
+                return false;
             }
             
             // Get the new files to be added to the case.
             unpackedFiles = unpackedTree.getAllFileObjects();
-
         } catch (SevenZipException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, "Error unpacking file: " + archiveFile, ex); //NON-NLS
             //inbox message
@@ -1269,6 +1271,15 @@ class SevenZipExtractor {
 
         final UnpackedNode rootNode;
         private int nodesProcessed = 0;
+            
+        // It is significantly faster to add the DerivedFiles to the case on a transaction,
+        // but we don't want to hold the transaction (and case write lock) for the entire 
+        // stage. Instead, we use the same transaction for MAX_TRANSACTION_SIZE database operations
+        // and then commit that transaction and start a new one, giving at least a short window
+        // for other processes.
+        private CaseDbTransaction currentTransaction = null;
+        private long transactionCounter = 0;
+        private final static long MAX_TRANSACTION_SIZE = 1000;
 
         /**
          *
@@ -1301,7 +1312,7 @@ class SevenZipExtractor {
                 }
             }
 
-            List<byte[]> byteTokens = null;
+            List<byte[]> byteTokens;
             if (filePathBytes == null) {
                 return addNode(rootNode, tokens, null);
             } else {
@@ -1310,9 +1321,11 @@ class SevenZipExtractor {
                 for (int i = 0; i < filePathBytes.length; i++) {
                     if (filePathBytes[i] == '/') {
                         int len = i - last;
-                        byte[] arr = new byte[len];
-                        System.arraycopy(filePathBytes, last, arr, 0, len);
-                        byteTokens.add(arr);
+                        if (len > 0) {
+                            byte[] arr = new byte[len];
+                            System.arraycopy(filePathBytes, last, arr, 0, len);
+                            byteTokens.add(arr);
+                        }
                         last = i + 1;
                     }
                 }
@@ -1324,8 +1337,13 @@ class SevenZipExtractor {
                 }
 
                 if (tokens.size() != byteTokens.size()) {
-                    logger.log(Level.WARNING, "Could not map path bytes to path string (path string: \"{0}\", bytes: {1})", 
-                            new Object[]{filePath, bytesToString(filePathBytes)});
+                    String rootFileInfo = "(unknown)";
+                    if (rootNode.getFile() != null) {
+                        rootFileInfo = rootNode.getFile().getParentPath() + rootNode.getFile().getName() 
+                                + "(ID: " + rootNode.getFile().getId() + ")";
+                    }
+                    logger.log(Level.WARNING, "Could not map path bytes to path string while extracting archive {0} (path string: \"{1}\", bytes: {2})", 
+                            new Object[]{rootFileInfo, this.rootNode.getFile().getId(), filePath, bytesToString(filePathBytes)});
                     return addNode(rootNode, tokens, null);
                 }
             }
@@ -1439,6 +1457,9 @@ class SevenZipExtractor {
          *                        updating
          * @param statusMap       - the map of existing files and their status
          * @param archiveFilePath - the archive file path for the unpacked node
+         * @param parentAr        - the parent archive as an Archive object
+         * @param archiveFile     - the parent archive as an AbstractFile
+         * @param depthMap        - the depth map (to prevent zip bombs)
          *
          * @throws TskCoreException
          */
@@ -1449,10 +1470,10 @@ class SevenZipExtractor {
                 String nameInDatabase = getKeyFromUnpackedNode(node, archiveFilePath);
                 ZipFileStatusWrapper existingFile = nameInDatabase == null ? null : statusMap.get(nameInDatabase);
                 if (existingFile == null) {
-                    df = fileManager.addDerivedFile(node.getFileName(), node.getLocalRelPath(), node.getSize(),
+                    df = Case.getCurrentCaseThrows().getSleuthkitCase().addDerivedFile(node.getFileName(), node.getLocalRelPath(), node.getSize(),
                             node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
                             node.isIsFile(), node.getParent().getFile(), "", MODULE_NAME,
-                            "", "", TskData.EncodingType.XOR1);
+                            "", "", TskData.EncodingType.XOR1, getCurrentTransaction());
                     statusMap.put(getKeyAbstractFile(df), new ZipFileStatusWrapper(df, ZipFileStatus.EXISTS));
                 } else {
                     String key = getKeyAbstractFile(existingFile.getFile());
@@ -1463,10 +1484,10 @@ class SevenZipExtractor {
                     if (existingFile.getStatus() == ZipFileStatus.UPDATE) {
                         //if the we are updating a file and its mime type was octet-stream we want to re-type it
                         String mimeType = existingFile.getFile().getMIMEType().equalsIgnoreCase("application/octet-stream") ? null : existingFile.getFile().getMIMEType();
-                        df = fileManager.updateDerivedFile((DerivedFile) existingFile.getFile(), node.getLocalRelPath(), node.getSize(),
+                        df = Case.getCurrentCaseThrows().getSleuthkitCase().updateDerivedFile((DerivedFile) existingFile.getFile(), node.getLocalRelPath(), node.getSize(),
                                 node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
                                 node.isIsFile(), mimeType, "", MODULE_NAME,
-                                "", "", TskData.EncodingType.XOR1);
+                                "", "", TskData.EncodingType.XOR1, existingFile.getFile().getParent(), getCurrentTransaction());
                     } else {
                         //ALREADY CURRENT - SKIP
                         statusMap.put(key, new ZipFileStatusWrapper(existingFile.getFile(), ZipFileStatus.SKIP));
@@ -1474,7 +1495,7 @@ class SevenZipExtractor {
                     }
                 }
                 node.setFile(df);
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Error adding a derived file to db:" + node.getFileName(), ex); //NON-NLS
                 throw new TskCoreException(
                         NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackedTree.exception.msg",
@@ -1516,6 +1537,71 @@ class SevenZipExtractor {
             //recurse adding the children if this file was incomplete the children presumably need to be added
             for (UnpackedNode child : node.getChildren()) {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath), parentAr, archiveFile, depthMap);
+            }
+        }
+        
+        /**
+         * Get the current transaction being used in updateOrAddFileToCaseRec().
+         * If there is no transaction, one will be started. After the
+         * transaction has been used MAX_TRANSACTION_SIZE, it will be committed and a
+         * new transaction will be opened.
+         * 
+         * @return The open transaction.
+         * 
+         * @throws TskCoreException 
+         */
+        private CaseDbTransaction getCurrentTransaction() throws TskCoreException {
+        
+            if (currentTransaction == null) {
+                startTransaction();
+            } 
+
+            if (transactionCounter > MAX_TRANSACTION_SIZE) {
+                commitCurrentTransaction();
+                startTransaction();
+            }
+
+            transactionCounter++;
+            return currentTransaction;
+        }
+    
+        /**
+         * Open a transaction.
+         * 
+         * @throws TskCoreException 
+         */
+        private void startTransaction() throws TskCoreException {
+            try {
+                currentTransaction = Case.getCurrentCaseThrows().getSleuthkitCase().beginTransaction();
+                transactionCounter = 0;
+            } catch (NoCurrentCaseException ex) {
+                throw new TskCoreException("Case is closed");
+            }
+        }
+    
+        /**
+         * Commit the current transaction.
+         * 
+         * @throws TskCoreException 
+         */
+        private void commitCurrentTransaction() throws TskCoreException {
+            if (currentTransaction != null) {
+                currentTransaction.commit();
+                currentTransaction = null;
+            }
+        }
+    
+        /**
+         * Rollback the current transaction.
+         */
+        private void rollbackCurrentTransaction() {
+            if (currentTransaction != null) {
+                try {
+                    currentTransaction.rollback();
+                    currentTransaction = null;
+                } catch (TskCoreException ex) {
+                    // Ignored
+                }
             }
         }
 

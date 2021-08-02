@@ -111,7 +111,11 @@ Descriptions of the property types:
 - <b>ICCID Number</b>
  - ICCID properties are currently only created by custom Autopsy modules.
 - <b>Credit Card</b>
- - Credid Card properties are created by the \ref keyword_search_page.
+ - Credit Card properties are created by the \ref keyword_search_page.
+- <b>OS Account</b>
+ - OS account properties are created by the disk image data source processor and the \ref recent_activity_page.
+- <b>Installed Programs</b>
+ - Installed program properties are created primarily by the \ref recent_activity_page.
 - <b> App-specific Accounts (Facebook, Twitter, etc)</b>
  - These properties primarily come from the \ref android_analyzer_page.
 
@@ -148,7 +152,7 @@ There are three settings for the Central Repository ingest module:
 <ul>
 <li><b>Save items to the Central Repository</b> - This should only be unselected in the rare case that you don't want to add any properties from the current data source to the central repository, but still want to flag past occurrences.
 <li><b>Flag items previously tagged as notable</b> - Enabling this causes Interesting Item/File artifacts to be created when properties matching those previously flagged are found. See the next section \ref cr_tagging for details.
-<li><b>Flag previously seen devices</b> - When this is enabled, an Interesting Item artifact will be created if any device-related property (USB, MAC Address, IMSI, IMEI, ICCID) is found that is already in the central repository, regardless of whether they have been flagged.
+<li><b>Flag previously seen devices and users</b> - When this is enabled, an Interesting Item artifact will be created if any device-related property (USB, MAC Address, IMSI, IMEI, ICCID) or an OS account is found that is already in the central repository, regardless of whether they have been flagged.
 </li>
 
 \subsection cr_tagging Tagging Files and Artifacts

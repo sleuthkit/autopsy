@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -44,14 +45,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
-import org.openide.explorer.view.Visualizer;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -127,6 +125,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
     private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
 
+    // nodes to be opened if present at top level
+    private static final Set<String> NODES_TO_EXPAND = Stream.of(AnalysisResults.getName(), DataArtifacts.getName(), ViewsNode.NAME)
+            .collect(Collectors.toSet());
+
     /**
      * the constructor
      */
@@ -135,31 +137,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         // only allow one item to be selected at a time
         getTree().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-        //Hook into the JTree and pre-expand the Views Node and Results node when a user
-        //expands an item in the tree that makes these nodes visible.
-        ((ExpansionBeanTreeView) getTree()).addTreeExpansionListener(new TreeExpansionListener() {
-            @Override
-            public void treeExpanded(TreeExpansionEvent event) {
-                //Bail immediately if we are not in the Group By view.
-                //Assumption here is that the views are already expanded.
-                if (!CasePreferences.getGroupItemsInTreeByDataSource()) {
-                    return;
-                }
 
-                Node expandedNode = Visualizer.findNode(event.getPath().getLastPathComponent());
-                for (Node child : em.getRootContext().getChildren().getNodes()) {
-                    if (child.equals(expandedNode)) {
-                        preExpandNodes(child.getChildren());
-                    }
-                }
-            }
-
-            @Override
-            public void treeCollapsed(TreeExpansionEvent event) {
-                //Do nothing
-            }
-
-        });
         // remove the close button
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
         setName(NbBundle.getMessage(DirectoryTreeTopComponent.class, "CTL_DirectoryTreeTopComponent"));
@@ -202,30 +180,23 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     private void preExpandNodes(Children rootChildren) {
         BeanTreeView tree = getTree();
-        for (String categoryKey : new String[]{AnalysisResults.getName(), DataArtifacts.getName()}) {
-            Node categoryNode = rootChildren.findChild(categoryKey);
 
-            if (!Objects.isNull(categoryNode)) {
-                tree.expandNode(categoryNode);
-                Children resultsChildren = categoryNode.getChildren();
-                Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
-            }
-        }
-
-        Node views = rootChildren.findChild(ViewsNode.NAME);
-        if (!Objects.isNull(views)) {
-            tree.expandNode(views);
+        // using getNodes(true) to fetch children so that async nodes are loaded
+        Node[] rootChildrenNodes = rootChildren.getNodes(true);
+        if (rootChildrenNodes == null || rootChildrenNodes.length < 1) {
+            return;
         }
 
         // expand all nodes parents of and including hosts if group by host/person
         if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-            Node[] rootNodes = rootChildren.getNodes();
-            if (rootNodes != null) {
-                Stream.of(rootNodes)
-                        .flatMap((n) -> getHostNodesAndParents(n).stream())
-                        .filter((n) -> n != null)
-                        .forEach((n) -> tree.expandNode(n));
-            }
+            Stream.of(rootChildrenNodes)
+                    .flatMap((n) -> getHostNodesAndParents(n).stream())
+                    .filter((n) -> n != null)
+                    .forEach(tree::expandNode);
+        } else {
+            Stream.of(rootChildrenNodes)
+                    .filter(n -> n != null && NODES_TO_EXPAND.contains(n.getName()))
+                    .forEach(tree::expandNode);
         }
     }
 
@@ -1547,9 +1518,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Returns the credit card artifact's parent node or null if cannot be
      * found.
      *
-     * @param typesChildren The children object of the same category as credit
-     *                      card.
-     * @param art           The artifact.
+     * @param accountRootChildren
+     * @param ccNumberName
      *
      * @return The credit card artifact's parent node or null if cannot be
      *         found.

@@ -293,10 +293,7 @@ public class DataArtifactContentViewer extends javax.swing.JPanel implements Dat
 
     @Override
     public void setNode(Node selectedNode) {
-        if (currentNode == selectedNode) {
-            return;
-        }
-        currentNode = selectedNode;
+        currentNode = null;
 
         // Make sure there is a node. Null might be passed to reset the viewer.
         if (selectedNode == null) {
@@ -388,7 +385,6 @@ public class DataArtifactContentViewer extends javax.swing.JPanel implements Dat
             case DATA_ARTIFACT:
                 return MORE_PREFERRED;
             // everything else is less preferred
-            case ANALYSIS_RESULT:
             default:
                 return LESS_PREFERRED;
         }
@@ -627,6 +623,7 @@ public class DataArtifactContentViewer extends javax.swing.JPanel implements Dat
                 try {
                     ViewUpdate viewUpdate = get();
                     if (viewUpdate != null) {
+                        currentNode = selectedNode;
                         updateView(viewUpdate);
                     }
                 } catch (InterruptedException | ExecutionException ex) {

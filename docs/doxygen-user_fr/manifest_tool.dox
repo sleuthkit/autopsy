@@ -1,0 +1,65 @@
+/*! \page manifest_tool_page Outil Manifest
+
+[TOC]
+
+
+\section manifest_tool_overview Aperçu
+
+"Manifest Tool" est un exécutable conçu pour aider à la création automatisée de fichiers Manifest nécessaires pour exécuter l'acquisition automatisée sur une source de données. Aucune installation n'est nécessaire. Pour utiliser l'outil, double-cliquez sur l'exécutable "Manifest Tool". Lorsqu'il s'ouvre, sélectionnez l'option avec l'algorithme que vous souhaitez exécuter dans la liste déroulante, et remplissez tous les paramètres disponibles avant de cliquer sur le bouton "Run". Un journal indiquant le succès ou l'échec de chaque fichier Manifest qu'il tente de créer apparaîtra dans la zone de progression.
+
+\section manifest_tool_output Sortie
+
+La sortie de l'outil Manifest sera des fichiers XML se terminant par _Manifest.xml.
+
+\subsection manifest_tool_one_ds_per_folder "One Data Source Per Folder"
+
+L'algorithme "One Data Source Per Folder" est conçu pour un cas d'utilisation spécifique : lorsque le dossier de cas contient plusieurs sous-dossiers, chacun contenant généralement une source de données d'un certain type. Référez vous à la section \ref manifest_tool_algorithm_specifics pour plus de détails sur cet algorithme.
+
+Pour utiliser cet algorithme, utilisez le bouton "Browse" pour sélectionner un dossier racine comme répertoire de cas. Sélectionnez ensuite le bouton "Run" pour générer des fichiers Manifest pour chacune des sources de données détectées. Un fichier Manifest sera généré pour chaque sous-dossier du dossier racine sélectionné, les fichiers Manifest seront placés dans le dossier racine sélectionné.
+
+\subsection manifest_tool_single_ds "Single Data Source"
+
+L'algorithme "Single Data Source" sert à créer un fichier Manifest pour une seule image ou un fichier logique avec un nom de cas spécifié par l'utilisateur.
+
+Pour utiliser cet algorithme, utilisez le bouton "Browse" pour sélectionner un fichier à utiliser comme source de données et entrez un nom de cas dans le champ "Case name". Sélectionnez ensuite le bouton "Run" pour générer un fichier Manifest. Le fichier Manifest sera créé dans le même dossier que la source de données sélectionnée.
+
+\subsection manifest_tool_logical_file_folder "Folder of Logical Files"
+
+L'algorithme "Folder of Logical Files" sert à créer un fichier Manifest unique pour un dossier entier de fichiers qui seront tous analysés en tant que fichiers logiques.
+
+Pour utiliser cet algorithme, utilisez le bouton "Browse" pour sélectionner un dossier à ajouter en tant que dossier de fichiers logiques et entrez un nom de cas dans le champ "Case name". Sélectionnez ensuite le bouton "Run" pour générer un fichier Manifest. Le fichier Manifest sera créé dans le dossier parent de votre dossier de fichiers logiques.
+
+\section manifest_tol_example Exemple
+
+Étant donné un dossier racine qui ressemble à ceci:
+
+\image html AutoIngest/manifest_tool_root_folder.png
+
+Un utilisateur ayant sélectionné l'algorithme "One Data Source Per Folder" obtiendra une sortie qui ressemble à ce qui suit, où un fichier Manifest existe maintenant pour chaque sous-dossier non vide. Le nom du dossier racine sera utilisé comme nom de cas dans les fichiers Manifest (dans cet exemple, le nom de cas sera TestCaseFolder.)
+
+\image html AutoIngest/manifest_tool_ui.png
+
+Le contenu d'un fichier XML aura le format suivant:
+
+\verbatim
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<AutopsyManifest>
+<CaseName>TestCaseFolder</CaseName>
+<DataSource>interestingL01\interesting_files2.L01</DataSource>
+</AutopsyManifest>
+\endverbatim
+
+\section manifest_tool_algorithm_specifics Spécificités de l'algorithme "One Data Source Per Folder" 
+<ul>
+<li>Le seul paramètre de configuration que l'utilisateur doit choisir est un dossier racine.
+<li>Le nom du dossier racine spécifié deviendra le nom de cas utilisé dans les fichiers Manifest.
+<li>Chaque sous-dossier non vide du dossier racine aura un fichier Manifest créé pour lui.
+<li>Tous les fichiers Manifest seront créés dans le dossier racine.
+<li>Les fichiers directement dans le dossier racine seront ignorés et resteront non traités.
+<li>Les sous-dossiers qui contiennent un fichier .E01, .L01, .001 ou .AD1 auront le premier fichier de ce type utilisé comme source de données dans le fichier Manifest.
+<li>Les sous-dossiers contenant plusieurs fichiers .E01, .L01, .001 ou .AD1 verront les fichiers supplémentaires ignorés et ils resteront non traités.
+<li>Les sous-dossiers sans fichier .E01, .L01, .001 ou .AD1 auront le sous-dossier entier ajouté comme source de données.
+<li>Si le dossier racine contient déjà un fichier _Manifest.xml spécifique, il ne sera ni remplacé ni modifié.
+</ul>
+
+*/

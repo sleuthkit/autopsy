@@ -1,0 +1,90 @@
+/*! \page upgrade_solr8_page Mise à niveau vers Autopsy 4.18.0 (avec Solr 8)
+
+[TOC]
+
+Autopsy 4.18.0 (et versions supérieures) créera de nouveaux cas avec Solr 8 au lieu de Solr 4. Puisque Solr 8 n'est pas rétrocompatible avec Solr 4, cela aura un certain impact pour vous. Notamment:
+
+- Les cas réalisés avec Autopsy 4.17.0 et versions antérieures continueront à utiliser les index Solr 4 et pourront être ouverts avec Autopsy 4.18.0+
+- Les cas réalisés avec Autopsy 4.18.0 et versions ultérieures utiliseront Solr 8 et ne peuvent pas être ouverts par Autopsy 4.17.0 et versions antérieures.
+Le principal avantage est que vous pouvez ouvrir des cas plus anciens, mais de nouveaux cas ne peuvent pas être ouverts par des logiciels plus anciens.
+
+Si vous utilisez des cas mono-utilisateur, vous n'avez rien d'autre à faire. Autopsy est livré avec Solr 4 et 8 intégrés.
+
+Si vous utilisez un cluster multi-utilisateurs, vous devrez installer un nouveau serveur Solr 8 et choisirez peut-être de conserver également Solr 4.
+
+
+\section solr8_upgrade_cluster Options de cluster multi-utilisateurs
+
+Il y a deux éléments à prendre en compte lors de la conversion ascendante d'un cluster multi-utilisateur:
+- Quelles versions de serveurs Solr exécuter
+- Où stocker les données ZooKeeper
+
+Les sections suivantes couvrent ces sujets plus en détail.
+
+\subsection solr8_upgrade_cluster_solr Plusieurs serveurs Solr
+
+Vous souhaiterez probablement que les serveurs Solr 4 et 8 soient en cours d'exécution afin de pouvoir ouvrir des cas plus anciens. Si tel est le cas, alors:
+- Obtenez un nouveau serveur et installez Solr 8 dessus en utilisant les instructions de la page \ref install_solr_page.
+- Configurez chaque client Autopsy pour avoir les adresses des deux serveurs (voir ci-dessous).
+
+Si vous ne voulez avoir que Solr 8, suivez simplement les instructions pour Solr 8 et débarrassez-vous du serveur Solr 4. Vous ne pourrez pas ouvrir de cas plus anciens. Il est possible de mettre à jour les index Solr, mais nous ne l'avons pas testé.
+
+
+Pour configurer Autopsy afin de pouvoir se connecter à la fois aux serveurs multi-utilisateurs Solr 8 et Solr 4, démarrez Autopsy et ouvrez le panneau des paramètres multi-utilisateurs depuis "Tools", "Options", "Multi-user". Notez que pour créer ou ouvrir des cas multi-utilisateurs, "Enable Multi-user cases" doit être coché et les paramètres ci-dessous doivent être corrects.
+
+Il est recommandé d'exécuter les serveurs Solr 8 et Solr 4 sur des machines distinctes. Dans l'exemple ci-dessous, le serveur Solr 8 s'exécute sur une machine avec le nom d'hôte "Solr1" et le serveur Solr 4 s'exécute sur une machine avec le nom d'hôte "Solr6".
+
+\image html solr_running_in_parallel.png
+
+Une fois que les informations de connexion aux serveurs multi-utilisateurs Solr 8 et Solr 4 sont entrées et enregistrées, Autopsy pourra ouvrir les cas multi-utilisateurs Solr 8 (Autopsy version 4.18.0 et ultérieure), ainsi que les anciens cas multi-utilisateurs Solr 4 existants (cas créés avec les versions 4.17.0 et antérieures d'Autopsy).
+
+<b>IMPORTANT</b>: Le bouton "Test Connection" ne vérifie pas à quelle version de Solr Autopsy se connecte. Il vérifie uniquement que Autopsy se connecte à un serveur Solr et est capable de recevoir une réponse. Par conséquent, il est important que l'utilisateur entre des informations de connexion au serveur correctes dans les champs appropriés.
+
+Si vous avez l'intention d'exécuter les serveurs Solr 4 et Solr 8 sur la même machine en même temps, vous devez changer le port du service Solr 8 en utilisant le paramètre <b>SOLR_PORT</b> dans \c "C:\solr-8.6.3\bin\solr.in.cmd" (en supposant que le fichier ZIP du package Solr ait été extrait dans le répertoire \c "C:\solr-8.6.3\"). Par défaut, le service Solr démarre sur le port 8983.
+
+\subsection install_solr_zk_migration Migration des données ZooKeeper
+
+Outre l'indexation de texte, le service Solr stocke également des données de "coordination" à l'aide d'Apache ZooKeeper. Vous pourrez déplacer ces données si vous vous débarrassez de votre serveur Solr 4. Ces données vous permettent de:
+- Savoir quels cas multi-utilisateurs vous pouvez ouvrir
+- Savoir quelles images de disque ont déjà été traitées par l'acquisition automatique
+
+Vous pouvez continuer à utiliser votre instance Solr 4 de ZooKeeper, mais nous avons également un utilitaire qui vous permet de migrer les données vers un nouveau serveur, tel que celui exécutant Solr 8 (ou une instance autonome).
+
+Dans notre exemple, nous allons migrer les données ZooKeeper d'un serveur ZooKeeper fonctionnant sur un serveur Solr 4 (sur la machine "Solr6") vers un tout nouveau serveur ZooKeeper fonctionnant sur un serveur Solr 8 (sur la machine "Solr1").
+
+Vous pouvez parcourir les données ZooKeeper existantes si vous accédez à la machine Solr6 et ouvrez la console d'administration Solr (http://localhost:8983/solr/#/). Dans la console d'administration Solr, accédez à "Cloud"-> "Tree", et développez la section "autopsy" de l'arborescence:
+
+\image html solr_zk_migration_1.png
+
+Vous pouvez suivre les mêmes étapes pour parcourir les données ZooKeeper sur le nouveau serveur Solr 8 (sur la machine "Solr1"). Si Autopsy n'a pas encore été utilisé avec ce serveur, le dossier "autopsy" sera manquant, comme dans l'exemple ci-dessous:
+
+\image html solr_zk_migration_2.png
+
+L'utilitaire de migration ZooKeeper (ZookeeperNodeMigration.jar) se trouve dans le répertoire \c "C:\Program Files\(version actuelle d'Autopsy)\autopsy\ZookeeperNodeMigration":
+
+\image html solr_zk_migration_3.png
+
+L'utilitaire ZookeeperNodeMigration nécessite les entrées suivantes: 
+<ul>
+<li>Saisie de l'adresse IP ou du nom d'hôte de Zookeeper
+<li>Saisie du numéro de port de Zookeeper
+<li>Sortie de l'adresse IP ou du nom d'hôte de Zookeeper
+<li>Sortie du numéro de port de Zookeeper
+</ul>
+
+Par exemple, si vous exécutez la commande suivante à partir de la ligne de commande, les nœuds Zookeeper seront copiés du serveur Zookeeper sur Solr6:9983 vers le serveur Zookeeper sur Solr1:9983:
+
+> java -jar ZookeeperNodeMigration.jar Solr6 9983 Solr1 9983
+
+\image html solr_zk_migration_4.png
+
+Si Java n'est pas installé sur la machine, vous pouvez utiliser la version packagée de Java qui est distribuée avec Autopsy. Par example:
+
+> \c "C:\Program Files\Autopsy-4.18.0\jre\bin\java.exe" -jar ZookeeperNodeMigration.jar Solr6 9983 Solr1 9983 
+
+Pour vérifier que les données ZooKeeper ont été copiées du serveur Solr6 vers le serveur Solr1, actualisez la console d'administration Solr sur la machine Solr1. Vous devriez maintenant voir le répertoire "autopsy", ainsi que son contenu, lorsque vous accédez à la section "Cloud" -> "Tree" de la console d'administration Solr:
+
+\image html solr_zk_migration_5.png
+
+
+*/

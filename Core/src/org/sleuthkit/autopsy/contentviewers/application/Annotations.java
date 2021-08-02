@@ -207,11 +207,10 @@ public class Annotations {
 
         Element sourceFileSection = appendSection(parent, Bundle.Annotations_sourceFile_title());
         sourceFileSection.attr("class", ContentViewerHtmlStyles.getSpacedSectionClassName());
-        
+
         Element sourceFileContainer = sourceFileSection.appendElement("div");
         sourceFileContainer.attr("class", ContentViewerHtmlStyles.getIndentedClassName());
-        
-        
+
         boolean sourceFileRendered = renderContent(sourceFileContainer, sourceContent, true);
 
         if (!sourceFileRendered) {
@@ -239,7 +238,7 @@ public class Annotations {
 
             if (CentralRepository.isEnabled()) {
                 List<CorrelationAttributeInstance> centralRepoComments = getCentralRepositoryData(sourceFile);
-                boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader, 
+                boolean crRendered = appendEntries(parent, CR_COMMENTS_CONFIG, centralRepoComments, isSubheader,
                         !contentRendered);
                 contentRendered = contentRendered || crRendered;
             }
@@ -475,13 +474,13 @@ public class Annotations {
         if (!isFirstSection) {
             sectionDiv.attr("class", ContentViewerHtmlStyles.getSpacedSectionClassName());
         }
-        
+
         Element sectionContainer = sectionDiv.appendElement("div");
-        
+
         if (!isSubsection) {
-            sectionContainer.attr("class", ContentViewerHtmlStyles.getIndentedClassName());    
+            sectionContainer.attr("class", ContentViewerHtmlStyles.getIndentedClassName());
         }
-        
+
         appendVerticalEntryTables(sectionContainer, items, config.getAttributes());
         return true;
     }
@@ -532,7 +531,10 @@ public class Annotations {
      * @return The created table.
      */
     private static Element appendTable(Element parent, int columnNumber, List<List<String>> content, List<String> columnHeaders) {
-        Element table = parent.appendElement("table");
+        Element table = parent.appendElement("table")
+                .attr("valign", "top")
+                .attr("align", "left");
+
         if (columnHeaders != null && !columnHeaders.isEmpty()) {
             Element header = table.appendElement("thead");
             appendRow(header, columnHeaders, columnNumber, true);
@@ -559,9 +561,15 @@ public class Annotations {
         Element row = rowParent.appendElement("tr");
         for (int i = 0; i < columnNumber; i++) {
             Element cell = row.appendElement(cellType);
-            cell.attr("class", ContentViewerHtmlStyles.getTextClassName());
+
+            if (i == 0) {
+                cell.attr("class", ContentViewerHtmlStyles.getKeyColumnClassName());
+            }
+
             if (data != null && i < data.size()) {
-                cell.text(StringUtils.isEmpty(data.get(i)) ? "" : data.get(i));
+                cell.appendElement("span")
+                        .attr("class", ContentViewerHtmlStyles.getTextClassName())
+                        .text(StringUtils.isEmpty(data.get(i)) ? "" : data.get(i));
             }
         }
         return row;

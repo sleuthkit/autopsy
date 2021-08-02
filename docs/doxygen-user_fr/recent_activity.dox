@@ -1,0 +1,43 @@
+/*! \page recent_activity_page Recent Activity (Activités récentes)
+
+[TOC]
+
+
+Qu'est ce que ça fait
+========
+
+Le module "Recent Activity" extrait l'activité de l'utilisateur telle qu'elle est enregistrée par les navigateurs Web (y compris les recherches Web), les programmes installés et le système d'exploitation. Il exécute également Regripper sur les ruches de la base de registre.
+
+Cela vous permet de voir quelle activité s'est produite au cours des sept derniers jours d'utilisation, quels sites Web ont été consultés, ce que la machine a fait et à quoi elle s'est connectée.
+
+Configuration
+=======
+
+Configuration de la personnalisation des catégories Web
+------
+
+Le module "Recent Activity" créera des résultats "Web Categories" pour les domaines qui correspondent à une liste de catégories. Il existe des catégories intégrées, mais des catégories personnalisées peuvent également être saisies via l'onglet "Custom Web Categories" du panneau d'options principal. Ces catégories personnalisées remplaceront toute catégorie intégrée correspondante.
+
+\image html custom_web_categories.png
+
+Les boutons situés sous la liste des catégories vous permettent de saisir de nouvelles catégories, de modifier des catégories existantes et de supprimer des catégories. Vous pouvez également exporter votre liste de catégories et importer un ensemble de catégories précédemment exportées à partir de ce panneau. L'importation d'un ensemble ajoutera ces catégories à la liste actuelle (les catégories existantes ne seront pas supprimées).
+
+La catégorie correspondante pour chaque domaine sera répertoriée dans la colonne "Name" dans la visionneuse de résultats.
+\image html custom_web_categories_results.png
+
+
+Utilisation du module
+======
+
+Paramètres d'intégration
+------
+Il n'y a pas de paramètre à l'exécution pour ce module.
+
+
+Voir les résultats
+------
+Les résultats s'affichent dans l'arborescence sous "Extracted Content".
+
+\image html extracted_content.PNG
+
+*/

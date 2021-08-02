@@ -46,12 +46,13 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifactNode
      *                      accounts
      */
     ContactsChildNodeFactory(SelectionInfo selectionInfo) {
-        this.selectionInfo = selectionInfo;    
+        this.selectionInfo = selectionInfo;
     }
-    
+
     /**
-     * Updates the current instance of selectionInfo and calls the refresh method.
-     * 
+     * Updates the current instance of selectionInfo and calls the refresh
+     * method.
+     *
      * @param selectionInfo New instance of the currently selected accounts
      */
     public void refresh(SelectionInfo selectionInfo) {
@@ -62,7 +63,9 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifactNode
     /**
      * Creates a list of Keys (BlackboardArtifact) for only contacts of the
      * currently selected accounts
+     *
      * @param list List of BlackboardArtifact to populate
+     *
      * @return True on success
      */
     @Override
@@ -79,7 +82,7 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifactNode
             logger.log(Level.SEVERE, "Failed to load relationship sources.", ex); //NON-NLS
             return false;
         }
-  
+
         relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
 
             BlackboardArtifact bba = (BlackboardArtifact) content;

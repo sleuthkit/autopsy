@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,10 +30,19 @@ public interface DataSourceIngestModule extends IngestModule {
      * Processes a data source. Called once between calls to startUp() and
      * shutDown().
      *
+     * IMPORTANT: In addition to returning ProcessResult.OK or
+     * ProcessResult.ERROR, modules should log all errors using methods provided
+     * by the org.sleuthkit.autopsy.coreutils.Logger class. Log messages should
+     * include the name and object ID of the data being processed. If an
+     * exception has been caught by the module, the exception should be sent to
+     * the Logger along with the log message so that a stack trace will appear
+     * in the application log.
+     *
      * @param dataSource  The data source to process.
      * @param progressBar A progress bar to be used to report progress.
      *
      * @return A result code indicating success or failure of the processing.
      */
     ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar);
+
 }

@@ -1,0 +1,26 @@
+﻿/*! \page module_install_page Installation de modules tiers
+
+[TOC]
+
+
+Il existe différents endroits dans Autopsy où les développeurs peuvent écrire des modules d'extension personnalisés. Cette page explique comment les installer.
+
+Il existe deux types de modules:
+- Modules écrits en Java livrés dans des fichiers NBM (NetBeans Module).
+- Modules écrits en Python livrés sous forme de dossier dans un fichier ZIP.
+
+\section module_install_nbm Installation des modules NetBeans
+Si vous disposez d'un fichier NBM, il peut contenir un ou plusieurs modules Autopsy. Pour l'installer, utilisez le gestionnaire de plugins dans "Tools", "Plugins". 
+
+\image html module_install_netbeans.png
+
+Choisissez l'onglet "Downloaded" puis "Add Plugins".  Accédez au fichier NBM. Vous devrez peut-être redémarrer Autopsy. 
+
+\section module_install_python Installation des modules Python
+Si vous avez un fichier ZIP contenant un module Python, décompressez le fichier et vous devriez obtenir un dossier. Ouvrez le dossier de la bibliothèque des modules Python via Autopsy en utilisant "Tools", "Python Plugins".  
+
+\image html module_install_python.png
+
+Sous Windows, ce sera sous votre répertoire utilisateur, dans "AppData\Roaming\autopsy\python_modules". Collez à cet emplacement le dossier du module et Autopsy devrait l'identifier et l'utiliser la prochaine fois qu'il chargera les modules.
+
+*/

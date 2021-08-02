@@ -194,7 +194,7 @@ public class ImageUtils {
     public static SortedSet<String> getSupportedImageMimeTypes() {
         return Collections.unmodifiableSortedSet(SUPPORTED_IMAGE_MIME_TYPES);
     }
-
+    
     /**
      * Get the default thumbnail, which is the icon for a file. Used when we can
      * not generate a content based thumbnail.
