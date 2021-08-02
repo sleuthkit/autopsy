@@ -48,9 +48,9 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 
 @Messages({
-    "AllCasesSearchDialog.dialogTitle.text=Search All Cases",
+    "AllCasesSearchDialog.dialogTitle.text=Search Central Repository",
     "AllCasesSearchDialog.resultsTitle.text=All Cases",
-    "AllCasesSearchDialog.resultsDescription.text=All Cases Search",
+    "AllCasesSearchDialog.resultsDescription.text=Search Central Repository",
     "AllCasesSearchDialog.emptyNode.text=No results found.",
     "AllCasesSearchDialog.validation.invalidHash=The supplied value is not a valid MD5 hash.",
     "AllCasesSearchDialog.validation.invalidEmail=The supplied value is not a valid e-mail address.",

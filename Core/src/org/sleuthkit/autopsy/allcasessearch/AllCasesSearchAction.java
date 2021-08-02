@@ -32,9 +32,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
  * Action for accessing the Search Other Cases dialog.
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.allcasessearch.AllCasesSearchAction")
-@ActionRegistration(displayName = "#CTL_OtherCasesSearchAction=Search All Cases", lazy = false)
+@ActionRegistration(displayName = "#CTL_OtherCasesSearchAction=Search Centeral Repository", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 201)
-@NbBundle.Messages({"CTL_AllCasesSearchAction=Search All Cases"})
+@NbBundle.Messages({"CTL_AllCasesSearchAction=Search Centeral Repository"})
 public class AllCasesSearchAction extends CallableSystemAction {
 
     @Override
@@ -54,7 +54,7 @@ public class AllCasesSearchAction extends CallableSystemAction {
     }
 
     @NbBundle.Messages({
-        "AllCasesSearchAction.getName.text=Search All Cases"})
+        "AllCasesSearchAction.getName.text=Search Centeral Repository"})
     @Override
     public String getName() {
         return Bundle.AllCasesSearchAction_getName_text();

@@ -1,5 +1,5 @@
 
-AllCasesSearchAction.getName.text=Search All Cases
+AllCasesSearchAction.getName.text=Search Centeral Repository
 # {0} - number of cases
 AllCasesSearchDialog.caseLabel.text=The current Central Repository contains {0} case(s).
 AllCasesSearchDialog.correlationValueTextField.domainExample=Example: "domain.com"
@@ -13,11 +13,11 @@ AllCasesSearchDialog.correlationValueTextField.phoneExample=Example: "(800)123-4
 AllCasesSearchDialog.correlationValueTextField.ssidExample=Example: "WirelessNetwork-5G"
 AllCasesSearchDialog.correlationValueTextField.usbExample=Example: "4&1234567&0"
 AllCasesSearchDialog.descriptionLabel.text=<html>Search the Central Repository for correlation properties with a specified value. The search is case insensitive.</html>
-AllCasesSearchDialog.dialogTitle.text=Search All Cases
+AllCasesSearchDialog.dialogTitle.text=Search Central Repository
 AllCasesSearchDialog.emptyNode.text=No results found.
 AllCasesSearchDialog.errorLabel.text=\ 
 AllCasesSearchDialog.correlationTypeLabel.text=Correlation Property Type:
-AllCasesSearchDialog.resultsDescription.text=All Cases Search
+AllCasesSearchDialog.resultsDescription.text=Search Central Repository
 AllCasesSearchDialog.resultsTitle.text=All Cases
 AllCasesSearchDialog.searchButton.AccessibleContext.accessibleDescription=
 AllCasesSearchDialog.searchButton.AccessibleContext.accessibleName=Search
@@ -43,4 +43,4 @@ CorrelationAttributeInstanceNode.columnName.device=Device
 CorrelationAttributeInstanceNode.columnName.known=Known
 CorrelationAttributeInstanceNode.columnName.name=Name
 CorrelationAttributeInstanceNode.columnName.path=Path
-CTL_AllCasesSearchAction=Search All Cases
+CTL_AllCasesSearchAction=Search Centeral Repository
