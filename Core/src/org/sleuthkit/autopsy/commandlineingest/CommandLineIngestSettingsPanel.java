@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -288,6 +288,10 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         String reportName = getReportName();
         if (reportName.equals(Bundle.CommandListIngestSettingsPanel_Make_Config())) {
             reportName = JOptionPane.showInputDialog(this, Bundle.CommandListIngestSettingsPanel_Report_Name_Msg());
+            
+            // sanitize report name. Remove all commas because in CommandLineOptionProcessor we use commas
+            // to separate multiple report names
+            reportName = reportName.replaceAll(",", "");
 
             // User hit cancel
             if (reportName == null) {
