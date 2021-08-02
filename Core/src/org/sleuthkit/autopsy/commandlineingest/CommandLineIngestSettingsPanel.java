@@ -280,7 +280,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         add(nodePanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     @Messages({
-        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name:",
+        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (commas not allowed):",
         "CommandLineIngestSettingPanel_empty_report_name_mgs=Report profile name was empty, no profile created.",
         "CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created."
     })
