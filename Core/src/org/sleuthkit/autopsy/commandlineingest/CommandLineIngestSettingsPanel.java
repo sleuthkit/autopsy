@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -280,7 +280,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         add(nodePanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     @Messages({
-        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name:",
+        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (commas not allowed):",
         "CommandLineIngestSettingPanel_empty_report_name_mgs=Report profile name was empty, no profile created.",
         "CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created."
     })
@@ -288,6 +288,10 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         String reportName = getReportName();
         if (reportName.equals(Bundle.CommandListIngestSettingsPanel_Make_Config())) {
             reportName = JOptionPane.showInputDialog(this, Bundle.CommandListIngestSettingsPanel_Report_Name_Msg());
+            
+            // sanitize report name. Remove all commas because in CommandLineOptionProcessor we use commas
+            // to separate multiple report names
+            reportName = reportName.replaceAll(",", "");
 
             // User hit cancel
             if (reportName == null) {

@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,8 +32,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewerTagManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -60,6 +66,37 @@ public class TagsManager implements Closeable {
     private static String PROJECT_VIC_TAG_SET_NAME = "Project VIC";
 
     private static final Object lock = new Object();
+    
+    private final Map<String, TagName> allTagNameMap = Collections.synchronizedMap(new HashMap<>());
+    
+    private final PropertyChangeListener listener = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (evt.getPropertyName().equals(Case.Events.TAG_NAMES_ADDED.name())
+                    || evt.getPropertyName().equals(Case.Events.TAG_NAMES_UPDATED.name())) {
+                TagNamesEvent tagEvent = (TagNamesEvent) evt;
+                List<TagName> addTagNames = tagEvent.getTagNames();
+                for (TagName tag : addTagNames) {
+                    allTagNameMap.put(tag.getDisplayName(), tag);
+                }
+            } else if (evt.getPropertyName().equals(Case.Events.TAG_NAMES_DELETED.name())) {
+                TagNamesDeletedEvent tagEvent = (TagNamesDeletedEvent) evt;
+                List<Long> deletedIds = tagEvent.getTagNameIds();
+                List<String> keysToRemove = new ArrayList<>();
+                for (TagName tagName : getAllTagNames()) {
+                    if (deletedIds.contains(tagName.getId())) {
+                        keysToRemove.add(tagName.getDisplayName());
+                    }
+                }
+
+                for (String key : keysToRemove) {
+                    allTagNameMap.remove(key);
+                }
+            }
+        }
+    };
+    
+    private final PropertyChangeListener weakListener = WeakListeners.propertyChange(listener, null);
 
     static {
 
@@ -177,8 +214,6 @@ public class TagsManager implements Closeable {
             /*
              * No current case, nothing more to add to the set.
              */
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get list of TagNames from TagsManager.", ex);
         }
         return tagDisplayNames;
     }
@@ -268,21 +303,26 @@ public class TagsManager implements Closeable {
                 
                 // add the standard tag names
                 for (TagNameDefinition def : TagNameDefinition.getStandardTagNameDefinitions()) {
-                    caseDb.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
+                    taggingMgr.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
                 }
                 
                 //Assume new case and add all tag sets
                 for (TagSetDefinition setDef : TagSetDefinition.readTagSetDefinitions()) {
                     List<TagName> tagNamesInSet = new ArrayList<>();
                     for (TagNameDefinition tagNameDef : setDef.getTagNameDefinitions()) {
-                        tagNamesInSet.add(caseDb.addOrUpdateTagName(tagNameDef.getDisplayName(), tagNameDef.getDescription(), tagNameDef.getColor(), tagNameDef.getKnownStatus()));
+                        tagNamesInSet.add(taggingMgr.addOrUpdateTagName(tagNameDef.getDisplayName(), tagNameDef.getDescription(), tagNameDef.getColor(), tagNameDef.getKnownStatus()));
                     }
 
                     if (!tagNamesInSet.isEmpty()) {
                         taggingMgr.addTagSet(setDef.getName(), tagNamesInSet);
                     }
                 }
+            }         
+
+            for(TagName tagName: caseDb.getAllTagNames()) {
+                allTagNameMap.put(tagName.getDisplayName(), tagName);
             }
+            
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error updating standard tag name and tag set definitions", ex);
         } catch (IOException ex) {
@@ -292,6 +332,10 @@ public class TagsManager implements Closeable {
         for (TagNameDefinition tagName : TagNameDefinition.getTagNameDefinitions()) {
             tagName.saveToCase(caseDb);
         }
+        
+        Case.addEventTypeSubscriber(Collections.singleton(Case.Events.TAG_NAMES_UPDATED), weakListener);
+        Case.addEventTypeSubscriber(Collections.singleton(Case.Events.TAG_NAMES_ADDED), weakListener);
+        Case.addEventTypeSubscriber(Collections.singleton(Case.Events.TAG_NAMES_DELETED), weakListener);
     }
 
     /**
@@ -337,11 +381,12 @@ public class TagsManager implements Closeable {
      * Gets a list of all tag names currently in the case database.
      *
      * @return A list, possibly empty, of TagName objects.
-     *
-     * @throws TskCoreException If there is an error querying the case database.
      */
-    public List<TagName> getAllTagNames() throws TskCoreException {
-        return caseDb.getAllTagNames();
+    public synchronized List<TagName> getAllTagNames() {
+        
+        List<TagName> tagNames = new ArrayList<>();
+        tagNames.addAll(allTagNameMap.values());
+        return tagNames;
     }
 
     /**
@@ -439,7 +484,7 @@ public class TagsManager implements Closeable {
      */
     public Map<String, TagName> getDisplayNamesToTagNamesMap() throws TskCoreException {
         Map<String, TagName> tagNames = new HashMap<>();
-        for (TagName tagName : caseDb.getAllTagNames()) {
+        for (TagName tagName : getAllTagNames()) {
             tagNames.put(tagName.getDisplayName(), tagName);
         }
         return tagNames;
@@ -521,13 +566,13 @@ public class TagsManager implements Closeable {
     public TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
         synchronized (lock) {
             try {
-                TagName tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
+                TagName tagName = caseDb.getTaggingManager().addOrUpdateTagName(displayName, description, color, knownStatus);
                 Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
                 customTypes.add(new TagNameDefinition(displayName, description, color, knownStatus));
                 TagNameDefinition.setTagNameDefinitions(customTypes);
                 return tagName;
             } catch (TskCoreException ex) {
-                List<TagName> existingTagNames = caseDb.getAllTagNames();
+                List<TagName> existingTagNames = getAllTagNames();
                 for (TagName tagName : existingTagNames) {
                     if (tagName.getDisplayName().equals(displayName)) {
                         throw new TagNameAlreadyExistsException();
@@ -1039,5 +1084,4 @@ public class TagsManager implements Closeable {
     @Override
     public void close() throws IOException {
     }
-
 }
