@@ -228,8 +228,9 @@ class DirectoryTreeFilterNode extends FilterNode {
                 String oldDisplayName = currentDisplayName;
                 currentDisplayName = get();
                 // When currentDisplayName != oldDisplayName fireDisplayNameChange 
-                // will cause getDisplayName to be called again which will again launch the 
+                // will cause getDisplayName to be called which will in turn launch the 
                 // swing worker. 
+                // when currentDisplayName == oldDiplayName fireDisplayNameChange is a no-op
                 fireDisplayNameChange(currentDisplayName, oldDisplayName);
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error adding count to node display name " + currentDisplayName, ex);
