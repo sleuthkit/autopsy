@@ -1,4 +1,4 @@
-﻿/*! \page central_repo_page Référentiel central
+/*! \page central_repo_page Référentiel central
 
 [TOC]
 
@@ -111,6 +111,10 @@ Descriptions des types de propriétés:
  - Les propriétés d'ICCID ne sont actuellement créées que par des modules Autopsy personnalisés.
 - <b>Credit Card</b>
  - Les propriétés de carte de crédit sont créées par le module \ref keyword_search_page.
+- <b>OS Account</b>
+ - Les propriétés de comptes de système d'exploitation sont créés par le processeur de source de données d'image disque et le module \ref recent_activity_page.
+- <b>Installed Programs</b>
+ - Les propriétés des programmes installés sont créées principalement par le module \ref recent_activity_page.
 - <b> App-specific Accounts (Facebook, Twitter, etc...)</b>
  - Ces propriétés proviennent principalement du module \ref android_analyzer_page.
 
@@ -146,7 +150,7 @@ Il existe trois paramètres pour le module d'acquisition "Central Repository":
 <ul>
 <li><b>Save items to the Central Repository</b> - Cette option ne doit être désélectionnée que dans les rares cas où vous ne souhaitez pas ajouter de propriétés de la source de données actuelle au référentiel central, mais souhaitez quand même signaler les occurrences passées.
 <li><b>Flag items previously tagged as notable</b> - L'activation de cette option entraîne la création d'artefacts d'éléments/fichiers intéressants lorsque des propriétés correspondant à celles précédemment marquées sont trouvées. Voir la section suivante \ref cr_tagging pour plus de détails.
-<li><b>Flag previously seen devices</b> - Lorsque cette option est activée, un artefact "Interesting Item" sera créé si une propriété liée au périphérique (USB, adresse MAC, IMSI, IMEI, ICCID) est détectée et se trouve déjà dans le référentiel central, qu'elle ait été ou non signalée.
+<li><b>Flag previously seen devices and users</b> - Lorsque cette option est activée, un artefact "Interesting Item" sera créé si une propriété liée au périphérique (USB, adresse MAC, IMSI, IMEI, ICCID) ou un compte de système d'exploitation sont détectés et se trouvent déjà dans le référentiel central, qu'ils aient été ou non marqués.
 </li>
 
 \subsection cr_tagging Marquage de fichiers et d'artefacts

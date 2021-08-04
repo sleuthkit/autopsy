@@ -1,4 +1,4 @@
-﻿/*! \page host_page Hosts (Hôtes)
+/*! \page host_page Hosts (Hôtes)
 
 
 [TOC]
@@ -19,7 +19,7 @@ Les hôtes sont affichés dans l'\ref tree_viewer_page. En fonction des \ref vie
 
 \subsection host_os_accounts Comptes de système d'exploitation
 
-Les comptes de système d'exploitation peuvent être affichés dans le nœud "OS Accounts" sous "Results". Chaque compte de système d'exploitation est associé à un hôte et les informations sur l'hôte sont affichées dans l'onglet "OS Accounts" de la visionneuse de contenu.
+Les comptes de système d'exploitation peuvent être affichés dans le nœud "OS Accounts" de l'arborescence. Chaque compte de système d'exploitation est associé à un hôte et les informations sur l'hôte sont affichées dans l'onglet "OS Accounts" de la visionneuse de contenu.
 
 \image html host_os_accounts.png
 

@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,26 +165,22 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
     private class IngestJobTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.jobID"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dataSource"),
+        private static final long serialVersionUID = 1L;
+
+        private final String[] columnNames = {
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.jobID"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dataSource"),
             NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.start"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.numProcessed"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.filesPerSec"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.inProgress"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.filesQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dirQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.rootQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.streamingQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dsQueued")};
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.numProcessed"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.filesPerSec"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.inProgress"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.filesQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dirQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.rootQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.streamingQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dsQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.artifactsQueued")};
+
         private List<Snapshot> jobSnapshots;
 
         private IngestJobTableModel() {
@@ -250,6 +246,9 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                 case 10:
                     cellValue = snapShot.getDsQueueSize();
                     break;
+                case 11:
+                    cellValue = snapShot.getArtifactTasksQueueSize();
+                    break;
                 default:
                     cellValue = null;
                     break;
@@ -259,6 +258,8 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     }
 
     private class ModuleTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
 
         private class ModuleStats implements Comparable<ModuleStats> {
 

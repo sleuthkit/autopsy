@@ -1,12 +1,14 @@
-﻿/*! \page tree_viewer_page Arborescence
+/*! \page tree_viewer_page Arborescence
 
 [TOC]
 
 
-L'arborescence sur le côté gauche de la fenêtre principale est l'endroit où vous pouvez parcourir les fichiers dans les sources de données du cas et trouver les résultats enregistrés à partir des analyses automatisées (Ingest). L'arborescence a cinq zones principales:
+L'arborescence sur le côté gauche de la fenêtre principale est l'endroit où vous pouvez parcourir les fichiers dans les sources de données du cas et trouver les résultats enregistrés à partir des analyses automatisées (Ingest). L'arborescence a sept zones principales:
 - <b>Persons / Hosts / Data Sources:</b> Cela montre la hiérarchie arborescente de répertoires des sources de données. Vous pouvez accéder à un fichier ou à un répertoire spécifique ici. Chaque source de données ajoutée au cas est représentée sous la forme d'une sous-arborescence distincte. Si vous ajoutez une source de données plusieurs fois, elle apparaît plusieurs fois.
-- <b>Views:</b> Des types spécifiques de fichiers provenant des sources de données sont affichés ici, agrégés par type ou par d'autres propriétés. Les fichiers ici peuvent provenir de plusieurs sources de données.
-- <b>Results:</b> C'est ici que vous pouvez voir les résultats des analyses automatisées (Ingest) exécutée en arrière-plan ainsi que vos résultats de recherche.
+- <b>File Views:</b> Des types spécifiques de fichiers provenant des sources de données sont affichés ici, agrégés par type ou par d'autres propriétés. Les fichiers ici peuvent provenir de plusieurs sources de données.
+- <b>Data Artifacts:</b> C'est l'un des principaux endroits où les résultats des \ref ingest_page en cours apparaissent.
+- <b>Analysis Results:</b> C'est l'un des autres principaux endroits où les résultats des \ref ingest_page en cours apparaissent.
+- <b>OS Accounts:</b> C'est ici que vous pouvez voir à la fois les résultats de l'analyse automatisée exécutée en arrière-plan et les résultats de votre recherche.
 - <b>Tags:</b> C'est là que les fichiers et les résultats qui ont été \ref tagging_page "marqués" sont affichés.
 - <b>Reports:</b> Les rapports que vous avez générés ou que les modules d'acquisition ont créés s'affichent ici.
 
@@ -43,22 +45,28 @@ L'espace non alloué (Unallocated space) représente les parties d'un système d
 Un exemple de l'option d'extraction de fichier unique est illustré ci-dessous.
 \image html extracting-unallocated-space.PNG
 
-\section ui_tree_views Views (Vues)
+\section ui_tree_views File Views (Vues des fichiers)
 
 La zone "Views" filtre tous les fichiers du cas en fonction de certaines propriétés du fichier. 
 - <b>File Types</b> - Trie les fichiers par extension ou par type MIME et les affiche dans le groupe approprié. Par exemple, les fichiers avec les extensions .mp3 et .wav se retrouvent dans le groupe "Audio".
 - <b>Deleted Files</b> - Affiche les fichiers qui ont été supprimés, mais dont les noms ont été récupérés.
 - <b>File Size</b> - Trie les fichiers en fonction de leur taille.
 
+\section ui_tree_results Data Artifacts (Artefacts de données)
 
-\section ui_tree_results Results (Résultats)
-- <b>Extracted Content:</b> De nombreux modules d'acquisition placeront les résultats ici: métadonnées EXIF, emplacements GPS ou historiques Web par exemple.
-- <b>Keyword Hits:</b> Les résultats de la recherche par mot-clé s'affichent ici.
-- <b>Hashset Hits:</b> Les résultats de la recherche de hachage s'affichent ici. 
-- <b>E-Mail Messages:</b> Les e-mails s'affichent ici.
-- <b>Interesting Items:</b> Les éléments jugés intéressants apparaissent ici.
-- <b>Accounts:</b> Les comptes de carte de crédit s'affichent ici.
-- <b>Tags:</b> Tout élément que vous avez marqué apparaît ici pour que vous puissiez le retrouver facilement.
+Cette section présente les artefacts de données créés en exécutant les modules d'acquisition. En général, les artefacts de données contiennent des informations concrètes extraites de la source de données. Par exemple, des journaux d'appels et des messages de journaux de communication ou des signets Web extraits d'une base de données de navigateur.
+
+\section ui_tree_analysis_results Analysis Results (Résultats d'analyse)
+
+Cette section affiche les résultats d'analyse créés en exécutant les modules d'acquisition. En général, les résultats d'analyse contiennent des informations intéressantes pour l'utilisateur. Par exemple, si l'utilisateur établit une liste de \ref hash_db_page "hachages notables", tous les hits de l'ensemble de hachage apparaîtront ici. 
+
+\section ui_tree_os_accounts OS Accounts (Comptes de système d'exploitation)
+
+Cette section montre les comptes de système d'exploitation trouvés dans le cas. Voir la rubrique \ref host_os_accounts à titre d'exemple.
+
+\section ui_tree_tags Tags (Marquages)
+
+Tout élément que vous marquez s'affiche ici pour que vous puissiez le retrouver facilement. Voir la page \ref tagging_page pour plus d'informations.
 
 \section ui_tree_reports Reports (Rapports)
 
