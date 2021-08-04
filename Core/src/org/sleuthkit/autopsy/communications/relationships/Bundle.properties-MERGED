@@ -59,6 +59,7 @@ SummaryViewer_Device_Account_Description=This account was referenced by a device
 SummaryViewer_Fetching_References=<Fetching File References>
 SummaryViewer_FileRef_Message=<Select a single account to see File References>
 SummaryViewer_FileRefNameColumn_Title=Path
+SummaryViewer_loading_count_message=Loading....
 SummaryViewer_Persona_CR_Message=<Enable Central Repository to view Personas>
 SummaryViewer_Select_account_for_persona=<Select a single account to see Persona(s)>
 SummaryViewer_TabTitle=Summary
