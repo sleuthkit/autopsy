@@ -21,10 +21,14 @@ package org.sleuthkit.autopsy.directorytree;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Observable;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.Action;
+import javax.swing.SwingWorker;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
@@ -51,6 +55,9 @@ class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Logger logger = Logger.getLogger(DirectoryTreeFilterNode.class.getName());
     private static final Action collapseAllAction = new CollapseAction(NbBundle.getMessage(DirectoryTreeFilterNode.class, "DirectoryTreeFilterNode.action.collapseAll.text"));
+    
+    private String currentDisplayName;
+    private final String originalName;
 
     /**
      * Constructs node filter (decorator) that sets the actions for a node in
@@ -65,6 +72,9 @@ class DirectoryTreeFilterNode extends FilterNode {
         super(nodeToWrap,
                 DirectoryTreeFilterChildren.createInstance(nodeToWrap, createChildren),
                 new ProxyLookup(Lookups.singleton(nodeToWrap), nodeToWrap.getLookup()));
+       
+        originalName = nodeToWrap.getDisplayName();
+        currentDisplayName = originalName;
     }
 
     /**
@@ -76,35 +86,11 @@ class DirectoryTreeFilterNode extends FilterNode {
     @Override
     public String getDisplayName() {
         final Node orig = getOriginal();
-        String name = orig.getDisplayName();
-
         if (orig instanceof AbstractContentNode) {
-            AbstractFile file = getLookup().lookup(AbstractFile.class);
-            if ((file != null) && (false == (orig instanceof BlackboardArtifactNode))) {
-                try {
-                    int numVisibleChildren = getVisibleChildCount(file);
-
-                    /*
-                     * Left-to-right marks here are necessary to keep the count
-                     * and parens together for mixed right-to-left and
-                     * left-to-right names.
-                     */
-                    name = name + " \u200E(\u200E" + numVisibleChildren + ")\u200E";  //NON-NLS
-
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex); //NON-NLS
-                }
-            } else if (orig instanceof BlackboardArtifactNode) {
-                BlackboardArtifact artifact = ((BlackboardArtifactNode) orig).getArtifact();
-                try {
-                    int numAttachments = artifact.getChildrenCount();
-                    name = name + " \u200E(\u200E" + numAttachments + ")\u200E";  //NON-NLS
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting chidlren count for atifact: " + artifact, ex); //NON-NLS
-                }
-            }
+            DisplayNameWorker worker = new DisplayNameWorker(orig);
+            worker.execute();
         }
-        return name;
+        return currentDisplayName;
     }
 
     /**
@@ -193,6 +179,59 @@ class DirectoryTreeFilterNode extends FilterNode {
     @Override
     public Node getOriginal() {
         return super.getOriginal();
+    }
+    
+    private class DisplayNameWorker extends SwingWorker<String, Void> {
+
+        private final Node originalNode;
+        private final AbstractFile file;
+
+        private DisplayNameWorker(Node originalNode) {
+            this.originalNode = originalNode;
+            this.file = getLookup().lookup(AbstractFile.class);;
+        }
+
+        @Override
+        protected String doInBackground() throws Exception {
+            String name = originalName;
+            if ((file != null) && (false == (originalNode instanceof BlackboardArtifactNode))) {
+                try {
+                    int numVisibleChildren = getVisibleChildCount(file);
+
+                    /*
+                     * Left-to-right marks here are necessary to keep the count
+                     * and parens together for mixed right-to-left and
+                     * left-to-right names.
+                     */
+                    name = name + " \u200E(\u200E" + numVisibleChildren + ")\u200E";  //NON-NLS
+
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex); //NON-NLS
+                }
+            } else if (originalNode instanceof BlackboardArtifactNode) {
+                BlackboardArtifact artifact = ((BlackboardArtifactNode) originalNode).getArtifact();
+                try {
+                    int numAttachments = artifact.getChildrenCount();
+                    name = name + " \u200E(\u200E" + numAttachments + ")\u200E";  //NON-NLS
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting chidlren count for atifact: " + artifact, ex); //NON-NLS
+                }
+            }
+
+            return name;
+        }
+        
+        @Override
+        protected void done() {
+            try {
+                String oldDisplayName = currentDisplayName;
+                currentDisplayName = get();
+                DirectoryTreeFilterNode.this.fireDisplayNameChange(currentDisplayName, oldDisplayName);
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Error adding count to node display name " + currentDisplayName, ex);
+            }
+        }
+
     }
 
 }
