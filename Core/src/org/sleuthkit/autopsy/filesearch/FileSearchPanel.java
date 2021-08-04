@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,8 +40,6 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -64,6 +62,8 @@ class FileSearchPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private final List<FileSearchFilter> filters = new ArrayList<>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
+    private static MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
+    private static DataSourceFilter dataSourceFilter = new DataSourceFilter();
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
     private static SwingWorker<TableFilterNode, Void> searchWorker = null;
 
@@ -77,7 +77,6 @@ class FileSearchPanel extends javax.swing.JPanel {
     FileSearchPanel() {
         initComponents();
         customizeComponents();
-
     }
 
     /**
@@ -107,8 +106,6 @@ class FileSearchPanel extends javax.swing.JPanel {
         DateSearchFilter dateFilter = new DateSearchFilter();
         KnownStatusSearchFilter knowStatusFilter = new KnownStatusSearchFilter();
         HashSearchFilter hashFilter = new HashSearchFilter();
-        MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
-        DataSourceFilter dataSourceFilter = new DataSourceFilter();
 
         panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"), nameFilter));
 
@@ -166,7 +163,6 @@ class FileSearchPanel extends javax.swing.JPanel {
                 }
             }
         }
-
         errorLabel.setText("");
         return enabled;
     }
@@ -187,7 +183,7 @@ class FileSearchPanel extends javax.swing.JPanel {
             if (this.isValidSearch()) {
                 // try to get the number of matches first
                 Case currentCase = Case.getCurrentCaseThrows(); // get the most updated case
-                Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_searchingNode_display_text()), true);
+                 Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_searchingNode_display_text()), true);
                 String title = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.title", ++resultWindowCount);
                 String pathText = Bundle.FileSearchPanel_searchingPath_text();
                 final DataResultTopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText,
@@ -337,6 +333,15 @@ class FileSearchPanel extends javax.swing.JPanel {
         }
 
         return enabledFilters;
+    }
+    
+    /**
+     * Reset the filters which are populated with options based on the contents
+     * of the current case.
+     */
+    void resetCaseDependentFilters() {
+        dataSourceFilter.resetDataSourceFilter();
+        mimeTypeFilter.resetMimeTypeFilter();
     }
 
     void addListenerToAll(ActionListener l) {
