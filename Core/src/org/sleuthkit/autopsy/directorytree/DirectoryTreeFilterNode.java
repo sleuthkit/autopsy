@@ -21,14 +21,12 @@ package org.sleuthkit.autopsy.directorytree;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Observable;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.SwingWorker;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
@@ -181,6 +179,9 @@ class DirectoryTreeFilterNode extends FilterNode {
         return super.getOriginal();
     }
     
+    /**
+     * A SwingWorker to fetch the node child count for the display label.
+     */
     private class DisplayNameWorker extends SwingWorker<String, Void> {
 
         private final Node originalNode;
@@ -226,7 +227,10 @@ class DirectoryTreeFilterNode extends FilterNode {
             try {
                 String oldDisplayName = currentDisplayName;
                 currentDisplayName = get();
-                DirectoryTreeFilterNode.this.fireDisplayNameChange(currentDisplayName, oldDisplayName);
+                // When currentDisplayName != oldDisplayName fireDisplayNameChange 
+                // will cause getDisplayName to be called again which will again launch the 
+                // swing worker. 
+                fireDisplayNameChange(currentDisplayName, oldDisplayName);
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error adding count to node display name " + currentDisplayName, ex);
             }
