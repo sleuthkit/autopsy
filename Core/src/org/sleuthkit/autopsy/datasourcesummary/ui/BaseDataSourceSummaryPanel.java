@@ -44,10 +44,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.DefaultMenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
@@ -454,14 +450,6 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     protected abstract void onNewDataSource(DataSource dataSource);
 
     /**
-     * Returns all the excel exportable items associated with the tab.
-     *
-     * @param dataSource The data source that results should be filtered.
-     * @return The excel exportable objects.
-     */
-    abstract List<ExcelSheetExport> getExports(DataSource dataSource);
-
-    /**
      * Runs a data fetcher and returns the result handling any possible errors
      * with a log message.
      *
@@ -488,7 +476,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     /**
      * Function that converts data into a excel sheet data.
      */
-    protected interface ExcelExportFunction<T> {
+    // ELTODO protected interface ExcelExportFunction<T> {
 
         /**
          * Function that converts data into an excel sheet.
@@ -497,8 +485,8 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
          * @return The excel sheet export.
          * @throws ExcelExportException
          */
-        ExcelSheetExport convert(T data) throws ExcelExportException;
-    }
+    //    ExcelSheetExport convert(T data) throws ExcelExportException;
+    //}
 
     /**
      * Helper method that converts data into an excel sheet export handling
@@ -510,6 +498,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * message).
      * @return The excel sheet export.
      */
+    /* ELTODO 
     protected static <T> ExcelSheetExport convertToExcel(ExcelExportFunction<T> excelConverter, T data, String sheetName) {
         if (data == null) {
             return null;
@@ -523,7 +512,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
                             sheetName == null ? "<null>" : sheetName), ex);
             return null;
         }
-    }
+    }*/
 
     /**
      * Returns an excel sheet export given the fetching of data or null if no
@@ -535,13 +524,14 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param ds The data source to use for fetching data.
      * @return The excel sheet export or null if no export could be generated.
      */
+    /* ELTODO 
     protected static <T> ExcelSheetExport getExport(
             DataFetcher<DataSource, T> dataFetcher, ExcelExportFunction<T> excelConverter,
             String sheetName, DataSource ds) {
 
         T data = getFetchResult(dataFetcher, sheetName, ds);
         return convertToExcel(excelConverter, data, sheetName);
-    }
+    }*/
 
     /**
      * Returns an excel table export of the data or null if no export created.
@@ -551,13 +541,14 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param data The data to be exported.
      * @return The excel table export or null if no export could be generated.
      */
+    /* ELTODO 
     protected static <T, C extends ExcelCellModel> ExcelSheetExport getTableExport(List<ColumnModel<T, C>> columnsModel,
             String sheetName, List<T> data) {
 
         return convertToExcel((dataList) -> new ExcelTableExport<T, C>(sheetName, columnsModel, dataList),
                 data,
                 sheetName);
-    }
+    }*/
 
     /**
      * Returns an excel table export of the data or null if no export created.
@@ -569,6 +560,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param ds The data source.
      * @return The excel export or null if no export created.
      */
+    /* ELTODO 
     protected static <T, C extends ExcelCellModel> ExcelSheetExport getTableExport(
             DataFetcher<DataSource, List<T>> dataFetcher, List<ColumnModel<T, C>> columnsModel,
             String sheetName, DataSource ds) {
@@ -577,7 +569,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
                 (dataList) -> new ExcelTableExport<T, C>(sheetName, columnsModel, dataList),
                 sheetName,
                 ds);
-    }
+    }*/
 
     /**
      * Utility method that shows a loading screen with loadable components,

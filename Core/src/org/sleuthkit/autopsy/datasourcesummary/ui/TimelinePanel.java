@@ -39,7 +39,6 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineDataSourceUtils
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.DailyActivityAmount;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.TimelineSummaryData;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.OrderedKey;
@@ -49,10 +48,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.KeyValueItemExportable;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.TitledExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
@@ -304,6 +299,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         return new DefaultCellModel<>(date, (dt) -> dt == null ? "" : EARLIEST_LATEST_FORMAT.format(dt), EARLIEST_LATEST_FORMAT_STR);
     }
 
+    /* ELODO
     @Messages({
         "TimelinePanel_getExports_sheetName=Timeline",
         "TimelinePanel_getExports_activityRange=Activity Range",
@@ -328,7 +324,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
                                         "#,###",
                                         Bundle.TimelinePanel_getExports_chartName(),
                                         parseChartData(summaryData.getMostRecentDaysActivity(), true)))));
-    }
+    }*/
 
     /**
      * This method is called from within the constructor to initialize the form.

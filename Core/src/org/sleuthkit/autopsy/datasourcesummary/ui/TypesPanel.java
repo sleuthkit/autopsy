@@ -40,14 +40,9 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultTyp
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.KeyValueItemExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartPanel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.PieChartItem;
 
@@ -421,7 +416,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      * @param dataSource The data source containing the data.
      * @return The key value pair to be exported.
      */
-    private static KeyValueItemExportable getStrExportable(DataFetcher<DataSource, String> fetcher, String key, DataSource dataSource) {
+    /* ELODO private static KeyValueItemExportable getStrExportable(DataFetcher<DataSource, String> fetcher, String key, DataSource dataSource) {
         String result = getFetchResult(fetcher, "Types", dataSource);
         return (result == null) ? null : new KeyValueItemExportable(key, new DefaultCellModel<>(result));
     }
@@ -435,12 +430,13 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      * @param dataSource The data source.
      * @return The key value pair.
      */
-    private static KeyValueItemExportable getCountExportable(DataFetcher<DataSource, Long> fetcher, String key, DataSource dataSource) {
+    /* ELODOprivate static KeyValueItemExportable getCountExportable(DataFetcher<DataSource, Long> fetcher, String key, DataSource dataSource) {
         Long count = getFetchResult(fetcher, "Types", dataSource);
         return (count == null) ? null : new KeyValueItemExportable(key,
                 new DefaultCellModel<Long>(count, COMMA_FORMATTER::format, COMMA_FORMAT_STR));
     }
 
+    /* ELODO
     @Override
     List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
         if (dataSource == null) {
@@ -471,7 +467,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
                         .filter(sheet -> sheet != null)
                         .collect(Collectors.toList())
         ));
-    }
+    }*/
 
     /**
      * This method is called from within the constructor to initialize the form.

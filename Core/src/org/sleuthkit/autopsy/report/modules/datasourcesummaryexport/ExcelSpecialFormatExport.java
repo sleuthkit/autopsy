@@ -16,14 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.uiutils;
+package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
+import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelExport.ExcelExportException;
 
 /**
  * An excel export that has special row-by-row formatting.
@@ -108,7 +108,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
      */
     public static class SingleCellExportable implements ExcelItemExportable {
 
-        private final ExcelCellModel item;
+        private final DefaultCellModel item;
 
         /**
          * Main constructor.
@@ -124,7 +124,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
          *
          * @param item The cell model to be written.
          */
-        public SingleCellExportable(ExcelCellModel item) {
+        public SingleCellExportable(DefaultCellModel item) {
             this.item = item;
         }
 
@@ -142,8 +142,8 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
      */
     public static class KeyValueItemExportable implements ExcelItemExportable {
 
-        private final ExcelCellModel key;
-        private final ExcelCellModel value;
+        private final DefaultCellModel key;
+        private final DefaultCellModel value;
 
         /**
          * Main constructor.
@@ -151,7 +151,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
          * @param key The string key to be exported.
          * @param value The cell model to be exported.
          */
-        public KeyValueItemExportable(String key, ExcelCellModel value) {
+        public KeyValueItemExportable(String key, DefaultCellModel value) {
             this(new DefaultCellModel<>(key), value);
         }
 
@@ -161,7 +161,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
          * @param key The cell key to be exported.
          * @param value The cell model to be exported.
          */
-        public KeyValueItemExportable(ExcelCellModel key, ExcelCellModel value) {
+        public KeyValueItemExportable(DefaultCellModel key, DefaultCellModel value) {
             this.key = key;
             this.value = value;
         }

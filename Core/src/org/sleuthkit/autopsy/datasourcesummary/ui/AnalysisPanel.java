@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
@@ -30,7 +28,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.datamodel.DataSource;
@@ -229,6 +226,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    /* ELODO
     @Override
     List<ExcelSheetExport> getExports(DataSource dataSource) {
         return Stream.of(
@@ -237,7 +235,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
                 getTableExport(interestingItemsFetcher, DEFAULT_COLUMNS, Bundle.AnalysisPanel_interestingItemHits_tabName(), dataSource))
                 .filter(sheet -> sheet != null)
                 .collect(Collectors.toList());
-    }
+    }*/
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

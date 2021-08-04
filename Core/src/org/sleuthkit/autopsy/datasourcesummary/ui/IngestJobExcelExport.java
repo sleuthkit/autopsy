@@ -36,8 +36,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelTableExport;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
@@ -211,6 +209,7 @@ class IngestJobExcelExport {
      * @param dataSource The data source.
      * @return The list of sheets to be included in an export.
      */
+    /* ELODO
     static List<ExcelSheetExport> getExports(DataSource dataSource) {
         if (dataSource == null) {
             return Collections.emptyList();
@@ -246,7 +245,7 @@ class IngestJobExcelExport {
                 .collect(Collectors.toList());
 
         return Arrays.asList(new ExcelTableExport<>(Bundle.IngestJobExcelExport_sheetName(), COLUMNS, toDisplay));
-    }
+    }*/
 
     private IngestJobExcelExport() {
     }

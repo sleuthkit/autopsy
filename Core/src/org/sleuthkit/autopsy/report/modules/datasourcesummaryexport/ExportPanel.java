@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
 /**
  * The panel that provides options for exporting data source summary data.

@@ -26,8 +26,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
@@ -37,12 +35,10 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.Top
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
-import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getTableExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
@@ -366,6 +362,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         super.close();
     }
 
+    /* ELODO
     @Override
     List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
         return Stream.of(
@@ -376,7 +373,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
                 getTableExport(topAccountsFetcher, topAccountsTemplate, Bundle.UserActivityPanel_TopAccountTableModel_tabName(), dataSource))
                 .filter(sheet -> sheet != null)
                 .collect(Collectors.toList());
-    }
+    }*/
 
     /**
      * This method is called from within the constructor to initialize the form.

@@ -16,26 +16,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.uiutils;
+package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import javax.swing.JLabel;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 /**
  * The default cell model.
  */
-public class DefaultCellModel<T> implements GuiCellModel {
+class DefaultCellModel<T> {
 
     private final T data;
     private final String text;
-    private String tooltip;
-    private CellModel.HorizontalAlign horizontalAlignment;
-    private List<MenuItem> popupMenu;
-    private Supplier<List<MenuItem>> menuItemSupplier;
+    private HorizontalAlign horizontalAlignment;
     private final String excelFormatString;
+    
+    /**
+     * Describes the horizontal alignment.
+     */
+    enum HorizontalAlign {
+        LEFT(JLabel.LEFT, HorizontalAlignment.LEFT),
+        CENTER(JLabel.CENTER, HorizontalAlignment.CENTER),
+        RIGHT(JLabel.RIGHT, HorizontalAlignment.RIGHT);
+
+        private final int jlabelAlignment;
+        private final HorizontalAlignment poiAlignment;
+
+        /**
+         * Constructor for a HorizontalAlign enum.
+         *
+         * @param jlabelAlignment The corresponding JLabel horizontal alignment
+         * number.
+         * @param poiAlignment Horizontal alignment for Apache POI.
+         */
+        HorizontalAlign(int jlabelAlignment, HorizontalAlignment poiAlignment) {
+            this.jlabelAlignment = jlabelAlignment;
+            this.poiAlignment = poiAlignment;
+        }
+
+        /**
+         * @return The corresponding JLabel horizontal alignment (i.e.
+         * JLabel.LEFT).
+         */
+        int getJLabelAlignment() {
+            return this.jlabelAlignment;
+        }
+
+        /**
+         * @return Horizontal alignment for Apache POI.
+         */
+        HorizontalAlignment getPoiAlignment() {
+            return poiAlignment;
+        }
+    }    
 
     /**
      * Main constructor.
@@ -78,37 +112,20 @@ public class DefaultCellModel<T> implements GuiCellModel {
         } else {
             text = stringConverter.apply(this.data);
         }
-        this.tooltip = text;
     }
 
-    @Override
     public T getData() {
         return this.data;
     }
 
-    @Override
+    public String getExcelFormatString() {
+        return this.excelFormatString;
+    }
+
     public String getText() {
         return text;
     }
 
-    @Override
-    public String getTooltip() {
-        return tooltip;
-    }
-
-    /**
-     * Sets the tooltip for this cell model.
-     *
-     * @param tooltip The tooltip for the cell model.
-     *
-     * @return As a utility, returns this.
-     */
-    public DefaultCellModel<T> setTooltip(String tooltip) {
-        this.tooltip = tooltip;
-        return this;
-    }
-
-    @Override
     public HorizontalAlign getHorizontalAlignment() {
         return horizontalAlignment;
     }
@@ -120,43 +137,8 @@ public class DefaultCellModel<T> implements GuiCellModel {
      *
      * @return As a utility, returns this.
      */
-    public DefaultCellModel<T> setHorizontalAlignment(CellModel.HorizontalAlign alignment) {
+    public DefaultCellModel<T> setHorizontalAlignment(HorizontalAlign alignment) {
         this.horizontalAlignment = alignment;
-        return this;
-    }
-
-    @Override
-    public List<MenuItem> getPopupMenu() {
-        if (popupMenu != null) {
-            return Collections.unmodifiableList(popupMenu);
-        }
-        if (menuItemSupplier != null) {
-            return this.menuItemSupplier.get();
-        }
-        return null;
-    }
-
-    /**
-     * Sets a function to lazy load the popup menu items.
-     *
-     * @param menuItemSupplier The lazy load function for popup items.
-     *
-     * @return
-     */
-    public DefaultCellModel<T> setPopupMenuRetriever(Supplier<List<MenuItem>> menuItemSupplier) {
-        this.menuItemSupplier = menuItemSupplier;
-        return this;
-    }
-
-    /**
-     * Sets the list of items for a popup menu
-     *
-     * @param popupMenu
-     *
-     * @return As a utility, returns this.
-     */
-    public DefaultCellModel<T> setPopupMenu(List<MenuItem> popupMenu) {
-        this.popupMenu = popupMenu == null ? null : new ArrayList<>(popupMenu);
         return this;
     }
 

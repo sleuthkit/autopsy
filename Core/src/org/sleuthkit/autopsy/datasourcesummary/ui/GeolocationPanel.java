@@ -45,7 +45,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.geolocation.GeoFilter;
@@ -349,6 +348,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
         onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
+    /* ELODO
     @Override
     List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
         GeolocationViewModel model = getFetchResult(geolocationFetcher, "Geolocation sheets", dataSource);
@@ -360,7 +360,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
                 getTableExport(DEFAULT_TEMPLATE, Bundle.GeolocationPanel_mostRecent_tabName(), model.getMostRecentData()),
                 getTableExport(DEFAULT_TEMPLATE, Bundle.GeolocationPanel_mostCommon_tabName(), model.getMostCommonData())
         );
-    }
+    }*/
 
     @Override
     public void close() {

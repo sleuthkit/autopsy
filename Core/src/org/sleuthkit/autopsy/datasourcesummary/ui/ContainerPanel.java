@@ -36,18 +36,10 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ExcelItemExportable;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.KeyValueItemExportable;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.SingleCellExportable;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.TitledExportable;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
@@ -488,6 +480,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
      * @return The list of key value pairs that can be incorporated into the
      * excel export.
      */
+    /* ELODO
     private static List<? extends ExcelItemExportable> getAcquisitionDetails(String acquisitionDetails) {
         if (StringUtils.isBlank(acquisitionDetails)) {
             return Collections.emptyList();
@@ -497,9 +490,9 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                     .filter(item -> item != null)
                     .collect(Collectors.toList());
         }
-    }
+    }*/
 
-    @Override
+    /* ELODO
     @Messages({
         "ContainerPanel_export_displayName=Display Name:",
         "ContainerPanel_export_originalName=Name:",
@@ -556,7 +549,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                         new TitledExportable(Bundle.ContainerPanel_export_filePaths(), cellPaths)
                 )));
 
-    }
+    }*/
 
     /**
      * This method is called from within the constructor to initialize the form.

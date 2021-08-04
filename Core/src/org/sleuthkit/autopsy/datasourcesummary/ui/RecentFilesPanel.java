@@ -27,20 +27,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesGetter;
 import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentAttachmentDetails;
 import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentDownloadDetails;
 import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentFileDetails;
-import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getTableExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
@@ -190,6 +186,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         onNewDataSource(dataFetchComponents, tablePanelList, dataSource);
     }
 
+    /* ELODO
     @Override
     List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
         return Stream.of(
@@ -198,7 +195,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
                 getTableExport(attachmentsFetcher, attachmentsTemplate, Bundle.RecentFilesPanel_attachmentsTable_tabName(), dataSource))
                 .filter(sheet -> sheet != null)
                 .collect(Collectors.toList());
-    }
+    }*/
 
     @Override
     public void close() {
