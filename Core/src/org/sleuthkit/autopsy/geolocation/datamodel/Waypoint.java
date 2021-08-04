@@ -28,6 +28,7 @@ import java.util.Set;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -44,6 +45,7 @@ public class Waypoint {
     final private AbstractFile image;
     final private BlackboardArtifact artifact;
     final private GeoPath parentGeoPath;
+    final private Content content;
 
     final private List<Waypoint.Property> propertiesList;
 
@@ -93,6 +95,11 @@ public class Waypoint {
         this.parentGeoPath = parentGeoPath;
 
         propertiesList = createGeolocationProperties(attributeMap);
+        try {
+            content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+        } catch (TskCoreException ex) {
+            throw new GeoLocationDataException(String.format("Failed to get contend for artifact id (%d)", artifact.getId()), ex);
+        }
     }
 
     /**
@@ -247,6 +254,10 @@ public class Waypoint {
             }
         }
         return list;
+    }
+    
+    public Content getContent() {
+        return content;
     }
    
     /**

@@ -149,7 +149,7 @@ public class ImageGalleryService implements AutopsyService {
     private void addProjetVicTagSet(Case currentCase) throws TskCoreException {
         List<TagName> tagNames = new ArrayList<>();
         for (TagNameDefinition def : PROJECT_VIC_US_CATEGORIES) {
-            tagNames.add(currentCase.getSleuthkitCase().addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus()));
+            tagNames.add(currentCase.getSleuthkitCase().getTaggingManager().addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus()));
         }
         currentCase.getServices().getTagsManager().addTagSet(PROJECT_VIC_TAG_SET_NAME, tagNames);
     }

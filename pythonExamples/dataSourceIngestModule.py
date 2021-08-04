@@ -53,9 +53,8 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
-from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.datamodel import Score
-from java.util import ArrayList
+from java.util import Arrays
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the analysis.
@@ -86,8 +85,6 @@ class SampleJythonDataSourceIngestModuleFactory(IngestModuleFactoryAdapter):
 # Data Source-level ingest module.  One gets created per data source.
 # TODO: Rename this to something more specific. Could just remove "Factory" from above name.
 class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
-    LIKELY_NOTABLE_SCORE = Score(Score.Significance.LIKELY_NOTABLE, Score.MethodCategory.AUTO)
-
     _logger = Logger.getLogger(SampleJythonDataSourceIngestModuleFactory.moduleName)
 
     def log(self, level, msg):
@@ -118,7 +115,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         progressBar.switchToIndeterminate()
 
         # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
 
         # For our example, we will use FileManager to get all
         # files with the word "test"
@@ -142,13 +139,15 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artfiact.  Refer to the developer docs for other examples.
-            attrs = ArrayList()
-            attrs.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, SampleJythonDataSourceIngestModuleFactory.moduleName, "Test file"))
-            art = file.newAnalysisResult(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, self.LIKELY_NOTABLE_SCORE, None, "Test file", None, attrs)
+            attrs = Arrays.asList(BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
+                                                      SampleJythonDataSourceIngestModuleFactory.moduleName,
+                                                      "Test file"))
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE,
+                                         None, "Test file", None, attrs).getAnalysisResult()
 
             try:
-                # index the artifact for keyword search
-                blackboard.indexArtifact(art)
+                # post the artifact for listeners of artifact events.
+                blackboard.postArtifact(art, SampleJythonDataSourceIngestModuleFactory.moduleName)
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 
