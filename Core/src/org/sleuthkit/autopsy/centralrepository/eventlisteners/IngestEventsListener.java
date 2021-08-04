@@ -325,8 +325,10 @@ public class IngestEventsListener {
      * @param originalArtifact the artifact to create the "previously unseen" item
      *                         for
      */
-    static private void makeAndPostMatchingPersonaArtifact(BlackboardArtifact originalArtifact, Persona persona, CorrelationAttributeInstance.Type aType, String value) {
-                Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
+    static private void makeAndPostMatchingPersonaArtifact(BlackboardArtifact originalArtifact, Persona persona, 
+            List<String> caseDisplayNames, CorrelationAttributeInstance.Type aType, String value) {
+            String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
+            Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
                 new BlackboardAttribute(
                     TSK_NAME, MODULE_NAME,
                     persona.getName()),  
@@ -338,7 +340,10 @@ public class IngestEventsListener {
                     aType.getDisplayName()),
                 new BlackboardAttribute(
                     TSK_CORRELATION_VALUE, MODULE_NAME,
-                    value)
+                    value),
+                new BlackboardAttribute(
+                        TSK_OTHER_CASES, MODULE_NAME,
+                        prevCases)
                 );
         makeAndPostPersonaArtifact(BlackboardArtifact.Type.TSK_MATCHING_PERSONA, originalArtifact, attributesForNewArtifact, "",
                 Score.SCORE_LIKELY_NOTABLE, "This account is associated with a persona");
@@ -665,10 +670,16 @@ public class IngestEventsListener {
                                 String accountId = eamArtifact.getCorrelationValue();
                                 Collection<Persona> personaMatches = Persona.getPersonaByAccountIdentifierLike(accountId);
                                 for (Persona persona : personaMatches) {
+                                    // Make sure at least one account is an exact match.
+                                    boolean foundExactMatch = false;
                                     for (PersonaAccount personaAccount : persona.getPersonaAccounts()) {
                                         if (accountId.equalsIgnoreCase(personaAccount.getAccount().getIdentifier())) {
-                                            makeAndPostMatchingPersonaArtifact(bbArtifact, persona, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                            foundExactMatch = true;
                                         }
+                                    }
+                                    if (foundExactMatch) {
+                                        List<String> caseDisplayNames = persona.getCases().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
+                                        makeAndPostMatchingPersonaArtifact(bbArtifact, persona, caseDisplayNames, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                     }
                                 }
                             }
