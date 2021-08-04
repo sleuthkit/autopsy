@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,10 +30,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesGetter;
+import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentAttachmentDetails;
+import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentDownloadDetails;
+import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentFileDetails;
 import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getTableExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
@@ -120,13 +120,13 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         "RecentFilePanel_emailParserModuleName=Email Parser"
     })
     public RecentFilesPanel() {
-        this(new RecentFilesSummary());
+        this(new RecentFilesGetter());
     }
 
     /**
      * Creates new form RecentFilesPanel
      */
-    public RecentFilesPanel(RecentFilesSummary dataHandler) {
+    public RecentFilesPanel(RecentFilesGetter dataHandler) {
         super(dataHandler);
         docsFetcher = (dataSource) -> dataHandler.getRecentlyOpenedDocuments(dataSource, 10);
         downloadsFetcher = (dataSource) -> dataHandler.getRecentDownloads(dataSource, 10);

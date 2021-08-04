@@ -40,9 +40,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
+import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentAttachmentDetails;
+import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentDownloadDetails;
+import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentFileDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.testutils.RandomizationUtils;
 import org.sleuthkit.autopsy.testutils.TskMockUtils;
@@ -62,15 +62,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class RecentFilesSummaryTest {
 
     /**
-     * An interface for calling methods in RecentFilesSummary in a uniform
-     * manner.
+     * An interface for calling methods in RecentFilesGetter in a uniform
+ manner.
      */
     private interface RecentFilesMethod<T> {
 
         /**
-         * Means of acquiring data from a method in RecentFilesSummary.
+         * Means of acquiring data from a method in RecentFilesGetter.
          *
-         * @param recentFilesSummary The RecentFilesSummary object.
+         * @param recentFilesSummary The RecentFilesGetter object.
          * @param dataSource The datasource.
          * @param count The number of items to retrieve.
          *
@@ -79,7 +79,7 @@ public class RecentFilesSummaryTest {
          * @throws SleuthkitCaseProviderException
          * @throws TskCoreException
          */
-        List<T> fetch(RecentFilesSummary recentFilesSummary, DataSource dataSource, int count)
+        List<T> fetch(RecentFilesGetter recentFilesSummary, DataSource dataSource, int count)
                 throws SleuthkitCaseProviderException, TskCoreException;
     }
 
@@ -105,7 +105,7 @@ public class RecentFilesSummaryTest {
             throws TskCoreException, SleuthkitCaseProviderException {
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(null);
         DataSource dataSource = TskMockUtils.getDataSource(1);
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        RecentFilesGetter summary = new RecentFilesGetter();
 
         try {
             method.fetch(summary, dataSource, -1);
@@ -146,7 +146,7 @@ public class RecentFilesSummaryTest {
             throws SleuthkitCaseProviderException, TskCoreException {
 
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(null);
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        RecentFilesGetter summary = new RecentFilesGetter();
 
         List<? extends T> items = recentFilesMethod.fetch(summary, null, 10);
         Assert.assertNotNull("Expected method " + methodName + " to return an empty list.", items);
@@ -184,7 +184,7 @@ public class RecentFilesSummaryTest {
             throws SleuthkitCaseProviderException, TskCoreException {
 
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(Collections.emptyList());
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        RecentFilesGetter summary = new RecentFilesGetter();
         DataSource dataSource = TskMockUtils.getDataSource(1);
         List<? extends T> items = recentFilesMethod.fetch(summary, dataSource, 10);
         Assert.assertNotNull("Expected method " + methodName + " to return an empty list.", items);
@@ -278,7 +278,7 @@ public class RecentFilesSummaryTest {
 
             // run through method
             Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
-            RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+            RecentFilesGetter summary = new RecentFilesGetter();
             List<RecentFileDetails> results = summary.getRecentlyOpenedDocuments(dataSource, countRequest);
 
             // verify results
@@ -302,7 +302,7 @@ public class RecentFilesSummaryTest {
         List<BlackboardArtifact> artifacts = Arrays.asList(item2, item3, item1);
 
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        RecentFilesGetter summary = new RecentFilesGetter();
         List<RecentFileDetails> results = summary.getRecentlyOpenedDocuments(dataSource, 10);
 
         // verify results (only successItem)
@@ -322,7 +322,7 @@ public class RecentFilesSummaryTest {
         List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, successItem);
 
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        RecentFilesGetter summary = new RecentFilesGetter();
         List<RecentFileDetails> results = summary.getRecentlyOpenedDocuments(dataSource, 10);
 
         // verify results (only successItem)
@@ -373,7 +373,7 @@ public class RecentFilesSummaryTest {
 
             // call method
             Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
-            RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+            RecentFilesGetter summary = new RecentFilesGetter();
             List<RecentDownloadDetails> results = summary.getRecentDownloads(dataSource, countRequest);
 
             // verify results
@@ -399,7 +399,7 @@ public class RecentFilesSummaryTest {
         List<BlackboardArtifact> artifacts = Arrays.asList(item2, item3, item1);
 
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        RecentFilesGetter summary = new RecentFilesGetter();
 
         // call method
         List<RecentDownloadDetails> results = summary.getRecentDownloads(dataSource, 10);
@@ -422,7 +422,7 @@ public class RecentFilesSummaryTest {
         List<BlackboardArtifact> artifacts = Arrays.asList(nullTime, zeroTime, successItem);
 
         Pair<SleuthkitCase, Blackboard> casePair = DataSourceSummaryMockUtils.getArtifactsTSKMock(RandomizationUtils.getMixedUp(artifacts));
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        RecentFilesGetter summary = new RecentFilesGetter();
 
         // call method
         List<RecentDownloadDetails> results = summary.getRecentDownloads(dataSource, 10);
@@ -651,7 +651,7 @@ public class RecentFilesSummaryTest {
 
             List<AttachmentArtifactItem> mixedUpItems = RandomizationUtils.getMixedUp(items);
             Pair<SleuthkitCase, Blackboard> casePair = getRecentAttachmentArtifactCase(mixedUpItems);
-            RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+            RecentFilesGetter summary = new RecentFilesGetter();
 
             // retrieve results
             List<RecentAttachmentDetails> results = summary.getRecentAttachments(dataSource, countRequest);
@@ -698,7 +698,7 @@ public class RecentFilesSummaryTest {
                 noParentFile, noAssocAttr, missingAssocArt);
 
         Pair<SleuthkitCase, Blackboard> casePair = getRecentAttachmentArtifactCase(items);
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        RecentFilesGetter summary = new RecentFilesGetter();
 
         // get data
         List<RecentAttachmentDetails> results = summary.getRecentAttachments(dataSource, 10);
@@ -735,7 +735,7 @@ public class RecentFilesSummaryTest {
         List<AttachmentArtifactItem> items = Arrays.asList(item1, item2, item3);
 
         Pair<SleuthkitCase, Blackboard> casePair = getRecentAttachmentArtifactCase(items);
-        RecentFilesSummary summary = new RecentFilesSummary(() -> casePair.getLeft());
+        RecentFilesGetter summary = new RecentFilesGetter();
 
         // get data
         List<RecentAttachmentDetails> results = summary.getRecentAttachments(dataSource, 10);

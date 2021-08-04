@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 - 2020 Basis Technology Corp.
+ * Copyright 2019 - 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.contentutils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
  * Utilities for getting information about a data source or all data sources
  * from the case database.
  */
-final class DataSourceInfoUtilities {
+public final class DataSourceInfoUtilities {
 
     /**
      * Gets a count of tsk_files for a particular datasource.
@@ -55,7 +55,7 @@ final class DataSourceInfoUtilities {
      * @throws TskCoreException
      * @throws SQLException
      */
-    static Long getCountOfTskFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
+    public static Long getCountOfTskFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
             throws TskCoreException, SQLException {
         if (currentDataSource != null) {
             return skCase.countFilesWhere(
@@ -77,7 +77,7 @@ final class DataSourceInfoUtilities {
      * @throws TskCoreException
      * @throws SQLException
      */
-    static Long getCountOfRegularFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
+    public static Long getCountOfRegularFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
             throws TskCoreException, SQLException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue();
 
@@ -100,7 +100,7 @@ final class DataSourceInfoUtilities {
      * @throws TskCoreException
      * @throws SQLException
      */
-    static Long getCountOfRegNonSlackFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
+    public static Long getCountOfRegNonSlackFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
             throws TskCoreException, SQLException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
                 + " AND type<>" + TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType();
@@ -115,7 +115,7 @@ final class DataSourceInfoUtilities {
     /**
      * An interface for handling a result set and returning a value.
      */
-    interface ResultSetHandler<T> {
+    public interface ResultSetHandler<T> {
 
         T process(ResultSet resultset) throws SQLException;
     }
@@ -133,7 +133,7 @@ final class DataSourceInfoUtilities {
      * @throws TskCoreException
      * @throws SQLException
      */
-    static <T> T getBaseQueryResult(SleuthkitCase skCase, String query, ResultSetHandler<T> processor)
+    public static <T> T getBaseQueryResult(SleuthkitCase skCase, String query, ResultSetHandler<T> processor)
             throws TskCoreException, SQLException {
         try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
@@ -149,14 +149,14 @@ final class DataSourceInfoUtilities {
      *
      * @return The clause.
      */
-    static String getMetaFlagsContainsStatement(TSK_FS_META_FLAG_ENUM flag) {
+    public static String getMetaFlagsContainsStatement(TSK_FS_META_FLAG_ENUM flag) {
         return "meta_flags & " + flag.getValue() + " > 0";
     }
 
     /**
      * Enum for specifying the sort order for getAttributes.
      */
-    enum SortOrder {
+    public enum SortOrder {
         DESCENDING,
         ASCENDING
     }
@@ -181,7 +181,7 @@ final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      */
-    static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder) throws TskCoreException {
+    public static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder) throws TskCoreException {
         return getArtifacts(skCase, artifactType, dataSource, attributeType, sortOrder, 0);
     }
 
@@ -207,7 +207,7 @@ final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      */
-    static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder, int maxCount) throws TskCoreException {
+    public static List<BlackboardArtifact> getArtifacts(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, DataSource dataSource, BlackboardAttribute.Type attributeType, SortOrder sortOrder, int maxCount) throws TskCoreException {
         if (maxCount < 0) {
             throw new IllegalArgumentException("Invalid maxCount passed to getArtifacts, value must be equal to or greater than 0");
         }
@@ -380,7 +380,7 @@ final class DataSourceInfoUtilities {
      * @return The 'getValueString()' value or null if the attribute or String
      *         could not be retrieved.
      */
-    static String getStringOrNull(BlackboardArtifact artifact, Type attributeType) {
+    public static String getStringOrNull(BlackboardArtifact artifact, Type attributeType) {
         BlackboardAttribute attr = getAttributeOrNull(artifact, attributeType);
         return (attr == null) ? null : attr.getValueString();
     }
@@ -394,7 +394,7 @@ final class DataSourceInfoUtilities {
      * @return The 'getValueLong()' value or null if the attribute could not be
      *         retrieved.
      */
-    static Long getLongOrNull(BlackboardArtifact artifact, Type attributeType) {
+    public static Long getLongOrNull(BlackboardArtifact artifact, Type attributeType) {
         BlackboardAttribute attr = getAttributeOrNull(artifact, attributeType);
         return (attr == null) ? null : attr.getValueLong();
     }
@@ -408,7 +408,7 @@ final class DataSourceInfoUtilities {
      * @return The 'getValueInt()' value or null if the attribute could not be
      *         retrieved.
      */
-    static Integer getIntOrNull(BlackboardArtifact artifact, Type attributeType) {
+    public static Integer getIntOrNull(BlackboardArtifact artifact, Type attributeType) {
         BlackboardAttribute attr = getAttributeOrNull(artifact, attributeType);
         return (attr == null) ? null : attr.getValueInt();
     }
@@ -423,7 +423,7 @@ final class DataSourceInfoUtilities {
      * @return The date determined from the 'getValueLong()' as seconds from
      *         epoch or null if the attribute could not be retrieved or is 0.
      */
-    static Date getDateOrNull(BlackboardArtifact artifact, Type attributeType) {
+    public static Date getDateOrNull(BlackboardArtifact artifact, Type attributeType) {
         Long longVal = getLongOrNull(artifact, attributeType);
         return (longVal == null || longVal == 0) ? null : new Date(longVal * 1000);
     }
