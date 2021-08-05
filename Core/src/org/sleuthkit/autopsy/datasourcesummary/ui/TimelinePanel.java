@@ -299,7 +299,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         return new DefaultCellModel<>(date, (dt) -> dt == null ? "" : EARLIEST_LATEST_FORMAT.format(dt), EARLIEST_LATEST_FORMAT_STR);
     }
 
-    /* ELODO
+    /* ELTODO
     @Messages({
         "TimelinePanel_getExports_sheetName=Timeline",
         "TimelinePanel_getExports_activityRange=Activity Range",

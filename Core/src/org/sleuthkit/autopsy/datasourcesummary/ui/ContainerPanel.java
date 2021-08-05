@@ -480,7 +480,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
      * @return The list of key value pairs that can be incorporated into the
      * excel export.
      */
-    /* ELODO
+    /* ELTODO
     private static List<? extends ExcelItemExportable> getAcquisitionDetails(String acquisitionDetails) {
         if (StringUtils.isBlank(acquisitionDetails)) {
             return Collections.emptyList();
@@ -492,7 +492,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
         }
     }*/
 
-    /* ELODO
+    /* ELTODO
     @Messages({
         "ContainerPanel_export_displayName=Display Name:",
         "ContainerPanel_export_originalName=Name:",

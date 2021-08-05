@@ -124,7 +124,7 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
-    /* ELODO
+    /* ELTODO
     @Override
     List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
         PastCasesResult result = getFetchResult(pastCasesFetcher, "Past cases sheets", dataSource);

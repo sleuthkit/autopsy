@@ -35,7 +35,7 @@ public class DefaultCellModel<T> implements GuiCellModel {
     private CellModel.HorizontalAlign horizontalAlignment;
     private List<MenuItem> popupMenu;
     private Supplier<List<MenuItem>> menuItemSupplier;
-    private final String excelFormatString;
+    private final String excelFormatString; // ELTODO
 
     /**
      * Main constructor.

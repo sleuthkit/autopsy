@@ -362,7 +362,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         super.close();
     }
 
-    /* ELODO
+    /* ELTODO
     @Override
     List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
         return Stream.of(

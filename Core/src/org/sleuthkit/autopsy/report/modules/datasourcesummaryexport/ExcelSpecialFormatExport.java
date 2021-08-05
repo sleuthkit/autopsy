@@ -28,13 +28,13 @@ import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelExport.
 /**
  * An excel export that has special row-by-row formatting.
  */
-public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
+class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
 
     /**
      * The dimensions consumed by an item in an ExcelSpecialFormatExport list of
      * items to be rendered.
      */
-    public static class ItemDimensions {
+    static class ItemDimensions {
 
         private final int rowStart;
         private final int rowEnd;
@@ -49,7 +49,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
          * @param rowEnd The last excel row of the the item.
          * @param colEnd The last excel column of the item.
          */
-        public ItemDimensions(int rowStart, int colStart, int rowEnd, int colEnd) {
+        ItemDimensions(int rowStart, int colStart, int rowEnd, int colEnd) {
             this.rowStart = rowStart;
             this.colStart = colStart;
             this.rowEnd = rowEnd;
@@ -59,28 +59,28 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
         /**
          * @return The starting excel row of the item.
          */
-        public int getRowStart() {
+        int getRowStart() {
             return rowStart;
         }
 
         /**
          * @return The last excel row of the the item.
          */
-        public int getRowEnd() {
+        int getRowEnd() {
             return rowEnd;
         }
 
         /**
          * @return The starting excel column of the item.
          */
-        public int getColStart() {
+        int getColStart() {
             return colStart;
         }
 
         /**
          * @return The last excel column of the item.
          */
-        public int getColEnd() {
+        int getColEnd() {
             return colEnd;
         }
     }
@@ -88,7 +88,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
     /**
      * An item to be exported in a specially formatted excel export.
      */
-    public interface ExcelItemExportable {
+    interface ExcelItemExportable {
 
         /**
          * Writes the item to the sheet in the special format export sheet.
@@ -106,16 +106,16 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
     /**
      * Writes a string to a single cell in a specially formatted excel export.
      */
-    public static class SingleCellExportable implements ExcelItemExportable {
+    static class SingleCellExportable implements ExcelItemExportable {
 
-        private final DefaultCellModel item;
+        private final CellModel item;
 
         /**
          * Main constructor.
          *
          * @param key The text to be written.
          */
-        public SingleCellExportable(String key) {
+        SingleCellExportable(String key) {
             this(new DefaultCellModel<>(key));
         }
 
@@ -124,7 +124,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
          *
          * @param item The cell model to be written.
          */
-        public SingleCellExportable(DefaultCellModel item) {
+        SingleCellExportable(CellModel item) {
             this.item = item;
         }
 
@@ -140,10 +140,10 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
      * Writes a row consisting of first column as a key and second column as a
      * value.
      */
-    public static class KeyValueItemExportable implements ExcelItemExportable {
+    static class KeyValueItemExportable implements ExcelItemExportable {
 
-        private final DefaultCellModel key;
-        private final DefaultCellModel value;
+        private final CellModel key;
+        private final CellModel value;
 
         /**
          * Main constructor.
@@ -151,7 +151,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
          * @param key The string key to be exported.
          * @param value The cell model to be exported.
          */
-        public KeyValueItemExportable(String key, DefaultCellModel value) {
+        KeyValueItemExportable(String key, CellModel value) {
             this(new DefaultCellModel<>(key), value);
         }
 
@@ -161,7 +161,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
          * @param key The cell key to be exported.
          * @param value The cell model to be exported.
          */
-        public KeyValueItemExportable(DefaultCellModel key, DefaultCellModel value) {
+        KeyValueItemExportable(CellModel key, CellModel value) {
             this.key = key;
             this.value = value;
         }
@@ -186,7 +186,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
      *      item 2
      * </pre>
      */
-    public static class TitledExportable implements ExcelItemExportable {
+    static class TitledExportable implements ExcelItemExportable {
 
         private static final int DEFAULT_INDENT = 1;
 
@@ -199,7 +199,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
          * @param title The title for the export.
          * @param children The children to be indented and enumerated.
          */
-        public TitledExportable(String title, List<? extends ExcelItemExportable> children) {
+        TitledExportable(String title, List<? extends ExcelItemExportable> children) {
             this.title = title;
             this.children = children;
         }
@@ -232,7 +232,7 @@ public class ExcelSpecialFormatExport implements ExcelExport.ExcelSheetExport {
      * @param sheetName The name of the sheet.
      * @param exports The row-by-row items to be exported.
      */
-    public ExcelSpecialFormatExport(String sheetName, List<ExcelItemExportable> exports) {
+    ExcelSpecialFormatExport(String sheetName, List<ExcelItemExportable> exports) {
         this.sheetName = sheetName;
         this.exports = exports == null ? Collections.emptyList() : exports;
     }

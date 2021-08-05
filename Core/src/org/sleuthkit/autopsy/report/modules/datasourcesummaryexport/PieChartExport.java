@@ -44,14 +44,14 @@ import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelSpecial
  *
  * Class that creates an excel pie chart along with data table.
  */
-public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
+class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
 
     private static final int DEFAULT_ROW_SIZE = 20;
     private static final int DEFAULT_COL_SIZE = 10;
     private static final int DEFAULT_ROW_PADDING = 1;
     private static final int DEFAULT_COL_OFFSET = 1;
 
-    private final ExcelTableExport<PieChartItem, ? extends DefaultCellModel> tableExport;
+    private final ExcelTableExport<PieChartItem, ? extends CellModel> tableExport;
     private final int colOffset;
     private final int rowPadding;
     private final int colSize;
@@ -69,7 +69,7 @@ public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
      * @param chartTitle The title for the chart.
      * @param slices The values for the pie slices.
      */
-    public PieChartExport(String keyColumnHeader,
+    PieChartExport(String keyColumnHeader,
             String valueColumnHeader, String valueFormatString,
             String chartTitle,
             List<PieChartItem> slices) {
@@ -93,7 +93,7 @@ public class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
      * @param colSize The column size of the chart.
      * @param rowSize The row size of the chart.
      */
-    public PieChartExport(String keyColumnHeader,
+    PieChartExport(String keyColumnHeader,
             String valueColumnHeader, String valueFormatString,
             String chartTitle, String sheetName,
             List<PieChartItem> slices,

@@ -57,7 +57,7 @@ import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelSpecial
 /**
  * Class that creates an excel stacked bar chart along with data table.
  */
-public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
+class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
 
     /**
      * Creates an excel table model to be written to an excel sheet and used as
@@ -70,7 +70,7 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
      * @return An excel table export to be used as the data source for the chart
      * in the excel document.
      */
-    private static ExcelTableExport<Pair<Object, List<Double>>, ? extends DefaultCellModel> getTableModel(
+    private static ExcelTableExport<Pair<Object, List<Double>>, ? extends CellModel> getTableModel(
             List<BarChartSeries> categories, String keyColumnHeader, String chartTitle) {
 
         // get the row keys by finding the series with the largest set of bar items 
@@ -134,7 +134,7 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
     private static final int DEFAULT_ROW_PADDING = 1;
     private static final int DEFAULT_COL_OFFSET = 1;
 
-    private final ExcelTableExport<Pair<Object, List<Double>>, ? extends DefaultCellModel> tableExport;
+    private final ExcelTableExport<Pair<Object, List<Double>>, ? extends CellModel> tableExport;
     private final int colOffset;
     private final int rowPadding;
     private final int colSize;
@@ -154,7 +154,7 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
      * @param chartTitle The title for the chart.
      * @param categories The categories along with data.
      */
-    public BarChartExport(String keyColumnHeader,
+    BarChartExport(String keyColumnHeader,
             String valueFormatString,
             String chartTitle,
             List<BarChartSeries> categories) {
@@ -177,7 +177,7 @@ public class BarChartExport implements ExcelItemExportable, ExcelSheetExport {
      * @param colSize The column size of the chart.
      * @param rowSize The row size of the chart.
      */
-    public BarChartExport(String keyColumnHeader, String valueFormatString,
+    BarChartExport(String keyColumnHeader, String valueFormatString,
             String chartTitle, String sheetName,
             List<BarChartSeries> categories,
             int colOffset, int rowPadding, int colSize, int rowSize) {

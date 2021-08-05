@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "IngestJobExcelExport_versionColumn=Module Version",
     "IngestJobExcelExport_sheetName=Ingest History"
 })
-class IngestJobExcelExport {
+class IngestJobExcelExport { // ELTODO remove this class
 
     /**
      * An entry to display in an excel export.
@@ -209,7 +209,7 @@ class IngestJobExcelExport {
      * @param dataSource The data source.
      * @return The list of sheets to be included in an export.
      */
-    /* ELODO
+    /* ELTODO
     static List<ExcelSheetExport> getExports(DataSource dataSource) {
         if (dataSource == null) {
             return Collections.emptyList();

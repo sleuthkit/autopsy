@@ -69,7 +69,7 @@ class DataSourceSummaryReport implements GeneralReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
-        return null; // No configuration panel
+        return null; // ELTODO
     }
     
     @Override

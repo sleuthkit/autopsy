@@ -226,7 +226,7 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    /* ELODO
+    /* ELTODO
     @Override
     List<ExcelSheetExport> getExports(DataSource dataSource) {
         return Stream.of(

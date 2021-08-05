@@ -348,7 +348,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
         onNewDataSource(dataFetchComponents, tables, dataSource);
     }
 
-    /* ELODO
+    /* ELTODO
     @Override
     List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
         GeolocationViewModel model = getFetchResult(geolocationFetcher, "Geolocation sheets", dataSource);
