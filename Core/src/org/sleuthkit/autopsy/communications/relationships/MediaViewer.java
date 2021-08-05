@@ -202,7 +202,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     /**
      * Swing worker for gathering the data needed to populate the media viewer.
      */
-    private class MediaViewerWorker extends SwingWorker<Set<BlackboardArtifact>, Void> {
+    private class MediaViewerWorker extends SwingWorker<TableFilterNode, Void> {
 
         private final SelectionInfo selectionInfo;
 
@@ -211,7 +211,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
         }
 
         @Override
-        protected Set<BlackboardArtifact> doInBackground() throws Exception {
+        protected TableFilterNode doInBackground() throws Exception {
             Set<Content> relationshipSources;
             Set<BlackboardArtifact> artifactList = new HashSet<>();
 
@@ -223,7 +223,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
                 });
             }
 
-            return artifactList;
+            return new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentThumbnailsChildren(artifactList)), tableEM), true, this.getClass().getName());
         }
 
         @Messages({
@@ -236,7 +236,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
                 if (isCancelled()) {
                     return;
                 }
-                thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentThumbnailsChildren(get())), tableEM), true, this.getClass().getName()));
+                thumbnailViewer.setNode(get());
             } catch (ExecutionException | InterruptedException ex) {
                 String accounts = selectionInfo.getAccounts().stream().map(Account::getTypeSpecificID).collect(Collectors.joining(","));
                 logger.log(Level.WARNING, "Unable to update cvt media viewer for " + accounts, ex);
