@@ -66,7 +66,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private final DataFetcher<DataSource, List<RecentAttachmentDetails>> attachmentsFetcher;
 
     private final List<ColumnModel<RecentFileDetails, DefaultCellModel<?>>> docsTemplate = Arrays.asList(
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_path(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getPath())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
@@ -76,12 +76,12 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
                     80));
 
     private final List<ColumnModel<RecentDownloadDetails, DefaultCellModel<?>>> downloadsTemplate = Arrays.asList(
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_domain(),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_domain(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getWebDomain())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
                     }, 100),
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_path(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getPath())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
@@ -91,7 +91,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
                     80));
 
     private final List<ColumnModel<RecentAttachmentDetails, DefaultCellModel<?>>> attachmentsTemplate = Arrays.asList(
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_path(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getPath())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
@@ -99,7 +99,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
             new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
                     getDateFunct(),
                     80),
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_sender(),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_sender(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getSender())
                                 .setPopupMenuRetriever(getPopupFunct(prog));
@@ -110,10 +110,9 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
      */
     @Messages({
         "RecentFilesPanel_col_head_date=Date",
-        "RecentFilePanel_col_header_domain=Domain",
-        "RecentFilePanel_col_header_path=Path",
-        "RecentFilePanel_col_header_sender=Sender",
-        "RecentFilePanel_emailParserModuleName=Email Parser"
+        "RecentFilesPanel_col_header_domain=Domain",
+        "RecentFilesPanel_col_header_path=Path",
+        "RecentFilesPanel_col_header_sender=Sender"
     })
     public RecentFilesPanel() {
         this(new RecentFilesGetter());
@@ -186,17 +185,6 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
         onNewDataSource(dataFetchComponents, tablePanelList, dataSource);
     }
 
-    /* ELTODO
-    @Override
-    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
-        return Stream.of(
-                getTableExport(docsFetcher, docsTemplate, Bundle.RecentFilesPanel_docsTable_tabName(), dataSource),
-                getTableExport(downloadsFetcher, downloadsTemplate, Bundle.RecentFilesPanel_downloadsTable_tabName(), dataSource),
-                getTableExport(attachmentsFetcher, attachmentsTemplate, Bundle.RecentFilesPanel_attachmentsTable_tabName(), dataSource))
-                .filter(sheet -> sheet != null)
-                .collect(Collectors.toList());
-    }*/
-
     @Override
     public void close() {
         ingestRunningLabel.unregister();
@@ -213,7 +201,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     }
 
     @Messages({
-        "RecentFilePanel_no_open_documents=No recently open documents found."
+        "RecentFilesPanel_no_open_documents=No recently open documents found."
     })
     /**
      * Setup the data model and columns for the recently open table.
