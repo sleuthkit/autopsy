@@ -46,11 +46,7 @@ final class ExportRecentFiles {
     private static final String DATETIME_FORMAT_STR = "yyyy/MM/dd HH:mm:ss";
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat(DATETIME_FORMAT_STR, Locale.getDefault());
 
-    private final DataFetcher<DataSource, List<RecentFileDetails>> docsFetcher;
-    private final DataFetcher<DataSource, List<RecentDownloadDetails>> downloadsFetcher;
-    private final DataFetcher<DataSource, List<RecentAttachmentDetails>> attachmentsFetcher;
-
-    private final List<ColumnModel<RecentFileDetails, DefaultCellModel<?>>> docsTemplate = Arrays.asList(
+    private static final List<ColumnModel<RecentFileDetails, DefaultCellModel<?>>> docsTemplate = Arrays.asList(
             new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getPath());
@@ -59,7 +55,7 @@ final class ExportRecentFiles {
                     getDateFunct(),
                     80));
 
-    private final List<ColumnModel<RecentDownloadDetails, DefaultCellModel<?>>> downloadsTemplate = Arrays.asList(
+    private static final List<ColumnModel<RecentDownloadDetails, DefaultCellModel<?>>> downloadsTemplate = Arrays.asList(
             new ColumnModel<>(Bundle.RecentFilePanel_col_header_domain(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getWebDomain());
@@ -72,7 +68,7 @@ final class ExportRecentFiles {
                     getDateFunct(),
                     80));
 
-    private final List<ColumnModel<RecentAttachmentDetails, DefaultCellModel<?>>> attachmentsTemplate = Arrays.asList(
+    private static final List<ColumnModel<RecentAttachmentDetails, DefaultCellModel<?>>> attachmentsTemplate = Arrays.asList(
             new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getPath());
@@ -96,13 +92,7 @@ final class ExportRecentFiles {
         "RecentFilePanel_emailParserModuleName=Email Parser"
     })
 
-    /**
-     * Creates new form RecentFilesPanel
-     */
-    ExportRecentFiles() {
-        docsFetcher = (dataSource) -> RecentFilesSummary.getRecentlyOpenedDocuments(dataSource, 10);
-        downloadsFetcher = (dataSource) -> RecentFilesSummary.getRecentDownloads(dataSource, 10);
-        attachmentsFetcher = (dataSource) -> RecentFilesSummary.getRecentAttachments(dataSource, 10);
+    private ExportRecentFiles() {
     }
 
     /**
@@ -111,14 +101,19 @@ final class ExportRecentFiles {
      *
      * @return The function that determines the date cell from a RecentFileDetails object.
      */
-    private <T extends RecentFileDetails> Function<T, DefaultCellModel<?>> getDateFunct() {
+    private static <T extends RecentFileDetails> Function<T, DefaultCellModel<?>> getDateFunct() {
         return (T lastAccessed) -> {
             Function<Date, String> dateParser = (dt) -> dt == null ? "" : DATETIME_FORMAT.format(dt);
             return new DefaultCellModel<>(new Date(lastAccessed.getDateAsLong() * 1000), dateParser, DATETIME_FORMAT_STR);
         };
     }
 
-    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+    static List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+
+        DataFetcher<DataSource, List<RecentFileDetails>> docsFetcher = (ds) -> RecentFilesSummary.getRecentlyOpenedDocuments(ds, 10);
+        DataFetcher<DataSource, List<RecentDownloadDetails>> downloadsFetcher = (ds) -> RecentFilesSummary.getRecentDownloads(ds, 10);
+        DataFetcher<DataSource, List<RecentAttachmentDetails>> attachmentsFetcher = (ds) -> RecentFilesSummary.getRecentAttachments(ds, 10);
+
         return Stream.of(
                 ExcelExportAction.getTableExport(docsFetcher, docsTemplate, Bundle.RecentFilesPanel_docsTable_tabName(), dataSource),
                 ExcelExportAction.getTableExport(downloadsFetcher, downloadsTemplate, Bundle.RecentFilesPanel_downloadsTable_tabName(), dataSource),

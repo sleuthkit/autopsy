@@ -4,17 +4,10 @@ DataSourceSummaryReport.endReport.srcModuleName.text=Excel Report
 # {0} - sheetNumber
 ExcelExport_writeExcel_noSheetName=Sheet {0}
 ExcelExportAction_exportToXLSX_beginExport=Beginning Export...
-# {0} - tabName
-ExcelExportAction_exportToXLSX_gatheringTabData=Fetching Data for {0} Tab...
+ExcelExportAction_exportToXLSX_gatheringRecentActivityData=Fetching Recent Activity Data
 ExcelExportAction_exportToXLSX_writingToFile=Writing to File...
 ExcelExportAction_getXLSXPath_directory=DataSourceSummary
 ExcelExportAction_moduleName=Data Source Summary
-ExcelExportAction_runXLSXExport_errorMessage=There was an error while exporting.
-ExcelExportAction_runXLSXExport_errorTitle=Error While Exporting
-ExcelExportAction_runXLSXExport_progressCancelActionTitle=Cancelling...
-ExcelExportAction_runXLSXExport_progressCancelTitle=Cancel
-# {0} - dataSource
-ExcelExportAction_runXLSXExport_progressTitle=Exporting {0} to XLSX
 RecentFilePanel_col_header_domain=Domain
 RecentFilePanel_col_header_path=Path
 RecentFilePanel_col_header_sender=Sender

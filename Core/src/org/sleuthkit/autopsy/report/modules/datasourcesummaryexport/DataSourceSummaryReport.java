@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JPanel;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -30,6 +33,7 @@ import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 class DataSourceSummaryReport implements GeneralReportModule {
@@ -79,6 +83,7 @@ class DataSourceSummaryReport implements GeneralReportModule {
     
     @Override
     public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
+        progressPanel.start();
         Case currentCase = null;
         try {
             currentCase = Case.getCurrentCaseThrows();
@@ -87,31 +92,46 @@ class DataSourceSummaryReport implements GeneralReportModule {
             return;
         }
         
+        String errorMessage = "";
+        ReportProgressPanel.ReportStatus result = ReportProgressPanel.ReportStatus.COMPLETE;
+        List<Content> selectedDataSources = new ArrayList<>();
         if(settings.getSelectedDataSources() == null) {
             // Process all data sources if the list is null.
             try {
-                List<Long> selectedDataSources = currentCase.getDataSources()
-                        .stream()
-                        .map(Content::getId)
-                        .collect(Collectors.toList());
-                settings.setSelectedDataSources(selectedDataSources);
+                selectedDataSources = currentCase.getDataSources();
+                // ELTODO settings.setSelectedDataSources(selectedDataSources);
             } catch (TskCoreException ex) {
+                result = ReportProgressPanel.ReportStatus.ERROR;
+                // ELTODO errorMessage = Bundle.KMLReport_failedToCompleteReport();
                 logger.log(Level.SEVERE, "Could not get the datasources from the case", ex);
+                progressPanel.complete(result, errorMessage);
                 return;
             }
         }
         
         String baseReportDir = settings.getReportDirectoryPath();
         // Start the progress bar and setup the report
-        progressPanel.setIndeterminate(true);
-        progressPanel.start();
+        // ELTODO progressPanel.setIndeterminate(true);
+
         //progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
         String reportFullPath = baseReportDir + getRelativeFilePath(); //NON-NLS
-        String errorMessage = "";
 
-        //progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
+        
+        // looop over all data sources
+        for (Content dataSource : selectedDataSources){
+            if (dataSource instanceof DataSource) {
+                try {
+                    new ExcelExportAction().exportToXLSX(progressPanel, (DataSource) dataSource, reportFullPath);
+                } catch (IOException | ExcelExport.ExcelExportException ex) {
+                    // ELTODO errorMessage = Bundle.KMLReport_kmlFileWriteError();
+                    logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
+                    progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, errorMessage);
+                    return;
+                }
+            }
+        }
 
-        ReportProgressPanel.ReportStatus result = ReportProgressPanel.ReportStatus.COMPLETE;
+        progressPanel.complete(result, errorMessage);
     }
 
 }

@@ -250,21 +250,6 @@ class ExcelExport {
         void renderSheet(Sheet sheet, WorksheetEnv env) throws ExcelExportException;
     }
 
-    private static ExcelExport instance = null;
-
-    /**
-     * Retrieves a singleton instance of this class.
-     *
-     * @return The instance.
-     */
-    static ExcelExport getInstance() {
-        if (instance == null) {
-            instance = new ExcelExport();
-        }
-
-        return instance;
-    }
-
     private ExcelExport() {
     }
 
@@ -280,7 +265,7 @@ class ExcelExport {
         "# {0} - sheetNumber",
         "ExcelExport_writeExcel_noSheetName=Sheet {0}"
     })
-    void writeExcel(List<ExcelSheetExport> exports, File path) throws IOException, ExcelExportException {
+    static void writeExcel(List<ExcelSheetExport> exports, File path) throws IOException, ExcelExportException {
         // Create a Workbook
         Workbook workbook = new XSSFWorkbook(); // new HSSFWorkbook() for generating `.xls` file
 
