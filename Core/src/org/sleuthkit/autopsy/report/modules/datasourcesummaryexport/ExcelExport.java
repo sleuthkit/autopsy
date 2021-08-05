@@ -324,8 +324,8 @@ class ExcelExport {
     static Cell createCell(WorksheetEnv env, Row row, int colNum, CellModel cellModel, Optional<CellStyle> cellStyle) {
         CellStyle cellStyleToUse = cellStyle.orElse(env.getDefaultCellStyle());
 
-        if (cellModel.getText() != null || cellModel.getHorizontalAlignment() != null) {
-            cellStyleToUse = env.getCellStyle(new CellStyleKey(cellModel.getText(), cellStyleToUse, cellModel.getHorizontalAlignment()));
+        if (cellModel.getExcelFormatString() != null || cellModel.getHorizontalAlignment() != null) {
+            cellStyleToUse = env.getCellStyle(new CellStyleKey(cellModel.getExcelFormatString(), cellStyleToUse, cellModel.getHorizontalAlignment()));
         }
 
         Object cellData = cellModel.getData();

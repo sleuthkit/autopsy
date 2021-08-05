@@ -44,8 +44,7 @@ import org.sleuthkit.datamodel.DataSource;
     "ExportRecentFiles_col_head_date=Date",
     "ExportRecentFiles_col_header_domain=Domain",
     "ExportRecentFiles_col_header_path=Path",
-    "ExportRecentFiles_col_header_sender=Sender",
-    "ExportRecentFiles_emailParserModuleName=Email Parser"
+    "ExportRecentFiles_col_header_sender=Sender"
 })
 final class ExportRecentFiles {
 

@@ -82,4 +82,10 @@ interface CellModel {
      * @return The horizontal alignment for the text in the cell.
      */
     HorizontalAlign getHorizontalAlignment();
+    
+    /**
+     * @return The format string to be used with Apache POI during excel
+     * export or null if none necessary.
+     */
+    String getExcelFormatString();
 }

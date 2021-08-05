@@ -27,6 +27,7 @@ class DefaultCellModel<T> implements CellModel {
     private final T data;
     private final String text;
     private CellModel.HorizontalAlign horizontalAlignment;
+    private final String excelFormatString;
 
     /**
      * Main constructor.
@@ -62,6 +63,7 @@ class DefaultCellModel<T> implements CellModel {
      */
     DefaultCellModel(T data, Function<T, String> stringConverter, String excelFormatString) {
         this.data = data;
+        this.excelFormatString = excelFormatString;
 
         if (stringConverter == null) {
             text = this.data == null ? "" : this.data.toString();
@@ -84,6 +86,11 @@ class DefaultCellModel<T> implements CellModel {
     public HorizontalAlign getHorizontalAlignment() {
         return horizontalAlignment;
     }
+    
+    @Override
+    public String getExcelFormatString() {
+        return this.excelFormatString;
+    }    
 
     /**
      * Sets the horizontal alignment for this cell model.
