@@ -141,7 +141,7 @@ public class OsAccountViewer extends javax.swing.JPanel implements DataContentVi
 
     @Override
     public int isPreferred(Node node) {
-        return 5;
+        return 1;
     }
 
     /**

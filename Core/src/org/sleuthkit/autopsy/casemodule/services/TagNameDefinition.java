@@ -236,7 +236,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
     TagName saveToCase(SleuthkitCase caseDb) {
         TagName tagName = null;
         try {
-            tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
+            tagName = caseDb.getTaggingManager().addOrUpdateTagName(displayName, description, color, knownStatus);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error saving tag name definition", ex);
         }
