@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A pipeline of file ingest modules for performing file ingest tasks for an
+ * A pipeline of file ingest modules for executing file ingest tasks for an
  * ingest job.
  */
 @NbBundle.Messages({
@@ -49,7 +49,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     private final List<AbstractFile> fileBatch;
 
     /**
-     * Constructs a pipeline of file ingest modules for performing file ingest
+     * Constructs a pipeline of file ingest modules for executing file ingest
      * tasks for an ingest job.
      *
      * @param ingestJobPipeline The ingest job pipeline that owns this pipeline.
@@ -73,11 +73,11 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     }
 
     @Override
-    void prepareTask(FileIngestTask task) throws IngestTaskPipelineException {
+    void prepareForTask(FileIngestTask task) throws IngestTaskPipelineException {
     }
 
     @Override
-    void completeTask(FileIngestTask task) throws IngestTaskPipelineException {
+    void cleanUpAfterTask(FileIngestTask task) throws IngestTaskPipelineException {
         try {
             ingestManager.setIngestTaskProgress(task, SAVE_RESULTS_ACTIVITY);
             AbstractFile file = task.getFile();
@@ -106,7 +106,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     }
 
     /**
-     * Adds a file to a file cache used to update the case database with new
+     * Adds a file to a file cache used to update the case database with any new
      * properties added to the files in the cache by the ingest modules that
      * processed them. If adding the file to the cache fills the cache, a batch
      * update is done immediately.
@@ -195,7 +195,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         }
 
         @Override
-        void performTask(IngestJobPipeline ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
+        void executeTask(IngestJobPipeline ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
             AbstractFile file = null;
             try {
                 file = task.getFile();
@@ -203,12 +203,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
                 throw new IngestModuleException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
             }
             ingestManager.setIngestTaskProgress(task, getDisplayName());
-            ingestJobPipeline.setCurrentFileIngestModule(getDisplayName(), file.getName());
-            ProcessResult result = module.process(file);
-            // See JIRA-7449
-//            if (result == ProcessResult.ERROR) {
-//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (file objId = %d)", getDisplayName(), file.getName(), file.getId())); //NON-NLS
-//            }
+            module.process(file);
         }
 
     }

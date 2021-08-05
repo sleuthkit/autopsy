@@ -98,6 +98,11 @@ import org.sleuthkit.autopsy.casemodule.events.PersonsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.PersonsDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesUpdatedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagSetsEvent.TagSetsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagSetsEvent.TagSetsDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -484,7 +489,32 @@ public class Case {
         /**
          * One or more hosts have been removed from a person.
          */
-        HOSTS_REMOVED_FROM_PERSON;
+        HOSTS_REMOVED_FROM_PERSON,
+        
+        /**
+         * One or more TagNames have been added.
+         */
+        TAG_NAMES_ADDED,
+        
+        /**
+         * One or more TagNames have been updated.
+         */
+        TAG_NAMES_UPDATED,
+        
+        /**
+         * One or more TagNames have been deleted.
+         */
+        TAG_NAMES_DELETED,
+        
+        /**
+         * One or more TagSets have been added.
+         */
+        TAG_SETS_ADDED,
+        
+        /**
+         * One or more TagSets have been removed.
+         */
+        TAG_SETS_DELETED;
 
     };
 
@@ -498,25 +528,6 @@ public class Case {
         @Subscribe
         public void publishTimelineEventAddedEvent(TimelineManager.TimelineEventAddedEvent event) {
             eventPublisher.publish(new TimelineEventAddedEvent(event));
-        }
-
-        @SuppressWarnings("deprecation")
-        @Subscribe
-        public void publishArtifactsPostedEvent(Blackboard.ArtifactsPostedEvent event) {
-            for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
-                /*
-                 * IngestServices.fireModuleDataEvent is deprecated to
-                 * discourage ingest module writers from using it (they should
-                 * use org.sleuthkit.datamodel.Blackboard.postArtifact(s)
-                 * instead), but a way to publish
-                 * Blackboard.ArtifactsPostedEvents from the SleuthKit layer as
-                 * Autopsy ModuleDataEvents is still needed.
-                 */
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                        event.getModuleName(),
-                        artifactType,
-                        event.getArtifacts(artifactType)));
-            }
         }
 
         @Subscribe
@@ -627,7 +638,31 @@ public class Case {
         public void publisHostsRemovedFromPersonEvent(TskEvent.HostsRemovedFromPersonTskEvent event) {
             eventPublisher.publish(new HostsRemovedFromPersonEvent(event.getPerson(), event.getHostIds()));
         }
+        
+        @Subscribe
+        public void publicTagNamesAdded(TskEvent.TagNamesAddedTskEvent event) {
+            eventPublisher.publish(new TagNamesAddedEvent(event.getTagNames()));
+        }
 
+        @Subscribe
+        public void publicTagNamesUpdated(TskEvent.TagNamesUpdatedTskEvent event) {
+            eventPublisher.publish(new TagNamesUpdatedEvent(event.getTagNames()));
+        }
+
+        @Subscribe
+        public void publicTagNamesDeleted(TskEvent.TagNamesDeletedTskEvent event) {
+            eventPublisher.publish(new TagNamesDeletedEvent(event.getTagNameIds()));
+        }
+
+        @Subscribe
+        public void publicTagSetsAdded(TskEvent.TagSetsAddedTskEvent event) {
+            eventPublisher.publish(new TagSetsAddedEvent(event.getTagSets()));
+        }
+
+        @Subscribe
+        public void publicTagSetsDeleted(TskEvent.TagSetsDeletedTskEvent event) {
+            eventPublisher.publish(new TagSetsDeletedEvent(event.getTagSetIds()));
+        }
     }
 
     /**

@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * A pipeline of data source level ingest modules for performing data source
+ * A pipeline of data source level ingest modules for executing data source
  * level ingest tasks for an ingest job.
  */
 final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngestTask> {
@@ -57,11 +57,11 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
     }
 
     @Override
-    void prepareTask(DataSourceIngestTask task) {
+    void prepareForTask(DataSourceIngestTask task) {
     }
 
     @Override
-    void completeTask(DataSourceIngestTask task) {
+    void cleanUpAfterTask(DataSourceIngestTask task) {
         ingestManager.setIngestTaskProgressCompleted(task);
     }
 
@@ -83,22 +83,18 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
         }
 
         @Override
-        void performTask(IngestJobPipeline ingestJobPipeline, DataSourceIngestTask task) throws IngestModuleException {
+        void executeTask(IngestJobPipeline ingestJobPipeline, DataSourceIngestTask task) throws IngestModuleException {
             Content dataSource = task.getDataSource();
             String progressBarDisplayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.displayName", getDisplayName(), dataSource.getName());
             ingestJobPipeline.updateDataSourceIngestProgressBarDisplayName(progressBarDisplayName);
             ingestJobPipeline.switchDataSourceIngestProgressBarToIndeterminate();
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             logger.log(Level.INFO, "{0} analysis of {1} starting", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS
-            ProcessResult result = module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobPipeline));
+            module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobPipeline));
             logger.log(Level.INFO, "{0} analysis of {1} finished", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS            
             if (!ingestJobPipeline.isCancelled() && ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
                 ingestJobPipeline.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
-            }
-            // See JIRA-7449            
-//            if (result == ProcessResult.ERROR) {
-//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (data source objId = %d)", getDisplayName(), dataSource.getName(), dataSource.getId())); //NON-NLS
-//            }            
+            }           
         }
 
     }

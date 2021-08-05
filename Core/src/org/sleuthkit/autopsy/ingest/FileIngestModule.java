@@ -30,6 +30,14 @@ public interface FileIngestModule extends IngestModule {
      * Processes a file. Called between calls to startUp() and shutDown(). Will
      * be called for each file in a data source.
      *
+     * IMPORTANT: In addition to returning ProcessResult.OK or
+     * ProcessResult.ERROR, modules should log all errors using methods provided
+     * by the org.sleuthkit.autopsy.coreutils.Logger class. Log messages should
+     * include the name and object ID of the data being processed. If an
+     * exception has been caught by the module, the exception should be sent to
+     * the Logger along with the log message so that a stack trace will appear
+     * in the application log.
+     *
      * @param file The file to analyze.
      *
      * @return A result code indicating success or failure of the processing.

@@ -1,4 +1,4 @@
-﻿/*! \page result_viewer_page Visionneuse de résultats
+/*! \page result_viewer_page Visionneuse de résultats
 
 [TOC]
 
@@ -25,8 +25,8 @@ Ces colonnes affichent les informations suivantes:
 <ul>
 <li> (S)core - indique si l'élément est intéressant ou notable.
    <ul>
-     <li>Affiche une icône rouge si le fichier correspond à un hachage notable ou a été marqué avec une balise notable.
-     <li>Affiche une icône jaune si le fichier correspond à un élément intéressant ou a été marqué avec une balise non notable.
+     <li>Affiche une icône rouge si au moins un résultat d'analyse enfant est notable ou si le fichier est marqué avec une balise notable.
+     <li>Affiche une icône jaune si au moins un résultat d'analyse enfant est probablement notable ou si le fichier est marqué.
    </ul>
 <li> (C)omment - indique si l'élément a un commentaire dans le référentiel central ou si un commentaire est associé à une balise.
 <li> (O)ther occurrences - indique combien de sources de données dans le référentiel central contiennent cet élément. Le décompte comprendra l'élément sélectionné.
