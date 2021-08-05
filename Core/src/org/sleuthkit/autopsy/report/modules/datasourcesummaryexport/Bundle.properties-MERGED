@@ -15,3 +15,11 @@ ExcelExportAction_runXLSXExport_progressCancelActionTitle=Cancelling...
 ExcelExportAction_runXLSXExport_progressCancelTitle=Cancel
 # {0} - dataSource
 ExcelExportAction_runXLSXExport_progressTitle=Exporting {0} to XLSX
+RecentFilePanel_col_header_domain=Domain
+RecentFilePanel_col_header_path=Path
+RecentFilePanel_col_header_sender=Sender
+RecentFilePanel_emailParserModuleName=Email Parser
+RecentFilesPanel_attachmentsTable_tabName=Recent Attachments
+RecentFilesPanel_col_head_date=Date
+RecentFilesPanel_docsTable_tabName=Recently Opened Documents
+RecentFilesPanel_downloadsTable_tabName=Recently Downloads

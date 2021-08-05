@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -296,5 +295,124 @@ class ExcelExportAction implements Consumer<DataSource> {
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "There was an error attaching report to case.", ex);
         }
+    }
+    
+    /**
+     * Function that converts data into a excel sheet data.
+     */
+    protected interface ExcelExportFunction<T> {
+
+        /**
+         * Function that converts data into an excel sheet.
+         *
+         * @param data The data.
+         * @return The excel sheet export.
+         * @throws ExcelExportException
+         */
+        ExcelSheetExport convert(T data) throws ExcelExportException;
+    }
+
+    /**
+     * Runs a data fetcher and returns the result handling any possible errors
+     * with a log message.
+     *
+     * @param dataFetcher The means of fetching the data.
+     * @param sheetName   The name of the sheet.
+     * @param ds          The data source.
+     *
+     * @return The fetched data.
+     */
+    protected static <T> T getFetchResult(
+            DataFetcher<DataSource, T> dataFetcher,
+            String sheetName, DataSource ds) {
+
+        try {
+            return dataFetcher.runQuery(ds);
+        } catch (Exception ex) {
+            logger.log(Level.WARNING,
+                    String.format("There was an error while acquiring data for exporting worksheet(s): '%s' for dataSource: %s",
+                            sheetName == null ? "<null>" : sheetName,
+                            ds == null || ds.getName() == null ? "<null>" : ds.getName()), ex);
+            return null;
+        }
+    }
+
+    /**
+     * Helper method that converts data into an excel sheet export handling
+     * possible excel exceptions.
+     *
+     * @param excelConverter Function to convert data to an excel sheet export.
+     * @param data The data. If data is null, null will be returned.
+     * @param sheetName The name(s) of the sheet (to be used in the error
+     * message).
+     * @return The excel sheet export.
+     */
+    protected static <T> ExcelSheetExport convertToExcel(ExcelExportFunction<T> excelConverter, T data, String sheetName) {
+        if (data == null) {
+            return null;
+        }
+
+        try {
+            return excelConverter.convert(data);
+        } catch (ExcelExportException ex) {
+            logger.log(Level.WARNING,
+                    String.format("There was an error while preparing export of worksheet(s): '%s'",
+                            sheetName == null ? "<null>" : sheetName), ex);
+            return null;
+        }
+    }
+
+    /**
+     * Returns an excel sheet export given the fetching of data or null if no
+     * export created.
+     *
+     * @param dataFetcher The means of fetching data.
+     * @param excelConverter The means of converting data to excel.
+     * @param sheetName The name of the sheet (for error handling reporting).
+     * @param ds The data source to use for fetching data.
+     * @return The excel sheet export or null if no export could be generated.
+     */
+    protected static <T> ExcelSheetExport getExport(
+            DataFetcher<DataSource, T> dataFetcher, ExcelExportFunction<T> excelConverter,
+            String sheetName, DataSource ds) {
+
+        T data = getFetchResult(dataFetcher, sheetName, ds);
+        return convertToExcel(excelConverter, data, sheetName);
+    }
+
+    /**
+     * Returns an excel table export of the data or null if no export created.
+     *
+     * @param columnsModel The model for the columns.
+     * @param sheetName The name for the sheet.
+     * @param data The data to be exported.
+     * @return The excel table export or null if no export could be generated.
+     */
+    protected static <T, C extends CellModel> ExcelSheetExport getTableExport(List<ColumnModel<T, C>> columnsModel,
+            String sheetName, List<T> data) {
+
+        return convertToExcel((dataList) -> new ExcelTableExport<T, C>(sheetName, columnsModel, dataList),
+                data,
+                sheetName);
+    }
+
+    /**
+     * Returns an excel table export of the data or null if no export created.
+     *
+     * @param dataFetcher The means of fetching data for the data source and the
+     * export.
+     * @param columnsModel The model for the columns.
+     * @param sheetName The name for the sheet.
+     * @param ds The data source.
+     * @return The excel export or null if no export created.
+     */
+    protected static <T, C extends CellModel> ExcelSheetExport getTableExport(
+            DataFetcher<DataSource, List<T>> dataFetcher, List<ColumnModel<T, C>> columnsModel,
+            String sheetName, DataSource ds) {
+
+        return getExport(dataFetcher,
+                (dataList) -> new ExcelTableExport<T, C>(sheetName, columnsModel, dataList),
+                sheetName,
+                ds);
     }
 }
