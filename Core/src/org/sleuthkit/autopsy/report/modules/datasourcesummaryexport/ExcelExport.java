@@ -37,7 +37,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.DefaultCellModel.HorizontalAlign;
+import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.CellModel.HorizontalAlign;
 
 /**
  * Class for handling Excel exporting.
@@ -337,11 +337,11 @@ public class ExcelExport {
      * @param cellStyle The style to use.
      * @return The created cell.
      */
-    static Cell createCell(WorksheetEnv env, Row row, int colNum, DefaultCellModel cellModel, Optional<CellStyle> cellStyle) {
+    static Cell createCell(WorksheetEnv env, Row row, int colNum, CellModel cellModel, Optional<CellStyle> cellStyle) {
         CellStyle cellStyleToUse = cellStyle.orElse(env.getDefaultCellStyle());
 
-        if (cellModel.getExcelFormatString() != null || cellModel.getHorizontalAlignment() != null) {
-            cellStyleToUse = env.getCellStyle(new CellStyleKey(cellModel.getExcelFormatString(), cellStyleToUse, cellModel.getHorizontalAlignment()));
+        if (cellModel.getText() != null || cellModel.getHorizontalAlignment() != null) {
+            cellStyleToUse = env.getCellStyle(new CellStyleKey(cellModel.getText(), cellStyleToUse, cellModel.getHorizontalAlignment()));
         }
 
         Object cellData = cellModel.getData();

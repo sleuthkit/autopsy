@@ -25,7 +25,7 @@ import java.util.function.Function;
  * getJTablePanel. 'T' represents the object that will represent rows in the
  * table.
  */
-public class ColumnModel<T, C extends DefaultCellModel> {
+class ColumnModel<T, C extends CellModel> {
 
     private final String headerTitle;
     private final Function<T, ? extends C> cellRenderer;
@@ -38,7 +38,7 @@ public class ColumnModel<T, C extends DefaultCellModel> {
      * @param cellRenderer The method that generates a CellModel for the column
      * based on the data.
      */
-    public ColumnModel(String headerTitle, Function<T, ? extends C> cellRenderer) {
+    ColumnModel(String headerTitle, Function<T, ? extends C> cellRenderer) {
         this(headerTitle, cellRenderer, null);
     }
 
@@ -50,7 +50,7 @@ public class ColumnModel<T, C extends DefaultCellModel> {
      * based on the data.
      * @param width The preferred width of the column.
      */
-    public ColumnModel(String headerTitle, Function<T, ? extends C> cellRenderer, Integer width) {
+    ColumnModel(String headerTitle, Function<T, ? extends C> cellRenderer, Integer width) {
         this.headerTitle = headerTitle;
         this.cellRenderer = cellRenderer;
         this.width = width;
@@ -59,7 +59,7 @@ public class ColumnModel<T, C extends DefaultCellModel> {
     /**
      * @return The title for the column.
      */
-    public String getHeaderTitle() {
+    String getHeaderTitle() {
         return headerTitle;
     }
 
@@ -67,14 +67,14 @@ public class ColumnModel<T, C extends DefaultCellModel> {
      * @return The method that generates a CellModel for the column based on the
      * data.
      */
-    public Function<T, ? extends C> getCellRenderer() {
+    Function<T, ? extends C> getCellRenderer() {
         return cellRenderer;
     }
 
     /**
      * @return The preferred width of the column (can be null).
      */
-    public Integer getWidth() {
+    Integer getWidth() {
         return width;
     }
 }

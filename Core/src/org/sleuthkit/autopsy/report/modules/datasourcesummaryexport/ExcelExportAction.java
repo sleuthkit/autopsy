@@ -285,13 +285,13 @@ class ExcelExportAction implements Consumer<DataSource> {
                     dataSource);
 
             // and show finished dialog
-            SwingUtilities.invokeLater(() -> {
+            /* ELTODO SwingUtilities.invokeLater(() -> {
                 ExcelExportDialog dialog = new ExcelExportDialog(WindowManager.getDefault().getMainWindow(), path);
                 dialog.setResizable(false);
                 dialog.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
                 dialog.setVisible(true);
                 dialog.toFront();
-            });
+            });*/
 
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "There was an error attaching report to case.", ex);

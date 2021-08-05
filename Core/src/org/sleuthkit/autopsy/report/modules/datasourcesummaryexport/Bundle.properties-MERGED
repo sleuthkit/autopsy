@@ -15,4 +15,3 @@ ExcelExportAction_runXLSXExport_progressCancelActionTitle=Cancelling...
 ExcelExportAction_runXLSXExport_progressCancelTitle=Cancel
 # {0} - dataSource
 ExcelExportAction_runXLSXExport_progressTitle=Exporting {0} to XLSX
-ExcelExportDialog_title=Data Source Summary Exported
