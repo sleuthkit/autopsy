@@ -38,59 +38,55 @@ import org.sleuthkit.datamodel.DataSource;
  * Data Source Summary recent files panel.
  */
 @Messages({
-    "RecentFilesPanel_docsTable_tabName=Recently Opened Documents",
-    "RecentFilesPanel_downloadsTable_tabName=Recently Downloads",
-    "RecentFilesPanel_attachmentsTable_tabName=Recent Attachments",})
+    "ExportRecentFiles_docsTable_tabName=Recently Opened Documents",
+    "ExportRecentFiles_downloadsTable_tabName=Recently Downloads",
+    "ExportRecentFiles_attachmentsTable_tabName=Recent Attachments",
+    "ExportRecentFiles_col_head_date=Date",
+    "ExportRecentFiles_col_header_domain=Domain",
+    "ExportRecentFiles_col_header_path=Path",
+    "ExportRecentFiles_col_header_sender=Sender",
+    "ExportRecentFiles_emailParserModuleName=Email Parser"
+})
 final class ExportRecentFiles {
 
     private static final String DATETIME_FORMAT_STR = "yyyy/MM/dd HH:mm:ss";
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat(DATETIME_FORMAT_STR, Locale.getDefault());
 
     private static final List<ColumnModel<RecentFileDetails, DefaultCellModel<?>>> docsTemplate = Arrays.asList(
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
+            new ColumnModel<>(Bundle.ExportRecentFiles_col_header_path(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getPath());
                     }, 250),
-            new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
+            new ColumnModel<>(Bundle.ExportRecentFiles_col_head_date(),
                     getDateFunct(),
                     80));
 
     private static final List<ColumnModel<RecentDownloadDetails, DefaultCellModel<?>>> downloadsTemplate = Arrays.asList(
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_domain(),
+            new ColumnModel<>(Bundle.ExportRecentFiles_col_header_domain(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getWebDomain());
                     }, 100),
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
+            new ColumnModel<>(Bundle.ExportRecentFiles_col_header_path(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getPath());
                     }, 250),
-            new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
+            new ColumnModel<>(Bundle.ExportRecentFiles_col_head_date(),
                     getDateFunct(),
                     80));
 
     private static final List<ColumnModel<RecentAttachmentDetails, DefaultCellModel<?>>> attachmentsTemplate = Arrays.asList(
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
+            new ColumnModel<>(Bundle.ExportRecentFiles_col_header_path(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getPath());
                     }, 250),
-            new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
+            new ColumnModel<>(Bundle.ExportRecentFiles_col_head_date(),
                     getDateFunct(),
                     80),
-            new ColumnModel<>(Bundle.RecentFilePanel_col_header_sender(),
+            new ColumnModel<>(Bundle.ExportRecentFiles_col_header_sender(),
                     (prog) -> {
                         return new DefaultCellModel<>(prog.getSender());
                     }, 150));
 
-    /**
-     * Default constructor.
-     */
-    @Messages({
-        "RecentFilesPanel_col_head_date=Date",
-        "RecentFilePanel_col_header_domain=Domain",
-        "RecentFilePanel_col_header_path=Path",
-        "RecentFilePanel_col_header_sender=Sender",
-        "RecentFilePanel_emailParserModuleName=Email Parser"
-    })
 
     private ExportRecentFiles() {
     }
@@ -115,9 +111,9 @@ final class ExportRecentFiles {
         DataFetcher<DataSource, List<RecentAttachmentDetails>> attachmentsFetcher = (ds) -> RecentFilesSummary.getRecentAttachments(ds, 10);
 
         return Stream.of(
-                ExcelExportAction.getTableExport(docsFetcher, docsTemplate, Bundle.RecentFilesPanel_docsTable_tabName(), dataSource),
-                ExcelExportAction.getTableExport(downloadsFetcher, downloadsTemplate, Bundle.RecentFilesPanel_downloadsTable_tabName(), dataSource),
-                ExcelExportAction.getTableExport(attachmentsFetcher, attachmentsTemplate, Bundle.RecentFilesPanel_attachmentsTable_tabName(), dataSource))
+                ExcelExportAction.getTableExport(docsFetcher, docsTemplate, Bundle.ExportRecentFiles_docsTable_tabName(), dataSource),
+                ExcelExportAction.getTableExport(downloadsFetcher, downloadsTemplate, Bundle.ExportRecentFiles_downloadsTable_tabName(), dataSource),
+                ExcelExportAction.getTableExport(attachmentsFetcher, attachmentsTemplate, Bundle.ExportRecentFiles_attachmentsTable_tabName(), dataSource))
                 .filter(sheet -> sheet != null)
                 .collect(Collectors.toList());
     }

@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JPanel;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
