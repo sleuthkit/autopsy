@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import javax.swing.JPanel;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -36,7 +37,12 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
-class DataSourceSummaryReport implements GeneralReportModule {
+/**
+ * Instances of this class plug in to the reporting infrastructure to provide a
+ * convenient way to extract data source summary information into Excel.
+ */
+@ServiceProvider(service = GeneralReportModule.class)
+public class DataSourceSummaryReport implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(DataSourceSummaryReport.class.getName());
     private static DataSourceSummaryReport instance;
@@ -49,8 +55,7 @@ class DataSourceSummaryReport implements GeneralReportModule {
         return instance;
     }
 
-    // Hidden constructor
-    private DataSourceSummaryReport() {
+    public DataSourceSummaryReport() {
     }
 
     
@@ -62,7 +67,7 @@ class DataSourceSummaryReport implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return "DataSourceSummaryReport.xlsx"; //NON-NLS
+        return ""; //ELTODO "DataSourceSummaryReport.xlsx"; //NON-NLS
     }
 
     @Override
@@ -98,14 +103,30 @@ class DataSourceSummaryReport implements GeneralReportModule {
         if(settings.getSelectedDataSources() == null) {
             // Process all data sources if the list is null.
             try {
-                selectedDataSources = currentCase.getDataSources();
-                // ELTODO settings.setSelectedDataSources(selectedDataSources);
+                selectedDataSources = currentCase.getDataSources();                
+                List<Long> dsIDs = selectedDataSources
+                        .stream()
+                        .map(Content::getId)
+                        .collect(Collectors.toList());
+                settings.setSelectedDataSources(dsIDs);
             } catch (TskCoreException ex) {
                 result = ReportProgressPanel.ReportStatus.ERROR;
                 // ELTODO errorMessage = Bundle.KMLReport_failedToCompleteReport();
                 logger.log(Level.SEVERE, "Could not get the datasources from the case", ex);
                 progressPanel.complete(result, errorMessage);
                 return;
+            }
+        } else {
+            for (Long dsID : settings.getSelectedDataSources()) {
+                try {
+                    selectedDataSources.add(currentCase.getSleuthkitCase().getContentById(dsID));
+                } catch (TskCoreException ex) {
+                    result = ReportProgressPanel.ReportStatus.ERROR;
+                    // ELTODO errorMessage = Bundle.KMLReport_failedToCompleteReport();
+                    logger.log(Level.SEVERE, "Could not get the datasources from the case", ex);
+                    progressPanel.complete(result, errorMessage);
+                    return;
+                }
             }
         }
         
@@ -121,7 +142,7 @@ class DataSourceSummaryReport implements GeneralReportModule {
         for (Content dataSource : selectedDataSources){
             if (dataSource instanceof DataSource) {
                 try {
-                    new ExcelExportAction().exportToXLSX(progressPanel, (DataSource) dataSource, reportFullPath);
+                    new ExcelExportAction().exportToXLSX(progressPanel, (DataSource) dataSource, baseReportDir);
                 } catch (IOException | ExcelExport.ExcelExportException ex) {
                     // ELTODO errorMessage = Bundle.KMLReport_kmlFileWriteError();
                     logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS

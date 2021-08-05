@@ -65,24 +65,17 @@ class ExcelExportAction {
      */
     @NbBundle.Messages({
         "ExcelExportAction_getXLSXPath_directory=DataSourceSummary",})
-    private File getXLSXPath(String dataSourceName) {
+    File getXLSXPath(String dataSourceName, String baseReportDir) {
         // set initial path to reports directory with filename that is 
         // a combination of the data source name and time stamp
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         String fileName = String.format("%s-%s.xlsx", dataSourceName == null ? "" : FileUtil.escapeFileName(dataSourceName), dateFormat.format(new Date()));
-        try {
-            String reportsDir = Case.getCurrentCaseThrows().getReportDirectory();
-            File reportsDirFile = Paths.get(reportsDir, Bundle.ExcelExportAction_getXLSXPath_directory()).toFile();
-            if (!reportsDirFile.exists()) {
-                reportsDirFile.mkdirs();
-            }
-
-            return Paths.get(reportsDirFile.getAbsolutePath(), fileName).toFile();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Unable to find reports directory.", ex);
+        File reportsDirFile = Paths.get(baseReportDir, Bundle.ExcelExportAction_getXLSXPath_directory()).toFile();
+        if (!reportsDirFile.exists()) {
+            reportsDirFile.mkdirs();
         }
 
-        return null;
+        return Paths.get(reportsDirFile.getAbsolutePath(), fileName).toFile();
     }
 
     /**
@@ -100,10 +93,10 @@ class ExcelExportAction {
         "ExcelExportAction_exportToXLSX_gatheringRecentActivityData=Fetching Recent Activity Data",
         "ExcelExportAction_exportToXLSX_writingToFile=Writing to File...",})
 
-    void exportToXLSX(ReportProgressPanel progressPanel, DataSource dataSource, String path)
+    void exportToXLSX(ReportProgressPanel progressPanel, DataSource dataSource, String baseReportDir)
             throws IOException, ExcelExport.ExcelExportException {
 
-        File reportFile = new File(path);
+        File reportFile = getXLSXPath(dataSource.getName(), baseReportDir);
         int totalWeight = 10;
         progressPanel.setIndeterminate(false);
         progressPanel.setMaximumProgress(totalWeight);
