@@ -1,3 +1,10 @@
+---------------- VERSION 4.19.1  --------------
+Bug Fixes:
+- Fixed connection leak associated with creating OS Accounts
+- Decreased priority of OS Account Content Viewer
+- Misc bound check fixes in TSK
+
+
 ---------------- VERSION 4.19.0  --------------
 Data Source Management:
 - To make managing big cases easier, all data sources are now associated with a host that can be specified in the “Add Data Source” wizard. 
