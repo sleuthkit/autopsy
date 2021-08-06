@@ -88,13 +88,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
 
     /*
-     * Cache of Content objects used to avoid repeated trips to the case
-     * database to retrieve Content objects that are the source of multiple
-     * artifacts.
-     */
-   // private static final Cache<Long, Content> contentCache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
-
-    /*
      * Case events that indicate an update to the node's property sheet may be
      * required.
      */
