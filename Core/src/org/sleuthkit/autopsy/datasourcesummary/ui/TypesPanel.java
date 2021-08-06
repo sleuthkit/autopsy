@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummaryGetter;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
@@ -233,7 +233,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      * Creates a new TypesPanel.
      */
     public TypesPanel() {
-        this(new MimeTypeSummary(), new TypesSummary(), new ContainerSummary());
+        this(new MimeTypeSummary(), new TypesSummary(), new ContainerSummaryGetter());
     }
 
     @Override
@@ -252,7 +252,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     public TypesPanel(
             MimeTypeSummary mimeTypeData,
             TypesSummary typeData,
-            ContainerSummary containerData) {
+            ContainerSummaryGetter containerData) {
 
         super(mimeTypeData, typeData, containerData);
 
