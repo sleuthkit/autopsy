@@ -45,7 +45,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -427,7 +426,7 @@ final class ExtractUnallocAction extends AbstractAction {
                                     }
                                 });
                             } catch (InterruptedException | InvocationTargetException ex) {
-                                Exceptions.printStackTrace(ex);
+                               logger.log(Level.SEVERE, "An error occured launching confirmation dialog for extract unalloc actions", ex);
                             }
 
                             if (dialogResult.value == JOptionPane.YES_OPTION) {
