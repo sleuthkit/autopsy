@@ -121,7 +121,7 @@ public class BlackboardArtifactTagNode extends TagNode {
 
         // if the artifact links to another file, add an action to go to that file
         try {
-            AbstractFile c = findLinked(artifact);
+            AbstractFile c = (AbstractFile)findLinked(artifact);
             if (c != null) {
                 actions.add(ViewFileInTimelineAction.createViewFileAction(c));
             }

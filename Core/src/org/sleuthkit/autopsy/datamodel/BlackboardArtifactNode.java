@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.annotations.Beta;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -33,8 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
@@ -96,7 +92,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * database to retrieve Content objects that are the source of multiple
      * artifacts.
      */
-    private static final Cache<Long, Content> contentCache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
+   // private static final Cache<Long, Content> contentCache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).build();
 
     /*
      * Case events that indicate an update to the node's property sheet may be
@@ -165,7 +161,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                      * The case has been closed.
                      */
                     unregisterListener();
-                    contentCache.invalidateAll();
                 }
             } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
                 SCOData scoData = (SCOData) evt.getNewValue();
@@ -336,15 +331,14 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @return The Lookup.
      */
     private static Lookup createLookup(BlackboardArtifact artifact) {
-        final long objectID = artifact.getObjectID();
         try {
-            Content content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
+            Content content = getSourceContent(artifact);
             if (content == null) {
                 return Lookups.fixed(artifact);
             } else {
                 return Lookups.fixed(artifact, content);
             }
-        } catch (ExecutionException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
             return Lookups.fixed(artifact);
         }
@@ -365,8 +359,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         Content content = null;
         if (lookupIsAssociatedFile) {
             try {
-                content = getPathIdFile(artifact);
-            } catch (ExecutionException ex) {
+                content = findLinked(artifact);
+            } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
                 content = null;
             }
@@ -382,35 +376,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Private helper method to allow content specified in a path id attribute
-     * to be retrieved.
-     *
-     * @param artifact The artifact for which content may be specified as a tsk
-     *                 path attribute.
-     *
-     * @return The Content specified by the artifact's path id attribute or null
-     *         if there was no content available.
-     *
-     * @throws ExecutionException Error retrieving the file specified by the
-     *                            path id from the cache.
-     */
-    private static Content getPathIdFile(BlackboardArtifact artifact) throws ExecutionException {
-        try {
-            BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
-            if (attribute != null) {
-                return contentCache.get(attribute.getValueLong(), () -> artifact.getSleuthkitCase().getContentById(attribute.getValueLong()));
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, MessageFormat.format("Error getting content for path id attrbiute for artifact: ", artifact.getId()), ex); //NON-NLS
-        }
-        return null;
-    }
-
-    /**
-     * Unregisters the application event listener when this node is garbage
+     * Unregister the application event listener when this node is garbage
      * collected, if this finalizer is actually called.
      *
-     * RC: Isn't there some node lifecycle property change event that could be
+     * RC: Isn't there some node life cycle property change event that could be
      * used to unregister the listener instead?
      *
      * @throws Throwable
@@ -463,7 +432,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * timeline.
          */
         try {
-            AbstractFile linkedFile = findLinked(artifact);
+            AbstractFile linkedFile = (AbstractFile)findLinked(artifact);
             if (linkedFile != null) {
                 actionsList.add(ViewFileInTimelineAction.createViewFileAction(linkedFile));
             }
