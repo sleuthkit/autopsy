@@ -132,10 +132,11 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     }
 
     /**
-     * Returns a function that gets the date from the RecentFileDetails object and
-     * converts into a DefaultCellModel to be displayed in a table.
+     * Returns a function that gets the date from the RecentFileDetails object
+     * and converts into a DefaultCellModel to be displayed in a table.
      *
-     * @return The function that determines the date cell from a RecentFileDetails object.
+     * @return The function that determines the date cell from a
+     *         RecentFileDetails object.
      */
     private <T extends RecentFileDetails> Function<T, DefaultCellModel<?>> getDateFunct() {
         return (T lastAccessed) -> {
@@ -150,9 +151,10 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
      * items.
      *
      * @param record The RecentFileDetails instance.
+     *
      * @return The menu items list containing one action or navigating to the
-     * appropriate artifact/file and closing the data source summary dialog if
-     * open.
+     *         appropriate artifact/file and closing the data source summary
+     *         dialog if open.
      */
     private Supplier<List<MenuItem>> getPopupFunct(RecentFileDetails record) {
         return () -> {

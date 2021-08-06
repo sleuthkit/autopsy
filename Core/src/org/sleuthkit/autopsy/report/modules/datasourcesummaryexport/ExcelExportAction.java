@@ -91,6 +91,7 @@ class ExcelExportAction {
     @NbBundle.Messages({
         "ExcelExportAction_exportToXLSX_beginExport=Beginning Export...",
         "ExcelExportAction_exportToXLSX_gatheringRecentActivityData=Fetching Recent Activity Data",
+        "ExcelExportAction_exportToXLSX_gatheringContainerData=Fetching Container & Image Data",
         "ExcelExportAction_exportToXLSX_writingToFile=Writing to File...",})
 
     void exportToXLSX(ReportProgressPanel progressPanel, DataSource dataSource, String baseReportDir)
@@ -103,17 +104,24 @@ class ExcelExportAction {
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_beginExport());
         List<ExcelExport.ExcelSheetExport> sheetExports = new ArrayList<>();
 
+        // Export Recent Activity data
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringRecentActivityData());
         progressPanel.setProgress(1);
-
-        // Export Recent Activity data
         List<ExcelExport.ExcelSheetExport> exports = ExportRecentFiles.getExports(dataSource);
+        if (exports != null) {
+            sheetExports.addAll(exports);
+        }
+        
+        // Export Container & Image info data
+        progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringContainerData());
+        progressPanel.setProgress(2);
+        exports = ExportContainerInfo.getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }
 
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_writingToFile());
-        progressPanel.setProgress(2);
+        progressPanel.setProgress(3);
         ExcelExport.writeExcel(sheetExports, reportFile);
 
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE, "");

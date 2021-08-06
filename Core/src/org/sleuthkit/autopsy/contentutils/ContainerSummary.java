@@ -385,10 +385,10 @@ public class ContainerSummary {
     }
 
     /**
-     * Generates a container data model object containing data about
-     * the data source.
+     * Generates a container data model object containing data about the data
+     * source.
      *
-     * @param ds               The data source.
+     * @param ds The data source.
      *
      * @return The generated view model.
      */
@@ -407,10 +407,9 @@ public class ContainerSummary {
     }
 
     /**
-     * Generates an image data model object containing data about the
-     * image.
+     * Generates an image data model object containing data about the image.
      *
-     * @param image            The image.
+     * @param image The image.
      *
      * @return The generated view model.
      */

@@ -31,8 +31,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 
 /**
- * Wrapper class for converting org.sleuthkit.autopsy.contentutils.RecentFilesSummary functionality into 
- * a DefaultArtifactUpdateGovernor used by Recent Files Data Summary tab.
+ * Wrapper class for converting
+ * org.sleuthkit.autopsy.contentutils.RecentFilesSummary functionality into a
+ * DefaultArtifactUpdateGovernor used by Recent Files Data Summary tab.
  */
 public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
 
@@ -52,11 +53,11 @@ public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
      * TSK_RECENT_OBJECT artifact.
      *
      * @param dataSource The data source to query.
-     * @param maxCount The maximum number of results to return, pass 0 to get a
-     * list of all results.
+     * @param maxCount   The maximum number of results to return, pass 0 to get
+     *                   a list of all results.
      *
      * @return A list RecentFileDetails representing the most recently opened
-     * documents or an empty list if none were found.
+     *         documents or an empty list if none were found.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
@@ -74,11 +75,11 @@ public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
      * artifact TSK_DATETIME_ACCESSED attribute.
      *
      * @param dataSource Data source to query.
-     * @param maxCount Maximum number of results to return, passing 0 will
-     * return all results.
+     * @param maxCount   Maximum number of results to return, passing 0 will
+     *                   return all results.
      *
      * @return A list of RecentFileDetails objects or empty list if none were
-     * found.
+     *         found.
      *
      * @throws TskCoreException
      * @throws SleuthkitCaseProviderException
@@ -95,8 +96,8 @@ public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
      * Returns a list of the most recent message attachments.
      *
      * @param dataSource Data source to query.
-     * @param maxCount Maximum number of results to return, passing 0 will
-     * return all results.
+     * @param maxCount   Maximum number of results to return, passing 0 will
+     *                   return all results.
      *
      * @return A list of RecentFileDetails of the most recent attachments.
      *

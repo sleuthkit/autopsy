@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentFileDetails;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- * Data Source Summary recent files panel.
+ * Class to export data source summary info.
  */
 @Messages({
     "ExportRecentFiles_docsTable_tabName=Recently Opened Documents",
@@ -86,15 +86,15 @@ final class ExportRecentFiles {
                         return new DefaultCellModel<>(prog.getSender());
                     }, 150));
 
-
     private ExportRecentFiles() {
     }
 
     /**
-     * Returns a function that gets the date from the RecentFileDetails object and
-     * converts into a DefaultCellModel to be displayed in a table.
+     * Returns a function that gets the date from the RecentFileDetails object
+     * and converts into a DefaultCellModel to be displayed in a table.
      *
-     * @return The function that determines the date cell from a RecentFileDetails object.
+     * @return The function that determines the date cell from a
+     *         RecentFileDetails object.
      */
     private static <T extends RecentFileDetails> Function<T, DefaultCellModel<?>> getDateFunct() {
         return (T lastAccessed) -> {

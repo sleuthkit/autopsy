@@ -29,6 +29,8 @@ import java.util.TreeMap;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.lang.StringUtils;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.Type;
@@ -123,7 +125,6 @@ public final class DataSourceInfoUtilities {
     /**
      * Retrieves a result based on the provided query.
      *
-     * @param skCase    The current SleuthkitCase.
      * @param query     The query.
      * @param processor The result set handler.
      *
@@ -132,10 +133,11 @@ public final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      * @throws SQLException
+     * @throws NoCurrentCaseException
      */
-    public static <T> T getBaseQueryResult(SleuthkitCase skCase, String query, ResultSetHandler<T> processor)
-            throws TskCoreException, SQLException {
-        try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+    public static <T> T getBaseQueryResult(String query, ResultSetHandler<T> processor)
+            throws TskCoreException, SQLException, NoCurrentCaseException {
+        try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             return processor.process(resultSet);
         }
@@ -398,7 +400,7 @@ public final class DataSourceInfoUtilities {
         BlackboardAttribute attr = getAttributeOrNull(artifact, attributeType);
         return (attr == null) ? null : attr.getValueLong();
     }
-    
+
     /**
      * Retrieves the int value of a certain attribute type from an artifact.
      *

@@ -73,7 +73,7 @@ public class RecentFilesSummary {
     }
 
     public static Set<Integer> getArtifactTypeIdsForRefresh() {
-        return ARTIFACT_UPDATE_TYPE_IDS;
+        return Collections.unmodifiableSet(ARTIFACT_UPDATE_TYPE_IDS);
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
 import java.text.DecimalFormat;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 
 /**
  * This class provides utilities for representing storage size in most relevant
  * units (i.e. bytes, megabytes, etc.).
  */
-public final class SizeRepresentationUtil {
+final class SizeRepresentationUtil {
 
     private static final int SIZE_CONVERSION_CONSTANT = 1000;
     private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##");
@@ -51,7 +50,7 @@ public final class SizeRepresentationUtil {
         PB(Bundle.SizeRepresentationUtil_units_petabytes(), "#,##0.00,,,,,", 5);
 
         private final String suffix;
-        private final String excelFormatString; // ELTODO
+        private final String excelFormatString;
         private final long divisor;
 
         /**
@@ -71,21 +70,21 @@ public final class SizeRepresentationUtil {
         /**
          * @return The string suffix to use for size unit.
          */
-        public String getSuffix() {
+        String getSuffix() {
             return suffix;
         }
 
         /**
          * @return The excel format string to use for this size unit.
          */
-        public String getExcelFormatString() {
+        String getExcelFormatString() {
             return excelFormatString;
         }
 
         /**
          * @return The divisor to convert from bytes to this unit.
          */
-        public long getDivisor() {
+        long getDivisor() {
             return divisor;
         }
     }
