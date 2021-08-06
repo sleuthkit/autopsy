@@ -23,14 +23,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -43,11 +41,10 @@ import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
 
-    private static ExplorerNodeActionVisitor instance = new ExplorerNodeActionVisitor();
+    private final static ExplorerNodeActionVisitor instance = new ExplorerNodeActionVisitor();
 
     public static List<Action> getActions(Content c) {
         List<Action> actions = new ArrayList<>();
