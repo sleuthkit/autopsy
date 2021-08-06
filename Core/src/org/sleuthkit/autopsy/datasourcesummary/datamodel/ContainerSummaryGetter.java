@@ -20,20 +20,30 @@ package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.contentutils.ContainerSummary;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Wrapper class for converting org.sleuthkit.autopsy.contentutils.ContainerSummary functionality into 
- * a DefaultArtifactUpdateGovernor used by Container tab.
+ * Wrapper class for converting
+ * org.sleuthkit.autopsy.contentutils.ContainerSummary functionality into a
+ * DefaultArtifactUpdateGovernor used by Container tab.
  */
 public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
+
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID(),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE.getTypeID()
+    ));
 
     /**
      * Main constructor.
@@ -53,7 +63,7 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
 
     @Override
     public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return ContainerSummary.getArtifactTypeIdsForRefresh();
+        return Collections.unmodifiableSet(ARTIFACT_UPDATE_TYPE_IDS);
     }
 
     /**
@@ -73,7 +83,7 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
             return ContainerSummary.getSizeOfUnallocatedFiles(currentDataSource);
         } catch (NoCurrentCaseException ex) {
             throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }    
+        }
     }
 
     /**
@@ -95,7 +105,7 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
             return ContainerSummary.getOperatingSystems(dataSource);
         } catch (NoCurrentCaseException ex) {
             throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }  
+        }
     }
 
     /**
@@ -117,12 +127,12 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
             return ContainerSummary.getDataSourceType(dataSource);
         } catch (NoCurrentCaseException ex) {
             throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }  
+        }
     }
-    
+
     /**
-     * Retrieves a container data model object containing data about
-     * the data source.
+     * Retrieves a container data model object containing data about the data
+     * source.
      *
      * @param dataSource The data source.
      *

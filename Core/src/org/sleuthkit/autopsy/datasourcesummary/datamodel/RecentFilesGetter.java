@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +32,7 @@ import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentFileDetails;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Wrapper class for converting
@@ -36,6 +40,14 @@ import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.S
  * DefaultArtifactUpdateGovernor used by Recent Files Data Summary tab.
  */
 public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
+
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID(),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID(),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
+            BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
+    ));
 
     /**
      * Default constructor.
@@ -45,7 +57,7 @@ public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
 
     @Override
     public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return RecentFilesSummary.getArtifactTypeIdsForRefresh();
+        return Collections.unmodifiableSet(ARTIFACT_UPDATE_TYPE_IDS);
     }
 
     /**

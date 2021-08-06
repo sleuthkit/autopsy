@@ -58,22 +58,10 @@ public class RecentFilesSummary {
 
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
 
-    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID(),
-            ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(),
-            ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID(),
-            ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-            ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
-    ));
-
     /**
      * Default constructor.
      */
     private RecentFilesSummary() {
-    }
-
-    public static Set<Integer> getArtifactTypeIdsForRefresh() {
-        return Collections.unmodifiableSet(ARTIFACT_UPDATE_TYPE_IDS);
     }
 
     /**

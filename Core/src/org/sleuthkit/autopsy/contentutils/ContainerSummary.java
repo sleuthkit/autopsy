@@ -38,18 +38,9 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class ContainerSummary {
 
-    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID(),
-            BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE.getTypeID()
-    ));
-
     private ContainerSummary() {
     }
-
-    public static Set<Integer> getArtifactTypeIdsForRefresh() {
-        return Collections.unmodifiableSet(ARTIFACT_UPDATE_TYPE_IDS);
-    }
-
+    
     /**
      * Gets the size of unallocated files in a particular datasource.
      *
