@@ -93,6 +93,7 @@ class ExcelExportAction {
         "ExcelExportAction_exportToXLSX_gatheringRecentActivityData=Fetching Recent Activity Data",
         "ExcelExportAction_exportToXLSX_gatheringContainerData=Fetching Container & Image Data",
         "ExcelExportAction_exportToXLSX_gatheringTimelineData=Fetching Timeline Data",
+        "ExcelExportAction_exportToXLSX_gatheringFileData=Fetching File and MIME Type Data",
         "ExcelExportAction_exportToXLSX_writingToFile=Writing to File...",})
 
     void exportToXLSX(ReportProgressPanel progressPanel, DataSource dataSource, String baseReportDir)
@@ -127,7 +128,15 @@ class ExcelExportAction {
         exports = ExportTimeline.getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
-        }        
+        }
+        
+        // Export file and MIME type data
+        progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringFileData());
+        progressPanel.setProgress(4);
+        exports = ExportTypes.getExports(dataSource);
+        if (exports != null) {
+            sheetExports.addAll(exports);
+        }
         
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_writingToFile());
         progressPanel.setProgress(9);

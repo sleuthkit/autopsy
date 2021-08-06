@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,12 @@ package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.contentutils.DataSourceInfoUtilities;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -34,11 +36,10 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Provides methods to query for datasource files by mime type.
+ * Wrapper class for converting org.sleuthkit.autopsy.contentutils.TypesSummary
+ * functionality into a DefaultArtifactUpdateGovernor used by TypesPanel tab.
  */
-public class MimeTypeSummary implements DefaultUpdateGovernor {
-
-    private final SleuthkitCaseProvider provider;
+public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
 
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
             Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
@@ -46,17 +47,7 @@ public class MimeTypeSummary implements DefaultUpdateGovernor {
     /**
      * Main constructor.
      */
-    public MimeTypeSummary() {
-        this(SleuthkitCaseProvider.DEFAULT);
-    }
-
-    /**
-     * Main constructor.
-     *
-     * @param provider The means of obtaining a sleuthkit case.
-     */
-    public MimeTypeSummary(SleuthkitCaseProvider provider) {
-        this.provider = provider;
+    public MimeTypeSummaryGetter() {
     }
 
     @Override
@@ -76,7 +67,7 @@ public class MimeTypeSummary implements DefaultUpdateGovernor {
 
     @Override
     public Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
-        return INGEST_JOB_EVENTS;
+        return Collections.unmodifiableSet(INGEST_JOB_EVENTS);
     }
 
     /**
@@ -99,12 +90,11 @@ public class MimeTypeSummary implements DefaultUpdateGovernor {
      */
     public Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(
-                provider.get(),
-                currentDataSource,
-                "mime_type IN " + getSqlSet(setOfMimeTypes)
-        );
+        try {
+            return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource, "mime_type IN " + getSqlSet(setOfMimeTypes));
+        } catch (NoCurrentCaseException ex) {
+            throw new SleuthkitCaseProviderException("No currently open case.", ex);
+        }
     }
 
     /**
@@ -125,13 +115,13 @@ public class MimeTypeSummary implements DefaultUpdateGovernor {
      */
     public Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(
-                provider.get(),
-                currentDataSource,
-                "mime_type NOT IN " + getSqlSet(setOfMimeTypes)
-                + " AND mime_type IS NOT NULL AND mime_type <> '' "
-        );
+        try {
+            return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
+                    "mime_type NOT IN " + getSqlSet(setOfMimeTypes)
+                    + " AND mime_type IS NOT NULL AND mime_type <> '' ");
+        } catch (NoCurrentCaseException ex) {
+            throw new SleuthkitCaseProviderException("No currently open case.", ex);
+        }
     }
 
     /**
@@ -147,8 +137,11 @@ public class MimeTypeSummary implements DefaultUpdateGovernor {
      */
     public Long getCountOfAllRegularFiles(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), dataSource, null);
+        try {
+            return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(dataSource, null);
+        } catch (NoCurrentCaseException ex) {
+            throw new SleuthkitCaseProviderException("No currently open case.", ex);
+        }
     }
 
     /**
@@ -165,12 +158,11 @@ public class MimeTypeSummary implements DefaultUpdateGovernor {
      */
     public Long getCountOfFilesWithNoMimeType(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(
-                provider.get(),
-                currentDataSource,
-                "(mime_type IS NULL OR mime_type = '') "
-        );
+        try {
+            return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource, "(mime_type IS NULL OR mime_type = '') ");
+        } catch (NoCurrentCaseException ex) {
+            throw new SleuthkitCaseProviderException("No currently open case.", ex);
+        }
     }
 
     /**

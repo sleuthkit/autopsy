@@ -1,0 +1,182 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 - 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.contentutils;
+
+import java.awt.Color;
+import java.sql.SQLException;
+import java.util.Set;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
+
+/**
+ * Helper class for getting summary information on the known files present in the
+ * specified DataSource..
+ */
+public class TypesSummary {
+
+    private TypesSummary() {
+    }
+
+    /**
+     * Get count of regular files (not directories) in a data source.
+     *
+     * @param currentDataSource The data source.
+     *
+     * @return The count.
+     *
+     * @throws TskCoreException
+     * @throws SQLException
+     * @throws NoCurrentCaseException
+     */
+    public static Long getCountOfFiles(DataSource currentDataSource)
+            throws TskCoreException, SQLException, NoCurrentCaseException {
+        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource, null);
+    }
+
+    /**
+     * Get count of allocated files in a data source.
+     *
+     * @param currentDataSource The data source.
+     *
+     * @return The count.
+     *
+     * @throws TskCoreException
+     * @throws SQLException
+     * @throws NoCurrentCaseException
+     */
+    public static Long getCountOfAllocatedFiles(DataSource currentDataSource)
+            throws TskCoreException, SQLException, NoCurrentCaseException {
+
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
+                DataSourceInfoUtilities.getMetaFlagsContainsStatement(TskData.TSK_FS_META_FLAG_ENUM.ALLOC));
+    }
+
+    /**
+     * Get count of unallocated files in a data source.
+     *
+     * @param currentDataSource The data source.
+     *
+     * @return The count.
+     *
+     * @throws TskCoreException
+     * @throws SQLException
+     * @throws NoCurrentCaseException
+     */
+    public static Long getCountOfUnallocatedFiles(DataSource currentDataSource)
+            throws NoCurrentCaseException, TskCoreException, SQLException {
+
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
+                DataSourceInfoUtilities.getMetaFlagsContainsStatement(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC));
+    }
+
+    /**
+     * Get count of directories in a data source.
+     *
+     * @param currentDataSource The data source.
+     *
+     * @return The count.
+     *
+     * @throws TskCoreException
+     * @throws SQLException
+     * @throws NoCurrentCaseException
+     */
+    public static Long getCountOfDirectories(DataSource currentDataSource)
+            throws NoCurrentCaseException, TskCoreException, SQLException {
+
+        return DataSourceInfoUtilities.getCountOfTskFiles(currentDataSource,
+                "meta_type=" + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()
+                + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType());
+    }
+
+    /**
+     * Get count of slack files in a data source.
+     *
+     * @param currentDataSource The data source.
+     *
+     * @return The count.
+     *
+     * @throws TskCoreException
+     * @throws SQLException
+     * @throws NoCurrentCaseException
+     */
+    public static Long getCountOfSlackFiles(DataSource currentDataSource)
+            throws NoCurrentCaseException, TskCoreException, SQLException {
+
+        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource,
+                "type=" + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType());
+    }
+
+    /**
+     * Information concerning a particular file type category.
+     */
+    public static class FileTypeCategoryData {
+
+        private final String label;
+        private final Set<String> mimeTypes;
+        private final Color color;
+
+        /**
+         * Main constructor.
+         *
+         * @param label The label for this slice.
+         * @param mimeTypes The mime types associated with this slice.
+         * @param color The color associated with this slice.
+         */
+        public FileTypeCategoryData(String label, Set<String> mimeTypes, Color color) {
+            this.label = label;
+            this.mimeTypes = mimeTypes;
+            this.color = color;
+        }
+
+        /**
+         * Constructor that accepts FileTypeCategory.
+         *
+         * @param label The label for this slice.
+         * @param mimeTypes The mime types associated with this slice.
+         * @param color The color associated with this slice.
+         */
+        public FileTypeCategoryData(String label, FileTypeUtils.FileTypeCategory fileCategory, Color color) {
+            this(label, fileCategory.getMediaTypes(), color);
+        }
+
+        /**
+         * @return The label for this category.
+         */
+        public String getLabel() {
+            return label;
+        }
+
+        /**
+         * @return The mime types associated with this category.
+         */
+        public Set<String> getMimeTypes() {
+            return mimeTypes;
+        }
+
+        /**
+         * @return The color associated with this category.
+         */
+        public Color getColor() {
+            return color;
+        }
+    }
+}

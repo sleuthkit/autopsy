@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentutils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -45,10 +46,12 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
  */
 public final class DataSourceInfoUtilities {
 
+    public static final String COMMA_FORMAT_STR = "#,###";
+    public static final DecimalFormat COMMA_FORMATTER = new DecimalFormat(COMMA_FORMAT_STR);
+
     /**
      * Gets a count of tsk_files for a particular datasource.
      *
-     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
      *
@@ -56,11 +59,12 @@ public final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      * @throws SQLException
+     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfTskFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
-            throws TskCoreException, SQLException {
+    public static Long getCountOfTskFiles(DataSource currentDataSource, String additionalWhere)
+            throws TskCoreException, SQLException, NoCurrentCaseException {
         if (currentDataSource != null) {
-            return skCase.countFilesWhere(
+            return Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere(
                     "data_source_obj_id=" + currentDataSource.getId()
                     + (StringUtils.isBlank(additionalWhere) ? "" : (" AND " + additionalWhere)));
         }
@@ -70,7 +74,6 @@ public final class DataSourceInfoUtilities {
     /**
      * Gets a count of regular files for a particular datasource.
      *
-     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
      *
@@ -78,22 +81,22 @@ public final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      * @throws SQLException
+     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfRegularFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
-            throws TskCoreException, SQLException {
+    public static Long getCountOfRegularFiles(DataSource currentDataSource, String additionalWhere)
+            throws TskCoreException, SQLException, NoCurrentCaseException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue();
 
         if (StringUtils.isNotBlank(additionalWhere)) {
             whereClause += " AND " + additionalWhere;
         }
 
-        return getCountOfTskFiles(skCase, currentDataSource, whereClause);
+        return getCountOfTskFiles(currentDataSource, whereClause);
     }
 
     /**
      * Gets a count of regular non-slack files for a particular datasource.
      *
-     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
      *
@@ -101,9 +104,10 @@ public final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      * @throws SQLException
+     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfRegNonSlackFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
-            throws TskCoreException, SQLException {
+    public static Long getCountOfRegNonSlackFiles(DataSource currentDataSource, String additionalWhere)
+            throws TskCoreException, SQLException, NoCurrentCaseException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
                 + " AND type<>" + TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType();
 
@@ -111,7 +115,7 @@ public final class DataSourceInfoUtilities {
             whereClause += " AND " + additionalWhere;
         }
 
-        return getCountOfTskFiles(skCase, currentDataSource, whereClause);
+        return getCountOfTskFiles(currentDataSource, whereClause);
     }
 
     /**
@@ -428,5 +432,28 @@ public final class DataSourceInfoUtilities {
     public static Date getDateOrNull(BlackboardArtifact artifact, Type attributeType) {
         Long longVal = getLongOrNull(artifact, attributeType);
         return (longVal == null || longVal == 0) ? null : new Date(longVal * 1000);
+    }
+
+    /**
+     * Returns the long value or zero if longVal is null.
+     *
+     * @param longVal The long value.
+     *
+     * @return The long value or 0 if provided value is null.
+     */
+    public static long getLongOrZero(Long longVal) {
+        return longVal == null ? 0 : longVal;
+    }
+
+    /**
+     * Returns string value of long with comma separators. If null returns a
+     * string of '0'.
+     *
+     * @param longVal The long value.
+     *
+     * @return The string value of the long.
+     */
+    public static String getStringOrZero(Long longVal) {
+        return longVal == null ? "0" : COMMA_FORMATTER.format(longVal);
     }
 }
