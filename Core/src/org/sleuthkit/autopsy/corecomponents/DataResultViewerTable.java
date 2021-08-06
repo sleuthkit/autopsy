@@ -202,7 +202,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         initializePagingSupport();
 
         /*
-         * Disable the CSV export button for the common properties results 
+         * Disable the CSV export button for the common properties results
          */
         if (this instanceof org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributesSearchResultsViewerTable) {
             exportCSVButton.setEnabled(false);
@@ -764,9 +764,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         /*
-        NOTE: it is possible to have "discontinuities" in the keys (i.e. column numbers)
-        of the map. This happens when some of the columns had a previous setting, and 
-        other columns did not. We need to make the keys 0-indexed and continuous.
+         * NOTE: it is possible to have "discontinuities" in the keys (i.e.
+         * column numbers) of the map. This happens when some of the columns had
+         * a previous setting, and other columns did not. We need to make the
+         * keys 0-indexed and continuous.
          */
         compactPropertiesMap();
 
