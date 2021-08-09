@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -442,8 +442,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
         }
 
-        setColumnWidths();
-
         /*
          * Load column sorting information from preferences file and apply it to
          * columns.
@@ -465,6 +463,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         loadColumnVisibility();
 
+        /*
+         * Set the column widths.
+         *
+         * IMPORTANT: This needs to come after the preceding calls to determine
+         * the columns that will be displayed and their layout, which includes a
+         * call to ResultViewerPersistence.getAllChildProperties(). That method
+         * calls Children.getNodes(true) on the root node to ensure ALL of the
+         * nodes have been created in the NetBeans asynch child creation thread,
+         * and then uses the first one hundred nodes to determine which columns
+         * to display.
+         */
+        setColumnWidths();        
+        
         /*
          * If one of the child nodes of the root node is to be selected, select
          * it.
