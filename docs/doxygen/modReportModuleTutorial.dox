@@ -45,7 +45,7 @@ A third approach is to call org.sleuthkit.autopsy.casemodule.Case.getDataSources
 
 \subsubsection python_tutorial3_getting_artifacts Getting Blackboard Artifacts
 
-The blackboard is where modules store their analysis results. If you want to include them in your report, then there are several methods that you could use. If you want all artifacts of a given type, then you can use <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/latest/classorg_1_1sleuthkit_1_1datamodel_1_1_sleuthkit_case.html#a0b8396fac6c40d8291cc48732dd15d74">SleuthkitCase.getBlackboardArtifacts()</a>. There are many variations of this method that take different arguments. Look at them to find the one that is most convenient for you.
+The blackboard is where modules store their analysis results. If you want to include them in your report, then there are several methods that you could use. If you want all artifacts of a given type, then you can use <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest//classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html#af7261eb61cd05a4d457910eed599dd54">getDataArtifacts()</a>or <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest//classorg_1_1sleuthkit_1_1datamodel_1_1_blackboard.html#a563cbd08810a1b31ef2ecf0ebf0b7356">Blackboard.getAnalysisResultsByType()</a>. There are variations of these methods that take different arguments. Look at them to find the one that is most convenient for you.
 
 \subsubsection python_tutorial3_getting_tags Getting Tagged Files or Artifacts
 
