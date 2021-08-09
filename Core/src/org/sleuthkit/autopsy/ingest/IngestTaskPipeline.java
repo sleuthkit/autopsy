@@ -26,8 +26,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.concurrent.GuardedBy;
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -36,25 +34,21 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * An abstract superclass for pipelines of ingest modules that execute ingest
- * tasks for an ingest job.
+ * tasks for an ingest job. Subclasses need to extend this class and to
+ * implement a specialization of the inner PipelineModule abstract superclass.
  *
- * Conceptually, an ingest job pipeline is divided into one or more "sub
- * pipelines" that are actually ingest task pipelines of varying types. Thus,
- * the type parameter of this generic is an ingest task type.
- *
- * IMPORTANT: Subclasses need to both extend this class, and to implement a
- * specialization of the inner PipelineModule abstract superclass.
+ * NOTE ON MULTI-THREADING POLICY: This class is primarily designed for use
+ * by one thread at a time. There are a few status fields that are volatile to
+ * ensure visibility to threads making ingest progress snapshots, but methods
+ * such as startUp(), executeTask() and shutDown() are not synchronized.
  *
  * @param <T> The ingest task type.
  */
-@ThreadSafe
 abstract class IngestTaskPipeline<T extends IngestTask> {
 
     private static final Logger logger = Logger.getLogger(IngestTaskPipeline.class.getName());
     private final IngestJobPipeline ingestJobPipeline;
-    @GuardedBy("this")
     private final List<IngestModuleTemplate> moduleTemplates;
-    @GuardedBy("this")
     private final List<PipelineModule<T>> modules;
     private volatile Date startTime;
     private volatile boolean running;
@@ -87,7 +81,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      *
      * @return True or false.
      */
-    synchronized boolean isEmpty() {
+    boolean isEmpty() {
         return modules.isEmpty();
     }
 
@@ -107,7 +101,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      *
      * @return A list of ingest module start up errors, possibly empty.
      */
-    synchronized List<IngestModuleError> startUp() {
+    List<IngestModuleError> startUp() {
         List<IngestModuleError> errors = new ArrayList<>();
         if (!running) {
             /*
@@ -201,7 +195,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      *
      * @return A list of ingest module task processing errors, possibly empty.
      */
-    synchronized List<IngestModuleError> executeTask(T task) {
+    List<IngestModuleError> executeTask(T task) {
         List<IngestModuleError> errors = new ArrayList<>();
         if (running) {
             if (!ingestJobPipeline.isCancelled()) {
@@ -324,7 +318,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      *
      * @return A list of shut down errors, possibly empty.
      */
-    synchronized List<IngestModuleError> shutDown() {
+    List<IngestModuleError> shutDown() {
         List<IngestModuleError> errors = new ArrayList<>();
         if (running == true) {
             for (PipelineModule<T> module : modules) {
