@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummaryGetter;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
@@ -98,10 +98,10 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
      * Creates a new DataSourceUserActivityPanel.
      */
     public AnalysisPanel() {
-        this(new AnalysisSummary());
+        this(new AnalysisSummaryGetter());
     }
 
-    public AnalysisPanel(AnalysisSummary analysisData) {
+    public AnalysisPanel(AnalysisSummaryGetter analysisData) {
         super(analysisData);
 
         hashsetsFetcher = (dataSource) -> analysisData.getHashsetCounts(dataSource);
@@ -225,18 +225,6 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    /* ELTODO
-    @Override
-    List<ExcelSheetExport> getExports(DataSource dataSource) {
-        return Stream.of(
-                getTableExport(hashsetsFetcher, DEFAULT_COLUMNS, Bundle.AnalysisPanel_hashsetHits_tabName(), dataSource),
-                getTableExport(keywordsFetcher, DEFAULT_COLUMNS, Bundle.AnalysisPanel_keywordHits_tabName(), dataSource),
-                getTableExport(interestingItemsFetcher, DEFAULT_COLUMNS, Bundle.AnalysisPanel_interestingItemHits_tabName(), dataSource))
-                .filter(sheet -> sheet != null)
-                .collect(Collectors.toList());
-    }*/
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

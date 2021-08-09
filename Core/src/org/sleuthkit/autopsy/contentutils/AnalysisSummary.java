@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.contentutils;
 
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -30,53 +28,25 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.autopsy.contentutils.DataSourceInfoUtilities;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Providing data for the data source analysis tab.
+ * Helper class for getting hash set hits, keyword hits, and interesting item
+ * hits within a datasource.
  */
-public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
+public class AnalysisSummary {
 
     private static final BlackboardAttribute.Type TYPE_SET_NAME = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME);
-
     private static final Set<String> EXCLUDED_KEYWORD_SEARCH_ITEMS = new HashSet<>();
 
-    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-            ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
-            ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
-            ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
-    ));
-
-    private final SleuthkitCaseProvider provider;
-
-    /**
-     * Main constructor.
-     */
-    public AnalysisSummary() {
-        this(SleuthkitCaseProvider.DEFAULT);
-    }
-
-    /**
-     * Main constructor.
-     *
-     * @param provider The means of obtaining a sleuthkit case.
-     */
-    public AnalysisSummary(SleuthkitCaseProvider provider) {
-        this.provider = provider;
-    }
-
-    @Override
-    public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return ARTIFACT_UPDATE_TYPE_IDS;
+    private AnalysisSummary() {
     }
 
     /**
@@ -89,7 +59,7 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public List<Pair<String, Long>> getHashsetCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
+    public static List<Pair<String, Long>> getHashsetCounts(DataSource dataSource) throws NoCurrentCaseException, TskCoreException {
         return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT);
     }
 
@@ -103,7 +73,7 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public List<Pair<String, Long>> getKeywordCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
+    public static List<Pair<String, Long>> getKeywordCounts(DataSource dataSource) throws NoCurrentCaseException, TskCoreException {
         return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT).stream()
                 // make sure we have a valid set and that that set does not belong to the set of excluded items
                 .filter((pair) -> pair != null && pair.getKey() != null && !EXCLUDED_KEYWORD_SEARCH_ITEMS.contains(pair.getKey().toUpperCase().trim()))
@@ -122,7 +92,7 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public List<Pair<String, Long>> getInterestingItemCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
+    public static List<Pair<String, Long>> getInterestingItemCounts(DataSource dataSource) throws NoCurrentCaseException, TskCoreException {
         return getCountsData(dataSource, TYPE_SET_NAME, ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
     }
 
@@ -137,22 +107,21 @@ public class AnalysisSummary implements DefaultArtifactUpdateGovernor {
      *         value and the value is the count of items found. This list is
      *         sorted by the count descending max to min.
      *
-     * @throws SleuthkitCaseProviderException
+     * @throws NoCurrentCaseException
      * @throws TskCoreException
      */
-    private List<Pair<String, Long>> getCountsData(DataSource dataSource, BlackboardAttribute.Type keyType, ARTIFACT_TYPE... artifactTypes)
-            throws SleuthkitCaseProviderException, TskCoreException {
+    private static List<Pair<String, Long>> getCountsData(DataSource dataSource, BlackboardAttribute.Type keyType, ARTIFACT_TYPE... artifactTypes)
+            throws NoCurrentCaseException, TskCoreException {
 
         if (dataSource == null) {
             return Collections.emptyList();
         }
 
         List<BlackboardArtifact> artifacts = new ArrayList<>();
-        SleuthkitCase skCase = provider.get();
 
         // get all artifacts in one list for each artifact type
         for (ARTIFACT_TYPE type : artifactTypes) {
-            artifacts.addAll(skCase.getBlackboard().getArtifacts(type.getTypeID(), dataSource.getId()));
+            artifacts.addAll(Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(type.getTypeID(), dataSource.getId()));
         }
 
         // group those based on the value of the attribute type that should serve as a key

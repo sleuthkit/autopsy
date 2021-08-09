@@ -60,8 +60,9 @@ class ExcelExportAction {
      * Generates an xlsx path for the data source summary export.
      *
      * @param dataSourceName The name of the data source.
+     *
      * @return The file to which the excel document should be written or null if
-     * file already exists or cancellation.
+     *         file already exists or cancellation.
      */
     @NbBundle.Messages({
         "ExcelExportAction_getXLSXPath_directory=DataSourceSummary",})
@@ -82,8 +83,9 @@ class ExcelExportAction {
      * Action that handles updating progress and exporting data from the tabs.
      *
      * @param progressPanel The progress indicator.
-     * @param dataSource The data source to be exported.
-     * @param path The path of the excel export.
+     * @param dataSource    The data source to be exported.
+     * @param path          The path of the excel export.
+     *
      * @throws InterruptedException
      * @throws IOException
      * @throws ExcelExportException
@@ -94,6 +96,7 @@ class ExcelExportAction {
         "ExcelExportAction_exportToXLSX_gatheringContainerData=Fetching Container & Image Data",
         "ExcelExportAction_exportToXLSX_gatheringTimelineData=Fetching Timeline Data",
         "ExcelExportAction_exportToXLSX_gatheringFileData=Fetching File and MIME Type Data",
+        "ExcelExportAction_exportToXLSX_gatheringAnalysisData=Fetching Analysis Data",
         "ExcelExportAction_exportToXLSX_writingToFile=Writing to File...",})
 
     void exportToXLSX(ReportProgressPanel progressPanel, DataSource dataSource, String baseReportDir)
@@ -113,7 +116,7 @@ class ExcelExportAction {
         if (exports != null) {
             sheetExports.addAll(exports);
         }
-        
+
         // Export Container & Image info data
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringContainerData());
         progressPanel.setProgress(2);
@@ -129,7 +132,7 @@ class ExcelExportAction {
         if (exports != null) {
             sheetExports.addAll(exports);
         }
-        
+
         // Export file and MIME type data
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringFileData());
         progressPanel.setProgress(4);
@@ -137,7 +140,15 @@ class ExcelExportAction {
         if (exports != null) {
             sheetExports.addAll(exports);
         }
-        
+
+        // Export hash set hits, keyword hits, and interesting item hits
+        progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringAnalysisData());
+        progressPanel.setProgress(5);
+        exports = ExportAnalysisResults.getExports(dataSource);
+        if (exports != null) {
+            sheetExports.addAll(exports);
+        }
+
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_writingToFile());
         progressPanel.setProgress(9);
         ExcelExport.writeExcel(sheetExports, reportFile);
@@ -159,14 +170,13 @@ class ExcelExportAction {
              * ExcelExportDialog(WindowManager.getDefault().getMainWindow(),
              * path); dialog.setResizable(false);
              * dialog.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-             * dialog.setVisible(true); dialog.toFront();
-            });
+             * dialog.setVisible(true); dialog.toFront(); });
              */
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.WARNING, "There was an error attaching report to case.", ex);
         }
     }
-    
+
     /**
      * Function that converts data into a excel sheet data.
      */
@@ -176,7 +186,9 @@ class ExcelExportAction {
          * Function that converts data into an excel sheet.
          *
          * @param data The data.
+         *
          * @return The excel sheet export.
+         *
          * @throws ExcelExportException
          */
         ExcelSheetExport convert(T data) throws ExcelExportException;
@@ -212,9 +224,10 @@ class ExcelExportAction {
      * possible excel exceptions.
      *
      * @param excelConverter Function to convert data to an excel sheet export.
-     * @param data The data. If data is null, null will be returned.
-     * @param sheetName The name(s) of the sheet (to be used in the error
-     * message).
+     * @param data           The data. If data is null, null will be returned.
+     * @param sheetName      The name(s) of the sheet (to be used in the error
+     *                       message).
+     *
      * @return The excel sheet export.
      */
     protected static <T> ExcelSheetExport convertToExcel(ExcelExportFunction<T> excelConverter, T data, String sheetName) {
@@ -236,10 +249,12 @@ class ExcelExportAction {
      * Returns an excel sheet export given the fetching of data or null if no
      * export created.
      *
-     * @param dataFetcher The means of fetching data.
+     * @param dataFetcher    The means of fetching data.
      * @param excelConverter The means of converting data to excel.
-     * @param sheetName The name of the sheet (for error handling reporting).
-     * @param ds The data source to use for fetching data.
+     * @param sheetName      The name of the sheet (for error handling
+     *                       reporting).
+     * @param ds             The data source to use for fetching data.
+     *
      * @return The excel sheet export or null if no export could be generated.
      */
     protected static <T> ExcelSheetExport getExport(
@@ -254,8 +269,9 @@ class ExcelExportAction {
      * Returns an excel table export of the data or null if no export created.
      *
      * @param columnsModel The model for the columns.
-     * @param sheetName The name for the sheet.
-     * @param data The data to be exported.
+     * @param sheetName    The name for the sheet.
+     * @param data         The data to be exported.
+     *
      * @return The excel table export or null if no export could be generated.
      */
     protected static <T, C extends CellModel> ExcelSheetExport getTableExport(List<ColumnModel<T, C>> columnsModel,
@@ -269,11 +285,12 @@ class ExcelExportAction {
     /**
      * Returns an excel table export of the data or null if no export created.
      *
-     * @param dataFetcher The means of fetching data for the data source and the
-     * export.
+     * @param dataFetcher  The means of fetching data for the data source and
+     *                     the export.
      * @param columnsModel The model for the columns.
-     * @param sheetName The name for the sheet.
-     * @param ds The data source.
+     * @param sheetName    The name for the sheet.
+     * @param ds           The data source.
+     *
      * @return The excel export or null if no export created.
      */
     protected static <T, C extends CellModel> ExcelSheetExport getTableExport(
