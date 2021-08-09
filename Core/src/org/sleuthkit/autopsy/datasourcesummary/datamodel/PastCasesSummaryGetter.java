@@ -1,0 +1,76 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
+import org.sleuthkit.autopsy.contentutils.PastCasesSummary;
+import org.sleuthkit.autopsy.contentutils.PastCasesSummary.PastCasesResult;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
+
+/**
+ * Wrapper class for converting org.sleuthkit.autopsy.contentutils.PastCasesSummary
+ * functionality into a DefaultArtifactUpdateGovernor used by PastCases tab.
+ */
+public class PastCasesSummaryGetter implements DefaultArtifactUpdateGovernor {
+
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+            ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
+    ));
+
+    public PastCasesSummaryGetter() {
+    }
+
+    @Override
+    public Set<Integer> getArtifactTypeIdsForRefresh() {
+        return Collections.unmodifiableSet(ARTIFACT_UPDATE_TYPE_IDS);
+    }
+
+    /**
+     * Returns the past cases data to be shown in the past cases tab.
+     *
+     * @param dataSource The data source.
+     *
+     * @return The retrieved data or null if null dataSource.
+     *
+     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     */
+    public PastCasesResult getPastCasesData(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
+
+        if (dataSource == null) {
+            return null;
+        }
+
+        try {
+            return PastCasesSummary.getPastCasesData(dataSource);
+        } catch (NoCurrentCaseException ex) {
+            throw new SleuthkitCaseProviderException("No currently open case.", ex);
+        }
+    }
+}

@@ -22,8 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
+import org.sleuthkit.autopsy.contentutils.PastCasesSummary.PastCasesResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummaryGetter;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
@@ -80,19 +80,19 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
     private final DataFetcher<DataSource, PastCasesResult> pastCasesFetcher;
-    
+
     public PastCasesPanel() {
-        this(new PastCasesSummary());
+        this(new PastCasesSummaryGetter());
     }
 
     /**
      * Creates new form PastCasesPanel
      */
-    public PastCasesPanel(PastCasesSummary pastCaseData) {
+    public PastCasesPanel(PastCasesSummaryGetter pastCaseData) {
         super(pastCaseData);
 
         this.pastCasesFetcher = (dataSource) -> pastCaseData.getPastCasesData(dataSource);
-        
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(
@@ -123,20 +123,6 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     protected void onNewDataSource(DataSource dataSource) {
         onNewDataSource(dataFetchComponents, tables, dataSource);
     }
-
-    /* ELTODO
-    @Override
-    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
-        PastCasesResult result = getFetchResult(pastCasesFetcher, "Past cases sheets", dataSource);
-        if (result == null) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.asList(
-                getTableExport(DEFAULT_TEMPLATE, Bundle.PastCasesPanel_notableFileTable_tabName(), result.getTaggedNotable()),
-                getTableExport(DEFAULT_TEMPLATE, Bundle.PastCasesPanel_sameIdsTable_tabName(), result.getSameIdsResults())
-        );
-    }*/
 
     @Override
     public void close() {

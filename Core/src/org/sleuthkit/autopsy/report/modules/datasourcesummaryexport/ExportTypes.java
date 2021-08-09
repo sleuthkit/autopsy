@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Panel for displaying summary information on the known files present in the
+ * Class to export summary information on the known files present in the
  * specified DataSource.
  */
 @Messages({

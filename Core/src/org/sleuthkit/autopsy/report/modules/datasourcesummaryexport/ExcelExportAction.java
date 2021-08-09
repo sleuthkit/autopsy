@@ -97,6 +97,7 @@ class ExcelExportAction {
         "ExcelExportAction_exportToXLSX_gatheringTimelineData=Fetching Timeline Data",
         "ExcelExportAction_exportToXLSX_gatheringFileData=Fetching File and MIME Type Data",
         "ExcelExportAction_exportToXLSX_gatheringAnalysisData=Fetching Analysis Data",
+        "ExcelExportAction_exportToXLSX_gatheringPastData=Fetching Historical Data",
         "ExcelExportAction_exportToXLSX_writingToFile=Writing to File...",})
 
     void exportToXLSX(ReportProgressPanel progressPanel, DataSource dataSource, String baseReportDir)
@@ -145,6 +146,14 @@ class ExcelExportAction {
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringAnalysisData());
         progressPanel.setProgress(5);
         exports = ExportAnalysisResults.getExports(dataSource);
+        if (exports != null) {
+            sheetExports.addAll(exports);
+        }
+        
+        // Export hash set hits, keyword hits, and interesting item hits
+        progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringPastData());
+        progressPanel.setProgress(6);
+        exports = ExportPastCases.getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.contentutils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,14 +25,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
-import org.sleuthkit.autopsy.contentutils.DataSourceInfoUtilities;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -63,7 +61,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * d) The content of that TSK_COMMENT attribute will be of the form "Previous
  * Case: case1,case2...caseN"
  */
-public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
+public class PastCasesSummary {
 
     /**
      * Return type for results items in the past cases tab.
@@ -99,11 +97,6 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
         }
     }
 
-    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-            ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-    ));
-
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
     private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COMMENT);
     private static final BlackboardAttribute.Type TYPE_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
@@ -118,39 +111,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
     private static final String CASE_SEPARATOR = ",";
     private static final String PREFIX_END = ":";
 
-    private final SleuthkitCaseProvider caseProvider;
-    private final java.util.logging.Logger logger;
-
-    /**
-     * Main constructor.
-     */
-    public PastCasesSummary() {
-        this(
-                SleuthkitCaseProvider.DEFAULT,
-                org.sleuthkit.autopsy.coreutils.Logger.getLogger(PastCasesSummary.class.getName())
-        );
-
-    }
-
-    /**
-     * Main constructor with external dependencies specified. This constructor
-     * is designed with unit testing in mind since mocked dependencies can be
-     * utilized.
-     *
-     * @param provider The object providing the current SleuthkitCase.
-     * @param logger   The logger to use.
-     */
-    public PastCasesSummary(
-            SleuthkitCaseProvider provider,
-            java.util.logging.Logger logger) {
-
-        this.caseProvider = provider;
-        this.logger = logger;
-    }
-
-    @Override
-    public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return ARTIFACT_UPDATE_TYPE_IDS;
+    private PastCasesSummary() {
     }
 
     /**
@@ -225,7 +186,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      * @return The list of unique cases and their occurrences sorted from max to
      *         min.
      */
-    private List<Pair<String, Long>> getCaseCounts(Stream<String> cases) {
+    private static List<Pair<String, Long>> getCaseCounts(Stream<String> cases) {
         Collection<List<String>> groupedCases = cases
                 // group by case insensitive compare of cases
                 .collect(Collectors.groupingBy((caseStr) -> caseStr.toUpperCase().trim()))
@@ -250,21 +211,24 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @return The artifact if found or null if not.
      *
-     * @throws SleuthkitCaseProviderException
+     * @throws NoCurrentCaseException
      */
-    private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
+    private static BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws NoCurrentCaseException {
         Long parentId = DataSourceInfoUtilities.getLongOrNull(artifact, TYPE_ASSOCIATED_ARTIFACT);
         if (parentId == null) {
             return null;
         }
 
-        SleuthkitCase skCase = caseProvider.get();
         try {
-            return skCase.getArtifactByArtifactId(parentId);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING,
-                    String.format("There was an error fetching the parent artifact of a TSK_INTERESTING_ARTIFACT_HIT (parent id: %d)", parentId),
-                    ex);
+            return Case.getCurrentCaseThrows().getSleuthkitCase().getArtifactByArtifactId(parentId);
+        } catch (TskCoreException ignore) {
+            /*
+             * I'm not certain why we ignore this, but it was previously simply
+             * logged as warning so I'm keeping the original logic
+             * logger.log(Level.WARNING, String.format("There was an error
+             * fetching the parent artifact of a TSK_INTERESTING_ARTIFACT_HIT
+             * (parent id: %d)", parentId), ex);
+             */
             return null;
         }
     }
@@ -276,9 +240,9 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @return True if there is a device associated artifact.
      *
-     * @throws SleuthkitCaseProviderException
+     * @throws NoCurrentCaseException
      */
-    private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
+    private static boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws NoCurrentCaseException {
         BlackboardArtifact parent = getParentArtifact(artifact);
         if (parent == null) {
             return false;
@@ -294,17 +258,17 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @return The retrieved data or null if null dataSource.
      *
-     * @throws SleuthkitCaseProviderException
+     * @throws NoCurrentCaseException
      * @throws TskCoreException
      */
-    public PastCasesResult getPastCasesData(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
+    public static PastCasesResult getPastCasesData(DataSource dataSource)
+            throws NoCurrentCaseException, TskCoreException {
 
         if (dataSource == null) {
             return null;
         }
 
-        SleuthkitCase skCase = caseProvider.get();
+        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
 
         List<String> deviceArtifactCases = new ArrayList<>();
         List<String> nonDeviceArtifactCases = new ArrayList<>();
