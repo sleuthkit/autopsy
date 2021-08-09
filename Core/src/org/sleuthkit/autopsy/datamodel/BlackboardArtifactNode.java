@@ -263,7 +263,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         
         try {
             //The lookup for a file may or may not exist so we define the srcContent as the parent.
-            srcContent = artifact.getParent();
+            srcContent = getSourceContent(artifact);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, MessageFormat.format("Error getting the parent of the artifact for (artifact objID={0})", artifact.getId()), ex);
         }
