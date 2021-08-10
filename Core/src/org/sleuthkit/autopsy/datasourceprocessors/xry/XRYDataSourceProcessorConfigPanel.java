@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import javax.swing.JPanel;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
 
 /**
  * Allows an examiner to configure the XRY Data source processor.
@@ -48,6 +49,8 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
     //Used to communicate with the DSP infrastructure. This config
     //panel will indicate when it is ready for an update.
     private final PropertyChangeSupport pcs;
+    
+    private final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
     
     /**
      * Creates new form XRYDataSourceConfigPanel. 
@@ -191,7 +194,7 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
      * report folder.
      */
     private void fileBrowserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileBrowserButtonActionPerformed
-        JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = chooserHelper.getChooser();
         fileChooser.setMultiSelectionEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         Optional<Path> lastUsedPath = getLastUsedPath();

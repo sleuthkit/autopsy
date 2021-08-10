@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 
 /**
@@ -58,7 +59,8 @@ final class LocalDiskPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private LocalDisk localDisk;
     private boolean enableNext = false;
-    private final JFileChooser fc = new JFileChooser();
+    private JFileChooser fc;
+    private final JFileChooserHelper chooserHelper;
 
     /**
      * Creates new form LocalDiskPanel
@@ -68,6 +70,7 @@ final class LocalDiskPanel extends JPanel {
         customInit();
         createTimeZoneList();
         createSectorSizeList();
+        chooserHelper = JFileChooserHelper.getHelper();
     }
 
     /**
@@ -261,6 +264,7 @@ final class LocalDiskPanel extends JPanel {
     }//GEN-LAST:event_pathTextFieldKeyReleased
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
+        fc = chooserHelper.getChooser();
         String oldText = pathTextField.getText();
         // set the current directory of the FileChooser if the ImagePath Field is valid
         File currentFile = new File(oldText);

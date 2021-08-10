@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,6 +65,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 
 /**
@@ -93,6 +94,8 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String DB_NAME_PARAM = "dbName";
     private static final String KNOWN_STATUS_PARAM = "knownStatus";
     private static final Pattern OFFICIAL_FILENAME = Pattern.compile("(?<" + DB_NAME_PARAM + ">.+?)\\.(?<" + KNOWN_STATUS_PARAM + ">.+?)\\." + KDB_EXT);
+    
+    private final JFileChooserHelper chooserHelper;
 
     private static final FilenameFilter DEFAULT_KDB_FILTER = new FilenameFilter() {
         @Override
@@ -136,6 +139,7 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     private HashDbManager() {
+        chooserHelper = JFileChooserHelper.getHelper();
         loadHashsetsConfiguration();
     }
 
@@ -870,7 +874,7 @@ public class HashDbManager implements PropertyChangeListener {
 
     private String searchForFile() {
         String filePath = null;
-        JFileChooser fc = new JFileChooser();
+        JFileChooser fc = chooserHelper.getChooser();
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         String[] EXTENSION = new String[]{"txt", "idx", "hash", "Hash", "kdb"}; //NON-NLS

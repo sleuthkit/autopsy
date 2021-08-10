@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
 
 /**
  * A file content viewer for SQLite database files.
@@ -74,6 +75,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private int currPage = 0; // curr page of rows being displayed
 
     SwingWorker<?, ?> worker;
+    
+    private final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
 
     /**
      * Constructs a file content viewer for SQLite database files.
@@ -280,7 +283,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private void exportCsvButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCsvButtonActionPerformed
         Case openCase = Case.getCurrentCase();
         File caseDirectory = new File(openCase.getExportDirectory());
-        JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = chooserHelper.getChooser();
         fileChooser.setDragEnabled(false);
         fileChooser.setCurrentDirectory(caseDirectory);
         //Set a filter to let the filechooser only work for csv files

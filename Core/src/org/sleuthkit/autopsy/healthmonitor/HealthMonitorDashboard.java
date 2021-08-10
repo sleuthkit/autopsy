@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
 
 /**
  * Dashboard for viewing metrics and controlling the health monitor.
@@ -86,6 +87,8 @@ public class HealthMonitorDashboard {
     private JDialog dialog = null;
     private final Container parentWindow;
     
+    private final JFileChooserHelper chooserHelper;
+    
     /**
      * Create an instance of the dashboard.
      * Call display() after creation to show the dashboard.
@@ -95,6 +98,7 @@ public class HealthMonitorDashboard {
         timingData = new HashMap<>();
         userData = new ArrayList<>();
         parentWindow = parent;
+        chooserHelper = JFileChooserHelper.getHelper();
     }
     
     /**
@@ -495,7 +499,7 @@ public class HealthMonitorDashboard {
         reportButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
-                JFileChooser reportFileChooser = new JFileChooser();
+                JFileChooser reportFileChooser = chooserHelper.getChooser();
                 reportFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 reportFileChooser.setCurrentDirectory(new File(UserPreferences.getHealthMonitorReportPath()));
                 final DateFormat csvTimestampFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");

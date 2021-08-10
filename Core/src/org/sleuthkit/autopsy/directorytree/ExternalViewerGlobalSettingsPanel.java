@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
 
 /**
  * An options panel for the user to create, edit, and delete associations for
@@ -42,9 +43,13 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private ExternalViewerGlobalSettingsTableModel tableModel;
+    private static final long serialVersionUID = 1L;
 
-    public ExternalViewerGlobalSettingsPanel() {
+    private ExternalViewerGlobalSettingsTableModel tableModel;
+    
+    private final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
+
+    ExternalViewerGlobalSettingsPanel() {
         this(new ExternalViewerGlobalSettingsTableModel(new String[] {
             "Mime type/Extension", "Application"}));
     }
@@ -52,7 +57,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     /**
      * Creates new form ExternalViewerGlobalSettingsPanel
      */
-    public ExternalViewerGlobalSettingsPanel(ExternalViewerGlobalSettingsTableModel tableModel) {
+    ExternalViewerGlobalSettingsPanel(ExternalViewerGlobalSettingsTableModel tableModel) {
         initComponents();
         this.tableModel = tableModel;
         customizeComponents(tableModel);
@@ -335,7 +340,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 
     private void browseHxDDirectoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseHxDDirectoryActionPerformed
-        JFileChooser fileWindow = new JFileChooser();
+        JFileChooser fileWindow = chooserHelper.getChooser();
         fileWindow.setFileSelectionMode(JFileChooser.FILES_ONLY);
         GeneralFilter exeFilter = new GeneralFilter(GeneralFilter.EXECUTABLE_EXTS, GeneralFilter.EXECUTABLE_DESC);
         File HxDPathFile = new File(HxDPath.getText());

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2020 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,21 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
+import java.awt.Cursor;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FilenameUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -56,12 +62,14 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
     private static final String DEFAULT_FILE_NAME = NbBundle
             .getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.defaultFileName");
+    private static final long serialVersionUID = 1L;
     private JFileChooser fileChooser = null;
     private HashDb newHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbCreate_Path";
     private CentralRepoOrganization selectedOrg = null;
     private List<CentralRepoOrganization> orgs = null;
     static final String HASH_DATABASE_DIR_NAME = "HashDatabases";
+    private final FutureTask<CustomFileChooser> futureFileChooser = new FutureTask<>(CustomFileChooser::new);
 
     /**
      * Displays a dialog that allows a user to create a new hash database and
@@ -70,10 +78,12 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
      */
     HashDbCreateDatabaseDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.createHashDbMsg"), true);
-        initFileChooser();
         initComponents();
         enableComponents();
         display();
+        
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(futureFileChooser);
     }
 
     /**
@@ -84,43 +94,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     HashDb getHashDatabase() {
         return newHashDb;
     }
-
-    private void initFileChooser() {
-        fileChooser = new JFileChooser() {
-            @Override
-            public void approveSelection() {
-                File selectedFile = getSelectedFile();
-                if (!FilenameUtils.getExtension(selectedFile.getName()).equalsIgnoreCase(HashDbManager.getHashDatabaseFileExtension())) {
-                    if (JOptionPane.showConfirmDialog(this,
-                            NbBundle.getMessage(this.getClass(),
-                                    "HashDbCreateDatabaseDialog.hashDbMustHaveFileExtensionMsg",
-                                    HashDbManager.getHashDatabaseFileExtension()),
-                            NbBundle.getMessage(this.getClass(),
-                                    "HashDbCreateDatabaseDialog.fileNameErr"),
-                            JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
-                        cancelSelection();
-                    }
-                    return;
-                }
-                if (selectedFile.exists()) {
-                    if (JOptionPane.showConfirmDialog(this,
-                            NbBundle.getMessage(this.getClass(),
-                                    "HashDbCreateDatabaseDialog.fileNameAlreadyExistsMsg"),
-                            NbBundle.getMessage(this.getClass(),
-                                    "HashDbCreateDatabaseDialog.fileExistsErr"),
-                            JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
-                        cancelSelection();
-                    }
-                    return;
-                }
-                super.approveSelection();
-            }
-        };
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setDragEnabled(false);
-        fileChooser.setMultiSelectionEnabled(false);
-    }
-
+    
     private void display() {
         setLocationRelativeTo(getOwner());
         setVisible(true);
@@ -167,6 +141,43 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         } catch (CentralRepoException ex) {
             JOptionPane.showMessageDialog(this, Bundle.HashDbCreateDatabaseDialog_populateOrgsError_message());
             Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Failure loading organizations", ex);
+        }
+    }
+    
+    /**
+     * Customize the JFileChooser.
+     */
+    private class CustomFileChooser extends JFileChooser {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void approveSelection() {
+            File selectedFile = getSelectedFile();
+            if (!FilenameUtils.getExtension(selectedFile.getName()).equalsIgnoreCase(HashDbManager.getHashDatabaseFileExtension())) {
+                if (JOptionPane.showConfirmDialog(this,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbCreateDatabaseDialog.hashDbMustHaveFileExtensionMsg",
+                                HashDbManager.getHashDatabaseFileExtension()),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbCreateDatabaseDialog.fileNameErr"),
+                        JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+                    cancelSelection();
+                }
+                return;
+            }
+            if (selectedFile.exists()) {
+                if (JOptionPane.showConfirmDialog(this,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbCreateDatabaseDialog.fileNameAlreadyExistsMsg"),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbCreateDatabaseDialog.fileExistsErr"),
+                        JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION) {
+                    cancelSelection();
+                }
+                return;
+            }
+            super.approveSelection();
         }
     }
 
@@ -435,6 +446,22 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                 path.append(File.separator).append(DEFAULT_FILE_NAME);
             }
             path.append(".").append(HashDbManager.getHashDatabaseFileExtension());
+            
+            if(fileChooser == null) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                try {
+                    fileChooser = futureFileChooser.get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    fileChooser = new CustomFileChooser();
+                }
+               
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                fileChooser.setDragEnabled(false);
+                fileChooser.setMultiSelectionEnabled(false);
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+            
+            
             fileChooser.setSelectedFile(new File(path.toString()));
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
                 File databaseFile = fileChooser.getSelectedFile();

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -45,7 +46,8 @@ class MissingImageDialog extends javax.swing.JDialog {
     long obj_id;
     SleuthkitCase db;
 
-    private final JFileChooser fileChooser = new JFileChooser();
+    private JFileChooser fileChooser;
+    private final JFileChooserHelper chooserHelper;
 
     /**
      * Instantiate a MissingImageDialog.
@@ -58,17 +60,8 @@ class MissingImageDialog extends javax.swing.JDialog {
         this.obj_id = obj_id;
         this.db = db;
         initComponents();
-
-        fileChooser.setDragEnabled(false);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setMultiSelectionEnabled(false);
-
-        List<FileFilter> fileFiltersList = ImageDSProcessor.getFileFiltersList();
-        for (FileFilter fileFilter : fileFiltersList) {
-            fileChooser.addChoosableFileFilter(fileFilter);
-        }
-        fileChooser.setFileFilter(fileFiltersList.get(0));
-
+        
+        chooserHelper = JFileChooserHelper.getHelper();
         selectButton.setEnabled(false);
     }
 
@@ -270,6 +263,19 @@ class MissingImageDialog extends javax.swing.JDialog {
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
 
+        if(fileChooser == null) {
+            fileChooser = chooserHelper.getChooser();
+            fileChooser.setDragEnabled(false);
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setMultiSelectionEnabled(false);
+
+            List<FileFilter> fileFiltersList = ImageDSProcessor.getFileFiltersList();
+            for (FileFilter fileFilter : fileFiltersList) {
+                fileChooser.addChoosableFileFilter(fileFilter);
+            }
+            fileChooser.setFileFilter(fileFiltersList.get(0));
+        }
+        
         String oldText = pathNameTextField.getText();
         lbWarning.setText("");
         // set the current directory of the FileChooser if the ImagePath Field is valid

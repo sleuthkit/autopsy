@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFileProp
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Node.Property;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
 
 /**
  * Exports CSV version of result nodes to a location selected by the user.
@@ -68,6 +69,8 @@ public final class ExportCSVAction extends AbstractAction {
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
     private static ExportCSVAction instance;
+    
+    private static final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
 
     /**
      * Get an instance of the Action. See above for why
@@ -125,7 +128,7 @@ public final class ExportCSVAction extends AbstractAction {
             // Set up the file chooser with a default name and either the Export
             // folder or the last used folder.
             String fileName = getDefaultOutputFileName(nodesToExport.iterator().next().getParentNode());
-            JFileChooser fileChooser = new JFileChooser();
+            JFileChooser fileChooser = chooserHelper.getChooser();
             fileChooser.setCurrentDirectory(new File(getExportDirectory(Case.getCurrentCaseThrows())));
             fileChooser.setSelectedFile(new File(fileName));
             fileChooser.setFileFilter(new FileNameExtensionFilter("csv file", "csv"));
