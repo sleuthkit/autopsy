@@ -67,10 +67,10 @@ class ExportIngestHistory {
         /**
          * Main constructor.
          *
-         * @param startTime The ingest start time.
-         * @param endTime The ingest stop time.
-         * @param status The ingest status.
-         * @param ingestModule The ingest module.
+         * @param startTime           The ingest start time.
+         * @param endTime             The ingest stop time.
+         * @param status              The ingest status.
+         * @param ingestModule        The ingest module.
          * @param ingestModuleVersion The ingest module version.
          */
         IngestJobEntry(Date startTime, Date endTime, String status, String ingestModule, String ingestModuleVersion) {
@@ -144,6 +144,7 @@ class ExportIngestHistory {
      * Retrieves data for a date cell.
      *
      * @param date The date.
+     *
      * @return The data cell to be used in the excel export.
      */
     private static DefaultCellModel<?> getDateCell(Date date) {
@@ -155,6 +156,7 @@ class ExportIngestHistory {
      * Retrieves all the ingest job modules and versions for a job.
      *
      * @param job The ingest job.
+     *
      * @return All of the corresponding entries sorted by module name.
      */
     private static List<IngestJobEntry> getEntries(IngestJobInfo job) {
@@ -187,6 +189,7 @@ class ExportIngestHistory {
      * to null.
      *
      * @param list The list of entries for an ingest job.
+     *
      * @return The stream of entries to be displayed.
      */
     private static Stream<IngestJobEntry> showFirstRowOnly(List<IngestJobEntry> list) {
@@ -206,6 +209,7 @@ class ExportIngestHistory {
      * Returns a list of sheets to be exported for the Ingest History tab.
      *
      * @param dataSource The data source.
+     *
      * @return The list of sheets to be included in an export.
      */
     static List<ExcelSheetExport> getExports(DataSource dataSource) {
