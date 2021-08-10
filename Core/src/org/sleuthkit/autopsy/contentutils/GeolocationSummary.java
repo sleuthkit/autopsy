@@ -243,7 +243,7 @@ public class GeolocationSummary {
     /**
      * A supplier of an item T that can throw an exception of type E.
      */
-    public interface SupplierWithException<T, E extends Throwable> {
+    interface SupplierWithException<T, E extends Throwable> {
 
         /**
          * A supplier method that can throw an exception of E.
@@ -502,7 +502,7 @@ public class GeolocationSummary {
          *                    is received from geolocation.
          * @param filters     The applicable filters for geolocation.
          */
-        public PointFetcher(BlockingQueue<GeoResult> asyncResult, GeoFilter filters) {
+        PointFetcher(BlockingQueue<GeoResult> asyncResult, GeoFilter filters) {
             super(filters);
             this.asyncResult = asyncResult;
         }

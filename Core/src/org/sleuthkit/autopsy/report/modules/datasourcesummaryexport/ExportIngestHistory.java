@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -34,25 +34,24 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
+import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelExport.ExcelSheetExport;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Class that handles exporting information in IngestJobInfoPanel to excel.
+ * Class that handles exporting ingest job information to excel.
  */
 @Messages({
-    "IngestJobExcelExport_startTimeColumn=Start Time",
-    "IngestJobExcelExport_endTimeColumn=End Time",
-    "IngestJobExcelExport_ingestStatusTimeColumn=Ingest Status",
-    "IngestJobExcelExport_moduleNameTimeColumn=Module Name",
-    "IngestJobExcelExport_versionColumn=Module Version",
-    "IngestJobExcelExport_sheetName=Ingest History"
+    "ExportIngestHistory_startTimeColumn=Start Time",
+    "ExportIngestHistory_endTimeColumn=End Time",
+    "ExportIngestHistory_ingestStatusTimeColumn=Ingest Status",
+    "ExportIngestHistory_moduleNameTimeColumn=Module Name",
+    "ExportIngestHistory_versionColumn=Module Version",
+    "ExportIngestHistory_sheetName=Ingest History"
 })
-class IngestJobExcelExport { // ELTODO remove this class
+class ExportIngestHistory {
 
     /**
      * An entry to display in an excel export.
@@ -118,26 +117,26 @@ class IngestJobExcelExport { // ELTODO remove this class
         }
     }
 
-    private static final Logger logger = Logger.getLogger(IngestJobExcelExport.class.getName());
+    private static final Logger logger = Logger.getLogger(ExportIngestHistory.class.getName());
     private static final String DATETIME_FORMAT_STR = "yyyy/MM/dd HH:mm:ss";
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat(DATETIME_FORMAT_STR, Locale.getDefault());
 
     // columns in the excel export table to be created.
     private static final List<ColumnModel<IngestJobEntry, DefaultCellModel<?>>> COLUMNS = Arrays.asList(
             new ColumnModel<>(
-                    Bundle.IngestJobExcelExport_startTimeColumn(),
+                    Bundle.ExportIngestHistory_startTimeColumn(),
                     (entry) -> getDateCell(entry.getStartTime())),
             new ColumnModel<>(
-                    Bundle.IngestJobExcelExport_endTimeColumn(),
+                    Bundle.ExportIngestHistory_endTimeColumn(),
                     (entry) -> getDateCell(entry.getEndTime())),
             new ColumnModel<>(
-                    Bundle.IngestJobExcelExport_ingestStatusTimeColumn(),
+                    Bundle.ExportIngestHistory_ingestStatusTimeColumn(),
                     (entry) -> new DefaultCellModel<>(entry.getStatus())),
             new ColumnModel<>(
-                    Bundle.IngestJobExcelExport_moduleNameTimeColumn(),
+                    Bundle.ExportIngestHistory_moduleNameTimeColumn(),
                     (entry) -> new DefaultCellModel<>(entry.getIngestModule())),
             new ColumnModel<>(
-                    Bundle.IngestJobExcelExport_versionColumn(),
+                    Bundle.ExportIngestHistory_versionColumn(),
                     (entry) -> new DefaultCellModel<>(entry.getIngestModuleVersion()))
     );
 
@@ -209,7 +208,6 @@ class IngestJobExcelExport { // ELTODO remove this class
      * @param dataSource The data source.
      * @return The list of sheets to be included in an export.
      */
-    /* ELTODO
     static List<ExcelSheetExport> getExports(DataSource dataSource) {
         if (dataSource == null) {
             return Collections.emptyList();
@@ -244,9 +242,9 @@ class IngestJobExcelExport { // ELTODO remove this class
                 .filter(item -> item != null)
                 .collect(Collectors.toList());
 
-        return Arrays.asList(new ExcelTableExport<>(Bundle.IngestJobExcelExport_sheetName(), COLUMNS, toDisplay));
-    }*/
+        return Arrays.asList(new ExcelTableExport<>(Bundle.ExportIngestHistory_sheetName(), COLUMNS, toDisplay));
+    }
 
-    private IngestJobExcelExport() {
+    private ExportIngestHistory() {
     }
 }
