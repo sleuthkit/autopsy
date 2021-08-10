@@ -472,7 +472,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * calls Children.getNodes(true) on the root node to ensure ALL of the
          * nodes have been created in the NetBeans asynch child creation thread,
          * and then uses the first one hundred nodes to determine which columns
-         * to display.
+         * to display, including their header text.
          */
         setColumnWidths();        
         
