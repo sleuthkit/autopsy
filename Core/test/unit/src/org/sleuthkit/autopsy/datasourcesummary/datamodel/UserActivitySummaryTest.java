@@ -44,11 +44,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceSummaryMockUtils.getArtifactsTSKMock;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopAccountResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopDeviceAttachedResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopDomainsResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopProgramsResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopWebSearchResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopAccountResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDeviceAttachedResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDomainsResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopProgramsResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopWebSearchResult;
 import org.sleuthkit.autopsy.testutils.TskMockUtils;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
@@ -133,11 +133,7 @@ public class UserActivitySummaryTest {
     private static UserActivitySummaryGetter getTestClass(SleuthkitCase tskCase, boolean hasTranslation, Function<String, String> translateFunction)
             throws NoServiceProviderException, TranslationException {
 
-        return new UserActivitySummaryGetter(
-                () -> tskCase,
-                TskMockUtils.getTextTranslationService(translateFunction, hasTranslation),
-                TskMockUtils.getJavaLogger("UNIT TEST LOGGER")
-        );
+        return new UserActivitySummaryGetter();
     }
 
     private <T> void testMinCount(DataFunction<T> funct, String id)
@@ -433,11 +429,7 @@ public class UserActivitySummaryTest {
         // set up a mock TextTranslationService returning a translation
         TextTranslationService translationService = TskMockUtils.getTextTranslationService(translator, hasProvider);
 
-        UserActivitySummaryGetter summary = new UserActivitySummaryGetter(
-                () -> tskPair.getLeft(),
-                translationService,
-                TskMockUtils.getJavaLogger("UNIT TEST LOGGER")
-        );
+        UserActivitySummaryGetter summary = new UserActivitySummaryGetter();
 
         List<TopWebSearchResult> results = summary.getMostRecentWebSearches(ds, queries.size());
 

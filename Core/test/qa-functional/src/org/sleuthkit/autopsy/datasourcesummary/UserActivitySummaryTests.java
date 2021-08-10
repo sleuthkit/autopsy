@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopDomainsResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDomainsResult;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;

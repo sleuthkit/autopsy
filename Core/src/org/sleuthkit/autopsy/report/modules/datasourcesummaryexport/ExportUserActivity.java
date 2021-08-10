@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopWebSearchResult
 import static org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelExportAction.getTableExport;
 
 /**
- * A panel to display user activity.
+ * Class to export user activity present in the specified DataSource.
  */
 @Messages({
     "ExportUserActivity_tab_title=User Activity",

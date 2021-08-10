@@ -99,6 +99,7 @@ class ExcelExportAction {
         "ExcelExportAction_exportToXLSX_gatheringAnalysisData=Fetching Analysis Data",
         "ExcelExportAction_exportToXLSX_gatheringPastData=Fetching Historical Data",
         "ExcelExportAction_exportToXLSX_gatheringUserData=Fetching User Activity Data",
+        "ExcelExportAction_exportToXLSX_gatheringGeoData=Fetching Geolocation Data",
         "ExcelExportAction_exportToXLSX_writingToFile=Writing to File...",})
 
     void exportToXLSX(ReportProgressPanel progressPanel, DataSource dataSource, String baseReportDir)
@@ -163,6 +164,14 @@ class ExcelExportAction {
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringUserData());
         progressPanel.setProgress(6);
         exports = ExportUserActivity.getExports(dataSource);
+        if (exports != null) {
+            sheetExports.addAll(exports);
+        }
+        
+        // Export geolocation data
+        progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringGeoData());
+        progressPanel.setProgress(7);
+        exports = ExportGeolocation.getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }

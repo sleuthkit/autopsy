@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.contentutils;
 
 import java.util.Collection;
 import java.util.List;
@@ -64,8 +64,8 @@ class LatLngMap<E extends KdTree.XYZPoint> {
      * Main contructor.
      *
      * @param pointsToAdd The points to be added to the data structure.
-     * @param bucketSize The size of a grid square in kilometers. So, if this
-     * value is 100, each sqaure will be a 100 x 100 km.
+     * @param bucketSize  The size of a grid square in kilometers. So, if this
+     *                    value is 100, each sqaure will be a 100 x 100 km.
      */
     LatLngMap(List<E> pointsToAdd, double bucketSize) {
         this.bucketSize = bucketSize;
@@ -86,6 +86,7 @@ class LatLngMap<E extends KdTree.XYZPoint> {
      * closest neighboring buckets.
      *
      * @param point The point to calculate the bucket location pair.
+     *
      * @return The pair that was determined.
      */
     private Pair<Double, Double> getBucketLocation(XYZPoint point) {
@@ -106,6 +107,7 @@ class LatLngMap<E extends KdTree.XYZPoint> {
      * Finds closest point within (.5 * bucketSize) distance.
      *
      * @param point The point for which to find closest.
+     *
      * @return Returns the found point.
      */
     E findClosest(E point) {
@@ -132,9 +134,10 @@ class LatLngMap<E extends KdTree.XYZPoint> {
     /**
      * Within the specific bucket, finds the closest point if any exists.
      *
-     * @param x The x axis bucket.
-     * @param y The y axis bucket.
+     * @param x     The x axis bucket.
+     * @param y     The y axis bucket.
      * @param point The point to search for.
+     *
      * @return The point, if any, that was found.
      */
     private E findClosestInBucket(int x, int y, E point) {

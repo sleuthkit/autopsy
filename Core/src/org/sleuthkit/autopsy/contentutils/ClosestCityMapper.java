@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.contentutils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -60,10 +60,14 @@ class ClosestCityMapper {
     // singleton instance of this class
     private static ClosestCityMapper instance = null;
 
+    // the logger
+    private static final java.util.logging.Logger logger = Logger.getLogger(ClosestCityMapper.class.getName());
+
     /**
      * Retrieves singleton instance of this class.
      *
      * @return The singleton instance of this class.
+     *
      * @throws IOException
      */
     static ClosestCityMapper getInstance() throws IOException {
@@ -75,10 +79,7 @@ class ClosestCityMapper {
     }
 
     // data structure housing cities
-    private LatLngMap<CityRecord> latLngMap = null;
-
-    // the logger
-    private final java.util.logging.Logger logger;
+    private static LatLngMap<CityRecord> latLngMap = null;
 
     /**
      * Main Constructor.
@@ -86,21 +87,19 @@ class ClosestCityMapper {
      * @throws IOException
      */
     private ClosestCityMapper() throws IOException {
-        this(
-                GeolocationSummary.class.getResourceAsStream(CITIES_CSV_FILENAME),
-                Logger.getLogger(ClosestCityMapper.class.getName()));
+        this(ClosestCityMapper.class.getResourceAsStream(CITIES_CSV_FILENAME));
     }
 
     /**
      * Main Constructor loading from an input stream.
      *
      * @param citiesInputStream The input stream for the csv text file
-     * containing the cities.
-     * @param logger The logger to be used with this.
+     *                          containing the cities.
+     * @param logger            The logger to be used with this.
+     *
      * @throws IOException
      */
-    private ClosestCityMapper(InputStream citiesInputStream, java.util.logging.Logger logger) throws IOException {
-        this.logger = logger;
+    private ClosestCityMapper(InputStream citiesInputStream) throws IOException {
         latLngMap = new LatLngMap<CityRecord>(parseCsvLines(citiesInputStream, true));
     }
 
@@ -109,9 +108,10 @@ class ClosestCityMapper {
      * city can be determined.
      *
      * @param point The point to locate.
+     *
      * @return The closest city or null if no close city can be found.
      */
-    CityRecord findClosest(CityRecord point) {
+    static CityRecord findClosest(CityRecord point) {
         return latLngMap.findClosest(point);
     }
 
@@ -120,9 +120,10 @@ class ClosestCityMapper {
      * returned.
      *
      * @param s The string to parse.
+     *
      * @return The double value or null if value cannot be parsed.
      */
-    private Double tryParse(String s) {
+    private static Double tryParse(String s) {
         if (s == null) {
             return null;
         }
@@ -138,11 +139,12 @@ class ClosestCityMapper {
      * Parses a country name and transforms values like "last, first" to "first
      * last" (i.e. "Korea, South" becomes "South Korea").
      *
-     * @param orig The original string value.
+     * @param orig    The original string value.
      * @param lineNum The line number that this country was found.
+     *
      * @return The country name.
      */
-    private String parseCountryName(String orig, int lineNum) {
+    private static String parseCountryName(String orig, int lineNum) {
         if (StringUtils.isBlank(orig)) {
             logger.log(Level.WARNING, String.format("No country name determined for line %d.", lineNum));
             return null;
@@ -159,12 +161,13 @@ class ClosestCityMapper {
     /**
      * Parses a row from the csv creating a city record.
      *
-     * @param csvRow The row of data where each item in the list is each column
-     * in the row.
+     * @param csvRow  The row of data where each item in the list is each column
+     *                in the row.
      * @param lineNum The line number for this csv row.
+     *
      * @return The parsed CityRecord or null if none can be determined.
      */
-    private CityRecord getCsvCityRecord(List<String> csvRow, int lineNum) {
+    private static CityRecord getCsvCityRecord(List<String> csvRow, int lineNum) {
         if (csvRow == null || csvRow.size() <= MAX_IDX) {
             logger.log(Level.WARNING, String.format("Row at line number %d is required to have at least %d elements and does not.", lineNum, (MAX_IDX + 1)));
             return null;
@@ -199,11 +202,12 @@ class ClosestCityMapper {
     /**
      * Parses a row of the csv into individual column values.
      *
-     * @param line The line to parse.
+     * @param line    The line to parse.
      * @param lineNum The line number in the csv where this line is.
+     *
      * @return The list of column values.
      */
-    private List<String> parseCsvLine(String line, int lineNum) {
+    private static List<String> parseCsvLine(String line, int lineNum) {
         if (line == null || line.length() <= 0) {
             logger.log(Level.INFO, String.format("Line at %d had no content", lineNum));
             return null;
@@ -222,13 +226,15 @@ class ClosestCityMapper {
      * Parses all lines in the csv file input stream into a list of city
      * records.
      *
-     * @param csvInputStream The csv file input stream.
+     * @param csvInputStream  The csv file input stream.
      * @param ignoreHeaderRow Whether or not there is a header row in the csv
-     * file.
+     *                        file.
+     *
      * @return The list of city records.
+     *
      * @throws IOException
      */
-    private List<CityRecord> parseCsvLines(InputStream csvInputStream, boolean ignoreHeaderRow) throws IOException {
+    private static List<CityRecord> parseCsvLines(InputStream csvInputStream, boolean ignoreHeaderRow) throws IOException {
         List<CityRecord> cityRecords = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(csvInputStream, "UTF-8"))) {
             int lineNum = 1;
