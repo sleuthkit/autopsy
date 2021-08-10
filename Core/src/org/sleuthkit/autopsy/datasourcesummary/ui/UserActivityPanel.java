@@ -28,13 +28,13 @@ import java.util.Locale;
 import java.util.function.Function;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.LastAccessedArtifact;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.LastAccessedArtifact;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopAccountResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDeviceAttachedResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDomainsResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopProgramsResult;
+import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopWebSearchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
@@ -261,22 +261,22 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
-    private final UserActivitySummary userActivityData;
+    private final UserActivitySummaryGetter userActivityData;
 
     /**
      * Creates a new UserActivityPanel.
      */
     public UserActivityPanel() {
-        this(new UserActivitySummary());
+        this(new UserActivitySummaryGetter());
     }
 
     /**
      * Creates a new UserActivityPanel.
      *
      * @param userActivityData Class from which to obtain remaining user
-     * activity data.
+     *                         activity data.
      */
-    public UserActivityPanel(UserActivitySummary userActivityData) {
+    public UserActivityPanel(UserActivitySummaryGetter userActivityData) {
         super(userActivityData);
         this.userActivityData = userActivityData;
 
@@ -328,7 +328,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
      * @param record The LastAccessedArtifact instance.
      *
      * @return The menu items list containing one action or navigating to the
-     * appropriate artifact and closing the data source summary dialog if open.
+     *         appropriate artifact and closing the data source summary dialog
+     *         if open.
      */
     private List<MenuItem> getPopup(LastAccessedArtifact record) {
         return record == null ? null : Arrays.asList(getArtifactNavigateItem(record.getArtifact()));
@@ -337,7 +338,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     /**
      * Queries DataSourceTopProgramsSummary instance for short folder name.
      *
-     * @param path The path for the application.
+     * @param path    The path for the application.
      * @param appName The application name.
      *
      * @return The underlying short folder name if one exists.
@@ -361,19 +362,6 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
         ingestRunningLabel.unregister();
         super.close();
     }
-
-    /* ELTODO
-    @Override
-    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
-        return Stream.of(
-                getTableExport(topProgramsFetcher, topProgramsTemplate, Bundle.UserActivityPanel_TopProgramsTableModel_tabName(), dataSource),
-                getTableExport(topDomainsFetcher, topDomainsTemplate, Bundle.UserActivityPanel_TopDomainsTableModel_tabName(), dataSource),
-                getTableExport(topWebSearchesFetcher, topWebSearchesTemplate, Bundle.UserActivityPanel_TopWebSearchTableModel_tabName(), dataSource),
-                getTableExport(topDevicesAttachedFetcher, topDevicesTemplate, Bundle.UserActivityPanel_TopDeviceAttachedTableModel_tabName(), dataSource),
-                getTableExport(topAccountsFetcher, topAccountsTemplate, Bundle.UserActivityPanel_TopAccountTableModel_tabName(), dataSource))
-                .filter(sheet -> sheet != null)
-                .collect(Collectors.toList());
-    }*/
 
     /**
      * This method is called from within the constructor to initialize the form.

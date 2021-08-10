@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopDomainsResult;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -36,14 +36,14 @@ import org.sleuthkit.autopsy.integrationtesting.IntegrationTest;
 import org.sleuthkit.autopsy.integrationtesting.IntegrationTestGroup;
 
 /**
- * Tests for the UserActivitySummary class.
+ * Tests for the UserActivitySummaryGetter class.
  */
 @ServiceProvider(service = IntegrationTestGroup.class)
 public class UserActivitySummaryTests implements IntegrationTestGroup {
 
     /**
-     * Runs UserActivitySummary.getRecentDomains for all data sources found in
-     * the current case.
+     * Runs UserActivitySummaryGetter.getRecentDomains for all data sources found in
+ the current case.
      *
      * @return A map where the key is the data source name and the value are the
      *         results of that method.
@@ -52,7 +52,7 @@ public class UserActivitySummaryTests implements IntegrationTestGroup {
     public Map<String, List<Map<String, Object>>> getRecentDomainsTest()
             throws NoCurrentCaseException, TskCoreException, SleuthkitCaseProviderException {
 
-        UserActivitySummary userActivitySummary = new UserActivitySummary();
+        UserActivitySummaryGetter userActivitySummary = new UserActivitySummaryGetter();
         Map<String, List<Map<String, Object>>> toRet = new HashMap<>();
         for (Content c : Case.getCurrentCaseThrows().getDataSources()) {
             if (c instanceof DataSource) {

@@ -44,11 +44,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceSummaryMockUtils.getArtifactsTSKMock;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopAccountResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopDeviceAttachedResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopDomainsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopProgramsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummaryGetter.TopWebSearchResult;
 import org.sleuthkit.autopsy.testutils.TskMockUtils;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
@@ -63,27 +63,27 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Tests for UserActivitySummary.
+ * Tests for UserActivitySummaryGetter.
  */
 public class UserActivitySummaryTest {
 
     /**
-     * Function to retrieve data from UserActivitySummary with the provided
-     * arguments.
+     * Function to retrieve data from UserActivitySummaryGetter with the provided
+ arguments.
      */
     private interface DataFunction<T> {
 
         /**
-         * A UserActivitySummary method encapsulated in a uniform manner.
+         * A UserActivitySummaryGetter method encapsulated in a uniform manner.
          *
-         * @param userActivitySummary The UserActivitySummary class to use.
+         * @param userActivitySummary The UserActivitySummaryGetter class to use.
          * @param datasource The data source.
          * @param count The count.
          * @return The list of objects to return.
          * @throws SleuthkitCaseProviderException
          * @throws TskCoreException
          */
-        List<T> retrieve(UserActivitySummary userActivitySummary, DataSource datasource, int count) throws
+        List<T> retrieve(UserActivitySummaryGetter userActivitySummary, DataSource datasource, int count) throws
                 SleuthkitCaseProviderException, TskCoreException;
     }
 
@@ -119,21 +119,21 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Gets a UserActivitySummary class to test.
+     * Gets a UserActivitySummaryGetter class to test.
      *
      * @param tskCase The SleuthkitCase.
      * @param hasTranslation Whether the translation service is functional.
      * @param translateFunction Function for translation.
      *
-     * @return The UserActivitySummary class to use for testing.
+     * @return The UserActivitySummaryGetter class to use for testing.
      *
      * @throws NoServiceProviderException
      * @throws TranslationException
      */
-    private static UserActivitySummary getTestClass(SleuthkitCase tskCase, boolean hasTranslation, Function<String, String> translateFunction)
+    private static UserActivitySummaryGetter getTestClass(SleuthkitCase tskCase, boolean hasTranslation, Function<String, String> translateFunction)
             throws NoServiceProviderException, TranslationException {
 
-        return new UserActivitySummary(
+        return new UserActivitySummaryGetter(
                 () -> tskCase,
                 TskMockUtils.getTextTranslationService(translateFunction, hasTranslation),
                 TskMockUtils.getJavaLogger("UNIT TEST LOGGER")
@@ -145,7 +145,7 @@ public class UserActivitySummaryTest {
 
         for (int count : new int[]{0, -1}) {
             Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(null);
-            UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+            UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
             try {
                 funct.retrieve(summary, TskMockUtils.getDataSource(1), -1);
@@ -183,7 +183,7 @@ public class UserActivitySummaryTest {
             throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException {
 
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(null);
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
         List<T> retArr = funct.retrieve(summary, null, 10);
         verify(tskPair.getRight(), never()
                 .description(String.format("Expected method %s to return empty list for null data source and not call SleuthkitCase", id)))
@@ -216,7 +216,7 @@ public class UserActivitySummaryTest {
         long dataSourceId = 1;
         int count = 10;
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(new ArrayList<>());
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
         List<T> retArr = funct.retrieve(summary, TskMockUtils.getDataSource(dataSourceId), count);
 
         Assert.assertTrue(String.format("Expected non null empty list returned from %s", id), retArr != null);
@@ -290,7 +290,7 @@ public class UserActivitySummaryTest {
                 .collect(Collectors.toList());
 
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(artifacts);
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
         List<TopDeviceAttachedResult> results = summary.getRecentDevices(ds, count);
 
@@ -304,8 +304,8 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Ensures that UserActivitySummary.getRecentDevices limits returned entries
-     * to count provided.
+     * Ensures that UserActivitySummaryGetter.getRecentDevices limits returned entries
+ to count provided.
      *
      * @throws TskCoreException
      * @throws NoServiceProviderException
@@ -327,7 +327,7 @@ public class UserActivitySummaryTest {
                     .collect(Collectors.toList());
 
             Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(returnedArtifacts);
-            UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+            UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
             List<TopDeviceAttachedResult> results = summary.getRecentDevices(dataSource, countRequested);
             verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(), dataSourceId,
@@ -348,7 +348,7 @@ public class UserActivitySummaryTest {
         BlackboardArtifact item3 = getRecentDeviceArtifact(1003, dataSource, "ID1", "MAKE1", "MODEL1", DAY_SECONDS + 2);
 
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(Arrays.asList(item1, item2, item3));
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
         List<TopDeviceAttachedResult> results = summary.getRecentDevices(dataSource, 10);
 
@@ -396,7 +396,7 @@ public class UserActivitySummaryTest {
         List<BlackboardArtifact> artList = Arrays.asList(art1a, art2a, art2b, art1b, art1c);
 
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(artList);
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
         List<TopWebSearchResult> results = summary.getMostRecentWebSearches(ds, 10);
         verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSourceId,
                 "Expected getRecentDevices to call getArtifacts with correct arguments.");
@@ -433,7 +433,7 @@ public class UserActivitySummaryTest {
         // set up a mock TextTranslationService returning a translation
         TextTranslationService translationService = TskMockUtils.getTextTranslationService(translator, hasProvider);
 
-        UserActivitySummary summary = new UserActivitySummary(
+        UserActivitySummaryGetter summary = new UserActivitySummaryGetter(
                 () -> tskPair.getLeft(),
                 translationService,
                 TskMockUtils.getJavaLogger("UNIT TEST LOGGER")
@@ -473,8 +473,8 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Verify that UserActivitySummary.getMostRecentWebSearches handles
-     * translation appropriately.
+     * Verify that UserActivitySummaryGetter.getMostRecentWebSearches handles
+ translation appropriately.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
@@ -502,8 +502,8 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Ensure that UserActivitySummary.getMostRecentWebSearches results limited
-     * to count.
+     * Ensure that UserActivitySummaryGetter.getMostRecentWebSearches results limited
+ to count.
      *
      * @throws TskCoreException
      * @throws NoServiceProviderException
@@ -525,7 +525,7 @@ public class UserActivitySummaryTest {
                     .collect(Collectors.toList());
 
             Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(returnedArtifacts);
-            UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+            UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
             List<TopWebSearchResult> results = summary.getMostRecentWebSearches(dataSource, countRequested);
             verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSourceId,
@@ -558,8 +558,8 @@ public class UserActivitySummaryTest {
     private static final long DOMAIN_WINDOW_DAYS = 30;
 
     /**
-     * UserActivitySummary.getRecentDomains should return results within 30 days
-     * of the most recent access.
+     * UserActivitySummaryGetter.getRecentDomains should return results within 30 days
+ of the most recent access.
      *
      * @throws TskCoreException
      * @throws SleuthkitCaseProviderException
@@ -589,7 +589,7 @@ public class UserActivitySummaryTest {
 
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(retArr);
 
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
         List<TopDomainsResult> domains = summary.getRecentDomains(dataSource, 10);
 
@@ -633,7 +633,7 @@ public class UserActivitySummaryTest {
 
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(retArr);
 
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
         List<TopDomainsResult> domains = summary.getRecentDomains(dataSource, 10);
 
@@ -670,7 +670,7 @@ public class UserActivitySummaryTest {
         List<BlackboardArtifact> retArr = Arrays.asList(artifact1, artifact1a, artifact2, artifact2a, artifact2b);
 
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(retArr);
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
         List<TopDomainsResult> domains = summary.getRecentDomains(dataSource, 10);
 
@@ -689,8 +689,8 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Ensure that UserActivitySummary.getRecentDomains limits to count
-     * appropriately.
+     * Ensure that UserActivitySummaryGetter.getRecentDomains limits to count
+ appropriately.
      *
      * @throws TskCoreException
      * @throws NoServiceProviderException
@@ -719,7 +719,7 @@ public class UserActivitySummaryTest {
                     .collect(Collectors.toList());
 
             Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(returnedArtifacts);
-            UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+            UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
             List<TopDomainsResult> results = summary.getRecentDomains(dataSource, countRequested);
             verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(), dataSourceId,
@@ -818,7 +818,7 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Performs a test on UserActivitySummary.getRecentAccounts.
+     * Performs a test on UserActivitySummaryGetter.getRecentAccounts.
      *
      * @param dataSource The datasource to use as parameter.
      * @param count The count to use as a parameter.
@@ -849,7 +849,7 @@ public class UserActivitySummaryTest {
                     .collect(Collectors.toList());
         });
 
-        UserActivitySummary summary = getTestClass(mockCase, false, null);
+        UserActivitySummaryGetter summary = getTestClass(mockCase, false, null);
 
         List<TopAccountResult> receivedResults = summary.getRecentAccounts(dataSource, count);
 
@@ -880,8 +880,8 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Verify that UserActivitySummary.getRecentAccounts attempts to find a date
-     * but if none present, the artifact is excluded.
+     * Verify that UserActivitySummaryGetter.getRecentAccounts attempts to find a date
+ but if none present, the artifact is excluded.
      *
      * @throws TskCoreException
      * @throws NoServiceProviderException
@@ -950,8 +950,8 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Verifies that UserActivitySummary.getRecentAccounts groups appropriately
-     * by account type.
+     * Verifies that UserActivitySummaryGetter.getRecentAccounts groups appropriately
+ by account type.
      *
      * @throws TskCoreException
      * @throws NoServiceProviderException
@@ -986,8 +986,8 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Verifies that UserActivitySummary.getRecentAccounts properly limits
-     * results returned.
+     * Verifies that UserActivitySummaryGetter.getRecentAccounts properly limits
+ results returned.
      *
      * @throws TskCoreException
      * @throws NoServiceProviderException
@@ -1007,7 +1007,7 @@ public class UserActivitySummaryTest {
                     .collect(Collectors.toList());
 
             Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(returnedArtifacts);
-            UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+            UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
             List<TopAccountResult> results = summary.getRecentAccounts(dataSource, countRequested);
             verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(), dataSource.getId(),
@@ -1044,7 +1044,7 @@ public class UserActivitySummaryTest {
         expected.put("/Other Path/Item/Item.exe", "");
 
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(null);
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
         for (Entry<String, String> path : expected.entrySet()) {
             Assert.assertTrue(path.getValue().equalsIgnoreCase(summary.getShortFolderName(path.getKey(), "Item.exe")));
@@ -1112,7 +1112,7 @@ public class UserActivitySummaryTest {
                 successful,
                 successful2
         ));
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
         List<TopProgramsResult> results = summary.getTopPrograms(ds1, 10);
 
         Assert.assertEquals(2, results.size());
@@ -1150,7 +1150,7 @@ public class UserActivitySummaryTest {
                 prog2, prog2a, prog2b,
                 prog3, prog3a, prog3b
         ));
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
         List<TopProgramsResult> results = summary.getTopPrograms(ds1, 10);
 
         Assert.assertEquals(3, results.size());
@@ -1174,7 +1174,7 @@ public class UserActivitySummaryTest {
             throws TskCoreException, NoServiceProviderException, TranslationException, SleuthkitCaseProviderException {
 
         Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(artifacts);
-        UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+        UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
         List<TopProgramsResult> results = summary.getTopPrograms(ds1, 10);
 
         Assert.assertEquals(programNamesReturned.size(), results.size());
@@ -1184,8 +1184,8 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Ensure that UserActivitySummary.getTopPrograms properly orders results
-     * (first by run count, then date, then program name).
+     * Ensure that UserActivitySummaryGetter.getTopPrograms properly orders results
+ (first by run count, then date, then program name).
      *
      * @throws TskCoreException
      * @throws NoServiceProviderException
@@ -1214,8 +1214,8 @@ public class UserActivitySummaryTest {
     }
 
     /**
-     * Ensure that UserActivitySummary.getTopPrograms properly limits results
-     * (if no run count and no run date, then no limit).
+     * Ensure that UserActivitySummaryGetter.getTopPrograms properly limits results
+ (if no run count and no run date, then no limit).
      *
      * @throws TskCoreException
      * @throws NoServiceProviderException
@@ -1239,7 +1239,7 @@ public class UserActivitySummaryTest {
                     .collect(Collectors.toList());
 
             Pair<SleuthkitCase, Blackboard> tskPair = getArtifactsTSKMock(returnedArtifacts);
-            UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
+            UserActivitySummaryGetter summary = getTestClass(tskPair.getLeft(), false, null);
 
             List<TopProgramsResult> results = summary.getTopPrograms(dataSource, countRequested);
             verifyCalled(tskPair.getRight(), ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID(), dataSourceId,
@@ -1253,7 +1253,7 @@ public class UserActivitySummaryTest {
                     .collect(Collectors.toList());
 
             Pair<SleuthkitCase, Blackboard> tskPairAlphabetical = getArtifactsTSKMock(returnedArtifactsAlphabetical);
-            UserActivitySummary summaryAlphabetical = getTestClass(tskPairAlphabetical.getLeft(), false, null);
+            UserActivitySummaryGetter summaryAlphabetical = getTestClass(tskPairAlphabetical.getLeft(), false, null);
 
             List<TopProgramsResult> resultsAlphabetical = summaryAlphabetical.getTopPrograms(dataSource, countRequested);
             verifyCalled(tskPairAlphabetical.getRight(), ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID(), dataSourceId,
