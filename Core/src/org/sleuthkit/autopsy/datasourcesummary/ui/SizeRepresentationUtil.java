@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,28 +43,23 @@ public final class SizeRepresentationUtil {
         "SizeRepresentationUtil_units_petabytes=PB"
     })
     enum SizeUnit {
-        BYTES(Bundle.SizeRepresentationUtil_units_bytes(), "#", 0),
-        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), "#,##0.00,", 1),
-        MB(Bundle.SizeRepresentationUtil_units_megabytes(), "#,##0.00,,", 2),
-        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), "#,##0.00,,,", 3),
-        TB(Bundle.SizeRepresentationUtil_units_terabytes(), "#,##0.00,,,,", 4),
-        PB(Bundle.SizeRepresentationUtil_units_petabytes(), "#,##0.00,,,,,", 5);
+        BYTES(Bundle.SizeRepresentationUtil_units_bytes(), 0),
+        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), 1),
+        MB(Bundle.SizeRepresentationUtil_units_megabytes(), 2),
+        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), 3),
+        TB(Bundle.SizeRepresentationUtil_units_terabytes(), 4),
+        PB(Bundle.SizeRepresentationUtil_units_petabytes(), 5);
 
         private final String suffix;
-        private final String excelFormatString; // ELTODO
         private final long divisor;
 
         /**
          * Main constructor.
          * @param suffix The string suffix to use for size unit.
-         * @param excelFormatString The excel format string to use for this size unit.
          * @param power The power of 1000 of bytes for this size unit.
          */
-        SizeUnit(String suffix, String excelFormatString, int power) {
+        SizeUnit(String suffix, int power) {
             this.suffix = suffix;
-            
-            // based on https://www.mrexcel.com/board/threads/how-do-i-format-cells-to-show-gb-mb-kb.140135/
-            this.excelFormatString = String.format("%s \"%s\"", excelFormatString, suffix);
             this.divisor = (long) Math.pow(SIZE_CONVERSION_CONSTANT, power);
         }
 
@@ -73,13 +68,6 @@ public final class SizeRepresentationUtil {
          */
         public String getSuffix() {
             return suffix;
-        }
-
-        /**
-         * @return The excel format string to use for this size unit.
-         */
-        public String getExcelFormatString() {
-            return excelFormatString;
         }
 
         /**
@@ -171,7 +159,7 @@ public final class SizeRepresentationUtil {
                 unit = SizeUnit.BYTES;
             }
 
-            return new DefaultCellModel<Long>(bytes, SizeRepresentationUtil::getSizeString, unit.getExcelFormatString());
+            return new DefaultCellModel<Long>(bytes, SizeRepresentationUtil::getSizeString);
         }
     }
 

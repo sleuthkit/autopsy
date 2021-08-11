@@ -141,7 +141,7 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     private <T extends RecentFileDetails> Function<T, DefaultCellModel<?>> getDateFunct() {
         return (T lastAccessed) -> {
             Function<Date, String> dateParser = (dt) -> dt == null ? "" : DATETIME_FORMAT.format(dt);
-            return new DefaultCellModel<>(new Date(lastAccessed.getDateAsLong() * 1000), dateParser, DATETIME_FORMAT_STR)
+            return new DefaultCellModel<>(new Date(lastAccessed.getDateAsLong() * 1000), dateParser)
                     .setPopupMenuRetriever(getPopupFunct(lastAccessed));
         };
     }

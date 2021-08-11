@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -316,7 +316,7 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
     private <T extends LastAccessedArtifact> Function<T, DefaultCellModel<?>> getDateFunct() {
         return (T lastAccessed) -> {
             Function<Date, String> dateParser = (dt) -> dt == null ? "" : DATETIME_FORMAT.format(dt);
-            return new DefaultCellModel<>(lastAccessed.getLastAccessed(), dateParser, DATETIME_FORMAT_STR)
+            return new DefaultCellModel<>(lastAccessed.getLastAccessed(), dateParser)
                     .setPopupMenu(getPopup(lastAccessed));
         };
     }
