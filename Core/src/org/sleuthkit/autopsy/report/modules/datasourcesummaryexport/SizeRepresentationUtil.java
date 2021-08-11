@@ -111,8 +111,7 @@ final class SizeRepresentationUtil {
             return SizeUnit.values()[0];
         }
         
-        for (int unitsIndex = 0; unitsIndex < SizeUnit.values().length; unitsIndex++) {
-            SizeUnit unit = SizeUnit.values()[unitsIndex];
+        for (SizeUnit unit : SizeUnit.values()) {
             long result = size / unit.getDivisor();
             if (result < SIZE_CONVERSION_CONSTANT) {
                 return unit;
@@ -170,7 +169,7 @@ final class SizeRepresentationUtil {
                 unit = SizeUnit.BYTES;
             }
 
-            return new DefaultCellModel<Long>(bytes, SizeRepresentationUtil::getSizeString, unit.getExcelFormatString());
+            return new DefaultCellModel<>(bytes, SizeRepresentationUtil::getSizeString, unit.getExcelFormatString());
         }
     }
 

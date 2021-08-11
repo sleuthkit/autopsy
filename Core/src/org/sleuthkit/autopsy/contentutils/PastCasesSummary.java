@@ -86,14 +86,14 @@ public class PastCasesSummary {
          * @return Data for the cases with same id table.
          */
         public List<Pair<String, Long>> getSameIdsResults() {
-            return sameIdsResults;
+            return Collections.unmodifiableList(sameIdsResults);
         }
 
         /**
          * @return Data for the tagged notable table.
          */
         public List<Pair<String, Long>> getTaggedNotable() {
-            return taggedNotable;
+            return Collections.unmodifiableList(taggedNotable);
         }
     }
 

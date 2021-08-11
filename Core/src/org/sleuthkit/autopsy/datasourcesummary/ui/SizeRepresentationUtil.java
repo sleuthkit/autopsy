@@ -100,8 +100,7 @@ public final class SizeRepresentationUtil {
             return SizeUnit.values()[0];
         }
         
-        for (int unitsIndex = 0; unitsIndex < SizeUnit.values().length; unitsIndex++) {
-            SizeUnit unit = SizeUnit.values()[unitsIndex];
+        for (SizeUnit unit : SizeUnit.values()) {
             long result = size / unit.getDivisor();
             if (result < SIZE_CONVERSION_CONSTANT) {
                 return unit;
@@ -154,12 +153,7 @@ public final class SizeRepresentationUtil {
         if (bytes == null) {
             return new DefaultCellModel<>("");
         } else {
-            SizeUnit unit = SizeRepresentationUtil.getSizeUnit(bytes);
-            if (unit == null) {
-                unit = SizeUnit.BYTES;
-            }
-
-            return new DefaultCellModel<Long>(bytes, SizeRepresentationUtil::getSizeString);
+            return new DefaultCellModel<>(bytes, SizeRepresentationUtil::getSizeString);
         }
     }
 
