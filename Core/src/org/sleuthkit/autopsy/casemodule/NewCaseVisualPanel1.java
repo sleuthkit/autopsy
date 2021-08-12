@@ -30,7 +30,7 @@ import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * The JPanel for the first page of the new case wizard.
@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
 
-    private final JFileChooserHelper fileChooserHelper = JFileChooserHelper.getHelper();
+    private final JFileChooserFactory fileChooserHelper = new JFileChooserFactory();
     private final NewCaseWizardPanel1 wizPanel;
 
     /**

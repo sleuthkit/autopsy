@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -53,8 +53,8 @@ public class ExtractActionHelper {
     private final Logger logger = Logger.getLogger(ExtractActionHelper.class.getName());
     private String userDefinedExportPath;
     
-    private final JFileChooserHelper extractFileHelper = JFileChooserHelper.getHelper();
-    private final JFileChooserHelper extractFilesHelper = JFileChooserHelper.getHelper();
+    private final JFileChooserFactory extractFileHelper = new JFileChooserFactory();
+    private final JFileChooserFactory extractFilesHelper = new JFileChooserFactory();
 
     /**
      * Extract the specified collection of files with an event specified for

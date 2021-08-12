@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.report.modules.stix;
 
 import java.io.File;
 import javax.swing.JFileChooser;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * Configuration panel for STIX report generation.
@@ -30,7 +30,7 @@ public class STIXReportModuleConfigPanel extends javax.swing.JPanel {
 
     String stixFile = null;
     boolean showAllResults;
-    private final JFileChooserHelper chooserHelper;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Creates new form STIXReportModuleConfigPanel
@@ -39,7 +39,7 @@ public class STIXReportModuleConfigPanel extends javax.swing.JPanel {
         initComponents();
         showAllResults = false;
         jCheckBox1.setSelected(false);
-        chooserHelper = JFileChooserHelper.getHelper();
+        chooserHelper = new JFileChooserFactory();
     }
     
     void setConfiguration(STIXReportModuleSettings settings) {

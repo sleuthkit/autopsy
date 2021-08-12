@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * A panel to allow the user to set the custom properties of the geolocation
@@ -48,7 +48,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
     
     private static final Logger logger = Logger.getLogger(GeolocationSettingsPanel.class.getName());
     
-    private static final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
+    private static final JFileChooserFactory chooserHelper = new JFileChooserFactory();
 
     /**
      * Creates new GeolocationSettingsPanel

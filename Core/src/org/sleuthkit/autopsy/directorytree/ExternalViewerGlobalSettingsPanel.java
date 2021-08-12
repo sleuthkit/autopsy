@@ -33,7 +33,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * An options panel for the user to create, edit, and delete associations for
@@ -47,7 +47,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
     private ExternalViewerGlobalSettingsTableModel tableModel;
     
-    private final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
+    private final JFileChooserFactory chooserHelper = new JFileChooserFactory();
 
     ExternalViewerGlobalSettingsPanel() {
         this(new ExternalViewerGlobalSettingsTableModel(new String[] {

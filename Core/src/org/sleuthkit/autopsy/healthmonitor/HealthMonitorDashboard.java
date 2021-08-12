@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * Dashboard for viewing metrics and controlling the health monitor.
@@ -87,7 +87,7 @@ public class HealthMonitorDashboard {
     private JDialog dialog = null;
     private final Container parentWindow;
     
-    private final JFileChooserHelper chooserHelper;
+    private final JFileChooserFactory chooserHelper;
     
     /**
      * Create an instance of the dashboard.
@@ -98,7 +98,7 @@ public class HealthMonitorDashboard {
         timingData = new HashMap<>();
         userData = new ArrayList<>();
         parentWindow = parent;
-        chooserHelper = JFileChooserHelper.getHelper();
+        chooserHelper = new JFileChooserFactory();
     }
     
     /**

@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * Allows examiner to supply a raw data source.
@@ -43,7 +43,7 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
     private static final long serialVersionUID = 1L;    //default
     private final String PROP_LASTINPUT_PATH = "LBL_LastInputFile_PATH";
     private JFileChooser fc;
-    private JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
+    private JFileChooserFactory chooserHelper = new JFileChooserFactory();
     // Externally supplied name is used to store settings 
     private final String contextName;
     /**

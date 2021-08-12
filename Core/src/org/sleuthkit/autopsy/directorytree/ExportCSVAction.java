@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFileProp
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Node.Property;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * Exports CSV version of result nodes to a location selected by the user.
@@ -70,7 +70,7 @@ public final class ExportCSVAction extends AbstractAction {
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
     private static ExportCSVAction instance;
     
-    private static final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
+    private static final JFileChooserFactory chooserHelper = new JFileChooserFactory();
 
     /**
      * Get an instance of the Action. See above for why

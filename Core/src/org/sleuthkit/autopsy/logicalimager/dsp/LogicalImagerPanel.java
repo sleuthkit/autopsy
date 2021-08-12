@@ -44,7 +44,7 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * Panel for adding an logical image file from drive letters. Allows the user to
@@ -68,7 +68,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     private final Pattern regex = Pattern.compile("Logical_Imager_(.+)_(\\d{4})(\\d{2})(\\d{2})_(\\d{2})_(\\d{2})_(\\d{2})");
     private Path manualImageDirPath;
     private DefaultTableModel imageTableModel;
-    private final JFileChooserHelper chooserHelper;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Creates new form LogicalImagerPanel
@@ -81,7 +81,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         configureImageTable();
         jScrollPane1.setBorder(null);
         clearImageTable();
-        chooserHelper = JFileChooserHelper.getHelper();
+        chooserHelper = new JFileChooserFactory();
     }
 
     /**

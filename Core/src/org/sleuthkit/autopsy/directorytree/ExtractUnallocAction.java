@@ -33,9 +33,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -50,6 +47,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -78,9 +76,7 @@ final class ExtractUnallocAction extends AbstractAction {
     private final Volume volume;
     private final Image image;
 
-    private final FutureTask<JFileChooser> futureFileChooser = new FutureTask<>(CustomFileChooser::new);
-
-    private JFileChooser fileChooser = null;
+    private final JFileChooserFactory chooserFactory;
 
     /**
      * Create an instance of ExtractUnallocAction with a volume.
@@ -90,7 +86,7 @@ final class ExtractUnallocAction extends AbstractAction {
      */
     ExtractUnallocAction(String title, Volume volume) {
         this(title, null, volume);
-
+        
     }
 
     /**
@@ -110,9 +106,8 @@ final class ExtractUnallocAction extends AbstractAction {
 
         this.volume = null;
         this.image = image;
-
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(futureFileChooser);
+        
+        chooserFactory = new JFileChooserFactory(CustomFileChooser.class);
     }
 
     /**
@@ -138,13 +133,7 @@ final class ExtractUnallocAction extends AbstractAction {
             return;
         }
 
-        if (fileChooser == null) {
-            try {
-                fileChooser = futureFileChooser.get();
-            } catch (InterruptedException | ExecutionException ex) {
-                fileChooser = new CustomFileChooser();
-            }
-        }
+        JFileChooser fileChooser = chooserFactory.getChooser();
 
         fileChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
         if (JFileChooser.APPROVE_OPTION != fileChooser.showSaveDialog((Component) event.getSource())) {
@@ -753,11 +742,11 @@ final class ExtractUnallocAction extends AbstractAction {
     }
 
     // A Custome JFileChooser for this Action Class.
-    private class CustomFileChooser extends JFileChooser {
+    public static class CustomFileChooser extends JFileChooser {
 
         private static final long serialVersionUID = 1L;
 
-        CustomFileChooser() {
+        public CustomFileChooser() {
             initalize();
         }
 

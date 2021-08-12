@@ -49,7 +49,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * A file content viewer for SQLite database files.
@@ -76,7 +76,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     SwingWorker<?, ?> worker;
     
-    private final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
+    private final JFileChooserFactory chooserHelper = new JFileChooserFactory();
 
     /**
      * Constructs a file content viewer for SQLite database files.

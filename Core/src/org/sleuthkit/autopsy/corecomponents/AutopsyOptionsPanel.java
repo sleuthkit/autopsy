@@ -55,7 +55,7 @@ import org.sleuthkit.autopsy.machinesettings.UserMachinePreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences.TempDirChoice;
 import org.sleuthkit.autopsy.report.ReportBranding;
 
@@ -97,9 +97,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private final ReportBranding reportBranding;
     private JFileChooser heapFileChooser;
     
-    private final JFileChooserHelper logoChooserHelper = JFileChooserHelper.getHelper();
-    private final JFileChooserHelper heapChooserHelper = JFileChooserHelper.getHelper();
-    private final JFileChooserHelper tempChooserHelper = JFileChooserHelper.getHelper();
+    private final JFileChooserFactory logoChooserHelper = new JFileChooserFactory();
+    private final JFileChooserFactory heapChooserHelper = new JFileChooserFactory();
+    private final JFileChooserFactory tempChooserHelper = new JFileChooserFactory();
 
     /**
      * Instantiate the Autopsy options panel.

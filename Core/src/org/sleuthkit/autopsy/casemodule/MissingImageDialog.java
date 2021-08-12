@@ -32,7 +32,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -47,7 +47,7 @@ class MissingImageDialog extends javax.swing.JDialog {
     SleuthkitCase db;
 
     private JFileChooser fileChooser;
-    private final JFileChooserHelper chooserHelper;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Instantiate a MissingImageDialog.
@@ -61,7 +61,7 @@ class MissingImageDialog extends javax.swing.JDialog {
         this.db = db;
         initComponents();
         
-        chooserHelper = JFileChooserHelper.getHelper();
+        chooserHelper = new JFileChooserFactory();
         selectButton.setEnabled(false);
     }
 

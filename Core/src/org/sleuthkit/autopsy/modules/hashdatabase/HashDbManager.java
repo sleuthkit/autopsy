@@ -65,7 +65,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 
 /**
@@ -95,7 +95,7 @@ public class HashDbManager implements PropertyChangeListener {
     private static final String KNOWN_STATUS_PARAM = "knownStatus";
     private static final Pattern OFFICIAL_FILENAME = Pattern.compile("(?<" + DB_NAME_PARAM + ">.+?)\\.(?<" + KNOWN_STATUS_PARAM + ">.+?)\\." + KDB_EXT);
     
-    private final JFileChooserHelper chooserHelper;
+    private final JFileChooserFactory chooserHelper;
 
     private static final FilenameFilter DEFAULT_KDB_FILTER = new FilenameFilter() {
         @Override
@@ -139,7 +139,7 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     private HashDbManager() {
-        chooserHelper = JFileChooserHelper.getHelper();
+        chooserHelper = new JFileChooserFactory();
         loadHashsetsConfiguration();
     }
 

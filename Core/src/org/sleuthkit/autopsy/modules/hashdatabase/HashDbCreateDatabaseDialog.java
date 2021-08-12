@@ -18,21 +18,15 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
-import java.awt.Cursor;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FilenameUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -51,6 +45,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * Instances of this class allow a user to create a new hash database and add it
@@ -69,7 +64,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     private CentralRepoOrganization selectedOrg = null;
     private List<CentralRepoOrganization> orgs = null;
     static final String HASH_DATABASE_DIR_NAME = "HashDatabases";
-    private final FutureTask<CustomFileChooser> futureFileChooser = new FutureTask<>(CustomFileChooser::new);
+    private final JFileChooserFactory chooserFactory;
 
     /**
      * Displays a dialog that allows a user to create a new hash database and
@@ -79,11 +74,10 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     HashDbCreateDatabaseDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.createHashDbMsg"), true);
         initComponents();
+        chooserFactory = new JFileChooserFactory(CustomFileChooser.class);
         enableComponents();
         display();
         
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(futureFileChooser);
     }
 
     /**
@@ -147,7 +141,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     /**
      * Customize the JFileChooser.
      */
-    private class CustomFileChooser extends JFileChooser {
+    public static class CustomFileChooser extends JFileChooser {
 
         private static final long serialVersionUID = 1L;
 
@@ -448,17 +442,11 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             path.append(".").append(HashDbManager.getHashDatabaseFileExtension());
             
             if(fileChooser == null) {
-                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-                    fileChooser = futureFileChooser.get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    fileChooser = new CustomFileChooser();
-                }
+                fileChooser = chooserFactory.getChooser();
                
                 fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 fileChooser.setDragEnabled(false);
                 fileChooser.setMultiSelectionEnabled(false);
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             }
             
             

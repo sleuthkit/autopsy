@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * The action associated with the Case/Open Case menu item via the layer.xml
@@ -65,7 +65,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
     private static final Logger LOGGER = Logger.getLogger(CaseOpenAction.class.getName());
     private final FileFilter caseMetadataFileFilter;
 
-    private final JFileChooserHelper fileChooserHelper;
+    private final JFileChooserFactory fileChooserHelper;
 
     /**
      * Constructs the action associated with the Case/Open Case menu item via
@@ -75,7 +75,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
      */
     public CaseOpenAction() {
         caseMetadataFileFilter = new FileNameExtensionFilter(NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(), CaseMetadata.getFileExtension()), CaseMetadata.getFileExtension().substring(1));
-        fileChooserHelper = JFileChooserHelper.getHelper();
+        fileChooserHelper = new JFileChooserFactory();
     }
 
     /**

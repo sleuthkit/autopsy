@@ -50,7 +50,7 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 import org.sleuthkit.autopsy.logicalimager.dsp.DriveListUtils;
 
 /**
@@ -64,7 +64,7 @@ final class ConfigVisualPanel1 extends JPanel {
     private static final String DEFAULT_CONFIG_FILE_NAME = "logical-imager-config.json";
     private static final String UPDATE_UI_EVENT_NAME = "UPDATE_UI";
     private String configFilename;
-    private final JFileChooserHelper chooserHelper;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Creates new form ConfigVisualPanel1
@@ -76,7 +76,7 @@ final class ConfigVisualPanel1 extends JPanel {
             refreshDriveList();
             updateControls();
         });
-        chooserHelper = JFileChooserHelper.getHelper();
+        chooserHelper = new JFileChooserFactory();
     }
 
     @NbBundle.Messages({

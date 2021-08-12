@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 
 /**
@@ -60,7 +60,7 @@ final class LocalDiskPanel extends JPanel {
     private LocalDisk localDisk;
     private boolean enableNext = false;
     private JFileChooser fc;
-    private final JFileChooserHelper chooserHelper;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Creates new form LocalDiskPanel
@@ -70,7 +70,7 @@ final class LocalDiskPanel extends JPanel {
         customInit();
         createTimeZoneList();
         createSectorSizeList();
-        chooserHelper = JFileChooserHelper.getHelper();
+        chooserHelper = new JFileChooserFactory();
     }
 
     /**

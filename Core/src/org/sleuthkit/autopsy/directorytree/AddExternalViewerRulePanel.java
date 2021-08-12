@@ -26,7 +26,7 @@ import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
@@ -38,7 +38,7 @@ class AddExternalViewerRulePanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(AddExternalViewerRulePanel.class.getName());
     private static final long serialVersionUID = 1L;
     private JFileChooser fc;
-    private final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
+    private final JFileChooserFactory chooserHelper = new JFileChooserFactory();
     private static final GeneralFilter exeFilter = new GeneralFilter(GeneralFilter.EXECUTABLE_EXTS, GeneralFilter.EXECUTABLE_DESC);
 
     enum EVENT {

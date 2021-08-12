@@ -30,7 +30,7 @@ import javax.swing.JPanel;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * Allows an examiner to configure the XRY Data source processor.
@@ -50,7 +50,7 @@ final class XRYDataSourceProcessorConfigPanel extends JPanel {
     //panel will indicate when it is ready for an update.
     private final PropertyChangeSupport pcs;
     
-    private final JFileChooserHelper chooserHelper = JFileChooserHelper.getHelper();
+    private final JFileChooserFactory chooserHelper = new JFileChooserFactory();
     
     /**
      * Creates new form XRYDataSourceConfigPanel. 

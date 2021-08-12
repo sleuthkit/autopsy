@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerExc
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -59,7 +59,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private final static String LAST_FILE_PATH_KEY = "HashDbImport_Path";
     private CentralRepoOrganization selectedOrg = null;
     private List<CentralRepoOrganization> orgs = null;
-    private final JFileChooserHelper chooserHelper;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Displays a dialog that allows a user to select an existing hash database
@@ -70,7 +70,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.importHashDbMsg"),
                 true);
-        chooserHelper = JFileChooserHelper.getHelper();
+        chooserHelper = new JFileChooserFactory();
         initComponents();
         enableComponents();
         display();

@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserHelper;
+import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
 import org.sleuthkit.datamodel.HashUtility;
 
 /**
@@ -49,7 +49,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     private static final long serialVersionUID = 1L;
     private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
     private static final String[] SECTOR_SIZE_CHOICES = {"Auto Detect", "512", "1024", "2048", "4096"};
-    private final JFileChooserHelper fileChooserHelper = JFileChooserHelper.getHelper();
+    private final JFileChooserFactory fileChooserHelper = new JFileChooserFactory();
     private JFileChooser fileChooser;
     private final String contextName;
     private final List<FileFilter> fileChooserFilters;
