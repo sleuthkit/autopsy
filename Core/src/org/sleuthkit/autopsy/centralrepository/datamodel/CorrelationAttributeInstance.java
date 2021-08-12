@@ -269,21 +269,21 @@ public class CorrelationAttributeInstance implements Serializable {
      * @throws CentralRepoException if the Type's dbTableName has invalid
      *                        characters/format
      */
-    @Messages({"CorrelationType.FILES.displayName=Files",
-        "CorrelationType.DOMAIN.displayName=Domains",
-        "CorrelationType.EMAIL.displayName=Email Addresses",
-        "CorrelationType.PHONE.displayName=Phone Numbers",
-        "CorrelationType.USBID.displayName=USB Devices",
-        "CorrelationType.SSID.displayName=Wireless Networks",
-        "CorrelationType.MAC.displayName=MAC Addresses",
+    @Messages({"CorrelationType.FILES.displayName=File MD5",
+        "CorrelationType.DOMAIN.displayName=Domain",
+        "CorrelationType.EMAIL.displayName=Email Addresse",
+        "CorrelationType.PHONE.displayName=Phone Number",
+        "CorrelationType.USBID.displayName=USB Device",
+        "CorrelationType.SSID.displayName=Wireless Network",
+        "CorrelationType.MAC.displayName=MAC Addresse",
         "CorrelationType.IMEI.displayName=IMEI Number",
         "CorrelationType.IMSI.displayName=IMSI Number",
-        "CorrelationType.PROG_NAME.displayName=Installed Programs",
+        "CorrelationType.PROG_NAME.displayName=Installed Program",
         "CorrelationType.ICCID.displayName=ICCID Number",
         "CorrelationType.OS_ACCOUNT.displayName=Os Account"})
     public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws CentralRepoException {
         List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = new ArrayList<>();
-        
+         
         defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
         defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, true)); // NON-NLS
         defaultCorrelationTypes.add(new CorrelationAttributeInstance.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, true)); // NON-NLS
