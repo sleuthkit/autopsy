@@ -271,11 +271,11 @@ public class CorrelationAttributeInstance implements Serializable {
      */
     @Messages({"CorrelationType.FILES.displayName=File MD5",
         "CorrelationType.DOMAIN.displayName=Domain",
-        "CorrelationType.EMAIL.displayName=Email Addresse",
+        "CorrelationType.EMAIL.displayName=Email Address",
         "CorrelationType.PHONE.displayName=Phone Number",
         "CorrelationType.USBID.displayName=USB Device",
         "CorrelationType.SSID.displayName=Wireless Network",
-        "CorrelationType.MAC.displayName=MAC Addresse",
+        "CorrelationType.MAC.displayName=MAC Address",
         "CorrelationType.IMEI.displayName=IMEI Number",
         "CorrelationType.IMSI.displayName=IMSI Number",
         "CorrelationType.PROG_NAME.displayName=Installed Program",
