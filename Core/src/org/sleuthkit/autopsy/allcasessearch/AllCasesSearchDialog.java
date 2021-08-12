@@ -166,7 +166,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
         errorLabel = new javax.swing.JLabel();
         descriptionLabel = new javax.swing.JLabel();
         casesLabel = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        correlationValueScrollPane = new javax.swing.JScrollPane();
         correlationValueTextArea = new javax.swing.JTextArea();
         normalizedLabel = new javax.swing.JLabel();
 
@@ -201,7 +201,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
         correlationValueTextArea.setColumns(20);
         correlationValueTextArea.setRows(5);
         correlationValueTextArea.setText(org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.correlationValueTextArea.text")); // NOI18N
-        jScrollPane1.setViewportView(correlationValueTextArea);
+        correlationValueScrollPane.setViewportView(correlationValueTextArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(normalizedLabel, org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.normalizedLabel.text")); // NOI18N
 
@@ -230,7 +230,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(correlationTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 379, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(correlationValueScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 379, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(0, 0, Short.MAX_VALUE)))
                                 .addGap(142, 142, 142))
                             .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
@@ -248,7 +248,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(correlationValueLabel)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(correlationValueScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(normalizedLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
@@ -523,10 +523,10 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
     private javax.swing.JComboBox<String> correlationTypeComboBox;
     private javax.swing.JLabel correlationTypeLabel;
     private javax.swing.JLabel correlationValueLabel;
+    private javax.swing.JScrollPane correlationValueScrollPane;
     private javax.swing.JTextArea correlationValueTextArea;
     private javax.swing.JLabel descriptionLabel;
     private javax.swing.JLabel errorLabel;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel normalizedLabel;
     private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables
