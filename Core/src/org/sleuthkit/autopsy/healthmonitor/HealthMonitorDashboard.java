@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Dashboard for viewing metrics and controlling the health monitor.

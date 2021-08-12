@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerExc
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Instances of this class allow a user to select an existing hash database and

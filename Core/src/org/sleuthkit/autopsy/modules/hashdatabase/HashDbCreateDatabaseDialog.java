@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Instances of this class allow a user to create a new hash database and add it

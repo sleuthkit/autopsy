@@ -30,7 +30,7 @@ import javax.swing.JPanel;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Allows an examiner to configure the XRY Data source processor.

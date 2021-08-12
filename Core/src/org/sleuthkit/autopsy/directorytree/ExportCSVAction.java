@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFileProp
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Node.Property;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Exports CSV version of result nodes to a location selected by the user.

@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.report.modules.stix;
 
 import java.io.File;
 import javax.swing.JFileChooser;
-import org.sleuthkit.autopsy.guicomponeontutils.JFileChooserFactory;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Configuration panel for STIX report generation.
