@@ -66,7 +66,7 @@ public class DataSourceSummaryReport implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return ""; //ELTODO "DataSourceSummaryReport.xlsx"; //NON-NLS
+        return "";
     }
 
     @Override
@@ -77,7 +77,7 @@ public class DataSourceSummaryReport implements GeneralReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
-        return null; // ELTODO
+        return null;
     }
     
     @Override
@@ -85,13 +85,19 @@ public class DataSourceSummaryReport implements GeneralReportModule {
         return true;
     }
     
+    @NbBundle.Messages({
+        "DataSourceSummaryReport.error.noOpenCase=No currently open case.",
+        "DataSourceSummaryReport.error.noDataSources=No data sources selected for report.",
+        "DataSourceSummaryReport.failedToCompleteReport=Failed to complete report.",
+        "DataSourceSummaryReport.excelFileWriteError=Could not write the KML file.",})
     @Override
     public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         progressPanel.start();
-        Case currentCase = null;
+        Case currentCase;
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.DataSourceSummaryReport_error_noOpenCase());
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
@@ -110,7 +116,7 @@ public class DataSourceSummaryReport implements GeneralReportModule {
                 settings.setSelectedDataSources(dsIDs);
             } catch (TskCoreException ex) {
                 result = ReportProgressPanel.ReportStatus.ERROR;
-                // ELTODO errorMessage = Bundle.KMLReport_failedToCompleteReport();
+                errorMessage = Bundle.DataSourceSummaryReport_failedToCompleteReport();
                 logger.log(Level.SEVERE, "Could not get the datasources from the case", ex);
                 progressPanel.complete(result, errorMessage);
                 return;
@@ -121,7 +127,7 @@ public class DataSourceSummaryReport implements GeneralReportModule {
                     selectedDataSources.add(currentCase.getSleuthkitCase().getContentById(dsID));
                 } catch (TskCoreException ex) {
                     result = ReportProgressPanel.ReportStatus.ERROR;
-                    // ELTODO errorMessage = Bundle.KMLReport_failedToCompleteReport();
+                    errorMessage = Bundle.DataSourceSummaryReport_failedToCompleteReport();
                     logger.log(Level.SEVERE, "Could not get the datasources from the case", ex);
                     progressPanel.complete(result, errorMessage);
                     return;
@@ -129,21 +135,20 @@ public class DataSourceSummaryReport implements GeneralReportModule {
             }
         }
         
-        String baseReportDir = settings.getReportDirectoryPath();
-        // Start the progress bar and setup the report
-        // ELTODO progressPanel.setIndeterminate(true);
-
-        //progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
-        String reportFullPath = baseReportDir + getRelativeFilePath(); //NON-NLS
-
+        if (selectedDataSources.isEmpty()) {
+            result = ReportProgressPanel.ReportStatus.ERROR;
+            progressPanel.complete(result, Bundle.DataSourceSummaryReport_error_noDataSources());
+            logger.log(Level.SEVERE, "No data sources selected for report."); //NON-NLS
+            return;            
+        }
         
-        // looop over all data sources
+        // looop over all selected data sources
         for (Content dataSource : selectedDataSources){
             if (dataSource instanceof DataSource) {
                 try {
-                    new ExcelExportAction().exportToXLSX(progressPanel, (DataSource) dataSource, baseReportDir);
+                    new ExcelExportAction().exportToXLSX(progressPanel, (DataSource) dataSource, settings.getReportDirectoryPath());
                 } catch (IOException | ExcelExport.ExcelExportException ex) {
-                    // ELTODO errorMessage = Bundle.KMLReport_kmlFileWriteError();
+                    errorMessage = Bundle.DataSourceSummaryReport_excelFileWriteError();
                     logger.log(Level.SEVERE, errorMessage, ex); //NON-NLS
                     progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, errorMessage);
                     return;
