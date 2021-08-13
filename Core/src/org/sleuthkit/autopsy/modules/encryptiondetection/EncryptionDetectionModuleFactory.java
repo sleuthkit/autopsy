@@ -36,13 +36,19 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 @ServiceProvider(service = IngestModuleFactory.class)
 @Messages({
     "EncryptionDetectionFileIngestModule.moduleName.text=Encryption Detection",
-    "EncryptionDetectionFileIngestModule.getDesc.text=Looks for files with the specified minimum entropy."
+    "EncryptionDetectionFileIngestModule.getDesc.text=Looks for files with the specified minimum entropy.",
+    "EncryptionDetectionFileIngestModule.artifactComment.password=Password protection detected.",
 })
+
 public class EncryptionDetectionModuleFactory implements IngestModuleFactory {
 
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
+    }
+
+    public static String getPasswordProtectMessage() {
+        return Bundle.EncryptionDetectionFileIngestModule_artifactComment_password();
     }
 
     /**

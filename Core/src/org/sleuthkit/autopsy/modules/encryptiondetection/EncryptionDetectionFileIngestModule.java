@@ -83,7 +83,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     private Blackboard blackboard;
     private IngestJobContext context;
     private double calculatedEntropy;
-
+    
     private final double minimumEntropy;
     private final int minimumFileSize;
     private final boolean fileSizeMultipleEnforced;
@@ -119,7 +119,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     }
 
     @Messages({
-        "EncryptionDetectionFileIngestModule.artifactComment.password=Password protection detected.",
+//        "EncryptionDetectionFileIngestModule.artifactComment.password=Password protection detected.",
         "EncryptionDetectionFileIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f)."
     })
     @Override
@@ -160,7 +160,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                             String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
                 } else if (isFilePasswordProtected(file)) {
                     return flagFile(file, BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NOTABLE, 
-                    Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
+                    EncryptionDetectionModuleFactory.getPasswordProtectMessage());
                 }
             }
         } catch (ReadContentInputStreamException | SAXException | TikaException | UnsupportedCodecException ex) {
