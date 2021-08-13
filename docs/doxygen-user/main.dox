@@ -8,6 +8,9 @@ This is the User's Guide for the <a href="http://www.sleuthkit.org/autopsy/">ope
 
 Note: For those users running Autopsy on Mac devices, the functionality available through the "Tools" -> "Options" dialog as described in this documentation can be accessed through the system menu bar under "Preferences" or through the Cmd + , (command-comma) shortcut.
 
+Translated versions of this guide:
+- <a href="https://sleuthkit.org/autopsy/docs/user-docs_fr/4.19.0/">Français (4.19.0)</a>
+
 Help Topics
 -------
 The following topics are available here:
