@@ -23,6 +23,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -259,9 +260,8 @@ public class ResultFile extends Result {
 
     @Override
     public int hashCode() {
-        if (this.getFirstInstance().getMd5Hash() == null
-                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())
-                || !HashUtility.isValidMd5Hash(this.getFirstInstance().getMd5Hash())) {
+        if (StringUtils.isBlank(this.getFirstInstance().getMd5Hash()) 
+                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())) {
             return super.hashCode();
         } else {
             //if the file has a valid MD5 use the hashcode of the MD5 for deduping files with the same MD5
@@ -273,9 +273,8 @@ public class ResultFile extends Result {
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof ResultFile)
-                || this.getFirstInstance().getMd5Hash() == null
-                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())
-                || !HashUtility.isValidMd5Hash(this.getFirstInstance().getMd5Hash())) {
+                || StringUtils.isBlank(this.getFirstInstance().getMd5Hash()) 
+                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())) {
             return super.equals(obj);
         } else {
             //if the file has a valid MD5 compare use the MD5 for equality check
