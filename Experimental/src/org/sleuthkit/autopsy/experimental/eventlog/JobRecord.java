@@ -22,8 +22,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- *
- * @author gregd
+ * The record for the job.
  */
 public class JobRecord {
     
@@ -35,7 +34,17 @@ public class JobRecord {
     private final Optional<Instant> endTime;
     private final JobStatus status;
 
-    public JobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Instant> startTime, Optional<Instant> endTime, JobStatus status) {
+    /**
+     * Main constructor.
+     * @param id The id of the job.
+     * @param caseId The parent case id in the event log.
+     * @param caseName The name of the case.
+     * @param dataSourceName The name of the data source.
+     * @param startTime The start time of processing.
+     * @param endTime The end time of processing.
+     * @param status The current status.
+     */
+    JobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Instant> startTime, Optional<Instant> endTime, JobStatus status) {
         this.id = id;
         this.caseId = caseId;
         this.caseName = caseName;
@@ -45,30 +54,51 @@ public class JobRecord {
         this.status = status;
     }
 
+    /**
+     * @return The id of the job.
+     */
     public long getId() {
         return id;
     }
 
+    /**
+     * @return The parent case id in the event log.
+     */
     public long getCaseId() {
         return caseId;
     }
 
+    /**
+     * @return The name of the case.
+     */
     public String getCaseName() {
         return caseName;
     }
 
+    /**
+     * @return The name of the data source.
+     */
     public String getDataSourceName() {
         return dataSourceName;
     }
 
+    /**
+     * @return The start time of processing.
+     */
     public Optional<Instant> getStartTime() {
         return startTime;
     }
 
+    /**
+     * @return The end time of processing.
+     */
     public Optional<Instant> getEndTime() {
         return endTime;
     }
 
+    /**
+     * @return The current status.
+     */
     public JobStatus getStatus() {
         return status;
     }

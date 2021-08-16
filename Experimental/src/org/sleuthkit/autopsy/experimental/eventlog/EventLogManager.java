@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.experimental.eventlog;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -49,7 +48,6 @@ public class EventLogManager {
 
     private static EventLogManager instance;
 
-    
     /**
      * Returns singleton instance of the event log manager for auto ingest.
      *
@@ -57,27 +55,39 @@ public class EventLogManager {
      *
      * @throws UserPreferencesException
      */
-    public static EventLogManager getInstance() throws UserPreferencesException, PropertyVetoException, ClassNotFoundException, SQLException {
+    public static EventLogManager getInstance() throws EventLogException {
         if (instance == null) {
-            CaseDbConnectionInfo connectionInfo = UserPreferences.getDatabaseConnectionInfo();
+            CaseDbConnectionInfo connectionInfo;
+            try {
+                connectionInfo = UserPreferences.getDatabaseConnectionInfo();
+            } catch (UserPreferencesException ex) {
+                throw new EventLogException("An error occurred while fetching multiuser settings.", ex);
+            }
+
             String host = connectionInfo.getHost();
             String userName = connectionInfo.getUserName();
             String password = connectionInfo.getPassword();
             String port = connectionInfo.getPort();
 
             try (Connection pgConn = getPgConnection(host, port, userName, password, Optional.empty())) {
-                if (!verifyDatabaseExists(pgConn)) {
+                if (!verifyDatabaseExists(pgConn, DB_NAME)) {
                     if (!createDatabase(pgConn, DB_NAME, userName)) {
-                        throw new SQLException("Unable to create EventLogManager database: " + DB_NAME);
+                        throw new EventLogException("Unable to create EventLogManager database: " + DB_NAME);
                     }
                 }
+            } catch (SQLException | ClassNotFoundException ex) {
+                throw new EventLogException(MessageFormat.format("An error occurred while verifying that postgres database {0} exists.", DB_NAME), ex);
             }
 
             DataSource dataSource = getDataSource(host, port, userName, password, DB_NAME);
             try (Connection dbConn = dataSource.getConnection()) {
                 if (!createDbSchema(dbConn)) {
-                    throw new SQLException("Unable to create schema for: " + DB_NAME);
+                    throw new EventLogException("Unable to create schema for: " + DB_NAME);
                 }
+            } catch (SQLException ex) {
+                throw new EventLogException(MessageFormat.format(
+                        "An error occurred while verifying that schema in database {0} was properly configured.", DB_NAME),
+                        ex);
             }
 
             instance = new EventLogManager(dataSource);
@@ -86,7 +96,18 @@ public class EventLogManager {
         return instance;
     }
 
-    private static ComboPooledDataSource getDataSource(String host, String port, String userName, String password, String dbName) throws PropertyVetoException {
+    /**
+     * Returns a pooled c3po data source that can be used for connections.
+     *
+     * @param host     The pg host.
+     * @param port     The pg port.
+     * @param userName The username to use to connect pg.
+     * @param password The password to use to connect to pg.
+     * @param dbName   The name of the database to connect to.
+     *
+     * @return The pooled connection.
+     */
+    private static ComboPooledDataSource getDataSource(String host, String port, String userName, String password, String dbName) {
         ComboPooledDataSource cpds = new ComboPooledDataSource();
         cpds.setJdbcUrl(getPgConnectionString(host, port, Optional.of(dbName)));
         cpds.setUser(userName);
@@ -94,13 +115,37 @@ public class EventLogManager {
         return cpds;
     }
 
+    /**
+     * Creates a postgres jdbc url to use for pg connections.
+     *
+     * @param host   The pg hostname.
+     * @param port   The pg port.
+     * @param dbName The name of the pg database. If empty, the root "postgres"
+     *               database is used.
+     *
+     * @return The jdbc url.
+     */
     private static String getPgConnectionString(String host, String port, Optional<String> dbName) {
         return PG_JDBC_BASE_URI + host + ":" + port + "/" + dbName.orElse("postgres");
     }
 
-    private static Connection getPgConnection(String host, String port, String userName, String password, Optional<String> dbName)
-            throws ClassNotFoundException, SQLException {
-
+    /**
+     * Returns a standard db connection to the postgres database specified by
+     * settings.
+     *
+     * @param host     The pg host.
+     * @param port     The pg port.
+     * @param userName The username to use to connect pg.
+     * @param password The password to use to connect to pg.
+     * @param dbName   The name of the pg database. If empty, the root
+     *                 "postgres" database is used.
+     *
+     * @return
+     *
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
+    private static Connection getPgConnection(String host, String port, String userName, String password, Optional<String> dbName) throws ClassNotFoundException, SQLException {
         String url = getPgConnectionString(host, port, dbName);
 
         Properties props = new Properties();
@@ -111,9 +156,19 @@ public class EventLogManager {
         return DriverManager.getConnection(url, props);
     }
 
-    private static boolean verifyDatabaseExists(Connection conn) throws SQLException, ClassNotFoundException {
+    /**
+     * Verify that the given postgres database exists.
+     *
+     * @param conn   The pg connection to the root 'postgres' database.
+     * @param dbName The database name to verify exists.
+     *
+     * @return True if exists.
+     *
+     * @throws SQLException
+     */
+    private static boolean verifyDatabaseExists(Connection conn, String dbName) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement("SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower(?) LIMIT 1")) {
-            ps.setString(1, DB_NAME);
+            ps.setString(1, dbName);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return true;
@@ -124,7 +179,18 @@ public class EventLogManager {
         return false;
     }
 
-    private static boolean createDatabase(Connection conn, String dbName, String userName) throws ClassNotFoundException, SQLException {
+    /**
+     * Creates a postgres database.
+     *
+     * @param conn     The root 'postgres' database connection.
+     * @param dbName   The name of the database to create.
+     * @param userName The owner of the database.
+     *
+     * @return True if successful.
+     *
+     * @throws SQLException
+     */
+    private static boolean createDatabase(Connection conn, String dbName, String userName) throws SQLException {
         String sql = "CREATE DATABASE %s OWNER %s"; // NON-NLS
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(String.format(sql, dbName, userName));
@@ -133,6 +199,17 @@ public class EventLogManager {
         return true;
     }
 
+    /**
+     * Runs sql queries to instantiate the necessary schema if not already
+     * created. This method can be run even if database has been previously
+     * instantiated.
+     *
+     * @param conn The database connection.
+     *
+     * @return True if successful.
+     *
+     * @throws SQLException
+     */
     private static boolean createDbSchema(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
             conn.setAutoCommit(false);
@@ -154,7 +231,7 @@ public class EventLogManager {
                     + "FOREIGN KEY(case_id) REFERENCES cases(id) ON DELETE CASCADE"
                     + ")");
 
-            stmt.execute("CREATE INDEX IF NOT EXISTS ON jobs(case_id)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS ON jobs(case_id, data_source_name)");
 
             stmt.execute("CREATE TABLE IF NOT EXISTS db_versions("
                     + "major_version INTEGER, "
@@ -179,14 +256,38 @@ public class EventLogManager {
 
     private final DataSource dataSource;
 
+    /**
+     * Main constructor.
+     *
+     * @param dataSource The pooled data source connection to use.
+     */
     private EventLogManager(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
+    /**
+     * Creates a case record given the result set. Expects 'case_id' and 'name'.
+     *
+     * @param rs The result set.
+     *
+     * @return The case record.
+     *
+     * @throws SQLException
+     */
     private CaseRecord getCaseRecord(ResultSet rs) throws SQLException {
         return new CaseRecord(rs.getLong("case_id"), rs.getString("name"));
     }
 
+    /**
+     * Returns the case record denoted by the case name or creates a new entry
+     * and returns the record.
+     *
+     * @param caseName The unique name of the case.
+     *
+     * @return The case record in the event log of the given case name.
+     *
+     * @throws SQLException
+     */
     public CaseRecord getOrCreateCaseRecord(String caseName) throws SQLException {
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement query = conn.prepareStatement("SELECT case_id, name FROM cases WHERE name = ?")) {
@@ -221,6 +322,18 @@ public class EventLogManager {
         }
     }
 
+    /**
+     * Returns the job record denoted by the case id and data source or creates
+     * a new entry.
+     *
+     * @param caseId         The case id in the event log.
+     * @param dataSourceName The data source name (caseId and dataSourceName
+     *                       must be unique)
+     *
+     * @return The found or created job record.
+     *
+     * @throws SQLException
+     */
     public JobRecord getOrCreateJobRecord(long caseId, String dataSourceName) throws SQLException {
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement query = conn.prepareStatement("SELECT "
@@ -281,6 +394,17 @@ public class EventLogManager {
         }
     }
 
+    /**
+     * Set job status for the given job.
+     *
+     * @param jobId     The job id.
+     * @param newStatus The status to set for the job.
+     * @param date      The timestamp for when
+     *
+     * @return The job record if an update is made.
+     *
+     * @throws SQLException
+     */
     public Optional<JobRecord> setJobStatus(long jobId, JobStatus newStatus, Date date) throws SQLException {
         String returningClause = " RETURNING job_id, data_source_name, start_time, end_time, status, case_id";
         String updateStr;
@@ -324,10 +448,20 @@ public class EventLogManager {
         }
     }
 
+    /**
+     * Retrieves all the jobs of the given status.
+     *
+     * @param status The status.
+     *
+     * @return The list of job records.
+     *
+     * @throws SQLException
+     */
     public List<JobRecord> getJobs(JobStatus status) throws SQLException {
         List<JobRecord> toReturn = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
-                PreparedStatement query = conn.prepareStatement("SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM jobs WHERE status = ?")) {
+                PreparedStatement query = conn.prepareStatement(
+                        "SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM jobs WHERE status = ?")) {
 
             query.setInt(1, status.getDbVal());
 
@@ -341,6 +475,17 @@ public class EventLogManager {
         return toReturn;
     }
 
+    /**
+     * Returns a job record from the given result set.
+     *
+     * @param rs The result set. It is expected to have all columns of jobs as
+     *           well as 'case_name' which is the name of the case signified by
+     *           the 'case_id'.
+     *
+     * @return The record.
+     *
+     * @throws SQLException
+     */
     private JobRecord getJobRecord(ResultSet rs) throws SQLException {
         return new JobRecord(rs.getLong("job_id"),
                 rs.getLong("case_id"),

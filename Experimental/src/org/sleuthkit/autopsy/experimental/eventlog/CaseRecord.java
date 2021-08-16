@@ -19,25 +19,36 @@
 package org.sleuthkit.autopsy.experimental.eventlog;
 
 /**
- *
- * @author gregd
+ * A record for a case processed by auto ingest.
  */
 public class CaseRecord {
-    
+
     private final long id;
     private final String name;
 
-    public CaseRecord(long id, String name) {
+    /**
+     * Main constructor.
+     *
+     * @param id   The event log id of the case.
+     * @param name The unique name of the case.
+     */
+    CaseRecord(long id, String name) {
         this.id = id;
         this.name = name;
     }
 
+    /**
+     * @return The event log id of the case.
+     */
     public long getId() {
         return id;
     }
 
+    /**
+     * @return The unique name of the case.
+     */
     public String getName() {
         return name;
     }
-    
+
 }

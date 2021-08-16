@@ -22,21 +22,32 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- *
- * @author gregd
+ * The status of the job.
  */
 public enum JobStatus {
     PENDING(0), RUNNING(1), DONE(2);
     private int dbVal;
 
+    /**
+     * Constructor.
+     * @param dbVal The integer value used to represent the status in the database. 
+     */
     JobStatus(int dbVal) {
         this.dbVal = dbVal;
     }
 
-    int getDbVal() {
+    /**
+     * @return The integer value used to represent the status in the database. 
+     */
+    public int getDbVal() {
         return dbVal;
     }
 
+    /**
+     * Returns the enum value signified by the integer value.
+     * @param dbVal The integer value used to represent the status in the database. 
+     * @return The job status if found or empty if not.
+     */
     public static Optional<JobStatus> getFromDbVal(Integer dbVal) {
         if (dbVal == null) {
             return Optional.empty();
