@@ -23,7 +23,7 @@ import java.awt.Color;
 /**
  * An individual pie chart slice in the pie chart.
  */
-public class PieChartItem {
+class PieChartItem {
 
     private final String label;
     private final double value;
@@ -37,7 +37,7 @@ public class PieChartItem {
      * @param color The color for the pie slice. Can be null for
      * auto-determined.
      */
-    public PieChartItem(String label, double value, Color color) {
+    PieChartItem(String label, double value, Color color) {
         this.label = label;
         this.value = value;
         this.color = color;
@@ -46,21 +46,21 @@ public class PieChartItem {
     /**
      * @return The label for this item.
      */
-    public String getLabel() {
+    String getLabel() {
         return label;
     }
 
     /**
      * @return The value for this item.
      */
-    public double getValue() {
+    double getValue() {
         return value;
     }
 
     /**
      * @return The color for the pie slice or null for auto-determined.
      */
-    public Color getColor() {
+    Color getColor() {
         return color;
     }
 

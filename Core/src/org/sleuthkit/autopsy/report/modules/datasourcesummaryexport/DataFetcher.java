@@ -25,7 +25,7 @@ package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
  * another type in the event that the fetching encountered an error.
  */
 @FunctionalInterface
-public interface DataFetcher<I, O> {
+interface DataFetcher<I, O> {
 
     /**
      * A function that accepts an input argument and outputs a result. Since it
