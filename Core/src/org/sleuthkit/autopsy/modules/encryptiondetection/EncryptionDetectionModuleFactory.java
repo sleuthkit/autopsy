@@ -42,15 +42,13 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 public class EncryptionDetectionModuleFactory implements IngestModuleFactory {
 
+    public static final String PASSWORD_PROTECT_MESSAGE = Bundle.EncryptionDetectionFileIngestModule_artifactComment_password();
+
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
-
-    public static String getPasswordProtectMessage() {
-        return Bundle.EncryptionDetectionFileIngestModule_artifactComment_password();
-    }
-
+    
     /**
      * Get the name of the module.
      *

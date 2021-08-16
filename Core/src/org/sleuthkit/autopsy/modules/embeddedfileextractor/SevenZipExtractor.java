@@ -96,7 +96,7 @@ class SevenZipExtractor {
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
             "EmbeddedFileExtractorIngestModule.ArchiveExtractor.encryptionFileLevel");
-    private static final String ENCRYPTION_FULL = EncryptionDetectionModuleFactory.getPasswordProtectMessage();
+    private static final String ENCRYPTION_FULL = EncryptionDetectionModuleFactory.PASSWORD_PROTECT_MESSAGE;
 
     //zip bomb detection
     private static final int MAX_DEPTH = 4;
