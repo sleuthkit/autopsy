@@ -214,36 +214,32 @@ public class EventLogManager {
         try (Statement stmt = conn.createStatement()) {
             conn.setAutoCommit(false);
 
-            stmt.execute("CREATE TABLE IF NOT EXISTS cases("
-                    + "case_id SERIAL PRIMARY KEY, "
-                    + "name TEXT "
+            stmt.execute("CREATE TABLE IF NOT EXISTS cases(case_id SERIAL PRIMARY KEY, name TEXT)");
+
+            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS case_name_idx ON cases(name)");
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS jobs(\n"
+                    + "	job_id SERIAL PRIMARY KEY, \n"
+                    + "	data_source_name TEXT, \n"
+                    + "	start_time TIMESTAMP WITHOUT TIME ZONE, \n"
+                    + "	end_time TIMESTAMP WITHOUT TIME ZONE,\n"
+                    + "	status SMALLINT,\n"
+                    + "	case_id INTEGER,\n"
+                    + "	FOREIGN KEY(case_id) REFERENCES cases(case_id) ON DELETE CASCADE\n"
                     + ")");
 
-            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS ON cases(name)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS jobs_case_ds_idx ON jobs(case_id, data_source_name)");
 
-            stmt.execute("CREATE TABLE IF NOT EXISTS jobs ("
-                    + "job_id SERIAL PRIMARY KEY, "
-                    + "data_source_name TEXT, "
-                    + "start_time TIMESTAMP WITHOUT TIME ZONE, "
-                    + "end_time TIMESTAMP WITHOUT TIME ZONE, "
-                    + "status SMALLINT, "
-                    + "case_id INTEGER, "
-                    + "FOREIGN KEY(case_id) REFERENCES cases(id) ON DELETE CASCADE"
+            stmt.execute("CREATE TABLE IF NOT EXISTS db_versions(\n"
+                    + "	major_version INTEGER, \n"
+                    + "	minor_version INTEGER, \n"
+                    + "	revision INTEGER, \n"
+                    + "	creation_date TIMESTAMP WITHOUT TIME ZONE\n"
                     + ")");
 
-            stmt.execute("CREATE INDEX IF NOT EXISTS ON jobs(case_id, data_source_name)");
+            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS db_versions_idx ON db_versions(major_version, minor_version, revision)");
 
-            stmt.execute("CREATE TABLE IF NOT EXISTS db_versions("
-                    + "major_version INTEGER, "
-                    + "minor_version INTEGER, "
-                    + "revision INTEGER, "
-                    + "creation_date TIMESTAMP WITHOUT TIME ZONE"
-                    + ")");
-
-            stmt.execute("CREATE INDEX IF NOT EXISTS ON db_versions(major_version, minor_version, revision)");
-
-            stmt.execute("INSERT INTO db_versions(major_version, minor_version, revision, creation_date) "
-                    + "VALUES(1, 0, 0, NOW()) ON CONFLICT DO NOTHING");
+            stmt.execute("INSERT INTO db_versions(major_version, minor_version, revision, creation_date) VALUES(1, 0, 0, NOW()) ON CONFLICT DO NOTHING");
 
             conn.commit();
         } catch (SQLException ex) {
