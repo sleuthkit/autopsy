@@ -42,7 +42,7 @@ import javax.sql.DataSource;
  */
 public class EventLogManager {
 
-    private static final String DB_NAME = "AutoIngestEventLog";
+    private static final String DB_NAME = "event_log";
     private static final String PG_JDBC_BASE_URI = "jdbc:postgresql://";
     private static final String PG_JDBC_DRIVER = "org.postgresql.Driver";
 
