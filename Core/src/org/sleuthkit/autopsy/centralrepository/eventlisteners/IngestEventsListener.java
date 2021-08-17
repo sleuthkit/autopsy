@@ -620,18 +620,17 @@ public class IngestEventsListener {
                         if (recentlyAddedCeArtifacts.add(eamArtifact.toString())) {
                             
                             // Get a list of instances for a given value (hash, email, etc.)
-                            List<CorrelationAttributeInstance> previousOccurences = new ArrayList<>();
+                            List<CorrelationAttributeInstance> previousOccurrences = new ArrayList<>();
                             // check if we are flagging things
                             if (flagNotableItemsEnabled || flagPreviousItemsEnabled || flagUniqueItemsEnabled) {
                                 try {
-                                    previousOccurences = dbManager.getArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                    previousOccurrences = dbManager.getArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
 
-                                    // ELTODO do we need this?
                                     // make sure the previous instances do not contain current case
-                                    for (Iterator<CorrelationAttributeInstance> iterator = previousOccurences.iterator(); iterator.hasNext();) {
+                                    for (Iterator<CorrelationAttributeInstance> iterator = previousOccurrences.iterator(); iterator.hasNext();) {
                                         CorrelationAttributeInstance instance = iterator.next();
                                         if (instance.getCorrelationCase().getCaseUUID().equals(eamArtifact.getCorrelationCase().getCaseUUID())) {
-                                            // this is the current case - remove the instace from the previousOccurences list
+                                            // this is the current case - remove the instace from the previousOccurrences list
                                             iterator.remove();
                                         }
                                     }
@@ -645,7 +644,7 @@ public class IngestEventsListener {
                             // if getKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
                             // create TSK_PREVIOUSLY_SEEN artifact on BB.
                             if (flagNotableItemsEnabled) {
-                                List<String> caseDisplayNames = getCaseDisplayNamesForNotable(previousOccurences);
+                                List<String> caseDisplayNames = getCaseDisplayNamesForNotable(previousOccurrences);
                                 if (!caseDisplayNames.isEmpty()) {
                                     makeAndPostPreviousNotableArtifact(bbArtifact,
                                             caseDisplayNames, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
@@ -664,9 +663,8 @@ public class IngestEventsListener {
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.MAC_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.PHONE_TYPE_ID)) {
-                                // only alert to previous instances when they were in another case
-                                
-                                List<String> caseDisplayNames = getCaseDisplayNames(previousOccurences);
+
+                                List<String> caseDisplayNames = getCaseDisplayNames(previousOccurrences);
                                 makeAndPostPreviousSeenArtifact(bbArtifact, caseDisplayNames, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                             }
                             
@@ -697,7 +695,7 @@ public class IngestEventsListener {
                                     && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.DOMAIN_TYPE_ID)) {
                                 
-                                if (previousOccurences.isEmpty()) {
+                                if (previousOccurrences.isEmpty()) {
                                     makeAndPostPreviouslyUnseenArtifact(bbArtifact, eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                 }
                             }
@@ -725,13 +723,13 @@ public class IngestEventsListener {
     /**
      * Gets case display names for a list of CorrelationAttributeInstance.
      *
-     * @param occurences List of CorrelationAttributeInstance
+     * @param occurrences List of CorrelationAttributeInstance
      *
      * @return List of case display names
      */
-    private List<String> getCaseDisplayNames(List<CorrelationAttributeInstance> occurences) {
+    private List<String> getCaseDisplayNames(List<CorrelationAttributeInstance> occurrences) {
         List<String> caseNames = new ArrayList<>();
-        for (CorrelationAttributeInstance occurrence : occurences) {
+        for (CorrelationAttributeInstance occurrence : occurrences) {
             caseNames.add(occurrence.getCorrelationCase().getDisplayName());
         }
         return caseNames;
@@ -740,13 +738,13 @@ public class IngestEventsListener {
     /**
      * Gets case display names for only occurrences marked as NOTABLE/BAD.
      *
-     * @param occurences List of CorrelationAttributeInstance
+     * @param occurrences List of CorrelationAttributeInstance
      *
-     * @return List of case display names of NOTABLE/BAD occurences
+     * @return List of case display names of NOTABLE/BAD occurrences
      */
-    private List<String> getCaseDisplayNamesForNotable(List<CorrelationAttributeInstance> occurences) {
+    private List<String> getCaseDisplayNamesForNotable(List<CorrelationAttributeInstance> occurrences) {
         List<String> caseNames = new ArrayList<>();
-        for (CorrelationAttributeInstance occurrence : occurences) {
+        for (CorrelationAttributeInstance occurrence : occurrences) {
             if (occurrence.getKnownStatus() == TskData.FileKnown.BAD) {
                 caseNames.add(occurrence.getCorrelationCase().getDisplayName());
             }
