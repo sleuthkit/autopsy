@@ -355,7 +355,8 @@ public class EventLogManager {
                 }
 
                 // taken from https://stackoverflow.com/a/49536257
-                try (PreparedStatement insert = conn.prepareStatement("WITH inserted AS ("
+                try (PreparedStatement insert = conn.prepareStatement(
+                        "WITH inserted AS ("
                         + "INSERT INTO jobs(data_source_name, start_time, end_time, status, case_id) VALUES(?, NULL, NULL, ?, ?) "
                         + "RETURNING *) "
                         + "SELECT "
@@ -402,23 +403,34 @@ public class EventLogManager {
      * @throws SQLException
      */
     public Optional<JobRecord> setJobStatus(long jobId, JobStatus newStatus, Date date) throws SQLException {
-        String returningClause = " RETURNING job_id, data_source_name, start_time, end_time, status, case_id";
+        
         String updateStr;
         switch (newStatus) {
             case RUNNING:
-                updateStr = "UPDATE jobs SET status = ?, start_time = ? WHERE job_id = ? AND start_time = NULL" + returningClause;
+                updateStr = "UPDATE jobs SET status = ?, start_time = ? WHERE job_id = ? AND start_time = NULL";
                 break;
             case DONE:
-                updateStr = "UPDATE jobs SET status = ?, end_time = ? WHERE job_id = ? AND end_time = NULL" + returningClause;
+                updateStr = "UPDATE jobs SET status = ?, end_time = ? WHERE job_id = ? AND end_time = NULL";
                 break;
             case PENDING:
             default:
-                updateStr = "UPDATE jobs SET status = ? WHERE job_id = ? AND start_time = NULL AND end_time = NULL" + returningClause;
+                updateStr = "UPDATE jobs SET status = ? WHERE job_id = ? AND start_time = NULL AND end_time = NULL";
                 break;
         }
+        
+        String fullClause = "WITH updated AS (" + updateStr + " RETURNING *) "
+                        + "SELECT "
+                        + "updated.job_id, "
+                        + "updated.data_source_name, "
+                        + "updated.start_time, "
+                        + "updated.end_time, "
+                        + "updated.status, "
+                        + "updated.case_id, "
+                        + "cases.name AS case_name "
+                        + "FROM updated INNER JOIN cases ON cases.case_id = updated.case_id ";
 
         try (Connection conn = dataSource.getConnection();
-                PreparedStatement updateStmt = conn.prepareStatement(updateStr)) {
+                PreparedStatement updateStmt = conn.prepareStatement(fullClause)) {
 
             updateStmt.setInt(1, newStatus.getDbVal());
 
@@ -457,7 +469,16 @@ public class EventLogManager {
         List<JobRecord> toReturn = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement query = conn.prepareStatement(
-                        "SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM jobs WHERE status = ?")) {
+                         "SELECT "
+                        + "jobs.job_id, "
+                        + "jobs.data_source_name, "
+                        + "jobs.start_time, "
+                        + "jobs.end_time, "
+                        + "jobs.status, "
+                        + "jobs.case_id, "
+                        + "cases.name AS case_name "
+                        + "FROM inserted INNER JOIN cases ON cases.case_id = inserted.case_id "
+                        + "WHERE jobs.status = ?")) {
 
             query.setInt(1, status.getDbVal());
 
