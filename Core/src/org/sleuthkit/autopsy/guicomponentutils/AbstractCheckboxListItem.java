@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.guicomponeontutils;
+package org.sleuthkit.autopsy.guicomponentutils;
 
 import javax.swing.Icon;
 import org.sleuthkit.autopsy.guiutils.CheckBoxJList;
