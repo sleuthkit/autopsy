@@ -228,7 +228,7 @@ public class EventLogManager {
                     + "	FOREIGN KEY(case_id) REFERENCES cases(case_id) ON DELETE CASCADE\n"
                     + ")");
 
-            stmt.execute("CREATE INDEX IF NOT EXISTS jobs_case_ds_idx ON jobs(case_id, data_source_name)");
+            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS jobs_case_ds_idx ON jobs(case_id, data_source_name);");
 
             stmt.execute("CREATE TABLE IF NOT EXISTS db_versions(\n"
                     + "	major_version INTEGER, \n"
