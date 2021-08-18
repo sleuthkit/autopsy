@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.discovery.search;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
