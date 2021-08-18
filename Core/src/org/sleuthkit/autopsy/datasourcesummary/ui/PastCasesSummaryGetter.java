@@ -23,7 +23,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
@@ -32,8 +33,9 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Wrapper class for converting org.sleuthkit.autopsy.contentutils.PastCasesSummary
- * functionality into a DefaultArtifactUpdateGovernor used by PastCases tab.
+ * Wrapper class for converting
+ * org.sleuthkit.autopsy.contentutils.PastCasesSummary functionality into a
+ * DefaultArtifactUpdateGovernor used by PastCases tab.
  */
 public class PastCasesSummaryGetter implements DefaultArtifactUpdateGovernor {
 
@@ -42,7 +44,10 @@ public class PastCasesSummaryGetter implements DefaultArtifactUpdateGovernor {
             ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
     ));
 
+    private PastCasesSummary pastSummary;
+
     public PastCasesSummaryGetter() {
+        pastSummary = new PastCasesSummary();
     }
 
     @Override
@@ -67,10 +72,6 @@ public class PastCasesSummaryGetter implements DefaultArtifactUpdateGovernor {
             return null;
         }
 
-        try {
-            return PastCasesSummary.getPastCasesData(dataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return pastSummary.getPastCasesData(dataSource);
     }
 }

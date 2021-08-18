@@ -39,11 +39,14 @@ import org.sleuthkit.datamodel.DataSource;
  * Class to export additional details associated with a specific DataSource
  */
 class ExportContainerInfo {
+    
+    private final ContainerSummary containerSummary;
 
     /**
      * Creates new form ExportContainerInfo.
      */
-    private ExportContainerInfo() {
+    ExportContainerInfo() {
+        containerSummary = new ContainerSummary();
     }
 
     /**
@@ -81,8 +84,8 @@ class ExportContainerInfo {
         "ExportContainerInfo_export_sha256=SHA256:",
         "ExportContainerInfo_export_unallocatedSize=Unallocated Space:",
         "ExportContainerInfo_export_filePaths=File Paths:",})
-    static List<ExcelSheetExport> getExports(DataSource ds) {
-        DataFetcher<DataSource, ContainerDetails> containerDataFetcher = (dataSource) -> ContainerSummary.getContainerDetails(dataSource);
+    List<ExcelSheetExport> getExports(DataSource ds) {
+        DataFetcher<DataSource, ContainerDetails> containerDataFetcher = (dataSource) -> containerSummary.getContainerDetails(dataSource);
         ContainerDetails containerDetails = ExcelExportAction.getFetchResult(containerDataFetcher, "Container sheets", ds);
         if (ds == null || containerDetails == null) {
             return Collections.emptyList();

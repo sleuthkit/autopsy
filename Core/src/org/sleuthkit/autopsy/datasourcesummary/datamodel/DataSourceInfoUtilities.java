@@ -52,6 +52,7 @@ public final class DataSourceInfoUtilities {
     /**
      * Gets a count of tsk_files for a particular datasource.
      *
+     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
      *
@@ -59,12 +60,11 @@ public final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      * @throws SQLException
-     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfTskFiles(DataSource currentDataSource, String additionalWhere)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
+    static Long getCountOfTskFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
+            throws TskCoreException, SQLException {
         if (currentDataSource != null) {
-            return Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere(
+            return skCase.countFilesWhere(
                     "data_source_obj_id=" + currentDataSource.getId()
                     + (StringUtils.isBlank(additionalWhere) ? "" : (" AND " + additionalWhere)));
         }
@@ -74,6 +74,7 @@ public final class DataSourceInfoUtilities {
     /**
      * Gets a count of regular files for a particular datasource.
      *
+     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
      *
@@ -81,22 +82,22 @@ public final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      * @throws SQLException
-     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfRegularFiles(DataSource currentDataSource, String additionalWhere)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
+    static Long getCountOfRegularFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
+            throws TskCoreException, SQLException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue();
 
         if (StringUtils.isNotBlank(additionalWhere)) {
             whereClause += " AND " + additionalWhere;
         }
 
-        return getCountOfTskFiles(currentDataSource, whereClause);
+        return getCountOfTskFiles(skCase, currentDataSource, whereClause);
     }
 
     /**
      * Gets a count of regular non-slack files for a particular datasource.
      *
+     * @param skCase            The current SleuthkitCase.
      * @param currentDataSource The datasource.
      * @param additionalWhere   Additional sql where clauses.
      *
@@ -104,10 +105,9 @@ public final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      * @throws SQLException
-     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfRegNonSlackFiles(DataSource currentDataSource, String additionalWhere)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
+    public static Long getCountOfRegNonSlackFiles(SleuthkitCase skCase, DataSource currentDataSource, String additionalWhere)
+            throws TskCoreException, SQLException {
         String whereClause = "meta_type=" + TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
                 + " AND type<>" + TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType();
 
@@ -115,7 +115,7 @@ public final class DataSourceInfoUtilities {
             whereClause += " AND " + additionalWhere;
         }
 
-        return getCountOfTskFiles(currentDataSource, whereClause);
+        return getCountOfTskFiles(skCase, currentDataSource, whereClause);
     }
 
     /**
@@ -129,6 +129,7 @@ public final class DataSourceInfoUtilities {
     /**
      * Retrieves a result based on the provided query.
      *
+     * @param skCase    The current SleuthkitCase.
      * @param query     The query.
      * @param processor The result set handler.
      *
@@ -137,11 +138,10 @@ public final class DataSourceInfoUtilities {
      *
      * @throws TskCoreException
      * @throws SQLException
-     * @throws NoCurrentCaseException
      */
-    public static <T> T getBaseQueryResult(String query, ResultSetHandler<T> processor)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
-        try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
+    static <T> T getBaseQueryResult(SleuthkitCase skCase, String query, ResultSetHandler<T> processor)
+            throws TskCoreException, SQLException {
+        try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(query)) {
             ResultSet resultSet = dbQuery.getResultSet();
             return processor.process(resultSet);
         }
@@ -433,6 +433,8 @@ public final class DataSourceInfoUtilities {
         Long longVal = getLongOrNull(artifact, attributeType);
         return (longVal == null || longVal == 0) ? null : new Date(longVal * 1000);
     }
+    
+    // ELTODO everything below is not in develop
 
     /**
      * Returns the long value or zero if longVal is null.

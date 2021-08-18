@@ -26,8 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -44,10 +44,22 @@ public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
             Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
 
+    private final SleuthkitCaseProvider provider;
+
     /**
      * Main constructor.
      */
     public MimeTypeSummaryGetter() {
+        this(SleuthkitCaseProvider.DEFAULT);
+    }
+
+    /**
+     * Main constructor.
+     *
+     * @param provider The means of obtaining a sleuthkit case.
+     */
+    public MimeTypeSummaryGetter(SleuthkitCaseProvider provider) {
+        this.provider = provider;
     }
 
     @Override
@@ -90,11 +102,7 @@ public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource, "mime_type IN " + getSqlSet(setOfMimeTypes));
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource, "mime_type IN " + getSqlSet(setOfMimeTypes));
     }
 
     /**
@@ -115,13 +123,9 @@ public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
-                    "mime_type NOT IN " + getSqlSet(setOfMimeTypes)
-                    + " AND mime_type IS NOT NULL AND mime_type <> '' ");
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource,
+                "mime_type NOT IN " + getSqlSet(setOfMimeTypes)
+                + " AND mime_type IS NOT NULL AND mime_type <> '' ");
     }
 
     /**
@@ -137,11 +141,7 @@ public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfAllRegularFiles(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(dataSource, null);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), dataSource, null);
     }
 
     /**
@@ -158,11 +158,7 @@ public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfFilesWithNoMimeType(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource, "(mime_type IS NULL OR mime_type = '') ");
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource, "(mime_type IS NULL OR mime_type = '') ");
     }
 
     /**

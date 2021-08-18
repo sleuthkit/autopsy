@@ -39,21 +39,31 @@ import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import java.util.function.Supplier;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.TimeLineModule;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.datamodel.TimelineFilter;
 
 /**
  * Provides data source summary information pertaining to Timeline data.
  */
 public class TimelineSummary {
 
-    private static final TimeZone timeZone = TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays());
+    /**
+     * A function for obtaining a Timeline RootFilter filtered to the specific
+     * data source.
+     */
+    public interface DataSourceFilterFunction {
+
+        /**
+         * Obtains a Timeline RootFilter filtered to the specific data source.
+         *
+         * @param dataSource The data source.
+         * @return The timeline root filter.
+         * @throws SleuthkitCaseProviderException
+         * @throws TskCoreException
+         */
+        RootFilter apply(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException;
+    }
 
     private static final long DAY_SECS = 24 * 60 * 60;
     private static final Set<TimelineEventType> FILE_SYSTEM_EVENTS
@@ -63,7 +73,31 @@ public class TimelineSummary {
                     TimelineEventType.FILE_CREATED,
                     TimelineEventType.FILE_CHANGED));
 
-    private TimelineSummary() {
+    private final SleuthkitCaseProvider caseProvider;
+    private final Supplier<TimeZone> timeZoneProvider;
+    private final DataSourceFilterFunction filterFunction;
+
+    /**
+     * Default constructor.
+     */
+    public TimelineSummary() {
+        this(SleuthkitCaseProvider.DEFAULT,
+                () -> TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays()),
+                (ds) -> TimelineDataSourceUtils.getInstance().getDataSourceFilter(ds));
+    }
+
+    /**
+     * Construct object with given SleuthkitCaseProvider
+     *
+     * @param caseProvider SleuthkitCaseProvider provider; cannot be null.
+     * @param timeZoneProvider The timezone provider; cannot be null.
+     * @param filterFunction Provides the default root filter function filtered
+     * to the data source; cannot be null.
+     */
+    public TimelineSummary(SleuthkitCaseProvider caseProvider, Supplier<TimeZone> timeZoneProvider, DataSourceFilterFunction filterFunction) {
+        this.caseProvider = caseProvider;
+        this.timeZoneProvider = timeZoneProvider;
+        this.filterFunction = filterFunction;
     }
 
     /**
@@ -75,12 +109,12 @@ public class TimelineSummary {
      *                      include.
      *
      * @return The retrieved data.
-     *
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
-     * @throws NoCurrentCaseException
      */
-    public static TimelineSummaryData getTimelineSummaryData(DataSource dataSource, int recentDaysNum) throws TskCoreException, NoCurrentCaseException {
-        TimelineManager timelineManager = Case.getCurrentCaseThrows().getSleuthkitCase().getTimelineManager();
+    public TimelineSummaryData getTimelineSummaryData(DataSource dataSource, int recentDaysNum) throws SleuthkitCaseProviderException, TskCoreException {
+        TimeZone timeZone = this.timeZoneProvider.get();
+        TimelineManager timelineManager = this.caseProvider.get().getTimelineManager();
 
         // get a mapping of days from epoch to the activity for that day
         Map<Long, DailyActivityAmount> dateCounts = getTimelineEventsByDay(dataSource, timelineManager, timeZone);
@@ -122,7 +156,7 @@ public class TimelineSummary {
      *
      * @return The most recent daily activity amounts.
      */
-    private static List<DailyActivityAmount> getMostRecentActivityAmounts(Map<Long, DailyActivityAmount> dateCounts, long minRecentDay, long maxDay) {
+    private List<DailyActivityAmount> getMostRecentActivityAmounts(Map<Long, DailyActivityAmount> dateCounts, long minRecentDay, long maxDay) {
         List<DailyActivityAmount> mostRecentActivityAmt = new ArrayList<>();
 
         for (long curRecentDay = minRecentDay; curRecentDay <= maxDay; curRecentDay++) {
@@ -148,11 +182,10 @@ public class TimelineSummary {
      * @return A Map mapping days from epoch to the activity for that day.
      *
      * @throws TskCoreException
-     * @throws NoCurrentCaseException
      */
-    private static Map<Long, DailyActivityAmount> getTimelineEventsByDay(DataSource dataSource, TimelineManager timelineManager, TimeZone timeZone)
-            throws TskCoreException, NoCurrentCaseException {
-        RootFilter rootFilter = getDataSourceFilter(dataSource);
+    private Map<Long, DailyActivityAmount> getTimelineEventsByDay(DataSource dataSource, TimelineManager timelineManager, TimeZone timeZone)
+            throws TskCoreException, SleuthkitCaseProviderException {
+        RootFilter rootFilter = this.filterFunction.apply(dataSource);
 
         // get events for data source
         long curRunTime = System.currentTimeMillis();
@@ -287,50 +320,6 @@ public class TimelineSummary {
         }
     }
 
-    /**
-     * Retrieves a RootFilter based on the default filter state but only the
-     * specified dataSource is selected.
-     *
-     * @param dataSource The data source.
-     *
-     * @return The root filter representing a default filter with only this data
-     *         source selected.
-     *
-     * @throws NoCurrentCaseException
-     * @throws TskCoreException
-     */
-    public static RootFilter getDataSourceFilter(DataSource dataSource) throws NoCurrentCaseException, TskCoreException {
-        RootFilterState filterState = getDataSourceFilterState(dataSource);
-        return filterState == null ? null : filterState.getActiveFilter();
-    }
-
-    /**
-     * Retrieves a TimeLineController based on the default filter state but only
-     * the specified dataSource is selected.
-     *
-     * @param dataSource The data source.
-     *
-     * @return The root filter state representing a default filter with only
-     *         this data source selected.
-     *
-     * @throws NoCurrentCaseException
-     * @throws TskCoreException
-     */
-    public static RootFilterState getDataSourceFilterState(DataSource dataSource) throws NoCurrentCaseException, TskCoreException {
-        TimeLineController controller = TimeLineModule.getController();
-        RootFilterState dataSourceState = controller.getEventsModel().getDefaultEventFilterState().copyOf();
-
-        for (FilterState<? extends TimelineFilter.DataSourceFilter> filterState : dataSourceState.getDataSourcesFilterState().getSubFilterStates()) {
-            TimelineFilter.DataSourceFilter dsFilter = filterState.getFilter();
-            if (dsFilter != null) {
-                filterState.setSelected(dsFilter.getDataSourceID() == dataSource.getId());
-            }
-
-        }
-
-        return dataSourceState;
-    }
-    
     /**
      * Creates a DateFormat formatter that uses UTC for time zone.
      *

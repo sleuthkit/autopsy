@@ -46,6 +46,8 @@ import org.sleuthkit.datamodel.DataSource;
     "TimlinePanel_last30DaysChart_fileEvts_title=File Events",
     "TimlinePanel_last30DaysChart_artifactEvts_title=Result Events",})
 class ExportTimeline {
+    
+    private final TimelineSummary timelineSummary;
 
     private static final String EARLIEST_LATEST_FORMAT_STR = "MMM d, yyyy";
     private static final DateFormat EARLIEST_LATEST_FORMAT = TimelineSummary.getUtcFormat(EARLIEST_LATEST_FORMAT_STR);
@@ -58,7 +60,8 @@ class ExportTimeline {
     /**
      * Creates new form PastCasesPanel
      */
-    private ExportTimeline() {
+    ExportTimeline() {
+        timelineSummary = new TimelineSummary();
     }
     
         /**
@@ -118,8 +121,8 @@ class ExportTimeline {
         "TimelinePanel_getExports_latest=Latest:",
         "TimelinePanel_getExports_dateColumnHeader=Date",
         "TimelinePanel_getExports_chartName=Last 30 Days",})
-    static List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
-        DataFetcher<DataSource, TimelineSummaryData> dataFetcher = (ds) -> TimelineSummary.getTimelineSummaryData(ds, MOST_RECENT_DAYS_COUNT);
+    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+        DataFetcher<DataSource, TimelineSummaryData> dataFetcher = (ds) -> timelineSummary.getTimelineSummaryData(ds, MOST_RECENT_DAYS_COUNT);
         TimelineSummaryData summaryData = ExcelExportAction.getFetchResult(dataFetcher, "Timeline", dataSource);
         if (summaryData == null) {
             return Collections.emptyList();

@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 import java.awt.Color;
 import java.sql.SQLException;
 import java.util.Set;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -33,8 +32,24 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class TypesSummary {
 
-    private TypesSummary() {
+    private final SleuthkitCaseProvider provider;
+
+    /**
+     * Main constructor.
+     */
+    public TypesSummary() {
+        this(SleuthkitCaseProvider.DEFAULT);
     }
+
+    /**
+     * Main constructor.
+     *
+     * @param provider The means of obtaining a sleuthkit case.
+     */
+    public TypesSummary(SleuthkitCaseProvider provider) {
+        this.provider = provider;
+    }
+
 
     /**
      * Get count of regular files (not directories) in a data source.
@@ -43,13 +58,17 @@ public class TypesSummary {
      *
      * @return The count.
      *
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
-     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfFiles(DataSource currentDataSource)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
-        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource, null);
+    public Long getCountOfFiles(DataSource currentDataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
+        return DataSourceInfoUtilities.getCountOfRegularFiles(
+                provider.get(),
+                currentDataSource,
+                null
+        );
     }
 
     /**
@@ -59,14 +78,14 @@ public class TypesSummary {
      *
      * @return The count.
      *
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
-     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfAllocatedFiles(DataSource currentDataSource)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
+    public Long getCountOfAllocatedFiles(DataSource currentDataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
 
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource,
                 DataSourceInfoUtilities.getMetaFlagsContainsStatement(TskData.TSK_FS_META_FLAG_ENUM.ALLOC));
     }
 
@@ -77,14 +96,14 @@ public class TypesSummary {
      *
      * @return The count.
      *
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
-     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfUnallocatedFiles(DataSource currentDataSource)
-            throws NoCurrentCaseException, TskCoreException, SQLException {
+    public Long getCountOfUnallocatedFiles(DataSource currentDataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
 
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource,
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource,
                 DataSourceInfoUtilities.getMetaFlagsContainsStatement(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC));
     }
 
@@ -95,14 +114,14 @@ public class TypesSummary {
      *
      * @return The count.
      *
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
-     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfDirectories(DataSource currentDataSource)
-            throws NoCurrentCaseException, TskCoreException, SQLException {
+    public Long getCountOfDirectories(DataSource currentDataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
 
-        return DataSourceInfoUtilities.getCountOfTskFiles(currentDataSource,
+        return DataSourceInfoUtilities.getCountOfTskFiles(provider.get(), currentDataSource,
                 "meta_type=" + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()
                 + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType());
     }
@@ -114,16 +133,18 @@ public class TypesSummary {
      *
      * @return The count.
      *
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
-     * @throws NoCurrentCaseException
      */
-    public static Long getCountOfSlackFiles(DataSource currentDataSource)
-            throws NoCurrentCaseException, TskCoreException, SQLException {
+    public Long getCountOfSlackFiles(DataSource currentDataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
 
-        return DataSourceInfoUtilities.getCountOfRegularFiles(currentDataSource,
+        return DataSourceInfoUtilities.getCountOfRegularFiles(provider.get(), currentDataSource,
                 "type=" + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType());
     }
+    
+    // ELTODO everything below is not in develop
 
     /**
      * Information concerning a particular file type category.

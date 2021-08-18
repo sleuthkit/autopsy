@@ -29,8 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -55,10 +54,26 @@ public class RecentFilesSummary {
 
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
 
+    private final SleuthkitCaseProvider provider;
+
     /**
      * Default constructor.
      */
-    private RecentFilesSummary() {
+    public RecentFilesSummary() {
+        this(SleuthkitCaseProvider.DEFAULT);
+    }
+
+    /**
+     * Construct object with given SleuthkitCaseProvider
+     *
+     * @param provider SleuthkitCaseProvider provider, cannot be null.
+     */
+    public RecentFilesSummary(SleuthkitCaseProvider provider) {
+        if (provider == null) {
+            throw new IllegalArgumentException("Unable to construct RecentFileSummary object. SleuthkitCaseProvider cannot be null");
+        }
+
+        this.provider = provider;
     }
 
     /**
@@ -112,17 +127,17 @@ public class RecentFilesSummary {
      * @return A list RecentFileDetails representing the most recently opened
      * documents or an empty list if none were found.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public static List<RecentFileDetails> getRecentlyOpenedDocuments(DataSource dataSource, int maxCount) throws TskCoreException, NoCurrentCaseException {
+    public List<RecentFileDetails> getRecentlyOpenedDocuments(DataSource dataSource, int maxCount) throws SleuthkitCaseProviderException, TskCoreException {
         if (dataSource == null) {
             return Collections.emptyList();
         }
 
         throwOnNonPositiveCount(maxCount);
 
-        List<RecentFileDetails> details = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard()
+        List<RecentFileDetails> details = provider.get().getBlackboard()
                 .getArtifacts(ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID(), dataSource.getId()).stream()
                 .map(art -> getRecentlyOpenedDocument(art))
                 .filter(d -> d != null)
@@ -173,16 +188,16 @@ public class RecentFilesSummary {
      * found.
      *
      * @throws TskCoreException
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      */
-    public static List<RecentDownloadDetails> getRecentDownloads(DataSource dataSource, int maxCount) throws TskCoreException, NoCurrentCaseException {
+    public List<RecentDownloadDetails> getRecentDownloads(DataSource dataSource, int maxCount) throws TskCoreException, SleuthkitCaseProviderException {
         if (dataSource == null) {
             return Collections.emptyList();
         }
 
         throwOnNonPositiveCount(maxCount);
 
-        List<RecentDownloadDetails> details = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard()
+        List<RecentDownloadDetails> details = provider.get().getBlackboard()
                 .getArtifacts(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(), dataSource.getId()).stream()
                 .map(art -> getRecentDownload(art))
                 .filter(d -> d != null)
@@ -200,17 +215,17 @@ public class RecentFilesSummary {
      *
      * @return A list of RecentFileDetails of the most recent attachments.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public static List<RecentAttachmentDetails> getRecentAttachments(DataSource dataSource, int maxCount) throws NoCurrentCaseException, TskCoreException {
+    public List<RecentAttachmentDetails> getRecentAttachments(DataSource dataSource, int maxCount) throws SleuthkitCaseProviderException, TskCoreException {
         if (dataSource == null) {
             return Collections.emptyList();
         }
 
         throwOnNonPositiveCount(maxCount);
 
-        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        SleuthkitCase skCase = provider.get();
 
         List<BlackboardArtifact> associatedArtifacts = skCase.getBlackboard()
                 .getArtifacts(ASSOCATED_OBJ_ART.getTypeID(), dataSource.getId());

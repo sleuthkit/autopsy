@@ -38,7 +38,22 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class ContainerSummary {
 
-    private ContainerSummary() {
+    private final SleuthkitCaseProvider provider;
+
+    /**
+     * Main constructor.
+     */
+    public ContainerSummary() {
+        this(SleuthkitCaseProvider.DEFAULT);
+    }
+
+    /**
+     * Main constructor.
+     *
+     * @param provider The means of obtaining a sleuthkit case.
+     */
+    public ContainerSummary(SleuthkitCaseProvider provider) {
+        this.provider = provider;
     }
     
     /**
@@ -48,12 +63,12 @@ public class ContainerSummary {
      *
      * @return The size or null if the query could not be executed.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
      */
-    public static Long getSizeOfUnallocatedFiles(DataSource currentDataSource)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
+    public Long getSizeOfUnallocatedFiles(DataSource currentDataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
         if (currentDataSource == null) {
             return null;
         }
@@ -79,7 +94,7 @@ public class ContainerSummary {
             }
         };
 
-        return DataSourceInfoUtilities.getBaseQueryResult(query, handler);
+        return DataSourceInfoUtilities.getBaseQueryResult(provider.get(), query, handler);
     }
 
     /**
@@ -91,12 +106,12 @@ public class ContainerSummary {
      * @return The concatenated value or null if the query could not be
      *         executed.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
      */
-    public static String getOperatingSystems(DataSource dataSource)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
+    public String getOperatingSystems(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
 
         if (dataSource == null) {
             return null;
@@ -116,12 +131,12 @@ public class ContainerSummary {
      * @return The concatenated value or null if the query could not be
      *         executed.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
      */
-    public static String getDataSourceType(DataSource dataSource)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
+    public String getDataSourceType(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
 
         if (dataSource == null) {
             return null;
@@ -136,19 +151,19 @@ public class ContainerSummary {
      * Generates a string which is a concatenation of the value received from
      * the result set.
      *
-     * @param query      The query.
-     * @param valueParam The parameter for the value in the result set.
-     * @param separator  The string separator used in concatenation.
+     * @param query              The query.
+     * @param valueParam         The parameter for the value in the result set.
+     * @param separator          The string separator used in concatenation.
      *
      * @return The concatenated string or null if the query could not be
      *         executed.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
      */
-    private static String getConcattedStringsResult(String query, String valueParam, String separator)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
+    private String getConcattedStringsResult(String query, String valueParam, String separator)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
 
         DataSourceInfoUtilities.ResultSetHandler<String> handler = (resultSet) -> {
             String toRet = "";
@@ -165,7 +180,7 @@ public class ContainerSummary {
             return toRet;
         };
 
-        return DataSourceInfoUtilities.getBaseQueryResult(query, handler);
+        return DataSourceInfoUtilities.getBaseQueryResult(provider.get(), query, handler);
     }
 
     /**
@@ -179,12 +194,12 @@ public class ContainerSummary {
      * @return The concatenated value or null if the query could not be
      *         executed.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      * @throws SQLException
      */
-    private static String getConcattedAttrValue(long dataSourceId, int artifactTypeId, int attributeTypeId)
-            throws TskCoreException, SQLException, NoCurrentCaseException {
+    private String getConcattedAttrValue(long dataSourceId, int artifactTypeId, int attributeTypeId)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
 
         final String valueParam = "concatted_attribute_value";
         String query = "SELECT attr.value_text AS " + valueParam
@@ -198,6 +213,8 @@ public class ContainerSummary {
         return getConcattedStringsResult(query, valueParam, separator);
     }
 
+	// ELTODO everything below is NOT in develop!
+	
     /**
      * Data model data for data source images.
      */
@@ -383,7 +400,7 @@ public class ContainerSummary {
      *
      * @return The generated view model.
      */
-    public static ContainerDetails getContainerDetails(DataSource ds) throws TskCoreException, SQLException, NoCurrentCaseException {
+    public ContainerDetails getContainerDetails(DataSource ds) throws TskCoreException, SQLException, SleuthkitCaseProvider.SleuthkitCaseProviderException {
         if (ds == null) {
             return null;
         }
@@ -404,7 +421,7 @@ public class ContainerSummary {
      *
      * @return The generated view model.
      */
-    public static ImageDetails getImageDetails(Image image) throws TskCoreException, SQLException, NoCurrentCaseException {
+    public ImageDetails getImageDetails(Image image) throws TskCoreException, SQLException, SleuthkitCaseProvider.SleuthkitCaseProviderException {
         if (image == null) {
             return null;
         }

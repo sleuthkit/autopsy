@@ -67,6 +67,8 @@ import static org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.Excel
     "ExportUserActivity_noDataExists=No communication data exists"})
 class ExportUserActivity {
 
+    private final UserActivitySummary userSummary;
+    
     private static final String DATETIME_FORMAT_STR = "yyyy/MM/dd HH:mm:ss";
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat(DATETIME_FORMAT_STR, Locale.getDefault());
     private static final int TOP_PROGS_COUNT = 10;
@@ -206,7 +208,8 @@ class ExportUserActivity {
             )
     );
 
-    private ExportUserActivity() {
+    ExportUserActivity() {
+        userSummary = new UserActivitySummary();
     }
 
     private static <T extends LastAccessedArtifact> Function<T, DefaultCellModel<?>> getDateFunct() {
@@ -228,13 +231,13 @@ class ExportUserActivity {
         return UserActivitySummary.getShortFolderName(path, appName);
     }
 
-    static List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
         
-        DataFetcher<DataSource, List<TopProgramsResult>> topProgramsFetcher = (ds) -> UserActivitySummary.getTopPrograms(ds, TOP_PROGS_COUNT);
-        DataFetcher<DataSource, List<TopDomainsResult>> topDomainsFetcher = (ds) -> UserActivitySummary.getRecentDomains(ds, TOP_DOMAINS_COUNT);
-        DataFetcher<DataSource, List<TopWebSearchResult>> topWebSearchesFetcher = (ds) -> UserActivitySummary.getMostRecentWebSearches(ds, TOP_SEARCHES_COUNT);
-        DataFetcher<DataSource, List<TopDeviceAttachedResult>> topDevicesAttachedFetcher = (ds) -> UserActivitySummary.getRecentDevices(ds, TOP_DEVICES_COUNT);
-        DataFetcher<DataSource, List<TopAccountResult>> topAccountsFetcher = (ds) -> UserActivitySummary.getRecentAccounts(ds, TOP_ACCOUNTS_COUNT);
+        DataFetcher<DataSource, List<TopProgramsResult>> topProgramsFetcher = (ds) -> userSummary.getTopPrograms(ds, TOP_PROGS_COUNT);
+        DataFetcher<DataSource, List<TopDomainsResult>> topDomainsFetcher = (ds) -> userSummary.getRecentDomains(ds, TOP_DOMAINS_COUNT);
+        DataFetcher<DataSource, List<TopWebSearchResult>> topWebSearchesFetcher = (ds) -> userSummary.getMostRecentWebSearches(ds, TOP_SEARCHES_COUNT);
+        DataFetcher<DataSource, List<TopDeviceAttachedResult>> topDevicesAttachedFetcher = (ds) -> userSummary.getRecentDevices(ds, TOP_DEVICES_COUNT);
+        DataFetcher<DataSource, List<TopAccountResult>> topAccountsFetcher = (ds) -> userSummary.getRecentAccounts(ds, TOP_ACCOUNTS_COUNT);
         
         return Stream.of(
                 getTableExport(topProgramsFetcher, topProgramsTemplate, Bundle.ExportUserActivity_TopProgramsTableModel_tabName(), dataSource),

@@ -56,14 +56,17 @@ class ExportAnalysisResults {
             )
     );
     
-    private ExportAnalysisResults() {
+    private final AnalysisSummary analysisSummary;
+    
+    ExportAnalysisResults() {
+        analysisSummary = new AnalysisSummary();
     }
 
-    static List<ExcelSheetExport> getExports(DataSource dataSource) {
+    List<ExcelSheetExport> getExports(DataSource dataSource) {
 
-        DataFetcher<DataSource, List<Pair<String, Long>>> hashsetsFetcher = (ds) -> AnalysisSummary.getHashsetCounts(ds);
-        DataFetcher<DataSource, List<Pair<String, Long>>> keywordsFetcher = (ds) -> AnalysisSummary.getKeywordCounts(ds);
-        DataFetcher<DataSource, List<Pair<String, Long>>> interestingItemsFetcher = (ds) -> AnalysisSummary.getInterestingItemCounts(ds);
+        DataFetcher<DataSource, List<Pair<String, Long>>> hashsetsFetcher = (ds) -> analysisSummary.getHashsetCounts(ds);
+        DataFetcher<DataSource, List<Pair<String, Long>>> keywordsFetcher = (ds) -> analysisSummary.getKeywordCounts(ds);
+        DataFetcher<DataSource, List<Pair<String, Long>>> interestingItemsFetcher = (ds) -> analysisSummary.getInterestingItemCounts(ds);
 
         return Stream.of(
                 getTableExport(hashsetsFetcher, DEFAULT_COLUMNS, Bundle.ExportAnalysisResults_hashsetHits_tabName(), dataSource),

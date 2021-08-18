@@ -24,14 +24,13 @@ import java.util.HashSet;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.List;
 import java.util.Set;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -49,10 +48,13 @@ public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
             BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
     ));
 
+    private RecentFilesSummary recentSummary;
+
     /**
      * Default constructor.
      */
     public RecentFilesGetter() {
+        recentSummary = new RecentFilesSummary();
     }
 
     @Override
@@ -75,11 +77,7 @@ public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      */
     public List<RecentFileDetails> getRecentlyOpenedDocuments(DataSource dataSource, int maxCount) throws SleuthkitCaseProviderException, TskCoreException {
-        try {
-            return RecentFilesSummary.getRecentlyOpenedDocuments(dataSource, maxCount);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return recentSummary.getRecentlyOpenedDocuments(dataSource, maxCount);
     }
 
     /**
@@ -97,11 +95,7 @@ public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
      * @throws SleuthkitCaseProviderException
      */
     public List<RecentDownloadDetails> getRecentDownloads(DataSource dataSource, int maxCount) throws TskCoreException, SleuthkitCaseProviderException {
-        try {
-            return RecentFilesSummary.getRecentDownloads(dataSource, maxCount);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return recentSummary.getRecentDownloads(dataSource, maxCount);
     }
 
     /**
@@ -117,10 +111,6 @@ public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      */
     public List<RecentAttachmentDetails> getRecentAttachments(DataSource dataSource, int maxCount) throws SleuthkitCaseProviderException, TskCoreException {
-        try {
-            return RecentFilesSummary.getRecentAttachments(dataSource, maxCount);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return recentSummary.getRecentAttachments(dataSource, maxCount);
     }
 }

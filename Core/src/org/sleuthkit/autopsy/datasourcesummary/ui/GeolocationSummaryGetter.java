@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityData;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -37,10 +37,13 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
  */
 public class GeolocationSummaryGetter implements DefaultArtifactUpdateGovernor {
 
+    private GeolocationSummary geoSummary;
+
     /**
      * Default constructor.
      */
     public GeolocationSummaryGetter() {
+        geoSummary = new GeolocationSummary();
     }
 
     /**
@@ -71,11 +74,6 @@ public class GeolocationSummaryGetter implements DefaultArtifactUpdateGovernor {
      */
     public CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount)
             throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException, IOException {
-
-        try {
-            return GeolocationSummary.getCityCounts(dataSource, daysCount, maxCount);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return geoSummary.getCityCounts(dataSource, daysCount, maxCount);
     }
 }

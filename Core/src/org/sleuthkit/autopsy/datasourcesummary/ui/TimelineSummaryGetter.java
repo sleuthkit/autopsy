@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -30,7 +30,6 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.TimelineSummaryData;
 
 /**
@@ -41,10 +40,13 @@ public class TimelineSummaryGetter implements DefaultUpdateGovernor {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
             Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
 
+    private TimelineSummary timelineSummary;
+
     /**
      * Default constructor.
      */
     public TimelineSummaryGetter() {
+        timelineSummary = new TimelineSummary();
     }
 
     @Override
@@ -70,20 +72,17 @@ public class TimelineSummaryGetter implements DefaultUpdateGovernor {
     /**
      * Retrieves timeline summary data.
      *
-     * @param dataSource The data source for which timeline data will be
-     * retrieved.
+     * @param dataSource    The data source for which timeline data will be
+     *                      retrieved.
      * @param recentDaysNum The maximum number of most recent days' activity to
-     * include.
+     *                      include.
+     *
      * @return The retrieved data.
+     *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
-     * @throws NoCurrentCaseException
      */
-    public TimelineSummaryData getData(DataSource dataSource, int recentDaysNum) throws SleuthkitCaseProviderException, TskCoreException, NoCurrentCaseException {
-        try {
-            return TimelineSummary.getTimelineSummaryData(dataSource, recentDaysNum);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+    public TimelineSummaryData getData(DataSource dataSource, int recentDaysNum) throws SleuthkitCaseProviderException, TskCoreException {
+        return timelineSummary.getTimelineSummaryData(dataSource, recentDaysNum);
     }
 }

@@ -25,9 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -46,10 +45,13 @@ public class AnalysisSummaryGetter implements DefaultArtifactUpdateGovernor {
             ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
     ));
 
+    AnalysisSummary analysisSummary;
+
     /**
      * Main constructor.
      */
     public AnalysisSummaryGetter() {
+        analysisSummary = new AnalysisSummary();
     }
 
     @Override
@@ -68,11 +70,7 @@ public class AnalysisSummaryGetter implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getHashsetCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
-        try {
-            return AnalysisSummary.getHashsetCounts(dataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return analysisSummary.getHashsetCounts(dataSource);
     }
 
     /**
@@ -86,11 +84,7 @@ public class AnalysisSummaryGetter implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getKeywordCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
-        try {
-            return AnalysisSummary.getKeywordCounts(dataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return analysisSummary.getKeywordCounts(dataSource);
     }
 
     /**
@@ -106,10 +100,6 @@ public class AnalysisSummaryGetter implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      */
     public List<Pair<String, Long>> getInterestingItemCounts(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException {
-        try {
-            return AnalysisSummary.getInterestingItemCounts(dataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return analysisSummary.getInterestingItemCounts(dataSource);
     }
 }

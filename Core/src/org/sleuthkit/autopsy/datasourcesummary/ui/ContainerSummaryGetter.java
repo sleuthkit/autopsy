@@ -24,9 +24,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -45,10 +44,13 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
             BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE.getTypeID()
     ));
 
+    private ContainerSummary containerSummary;
+
     /**
      * Main constructor.
      */
     public ContainerSummaryGetter() {
+        containerSummary = new ContainerSummary();
     }
 
     @Override
@@ -79,11 +81,7 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
      */
     public Long getSizeOfUnallocatedFiles(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return ContainerSummary.getSizeOfUnallocatedFiles(currentDataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return containerSummary.getSizeOfUnallocatedFiles(currentDataSource);
     }
 
     /**
@@ -101,11 +99,7 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
      */
     public String getOperatingSystems(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return ContainerSummary.getOperatingSystems(dataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return containerSummary.getOperatingSystems(dataSource);
     }
 
     /**
@@ -123,11 +117,7 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
      */
     public String getDataSourceType(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return ContainerSummary.getDataSourceType(dataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return containerSummary.getDataSourceType(dataSource);
     }
 
     /**
@@ -145,10 +135,6 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
      */
     public ContainerSummary.ContainerDetails getContainerDetails(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return ContainerSummary.getContainerDetails(dataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return containerSummary.getContainerDetails(dataSource);
     }
 }

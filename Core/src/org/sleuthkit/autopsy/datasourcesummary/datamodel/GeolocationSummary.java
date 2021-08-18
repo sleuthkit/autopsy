@@ -31,8 +31,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.geolocation.AbstractWaypointFetcher;
 import org.sleuthkit.autopsy.geolocation.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.MapWaypoint;
@@ -238,12 +237,13 @@ public class GeolocationSummary {
 
     private static final long DAY_SECS = 24 * 60 * 60;
 
-    private static final SupplierWithException<ClosestCityMapper, IOException> cityMapper = () -> ClosestCityMapper.getInstance();
+    private final SleuthkitCaseProvider provider;
+    private final SupplierWithException<ClosestCityMapper, IOException> cityMapper;
 
     /**
      * A supplier of an item T that can throw an exception of type E.
      */
-    interface SupplierWithException<T, E extends Throwable> {
+    public interface SupplierWithException<T, E extends Throwable> {
 
         /**
          * A supplier method that can throw an exception of E.
@@ -255,7 +255,23 @@ public class GeolocationSummary {
         T get() throws E;
     }
 
-    private GeolocationSummary() {
+    /**
+     * Default constructor.
+     */
+    public GeolocationSummary() {
+        this(() -> ClosestCityMapper.getInstance(), SleuthkitCaseProvider.DEFAULT);
+    }
+
+    /**
+     * Main constructor.
+     *
+     * @param cityMapper A means of acquiring a ClosestCityMapper that can throw
+     * an IOException.
+     * @param provider A means of acquiring a SleuthkitCaseProvider.
+     */
+    public GeolocationSummary(SupplierWithException<ClosestCityMapper, IOException> cityMapper, SleuthkitCaseProvider provider) {
+        this.cityMapper = cityMapper;
+        this.provider = provider;
     }
 
     /**
@@ -321,7 +337,7 @@ public class GeolocationSummary {
      *
      * @return A tuple of the closest city and timestamp in seconds from epoch.
      */
-    private static Pair<CityRecord, Long> getClosestWithTime(ClosestCityMapper cityMapper, MapWaypoint pt) {
+    private Pair<CityRecord, Long> getClosestWithTime(ClosestCityMapper cityMapper, MapWaypoint pt) {
         if (pt == null) {
             return null;
         }
@@ -344,7 +360,7 @@ public class GeolocationSummary {
      *         null if a closest is not determined) and the latest timestamp for
      *         each.
      */
-    private static Stream<Pair<CityRecord, Long>> reduceGrouping(Set<MapWaypoint> points, ClosestCityMapper cityMapper) {
+    private Stream<Pair<CityRecord, Long>> reduceGrouping(Set<MapWaypoint> points, ClosestCityMapper cityMapper) {
         if (points == null) {
             return Stream.empty();
         }
@@ -381,7 +397,7 @@ public class GeolocationSummary {
      *
      * @throws IOException
      */
-    private static Stream<Pair<CityRecord, Long>> processGeoResult(GeoResult geoResult, ClosestCityMapper cityMapper) {
+    private Stream<Pair<CityRecord, Long>> processGeoResult(GeoResult geoResult, ClosestCityMapper cityMapper) {
         if (geoResult == null) {
             return Stream.empty();
         }
@@ -418,14 +434,14 @@ public class GeolocationSummary {
      *
      * @return The sorted list.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws GeoLocationDataException
      * @throws InterruptedException
      */
-    public static CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount)
-            throws NoCurrentCaseException, GeoLocationDataException, InterruptedException, IOException {
+    public CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount)
+            throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException, IOException {
 
-        ClosestCityMapper closestCityMapper = cityMapper.get();
+        ClosestCityMapper closestCityMapper = this.cityMapper.get();
         GeoResult geoResult = getGeoResult(dataSource);
         List<Pair<CityRecord, Long>> dataSourcePoints = processGeoResult(geoResult, closestCityMapper)
                 .collect(Collectors.toList());
@@ -524,13 +540,12 @@ public class GeolocationSummary {
      * @param dataSource The data source.
      *
      * @return The GPS data pertaining to the data source.
-     *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws GeoLocationDataException
      * @throws InterruptedException
      */
-    private static GeoResult getGeoResult(DataSource dataSource)
-            throws NoCurrentCaseException, GeoLocationDataException, InterruptedException {
+    private GeoResult getGeoResult(DataSource dataSource)
+            throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
 
         // make asynchronous callback synchronous (the callback nature will be handled in a different level)
         // see the following: https://stackoverflow.com/questions/20659961/java-synchronous-callback
@@ -538,7 +553,7 @@ public class GeolocationSummary {
 
         GeoFilter geoFilter = new GeoFilter(true, false, 0, Arrays.asList(dataSource), GPS_ARTIFACT_TYPES);
 
-        WaypointBuilder.getAllWaypoints(Case.getCurrentCaseThrows().getSleuthkitCase(),
+        WaypointBuilder.getAllWaypoints(provider.get(),
                 Arrays.asList(dataSource),
                 GPS_ARTIFACT_TYPES,
                 true,

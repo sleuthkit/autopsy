@@ -47,6 +47,8 @@ import org.sleuthkit.datamodel.DataSource;
     "ExportRecentFiles_col_header_sender=Sender"
 })
 final class ExportRecentFiles {
+    
+    private final RecentFilesSummary recentSummary;
 
     private static final String DATETIME_FORMAT_STR = "yyyy/MM/dd HH:mm:ss";
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat(DATETIME_FORMAT_STR, Locale.getDefault());
@@ -86,7 +88,8 @@ final class ExportRecentFiles {
                         return new DefaultCellModel<>(prog.getSender());
                     }, 150));
 
-    private ExportRecentFiles() {
+    ExportRecentFiles() {
+        recentSummary = new RecentFilesSummary();
     }
 
     /**
@@ -103,11 +106,11 @@ final class ExportRecentFiles {
         };
     }
 
-    static List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
 
-        DataFetcher<DataSource, List<RecentFileDetails>> docsFetcher = (ds) -> RecentFilesSummary.getRecentlyOpenedDocuments(ds, 10);
-        DataFetcher<DataSource, List<RecentDownloadDetails>> downloadsFetcher = (ds) -> RecentFilesSummary.getRecentDownloads(ds, 10);
-        DataFetcher<DataSource, List<RecentAttachmentDetails>> attachmentsFetcher = (ds) -> RecentFilesSummary.getRecentAttachments(ds, 10);
+        DataFetcher<DataSource, List<RecentFileDetails>> docsFetcher = (ds) -> recentSummary.getRecentlyOpenedDocuments(ds, 10);
+        DataFetcher<DataSource, List<RecentDownloadDetails>> downloadsFetcher = (ds) -> recentSummary.getRecentDownloads(ds, 10);
+        DataFetcher<DataSource, List<RecentAttachmentDetails>> attachmentsFetcher = (ds) -> recentSummary.getRecentAttachments(ds, 10);
 
         return Stream.of(
                 ExcelExportAction.getTableExport(docsFetcher, docsTemplate, Bundle.ExportRecentFiles_docsTable_tabName(), dataSource),

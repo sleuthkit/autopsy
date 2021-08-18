@@ -25,12 +25,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -111,7 +111,34 @@ public class PastCasesSummary {
     private static final String CASE_SEPARATOR = ",";
     private static final String PREFIX_END = ":";
 
-    private PastCasesSummary() {
+    private final SleuthkitCaseProvider caseProvider;
+    private final java.util.logging.Logger logger;
+
+    /**
+     * Main constructor.
+     */
+    public PastCasesSummary() {
+        this(
+                SleuthkitCaseProvider.DEFAULT,
+                org.sleuthkit.autopsy.coreutils.Logger.getLogger(PastCasesSummary.class.getName())
+        );
+
+    }
+
+    /**
+     * Main constructor with external dependencies specified. This constructor
+     * is designed with unit testing in mind since mocked dependencies can be
+     * utilized.
+     *
+     * @param provider The object providing the current SleuthkitCase.
+     * @param logger   The logger to use.
+     */
+    public PastCasesSummary(
+            SleuthkitCaseProvider provider,
+            java.util.logging.Logger logger) {
+
+        this.caseProvider = provider;
+        this.logger = logger;
     }
 
     /**
@@ -211,24 +238,21 @@ public class PastCasesSummary {
      *
      * @return The artifact if found or null if not.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      */
-    private static BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws NoCurrentCaseException {
+    private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
         Long parentId = DataSourceInfoUtilities.getLongOrNull(artifact, TYPE_ASSOCIATED_ARTIFACT);
         if (parentId == null) {
             return null;
         }
 
+        SleuthkitCase skCase = caseProvider.get();
         try {
-            return Case.getCurrentCaseThrows().getSleuthkitCase().getArtifactByArtifactId(parentId);
-        } catch (TskCoreException ignore) {
-            /*
-             * I'm not certain why we ignore this, but it was previously simply
-             * logged as warning so I'm keeping the original logic
-             * logger.log(Level.WARNING, String.format("There was an error
-             * fetching the parent artifact of a TSK_INTERESTING_ARTIFACT_HIT
-             * (parent id: %d)", parentId), ex);
-             */
+            return skCase.getArtifactByArtifactId(parentId);
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING,
+                    String.format("There was an error fetching the parent artifact of a TSK_INTERESTING_ARTIFACT_HIT (parent id: %d)", parentId),
+                    ex);
             return null;
         }
     }
@@ -240,9 +264,9 @@ public class PastCasesSummary {
      *
      * @return True if there is a device associated artifact.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      */
-    private static boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws NoCurrentCaseException {
+    private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
         BlackboardArtifact parent = getParentArtifact(artifact);
         if (parent == null) {
             return false;
@@ -258,17 +282,17 @@ public class PastCasesSummary {
      *
      * @return The retrieved data or null if null dataSource.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public static PastCasesResult getPastCasesData(DataSource dataSource)
-            throws NoCurrentCaseException, TskCoreException {
+    public PastCasesResult getPastCasesData(DataSource dataSource)
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
 
         if (dataSource == null) {
             return null;
         }
 
-        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        SleuthkitCase skCase = caseProvider.get();
 
         List<String> deviceArtifactCases = new ArrayList<>();
         List<String> nonDeviceArtifactCases = new ArrayList<>();

@@ -24,9 +24,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -34,18 +34,22 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Wrapper class for converting org.sleuthkit.autopsy.contentutils.TypesSummary functionality into a
- * DefaultArtifactUpdateGovernor used by DataSourceSummaryCountsPanel.
+ * Wrapper class for converting org.sleuthkit.autopsy.contentutils.TypesSummary
+ * functionality into a DefaultArtifactUpdateGovernor used by
+ * DataSourceSummaryCountsPanel.
  */
 public class TypesSummaryGetter implements DefaultUpdateGovernor {
 
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
             Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
 
+    private TypesSummary typesSummary;
+
     /**
      * Main constructor.
      */
     public TypesSummaryGetter() {
+        typesSummary = new TypesSummary();
     }
 
     @Override
@@ -81,11 +85,7 @@ public class TypesSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfFiles(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return TypesSummary.getCountOfFiles(currentDataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return typesSummary.getCountOfFiles(currentDataSource);
     }
 
     /**
@@ -101,11 +101,7 @@ public class TypesSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfAllocatedFiles(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return TypesSummary.getCountOfAllocatedFiles(currentDataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return typesSummary.getCountOfAllocatedFiles(currentDataSource);
     }
 
     /**
@@ -121,11 +117,7 @@ public class TypesSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfUnallocatedFiles(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return TypesSummary.getCountOfUnallocatedFiles(currentDataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return typesSummary.getCountOfUnallocatedFiles(currentDataSource);
     }
 
     /**
@@ -141,11 +133,7 @@ public class TypesSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfDirectories(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return TypesSummary.getCountOfDirectories(currentDataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return typesSummary.getCountOfDirectories(currentDataSource);
     }
 
     /**
@@ -161,10 +149,6 @@ public class TypesSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfSlackFiles(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        try {
-            return TypesSummary.getCountOfSlackFiles(currentDataSource);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return typesSummary.getCountOfSlackFiles(currentDataSource);
     }
 }

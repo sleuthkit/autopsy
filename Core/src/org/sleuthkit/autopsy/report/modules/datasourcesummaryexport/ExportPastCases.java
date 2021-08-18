@@ -39,6 +39,8 @@ import org.sleuthkit.datamodel.DataSource;
     "ExportPastCases_notableFileTable_tabName=Cases with Common Notable",
     "ExportPastCases_sameIdsTable_tabName=Past Cases with the Same Devices",})
 class ExportPastCases {
+    
+    private final PastCasesSummary pastSummary;
 
     // model for column indicating the case
     private static final ColumnModel<Pair<String, Long>, DefaultCellModel<?>> CASE_COL = new ColumnModel<>(
@@ -58,11 +60,12 @@ class ExportPastCases {
     private static List<ColumnModel<Pair<String, Long>, DefaultCellModel<?>>> DEFAULT_TEMPLATE
             = Arrays.asList(CASE_COL, COUNT_COL);
 
-    private ExportPastCases() {
+    ExportPastCases() {
+        pastSummary = new PastCasesSummary();
     }
 
-    static List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
-        DataFetcher<DataSource, PastCasesResult> pastCasesFetcher = (ds) -> PastCasesSummary.getPastCasesData(ds);
+    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+        DataFetcher<DataSource, PastCasesResult> pastCasesFetcher = (ds) -> pastSummary.getPastCasesData(ds);
         PastCasesResult result = getFetchResult(pastCasesFetcher, "Past cases sheets", dataSource);
         if (result == null) {
             return Collections.emptyList();

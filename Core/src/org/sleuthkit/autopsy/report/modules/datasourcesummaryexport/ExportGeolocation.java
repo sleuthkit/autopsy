@@ -46,6 +46,8 @@ import org.sleuthkit.datamodel.DataSource;
     "ExportGeolocation_mostCommon_tabName=Most Common Cities",
     "ExportGeolocation_mostRecent_tabName=Most Recent Cities",})
 class ExportGeolocation {
+    
+    private final GeolocationSummary geoSummary;
 
     /**
      * Object encapsulating geolocation data.
@@ -109,7 +111,8 @@ class ExportGeolocation {
             COUNT_COL
     );
 
-    private ExportGeolocation() {
+    ExportGeolocation() {
+        geoSummary = new GeolocationSummary();
     }
 
     /**
@@ -203,9 +206,9 @@ class ExportGeolocation {
         }
     }
 
-    static List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
 
-        DataFetcher<DataSource, GeolocationData> geolocationFetcher = (ds) -> convertToViewModel(GeolocationSummary.getCityCounts(ds, DAYS_COUNT, MAX_COUNT));
+        DataFetcher<DataSource, GeolocationData> geolocationFetcher = (ds) -> convertToViewModel(geoSummary.getCityCounts(ds, DAYS_COUNT, MAX_COUNT));
 
         GeolocationData model
                 = getFetchResult(geolocationFetcher, "Geolocation sheets", dataSource);

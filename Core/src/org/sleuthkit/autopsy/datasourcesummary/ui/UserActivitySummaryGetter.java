@@ -25,8 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
@@ -54,7 +53,10 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
             ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID()
     ));
 
+    private final UserActivitySummary userActivity;
+
     public UserActivitySummaryGetter() {
+        userActivity = new UserActivitySummary();
     }
 
     @Override
@@ -90,11 +92,7 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
             return Collections.emptyList();
         }
 
-        try {
-            return UserActivitySummary.getRecentDomains(dataSource, count);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return userActivity.getRecentDomains(dataSource, count);
     }
 
     /**
@@ -119,11 +117,7 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
             return Collections.emptyList();
         }
 
-        try {
-            return UserActivitySummary.getMostRecentWebSearches(dataSource, count);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return userActivity.getMostRecentWebSearches(dataSource, count);
     }
 
     /**
@@ -147,11 +141,7 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
             return Collections.emptyList();
         }
 
-        try {
-            return UserActivitySummary.getRecentDevices(dataSource, count);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return userActivity.getRecentDevices(dataSource, count);
     }
 
     /**
@@ -179,11 +169,7 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
             return Collections.emptyList();
         }
 
-        try {
-            return UserActivitySummary.getRecentAccounts(dataSource, count);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return userActivity.getRecentAccounts(dataSource, count);
     }
 
     /**
@@ -228,10 +214,6 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
             return Collections.emptyList();
         }
 
-        try {
-            return UserActivitySummary.getTopPrograms(dataSource, count);
-        } catch (NoCurrentCaseException ex) {
-            throw new SleuthkitCaseProviderException("No currently open case.", ex);
-        }
+        return userActivity.getTopPrograms(dataSource, count);
     }
 }

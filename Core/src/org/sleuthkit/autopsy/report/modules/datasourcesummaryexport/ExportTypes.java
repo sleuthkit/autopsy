@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary.FileTypeCategoryData;
 import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelSpecialFormatExport.KeyValueItemExportable;
@@ -99,6 +100,10 @@ class ExportTypes {
             return usefulContent;
         }
     }
+    
+    private final ContainerSummary containerSummary;
+    private final TypesSummary typesSummary;
+    private final SleuthkitCaseProvider provider;
 
     private static final Color IMAGES_COLOR = new Color(156, 39, 176);
     private static final Color VIDEOS_COLOR = Color.YELLOW;
@@ -119,7 +124,10 @@ class ExportTypes {
             new FileTypeCategoryData(Bundle.ExportTypes_fileMimeTypesChart_unknown_title(), new HashSet<>(Arrays.asList("application/octet-stream")), UNKNOWN_COLOR)
     );
 
-    private ExportTypes() {
+    ExportTypes() {
+        this.provider = SleuthkitCaseProvider.DEFAULT;
+        containerSummary = new ContainerSummary();
+        typesSummary = new TypesSummary();
     }
 
     /**
@@ -160,8 +168,8 @@ class ExportTypes {
      * @throws TskCoreException
      * @throws SQLException
      */
-    private static Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) throws TskCoreException, SQLException, NoCurrentCaseException {
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource, "mime_type IN " + getSqlSet(setOfMimeTypes));
+    private Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) throws TskCoreException, SQLException, SleuthkitCaseProvider.SleuthkitCaseProviderException {
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource, "mime_type IN " + getSqlSet(setOfMimeTypes));
     }
 
     /**
@@ -176,8 +184,8 @@ class ExportTypes {
      * @throws TskCoreException
      * @throws SQLException
      */
-    private static Long getCountOfFilesWithNoMimeType(DataSource currentDataSource) throws TskCoreException, SQLException, NoCurrentCaseException {
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(currentDataSource, "(mime_type IS NULL OR mime_type = '') ");
+    private Long getCountOfFilesWithNoMimeType(DataSource currentDataSource) throws TskCoreException, SQLException, SleuthkitCaseProvider.SleuthkitCaseProviderException {
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource, "(mime_type IS NULL OR mime_type = '') ");
     }
 
     /**
@@ -188,8 +196,8 @@ class ExportTypes {
      *
      * @return The pie chart items.
      */
-    private static TypesPieChartData getMimeTypeCategoriesModel(DataSource dataSource)
-            throws SQLException, TskCoreException, NoCurrentCaseException {
+    private TypesPieChartData getMimeTypeCategoriesModel(DataSource dataSource)
+            throws SQLException, TskCoreException, SleuthkitCaseProvider.SleuthkitCaseProviderException {
 
         if (dataSource == null) {
             return null;
@@ -213,7 +221,7 @@ class ExportTypes {
         long noMimeTypeCount = DataSourceInfoUtilities.getLongOrZero(getCountOfFilesWithNoMimeType(dataSource));
 
         // get a count of all regular files
-        long allRegularFiles = DataSourceInfoUtilities.getLongOrZero(DataSourceInfoUtilities.getCountOfRegNonSlackFiles(dataSource, null));
+        long allRegularFiles = DataSourceInfoUtilities.getLongOrZero(DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), dataSource, null));
 
         // create entry for mime types in other category
         long otherCount = allRegularFiles - (categoryTotalCount + noMimeTypeCount);
@@ -268,21 +276,21 @@ class ExportTypes {
                 new DefaultCellModel<Long>(count, DataSourceInfoUtilities.COMMA_FORMATTER::format, DataSourceInfoUtilities.COMMA_FORMAT_STR));
     }
 
-    static List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
+    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
         if (dataSource == null) {
             return Collections.emptyList();
         }
 
-        DataFetcher<DataSource, String> usageFetcher = (ds) -> ContainerSummary.getDataSourceType(ds);
-        DataFetcher<DataSource, String> osFetcher = (ds) -> ContainerSummary.getOperatingSystems(ds);
+        DataFetcher<DataSource, String> usageFetcher = (ds) -> containerSummary.getDataSourceType(ds);
+        DataFetcher<DataSource, String> osFetcher = (ds) -> containerSummary.getOperatingSystems(ds);
         DataFetcher<DataSource, Long> sizeFetcher = (ds) -> ds == null ? null : ds.getSize();
 
         DataFetcher<DataSource, TypesPieChartData> typesFetcher = (ds) -> getMimeTypeCategoriesModel(ds);
 
-        DataFetcher<DataSource, Long> allocatedFetcher = (ds) -> TypesSummary.getCountOfAllocatedFiles(ds);
-        DataFetcher<DataSource, Long> unallocatedFetcher = (ds) -> TypesSummary.getCountOfUnallocatedFiles(ds);
-        DataFetcher<DataSource, Long> slackFetcher = (ds) -> TypesSummary.getCountOfSlackFiles(ds);
-        DataFetcher<DataSource, Long> directoriesFetcher = (ds) -> TypesSummary.getCountOfDirectories(ds);
+        DataFetcher<DataSource, Long> allocatedFetcher = (ds) -> typesSummary.getCountOfAllocatedFiles(ds);
+        DataFetcher<DataSource, Long> unallocatedFetcher = (ds) -> typesSummary.getCountOfUnallocatedFiles(ds);
+        DataFetcher<DataSource, Long> slackFetcher = (ds) -> typesSummary.getCountOfSlackFiles(ds);
+        DataFetcher<DataSource, Long> directoriesFetcher = (ds) -> typesSummary.getCountOfDirectories(ds);
 
         // Retrieve data to create the types pie chart
         TypesPieChartData typesData = ExcelExportAction.getFetchResult(typesFetcher, "Types", dataSource);

@@ -118,7 +118,7 @@ class ExcelExportAction {
         // Export file and MIME type data
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringFileData());
         progressPanel.setProgress(step);
-        List<ExcelExport.ExcelSheetExport> exports = ExportTypes.getExports(dataSource);
+        List<ExcelExport.ExcelSheetExport> exports = new ExportTypes().getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }
@@ -126,7 +126,7 @@ class ExcelExportAction {
         // Export user activity
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringUserData());
         progressPanel.setProgress(++step);
-        exports = ExportUserActivity.getExports(dataSource);
+        exports = new ExportUserActivity().getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }
@@ -134,7 +134,7 @@ class ExcelExportAction {
         // Export Recent Activity data
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringRecentActivityData());
         progressPanel.setProgress(++step);
-        exports = ExportRecentFiles.getExports(dataSource);
+        exports = new ExportRecentFiles().getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }
@@ -142,7 +142,7 @@ class ExcelExportAction {
         // Export hash set hits, keyword hits, and interesting item hits
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringAnalysisData());
         progressPanel.setProgress(++step);
-        exports = ExportAnalysisResults.getExports(dataSource);
+        exports = new ExportAnalysisResults().getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }
@@ -150,7 +150,7 @@ class ExcelExportAction {
         // Export past cases data
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringPastData());
         progressPanel.setProgress(++step);
-        exports = ExportPastCases.getExports(dataSource);
+        exports = new ExportPastCases().getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }        
@@ -158,7 +158,7 @@ class ExcelExportAction {
         // Export geolocation data
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringGeoData());
         progressPanel.setProgress(++step);
-        exports = ExportGeolocation.getExports(dataSource);
+        exports = new ExportGeolocation().getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }
@@ -166,7 +166,7 @@ class ExcelExportAction {
         // Export Timeline data
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringTimelineData());
         progressPanel.setProgress(++step);
-        exports = ExportTimeline.getExports(dataSource);
+        exports = new ExportTimeline().getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }
@@ -182,7 +182,7 @@ class ExcelExportAction {
         // Export Container & Image info data
         progressPanel.updateStatusLabel(Bundle.ExcelExportAction_exportToXLSX_gatheringContainerData());
         progressPanel.setProgress(++step);
-        exports = ExportContainerInfo.getExports(dataSource);
+        exports = new ExportContainerInfo().getExports(dataSource);
         if (exports != null) {
             sheetExports.addAll(exports);
         }

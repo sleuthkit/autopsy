@@ -31,13 +31,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
@@ -144,7 +144,35 @@ public class UserActivitySummary {
     private static final long DOMAIN_WINDOW_DAYS = 30;
     private static final long DOMAIN_WINDOW_MS = DOMAIN_WINDOW_DAYS * MS_PER_DAY;
 
-    private UserActivitySummary() {
+    private final SleuthkitCaseProvider caseProvider;
+    private final TextTranslationService translationService;
+    private final java.util.logging.Logger logger;
+
+    /**
+     * Main constructor.
+     */
+    public UserActivitySummary() {
+        this(SleuthkitCaseProvider.DEFAULT, TextTranslationService.getInstance(),
+                org.sleuthkit.autopsy.coreutils.Logger.getLogger(UserActivitySummary.class.getName()));
+    }
+
+    /**
+     * Main constructor with external dependencies specified. This constructor
+     * is designed with unit testing in mind since mocked dependencies can be
+     * utilized.
+     *
+     * @param provider The object providing the current SleuthkitCase.
+     * @param translationService The translation service.
+     * @param logger The logger to use.
+     */
+    public UserActivitySummary(
+            SleuthkitCaseProvider provider,
+            TextTranslationService translationService,
+            java.util.logging.Logger logger) {
+
+        this.caseProvider = provider;
+        this.translationService = translationService;
+        this.logger = logger;
     }
 
     /**
@@ -158,6 +186,7 @@ public class UserActivitySummary {
         }
     }
     
+    // ELTODO this method is not in develop
     /**
      * Determines a short folder name if any. Otherwise, returns empty string.
      *
@@ -199,10 +228,9 @@ public class UserActivitySummary {
      *
      * @return The list of items retrieved from the database.
      *
-     * @throws TskCoreException
-     * @throws NoCurrentCaseException
+     * @throws InterruptedException
      */
-    public static List<TopDomainsResult> getRecentDomains(DataSource dataSource, int count) throws TskCoreException, NoCurrentCaseException {
+    public List<TopDomainsResult> getRecentDomains(DataSource dataSource, int count) throws TskCoreException, SleuthkitCaseProviderException {
         assertValidCount(count);
 
         if (dataSource == null) {
@@ -240,7 +268,7 @@ public class UserActivitySummary {
      * @return The TopDomainsResult or null if no visits to this domain within
      *         30 days of mostRecentMs.
      */
-    private static TopDomainsResult getDomainsResult(String domain, List<Pair<BlackboardArtifact, Long>> visits, long mostRecentMs) {
+    private TopDomainsResult getDomainsResult(String domain, List<Pair<BlackboardArtifact, Long>> visits, long mostRecentMs) {
         long visitCount = 0;
         Long thisMostRecentMs = null;
         BlackboardArtifact thisMostRecentArtifact = null;
@@ -283,10 +311,10 @@ public class UserActivitySummary {
      *         visited and the relevant artifact.
      *
      * @throws TskCoreException
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      */
-    private static Pair<Long, Map<String, List<Pair<BlackboardArtifact, Long>>>> getDomainGroupsAndMostRecent(DataSource dataSource) throws TskCoreException, NoCurrentCaseException {
-        List<BlackboardArtifact> artifacts = DataSourceInfoUtilities.getArtifacts(Case.getCurrentCaseThrows().getSleuthkitCase(), TYPE_WEB_HISTORY,
+    private Pair<Long, Map<String, List<Pair<BlackboardArtifact, Long>>>> getDomainGroupsAndMostRecent(DataSource dataSource) throws TskCoreException, SleuthkitCaseProviderException {
+        List<BlackboardArtifact> artifacts = DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_WEB_HISTORY,
                 dataSource, TYPE_DATETIME_ACCESSED, DataSourceInfoUtilities.SortOrder.DESCENDING, 0);
 
         Long mostRecentMs = null;
@@ -368,10 +396,11 @@ public class UserActivitySummary {
      * @return The list of most recent web searches where most recent search
      *         appears first.
      *
-     * @throws NoCurrentCaseException
+     * @throws
+     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public static List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws NoCurrentCaseException, TskCoreException {
+    public List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
         if (dataSource == null) {
@@ -379,7 +408,7 @@ public class UserActivitySummary {
         }
 
         // get the artifacts
-        List<BlackboardArtifact> webSearchArtifacts = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard()
+        List<BlackboardArtifact> webSearchArtifacts = caseProvider.get().getBlackboard()
                 .getArtifacts(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(), dataSource.getId());
 
         // group by search string (case insensitive)
@@ -406,7 +435,6 @@ public class UserActivitySummary {
                 .collect(Collectors.toList());
 
         // get translation if possible
-        TextTranslationService translationService = TextTranslationService.getInstance();
         if (translationService.hasProvider()) {
             for (TopWebSearchResult result : results) {
                 result.setTranslatedResult(getTranslationOrNull(result.getSearchString()));
@@ -423,10 +451,9 @@ public class UserActivitySummary {
      * @param original The original text.
      *
      * @return The translated text or null if no translation can be determined
-     *         or exists.
+     * or exists.
      */
-    private static String getTranslationOrNull(String original) {
-        TextTranslationService translationService = TextTranslationService.getInstance();
+    private String getTranslationOrNull(String original) {
         if (!translationService.hasProvider() || StringUtils.isBlank(original)) {
             return null;
         }
@@ -434,9 +461,8 @@ public class UserActivitySummary {
         String translated = null;
         try {
             translated = translationService.translate(original);
-        } catch (NoServiceProviderException | TranslationException ignore) {
-            // Original logic ignored this error and simply logged it as warning so i'm keeping the same logic
-            // logger.log(Level.WARNING, String.format("There was an error translating text: '%s'", original), ex);
+        } catch (NoServiceProviderException | TranslationException ex) {
+            logger.log(Level.WARNING, String.format("There was an error translating text: '%s'", original), ex);
         }
 
         // if there is no translation or the translation is the same as the original, return null.
@@ -458,8 +484,8 @@ public class UserActivitySummary {
      *
      * @return The most recent one with a non-null date.
      */
-    private static TopDeviceAttachedResult getMostRecentDevice(TopDeviceAttachedResult r1, TopDeviceAttachedResult r2) {
-        if (r2.getLastAccessed() == null) {
+    private TopDeviceAttachedResult getMostRecentDevice(TopDeviceAttachedResult r1, TopDeviceAttachedResult r2) {
+        if (r2.getLastAccessed()== null) {
             return r1;
         }
 
@@ -480,17 +506,18 @@ public class UserActivitySummary {
      * @return The list of most recent devices attached where most recent device
      *         attached appears first.
      *
-     * @throws NoCurrentCaseException
+     * @throws
+     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public static List<TopDeviceAttachedResult> getRecentDevices(DataSource dataSource, int count) throws NoCurrentCaseException, TskCoreException {
+    public List<TopDeviceAttachedResult> getRecentDevices(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
         if (dataSource == null) {
             return Collections.emptyList();
         }
 
-        Collection<TopDeviceAttachedResult> results = DataSourceInfoUtilities.getArtifacts(Case.getCurrentCaseThrows().getSleuthkitCase(), TYPE_DEVICE_ATTACHED,
+        Collection<TopDeviceAttachedResult> results = DataSourceInfoUtilities.getArtifacts(caseProvider.get(), TYPE_DEVICE_ATTACHED,
                 dataSource, TYPE_DATETIME, DataSourceInfoUtilities.SortOrder.DESCENDING, 0)
                 .stream()
                 .map(artifact -> {
@@ -565,30 +592,30 @@ public class UserActivitySummary {
      * sent.
      *
      * @param dataSource The data source.
-     * @param count      The maximum number of records to be shown (must be >
-     *                   0).
+     * @param count The maximum number of records to be shown (must be > 0).
      *
      * @return The list of most recent accounts used where the most recent
-     *         account by last message sent occurs first.
+     * account by last message sent occurs first.
      *
-     * @throws NoCurrentCaseException
+     * @throws
+     * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
      * @throws TskCoreException
      */
     @Messages({
         "DataSourceUserActivitySummary_getRecentAccounts_emailMessage=Email Message",
         "DataSourceUserActivitySummary_getRecentAccounts_calllogMessage=Call Log",})
-    public static List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws NoCurrentCaseException, TskCoreException {
+    public List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
         if (dataSource == null) {
             return Collections.emptyList();
         }
 
-        Stream<TopAccountResult> messageResults = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(), dataSource.getId())
+        Stream<TopAccountResult> messageResults = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(), dataSource.getId())
                 .stream()
                 .map((art) -> getMessageAccountResult(art));
 
-        Stream<TopAccountResult> emailResults = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(), dataSource.getId())
+        Stream<TopAccountResult> emailResults = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(), dataSource.getId())
                 .stream()
                 .map((art) -> {
                     return getAccountResult(
@@ -598,7 +625,7 @@ public class UserActivitySummary {
                             TYPE_DATETIME_SENT);
                 });
 
-        Stream<TopAccountResult> calllogResults = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(), dataSource.getId())
+        Stream<TopAccountResult> calllogResults = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(), dataSource.getId())
                 .stream()
                 .map((art) -> {
                     return getAccountResult(
@@ -639,7 +666,7 @@ public class UserActivitySummary {
      *
      * @return The generated TopProgramsResult.
      */
-    private static TopProgramsResult getTopProgramsResult(BlackboardArtifact artifact) {
+    private TopProgramsResult getTopProgramsResult(BlackboardArtifact artifact) {
         String programName = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_PROG_NAME);
 
         // ignore items with no name or a ntos boot identifier
@@ -691,7 +718,7 @@ public class UserActivitySummary {
      * @param long2 Second possibly null long.
      *
      * @return Returns the compare value: 1,0,-1 favoring the higher non-null
-     *         value.
+     * value.
      */
     private static int nullableCompare(Long long1, Long long2) {
         if (long1 == null && long2 == null) {
@@ -732,10 +759,10 @@ public class UserActivitySummary {
      * @return The sorted list and limited to the count if last run or run count
      *         information is available on any item.
      *
-     * @throws NoCurrentCaseException
+     * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
      */
-    public static List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) throws NoCurrentCaseException, TskCoreException {
+    public List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
         assertValidCount(count);
 
         if (dataSource == null) {
@@ -743,7 +770,7 @@ public class UserActivitySummary {
         }
 
         // Get TopProgramsResults for each TSK_PROG_RUN artifact
-        Collection<TopProgramsResult> results = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID(), dataSource.getId())
+        Collection<TopProgramsResult> results = caseProvider.get().getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID(), dataSource.getId())
                 .stream()
                 // convert to a TopProgramsResult object or null if missing critical information
                 .map((art) -> getTopProgramsResult(art))

@@ -60,9 +60,6 @@ class ClosestCityMapper {
     // singleton instance of this class
     private static ClosestCityMapper instance = null;
 
-    // the logger
-    private static final java.util.logging.Logger logger = Logger.getLogger(ClosestCityMapper.class.getName());
-
     /**
      * Retrieves singleton instance of this class.
      *
@@ -79,7 +76,10 @@ class ClosestCityMapper {
     }
 
     // data structure housing cities
-    private static LatLngMap<CityRecord> latLngMap = null;
+    private LatLngMap<CityRecord> latLngMap = null;
+
+    // the logger
+    private final java.util.logging.Logger logger;
 
     /**
      * Main Constructor.
@@ -87,7 +87,9 @@ class ClosestCityMapper {
      * @throws IOException
      */
     private ClosestCityMapper() throws IOException {
-        this(ClosestCityMapper.class.getResourceAsStream(CITIES_CSV_FILENAME));
+        this(
+                GeolocationSummary.class.getResourceAsStream(CITIES_CSV_FILENAME),
+                Logger.getLogger(ClosestCityMapper.class.getName()));
     }
 
     /**
@@ -99,7 +101,8 @@ class ClosestCityMapper {
      *
      * @throws IOException
      */
-    private ClosestCityMapper(InputStream citiesInputStream) throws IOException {
+    private ClosestCityMapper(InputStream citiesInputStream, java.util.logging.Logger logger) throws IOException {
+        this.logger = logger;
         latLngMap = new LatLngMap<CityRecord>(parseCsvLines(citiesInputStream, true));
     }
 
@@ -111,7 +114,7 @@ class ClosestCityMapper {
      *
      * @return The closest city or null if no close city can be found.
      */
-    static CityRecord findClosest(CityRecord point) {
+    CityRecord findClosest(CityRecord point) {
         return latLngMap.findClosest(point);
     }
 
@@ -123,7 +126,7 @@ class ClosestCityMapper {
      *
      * @return The double value or null if value cannot be parsed.
      */
-    private static Double tryParse(String s) {
+    private Double tryParse(String s) {
         if (s == null) {
             return null;
         }
@@ -144,7 +147,7 @@ class ClosestCityMapper {
      *
      * @return The country name.
      */
-    private static String parseCountryName(String orig, int lineNum) {
+    private String parseCountryName(String orig, int lineNum) {
         if (StringUtils.isBlank(orig)) {
             logger.log(Level.WARNING, String.format("No country name determined for line %d.", lineNum));
             return null;
@@ -167,7 +170,7 @@ class ClosestCityMapper {
      *
      * @return The parsed CityRecord or null if none can be determined.
      */
-    private static CityRecord getCsvCityRecord(List<String> csvRow, int lineNum) {
+    private CityRecord getCsvCityRecord(List<String> csvRow, int lineNum) {
         if (csvRow == null || csvRow.size() <= MAX_IDX) {
             logger.log(Level.WARNING, String.format("Row at line number %d is required to have at least %d elements and does not.", lineNum, (MAX_IDX + 1)));
             return null;
@@ -207,7 +210,7 @@ class ClosestCityMapper {
      *
      * @return The list of column values.
      */
-    private static List<String> parseCsvLine(String line, int lineNum) {
+    private List<String> parseCsvLine(String line, int lineNum) {
         if (line == null || line.length() <= 0) {
             logger.log(Level.INFO, String.format("Line at %d had no content", lineNum));
             return null;
@@ -234,7 +237,7 @@ class ClosestCityMapper {
      *
      * @throws IOException
      */
-    private static List<CityRecord> parseCsvLines(InputStream csvInputStream, boolean ignoreHeaderRow) throws IOException {
+    private List<CityRecord> parseCsvLines(InputStream csvInputStream, boolean ignoreHeaderRow) throws IOException {
         List<CityRecord> cityRecords = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(csvInputStream, "UTF-8"))) {
             int lineNum = 1;
