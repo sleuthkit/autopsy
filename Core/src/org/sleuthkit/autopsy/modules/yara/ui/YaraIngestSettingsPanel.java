@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import javax.swing.DefaultListModel;
-import org.sleuthkit.autopsy.guicomponeontutils.AbstractCheckboxListItem;
+import org.sleuthkit.autopsy.guicomponentutils.AbstractCheckboxListItem;
 import org.sleuthkit.autopsy.guiutils.CheckBoxJList;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
