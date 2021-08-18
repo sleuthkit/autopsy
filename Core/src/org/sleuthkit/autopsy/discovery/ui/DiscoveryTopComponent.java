@@ -260,7 +260,6 @@ public final class DiscoveryTopComponent extends TopComponent {
     private void newSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newSearchButtonActionPerformed
         close();
         final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
-        discDialog.cancelSearch();
         discDialog.setVisible(true);
         discDialog.validateDialog();
     }//GEN-LAST:event_newSearchButtonActionPerformed

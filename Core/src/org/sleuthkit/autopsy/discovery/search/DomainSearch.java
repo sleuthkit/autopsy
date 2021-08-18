@@ -66,8 +66,8 @@ public class DomainSearch {
     }
 
     /**
-     * Run the domain search to get the group keys and sizes. Clears cache of
-     * search results, caching new results for access at later time.
+     * Run the domain search to get the search results keys and sizes. Clears
+     * cache of search results, caching new results for access at later time.
      *
      * @param userName            The name of the user performing the search.
      * @param filters             The filters to apply.
@@ -83,23 +83,15 @@ public class DomainSearch {
      *
      * @throws DiscoveryException
      */
-    public Map<GroupKey, Integer> getGroupSizes(String userName,
+    public Map<GroupKey, List<Result>> getSearchResults(String userName,
             List<AbstractFilter> filters,
             DiscoveryAttributes.AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
             SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
-
-        final Map<GroupKey, List<Result>> searchResults = searchCache.get(
+        return searchCache.get(
                 userName, filters, groupAttributeType, groupSortingType,
                 domainSortingMethod, caseDb, centralRepoDb);
-        // Transform the cached results into a map of group key to group size.
-        final LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
-        for (GroupKey groupKey : searchResults.keySet()) {
-            groupSizes.put(groupKey, searchResults.get(groupKey).size());
-        }
-
-        return groupSizes;
     }
 
     /**

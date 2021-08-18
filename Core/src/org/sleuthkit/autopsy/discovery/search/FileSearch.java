@@ -252,7 +252,7 @@ public class FileSearch {
      *
      * @throws DiscoveryException
      */
-    private static Map<GroupKey, List<Result>> runFileSearch(String userName,
+    public static Map<GroupKey, List<Result>> runFileSearch(String userName,
             List<AbstractFilter> filters,
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,

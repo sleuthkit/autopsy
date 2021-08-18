@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
+import org.sleuthkit.autopsy.discovery.search.Result;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
@@ -77,17 +78,28 @@ final class SearchWorker extends SwingWorker<Void, Void> {
             // Run the search
             if (searchType == SearchData.Type.DOMAIN) {
                 DomainSearch domainSearch = new DomainSearch();
-                results.putAll(domainSearch.getGroupSizes(System.getProperty(USER_NAME_PROPERTY), filters,
+                final Map<GroupKey, List<Result>> searchResults = domainSearch.getSearchResults(System.getProperty(USER_NAME_PROPERTY), filters,
                         groupingAttr,
                         groupSortAlgorithm,
                         fileSort,
-                        Case.getCurrentCase().getSleuthkitCase(), centralRepoDb));
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
+                // Transform the cached results into a map of group key to group size.
+                final LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
+                for (GroupKey groupKey : searchResults.keySet()) {
+                    if (isCancelled()) {
+                        return null;
+                    }
+                    results.put(groupKey, searchResults.get(groupKey).size());
+                }
             } else {
-                results.putAll(FileSearch.getGroupSizes(System.getProperty(USER_NAME_PROPERTY), filters,
-                        groupingAttr,
-                        groupSortAlgorithm,
-                        fileSort,
-                        Case.getCurrentCase().getSleuthkitCase(), centralRepoDb));
+                Map<GroupKey, List<Result>> searchResults = FileSearch.runFileSearch(System.getProperty(USER_NAME_PROPERTY), filters,
+                        groupingAttr, groupSortAlgorithm, fileSort, Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
+                for (GroupKey groupKey : searchResults.keySet()) {
+                    if (isCancelled()) {
+                        return null;
+                    }
+                    results.put(groupKey, searchResults.get(groupKey).size());
+                }
             }
         } catch (DiscoveryException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);

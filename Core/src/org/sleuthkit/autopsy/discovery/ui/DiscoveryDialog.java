@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.SwingUtilities;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
@@ -90,6 +89,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         if (discDialog == null) {
             discDialog = new DiscoveryDialog();
         }
+
         if (shouldUpdate) {
             discDialog.updateSearchSettings();
             shouldUpdate = false;
@@ -574,7 +574,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        // Get the selected filters
+        setVisible(false); //set visible used here instead of dispose incase dispose code changes
         final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
         if (tc == null) {
             setValid("No Top Component Found");
@@ -584,6 +584,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             tc.open();
         }
         tc.resetTopComponent();
+        // Get the selected filters
         List<AbstractFilter> filters;
         if (videosButton.isSelected()) {
             filters = videoFilterPanel.getFilters();
@@ -617,7 +618,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         }
         searchWorker = new SearchWorker(centralRepoDb, type, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
-        dispose();
+
         tc.toFront();
         tc.requestActive();
     }//GEN-LAST:event_searchButtonActionPerformed
@@ -651,6 +652,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     void cancelSearch() {
         if (searchWorker != null) {
             searchWorker.cancel(true);
+            searchWorker = null;
         }
     }
 
