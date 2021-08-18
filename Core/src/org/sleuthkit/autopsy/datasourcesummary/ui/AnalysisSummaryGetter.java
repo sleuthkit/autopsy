@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.Arrays;
@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.contentutils.AnalysisSummary;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
+import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;

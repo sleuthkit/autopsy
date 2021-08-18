@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.ui.UserActivitySummaryGetter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,12 +44,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceSummaryMockUtils.getArtifactsTSKMock;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopAccountResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDeviceAttachedResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDomainsResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopProgramsResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopWebSearchResult;
+import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
 import org.sleuthkit.autopsy.testutils.TskMockUtils;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;

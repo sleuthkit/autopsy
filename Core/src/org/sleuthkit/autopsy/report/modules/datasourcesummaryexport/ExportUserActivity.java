@@ -30,13 +30,13 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.LastAccessedArtifact;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopAccountResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDeviceAttachedResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDomainsResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopProgramsResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopWebSearchResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.LastAccessedArtifact;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
 import static org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelExportAction.getTableExport;
 
 /**

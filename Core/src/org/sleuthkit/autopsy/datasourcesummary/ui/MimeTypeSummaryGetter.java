@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import java.sql.SQLException;
@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.contentutils.DataSourceInfoUtilities;
+import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;

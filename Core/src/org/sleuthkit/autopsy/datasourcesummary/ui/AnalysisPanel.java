@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummaryGetter;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;

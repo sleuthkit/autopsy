@@ -16,22 +16,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
-import org.sleuthkit.autopsy.contentutils.TimelineSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.contentutils.TimelineSummary.TimelineSummaryData;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.TimelineSummaryData;
 
 /**
  * Provides data source summary information pertaining to Timeline data.

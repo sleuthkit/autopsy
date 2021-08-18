@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,13 +25,13 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGove
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.contentutils.RecentFilesSummary;
-import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentAttachmentDetails;
-import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentDownloadDetails;
-import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentFileDetails;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**

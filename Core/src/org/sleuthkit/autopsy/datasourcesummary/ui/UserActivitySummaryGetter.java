@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.Arrays;
@@ -26,15 +26,15 @@ import java.util.List;
 import java.util.Set;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopAccountResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDeviceAttachedResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopDomainsResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopProgramsResult;
-import org.sleuthkit.autopsy.contentutils.UserActivitySummary.TopWebSearchResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDomainsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopProgramsResult;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopWebSearchResult;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**

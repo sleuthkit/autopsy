@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import org.sleuthkit.autopsy.datasourcesummary.ui.RecentFilesGetter;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,10 +41,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentAttachmentDetails;
-import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentDownloadDetails;
-import org.sleuthkit.autopsy.contentutils.RecentFilesSummary.RecentFileDetails;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
+import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.testutils.RandomizationUtils;
 import org.sleuthkit.autopsy.testutils.TskMockUtils;
 import org.sleuthkit.datamodel.Blackboard;

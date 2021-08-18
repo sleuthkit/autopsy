@@ -16,14 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.datamodel;
+package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-import org.sleuthkit.autopsy.contentutils.GeolocationSummary;
-import org.sleuthkit.autopsy.contentutils.GeolocationSummary.CityData;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityData;
+import org.sleuthkit.autopsy.datasourcesummary.ui.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
