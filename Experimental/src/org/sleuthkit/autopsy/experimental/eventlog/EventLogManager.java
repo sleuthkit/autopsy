@@ -57,43 +57,85 @@ public class EventLogManager {
      */
     public static EventLogManager getInstance() throws EventLogException {
         if (instance == null) {
-            CaseDbConnectionInfo connectionInfo;
-            try {
-                connectionInfo = UserPreferences.getDatabaseConnectionInfo();
-            } catch (UserPreferencesException ex) {
-                throw new EventLogException("An error occurred while fetching multiuser settings.", ex);
-            }
+            String dbName = DB_NAME;
+            CaseDbConnectionInfo connectionInfo = getConnectionInfo();
 
             String host = connectionInfo.getHost();
             String userName = connectionInfo.getUserName();
             String password = connectionInfo.getPassword();
             String port = connectionInfo.getPort();
 
-            try (Connection pgConn = getPgConnection(host, port, userName, password, Optional.empty())) {
-                if (!verifyDatabaseExists(pgConn, DB_NAME)) {
-                    if (!createDatabase(pgConn, DB_NAME, userName)) {
-                        throw new EventLogException("Unable to create EventLogManager database: " + DB_NAME);
-                    }
-                }
-            } catch (SQLException | ClassNotFoundException ex) {
-                throw new EventLogException(MessageFormat.format("An error occurred while verifying that postgres database {0} exists.", DB_NAME), ex);
-            }
+            verifyOrCreatePgDb(host, port, userName, password, dbName);
 
-            DataSource dataSource = getDataSource(host, port, userName, password, DB_NAME);
-            try (Connection dbConn = dataSource.getConnection()) {
-                if (!createDbSchema(dbConn)) {
-                    throw new EventLogException("Unable to create schema for: " + DB_NAME);
-                }
-            } catch (SQLException ex) {
-                throw new EventLogException(MessageFormat.format(
-                        "An error occurred while verifying that schema in database {0} was properly configured.", DB_NAME),
-                        ex);
-            }
+            DataSource dataSource = getDataSource(host, port, userName, password, dbName);
+
+            verifyOrCreateSchema(dataSource, dbName);
 
             instance = new EventLogManager(dataSource);
         }
 
         return instance;
+    }
+
+    /**
+     * Obtains the connection info from user preferences.
+     *
+     * @return The connection preferences.
+     *
+     * @throws EventLogException
+     */
+    static CaseDbConnectionInfo getConnectionInfo() throws EventLogException {
+        try {
+            return UserPreferences.getDatabaseConnectionInfo();
+        } catch (UserPreferencesException ex) {
+            throw new EventLogException("An error occurred while fetching multiuser settings.", ex);
+        }
+    }
+
+    /**
+     * Verifies that the proper schema exists in the postgres database or
+     * creates it.
+     *
+     * @param dataSource The data source.
+     * @param dbName     The database name for error reporting purposes.
+     *
+     * @throws EventLogException
+     */
+    static void verifyOrCreateSchema(DataSource dataSource, String dbName) throws EventLogException {
+        try (final Connection dbConn = dataSource.getConnection()) {
+            if (!createDbSchema(dbConn)) {
+                throw new EventLogException("Unable to create schema for: " + dbName);
+            }
+        } catch (SQLException ex) {
+            throw new EventLogException(MessageFormat.format(
+                    "An error occurred while verifying that schema in database {0} was properly configured.", dbName),
+                    ex);
+        }
+    }
+
+    /**
+     * Verifies that the postgres database exists in the specified server or
+     * creates the database.
+     *
+     * @param host     The pg host.
+     * @param port     The pg port.
+     * @param userName The username to use to connect pg.
+     * @param password The password to use to connect to pg.
+     * @param dbName   The name of the pg database. If empty, the root
+     *                 "postgres" database is used.
+     *
+     * @throws EventLogException
+     */
+    static void verifyOrCreatePgDb(String host, String port, String userName, String password, String dbName) throws EventLogException {
+        try (Connection pgConn = getPgConnection(host, port, userName, password, Optional.empty())) {
+            if (!verifyDatabaseExists(pgConn, dbName)) {
+                if (!createDatabase(pgConn, dbName, userName)) {
+                    throw new EventLogException("Unable to create EventLogManager database: " + dbName);
+                }
+            }
+        } catch (SQLException | ClassNotFoundException ex) {
+            throw new EventLogException(MessageFormat.format("An error occurred while verifying that postgres database {0} exists.", dbName), ex);
+        }
     }
 
     /**
@@ -107,7 +149,7 @@ public class EventLogManager {
      *
      * @return The pooled connection.
      */
-    private static ComboPooledDataSource getDataSource(String host, String port, String userName, String password, String dbName) {
+    static ComboPooledDataSource getDataSource(String host, String port, String userName, String password, String dbName) {
         ComboPooledDataSource cpds = new ComboPooledDataSource();
         cpds.setJdbcUrl(getPgConnectionString(host, port, Optional.of(dbName)));
         cpds.setUser(userName);
@@ -145,7 +187,7 @@ public class EventLogManager {
      * @throws ClassNotFoundException
      * @throws SQLException
      */
-    private static Connection getPgConnection(String host, String port, String userName, String password, Optional<String> dbName) throws ClassNotFoundException, SQLException {
+    static Connection getPgConnection(String host, String port, String userName, String password, Optional<String> dbName) throws ClassNotFoundException, SQLException {
         String url = getPgConnectionString(host, port, dbName);
 
         Properties props = new Properties();
@@ -166,7 +208,7 @@ public class EventLogManager {
      *
      * @throws SQLException
      */
-    private static boolean verifyDatabaseExists(Connection conn, String dbName) throws SQLException {
+    static boolean verifyDatabaseExists(Connection conn, String dbName) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement("SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower(?) LIMIT 1")) {
             ps.setString(1, dbName);
             try (ResultSet rs = ps.executeQuery()) {
@@ -255,9 +297,10 @@ public class EventLogManager {
     /**
      * Main constructor.
      *
-     * @param dataSource The pooled data source connection to use.
+     * @param dataSource The pooled data source connection to use. This assumes
+     *                   that database and schema exist.
      */
-    private EventLogManager(DataSource dataSource) {
+    EventLogManager(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -403,7 +446,7 @@ public class EventLogManager {
      * @throws SQLException
      */
     public Optional<JobRecord> setJobStatus(long jobId, JobStatus newStatus, Date date) throws SQLException {
-        
+
         String updateStr;
         switch (newStatus) {
             case RUNNING:
@@ -417,17 +460,17 @@ public class EventLogManager {
                 updateStr = "UPDATE jobs SET status = ? WHERE job_id = ? AND start_time = NULL AND end_time = NULL";
                 break;
         }
-        
+
         String fullClause = "WITH updated AS (" + updateStr + " RETURNING *) "
-                        + "SELECT "
-                        + "updated.job_id, "
-                        + "updated.data_source_name, "
-                        + "updated.start_time, "
-                        + "updated.end_time, "
-                        + "updated.status, "
-                        + "updated.case_id, "
-                        + "cases.name AS case_name "
-                        + "FROM updated INNER JOIN cases ON cases.case_id = updated.case_id ";
+                + "SELECT "
+                + "updated.job_id, "
+                + "updated.data_source_name, "
+                + "updated.start_time, "
+                + "updated.end_time, "
+                + "updated.status, "
+                + "updated.case_id, "
+                + "cases.name AS case_name "
+                + "FROM updated INNER JOIN cases ON cases.case_id = updated.case_id ";
 
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement updateStmt = conn.prepareStatement(fullClause)) {
@@ -469,7 +512,7 @@ public class EventLogManager {
         List<JobRecord> toReturn = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement query = conn.prepareStatement(
-                         "SELECT "
+                        "SELECT "
                         + "jobs.job_id, "
                         + "jobs.data_source_name, "
                         + "jobs.start_time, "

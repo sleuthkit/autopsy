@@ -51,4 +51,8 @@ public class CaseRecord {
         return name;
     }
 
+    @Override
+    public String toString() {
+        return "CaseRecord{" + "id=" + id + ", name=" + name + '}';
+    }
 }

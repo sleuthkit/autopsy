@@ -102,5 +102,15 @@ public class JobRecord {
     public JobStatus getStatus() {
         return status;
     }
-    
+
+    @Override
+    public String toString() {
+        return "JobRecord{" + "id=" + id 
+                + ", caseId=" + caseId 
+                + ", caseName=" + caseName 
+                + ", dataSourceName=" + dataSourceName 
+                + ", startTime=" + startTime + ", endTime=" 
+                + endTime + ", status=" 
+                + status + '}';
+    }
 }
