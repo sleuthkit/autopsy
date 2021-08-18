@@ -25,8 +25,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.MessageFormat;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -67,7 +67,7 @@ public class EventLogManager {
 
             verifyOrCreatePgDb(host, port, userName, password, dbName);
 
-            DataSource dataSource = getDataSource(host, port, userName, password, dbName);
+            ComboPooledDataSource dataSource = getDataSource(host, port, userName, password, dbName);
 
             verifyOrCreateSchema(dataSource, dbName);
 
@@ -292,7 +292,7 @@ public class EventLogManager {
         return true;
     }
 
-    private final DataSource dataSource;
+    private final ComboPooledDataSource dataSource;
 
     /**
      * Main constructor.
@@ -300,8 +300,15 @@ public class EventLogManager {
      * @param dataSource The pooled data source connection to use. This assumes
      *                   that database and schema exist.
      */
-    EventLogManager(DataSource dataSource) {
+    EventLogManager(ComboPooledDataSource dataSource) {
         this.dataSource = dataSource;
+    }
+
+    /**
+     * Closes down connection pool.
+     */
+    void close() {
+        this.dataSource.resetPoolManager(true);
     }
 
     /**
@@ -329,34 +336,26 @@ public class EventLogManager {
      */
     public CaseRecord getOrCreateCaseRecord(String caseName) throws SQLException {
         try (Connection conn = dataSource.getConnection();
-                PreparedStatement query = conn.prepareStatement("SELECT case_id, name FROM cases WHERE name = ?")) {
-            conn.setAutoCommit(false);
+                // taken from https://stackoverflow.com/a/40325406
+                PreparedStatement query = conn.prepareStatement("WITH ins AS (\n"
+                        + "   INSERT INTO cases(name) VALUES(?)\n"
+                        + "   ON CONFLICT DO NOTHING\n"
+                        + "   RETURNING name, case_id\n"
+                        + "   )\n"
+                        + "SELECT name, case_id FROM ins\n"
+                        + "UNION ALL\n"
+                        + "SELECT name, case_id FROM cases WHERE name = ?")) {
+
             query.setString(1, caseName);
+            query.setString(2, caseName);
 
             try (ResultSet queryResults = query.executeQuery()) {
-                if (queryResults.next()) {
-                    CaseRecord record = getCaseRecord(queryResults);
-                    conn.commit();
-                    return record;
+                if (!queryResults.next()) {
+                    throw new SQLException(MessageFormat.format(
+                            "Expected a case to be created or previous to be returned, but received no results caseName: {0}.",
+                            caseName));
                 }
-
-                try (PreparedStatement insert = conn.prepareStatement("INSERT INTO cases(name) VALUES (?) RETURNING case_id, name")) {
-                    query.setString(1, caseName);
-
-                    try (ResultSet insertResults = insert.executeQuery()) {
-                        if (!queryResults.next()) {
-                            throw new SQLException("There was an error inserting into cases table with name of " + caseName);
-                        }
-
-                        CaseRecord record = getCaseRecord(insertResults);
-                        conn.commit();
-                        return record;
-
-                    }
-                }
-            } catch (SQLException ex) {
-                conn.rollback();
-                throw ex;
+                return getCaseRecord(queryResults);
             }
         }
     }
@@ -375,61 +374,32 @@ public class EventLogManager {
      */
     public JobRecord getOrCreateJobRecord(long caseId, String dataSourceName) throws SQLException {
         try (Connection conn = dataSource.getConnection();
-                PreparedStatement query = conn.prepareStatement("SELECT "
-                        + "jobs.job_id, "
-                        + "jobs.data_source_name, "
-                        + "jobs.start_time, "
-                        + "jobs.end_time, "
-                        + "jobs.status, "
-                        + "jobs.case_id, "
-                        + "cases.name AS case_name "
-                        + "FROM jobs INNER JOIN cases ON cases.case_id = jobs.case_id "
-                        + "WHERE cases.case_id = ? AND jobs.data_source_name = ?")) {
+                // taken from https://stackoverflow.com/a/40325406
+                PreparedStatement query = conn.prepareStatement("WITH ins AS (\n"
+                        + "   INSERT INTO jobs(data_source_name, start_time, end_time, status, case_id) VALUES(?, NULL, NULL, ?, ?)\n"
+                        + "   ON CONFLICT DO NOTHING\n"
+                        + "   RETURNING *\n"
+                        + "   )\n"
+                        + "SELECT j.job_id, j.data_source_name, j.start_time, j.end_time, j.status, j.case_id, c.name AS case_name\n"
+                        + "FROM (SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM ins\n"
+                        + "UNION ALL\n"
+                        + "(SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM jobs\n"
+                        + "WHERE case_id = ? AND data_source_name = ?)) j\n"
+                        + "INNER JOIN cases c ON c.case_id = j.case_id ")) {
 
-            conn.setAutoCommit(false);
             query.setString(1, dataSourceName);
-            query.setLong(2, caseId);
+            query.setInt(2, JobStatus.PENDING.getDbVal());
+            query.setLong(3, caseId);
+            query.setLong(4, caseId);
+            query.setString(5, dataSourceName);
 
             try (ResultSet queryResults = query.executeQuery()) {
-                if (queryResults.next()) {
-                    JobRecord record = getJobRecord(queryResults);
-                    conn.commit();
-                    return record;
+                if (!queryResults.next()) {
+                    throw new SQLException(MessageFormat.format(
+                            "Expected a job to be created or previous to be returned, but received no results caseId: {0}, dataSourceName: {1}.",
+                            caseId, dataSourceName));
                 }
-
-                // taken from https://stackoverflow.com/a/49536257
-                try (PreparedStatement insert = conn.prepareStatement(
-                        "WITH inserted AS ("
-                        + "INSERT INTO jobs(data_source_name, start_time, end_time, status, case_id) VALUES(?, NULL, NULL, ?, ?) "
-                        + "RETURNING *) "
-                        + "SELECT "
-                        + "inserted.job_id, "
-                        + "inserted.data_source_name, "
-                        + "inserted.start_time, "
-                        + "inserted.end_time, "
-                        + "inserted.status, "
-                        + "inserted.case_id, "
-                        + "cases.name AS case_name "
-                        + "FROM inserted INNER JOIN cases ON cases.case_id = inserted.case_id ")) {
-                    query.setString(1, dataSourceName);
-                    query.setInt(2, JobStatus.PENDING.getDbVal());
-                    query.setLong(3, caseId);
-
-                    try (ResultSet insertResults = insert.executeQuery()) {
-                        if (!queryResults.next()) {
-                            throw new SQLException(MessageFormat.format(
-                                    "There was an error inserting into jobs table with case id: {0} and data source name: {1}",
-                                    caseId, dataSourceName));
-                        }
-
-                        JobRecord record = getJobRecord(insertResults);
-                        conn.commit();
-                        return record;
-                    }
-                }
-            } catch (SQLException ex) {
-                conn.rollback();
-                throw ex;
+                return getJobRecord(queryResults);
             }
         }
     }
@@ -439,7 +409,7 @@ public class EventLogManager {
      *
      * @param jobId     The job id.
      * @param newStatus The status to set for the job.
-     * @param date      The timestamp for when
+     * @param date      The timestamp for when.
      *
      * @return The job record if an update is made.
      *
@@ -450,14 +420,14 @@ public class EventLogManager {
         String updateStr;
         switch (newStatus) {
             case RUNNING:
-                updateStr = "UPDATE jobs SET status = ?, start_time = ? WHERE job_id = ? AND start_time = NULL";
+                updateStr = "UPDATE jobs SET status = ?, start_time = ? WHERE job_id = ?";
                 break;
             case DONE:
-                updateStr = "UPDATE jobs SET status = ?, end_time = ? WHERE job_id = ? AND end_time = NULL";
+                updateStr = "UPDATE jobs SET status = ?, end_time = ? WHERE job_id = ?";
                 break;
             case PENDING:
             default:
-                updateStr = "UPDATE jobs SET status = ? WHERE job_id = ? AND start_time = NULL AND end_time = NULL";
+                updateStr = "UPDATE jobs SET status = ? WHERE job_id = ?";
                 break;
         }
 
@@ -480,7 +450,7 @@ public class EventLogManager {
             switch (newStatus) {
                 case RUNNING:
                 case DONE:
-                    updateStmt.setDate(2, new java.sql.Date(date.getTime()));
+                    updateStmt.setTimestamp(2, new Timestamp(date.getTime()));
                     updateStmt.setLong(3, jobId);
                     break;
                 case PENDING:
@@ -520,7 +490,7 @@ public class EventLogManager {
                         + "jobs.status, "
                         + "jobs.case_id, "
                         + "cases.name AS case_name "
-                        + "FROM inserted INNER JOIN cases ON cases.case_id = inserted.case_id "
+                        + "FROM jobs INNER JOIN cases ON cases.case_id = jobs.case_id "
                         + "WHERE jobs.status = ?")) {
 
             query.setInt(1, status.getDbVal());
@@ -551,8 +521,8 @@ public class EventLogManager {
                 rs.getLong("case_id"),
                 rs.getString("case_name"),
                 rs.getString("data_source_name"),
-                Optional.ofNullable(rs.getObject("start_time", Instant.class)),
-                Optional.ofNullable(rs.getObject("end_time", Instant.class)),
+                Optional.ofNullable(rs.getTimestamp("start_time")),
+                Optional.ofNullable(rs.getTimestamp("end_time")),
                 JobStatus.getFromDbVal(rs.getInt("status")).orElse(null));
     }
 

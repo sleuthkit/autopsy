@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.eventlog;
 
-import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
 
 /**
@@ -30,8 +30,8 @@ public class JobRecord {
     private final long caseId;
     private final String caseName;
     private final String dataSourceName;
-    private final Optional<Instant> startTime;
-    private final Optional<Instant> endTime;
+    private final Optional<Date> startTime;
+    private final Optional<Date> endTime;
     private final JobStatus status;
 
     /**
@@ -44,7 +44,7 @@ public class JobRecord {
      * @param endTime The end time of processing.
      * @param status The current status.
      */
-    JobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Instant> startTime, Optional<Instant> endTime, JobStatus status) {
+    JobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Date> startTime, Optional<Date> endTime, JobStatus status) {
         this.id = id;
         this.caseId = caseId;
         this.caseName = caseName;
@@ -85,14 +85,14 @@ public class JobRecord {
     /**
      * @return The start time of processing.
      */
-    public Optional<Instant> getStartTime() {
+    public Optional<Date> getStartTime() {
         return startTime;
     }
 
     /**
      * @return The end time of processing.
      */
-    public Optional<Instant> getEndTime() {
+    public Optional<Date> getEndTime() {
         return endTime;
     }
 

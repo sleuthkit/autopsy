@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.eventlog;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -148,18 +149,27 @@ public class EventLogManagerTests {
      * @throws EventLogException
      */
     public void runTests(String host, String port, String userName, String pword, String dbName) throws ClassNotFoundException, SQLException, EventLogException {
-        DataSource testDs = verifyDbAndSchemaTest(host, port, userName, pword, dbName);
+        EventLogManager manager = null;
+        try {
+            ComboPooledDataSource testDs = verifyDbAndSchemaTest(host, port, userName, pword, dbName);
 
-        EventLogManager manager = new EventLogManager(testDs);
+            manager = new EventLogManager(testDs);
 
-        List<CaseRecord> caseRecords = createCasesTest(manager, testDs);
+            List<CaseRecord> caseRecords = createCasesTest(manager, testDs);
 
-        createRecordsUpdateStatusTest(caseRecords, manager);
+            createJobsUpdateStatusTest(caseRecords, manager);
 
-        // drop db
-        try (Connection conn = EventLogManager.getPgConnection(host, port, userName, pword, Optional.empty());
-                Statement stmt = conn.createStatement()) {
-            stmt.execute("DROP DATABASE " + dbName);
+        } finally {
+            // drop db when done
+            if (manager != null) {
+                manager.close();
+                manager = null;
+            }
+
+            try (Connection conn = EventLogManager.getPgConnection(host, port, userName, pword, Optional.empty());
+                    Statement stmt = conn.createStatement()) {
+                stmt.execute("DROP DATABASE " + dbName);
+            }
         }
     }
 
@@ -212,13 +222,13 @@ public class EventLogManagerTests {
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    private DataSource verifyDbAndSchemaTest(String host, String port, String userName, String pword, String dbName) throws EventLogException, IllegalStateException, SQLException, ClassNotFoundException {
+    private ComboPooledDataSource verifyDbAndSchemaTest(String host, String port, String userName, String pword, String dbName) throws EventLogException, IllegalStateException, SQLException, ClassNotFoundException {
         //CaseDbConnectionInfo conn = EventLogManager.getConnectionInfo();
 
         // if db exists throw (shouldn't exist on start)
         try (Connection conn = EventLogManager.getPgConnection(host, port, userName, pword, Optional.empty())) {
             if (EventLogManager.verifyDatabaseExists(conn, dbName)) {
-                onErr("Database '{0}' shouldn't exist when running tests.  "
+                onErr("Database {0} shouldn't exist when running tests.  "
                         + "Please drop the database and try again.", dbName);
             }
 
@@ -226,21 +236,21 @@ public class EventLogManagerTests {
             EventLogManager.verifyOrCreatePgDb(host, port, userName, pword, dbName);
 
             if (!EventLogManager.verifyDatabaseExists(conn, dbName)) {
-                onErr("Unable to create database '{0}'", dbName);
+                onErr("Unable to create database {0}", dbName);
             }
         }
-        DataSource testDs = EventLogManager.getDataSource(host, port, userName, pword, dbName);
+        ComboPooledDataSource testDs = EventLogManager.getDataSource(host, port, userName, pword, dbName);
         // verify or create schema (check externally) and verify that the schema isn't changed.
         for (int i = 0; i < 2; i++) {
             EventLogManager.verifyOrCreateSchema(testDs, dbName);
             String tableListStr = ALL_TABLES.stream()
                     .map(t -> "'" + t + "'")
                     .collect(Collectors.joining(", "));
-            String queryStr = MessageFormat.format(
+            String queryStr = String.format(
                     "SELECT table_name "
                     + "FROM information_schema.tables "
                     + "WHERE table_schema = 'public' "
-                    + "AND LOWER(table_name) IN ({0})", tableListStr);
+                    + "AND LOWER(table_name) IN (%s)", tableListStr);
             List<String> dbTables = getList(testDs, queryStr, (rs) -> rs.getString("table_name"));
             assertTrue(dbTables.size() == ALL_TABLES.size(), "Expected tables to be: {0} but received: {1}", getStr(ALL_TABLES), getStr(dbTables));
         }
@@ -257,7 +267,7 @@ public class EventLogManagerTests {
      *
      * @throws SQLException
      */
-    private void createRecordsUpdateStatusTest(List<CaseRecord> caseRecords, EventLogManager manager) throws SQLException {
+    private void createJobsUpdateStatusTest(List<CaseRecord> caseRecords, EventLogManager manager) throws SQLException {
         // create 12 (6 for each case) records (verify in db)
         String dsPrefix = "ds_";
         Map<Long, List<JobRecord>> jobRecords = new HashMap<>();
@@ -265,7 +275,16 @@ public class EventLogManagerTests {
             List<JobRecord> recList = new ArrayList<>();
             jobRecords.put(c.getId(), recList);
             for (int jIdx = 0; jIdx < 6; jIdx++) {
-                recList.add(manager.getOrCreateJobRecord(jIdx, dsPrefix + jIdx));
+                JobRecord created = manager.getOrCreateJobRecord(c.getId(), dsPrefix + jIdx);
+                assertTrue(created.getCaseName().equals(c.getName()),
+                        "Expected case names to be equal.  Received {0}; expected {1}.",
+                        created.getCaseName(), c.getName());
+
+                assertTrue(created.getDataSourceName().equals(dsPrefix + jIdx),
+                        "Expected data source names to be equal.  Received {0}; expected {1}.",
+                        created.getDataSourceName(), dsPrefix + jIdx);
+
+                recList.add(created);
             }
         }
 
@@ -293,7 +312,7 @@ public class EventLogManagerTests {
         List<JobRecord> done2 = setStatus(manager, jobRecords, 2, JobStatus.DONE);
 
         // get running by filtering done
-        List<JobRecord> running2 = allRecords.stream()
+        List<JobRecord> running2 = running1.stream()
                 .filter(r
                         -> !done2.stream()
                         .filter(runItem -> runItem.getId() == r.getId())
@@ -324,8 +343,26 @@ public class EventLogManagerTests {
         for (List<JobRecord> records : jobRecords.values()) {
             for (int jIdx = 0; jIdx < count; jIdx++) {
                 JobRecord curRec = records.get(jIdx);
-                JobRecord updatedRecord = manager.setJobStatus(curRec.getId(), JobStatus.RUNNING, startDate).get();
-                assertTrue(curRec.getId() == updatedRecord.getId(), "Expected updated id to be equal, but changed from {0} to {1}", curRec.getId(), updatedRecord.getId());
+                JobRecord updatedRecord = manager.setJobStatus(curRec.getId(), status, startDate).get();
+                assertTrue(curRec.getId() == updatedRecord.getId(),
+                        "Expected updated id to be equal, but changed from {0} to {1}",
+                        curRec.getId(), updatedRecord.getId());
+                assertTrue(curRec.getCaseName().equals(updatedRecord.getCaseName())
+                        && updatedRecord.getCaseId() == curRec.getCaseId()
+                        && updatedRecord.getDataSourceName().equals(curRec.getDataSourceName()),
+                        "Expected sent and received to be equivalent except for status changes but received {0} when previous was {1}.",
+                        updatedRecord, curRec);
+
+                if (status == JobStatus.DONE) {
+                    assertTrue(startDate.equals(updatedRecord.getEndTime().get()),
+                            "Expected end time of {0} but received {1}.",
+                            startDate, updatedRecord.getEndTime().get());
+                } else if (status == JobStatus.RUNNING) {
+                    assertTrue(startDate.equals(updatedRecord.getStartTime().get()),
+                            "Expected end time of {0} but received {1}.",
+                            startDate, updatedRecord.getStartTime().get());
+                }
+
                 changed.add(updatedRecord);
             }
         }
