@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -110,7 +110,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
             logger.log(Level.SEVERE, "Error running file search test", ex);
             cancel(true);
         } catch (SearchCancellationException ex) {
-            //The does not explicitly have a way to cancell the loading of a page 
+            //The user does not explicitly have a way to cancel the loading of a page 
             //but they could have cancelled the search during the loading of the first page
             //So this may or may not be an issue depending on when this occurred.
             logger.log(Level.WARNING, "Search was cancelled while retrieving data for results page with starting entry: " + startingEntry, ex);

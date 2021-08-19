@@ -21,17 +21,25 @@ package org.sleuthkit.autopsy.discovery.ui;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.discovery.search.SearchContext;
 
+/**
+ * Implementation of SearchContext for searches being performed in the
+ * background thread of a SwingWorker.
+ */
+class SwingWorkerSearchContext implements SearchContext {
 
-    class SwingWorkerSearchContext implements SearchContext {
+    private final SwingWorker<Void, Void> searchWorker;
 
-        private final SwingWorker<Void, Void> searchWorker;
-
-        SwingWorkerSearchContext(SwingWorker<Void, Void> worker) {
-            searchWorker = worker;
-        }
-
-        @Override
-        public boolean searchIsCancelled() {
-            return searchWorker.isCancelled();
-        }
+    /**
+     * Construct a new SwingWorkerSearchContext.
+     *
+     * @param worker The SwingWorker the search is being performed in.
+     */
+    SwingWorkerSearchContext(SwingWorker<Void, Void> worker) {
+        searchWorker = worker;
     }
+
+    @Override
+    public boolean searchIsCancelled() {
+        return searchWorker.isCancelled();
+    }
+}

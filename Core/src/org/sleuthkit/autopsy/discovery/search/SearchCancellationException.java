@@ -20,10 +20,19 @@ package org.sleuthkit.autopsy.discovery.search;
 
 import java.util.concurrent.CancellationException;
 
+/**
+ * Exception to be thrown when the search has been intentionally cancelled to
+ * provide information on where the code was when the cancellation took place.
+ */
 public class SearchCancellationException extends CancellationException {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Construct a new SearchCancellationException with the specified message.
+     *
+     * @param message The text to use as the message for the exception.
+     */
     SearchCancellationException(String message) {
         super(message);
     }

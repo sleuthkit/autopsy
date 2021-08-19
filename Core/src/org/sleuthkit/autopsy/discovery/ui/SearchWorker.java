@@ -100,7 +100,6 @@ final class SearchWorker extends SwingWorker<Void, Void> {
             //so would not be a problem but we might be curious what was being done when it was cancelled
             logger.log(Level.INFO, "Discovery search was cancelled.", ex);
         }
-
         return null;
     }
 

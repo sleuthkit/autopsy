@@ -152,8 +152,15 @@ public class DiscoveryKeyUtils {
          *
          * @return The SearchContext the search key is being used in.
          *
+         * @throws DiscoveryException Thrown when the key being used has a null
+         *                            context indicating it was not created with
+         *                            knowledge of the case or central
+         *                            repository databases.
          */
-        SearchContext getContext() {
+        SearchContext getContext() throws DiscoveryException {
+            if (context == null) {
+                throw new DiscoveryException("The key in use was created without a context and does not support retrieving information from the databases.");
+            }
             return context;
         }
 

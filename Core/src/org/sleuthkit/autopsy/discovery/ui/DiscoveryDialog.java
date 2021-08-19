@@ -89,7 +89,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         if (discDialog == null) {
             discDialog = new DiscoveryDialog();
         }
-
         if (shouldUpdate) {
             discDialog.updateSearchSettings();
             shouldUpdate = false;
@@ -618,7 +617,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         }
         searchWorker = new SearchWorker(centralRepoDb, type, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
-
         tc.toFront();
         tc.requestActive();
     }//GEN-LAST:event_searchButtonActionPerformed
@@ -752,7 +750,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                                     || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), eventData, interestingItems);
                             }
-
                         }
                     } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
@@ -794,5 +791,4 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             return false;
         }
     }
-    
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,6 @@ public class DomainSearchCacheLoaderTest {
         SleuthkitCase caseDb = mock(SleuthkitCase.class);
         when(caseDb.getBlackboardArtifacts(TSK_WEB_CATEGORIZATION)).thenReturn(new ArrayList<>());
 
-        //null checks are being performed on the context allowing the context argument to be null during the test.
         SearchKey key = new SearchKey(null, new ArrayList<>(),
                 new DiscoveryAttributes.DataSourceAttribute(),
                 Group.GroupSortingAlgorithm.BY_GROUP_NAME,

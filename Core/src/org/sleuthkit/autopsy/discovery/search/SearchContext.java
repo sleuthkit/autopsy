@@ -18,7 +18,16 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
+/**
+ * Interface for providing feedback on if a search has been cancelled.
+ *
+ */
 public interface SearchContext {
-    
+
+    /**
+     * Returns true if the search has been cancelled, false otherwise.
+     *
+     * @return True if the search has been cancelled, false otherwise.
+     */
     boolean searchIsCancelled();
 }

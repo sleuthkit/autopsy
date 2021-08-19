@@ -78,10 +78,13 @@ public class DomainSearch {
      * @param caseDb              The case database.
      * @param centralRepoDb       The central repository database. Can be null
      *                            if not needed.
+     * @param context             The SearchContext the search is being performed from.
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters.
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     public Map<GroupKey, Integer> getGroupSizes(String userName,
             List<AbstractFilter> filters,

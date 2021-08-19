@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,8 +60,14 @@ public class SearchFiltering {
      * @param caseDb        The case database.
      * @param centralRepoDb The central repo. Can be null as long as no filters
      *                      need it.
+     * @param context       The SearchContext the search is being performed
+     *                      from.
      *
      * @return List of Results from the search performed.
+     *
+     * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     static List<Result> runQueries(List<AbstractFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
         if (caseDb == null) {
@@ -100,11 +106,15 @@ public class SearchFiltering {
      * @param caseDb        The case database.
      * @param centralRepoDb The central repo. Can be null as long as no filters
      *                      need it.
+     * @param context       The SearchContext the search is being performed
+     *                      from.
      *
      * @return An ArrayList of Results returned by the query.
      *
      * @throws TskCoreException
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     private static List<Result> getResultList(List<AbstractFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws TskCoreException, DiscoveryException, SearchCancellationException {
         // Get all matching abstract files

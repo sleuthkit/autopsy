@@ -184,7 +184,8 @@ public class DiscoveryAttributes {
          * @param context The SearchContext the search which is applying this
          *                filter is being performed from.
          *
-         * @return
+         * @return domainToCategory - A map of the domain names to the category
+         *         name attribute they are classified as.
          *
          * @throws TskCoreException
          * @throws InterruptedException
@@ -301,8 +302,6 @@ public class DiscoveryAttributes {
      * Example: query for notable status of google.com. Result: notable With
      * this map, all domain instances that represent google.com can be updated
      * after one simple lookup.
-     */
-    /**
      *
      * @param domainsBatch  The list of ResultDomains to organize.
      * @param attributeType The type of correlation attribute being organized.
@@ -370,7 +369,6 @@ public class DiscoveryAttributes {
         }
 
         /**
-         *
          * Helper method to batch the domain results and check for notability.
          *
          * @param results     The results which are being checked for previously

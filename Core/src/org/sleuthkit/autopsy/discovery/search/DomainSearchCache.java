@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,10 +55,14 @@ class DomainSearchCache {
      * @param caseDb             The case database.
      * @param centralRepoDb      The central repository database. Can be null if
      *                           not needed.
+     * @param context            The SearchContext the search is being performed
+     *                           from.
      *
      * @return Domain search results matching the given parameters.
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     Map<GroupKey, List<Result>> get(String userName,
             List<AbstractFilter> filters,

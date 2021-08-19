@@ -61,6 +61,8 @@ public abstract class AbstractFilter {
      *         before it)
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException Thrown when the user has cancelled
+     *                                     the search.
      */
     public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
             CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {

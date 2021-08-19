@@ -62,10 +62,14 @@ public class FileSearch {
      * @param caseDb             The case database
      * @param centralRepoDb      The central repository database. Can be null if
      *                           not needed.
+     * @param context            The SearchContext the search is being performed
+     *                           from.
      *
      * @return The raw search results
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     static SearchResults runFileSearchDebug(String userName,
             List<AbstractFilter> filters,
@@ -114,10 +118,14 @@ public class FileSearch {
      * @param caseDb             The case database
      * @param centralRepoDb      The central repository database. Can be null if
      *                           not needed.
+     * @param context            The SearchContext the search is being performed
+     *                           from.
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     public static Map<GroupKey, Integer> getGroupSizes(String userName,
             List<AbstractFilter> filters,
@@ -154,10 +162,14 @@ public class FileSearch {
      * @param caseDb             The case database
      * @param centralRepoDb      The central repository database. Can be null if
      *                           not needed.
+     * @param context            The SearchContext the search is being performed
+     *                           from.
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     public static List<Result> getFilesInGroup(String userName,
             List<AbstractFilter> filters,
@@ -249,10 +261,14 @@ public class FileSearch {
      * @param caseDb             The case database
      * @param centralRepoDb      The central repository database. Can be null if
      *                           not needed.
+     * @param context            The SearchContext the search is being performed
+     *                           from.
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     public static Map<GroupKey, List<Result>> runFileSearch(String userName,
             List<AbstractFilter> filters,
@@ -297,8 +313,12 @@ public class FileSearch {
      * @param caseDb        The case database
      * @param centralRepoDb The central repository database. Can be null if not
      *                      needed.
+     * @param context       The SearchContext the search is being performed
+     *                      from.
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     private static void addAttributes(List<AttributeType> attrs, List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context)
             throws DiscoveryException, SearchCancellationException {
