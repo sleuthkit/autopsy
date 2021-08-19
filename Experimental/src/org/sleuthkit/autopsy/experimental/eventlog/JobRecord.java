@@ -25,7 +25,7 @@ import java.util.Optional;
  * The record for the job.
  */
 public class JobRecord {
-    
+
     private final long id;
     private final long caseId;
     private final String caseName;
@@ -36,13 +36,14 @@ public class JobRecord {
 
     /**
      * Main constructor.
-     * @param id The id of the job.
-     * @param caseId The parent case id in the event log.
-     * @param caseName The name of the case.
+     *
+     * @param id             The id of the job.
+     * @param caseId         The parent case id in the event log.
+     * @param caseName       The name of the case.
      * @param dataSourceName The name of the data source.
-     * @param startTime The start time of processing.
-     * @param endTime The end time of processing.
-     * @param status The current status.
+     * @param startTime      The start time of processing.
+     * @param endTime        The end time of processing.
+     * @param status         The current status.
      */
     JobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Date> startTime, Optional<Date> endTime, JobStatus status) {
         this.id = id;
@@ -105,12 +106,12 @@ public class JobRecord {
 
     @Override
     public String toString() {
-        return "JobRecord{" + "id=" + id 
-                + ", caseId=" + caseId 
-                + ", caseName=" + caseName 
-                + ", dataSourceName=" + dataSourceName 
-                + ", startTime=" + startTime + ", endTime=" 
-                + endTime + ", status=" 
+        return "JobRecord{" + "id=" + id
+                + ", caseId=" + caseId
+                + ", caseName=" + caseName
+                + ", dataSourceName=" + dataSourceName
+                + ", startTime=" + startTime + ", endTime="
+                + endTime + ", status="
                 + status + '}';
     }
 }

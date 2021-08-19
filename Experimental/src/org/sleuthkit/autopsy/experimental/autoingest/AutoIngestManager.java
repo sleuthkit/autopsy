@@ -2246,7 +2246,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             EventLogManager manager = AutoIngestManager.this.eventLogManager;
 
             Date dateToUse = date == null ? new Date() : date;
-            String caseName = job.getCaseDirectoryPath().toString();
+            String caseName = job.getManifest().getCaseName();
             String dataSourceName = job.getManifest().getDataSourceFileName();
 
             try {
