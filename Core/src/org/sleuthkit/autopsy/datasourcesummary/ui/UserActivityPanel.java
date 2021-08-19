@@ -28,6 +28,7 @@ import java.util.Locale;
 import java.util.function.Function;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.LastAccessedArtifact;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopAccountResult;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.UserActivitySummary.TopDeviceAttachedResult;
@@ -342,8 +343,8 @@ public class UserActivityPanel extends BaseDataSourceSummaryPanel {
      *
      * @return The underlying short folder name if one exists.
      */
-    private String getShortFolderName(String path, String appName) {
-        return this.userActivityData.getShortFolderName(path, appName);
+    private static String getShortFolderName(String path, String appName) {
+        return UserActivitySummary.getShortFolderName(path, appName);
     }
 
     @Override

@@ -143,8 +143,6 @@ public class TypesSummary {
         return DataSourceInfoUtilities.getCountOfRegularFiles(provider.get(), currentDataSource,
                 "type=" + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType());
     }
-    
-    // ELTODO everything below is not in develop
 
     /**
      * Information concerning a particular file type category.

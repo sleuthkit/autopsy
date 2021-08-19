@@ -433,8 +433,6 @@ public final class DataSourceInfoUtilities {
         Long longVal = getLongOrNull(artifact, attributeType);
         return (longVal == null || longVal == 0) ? null : new Date(longVal * 1000);
     }
-    
-    // ELTODO everything below is not in develop
 
     /**
      * Returns the long value or zero if longVal is null.

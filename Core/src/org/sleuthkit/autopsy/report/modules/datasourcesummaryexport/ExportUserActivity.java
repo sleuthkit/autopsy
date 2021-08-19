@@ -91,7 +91,7 @@ class ExportUserActivity {
                     Bundle.ExportUserActivity_TopProgramsTableModel_folder_header(),
                     (prog) -> {
                         return new DefaultCellModel<>(
-                                getShortFolderName(
+                                UserActivitySummary.getShortFolderName(
                                         prog.getProgramPath(),
                                         prog.getProgramName()));
                     },
@@ -217,18 +217,6 @@ class ExportUserActivity {
             Function<Date, String> dateParser = (dt) -> dt == null ? "" : DATETIME_FORMAT.format(dt);
             return new DefaultCellModel<>(lastAccessed.getLastAccessed(), dateParser, DATETIME_FORMAT_STR);
         };
-    }
-
-    /**
-     * Queries DataSourceTopProgramsSummary instance for short folder name.
-     *
-     * @param path The path for the application.
-     * @param appName The application name.
-     *
-     * @return The underlying short folder name if one exists.
-     */
-    private static String getShortFolderName(String path, String appName) {
-        return UserActivitySummary.getShortFolderName(path, appName);
     }
 
     List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {

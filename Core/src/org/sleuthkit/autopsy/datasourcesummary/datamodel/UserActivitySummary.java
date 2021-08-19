@@ -186,7 +186,6 @@ public class UserActivitySummary {
         }
     }
     
-    // ELTODO this method is not in develop
     /**
      * Determines a short folder name if any. Otherwise, returns empty string.
      *

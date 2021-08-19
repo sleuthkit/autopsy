@@ -173,22 +173,6 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
     }
 
     /**
-     * Determines a short folder name if any. Otherwise, returns empty string.
-     *
-     * @param strPath         The string path.
-     * @param applicationName The application name.
-     *
-     * @return The short folder name or empty string if not found.
-     */
-    public String getShortFolderName(String strPath, String applicationName) {
-        if (strPath == null) {
-            return "";
-        }
-
-        return UserActivitySummary.getShortFolderName(strPath, applicationName);
-    }
-
-    /**
      * Retrieves the top programs results for the given data source limited to
      * the count provided as a parameter. The highest run times are at the top
      * of the list. If that information isn't available the last run date is

@@ -212,8 +212,6 @@ public class ContainerSummary {
         String separator = ", ";
         return getConcattedStringsResult(query, valueParam, separator);
     }
-
-	// ELTODO everything below is NOT in develop!
 	
     /**
      * Data model data for data source images.
