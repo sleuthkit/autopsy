@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,11 +46,11 @@ public class DomainSearchTest {
                 );
             }
         };
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null, 
-                new ArrayList<>(), null, null, null, null, null);
+        Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null,
+                new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false));
         assertEquals(4, sizes.get(groupOne).longValue());
     }
 
@@ -81,11 +81,11 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null, 
-                new ArrayList<>(), null, null, null, null, null);
+        Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null,
+                new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false));
         assertEquals(4, sizes.get(groupOne).longValue());
         assertEquals(3, sizes.get(groupTwo).longValue());
         assertEquals(1, sizes.get(groupThree).longValue());
@@ -95,11 +95,11 @@ public class DomainSearchTest {
     public void groupSizes_EmptyGroup_ShouldBeSizeZero() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(new HashMap<>());
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(new HashMap<>());
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null, 
-                new ArrayList<>(), null, null, null, null, null);
+        Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null,
+                new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false));
         assertEquals(0, sizes.size());
     }
 
@@ -120,17 +120,17 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
-                new ArrayList<>(), null, null, null, groupOne, 0, 3, null, null);
+        List<Result> firstPage = domainSearch.getDomainsInGroup(null,
+                new ArrayList<>(), null, null, null, groupOne, 0, 3, null, null, new TestSearchContextImpl(false));
         assertEquals(3, firstPage.size());
         for (int i = 0; i < firstPage.size(); i++) {
             assertEquals(domains.get(i), firstPage.get(i));
         }
     }
-    
+
     @Test
     public void getDomains_SingleGroupOverSizedPage_ShouldContainAllDomains() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
@@ -148,17 +148,17 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
-                new ArrayList<>(), null, null, null, groupOne, 0, 100, null, null);
+        List<Result> firstPage = domainSearch.getDomainsInGroup(null,
+                new ArrayList<>(), null, null, null, groupOne, 0, 100, null, null, new TestSearchContextImpl(false));
         assertEquals(4, firstPage.size());
         for (int i = 0; i < firstPage.size(); i++) {
             assertEquals(domains.get(i), firstPage.get(i));
         }
     }
-    
+
     @Test
     public void getDomains_SingleGroupHalfPage_ShouldContainHalfDomains() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
@@ -176,18 +176,18 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
-                new ArrayList<>(), null, null, null, groupOne, 0, 2, null, null);
+        List<Result> firstPage = domainSearch.getDomainsInGroup(null,
+                new ArrayList<>(), null, null, null, groupOne, 0, 2, null, null, new TestSearchContextImpl(false));
         assertEquals(2, firstPage.size());
         for (int i = 0; i < firstPage.size(); i++) {
             assertEquals(domains.get(i), firstPage.get(i));
         }
     }
-    
-        @Test
+
+    @Test
     public void getDomains_SingleGroupLastPageLastDomain_ShouldContainLastDomain() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
 
@@ -204,15 +204,15 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
-                new ArrayList<>(), null, null, null, groupOne, 3, 1, null, null);
+        List<Result> firstPage = domainSearch.getDomainsInGroup(null,
+                new ArrayList<>(), null, null, null, groupOne, 3, 1, null, null, new TestSearchContextImpl(false));
         assertEquals(1, firstPage.size());
         assertEquals(domains.get(domains.size() - 1), firstPage.get(0));
     }
-    
+
     @Test
     public void getDomains_SingleGroupOversizedOffset_ShouldContainNoDomains() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
@@ -230,14 +230,14 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
-                new ArrayList<>(), null, null, null, groupOne, 20, 5, null, null);
+        List<Result> firstPage = domainSearch.getDomainsInGroup(null,
+                new ArrayList<>(), null, null, null, groupOne, 20, 5, null, null, new TestSearchContextImpl(false));
         assertEquals(0, firstPage.size());
     }
-    
+
     @Test
     public void getDomains_SingleGroupZeroSizedPage_ShouldContainNoDomains() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
@@ -255,14 +255,14 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
-                new ArrayList<>(), null, null, null, groupOne, 0, 0, null, null);
+        List<Result> firstPage = domainSearch.getDomainsInGroup(null,
+                new ArrayList<>(), null, null, null, groupOne, 0, 0, null, null, new TestSearchContextImpl(false));
         assertEquals(0, firstPage.size());
     }
-    
+
     @Test
     public void getDomains_MultipleGroupsFullPage_ShouldContainAllDomainsInGroup() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
@@ -290,14 +290,14 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
-                new ArrayList<>(), null, null, null, groupOne, 0, 3, null, null);
+        List<Result> firstPage = domainSearch.getDomainsInGroup(null,
+                new ArrayList<>(), null, null, null, groupOne, 0, 3, null, null, new TestSearchContextImpl(false));
         assertEquals(3, firstPage.size());
     }
-    
+
     @Test
     public void getDomains_MultipleGroupsHalfPage_ShouldContainHalfDomainsInGroup() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
@@ -325,17 +325,17 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        List<Result> firstPage = domainSearch.getDomainsInGroup(null, 
-                new ArrayList<>(), null, null, null, groupTwo, 1, 2, null, null);
+        List<Result> firstPage = domainSearch.getDomainsInGroup(null,
+                new ArrayList<>(), null, null, null, groupTwo, 1, 2, null, null, new TestSearchContextImpl(false));
         assertEquals(2, firstPage.size());
         for (int i = 0; i < firstPage.size(); i++) {
             assertEquals(dummyData.get(groupTwo).get(i + 1), firstPage.get(i));
         }
     }
-    
+
     @Test
     public void getDomains_SingleGroupSimulatedPaging_ShouldPageThroughAllDomains() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
@@ -357,20 +357,20 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null)).thenReturn(dummyData);
+        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
-        
+
         int start = 0;
         int size = 2;
         while (start + size <= domains.size()) {
-            List<Result> page = domainSearch.getDomainsInGroup(null, 
-                new ArrayList<>(), null, null, null, groupOne, start, size, null, null);
+            List<Result> page = domainSearch.getDomainsInGroup(null,
+                    new ArrayList<>(), null, null, null, groupOne, start, size, null, null, new TestSearchContextImpl(false));
             assertEquals(2, page.size());
-            for(int i = 0; i < page.size(); i++) {
+            for (int i = 0; i < page.size(); i++) {
                 assertEquals(domains.get(start + i), page.get(i));
             }
-            
+
             start += size;
         }
     }
@@ -379,7 +379,7 @@ public class DomainSearchTest {
 
         private final String name;
 
-        public DummyKey(String name) {
+        DummyKey(String name) {
             this.name = name;
         }
 

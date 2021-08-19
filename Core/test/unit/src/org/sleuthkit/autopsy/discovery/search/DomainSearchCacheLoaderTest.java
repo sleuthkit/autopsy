@@ -48,11 +48,12 @@ public class DomainSearchCacheLoaderTest {
         SleuthkitCase caseDb = mock(SleuthkitCase.class);
         when(caseDb.getBlackboardArtifacts(TSK_WEB_CATEGORIZATION)).thenReturn(new ArrayList<>());
 
+        //null checks are being performed on the context allowing the context argument to be null during the test.
         SearchKey key = new SearchKey(null, new ArrayList<>(),
                 new DiscoveryAttributes.DataSourceAttribute(),
                 Group.GroupSortingAlgorithm.BY_GROUP_NAME,
                 ResultsSorter.SortingMethod.BY_DOMAIN_NAME,
-                caseDb, null);
+                caseDb, null, new TestSearchContextImpl(false));
 
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         when(loader.getResultDomainsFromDatabase(key)).thenReturn(domains);
@@ -88,7 +89,7 @@ public class DomainSearchCacheLoaderTest {
                 new DiscoveryAttributes.NoGroupingAttribute(),
                 Group.GroupSortingAlgorithm.BY_GROUP_NAME,
                 ResultsSorter.SortingMethod.BY_DOMAIN_NAME,
-                caseDb, null);
+                caseDb, null, new TestSearchContextImpl(false));
 
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         when(loader.getResultDomainsFromDatabase(key)).thenReturn(domains);
@@ -121,7 +122,7 @@ public class DomainSearchCacheLoaderTest {
                 new DiscoveryAttributes.NoGroupingAttribute(),
                 Group.GroupSortingAlgorithm.BY_GROUP_NAME,
                 ResultsSorter.SortingMethod.BY_DATA_SOURCE,
-                caseDb, null);
+                caseDb, null, new TestSearchContextImpl(false));
 
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         when(loader.getResultDomainsFromDatabase(key)).thenReturn(domains);
@@ -155,7 +156,7 @@ public class DomainSearchCacheLoaderTest {
                 new DiscoveryAttributes.DataSourceAttribute(),
                 Group.GroupSortingAlgorithm.BY_GROUP_SIZE,
                 ResultsSorter.SortingMethod.BY_DOMAIN_NAME,
-                caseDb, null);
+                caseDb, null, new TestSearchContextImpl(false));
 
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         when(loader.getResultDomainsFromDatabase(key)).thenReturn(domains);
@@ -173,4 +174,5 @@ public class DomainSearchCacheLoaderTest {
             }
         }
     }
+
 }
