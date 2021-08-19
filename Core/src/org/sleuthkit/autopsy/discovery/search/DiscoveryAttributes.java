@@ -78,8 +78,12 @@ public class DiscoveryAttributes {
          * @param caseDb        The case database.
          * @param centralRepoDb The central repository database. Can be null if
          *                      not needed.
+         * @param context       The SearchContext the search which is applying
+         *                      this filter is being performed from.
          *
          * @throws DiscoveryException
+         * @throws SearchCancellationException - Thrown when the user has
+         *                                     cancelled the search.
          */
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
             // Default is to do nothing
@@ -175,6 +179,17 @@ public class DiscoveryAttributes {
          * Loads all TSK_WEB_CATEGORY artifacts and maps the domain attribute to
          * the category name attribute. Each ResultDomain is then parsed and
          * matched against this map of values.
+         *
+         * @param caseDb  The case database.
+         * @param context The SearchContext the search which is applying this
+         *                filter is being performed from.
+         *
+         * @return
+         *
+         * @throws TskCoreException
+         * @throws InterruptedException
+         * @throws SearchCancellationException - Thrown when the user has
+         *                                     cancelled the search.
          */
         private Map<String, Set<String>> getDomainsWithWebCategories(SleuthkitCase caseDb, SearchContext context) throws TskCoreException, InterruptedException, SearchCancellationException {
             Map<String, Set<String>> domainToCategory = new HashMap<>();
@@ -287,6 +302,20 @@ public class DiscoveryAttributes {
      * this map, all domain instances that represent google.com can be updated
      * after one simple lookup.
      */
+    /**
+     *
+     * @param domainsBatch  The list of ResultDomains to organize.
+     * @param attributeType The type of correlation attribute being organized.
+     * @param context       The SearchContext the search which is applying this
+     *                      filter is being performed from.
+     *
+     * @return resultDomainTable - A map of the normalized domain name to the
+     *         list of ResultDomain objects which are part of that normalized
+     *         domain.
+     *
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
+     */
     private static Map<String, List<ResultDomain>> organizeByValue(List<ResultDomain> domainsBatch, CorrelationAttributeInstance.Type attributeType, SearchContext context) throws SearchCancellationException {
         final Map<String, List<ResultDomain>> resultDomainTable = new HashMap<>();
         for (ResultDomain domainInstance : domainsBatch) {
@@ -340,6 +369,21 @@ public class DiscoveryAttributes {
             }
         }
 
+        /**
+         *
+         * Helper method to batch the domain results and check for notability.
+         *
+         * @param results     The results which are being checked for previously
+         *                    being notable in the CR.
+         * @param centralRepo The central repository being used to check for
+         *                    notability.
+         * @param context     The SearchContext the search which is applying
+         *                    this filter is being performed from.
+         *
+         * @throws DiscoveryException
+         * @throws SearchCancellationException - Thrown when the user has
+         *                                     cancelled the search.
+         */
         private void processFilesWithCr(List<Result> results, CentralRepository centralRepo, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             List<ResultDomain> domainsBatch = new ArrayList<>();
@@ -359,6 +403,21 @@ public class DiscoveryAttributes {
             queryPreviouslyNotable(domainsBatch, centralRepo, context);
         }
 
+        /**
+         * Helper method to check a batch of domains for notability.
+         *
+         *
+         * @param domainsBatch The list of ResultDomains to check for
+         *                     notability.
+         * @param centralRepo  The central repository being used to check for
+         *                     notability.
+         * @param context      The SearchContext the search which is applying
+         *                     this filter is being performed from.
+         *
+         * @throws DiscoveryException
+         * @throws SearchCancellationException - Thrown when the user has
+         *                                     cancelled the search.
+         */
         private void queryPreviouslyNotable(List<ResultDomain> domainsBatch, CentralRepository centralRepo, SearchContext context) throws DiscoveryException, SearchCancellationException {
             if (domainsBatch.isEmpty()) {
                 return;
@@ -368,7 +427,9 @@ public class DiscoveryAttributes {
                 final CorrelationAttributeInstance.Type attributeType = centralRepo.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
                 final Map<String, List<ResultDomain>> resultDomainTable = organizeByValue(domainsBatch, attributeType, context);
                 final String values = createCSV(resultDomainTable.keySet());
-
+                if (context.searchIsCancelled()) {
+                    throw new SearchCancellationException("Search was cancelled while checking for previously notable domains.");
+                }
                 final String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
                 final String domainFrequencyQuery = " value AS domain_name "
                         + "FROM " + tableName + " "
@@ -451,9 +512,16 @@ public class DiscoveryAttributes {
          * Private helper method for adding Frequency attribute when CR is
          * enabled.
          *
-         * @param files         The list of ResultFiles to caluclate frequency
-         *                      for.
-         * @param centralRepoDb The central repository currently in use.
+         * @param results       The results which are having their frequency
+         *                      checked.
+         * @param centralRepoDb The central repository being used to check
+         *                      frequency.
+         * @param context       The SearchContext the search which is applying
+         *                      this filter is being performed from.
+         *
+         * @throws DiscoveryException
+         * @throws SearchCancellationException - Thrown when the user has
+         *                                     cancelled the search.
          */
         private void processResultFilesForCR(List<Result> results,
                 CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
@@ -479,7 +547,7 @@ public class DiscoveryAttributes {
                         }
 
                         if (hashesToLookUp.size() >= BATCH_SIZE) {
-                            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+                            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb, context);
 
                             hashesToLookUp.clear();
                             currentFiles.clear();
@@ -495,7 +563,7 @@ public class DiscoveryAttributes {
             }
 
             queryDomainFrequency(domainsToQuery, centralRepoDb, context);
-            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
+            computeFrequency(hashesToLookUp, currentFiles, centralRepoDb, context);
         }
     }
 
@@ -503,9 +571,14 @@ public class DiscoveryAttributes {
      * Query to get the frequency of a domain.
      *
      * @param domainsToQuery    List of domains to check the frequency of.
-     * @param centralRepository The central repository to query.
+     * @param centralRepository The central repository being used to check
+     *                          frequency.
+     * @param context           The SearchContext the search which is applying
+     *                          this filter is being performed from.
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     private static void queryDomainFrequency(List<ResultDomain> domainsToQuery, CentralRepository centralRepository, SearchContext context) throws DiscoveryException, SearchCancellationException {
         if (domainsToQuery.isEmpty()) {
@@ -524,8 +597,11 @@ public class DiscoveryAttributes {
                     + ")) AS foo GROUP BY value";
 
             final DomainFrequencyCallback frequencyCallback = new DomainFrequencyCallback(resultDomainTable);
-            centralRepository.processSelectClause(domainFrequencyQuery, frequencyCallback);
 
+            centralRepository.processSelectClause(domainFrequencyQuery, frequencyCallback);
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled while Domain frequency was being queried with the CR.");
+            }
             if (frequencyCallback.getCause() != null) {
                 throw frequencyCallback.getCause();
             }
@@ -1023,14 +1099,20 @@ public class DiscoveryAttributes {
     }
 
     /**
+     *
      * Computes the CR frequency of all the given hashes and updates the list of
      * files.
      *
      * @param hashesToLookUp Hashes to find the frequency of.
      * @param currentFiles   List of files to update with frequencies.
      * @param centralRepoDb  The central repository being used.
+     * @param context        The SearchContext the search which is applying this
+     *                       filter is being performed from.
+     *
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
-    private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, CentralRepository centralRepoDb) {
+    private static void computeFrequency(Set<String> hashesToLookUp, List<ResultFile> currentFiles, CentralRepository centralRepoDb, SearchContext context) throws SearchCancellationException {
 
         if (hashesToLookUp.isEmpty()) {
             return;
@@ -1050,7 +1132,9 @@ public class DiscoveryAttributes {
 
             FrequencyCallback callback = new FrequencyCallback(currentFiles);
             centralRepoDb.processSelectClause(selectClause, callback);
-
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled while Domain frequency was being queried with the CR.");
+            }
         } catch (CentralRepoException ex) {
             logger.log(Level.WARNING, "Error getting frequency counts from Central Repository", ex); // NON-NLS
         }

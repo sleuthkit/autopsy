@@ -113,6 +113,7 @@ public class DiscoveryKeyUtils {
                 ResultsSorter.SortingMethod sortingMethod) {
             this(userName, filters, groupAttributeType, groupSortingType,
                     sortingMethod, null, null, null);
+            //this constructor should only be used putting things directly into a map or getting if present since casedb, cr, and search context will be null
         }
 
         @Override
@@ -146,6 +147,12 @@ public class DiscoveryKeyUtils {
             return hash;
         }
 
+        /**
+         * Get the SearchContext for the search this key is being used in.
+         *
+         * @return The SearchContext the search key is being used in.
+         *
+         */
         SearchContext getContext() {
             return context;
         }

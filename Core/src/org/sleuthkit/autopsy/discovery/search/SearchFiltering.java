@@ -83,9 +83,7 @@ public class SearchFiltering {
             throw new DiscoveryException("Selected filters do not include a case database query");
         }
         if (context.searchIsCancelled()) {
-            if (context.searchIsCancelled()) {
-                throw new SearchCancellationException("The search was cancelled before result list could be retrieved.");
-            }
+            throw new SearchCancellationException("The search was cancelled before result list could be retrieved.");
         }
         try {
             return getResultList(filters, combinedQuery, caseDb, centralRepoDb, context);

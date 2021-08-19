@@ -134,7 +134,7 @@ public class DomainSearch {
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
             GroupKey groupKey, int startingEntry, int numberOfEntries,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException  {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
         final Map<GroupKey, List<Result>> searchResults = searchCache.get(
                 userName, filters, groupAttributeType, groupSortingType,
