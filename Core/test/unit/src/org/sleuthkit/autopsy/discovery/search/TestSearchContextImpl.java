@@ -26,7 +26,7 @@ public class TestSearchContextImpl implements SearchContext {
 
     private final boolean isCancelled;
 
-    TestSearchContextImpl(boolean hasBeenCancelled) {
+    public TestSearchContextImpl(boolean hasBeenCancelled) {
         isCancelled = hasBeenCancelled;
     }
 

@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.Test;
-
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
@@ -46,7 +45,7 @@ public class DomainSearchTest {
                 );
             }
         };
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null,
@@ -81,7 +80,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null,
@@ -95,7 +94,7 @@ public class DomainSearchTest {
     public void groupSizes_EmptyGroup_ShouldBeSizeZero() throws DiscoveryException {
         DomainSearchCache cache = mock(DomainSearchCache.class);
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(new HashMap<>());
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(new HashMap<>());
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         Map<GroupKey, Integer> sizes = domainSearch.getGroupSizes(null,
@@ -120,7 +119,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null,
@@ -148,7 +147,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null,
@@ -176,7 +175,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null,
@@ -204,7 +203,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null,
@@ -230,7 +229,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null,
@@ -255,7 +254,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null,
@@ -290,7 +289,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null,
@@ -325,7 +324,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
         List<Result> firstPage = domainSearch.getDomainsInGroup(null,
@@ -357,7 +356,7 @@ public class DomainSearchTest {
             }
         };
 
-        when(cache.get(null, new ArrayList<>(), null, null, null, null, null, new TestSearchContextImpl(false))).thenReturn(dummyData);
+        when(cache.get(isNull(), eq(new ArrayList<>()), isNull(), isNull(), isNull(), isNull(), isNull(), any(SearchContext.class))).thenReturn(dummyData);
 
         DomainSearch domainSearch = new DomainSearch(cache, null, null);
 
