@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,7 +81,7 @@ public class DiscoveryAttributes {
          *
          * @throws DiscoveryException
          */
-        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+        public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
             // Default is to do nothing
         }
     }
@@ -154,10 +154,13 @@ public class DiscoveryAttributes {
 
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
             try {
-                Map<String, Set<String>> domainsToCategories = getDomainsWithWebCategories(caseDb);
+                Map<String, Set<String>> domainsToCategories = getDomainsWithWebCategories(caseDb, context);
                 for (Result result : results) {
+                    if (context.searchIsCancelled()) {
+                        throw new SearchCancellationException("The search was cancelled while Domain Category Attribute was being added.");
+                    }
                     if (result instanceof ResultDomain) {
                         ResultDomain domain = (ResultDomain) result;
                         domain.addWebCategories(domainsToCategories.get(domain.getDomain()));
@@ -173,12 +176,15 @@ public class DiscoveryAttributes {
          * the category name attribute. Each ResultDomain is then parsed and
          * matched against this map of values.
          */
-        private Map<String, Set<String>> getDomainsWithWebCategories(SleuthkitCase caseDb) throws TskCoreException, InterruptedException {
+        private Map<String, Set<String>> getDomainsWithWebCategories(SleuthkitCase caseDb, SearchContext context) throws TskCoreException, InterruptedException, SearchCancellationException {
             Map<String, Set<String>> domainToCategory = new HashMap<>();
 
             for (BlackboardArtifact artifact : caseDb.getBlackboardArtifacts(TSK_WEB_CATEGORIZATION)) {
                 if (Thread.currentThread().isInterrupted()) {
                     throw new InterruptedException();
+                }
+                if (context.searchIsCancelled()) {
+                    throw new SearchCancellationException("Search was cancelled while getting domains for artifact type: " + artifact.getDisplayName());
                 }
                 BlackboardAttribute webCategory = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME));
                 BlackboardAttribute domain = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
@@ -206,14 +212,16 @@ public class DiscoveryAttributes {
 
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             // Get pairs of (object ID, keyword list name) for all files in the list of files that have
             // keyword list hits.
             String selectQuery = createSetNameClause(results, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
-
             SetKeywordListNamesCallback callback = new SetKeywordListNamesCallback(results);
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled while Keyword List Attribute was being added.");
+            }
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -279,7 +287,7 @@ public class DiscoveryAttributes {
      * this map, all domain instances that represent google.com can be updated
      * after one simple lookup.
      */
-    private static Map<String, List<ResultDomain>> organizeByValue(List<ResultDomain> domainsBatch, CorrelationAttributeInstance.Type attributeType) {
+    private static Map<String, List<ResultDomain>> organizeByValue(List<ResultDomain> domainsBatch, CorrelationAttributeInstance.Type attributeType, SearchContext context) throws SearchCancellationException {
         final Map<String, List<ResultDomain>> resultDomainTable = new HashMap<>();
         for (ResultDomain domainInstance : domainsBatch) {
             try {
@@ -288,6 +296,9 @@ public class DiscoveryAttributes {
                 final List<ResultDomain> bucket = resultDomainTable.getOrDefault(normalizedDomain, new ArrayList<>());
                 bucket.add(domainInstance);
                 resultDomainTable.put(normalizedDomain, bucket);
+                if (context.searchIsCancelled()) {
+                    throw new SearchCancellationException("Search was cancelled while orgainizing domains by their normalized value.");
+                }
             } catch (CorrelationAttributeNormalizationException ex) {
                 logger.log(Level.INFO, String.format("Domain [%s] failed normalization, skipping...", domainInstance.getDomain()));
             }
@@ -322,37 +333,40 @@ public class DiscoveryAttributes {
 
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             if (centralRepoDb != null) {
-                processFilesWithCr(results, centralRepoDb);
+                processFilesWithCr(results, centralRepoDb, context);
             }
         }
 
-        private void processFilesWithCr(List<Result> results, CentralRepository centralRepo) throws DiscoveryException {
+        private void processFilesWithCr(List<Result> results, CentralRepository centralRepo, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             List<ResultDomain> domainsBatch = new ArrayList<>();
             for (Result result : results) {
+                if (context.searchIsCancelled()) {
+                    throw new SearchCancellationException("The search was cancelled while Previously Notable attribute was being calculated with the CR.");
+                }
                 if (result.getType() == SearchData.Type.DOMAIN) {
                     domainsBatch.add((ResultDomain) result);
                     if (domainsBatch.size() == DOMAIN_BATCH_SIZE) {
-                        queryPreviouslyNotable(domainsBatch, centralRepo);
+                        queryPreviouslyNotable(domainsBatch, centralRepo, context);
                         domainsBatch.clear();
                     }
                 }
             }
 
-            queryPreviouslyNotable(domainsBatch, centralRepo);
+            queryPreviouslyNotable(domainsBatch, centralRepo, context);
         }
 
-        private void queryPreviouslyNotable(List<ResultDomain> domainsBatch, CentralRepository centralRepo) throws DiscoveryException {
+        private void queryPreviouslyNotable(List<ResultDomain> domainsBatch, CentralRepository centralRepo, SearchContext context) throws DiscoveryException, SearchCancellationException {
             if (domainsBatch.isEmpty()) {
                 return;
             }
 
             try {
                 final CorrelationAttributeInstance.Type attributeType = centralRepo.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
-                final Map<String, List<ResultDomain>> resultDomainTable = organizeByValue(domainsBatch, attributeType);
+                final Map<String, List<ResultDomain>> resultDomainTable = organizeByValue(domainsBatch, attributeType, context);
                 final String values = createCSV(resultDomainTable.keySet());
 
                 final String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
@@ -421,7 +435,7 @@ public class DiscoveryAttributes {
 
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
             if (centralRepoDb == null) {
                 for (Result result : results) {
                     if (result.getFrequency() == SearchData.Frequency.UNKNOWN && result.getKnown() == TskData.FileKnown.KNOWN) {
@@ -429,7 +443,7 @@ public class DiscoveryAttributes {
                     }
                 }
             } else {
-                processResultFilesForCR(results, centralRepoDb);
+                processResultFilesForCR(results, centralRepoDb, context);
             }
         }
 
@@ -442,11 +456,14 @@ public class DiscoveryAttributes {
          * @param centralRepoDb The central repository currently in use.
          */
         private void processResultFilesForCR(List<Result> results,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
             List<ResultFile> currentFiles = new ArrayList<>();
             Set<String> hashesToLookUp = new HashSet<>();
             List<ResultDomain> domainsToQuery = new ArrayList<>();
             for (Result result : results) {
+                if (context.searchIsCancelled()) {
+                    throw new SearchCancellationException("The search was cancelled while Frequency attribute was being calculated with the CR.");
+                }
                 // If frequency was already calculated, skip...
                 if (result.getFrequency() == SearchData.Frequency.UNKNOWN) {
                     if (result.getKnown() == TskData.FileKnown.KNOWN) {
@@ -470,15 +487,14 @@ public class DiscoveryAttributes {
                     } else {
                         domainsToQuery.add((ResultDomain) result);
                         if (domainsToQuery.size() == DOMAIN_BATCH_SIZE) {
-                            queryDomainFrequency(domainsToQuery, centralRepoDb);
-
+                            queryDomainFrequency(domainsToQuery, centralRepoDb, context);
                             domainsToQuery.clear();
                         }
                     }
                 }
             }
 
-            queryDomainFrequency(domainsToQuery, centralRepoDb);
+            queryDomainFrequency(domainsToQuery, centralRepoDb, context);
             computeFrequency(hashesToLookUp, currentFiles, centralRepoDb);
         }
     }
@@ -491,13 +507,13 @@ public class DiscoveryAttributes {
      *
      * @throws DiscoveryException
      */
-    private static void queryDomainFrequency(List<ResultDomain> domainsToQuery, CentralRepository centralRepository) throws DiscoveryException {
+    private static void queryDomainFrequency(List<ResultDomain> domainsToQuery, CentralRepository centralRepository, SearchContext context) throws DiscoveryException, SearchCancellationException {
         if (domainsToQuery.isEmpty()) {
             return;
         }
         try {
             final CorrelationAttributeInstance.Type attributeType = centralRepository.getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
-            final Map<String, List<ResultDomain>> resultDomainTable = organizeByValue(domainsToQuery, attributeType);
+            final Map<String, List<ResultDomain>> resultDomainTable = organizeByValue(domainsToQuery, attributeType, context);
             final String values = createCSV(resultDomainTable.keySet());
             final String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(attributeType);
             final String domainFrequencyQuery = " value AS domain_name, COUNT(value) AS frequency FROM"
@@ -620,7 +636,7 @@ public class DiscoveryAttributes {
 
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             // Get pairs of (object ID, hash set name) for all files in the list of files that have
             // hash set hits.
@@ -628,6 +644,9 @@ public class DiscoveryAttributes {
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
 
             HashSetNamesCallback callback = new HashSetNamesCallback(results);
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled while Hash Hit attribute was being added.");
+            }
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -695,7 +714,7 @@ public class DiscoveryAttributes {
 
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             // Get pairs of (object ID, interesting item set name) for all files in the list of files that have
             // interesting file set hits.
@@ -703,6 +722,9 @@ public class DiscoveryAttributes {
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
 
             InterestingFileSetNamesCallback callback = new InterestingFileSetNamesCallback(results);
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled while Interesting Item attribute was being added.");
+            }
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -808,7 +830,7 @@ public class DiscoveryAttributes {
 
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             // Get pairs of (object ID, object type name) for all files in the list of files that have
             // objects detected
@@ -816,6 +838,9 @@ public class DiscoveryAttributes {
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID());
 
             ObjectDetectedNamesCallback callback = new ObjectDetectedNamesCallback(results);
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled while Object Detected attribute was being added.");
+            }
             try {
                 caseDb.getCaseDbAccessManager().select(selectQuery, callback);
             } catch (TskCoreException ex) {
@@ -884,10 +909,13 @@ public class DiscoveryAttributes {
 
         @Override
         public void addAttributeToResults(List<Result> results, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             try {
                 for (Result result : results) {
+                    if (context.searchIsCancelled()) {
+                        throw new SearchCancellationException("The search was cancelled while File Tag attribute was being added.");
+                    }
                     if (result.getType() == SearchData.Type.DOMAIN) {
                         return;
                     }

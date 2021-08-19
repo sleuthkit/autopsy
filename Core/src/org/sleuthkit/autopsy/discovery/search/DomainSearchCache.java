@@ -65,10 +65,10 @@ class DomainSearchCache {
             DiscoveryAttributes.AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
         try {
             final SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType,
-                    groupSortingType, domainSortingMethod, caseDb, centralRepoDb);
+                    groupSortingType, domainSortingMethod, caseDb, centralRepoDb, context);
             return cache.get(searchKey);
         } catch (ExecutionException ex) {
             throw new DiscoveryException("Error fetching results from cache", ex.getCause());

@@ -794,4 +794,5 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             return false;
         }
     }
+    
 }

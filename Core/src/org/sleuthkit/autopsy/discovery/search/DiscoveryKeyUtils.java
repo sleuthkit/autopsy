@@ -59,6 +59,7 @@ public class DiscoveryKeyUtils {
         private final List<AbstractFilter> filters;
         private final SleuthkitCase sleuthkitCase;
         private final CentralRepository centralRepository;
+        private final SearchContext context;
 
         /**
          * Construct a new SearchKey with all information that defines a search.
@@ -70,16 +71,20 @@ public class DiscoveryKeyUtils {
          * @param sortingMethod      The method to sort the results by.
          * @param sleuthkitCase      The SleuthkitCase being searched.
          * @param centralRepository  The Central Repository being searched.
+         * @param context            The SearchContext which reflects the search
+         *                           being performed to get results for this
+         *                           key.
          */
         SearchKey(String userName, List<AbstractFilter> filters,
                 DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
                 ResultsSorter.SortingMethod sortingMethod,
-                SleuthkitCase sleuthkitCase, CentralRepository centralRepository) {
+                SleuthkitCase sleuthkitCase, CentralRepository centralRepository, SearchContext context) {
             this.groupAttributeType = groupAttributeType;
             this.groupSortingType = groupSortingType;
             this.sortingMethod = sortingMethod;
             this.filters = filters;
+            this.context = context;
 
             StringBuilder searchStringBuilder = new StringBuilder();
             searchStringBuilder.append(userName);
@@ -93,8 +98,8 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * Construct a SearchKey without a SleuthkitCase or CentralRepositry
-         * instance.
+         * Construct a SearchKey without a SearchContext, SleuthkitCase or
+         * CentralRepositry instance.
          *
          * @param userName           The name of the user performing the search.
          * @param filters            The Filters being used for the search.
@@ -107,7 +112,7 @@ public class DiscoveryKeyUtils {
                 Group.GroupSortingAlgorithm groupSortingType,
                 ResultsSorter.SortingMethod sortingMethod) {
             this(userName, filters, groupAttributeType, groupSortingType,
-                    sortingMethod, null, null);
+                    sortingMethod, null, null, null);
         }
 
         @Override
@@ -139,6 +144,10 @@ public class DiscoveryKeyUtils {
             int hash = 5;
             hash = 79 * hash + Objects.hashCode(getKeyString());
             return hash;
+        }
+
+        SearchContext getContext() {
+            return context;
         }
 
         /**

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.discovery.search;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
@@ -65,8 +66,8 @@ public class DomainSearch {
     }
 
     /**
-     * Run the domain search to get the search results caching new results for
-     * access at later time.
+     * Run the domain search to get the group keys and sizes. Clears cache of
+     * search results, caching new results for access at later time.
      *
      * @param userName            The name of the user performing the search.
      * @param filters             The filters to apply.
@@ -78,19 +79,31 @@ public class DomainSearch {
      * @param centralRepoDb       The central repository database. Can be null
      *                            if not needed.
      *
-     * @return Domain search results matching the given parameters.
+     * @return A LinkedHashMap grouped and sorted according to the parameters.
      *
      * @throws DiscoveryException
      */
-    public Map<GroupKey, List<Result>> getSearchResults(String userName,
+    public Map<GroupKey, Integer> getGroupSizes(String userName,
             List<AbstractFilter> filters,
             DiscoveryAttributes.AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
-        return searchCache.get(
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
+
+        final Map<GroupKey, List<Result>> searchResults = searchCache.get(
                 userName, filters, groupAttributeType, groupSortingType,
-                domainSortingMethod, caseDb, centralRepoDb);
+                domainSortingMethod, caseDb, centralRepoDb, context);
+
+        // Transform the cached results into a map of group key to group size.
+        final LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
+        for (GroupKey groupKey : searchResults.keySet()) {
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled before group sizes were finished being calculated");
+            }
+            groupSizes.put(groupKey, searchResults.get(groupKey).size());
+        }
+
+        return groupSizes;
     }
 
     /**
@@ -121,11 +134,11 @@ public class DomainSearch {
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
             GroupKey groupKey, int startingEntry, int numberOfEntries,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException  {
 
         final Map<GroupKey, List<Result>> searchResults = searchCache.get(
                 userName, filters, groupAttributeType, groupSortingType,
-                domainSortingMethod, caseDb, centralRepoDb);
+                domainSortingMethod, caseDb, centralRepoDb, context);
         final List<Result> domainsInGroup = searchResults.get(groupKey);
         final List<Result> page = new ArrayList<>();
         for (int i = startingEntry; (i < startingEntry + numberOfEntries)

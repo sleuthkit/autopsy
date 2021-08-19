@@ -72,7 +72,7 @@ public class FileSearch {
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
         // and sort them. For example, if we're grouping by central repo frequency, we need
@@ -82,10 +82,10 @@ public class FileSearch {
         attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());
 
         // Run the queries for each filter
-        List<Result> results = SearchFiltering.runQueries(filters, caseDb, centralRepoDb);
+        List<Result> results = SearchFiltering.runQueries(filters, caseDb, centralRepoDb, context);
 
         // Add the data to resultFiles for any attributes needed for sorting and grouping
-        addAttributes(attributesNeededForGroupingOrSorting, results, caseDb, centralRepoDb);
+        addAttributes(attributesNeededForGroupingOrSorting, results, caseDb, centralRepoDb, context);
 
         // Collect everything in the search results
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
@@ -124,11 +124,14 @@ public class FileSearch {
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
         Map<GroupKey, List<Result>> searchResults = runFileSearch(userName, filters,
-                groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
+                groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb, context);
         LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
         for (GroupKey groupKey : searchResults.keySet()) {
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled before group sizes were finished being calculated");
+            }
             groupSizes.put(groupKey, searchResults.get(groupKey).size());
         }
         return groupSizes;
@@ -164,7 +167,7 @@ public class FileSearch {
             GroupKey groupKey,
             int startingEntry,
             int numberOfEntries,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
         //the group should be in the cache at this point
         List<Result> filesInGroup = null;
         SearchKey searchKey = new SearchKey(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod);
@@ -178,7 +181,7 @@ public class FileSearch {
         List<Result> page = new ArrayList<>();
         if (filesInGroup == null) {
             logger.log(Level.INFO, "Group {0} was not cached, performing search to cache all groups again", groupKey);
-            runFileSearch(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb);
+            runFileSearch(userName, filters, groupAttributeType, groupSortingType, fileSortingMethod, caseDb, centralRepoDb, context);
             synchronized (searchCache) {
                 resultsMap = searchCache.getIfPresent(searchKey.getKeyString());
             }
@@ -218,7 +221,6 @@ public class FileSearch {
         TextSummarizer localSummarizer;
         synchronized (searchCache) {
             localSummarizer = SummaryHelpers.getLocalSummarizer();
-
         }
         if (localSummarizer != null) {
             try {
@@ -257,7 +259,7 @@ public class FileSearch {
             AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod fileSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
         // Make a list of attributes that we want to add values for. This ensures the
         // ResultFile objects will have all needed fields set when it's time to group
@@ -268,10 +270,10 @@ public class FileSearch {
         attributesNeededForGroupingOrSorting.addAll(fileSortingMethod.getRequiredAttributes());
 
         // Run the queries for each filter
-        List<Result> results = SearchFiltering.runQueries(filters, caseDb, centralRepoDb);
+        List<Result> results = SearchFiltering.runQueries(filters, caseDb, centralRepoDb, context);
 
         // Add the data to resultFiles for any attributes needed for sorting and grouping
-        addAttributes(attributesNeededForGroupingOrSorting, results, caseDb, centralRepoDb);
+        addAttributes(attributesNeededForGroupingOrSorting, results, caseDb, centralRepoDb, context);
 
         // Collect everything in the search results
         SearchResults searchResults = new SearchResults(groupSortingType, groupAttributeType, fileSortingMethod);
@@ -298,10 +300,10 @@ public class FileSearch {
      *
      * @throws DiscoveryException
      */
-    private static void addAttributes(List<AttributeType> attrs, List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb)
-            throws DiscoveryException {
+    private static void addAttributes(List<AttributeType> attrs, List<Result> results, SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context)
+            throws DiscoveryException, SearchCancellationException {
         for (AttributeType attr : attrs) {
-            attr.addAttributeToResults(results, caseDb, centralRepoDb);
+            attr.addAttributeToResults(results, caseDb, centralRepoDb, context);
         }
     }
 

@@ -63,7 +63,7 @@ public class SearchFiltering {
      *
      * @return List of Results from the search performed.
      */
-    static List<Result> runQueries(List<AbstractFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+    static List<Result> runQueries(List<AbstractFilter> filters, SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
         if (caseDb == null) {
             throw new DiscoveryException("Case DB parameter is null"); // NON-NLS
         }
@@ -82,8 +82,13 @@ public class SearchFiltering {
             // The file search filter is required, so this should never be empty.
             throw new DiscoveryException("Selected filters do not include a case database query");
         }
+        if (context.searchIsCancelled()) {
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled before result list could be retrieved.");
+            }
+        }
         try {
-            return getResultList(filters, combinedQuery, caseDb, centralRepoDb);
+            return getResultList(filters, combinedQuery, caseDb, centralRepoDb, context);
         } catch (TskCoreException ex) {
             throw new DiscoveryException("Error querying case database", ex); // NON-NLS
         }
@@ -103,11 +108,13 @@ public class SearchFiltering {
      * @throws TskCoreException
      * @throws DiscoveryException
      */
-    private static List<Result> getResultList(List<AbstractFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb) throws TskCoreException, DiscoveryException {
+    private static List<Result> getResultList(List<AbstractFilter> filters, String combinedQuery, SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws TskCoreException, DiscoveryException, SearchCancellationException {
         // Get all matching abstract files
         List<Result> resultList = new ArrayList<>();
         List<AbstractFile> sqlResults = caseDb.findAllFilesWhere(combinedQuery);
-
+        if (context.searchIsCancelled()) {
+            throw new SearchCancellationException("The search was cancelled while the case database query was being performed.");
+        }
         // If there are no results, return now
         if (sqlResults.isEmpty()) {
             return resultList;
@@ -120,8 +127,11 @@ public class SearchFiltering {
 
         // Now run any non-SQL filters. 
         for (AbstractFilter filter : filters) {
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled while alternate filters were being applied.");
+            }
             if (filter.useAlternateFilter()) {
-                resultList = filter.applyAlternateFilter(resultList, caseDb, centralRepoDb);
+                resultList = filter.applyAlternateFilter(resultList, caseDb, centralRepoDb, context);
             }
             // There are no matches for the filters run so far, so return
             if (resultList.isEmpty()) {
@@ -227,7 +237,7 @@ public class SearchFiltering {
         public Collection<ARTIFACT_TYPE> getTypes() {
             return Collections.unmodifiableCollection(types);
         }
-        
+
         private StringJoiner joinStandardArtifactTypes() {
             StringJoiner joiner = new StringJoiner(",");
             for (ARTIFACT_TYPE type : types) {
@@ -241,9 +251,10 @@ public class SearchFiltering {
             StringJoiner joiner = joinStandardArtifactTypes();
             return "artifact_type_id IN (" + joiner + ")";
         }
-        
+
         /**
-         * Used by backend domain search code to query for additional artifact types.
+         * Used by backend domain search code to query for additional artifact
+         * types.
          */
         String getWhereClause(List<ARTIFACT_TYPE> nonVisibleArtifactTypesToInclude) {
             StringJoiner joiner = joinStandardArtifactTypes();
@@ -674,14 +685,17 @@ public class SearchFiltering {
 
         @Override
         public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
             // Set the frequency for each file
             DiscoveryAttributes.FrequencyAttribute freqAttr = new DiscoveryAttributes.FrequencyAttribute();
-            freqAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb);
+            freqAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb, context);
 
             // If the frequency matches the filter, add the file to the results
             List<Result> frequencyResults = new ArrayList<>();
             for (Result file : currentResults) {
+                if (context.searchIsCancelled()) {
+                    throw new SearchCancellationException("The search was cancelled while Frequency alternate filter was being applied.");
+                }
                 if (frequencies.contains(file.getFrequency())) {
                     frequencyResults.add(file);
                 }
@@ -705,7 +719,7 @@ public class SearchFiltering {
             return Bundle.SearchFiltering_FrequencyFilter_desc(desc);
         }
     }
-    
+
     /**
      * A filter for domains with known account types.
      */
@@ -715,17 +729,20 @@ public class SearchFiltering {
         public String getWhereClause() {
             throw new UnsupportedOperationException("Not supported, this is an alternative filter.");
         }
-        
+
         @Override
         public boolean useAlternateFilter() {
             return true;
         }
-        
+
         @Override
         public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
             List<Result> filteredResults = new ArrayList<>();
             for (Result result : currentResults) {
+                if (context.searchIsCancelled()) {
+                    throw new SearchCancellationException("The search was cancelled while Known Account Type alternate filter was being applied.");
+                }
                 if (result instanceof ResultDomain) {
                     ResultDomain domain = (ResultDomain) result;
                     if (domain.hasKnownAccountType()) {
@@ -745,9 +762,9 @@ public class SearchFiltering {
         public String getDesc() {
             return Bundle.SearchFiltering_KnownAccountTypeFilter_desc();
         }
-        
+
     }
-    
+
     /**
      * A filter for previously notable content in the central repository.
      */
@@ -757,19 +774,22 @@ public class SearchFiltering {
         public String getWhereClause() {
             throw new UnsupportedOperationException("Not supported, this is an alternative filter.");
         }
-        
+
         @Override
         public boolean useAlternateFilter() {
             return true;
         }
-        
+
         @Override
         public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
             DiscoveryAttributes.PreviouslyNotableAttribute previouslyNotableAttr = new DiscoveryAttributes.PreviouslyNotableAttribute();
-            previouslyNotableAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb);
+            previouslyNotableAttr.addAttributeToResults(currentResults, caseDb, centralRepoDb, context);
             List<Result> filteredResults = new ArrayList<>();
             for (Result file : currentResults) {
+                if (context.searchIsCancelled()) {
+                    throw new SearchCancellationException("The search was cancelled while Previously Notable alternate filter was being applied.");
+                }
                 if (file.getPreviouslyNotableInCR() == SearchData.PreviouslyNotable.PREVIOUSLY_NOTABLE) {
                     filteredResults.add(file);
                 }
@@ -784,7 +804,7 @@ public class SearchFiltering {
         public String getDesc() {
             return Bundle.SearchFiltering_PreviouslyNotableFilter_desc();
         }
-        
+
     }
 
     /**
@@ -1068,7 +1088,7 @@ public class SearchFiltering {
 
         @Override
         public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
-                CentralRepository centralRepoDb) throws DiscoveryException {
+                CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             if (centralRepoDb == null) {
                 throw new DiscoveryException("Can not run Previously Notable filter with null Central Repository DB"); // NON-NLS
@@ -1087,6 +1107,9 @@ public class SearchFiltering {
                 CorrelationAttributeInstance.Type type = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(CorrelationAttributeInstance.FILES_TYPE_ID);
 
                 for (Result result : currentResults) {
+                    if (context.searchIsCancelled()) {
+                        throw new SearchCancellationException("The search was cancelled while Notable alternate filter was being applied.");
+                    }
                     ResultFile file = (ResultFile) result;
                     if (result.getType() == SearchData.Type.DOMAIN) {
                         break;

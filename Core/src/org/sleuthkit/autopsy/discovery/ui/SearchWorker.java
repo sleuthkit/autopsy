@@ -34,8 +34,9 @@ import org.sleuthkit.autopsy.discovery.search.Group;
 import org.sleuthkit.autopsy.discovery.search.FileSearch;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
-import org.sleuthkit.autopsy.discovery.search.Result;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
+import org.sleuthkit.autopsy.discovery.search.SearchCancellationException;
+import org.sleuthkit.autopsy.discovery.search.SearchContext;
 import org.sleuthkit.autopsy.discovery.search.SearchData;
 
 /**
@@ -76,35 +77,30 @@ final class SearchWorker extends SwingWorker<Void, Void> {
     protected Void doInBackground() throws Exception {
         try {
             // Run the search
+            SearchContext context = new SwingWorkerSearchContext(this);
             if (searchType == SearchData.Type.DOMAIN) {
                 DomainSearch domainSearch = new DomainSearch();
-                final Map<GroupKey, List<Result>> searchResults = domainSearch.getSearchResults(System.getProperty(USER_NAME_PROPERTY), filters,
+                results.putAll(domainSearch.getGroupSizes(System.getProperty(USER_NAME_PROPERTY), filters,
                         groupingAttr,
                         groupSortAlgorithm,
                         fileSort,
-                        Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
-                // Transform the cached results into a map of group key to group size.
-                final LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
-                for (GroupKey groupKey : searchResults.keySet()) {
-                    if (isCancelled()) {
-                        return null;
-                    }
-                    results.put(groupKey, searchResults.get(groupKey).size());
-                }
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepoDb, context));
             } else {
-                Map<GroupKey, List<Result>> searchResults = FileSearch.runFileSearch(System.getProperty(USER_NAME_PROPERTY), filters,
-                        groupingAttr, groupSortAlgorithm, fileSort, Case.getCurrentCase().getSleuthkitCase(), centralRepoDb);
-                for (GroupKey groupKey : searchResults.keySet()) {
-                    if (isCancelled()) {
-                        return null;
-                    }
-                    results.put(groupKey, searchResults.get(groupKey).size());
-                }
+                results.putAll(FileSearch.getGroupSizes(System.getProperty(USER_NAME_PROPERTY), filters,
+                        groupingAttr,
+                        groupSortAlgorithm,
+                        fileSort,
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepoDb, context));
             }
         } catch (DiscoveryException ex) {
-            logger.log(Level.SEVERE, "Error running file search test", ex);
+            logger.log(Level.SEVERE, "Error running file search test.", ex);
             cancel(true);
+        } catch (SearchCancellationException ex) {
+            //search cancellation exceptions should indicate that the user chose to cancell this search 
+            //so would not be a problem but we might be curious what was being done when it was cancelled
+            logger.log(Level.INFO, "Discovery search was cancelled.", ex);
         }
+
         return null;
     }
 

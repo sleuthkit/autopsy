@@ -36,6 +36,8 @@ import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
 import org.sleuthkit.autopsy.discovery.search.ResultsSorter;
 import org.sleuthkit.autopsy.discovery.search.Result;
+import org.sleuthkit.autopsy.discovery.search.SearchCancellationException;
+import org.sleuthkit.autopsy.discovery.search.SearchContext;
 
 /**
  * SwingWorker to retrieve the contents of a page.
@@ -87,7 +89,7 @@ final class PageWorker extends SwingWorker<Void, Void> {
 
     @Override
     protected Void doInBackground() throws Exception {
-
+        SearchContext context = new SwingWorkerSearchContext(this);
         try {
             // Run the search
             if (resultType == SearchData.Type.DOMAIN) {
@@ -96,17 +98,22 @@ final class PageWorker extends SwingWorker<Void, Void> {
                         groupingAttribute,
                         groupSort,
                         fileSortMethod, groupKey, startingEntry, pageSize,
-                        Case.getCurrentCase().getSleuthkitCase(), centralRepo));
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepo, context));
             } else {
                 results.addAll(FileSearch.getFilesInGroup(System.getProperty(USER_NAME_PROPERTY), searchfilters,
                         groupingAttribute,
                         groupSort,
                         fileSortMethod, groupKey, startingEntry, pageSize,
-                        Case.getCurrentCase().getSleuthkitCase(), centralRepo));
+                        Case.getCurrentCase().getSleuthkitCase(), centralRepo, context));
             }
         } catch (DiscoveryException ex) {
             logger.log(Level.SEVERE, "Error running file search test", ex);
             cancel(true);
+        } catch (SearchCancellationException ex) {
+            //The does not explicitly have a way to cancell the loading of a page 
+            //but they could have cancelled the search during the loading of the first page
+            //So this may or may not be an issue depending on when this occurred.
+            logger.log(Level.WARNING, "Search was cancelled while retrieving data for results page with starting entry: " + startingEntry, ex);
         }
         return null;
     }
