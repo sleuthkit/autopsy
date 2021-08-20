@@ -169,8 +169,7 @@ public class CorrelationAttributeUtil {
                     }
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                    Case currentCase = Case.getCurrentCaseThrows();
-                    Content sourceContent = currentCase.getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
                     Content dataSource = sourceContent.getDataSource();
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID,
                             attributes, sourceContent, dataSource);
@@ -187,8 +186,7 @@ public class CorrelationAttributeUtil {
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {
                     // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                    Case currentCase = Case.getCurrentCaseThrows();
-                    Content sourceContent = currentCase.getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
                     Content dataSource = sourceContent.getDataSource();
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMEI, CorrelationAttributeInstance.IMEI_TYPE_ID,
                             attributes, sourceContent, dataSource);
@@ -199,8 +197,7 @@ public class CorrelationAttributeUtil {
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {
                     // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                    Case currentCase = Case.getCurrentCaseThrows();
-                    Content sourceContent = currentCase.getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
                     Content dataSource = sourceContent.getDataSource();
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID,
                             attributes, sourceContent, dataSource);
@@ -209,8 +206,7 @@ public class CorrelationAttributeUtil {
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()) {
                     // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                    Case currentCase = Case.getCurrentCaseThrows();
-                    Content sourceContent = currentCase.getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
                     Content dataSource = sourceContent.getDataSource();
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, CorrelationAttributeInstance.PHONE_TYPE_ID,
                             attributes, sourceContent, dataSource);
@@ -509,8 +505,7 @@ public class CorrelationAttributeUtil {
         try {
 
             if (sourceContent == null) {
-                Case currentCase = Case.getCurrentCaseThrows();
-                sourceContent = currentCase.getSleuthkitCase().getContentById(artifact.getObjectID());
+                sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
             }
             if (null == sourceContent) {
                 logger.log(Level.SEVERE, "Error creating artifact instance of type {0}. Failed to load content with ID: {1} associated with artifact with ID: {2}",
