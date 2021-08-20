@@ -169,7 +169,7 @@ public class CorrelationAttributeUtil {
                     }
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(sourceArtifact.getObjectID());
                     Content dataSource = sourceContent.getDataSource();
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID,
                             attributes, sourceContent, dataSource);
@@ -186,7 +186,7 @@ public class CorrelationAttributeUtil {
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {
                     // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(sourceArtifact.getObjectID());
                     Content dataSource = sourceContent.getDataSource();
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMEI, CorrelationAttributeInstance.IMEI_TYPE_ID,
                             attributes, sourceContent, dataSource);
@@ -197,7 +197,7 @@ public class CorrelationAttributeUtil {
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {
                     // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(sourceArtifact.getObjectID());
                     Content dataSource = sourceContent.getDataSource();
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID,
                             attributes, sourceContent, dataSource);
@@ -206,7 +206,7 @@ public class CorrelationAttributeUtil {
 
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()) {
                     // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(sourceArtifact.getObjectID());
                     Content dataSource = sourceContent.getDataSource();
                     makeCorrAttrFromArtifactAttr(correlationAttrs, sourceArtifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, CorrelationAttributeInstance.PHONE_TYPE_ID,
                             attributes, sourceContent, dataSource);
@@ -338,7 +338,9 @@ public class CorrelationAttributeUtil {
             if (assocArtifactAttr != null) {
                 sourceArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(assocArtifactAttr.getValueLong());
             }
-        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID() == artifact.getArtifactTypeID()) {
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID() == artifact.getArtifactTypeID() 
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE.getTypeID() == artifact.getArtifactTypeID()
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_UNSEEN.getTypeID() == artifact.getArtifactTypeID()) {
             Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
             if (content instanceof DataArtifact) {
                 sourceArtifact = (BlackboardArtifact) content;
