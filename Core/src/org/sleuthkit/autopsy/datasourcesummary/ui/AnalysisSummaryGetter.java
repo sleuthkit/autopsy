@@ -45,7 +45,7 @@ public class AnalysisSummaryGetter implements DefaultArtifactUpdateGovernor {
             ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
     ));
 
-    AnalysisSummary analysisSummary;
+    private final AnalysisSummary analysisSummary;
 
     /**
      * Main constructor.

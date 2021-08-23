@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
 import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataSourceInfoUtilities;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TypesSummary.FileTypeCategoryData;
@@ -101,6 +102,7 @@ class ExportTypes {
         }
     }
     
+    private final MimeTypeSummary mimeTypeSummary;
     private final ContainerSummary containerSummary;
     private final TypesSummary typesSummary;
     private final SleuthkitCaseProvider provider;
@@ -128,64 +130,7 @@ class ExportTypes {
         this.provider = SleuthkitCaseProvider.DEFAULT;
         containerSummary = new ContainerSummary();
         typesSummary = new TypesSummary();
-    }
-
-    /**
-     * Derives a sql set string (i.e. "('val1', 'val2', 'val3')"). A naive
-     * attempt is made to sanitize the strings by removing single quotes from
-     * values.
-     *
-     * @param setValues The values that should be present in the set. Single
-     *                  quotes are removed.
-     *
-     * @return The sql set string.
-     */
-    private static String getSqlSet(Set<String> setValues) {
-        List<String> quotedValues = setValues
-                .stream()
-                .map(str -> String.format("'%s'", str.replace("'", "")))
-                .collect(Collectors.toList());
-
-        String commaSeparatedQuoted = String.join(", ", quotedValues);
-        return String.format("(%s) ", commaSeparatedQuoted);
-    }
-
-    /**
-     * Get the number of files in the case database for the current data source
-     * which have the specified mimetypes.
-     *
-     * @param currentDataSource the data source which we are finding a file
-     *                          count
-     *
-     * @param setOfMimeTypes    the set of mime types which we are finding the
-     *                          number of occurences of
-     *
-     * @return a Long value which represents the number of occurrences of the
-     *         specified mime types in the current case for the specified data
-     *         source, null if no count was retrieved
-     *
-     * @throws NoCurrentCaseException
-     * @throws TskCoreException
-     * @throws SQLException
-     */
-    private Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) throws TskCoreException, SQLException, SleuthkitCaseProvider.SleuthkitCaseProviderException {
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource, "mime_type IN " + getSqlSet(setOfMimeTypes));
-    }
-
-    /**
-     * Gets the number of files in the data source with no assigned mime type.
-     *
-     * @param currentDataSource The data source.
-     *
-     * @return The number of files with no mime type or null if there is an
-     *         issue searching the data source.
-     *
-     * @throws NoCurrentCaseException
-     * @throws TskCoreException
-     * @throws SQLException
-     */
-    private Long getCountOfFilesWithNoMimeType(DataSource currentDataSource) throws TskCoreException, SQLException, SleuthkitCaseProvider.SleuthkitCaseProviderException {
-        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource, "(mime_type IS NULL OR mime_type = '') ");
+        mimeTypeSummary = new MimeTypeSummary();
     }
 
     /**
@@ -208,7 +153,7 @@ class ExportTypes {
         long categoryTotalCount = 0;
 
         for (FileTypeCategoryData cat : FILE_MIME_TYPE_CATEGORIES) {
-            long thisValue = DataSourceInfoUtilities.getLongOrZero(getCountOfFilesForMimeTypes(dataSource, cat.getMimeTypes()));
+            long thisValue = DataSourceInfoUtilities.getLongOrZero(mimeTypeSummary.getCountOfFilesForMimeTypes(dataSource, cat.getMimeTypes()));
             categoryTotalCount += thisValue;
 
             fileCategoryItems.add(new PieChartItem(
@@ -218,7 +163,7 @@ class ExportTypes {
         }
 
         // get a count of all files with no mime type
-        long noMimeTypeCount = DataSourceInfoUtilities.getLongOrZero(getCountOfFilesWithNoMimeType(dataSource));
+        long noMimeTypeCount = DataSourceInfoUtilities.getLongOrZero(mimeTypeSummary.getCountOfFilesWithNoMimeType(dataSource));
 
         // get a count of all regular files
         long allRegularFiles = DataSourceInfoUtilities.getLongOrZero(DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), dataSource, null));

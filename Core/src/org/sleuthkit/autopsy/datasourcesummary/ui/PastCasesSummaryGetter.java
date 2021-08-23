@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
@@ -44,7 +43,7 @@ public class PastCasesSummaryGetter implements DefaultArtifactUpdateGovernor {
             ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
     ));
 
-    private PastCasesSummary pastSummary;
+    private final PastCasesSummary pastSummary;
 
     public PastCasesSummaryGetter() {
         pastSummary = new PastCasesSummary();
@@ -67,11 +66,6 @@ public class PastCasesSummaryGetter implements DefaultArtifactUpdateGovernor {
      */
     public PastCasesResult getPastCasesData(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
-
-        if (dataSource == null) {
-            return null;
-        }
-
         return pastSummary.getPastCasesData(dataSource);
     }
 }

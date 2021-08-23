@@ -16,20 +16,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider;
+import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.MimeTypeSummary;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -37,38 +30,24 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Wrapper class for converting org.sleuthkit.autopsy.contentutils.TypesSummary
  * functionality into a DefaultArtifactUpdateGovernor used by TypesPanel tab.
  */
-public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
+public class MimeTypeSummary {
 
-    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
-            Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
-
-    private final MimeTypeSummary mimeTypeSummary;
+    private final SleuthkitCaseProvider provider;
 
     /**
      * Main constructor.
      */
-    public MimeTypeSummaryGetter() {
-        mimeTypeSummary = new MimeTypeSummary();
+    public MimeTypeSummary() {
+        this(SleuthkitCaseProvider.DEFAULT);
     }
 
-    @Override
-    public boolean isRefreshRequired(ModuleContentEvent evt) {
-        return true;
-    }
-
-    @Override
-    public boolean isRefreshRequired(AbstractFile file) {
-        return true;
-    }
-
-    @Override
-    public boolean isRefreshRequired(IngestManager.IngestJobEvent evt) {
-        return (evt != null && INGEST_JOB_EVENTS.contains(evt));
-    }
-
-    @Override
-    public Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
-        return Collections.unmodifiableSet(INGEST_JOB_EVENTS);
+    /**
+     * Main constructor.
+     *
+     * @param provider The means of obtaining a sleuthkit case.
+     */
+    public MimeTypeSummary(SleuthkitCaseProvider provider) {
+        this.provider = provider;
     }
 
     /**
@@ -91,7 +70,7 @@ public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        return mimeTypeSummary.getCountOfFilesForMimeTypes(currentDataSource, setOfMimeTypes);
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource, "mime_type IN " + getSqlSet(setOfMimeTypes));
     }
 
     /**
@@ -112,7 +91,9 @@ public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfFilesNotInMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        return mimeTypeSummary.getCountOfFilesNotInMimeTypes(currentDataSource, setOfMimeTypes);
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource,
+                "mime_type NOT IN " + getSqlSet(setOfMimeTypes)
+                + " AND mime_type IS NOT NULL AND mime_type <> '' ");
     }
 
     /**
@@ -128,7 +109,7 @@ public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfAllRegularFiles(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        return mimeTypeSummary.getCountOfAllRegularFiles(dataSource);
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), dataSource, null);
     }
 
     /**
@@ -145,6 +126,26 @@ public class MimeTypeSummaryGetter implements DefaultUpdateGovernor {
      */
     public Long getCountOfFilesWithNoMimeType(DataSource currentDataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, SQLException {
-        return mimeTypeSummary.getCountOfFilesWithNoMimeType(currentDataSource);
+        return DataSourceInfoUtilities.getCountOfRegNonSlackFiles(provider.get(), currentDataSource, "(mime_type IS NULL OR mime_type = '') ");
+    }
+
+    /**
+     * Derives a sql set string (i.e. "('val1', 'val2', 'val3')"). A naive
+     * attempt is made to sanitize the strings by removing single quotes from
+     * values.
+     *
+     * @param setValues The values that should be present in the set. Single
+     *                  quotes are removed.
+     *
+     * @return The sql set string.
+     */
+    private String getSqlSet(Set<String> setValues) {
+        List<String> quotedValues = setValues
+                .stream()
+                .map(str -> String.format("'%s'", str.replace("'", "")))
+                .collect(Collectors.toList());
+
+        String commaSeparatedQuoted = String.join(", ", quotedValues);
+        return String.format("(%s) ", commaSeparatedQuoted);
     }
 }

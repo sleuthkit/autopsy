@@ -40,7 +40,7 @@ public class TimelineSummaryGetter implements DefaultUpdateGovernor {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
             Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
 
-    private TimelineSummary timelineSummary;
+    private final TimelineSummary timelineSummary;
 
     /**
      * Default constructor.

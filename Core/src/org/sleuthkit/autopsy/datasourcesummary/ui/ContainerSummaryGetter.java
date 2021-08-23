@@ -44,7 +44,7 @@ public class ContainerSummaryGetter implements DefaultArtifactUpdateGovernor {
             BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE.getTypeID()
     ));
 
-    private ContainerSummary containerSummary;
+    private final ContainerSummary containerSummary;
 
     /**
      * Main constructor.

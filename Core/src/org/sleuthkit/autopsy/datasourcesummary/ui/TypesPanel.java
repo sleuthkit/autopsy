@@ -171,7 +171,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
     /**
      * Creates a new TypesPanel.
      */
-    public TypesPanel() {
+    TypesPanel() {
         this(new MimeTypeSummaryGetter(), new TypesSummaryGetter(), new ContainerSummaryGetter());
     }
 
@@ -188,7 +188,7 @@ class TypesPanel extends BaseDataSourceSummaryPanel {
      * @param typeData The service for file types data.
      * @param containerData The service for container information.
      */
-    public TypesPanel(
+    TypesPanel(
             MimeTypeSummaryGetter mimeTypeData,
             TypesSummaryGetter typeData,
             ContainerSummaryGetter containerData) {

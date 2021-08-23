@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import java.awt.Cursor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.RightAlignedTableCellRenderer;
 import java.awt.EventQueue;

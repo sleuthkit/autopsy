@@ -43,7 +43,7 @@ public class TypesSummaryGetter implements DefaultUpdateGovernor {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
             Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
 
-    private TypesSummary typesSummary;
+    private final TypesSummary typesSummary;
 
     /**
      * Main constructor.

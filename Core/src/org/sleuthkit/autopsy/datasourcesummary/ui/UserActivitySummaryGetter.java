@@ -65,17 +65,6 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
     }
 
     /**
-     * Throws an IllegalArgumentException if count <= 0.
-     *
-     * @param count The count being checked.
-     */
-    private void assertValidCount(int count) {
-        if (count <= 0) {
-            throw new IllegalArgumentException("Count must be greater than 0");
-        }
-    }
-
-    /**
      * Gets a list of recent domains based on the datasource.
      *
      * @param dataSource The datasource to query for recent domains.
@@ -86,12 +75,6 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
      * @throws InterruptedException
      */
     public List<TopDomainsResult> getRecentDomains(DataSource dataSource, int count) throws TskCoreException, SleuthkitCaseProviderException {
-        assertValidCount(count);
-
-        if (dataSource == null) {
-            return Collections.emptyList();
-        }
-
         return userActivity.getRecentDomains(dataSource, count);
     }
 
@@ -111,12 +94,6 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
      * @throws TskCoreException
      */
     public List<TopWebSearchResult> getMostRecentWebSearches(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
-        assertValidCount(count);
-
-        if (dataSource == null) {
-            return Collections.emptyList();
-        }
-
         return userActivity.getMostRecentWebSearches(dataSource, count);
     }
 
@@ -135,12 +112,6 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
      * @throws TskCoreException
      */
     public List<TopDeviceAttachedResult> getRecentDevices(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
-        assertValidCount(count);
-
-        if (dataSource == null) {
-            return Collections.emptyList();
-        }
-
         return userActivity.getRecentDevices(dataSource, count);
     }
 
@@ -163,12 +134,6 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
         "DataSourceUserActivitySummary_getRecentAccounts_emailMessage=Email Message",
         "DataSourceUserActivitySummary_getRecentAccounts_calllogMessage=Call Log",})
     public List<TopAccountResult> getRecentAccounts(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
-        assertValidCount(count);
-
-        if (dataSource == null) {
-            return Collections.emptyList();
-        }
-
         return userActivity.getRecentAccounts(dataSource, count);
     }
 
@@ -192,12 +157,6 @@ public class UserActivitySummaryGetter implements DefaultArtifactUpdateGovernor 
      * @throws TskCoreException
      */
     public List<TopProgramsResult> getTopPrograms(DataSource dataSource, int count) throws SleuthkitCaseProviderException, TskCoreException {
-        assertValidCount(count);
-
-        if (dataSource == null) {
-            return Collections.emptyList();
-        }
-
         return userActivity.getTopPrograms(dataSource, count);
     }
 }

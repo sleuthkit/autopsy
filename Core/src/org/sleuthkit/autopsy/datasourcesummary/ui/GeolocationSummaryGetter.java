@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGove
 import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  * Wrapper class for converting
@@ -37,7 +36,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
  */
 public class GeolocationSummaryGetter implements DefaultArtifactUpdateGovernor {
 
-    private GeolocationSummary geoSummary;
+    private final GeolocationSummary geoSummary;
 
     /**
      * Default constructor.

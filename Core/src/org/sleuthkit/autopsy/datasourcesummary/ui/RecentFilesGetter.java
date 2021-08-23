@@ -48,7 +48,7 @@ public class RecentFilesGetter implements DefaultArtifactUpdateGovernor {
             BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
     ));
 
-    private RecentFilesSummary recentSummary;
+    private final RecentFilesSummary recentSummary;
 
     /**
      * Default constructor.
