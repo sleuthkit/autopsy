@@ -538,7 +538,10 @@ final class IngestJobPipeline {
      * @return True or false.
      */
     boolean hasFileIngestModules() {
-        return (fileIngestPipelines.isEmpty() == false);
+        if (!fileIngestPipelines.isEmpty()) {
+            return !fileIngestPipelines.get(0).isEmpty();
+        }
+        return false;
     }
 
     /**
@@ -1438,7 +1441,7 @@ final class IngestJobPipeline {
             }
             pausedIngestThreads.clear();
         }
-        
+
         // If a data source had no tasks in progress it may now be complete.
         checkForStageCompleted();
     }

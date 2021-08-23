@@ -43,10 +43,12 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
     private final static Logger logger = Logger.getLogger(SummaryPanelWorker.class.getName());
     
     private final Account account;
+    private final SelectionInfo selectionInfo;
 
     // Construct a instance
-    SummaryPanelWorker(Account account) {
+    SummaryPanelWorker(SelectionInfo selectionInfo, Account account) {
         this.account = account;
+        this.selectionInfo = selectionInfo;
     }
 
     /**
@@ -89,8 +91,8 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
                 }
             }
         }
-
-        return new SummaryWorkerResults(stringList, personaList, crAccount);
+        
+        return new SummaryWorkerResults(stringList, personaList, crAccount, new AccountSummary(account, selectionInfo.getArtifacts()));
     }
 
     /**
@@ -102,6 +104,7 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
         private final List<String> accountFileInstancePaths;
         private final List<Persona> personaList;
         private final CentralRepoAccount centralRepoAccount;
+        private final AccountSummary accountSummary;
 
         /**
          * Constructor.
@@ -112,10 +115,11 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
          *                                 account, maybe null if CR is not
          *                                 enabled.
          */
-        SummaryWorkerResults(List<String> accountFileInstancePaths, List<Persona> personaList, CentralRepoAccount centralRepoAccount) {
+        SummaryWorkerResults(List<String> accountFileInstancePaths, List<Persona> personaList, CentralRepoAccount centralRepoAccount, AccountSummary accountSummary) {
             this.accountFileInstancePaths = accountFileInstancePaths;
             this.personaList = personaList;
             this.centralRepoAccount = centralRepoAccount;
+            this.accountSummary = accountSummary;
         }
 
         /**
@@ -147,6 +151,10 @@ class SummaryPanelWorker extends SwingWorker<SummaryPanelWorker.SummaryWorkerRes
          */
         CentralRepoAccount getCRAccount() {
             return centralRepoAccount;
+        }
+        
+        AccountSummary getAccountSummary() {
+            return accountSummary;
         }
     }
 
