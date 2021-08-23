@@ -27,8 +27,8 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Wrapper class for converting org.sleuthkit.autopsy.contentutils.TypesSummary
- * functionality into a DefaultArtifactUpdateGovernor used by TypesPanel tab.
+ * Class to export summary information used by TypesPanel tab on the known files
+ * present in the specified DataSource.
  */
 public class MimeTypeSummary {
 
