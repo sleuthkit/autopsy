@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.eventlog;
+package org.sleuthkit.autopsy.experimental.clusterjournal;
 
 /**
  * A record for a case processed by auto ingest.
@@ -29,7 +29,7 @@ public class CaseRecord {
     /**
      * Main constructor.
      *
-     * @param id   The event log id of the case.
+     * @param id   The cluster journal id of the case.
      * @param name The unique name of the case.
      */
     CaseRecord(long id, String name) {
@@ -38,7 +38,7 @@ public class CaseRecord {
     }
 
     /**
-     * @return The event log id of the case.
+     * @return The cluster journal id of the case.
      */
     public long getId() {
         return id;

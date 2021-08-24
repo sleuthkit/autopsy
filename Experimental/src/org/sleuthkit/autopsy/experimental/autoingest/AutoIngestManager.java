@@ -97,11 +97,11 @@ import org.sleuthkit.autopsy.datasourceprocessors.AddDataSourceCallback;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.AutoIngestJobException;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
-import org.sleuthkit.autopsy.experimental.eventlog.CaseRecord;
-import org.sleuthkit.autopsy.experimental.eventlog.EventLogException;
-import org.sleuthkit.autopsy.experimental.eventlog.EventLogManager;
-import org.sleuthkit.autopsy.experimental.eventlog.JobRecord;
-import org.sleuthkit.autopsy.experimental.eventlog.JobStatus;
+import org.sleuthkit.autopsy.experimental.clusterjournal.CaseRecord;
+import org.sleuthkit.autopsy.experimental.clusterjournal.ClusterJournalException;
+import org.sleuthkit.autopsy.experimental.clusterjournal.ClusterJournalManager;
+import org.sleuthkit.autopsy.experimental.clusterjournal.IngestJobRecord;
+import org.sleuthkit.autopsy.experimental.clusterjournal.IngestJobStatus;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -178,7 +178,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private List<AutoIngestJob> completedJobs;
     private IngestStream currentIngestStream = null;
     private CoordinationService coordinationService;
-    private EventLogManager eventLogManager;
+    private ClusterJournalManager clusterJournalManager;
     private JobProcessingTask jobProcessingTask;
     private Future<?> jobProcessingTaskFuture;
     private Path rootInputDirectory;
@@ -254,9 +254,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         try {
-            eventLogManager = EventLogManager.getInstance();
-        } catch (EventLogException ex) {
-            throw new AutoIngestManagerException("Unable to instantiate the event log manager.", ex);
+            clusterJournalManager = ClusterJournalManager.getInstance();
+        } catch (ClusterJournalException ex) {
+            throw new AutoIngestManagerException("Unable to instantiate the cluster job manager.", ex);
         }
 
         try {
@@ -2187,7 +2187,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             setChanged();
             notifyObservers(Event.JOB_STARTED);
             eventPublisher.publishRemotely(new AutoIngestJobStartedEvent(currentJob));
-            setEventLogStatus(currentJob, JobStatus.RUNNING, currentJob.getProcessingStageStartDate());
+            setClusterJournalStatus(currentJob, IngestJobStatus.RUNNING, currentJob.getProcessingStageStartDate());
             try {
                 if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                     return;
@@ -2225,7 +2225,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         completedJobs.add(currentJob);
                     }
                     eventPublisher.publishRemotely(new AutoIngestJobCompletedEvent(currentJob, retry));
-                    setEventLogStatus(currentJob, JobStatus.DONE, currentJob.getCompletedDate());
+                    setClusterJournalStatus(currentJob, IngestJobStatus.DONE, currentJob.getCompletedDate());
                     currentJob = null;
                     setChanged();
                     notifyObservers(Event.JOB_COMPLETED);
@@ -2234,7 +2234,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         /**
-         * Updates the event log with the given status for the provided ingest
+         * Updates the cluster journal with the given status for the provided ingest
          * job.
          *
          * @param job    The ingest job.
@@ -2242,8 +2242,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @param date   The timestamp of the update. If null is provided, then
          *               current date will be used.
          */
-        private void setEventLogStatus(AutoIngestJob job, JobStatus status, Date date) {
-            EventLogManager manager = AutoIngestManager.this.eventLogManager;
+        private void setClusterJournalStatus(AutoIngestJob job, IngestJobStatus status, Date date) {
+            ClusterJournalManager manager = AutoIngestManager.this.clusterJournalManager;
 
             Date dateToUse = date == null ? new Date() : date;
             String caseName = job.getManifest().getCaseName();
@@ -2251,11 +2251,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
             try {
                 CaseRecord caseRecord = manager.getOrCreateCaseRecord(caseName);
-                JobRecord jobRecord = manager.getOrCreateJobRecord(caseRecord.getId(), dataSourceName);
+                IngestJobRecord jobRecord = manager.getOrCreateJobRecord(caseRecord.getId(), dataSourceName);
                 manager.setJobStatus(jobRecord.getId(), status, dateToUse);
             } catch (Exception ex) {
                 // firewall exception to prevent any exception from disrupting processing of data source.
-                sysLogger.log(Level.WARNING, "An error occurred while updating event log database.", ex);
+                sysLogger.log(Level.WARNING, "An error occurred while updating cluster journal database.", ex);
             }
         }
 

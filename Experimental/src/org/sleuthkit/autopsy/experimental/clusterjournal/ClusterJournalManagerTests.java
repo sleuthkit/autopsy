@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.eventlog;
+package org.sleuthkit.autopsy.experimental.clusterjournal;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.sql.Connection;
@@ -40,16 +40,16 @@ import org.apache.commons.lang3.tuple.Pair;
 /**
  *
  * Runs tests against the pg database specified in settings to test the
- * EventLogManager.
+ * ClusterJournalManager.
  */
-public class EventLogManagerTests {
+public class ClusterJournalManagerTests {
 
     /**
      * The tables in the database.
      */
     private static final List<String> ALL_TABLES = Arrays.asList(
             "cases",
-            "jobs",
+            "ingest_jobs",
             "db_versions"
     );
 
@@ -146,14 +146,14 @@ public class EventLogManagerTests {
      *
      * @throws ClassNotFoundException
      * @throws SQLException
-     * @throws EventLogException
+     * @throws ClusterJournalException
      */
-    public void runTests(String host, String port, String userName, String pword, String dbName) throws ClassNotFoundException, SQLException, EventLogException {
-        EventLogManager manager = null;
+    public void runTests(String host, String port, String userName, String pword, String dbName) throws ClassNotFoundException, SQLException, ClusterJournalException {
+        ClusterJournalManager manager = null;
         try {
             ComboPooledDataSource testDs = verifyDbAndSchemaTest(host, port, userName, pword, dbName);
 
-            manager = new EventLogManager(testDs);
+            manager = new ClusterJournalManager(testDs);
 
             List<CaseRecord> caseRecords = createCasesTest(manager, testDs);
 
@@ -166,7 +166,7 @@ public class EventLogManagerTests {
                 manager = null;
             }
 
-            try (Connection conn = EventLogManager.getPgConnection(host, port, userName, pword, Optional.empty());
+            try (Connection conn = ClusterJournalManager.getPgConnection(host, port, userName, pword, Optional.empty());
                     Statement stmt = conn.createStatement()) {
                 stmt.execute("DROP DATABASE " + dbName);
             }
@@ -174,19 +174,19 @@ public class EventLogManagerTests {
     }
 
     /**
-     * Creates case records with the EventLogManager, verifies their creation,
+     * Creates case records with the ClusterJournalManager, verifies their creation,
      * and returns the created cases.
      *
      * @param manager The manager.
      * @param testDs  The test data source in order to verify tables independent
-     *                of the event log manager.
+     *                of the cluster journal manager.
      *
      * @return The created cases.
      *
      * @throws SQLException
      * @throws IllegalStateException
      */
-    private List<CaseRecord> createCasesTest(EventLogManager manager, DataSource testDs) throws SQLException, IllegalStateException {
+    private List<CaseRecord> createCasesTest(ClusterJournalManager manager, DataSource testDs) throws SQLException, IllegalStateException {
         String case1Str = "Case_1";
         String case2Str = "Case_2";
         CaseRecord case1 = manager.getOrCreateCaseRecord(case1Str);
@@ -207,7 +207,7 @@ public class EventLogManagerTests {
 
     /**
      * Tests that the database is not initially present so data is not
-     * overwritten, creates the database and schema with the event log manager.
+     * overwritten, creates the database and schema with the cluster journal manager.
      *
      * @param host     The pg host.
      * @param port     The pg port.
@@ -217,32 +217,30 @@ public class EventLogManagerTests {
      *
      * @return The data source to use for connections to the created database.
      *
-     * @throws EventLogException
+     * @throws ClusterJournalException
      * @throws IllegalStateException
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    private ComboPooledDataSource verifyDbAndSchemaTest(String host, String port, String userName, String pword, String dbName) throws EventLogException, IllegalStateException, SQLException, ClassNotFoundException {
-        //CaseDbConnectionInfo conn = EventLogManager.getConnectionInfo();
-
+    private ComboPooledDataSource verifyDbAndSchemaTest(String host, String port, String userName, String pword, String dbName) throws ClusterJournalException, IllegalStateException, SQLException, ClassNotFoundException {
         // if db exists throw (shouldn't exist on start)
-        try (Connection conn = EventLogManager.getPgConnection(host, port, userName, pword, Optional.empty())) {
-            if (EventLogManager.verifyDatabaseExists(conn, dbName)) {
+        try (Connection conn = ClusterJournalManager.getPgConnection(host, port, userName, pword, Optional.empty())) {
+            if (ClusterJournalManager.verifyDatabaseExists(conn, dbName)) {
                 onErr("Database {0} shouldn't exist when running tests.  "
                         + "Please drop the database and try again.", dbName);
             }
 
             // verify or create database (check externally)
-            EventLogManager.verifyOrCreatePgDb(host, port, userName, pword, dbName);
+            ClusterJournalManager.verifyOrCreatePgDb(host, port, userName, pword, dbName);
 
-            if (!EventLogManager.verifyDatabaseExists(conn, dbName)) {
+            if (!ClusterJournalManager.verifyDatabaseExists(conn, dbName)) {
                 onErr("Unable to create database {0}", dbName);
             }
         }
-        ComboPooledDataSource testDs = EventLogManager.getDataSource(host, port, userName, pword, dbName);
+        ComboPooledDataSource testDs = ClusterJournalManager.getDataSource(host, port, userName, pword, dbName);
         // verify or create schema (check externally) and verify that the schema isn't changed.
         for (int i = 0; i < 2; i++) {
-            EventLogManager.verifyOrCreateSchema(testDs, dbName);
+            ClusterJournalManager.verifyOrCreateSchema(testDs, dbName);
             String tableListStr = ALL_TABLES.stream()
                     .map(t -> "'" + t + "'")
                     .collect(Collectors.joining(", "));
@@ -267,15 +265,15 @@ public class EventLogManagerTests {
      *
      * @throws SQLException
      */
-    private void createJobsUpdateStatusTest(List<CaseRecord> caseRecords, EventLogManager manager) throws SQLException {
+    private void createJobsUpdateStatusTest(List<CaseRecord> caseRecords, ClusterJournalManager manager) throws SQLException {
         // create 12 (6 for each case) records (verify in db)
         String dsPrefix = "ds_";
-        Map<Long, List<JobRecord>> jobRecords = new HashMap<>();
+        Map<Long, List<IngestJobRecord>> jobRecords = new HashMap<>();
         for (CaseRecord c : caseRecords) {
-            List<JobRecord> recList = new ArrayList<>();
+            List<IngestJobRecord> recList = new ArrayList<>();
             jobRecords.put(c.getId(), recList);
             for (int jIdx = 0; jIdx < 6; jIdx++) {
-                JobRecord created = manager.getOrCreateJobRecord(c.getId(), dsPrefix + jIdx);
+                IngestJobRecord created = manager.getOrCreateJobRecord(c.getId(), dsPrefix + jIdx);
                 assertTrue(created.getCaseName().equals(c.getName()),
                         "Expected case names to be equal.  Received {0}; expected {1}.",
                         created.getCaseName(), c.getName());
@@ -288,17 +286,17 @@ public class EventLogManagerTests {
             }
         }
 
-        List<JobRecord> allRecords = jobRecords.values().stream()
+        List<IngestJobRecord> allRecords = jobRecords.values().stream()
                 .flatMap(lst -> lst.stream())
                 .collect(Collectors.toList());
 
         verifyStatus(manager, allRecords, null, null);
 
         // set initial 4 records for each case to running
-        List<JobRecord> running1 = setStatus(manager, jobRecords, 4, JobStatus.RUNNING);
+        List<IngestJobRecord> running1 = setStatus(manager, jobRecords, 4, IngestJobStatus.RUNNING);
 
         // get pending by removing running from all
-        List<JobRecord> pending1 = allRecords.stream()
+        List<IngestJobRecord> pending1 = allRecords.stream()
                 .filter(r
                         -> !running1.stream()
                         .filter(runItem -> runItem.getId() == r.getId())
@@ -309,10 +307,10 @@ public class EventLogManagerTests {
         verifyStatus(manager, pending1, running1, null);
 
         // set initial 2 of each case (which should have been running) to done
-        List<JobRecord> done2 = setStatus(manager, jobRecords, 2, JobStatus.DONE);
+        List<IngestJobRecord> done2 = setStatus(manager, jobRecords, 2, IngestJobStatus.DONE);
 
         // get running by filtering done
-        List<JobRecord> running2 = running1.stream()
+        List<IngestJobRecord> running2 = running1.stream()
                 .filter(r
                         -> !done2.stream()
                         .filter(runItem -> runItem.getId() == r.getId())
@@ -336,14 +334,14 @@ public class EventLogManagerTests {
      *
      * @throws SQLException
      */
-    private List<JobRecord> setStatus(EventLogManager manager, Map<Long, List<JobRecord>> jobRecords, int count, JobStatus status) throws SQLException {
+    private List<IngestJobRecord> setStatus(ClusterJournalManager manager, Map<Long, List<IngestJobRecord>> jobRecords, int count, IngestJobStatus status) throws SQLException {
         // switch 8 to running (verify in db and get status)
         Date startDate = new Date();
-        List<JobRecord> changed = new ArrayList<>();
-        for (List<JobRecord> records : jobRecords.values()) {
+        List<IngestJobRecord> changed = new ArrayList<>();
+        for (List<IngestJobRecord> records : jobRecords.values()) {
             for (int jIdx = 0; jIdx < count; jIdx++) {
-                JobRecord curRec = records.get(jIdx);
-                JobRecord updatedRecord = manager.setJobStatus(curRec.getId(), status, startDate).get();
+                IngestJobRecord curRec = records.get(jIdx);
+                IngestJobRecord updatedRecord = manager.setJobStatus(curRec.getId(), status, startDate).get();
                 assertTrue(curRec.getId() == updatedRecord.getId(),
                         "Expected updated id to be equal, but changed from {0} to {1}",
                         curRec.getId(), updatedRecord.getId());
@@ -353,11 +351,11 @@ public class EventLogManagerTests {
                         "Expected sent and received to be equivalent except for status changes but received {0} when previous was {1}.",
                         updatedRecord, curRec);
 
-                if (status == JobStatus.DONE) {
+                if (status == IngestJobStatus.DONE) {
                     assertTrue(startDate.equals(updatedRecord.getEndTime().get()),
                             "Expected end time of {0} but received {1}.",
                             startDate, updatedRecord.getEndTime().get());
-                } else if (status == JobStatus.RUNNING) {
+                } else if (status == IngestJobStatus.RUNNING) {
                     assertTrue(startDate.equals(updatedRecord.getStartTime().get()),
                             "Expected end time of {0} but received {1}.",
                             startDate, updatedRecord.getStartTime().get());
@@ -382,16 +380,16 @@ public class EventLogManagerTests {
      *
      * @throws SQLException
      */
-    private static void verifyStatus(EventLogManager manager, List<JobRecord> expectedPendingIds, List<JobRecord> expectedRunningIds, List<JobRecord> expectedDoneIds) throws SQLException {
-        List<Pair<JobStatus, List<JobRecord>>> itemsToCheck = Arrays.asList(
-                Pair.of(JobStatus.PENDING, expectedPendingIds),
-                Pair.of(JobStatus.RUNNING, expectedRunningIds),
-                Pair.of(JobStatus.DONE, expectedDoneIds));
+    private static void verifyStatus(ClusterJournalManager manager, List<IngestJobRecord> expectedPendingIds, List<IngestJobRecord> expectedRunningIds, List<IngestJobRecord> expectedDoneIds) throws SQLException {
+        List<Pair<IngestJobStatus, List<IngestJobRecord>>> itemsToCheck = Arrays.asList(
+                Pair.of(IngestJobStatus.PENDING, expectedPendingIds),
+                Pair.of(IngestJobStatus.RUNNING, expectedRunningIds),
+                Pair.of(IngestJobStatus.DONE, expectedDoneIds));
 
-        for (Pair<JobStatus, List<JobRecord>> statusCounts : itemsToCheck) {
-            List<JobRecord> fromDatabase = manager.getJobs(statusCounts.getKey());
+        for (Pair<IngestJobStatus, List<IngestJobRecord>> statusCounts : itemsToCheck) {
+            List<IngestJobRecord> fromDatabase = manager.getJobs(statusCounts.getKey());
 
-            List<JobRecord> expectedJobs = statusCounts.getValue() == null ? Collections.emptyList() : statusCounts.getValue();
+            List<IngestJobRecord> expectedJobs = statusCounts.getValue() == null ? Collections.emptyList() : statusCounts.getValue();
             Set<Long> expectedIds = expectedJobs.stream()
                     .map(r -> r.getId())
                     .collect(Collectors.toSet());
@@ -402,7 +400,7 @@ public class EventLogManagerTests {
                     fromDatabase.size(),
                     getStr(fromDatabase));
 
-            List<JobRecord> intersection = fromDatabase.stream()
+            List<IngestJobRecord> intersection = fromDatabase.stream()
                     .filter(r -> !expectedIds.contains(r.getId()))
                     .collect(Collectors.toList());
 

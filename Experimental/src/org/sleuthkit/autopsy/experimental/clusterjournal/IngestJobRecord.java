@@ -16,15 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.eventlog;
+package org.sleuthkit.autopsy.experimental.clusterjournal;
 
 import java.util.Date;
 import java.util.Optional;
 
 /**
- * The record for the job.
+ * The record in the database for the ingest job.
  */
-public class JobRecord {
+public class IngestJobRecord {
 
     private final long id;
     private final long caseId;
@@ -32,20 +32,20 @@ public class JobRecord {
     private final String dataSourceName;
     private final Optional<Date> startTime;
     private final Optional<Date> endTime;
-    private final JobStatus status;
+    private final IngestJobStatus status;
 
     /**
      * Main constructor.
      *
      * @param id             The id of the job.
-     * @param caseId         The parent case id in the event log.
+     * @param caseId         The parent case id in the cluster journal.
      * @param caseName       The name of the case.
      * @param dataSourceName The name of the data source.
      * @param startTime      The start time of processing.
      * @param endTime        The end time of processing.
      * @param status         The current status.
      */
-    JobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Date> startTime, Optional<Date> endTime, JobStatus status) {
+    IngestJobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Date> startTime, Optional<Date> endTime, IngestJobStatus status) {
         this.id = id;
         this.caseId = caseId;
         this.caseName = caseName;
@@ -63,7 +63,7 @@ public class JobRecord {
     }
 
     /**
-     * @return The parent case id in the event log.
+     * @return The parent case id in the cluster journal.
      */
     public long getCaseId() {
         return caseId;
@@ -100,7 +100,7 @@ public class JobRecord {
     /**
      * @return The current status.
      */
-    public JobStatus getStatus() {
+    public IngestJobStatus getStatus() {
         return status;
     }
 

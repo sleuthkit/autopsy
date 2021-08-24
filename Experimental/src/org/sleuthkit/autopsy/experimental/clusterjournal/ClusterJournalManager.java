@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.eventlog;
+package org.sleuthkit.autopsy.experimental.clusterjournal;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.sql.Connection;
@@ -40,22 +40,22 @@ import javax.sql.DataSource;
 /**
  * Captures auto ingest events like start of ingest job or completion.
  */
-public class EventLogManager {
+public class ClusterJournalManager {
 
-    private static final String DB_NAME = "event_log";
+    private static final String DB_NAME = "cluster_journal";
     private static final String PG_JDBC_BASE_URI = "jdbc:postgresql://";
     private static final String PG_JDBC_DRIVER = "org.postgresql.Driver";
 
-    private static EventLogManager instance;
+    private static ClusterJournalManager instance;
 
     /**
-     * Returns singleton instance of the event log manager for auto ingest.
+     * Returns singleton instance of the cluster journal manager for auto ingest.
      *
      * @return The singleton instance.
      *
      * @throws UserPreferencesException
      */
-    public static EventLogManager getInstance() throws EventLogException {
+    public synchronized static ClusterJournalManager getInstance() throws ClusterJournalException {
         if (instance == null) {
             String dbName = DB_NAME;
             CaseDbConnectionInfo connectionInfo = getConnectionInfo();
@@ -71,7 +71,7 @@ public class EventLogManager {
 
             verifyOrCreateSchema(dataSource, dbName);
 
-            instance = new EventLogManager(dataSource);
+            instance = new ClusterJournalManager(dataSource);
         }
 
         return instance;
@@ -82,13 +82,13 @@ public class EventLogManager {
      *
      * @return The connection preferences.
      *
-     * @throws EventLogException
+     * @throws ClusterJournalException
      */
-    static CaseDbConnectionInfo getConnectionInfo() throws EventLogException {
+    static CaseDbConnectionInfo getConnectionInfo() throws ClusterJournalException {
         try {
             return UserPreferences.getDatabaseConnectionInfo();
         } catch (UserPreferencesException ex) {
-            throw new EventLogException("An error occurred while fetching multiuser settings.", ex);
+            throw new ClusterJournalException("An error occurred while fetching multiuser settings.", ex);
         }
     }
 
@@ -99,15 +99,15 @@ public class EventLogManager {
      * @param dataSource The data source.
      * @param dbName     The database name for error reporting purposes.
      *
-     * @throws EventLogException
+     * @throws ClusterJournalException
      */
-    static void verifyOrCreateSchema(DataSource dataSource, String dbName) throws EventLogException {
+    static void verifyOrCreateSchema(DataSource dataSource, String dbName) throws ClusterJournalException {
         try (final Connection dbConn = dataSource.getConnection()) {
             if (!createDbSchema(dbConn)) {
-                throw new EventLogException("Unable to create schema for: " + dbName);
+                throw new ClusterJournalException("Unable to create schema for: " + dbName);
             }
         } catch (SQLException ex) {
-            throw new EventLogException(MessageFormat.format(
+            throw new ClusterJournalException(MessageFormat.format(
                     "An error occurred while verifying that schema in database {0} was properly configured.", dbName),
                     ex);
         }
@@ -124,17 +124,17 @@ public class EventLogManager {
      * @param dbName   The name of the pg database. If empty, the root
      *                 "postgres" database is used.
      *
-     * @throws EventLogException
+     * @throws ClusterJournalException
      */
-    static void verifyOrCreatePgDb(String host, String port, String userName, String password, String dbName) throws EventLogException {
+    static void verifyOrCreatePgDb(String host, String port, String userName, String password, String dbName) throws ClusterJournalException {
         try (Connection pgConn = getPgConnection(host, port, userName, password, Optional.empty())) {
             if (!verifyDatabaseExists(pgConn, dbName)) {
                 if (!createDatabase(pgConn, dbName, userName)) {
-                    throw new EventLogException("Unable to create EventLogManager database: " + dbName);
+                    throw new ClusterJournalException("Unable to create ClusterJournalManager database: " + dbName);
                 }
             }
         } catch (SQLException | ClassNotFoundException ex) {
-            throw new EventLogException(MessageFormat.format("An error occurred while verifying that postgres database {0} exists.", dbName), ex);
+            throw new ClusterJournalException(MessageFormat.format("An error occurred while verifying that postgres database {0} exists.", dbName), ex);
         }
     }
 
@@ -260,7 +260,7 @@ public class EventLogManager {
 
             stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS case_name_idx ON cases(name)");
 
-            stmt.execute("CREATE TABLE IF NOT EXISTS jobs(\n"
+            stmt.execute("CREATE TABLE IF NOT EXISTS ingest_jobs(\n"
                     + "	job_id SERIAL PRIMARY KEY, \n"
                     + "	data_source_name TEXT, \n"
                     + "	start_time TIMESTAMP WITHOUT TIME ZONE, \n"
@@ -270,7 +270,7 @@ public class EventLogManager {
                     + "	FOREIGN KEY(case_id) REFERENCES cases(case_id) ON DELETE CASCADE\n"
                     + ")");
 
-            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS jobs_case_ds_idx ON jobs(case_id, data_source_name);");
+            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS ingest_jobs_case_ds_idx ON ingest_jobs(case_id, data_source_name);");
 
             stmt.execute("CREATE TABLE IF NOT EXISTS db_versions(\n"
                     + "	major_version INTEGER, \n"
@@ -300,7 +300,7 @@ public class EventLogManager {
      * @param dataSource The pooled data source connection to use. This assumes
      *                   that database and schema exist.
      */
-    EventLogManager(ComboPooledDataSource dataSource) {
+    ClusterJournalManager(ComboPooledDataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -330,21 +330,21 @@ public class EventLogManager {
      *
      * @param caseName The unique name of the case.
      *
-     * @return The case record in the event log of the given case name.
+     * @return The case record in the cluster journal of the given case name.
      *
      * @throws SQLException
      */
     public CaseRecord getOrCreateCaseRecord(String caseName) throws SQLException {
         try (Connection conn = dataSource.getConnection();
-                // taken from https://stackoverflow.com/a/40325406
-                PreparedStatement query = conn.prepareStatement("WITH ins AS (\n"
-                        + "   INSERT INTO cases(name) VALUES(?)\n"
-                        + "   ON CONFLICT DO NOTHING\n"
-                        + "   RETURNING name, case_id\n"
-                        + "   )\n"
-                        + "SELECT name, case_id FROM ins\n"
-                        + "UNION ALL\n"
-                        + "SELECT name, case_id FROM cases WHERE name = ?")) {
+            // taken from https://stackoverflow.com/a/40325406
+            PreparedStatement query = conn.prepareStatement("WITH ins AS (\n"
+                    + "   INSERT INTO cases(name) VALUES(?)\n"
+                    + "   ON CONFLICT DO NOTHING\n"
+                    + "   RETURNING name, case_id\n"
+                    + "   )\n"
+                    + "SELECT name, case_id FROM ins\n"
+                    + "UNION ALL\n"
+                    + "SELECT name, case_id FROM cases WHERE name = ?")) {
 
             query.setString(1, caseName);
             query.setString(2, caseName);
@@ -364,7 +364,7 @@ public class EventLogManager {
      * Returns the job record denoted by the case id and data source or creates
      * a new entry.
      *
-     * @param caseId         The case id in the event log.
+     * @param caseId         The case id in the cluster journal.
      * @param dataSourceName The data source name (caseId and dataSourceName
      *                       must be unique)
      *
@@ -372,23 +372,23 @@ public class EventLogManager {
      *
      * @throws SQLException
      */
-    public JobRecord getOrCreateJobRecord(long caseId, String dataSourceName) throws SQLException {
+    public IngestJobRecord getOrCreateJobRecord(long caseId, String dataSourceName) throws SQLException {
         try (Connection conn = dataSource.getConnection();
                 // taken from https://stackoverflow.com/a/40325406
                 PreparedStatement query = conn.prepareStatement("WITH ins AS (\n"
-                        + "   INSERT INTO jobs(data_source_name, start_time, end_time, status, case_id) VALUES(?, NULL, NULL, ?, ?)\n"
+                        + "   INSERT INTO ingest_jobs(data_source_name, start_time, end_time, status, case_id) VALUES(?, NULL, NULL, ?, ?)\n"
                         + "   ON CONFLICT DO NOTHING\n"
                         + "   RETURNING *\n"
                         + "   )\n"
                         + "SELECT j.job_id, j.data_source_name, j.start_time, j.end_time, j.status, j.case_id, c.name AS case_name\n"
                         + "FROM (SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM ins\n"
                         + "UNION ALL\n"
-                        + "(SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM jobs\n"
+                        + "(SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM ingest_jobs\n"
                         + "WHERE case_id = ? AND data_source_name = ?)) j\n"
                         + "INNER JOIN cases c ON c.case_id = j.case_id ")) {
 
             query.setString(1, dataSourceName);
-            query.setInt(2, JobStatus.PENDING.getDbVal());
+            query.setInt(2, IngestJobStatus.PENDING.getDbVal());
             query.setLong(3, caseId);
             query.setLong(4, caseId);
             query.setString(5, dataSourceName);
@@ -415,19 +415,19 @@ public class EventLogManager {
      *
      * @throws SQLException
      */
-    public Optional<JobRecord> setJobStatus(long jobId, JobStatus newStatus, Date date) throws SQLException {
+    public Optional<IngestJobRecord> setJobStatus(long jobId, IngestJobStatus newStatus, Date date) throws SQLException {
 
         String updateStr;
         switch (newStatus) {
             case RUNNING:
-                updateStr = "UPDATE jobs SET status = ?, start_time = ? WHERE job_id = ?";
+                updateStr = "UPDATE ingest_jobs SET status = ?, start_time = ? WHERE job_id = ?";
                 break;
             case DONE:
-                updateStr = "UPDATE jobs SET status = ?, end_time = ? WHERE job_id = ?";
+                updateStr = "UPDATE ingest_jobs SET status = ?, end_time = ? WHERE job_id = ?";
                 break;
             case PENDING:
             default:
-                updateStr = "UPDATE jobs SET status = ? WHERE job_id = ?";
+                updateStr = "UPDATE ingest_jobs SET status = ? WHERE job_id = ?";
                 break;
         }
 
@@ -470,7 +470,7 @@ public class EventLogManager {
     }
 
     /**
-     * Retrieves all the jobs of the given status.
+     * Retrieves all the ingest jobs of the given status.
      *
      * @param status The status.
      *
@@ -478,20 +478,20 @@ public class EventLogManager {
      *
      * @throws SQLException
      */
-    public List<JobRecord> getJobs(JobStatus status) throws SQLException {
-        List<JobRecord> toReturn = new ArrayList<>();
+    public List<IngestJobRecord> getJobs(IngestJobStatus status) throws SQLException {
+        List<IngestJobRecord> toReturn = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement query = conn.prepareStatement(
                         "SELECT "
-                        + "jobs.job_id, "
-                        + "jobs.data_source_name, "
-                        + "jobs.start_time, "
-                        + "jobs.end_time, "
-                        + "jobs.status, "
-                        + "jobs.case_id, "
+                        + "ingest_jobs.job_id, "
+                        + "ingest_jobs.data_source_name, "
+                        + "ingest_jobs.start_time, "
+                        + "ingest_jobs.end_time, "
+                        + "ingest_jobs.status, "
+                        + "ingest_jobs.case_id, "
                         + "cases.name AS case_name "
-                        + "FROM jobs INNER JOIN cases ON cases.case_id = jobs.case_id "
-                        + "WHERE jobs.status = ?")) {
+                        + "FROM ingest_jobs INNER JOIN cases ON cases.case_id = ingest_jobs.case_id "
+                        + "WHERE ingest_jobs.status = ?")) {
 
             query.setInt(1, status.getDbVal());
 
@@ -516,14 +516,14 @@ public class EventLogManager {
      *
      * @throws SQLException
      */
-    private JobRecord getJobRecord(ResultSet rs) throws SQLException {
-        return new JobRecord(rs.getLong("job_id"),
+    private IngestJobRecord getJobRecord(ResultSet rs) throws SQLException {
+        return new IngestJobRecord(rs.getLong("job_id"),
                 rs.getLong("case_id"),
                 rs.getString("case_name"),
                 rs.getString("data_source_name"),
                 Optional.ofNullable(rs.getTimestamp("start_time")),
                 Optional.ofNullable(rs.getTimestamp("end_time")),
-                JobStatus.getFromDbVal(rs.getInt("status")).orElse(null));
+                IngestJobStatus.getFromDbVal(rs.getInt("status")).orElse(null));
     }
 
 }

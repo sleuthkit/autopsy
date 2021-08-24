@@ -3,18 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.experimental.eventlog;
+package org.sleuthkit.autopsy.experimental.clusterjournal;
 
 /**
- * Exception thrown if there is a problem in the EventLogManager initialization.
+ * Exception thrown if there is a problem in the ClusterJournalManager initialization.
  */
-public class EventLogException extends Exception {
+public class ClusterJournalException extends Exception {
     
     /**
      * Main constructor.
      * @param message The message.
      */
-    EventLogException(String message) {
+    ClusterJournalException(String message) {
         super(message);
     }
 
@@ -23,7 +23,7 @@ public class EventLogException extends Exception {
      * @param message The message.
      * @param exception The inner exception.
      */
-    EventLogException(String message, Throwable exception) {
+    ClusterJournalException(String message, Throwable exception) {
         super(message, exception);
     }
     

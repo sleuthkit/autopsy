@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.eventlog;
+package org.sleuthkit.autopsy.experimental.clusterjournal;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 /**
  * The status of the job.
  */
-public enum JobStatus {
+public enum IngestJobStatus {
     PENDING(0), RUNNING(1), DONE(2);
     private int dbVal;
 
@@ -32,7 +32,7 @@ public enum JobStatus {
      * Constructor.
      * @param dbVal The integer value used to represent the status in the database. 
      */
-    JobStatus(int dbVal) {
+    IngestJobStatus(int dbVal) {
         this.dbVal = dbVal;
     }
 
@@ -48,11 +48,11 @@ public enum JobStatus {
      * @param dbVal The integer value used to represent the status in the database. 
      * @return The job status if found or empty if not.
      */
-    public static Optional<JobStatus> getFromDbVal(Integer dbVal) {
+    public static Optional<IngestJobStatus> getFromDbVal(Integer dbVal) {
         if (dbVal == null) {
             return Optional.empty();
         }
-        return Stream.of(JobStatus.values()).filter(s -> s.getDbVal() == dbVal).findFirst();
+        return Stream.of(IngestJobStatus.values()).filter(s -> s.getDbVal() == dbVal).findFirst();
     }
     
 }
