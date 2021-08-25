@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.uiutils;
+package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,24 +37,24 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModel.HorizontalAlign;
+import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.CellModel.HorizontalAlign;
 
 /**
  * Class for handling Excel exporting.
  */
-public class ExcelExport {
+class ExcelExport {
 
     /**
      * Exception thrown in the event of an excel export issue.
      */
-    public static class ExcelExportException extends Exception {
+    static class ExcelExportException extends Exception {
 
         /**
          * Constructor.
          *
          * @param string The message.
          */
-        public ExcelExportException(String string) {
+        ExcelExportException(String string) {
             super(string);
         }
 
@@ -64,7 +64,7 @@ public class ExcelExport {
          * @param string The message.
          * @param thrwbl The inner exception.
          */
-        public ExcelExportException(String string, Throwable thrwbl) {
+        ExcelExportException(String string, Throwable thrwbl) {
             super(string, thrwbl);
         }
     }
@@ -153,7 +153,7 @@ public class ExcelExport {
     /**
      * Class detailing aspects of the worksheet.
      */
-    public static class WorksheetEnv {
+    static class WorksheetEnv {
 
         private final CellStyle headerStyle;
         private final Workbook parentWorkbook;
@@ -182,7 +182,7 @@ public class ExcelExport {
          * @param cellStyleKey The key.
          * @return The cell style representing this key.
          */
-        public CellStyle getCellStyle(CellStyleKey cellStyleKey) {
+        CellStyle getCellStyle(CellStyleKey cellStyleKey) {
             return cellStyleCache.computeIfAbsent(cellStyleKey, (pair) -> {
                 CellStyle computed = this.parentWorkbook.createCellStyle();
                 computed.cloneStyleFrom(cellStyleKey.getCellStyle() == null ? defaultStyle : cellStyleKey.getCellStyle());
@@ -203,7 +203,7 @@ public class ExcelExport {
          *
          * @return The cell style to use for headers.
          */
-        public CellStyle getHeaderStyle() {
+        CellStyle getHeaderStyle() {
             return headerStyle;
         }
 
@@ -212,7 +212,7 @@ public class ExcelExport {
          *
          * @return The cell style for default items.
          */
-        public CellStyle getDefaultCellStyle() {
+        CellStyle getDefaultCellStyle() {
             return defaultStyle;
         }
 
@@ -221,7 +221,7 @@ public class ExcelExport {
          *
          * @return The parent workbook.
          */
-        public Workbook getParentWorkbook() {
+        Workbook getParentWorkbook() {
             return parentWorkbook;
         }
     }
@@ -229,7 +229,7 @@ public class ExcelExport {
     /**
      * An item to be exported as a sheet during export.
      */
-    public static interface ExcelSheetExport {
+    static interface ExcelSheetExport {
 
         /**
          * Returns the name of the sheet to use with this item.
@@ -250,23 +250,7 @@ public class ExcelExport {
         void renderSheet(Sheet sheet, WorksheetEnv env) throws ExcelExportException;
     }
 
-    private static ExcelExport instance = null;
-
-    /**
-     * Retrieves a singleton instance of this class.
-     *
-     * @return The instance.
-     */
-    public static ExcelExport getInstance() {
-        if (instance == null) {
-            instance = new ExcelExport();
-        }
-
-        return instance;
-    }
-
     private ExcelExport() {
-
     }
 
     /**
@@ -281,7 +265,7 @@ public class ExcelExport {
         "# {0} - sheetNumber",
         "ExcelExport_writeExcel_noSheetName=Sheet {0}"
     })
-    public void writeExcel(List<ExcelSheetExport> exports, File path) throws IOException, ExcelExportException {
+    static void writeExcel(List<ExcelSheetExport> exports, File path) throws IOException, ExcelExportException {
         // Create a Workbook
         Workbook workbook = new XSSFWorkbook(); // new HSSFWorkbook() for generating `.xls` file
 
@@ -337,7 +321,7 @@ public class ExcelExport {
      * @param cellStyle The style to use.
      * @return The created cell.
      */
-    static Cell createCell(WorksheetEnv env, Row row, int colNum, ExcelCellModel cellModel, Optional<CellStyle> cellStyle) {
+    static Cell createCell(WorksheetEnv env, Row row, int colNum, CellModel cellModel, Optional<CellStyle> cellStyle) {
         CellStyle cellStyleToUse = cellStyle.orElse(env.getDefaultCellStyle());
 
         if (cellModel.getExcelFormatString() != null || cellModel.getHorizontalAlignment() != null) {

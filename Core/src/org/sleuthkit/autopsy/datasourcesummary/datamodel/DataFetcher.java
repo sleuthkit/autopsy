@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.uiutils;
+package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 /**
  * A function that accepts input of type I and outputs type O. This function is
