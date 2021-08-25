@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,21 +18,18 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -40,13 +37,12 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
- * Helper class for getting data for the Recent Files Data Summary tab.
+ * Helper class for getting Recent Activity data.
  */
-public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
+public class RecentFilesSummary {
 
     private final static BlackboardAttribute.Type DATETIME_ACCESSED_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED);
     private final static BlackboardAttribute.Type DOMAIN_ATT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN);
@@ -57,14 +53,6 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
     private final static BlackboardArtifact.Type ASSOCATED_OBJ_ART = new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
 
     private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
-
-    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID(),
-            ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID(),
-            ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID(),
-            ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-            ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
-    ));
 
     private final SleuthkitCaseProvider provider;
 
@@ -88,11 +76,6 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
         this.provider = provider;
     }
 
-    @Override
-    public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return ARTIFACT_UPDATE_TYPE_IDS;
-    }
-
     /**
      * Removes fileDetails entries with redundant paths, sorts by date
      * descending and limits to the limit provided.
@@ -101,7 +84,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * @param limit The maximum number of entries to return.
      * @return The sorted limited list with unique paths.
      */
-    private <T extends RecentFileDetails> List<T> getSortedLimited(List<T> fileDetails, int limit) {
+    private static <T extends RecentFileDetails> List<T> getSortedLimited(List<T> fileDetails, int limit) {
         Map<String, T> fileDetailsMap = fileDetails.stream()
                 .filter(details -> details != null)
                 .collect(Collectors.toMap(
@@ -122,7 +105,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * @param artifact The artifact.
      * @return The derived object or null if artifact is invalid.
      */
-    private RecentFileDetails getRecentlyOpenedDocument(BlackboardArtifact artifact) {
+    private static RecentFileDetails getRecentlyOpenedDocument(BlackboardArtifact artifact) {
         String path = DataSourceInfoUtilities.getStringOrNull(artifact, PATH_ATT);
         Long lastOpened = DataSourceInfoUtilities.getLongOrNull(artifact, DATETIME_ACCESSED_ATT);
 
@@ -170,7 +153,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * @param artifact The artifact.
      * @return The derived object or null if artifact is invalid.
      */
-    private RecentDownloadDetails getRecentDownload(BlackboardArtifact artifact) {
+    private static RecentDownloadDetails getRecentDownload(BlackboardArtifact artifact) {
         Long accessedTime = DataSourceInfoUtilities.getLongOrNull(artifact, DATETIME_ACCESSED_ATT);
         String domain = DataSourceInfoUtilities.getStringOrNull(artifact, DOMAIN_ATT);
         String path = DataSourceInfoUtilities.getStringOrNull(artifact, PATH_ATT);
@@ -187,7 +170,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @param count The count.
      */
-    private void throwOnNonPositiveCount(int count) {
+    private static void throwOnNonPositiveCount(int count) {
         if (count < 1) {
             throw new IllegalArgumentException("Invalid count: value must be greater than 0.");
         }
@@ -268,7 +251,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      * @return The derived object or null.
      * @throws TskCoreException
      */
-    private RecentAttachmentDetails getRecentAttachment(BlackboardArtifact artifact, SleuthkitCase skCase) throws TskCoreException {
+    private static RecentAttachmentDetails getRecentAttachment(BlackboardArtifact artifact, SleuthkitCase skCase) throws TskCoreException {
         // get associated artifact or return no result
         BlackboardAttribute attribute = artifact.getAttribute(ASSOCATED_ATT);
         if (attribute == null) {
@@ -309,7 +292,7 @@ public class RecentFilesSummary implements DefaultArtifactUpdateGovernor {
      *
      * @return True if the given artifact is a message artifact
      */
-    private boolean isMessageArtifact(BlackboardArtifact nodeArtifact) {
+    private static boolean isMessageArtifact(BlackboardArtifact nodeArtifact) {
         final int artifactTypeID = nodeArtifact.getArtifactTypeID();
         return artifactTypeID == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
                 || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID();

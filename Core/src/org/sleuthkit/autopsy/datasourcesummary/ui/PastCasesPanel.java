@@ -19,21 +19,16 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
-import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getFetchResult;
-import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getTableExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.datamodel.DataSource;
@@ -84,19 +79,19 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
     private final DataFetcher<DataSource, PastCasesResult> pastCasesFetcher;
-    
+
     public PastCasesPanel() {
-        this(new PastCasesSummary());
+        this(new PastCasesSummaryGetter());
     }
 
     /**
      * Creates new form PastCasesPanel
      */
-    public PastCasesPanel(PastCasesSummary pastCaseData) {
+    public PastCasesPanel(PastCasesSummaryGetter pastCaseData) {
         super(pastCaseData);
 
         this.pastCasesFetcher = (dataSource) -> pastCaseData.getPastCasesData(dataSource);
-        
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(
@@ -126,19 +121,6 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     @Override
     protected void onNewDataSource(DataSource dataSource) {
         onNewDataSource(dataFetchComponents, tables, dataSource);
-    }
-
-    @Override
-    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
-        PastCasesResult result = getFetchResult(pastCasesFetcher, "Past cases sheets", dataSource);
-        if (result == null) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.asList(
-                getTableExport(DEFAULT_TEMPLATE, Bundle.PastCasesPanel_notableFileTable_tabName(), result.getTaggedNotable()),
-                getTableExport(DEFAULT_TEMPLATE, Bundle.PastCasesPanel_sameIdsTable_tabName(), result.getSameIdsResults())
-        );
     }
 
     @Override
