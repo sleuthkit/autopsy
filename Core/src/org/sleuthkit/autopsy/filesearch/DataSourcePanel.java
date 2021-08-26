@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -150,6 +150,19 @@ public class DataSourcePanel extends javax.swing.JPanel {
         boolean enabled = this.isSelected();
         this.dataSourceList.setEnabled(enabled);
         this.dataSourceNoteLabel.setEnabled(enabled);
+    }
+
+    /**
+     * Set the data source initially selected in this filter.
+     *
+     * @param dataSourceId - The object ID of the data source which will be
+     *                     selected.
+     */
+    void setDataSourceSelected(long dataSourceId) {
+        this.dataSourceCheckBox.setSelected(true);
+        setComponentsEnabled();
+        String dataSourceName = dataSourceMap.get(dataSourceId);
+        dataSourceList.setSelectedValue(dataSourceName, true);
     }
 
     /**

@@ -57,13 +57,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class FileSearchPanel extends javax.swing.JPanel {
-
+    
     private static final Logger logger = Logger.getLogger(FileSearchPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final List<FileSearchFilter> filters = new ArrayList<>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
-    private static MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
-    private static DataSourceFilter dataSourceFilter = new DataSourceFilter();
+    private static final MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
+    private static final DataSourceFilter dataSourceFilter = new DataSourceFilter();
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
     private static SwingWorker<TableFilterNode, Void> searchWorker = null;
 
@@ -106,7 +106,6 @@ class FileSearchPanel extends javax.swing.JPanel {
         DateSearchFilter dateFilter = new DateSearchFilter();
         KnownStatusSearchFilter knowStatusFilter = new KnownStatusSearchFilter();
         HashSearchFilter hashFilter = new HashSearchFilter();
-
         panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"), nameFilter));
 
         panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), sizeFilter));
@@ -147,6 +146,15 @@ class FileSearchPanel extends javax.swing.JPanel {
             }
         });
         searchButton.setEnabled(isValidSearch());
+    }
+
+    /**
+     * Set the data source filter to select the specified data source initially.
+     *
+     * @param dataSourceId - The data source to select.
+     */
+    void setDataSourceFilter(long dataSourceId) {
+        dataSourceFilter.setSelectedDataSource(dataSourceId);
     }
 
     /**
@@ -334,7 +342,7 @@ class FileSearchPanel extends javax.swing.JPanel {
 
         return enabledFilters;
     }
-    
+
     /**
      * Reset the filters which are populated with options based on the contents
      * of the current case.
