@@ -33,19 +33,21 @@ public class IngestJobRecord {
     private final Optional<Date> startTime;
     private final Optional<Date> endTime;
     private final IngestJobStatus status;
+    private final boolean ingestError;
 
     /**
      * Main constructor.
      *
      * @param id             The id of the job.
-     * @param caseId         The parent case id in the cluster journal.
+     * @param caseId         The parent case id in the event log.
      * @param caseName       The name of the case.
      * @param dataSourceName The name of the data source.
      * @param startTime      The start time of processing.
      * @param endTime        The end time of processing.
      * @param status         The current status.
+     * @param ingestError    There was an error on ingest.
      */
-    IngestJobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Date> startTime, Optional<Date> endTime, IngestJobStatus status) {
+    public IngestJobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Date> startTime, Optional<Date> endTime, IngestJobStatus status, boolean ingestError) {
         this.id = id;
         this.caseId = caseId;
         this.caseName = caseName;
@@ -53,6 +55,7 @@ public class IngestJobRecord {
         this.startTime = startTime;
         this.endTime = endTime;
         this.status = status;
+        this.ingestError = ingestError;
     }
 
     /**
@@ -63,7 +66,7 @@ public class IngestJobRecord {
     }
 
     /**
-     * @return The parent case id in the cluster journal.
+     * @return The parent case id in the event log.
      */
     public long getCaseId() {
         return caseId;
@@ -104,14 +107,17 @@ public class IngestJobRecord {
         return status;
     }
 
+    /**
+     * @return There was an error associated with this ingest.
+     */
+    public boolean getIngestError() {
+        return ingestError;
+    }
+
     @Override
     public String toString() {
-        return "JobRecord{" + "id=" + id
-                + ", caseId=" + caseId
-                + ", caseName=" + caseName
-                + ", dataSourceName=" + dataSourceName
-                + ", startTime=" + startTime + ", endTime="
-                + endTime + ", status="
-                + status + '}';
+        return "IngestJobRecord{" + "id=" + id + ", caseId=" + caseId + ", caseName=" + caseName + ", dataSourceName=" + dataSourceName + ", startTime=" + startTime + ", endTime=" + endTime + ", status=" + status + ", ingestError=" + ingestError + '}';
     }
+    
+    
 }

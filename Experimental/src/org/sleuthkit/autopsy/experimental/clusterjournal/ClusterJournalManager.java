@@ -49,7 +49,8 @@ public class ClusterJournalManager {
     private static ClusterJournalManager instance;
 
     /**
-     * Returns singleton instance of the cluster journal manager for auto ingest.
+     * Returns singleton instance of the cluster journal manager for auto
+     * ingest.
      *
      * @return The singleton instance.
      *
@@ -256,7 +257,11 @@ public class ClusterJournalManager {
         try (Statement stmt = conn.createStatement()) {
             conn.setAutoCommit(false);
 
-            stmt.execute("CREATE TABLE IF NOT EXISTS cases(case_id SERIAL PRIMARY KEY, name TEXT)");
+            stmt.execute("CREATE TABLE IF NOT EXISTS cases(\n"
+                    + "	case_id SERIAL PRIMARY KEY, \n"
+                    + "	name TEXT, \n"
+                    + "	created_date TIMESTAMP WITHOUT TIME ZONE\n"
+                    + ")");
 
             stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS case_name_idx ON cases(name)");
 
@@ -266,6 +271,7 @@ public class ClusterJournalManager {
                     + "	start_time TIMESTAMP WITHOUT TIME ZONE, \n"
                     + "	end_time TIMESTAMP WITHOUT TIME ZONE,\n"
                     + "	status SMALLINT,\n"
+                    + "	error_occurred BOOLEAN,\n"
                     + "	case_id INTEGER,\n"
                     + "	FOREIGN KEY(case_id) REFERENCES cases(case_id) ON DELETE CASCADE\n"
                     + ")");
@@ -321,33 +327,35 @@ public class ClusterJournalManager {
      * @throws SQLException
      */
     private CaseRecord getCaseRecord(ResultSet rs) throws SQLException {
-        return new CaseRecord(rs.getLong("case_id"), rs.getString("name"));
+        return new CaseRecord(rs.getLong("case_id"), rs.getString("name"), Optional.ofNullable(rs.getTimestamp("created_date")));
     }
 
     /**
      * Returns the case record denoted by the case name or creates a new entry
      * and returns the record.
      *
-     * @param caseName The unique name of the case.
+     * @param caseName    The unique name of the case.
+     * @param createdDate The date the item is created.
      *
      * @return The case record in the cluster journal of the given case name.
      *
      * @throws SQLException
      */
-    public CaseRecord getOrCreateCaseRecord(String caseName) throws SQLException {
+    public CaseRecord getOrCreateCaseRecord(String caseName, Optional<Date> createdDate) throws SQLException {
         try (Connection conn = dataSource.getConnection();
-            // taken from https://stackoverflow.com/a/40325406
-            PreparedStatement query = conn.prepareStatement("WITH ins AS (\n"
-                    + "   INSERT INTO cases(name) VALUES(?)\n"
-                    + "   ON CONFLICT DO NOTHING\n"
-                    + "   RETURNING name, case_id\n"
-                    + "   )\n"
-                    + "SELECT name, case_id FROM ins\n"
-                    + "UNION ALL\n"
-                    + "SELECT name, case_id FROM cases WHERE name = ?")) {
+                // taken from https://stackoverflow.com/a/40325406
+                PreparedStatement query = conn.prepareStatement("WITH ins AS (\n"
+                        + "   INSERT INTO cases(name, created_date) VALUES(?, ?)\n"
+                        + "   ON CONFLICT DO NOTHING\n"
+                        + "   RETURNING name, case_id, created_date\n"
+                        + "   )\n"
+                        + "SELECT name, case_id, created_date FROM ins\n"
+                        + "UNION ALL\n"
+                        + "SELECT name, case_id, created_date FROM cases WHERE name = ?")) {
 
             query.setString(1, caseName);
-            query.setString(2, caseName);
+            query.setDate(2, createdDate.map(d -> new java.sql.Date(d.getTime())).orElse(null));
+            query.setString(3, caseName);
 
             try (ResultSet queryResults = query.executeQuery()) {
                 if (!queryResults.next()) {
@@ -376,22 +384,22 @@ public class ClusterJournalManager {
         try (Connection conn = dataSource.getConnection();
                 // taken from https://stackoverflow.com/a/40325406
                 PreparedStatement query = conn.prepareStatement("WITH ins AS (\n"
-                        + "   INSERT INTO ingest_jobs(data_source_name, start_time, end_time, status, case_id) VALUES(?, NULL, NULL, ?, ?)\n"
+                        + "   INSERT INTO ingest_jobs(data_source_name, case_id, status, start_time, end_time, error_occurred) "
+                        + "       VALUES(?, ?, " + IngestJobStatus.PENDING.getDbVal() + ", NULL, NULL, FALSE)\n"
                         + "   ON CONFLICT DO NOTHING\n"
                         + "   RETURNING *\n"
                         + "   )\n"
-                        + "SELECT j.job_id, j.data_source_name, j.start_time, j.end_time, j.status, j.case_id, c.name AS case_name\n"
-                        + "FROM (SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM ins\n"
+                        + "SELECT j.job_id, j.data_source_name, j.start_time, j.end_time, j.status, j.case_id, j.error_occurred, c.name AS case_name\n"
+                        + "FROM (SELECT job_id, data_source_name, start_time, end_time, status, error_occurred, case_id FROM ins\n"
                         + "UNION ALL\n"
-                        + "(SELECT job_id, data_source_name, start_time, end_time, status, case_id FROM ingest_jobs\n"
-                        + "WHERE case_id = ? AND data_source_name = ?)) j\n"
+                        + "(SELECT job_id, data_source_name, start_time, end_time, status, error_occurred, case_id FROM ingest_jobs\n"
+                        + "WHERE data_source_name = ? AND case_id = ?)) j\n"
                         + "INNER JOIN cases c ON c.case_id = j.case_id ")) {
 
             query.setString(1, dataSourceName);
-            query.setInt(2, IngestJobStatus.PENDING.getDbVal());
-            query.setLong(3, caseId);
+            query.setLong(2, caseId);
+            query.setString(3, dataSourceName);
             query.setLong(4, caseId);
-            query.setString(5, dataSourceName);
 
             try (ResultSet queryResults = query.executeQuery()) {
                 if (!queryResults.next()) {
@@ -470,6 +478,43 @@ public class ClusterJournalManager {
     }
 
     /**
+     * Sets the job error status.
+     * @param jobId The job id.
+     * @param errorOccurred Whether or not an error occurred.
+     * @return The updated job record if the job record is present.
+     * @throws SQLException 
+     */
+    public Optional<IngestJobRecord> setJobError(long jobId, boolean errorOccurred) throws SQLException {
+        String updateStr = "UPDATE ingest_jobs SET error_occurred = ? WHERE job_id = ?";
+
+        String fullClause = "WITH updated AS (" + updateStr + " RETURNING *) "
+                + "SELECT "
+                + "updated.job_id, "
+                + "updated.data_source_name, "
+                + "updated.start_time, "
+                + "updated.end_time, "
+                + "updated.status, "
+                + "updated.case_id, "
+                + "cases.name AS case_name "
+                + "FROM updated INNER JOIN cases ON cases.case_id = updated.case_id ";
+
+        try (Connection conn = dataSource.getConnection();
+                PreparedStatement updateStmt = conn.prepareStatement(fullClause)) {
+
+            updateStmt.setBoolean(1, errorOccurred);
+            updateStmt.setLong(2, jobId);
+
+            try (ResultSet rs = updateStmt.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+
+                return Optional.of(getJobRecord(rs));
+            }
+        }
+    }
+
+    /**
      * Retrieves all the ingest jobs of the given status.
      *
      * @param status The status.
@@ -489,6 +534,7 @@ public class ClusterJournalManager {
                         + "ingest_jobs.end_time, "
                         + "ingest_jobs.status, "
                         + "ingest_jobs.case_id, "
+                        + "ingest_jobs.error_occurred, "
                         + "cases.name AS case_name "
                         + "FROM ingest_jobs INNER JOIN cases ON cases.case_id = ingest_jobs.case_id "
                         + "WHERE ingest_jobs.status = ?")) {
@@ -517,13 +563,16 @@ public class ClusterJournalManager {
      * @throws SQLException
      */
     private IngestJobRecord getJobRecord(ResultSet rs) throws SQLException {
-        return new IngestJobRecord(rs.getLong("job_id"),
+        return new IngestJobRecord(
+                rs.getLong("job_id"),
                 rs.getLong("case_id"),
                 rs.getString("case_name"),
                 rs.getString("data_source_name"),
                 Optional.ofNullable(rs.getTimestamp("start_time")),
                 Optional.ofNullable(rs.getTimestamp("end_time")),
-                IngestJobStatus.getFromDbVal(rs.getInt("status")).orElse(null));
+                IngestJobStatus.getFromDbVal(rs.getInt("status")).orElse(null),
+                rs.getBoolean("error_occurred")
+        );
     }
 
 }
