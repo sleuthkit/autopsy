@@ -177,14 +177,6 @@ final class ChromeCacheExtractor {
             currentCase = Case.getCurrentCaseThrows();
             fileManager = currentCase.getServices().getFileManager();
              
-            // Create an output folder to save any derived files
-            absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName, context.getJobId());
-            relOutputFolderName = Paths.get(RAImageIngestModule.getRelModuleOutputPath(currentCase, moduleName, context.getJobId())).normalize().toString();
-            
-            File dir = new File(absOutputFolderName);
-            if (dir.exists() == false) {
-                dir.mkdirs();
-            }
         } catch (NoCurrentCaseException ex) {
             String msg = "Failed to get current case."; //NON-NLS
             throw new IngestModuleException(msg, ex);
@@ -279,6 +271,17 @@ final class ChromeCacheExtractor {
             // Identify each cache folder by searching for the index files in each
             List<AbstractFile> indexFiles = findIndexFiles(); 
             
+            if (indexFiles.size() > 0) {
+                // Create an output folder to save any derived files
+                absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName, context.getJobId());
+                relOutputFolderName = Paths.get(RAImageIngestModule.getRelModuleOutputPath(currentCase, moduleName, context.getJobId())).normalize().toString();
+            
+                File dir = new File(absOutputFolderName);
+                if (dir.exists() == false) {
+                    dir.mkdirs();
+                }
+            }
+
             // Process each of the cache folders
             for (AbstractFile indexFile: indexFiles) {  
                 
