@@ -192,7 +192,7 @@ public class ClusterJournalManagerTests {
         Date caseDate = new Date();
         CaseRecord case1 = manager.getOrCreateCaseRecord(case1Str, Optional.of(caseDate));
         manager.getOrCreateCaseRecord(case2Str, Optional.of(caseDate));
-        List<CaseRecord> caseRecords = getList(testDs, "SELECT case_id, name FROM cases",
+        List<CaseRecord> caseRecords = getList(testDs, "SELECT case_id, name, created_date FROM cases",
                 (rs) -> new CaseRecord(rs.getLong("case_id"), rs.getString("name"), Optional.ofNullable(rs.getTimestamp("created_date"))))
                 .stream()
                 .sorted((a, b) -> Long.compare(a.getId(), b.getId()))
@@ -200,16 +200,16 @@ public class ClusterJournalManagerTests {
         assertTrue(caseRecords.size() == 2, "Expected 2 cases created; received {0} instead", getStr(caseRecords));
         assertTrue(caseRecords.get(0).getName().equals(case1Str), "Expected first case to be {0} but was {1}", case1Str, caseRecords.get(0).getName());
 
-        assertTrue(caseRecords.get(0).getCreatedDate().equals(caseDate),
+        assertTrue(caseDate.equals(caseRecords.get(0).getCreatedDate().get()),
                 "Expected first case to have created date of  {0} but was {1}",
                 caseDate,
-                caseRecords.get(0).getCreatedDate());
+                caseRecords.get(0).getCreatedDate().get());
         assertTrue(caseRecords.get(1).getName().equals(case2Str), "Expected first case to be {0} but was {1}", case2Str, caseRecords.get(1).getName());
 
-        assertTrue(caseRecords.get(1).getCreatedDate().equals(caseDate),
+        assertTrue(caseDate.equals(caseRecords.get(1).getCreatedDate().get()),
                 "Expected second case to have created date of  {0} but was {1}",
                 caseDate,
-                caseRecords.get(1).getCreatedDate());
+                caseRecords.get(1).getCreatedDate().get());
 
         // verify repeat case returns previous
         CaseRecord repeatCase = manager.getOrCreateCaseRecord(case1Str, Optional.of(new Date()));

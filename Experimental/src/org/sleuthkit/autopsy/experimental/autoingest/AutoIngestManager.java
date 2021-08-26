@@ -2253,10 +2253,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 CaseRecord caseRecord = manager.getOrCreateCaseRecord(caseName, Optional.of(job.getManifest().getDateFileCreated()));
                 IngestJobRecord jobRecord = manager.getOrCreateJobRecord(caseRecord.getId(), dataSourceName);
                 manager.setJobStatus(jobRecord.getId(), status, dateToUse);
-
-                if (job.getErrorsOccurred()) {
-                    manager.setJobError(jobRecord.getId(), true);
-                }
+                manager.setJobError(jobRecord.getId(), job.getErrorsOccurred());
             } catch (Exception ex) {
                 // firewall exception to prevent any exception from disrupting processing of data source.
                 sysLogger.log(Level.WARNING, "An error occurred while updating cluster journal database.", ex);

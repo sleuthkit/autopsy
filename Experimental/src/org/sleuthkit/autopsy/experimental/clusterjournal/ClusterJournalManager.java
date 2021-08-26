@@ -354,7 +354,7 @@ public class ClusterJournalManager {
                         + "SELECT name, case_id, created_date FROM cases WHERE name = ?")) {
 
             query.setString(1, caseName);
-            query.setDate(2, createdDate.map(d -> new java.sql.Date(d.getTime())).orElse(null));
+            query.setTimestamp(2, createdDate.map(d -> new Timestamp(d.getTime())).orElse(null));
             query.setString(3, caseName);
 
             try (ResultSet queryResults = query.executeQuery()) {
@@ -447,6 +447,7 @@ public class ClusterJournalManager {
                 + "updated.end_time, "
                 + "updated.status, "
                 + "updated.case_id, "
+                + "updated.error_occurred, "
                 + "cases.name AS case_name "
                 + "FROM updated INNER JOIN cases ON cases.case_id = updated.case_id ";
 
@@ -494,6 +495,7 @@ public class ClusterJournalManager {
                 + "updated.start_time, "
                 + "updated.end_time, "
                 + "updated.status, "
+                + "updated.error_occurred, "
                 + "updated.case_id, "
                 + "cases.name AS case_name "
                 + "FROM updated INNER JOIN cases ON cases.case_id = updated.case_id ";
