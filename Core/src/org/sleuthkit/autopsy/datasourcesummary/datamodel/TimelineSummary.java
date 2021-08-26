@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,29 +28,25 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import org.joda.time.Interval;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TimelineEvent;
 import org.sleuthkit.datamodel.TimelineEventType;
 import org.sleuthkit.datamodel.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import java.util.function.Supplier;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Provides data source summary information pertaining to Timeline data.
  */
-public class TimelineSummary implements DefaultUpdateGovernor {
+public class TimelineSummary {
 
     /**
      * A function for obtaining a Timeline RootFilter filtered to the specific
@@ -61,16 +59,13 @@ public class TimelineSummary implements DefaultUpdateGovernor {
          *
          * @param dataSource The data source.
          * @return The timeline root filter.
-         * @throws NoCurrentCaseException
+         * @throws SleuthkitCaseProviderException
          * @throws TskCoreException
          */
-        RootFilter apply(DataSource dataSource) throws NoCurrentCaseException, TskCoreException;
+        RootFilter apply(DataSource dataSource) throws SleuthkitCaseProviderException, TskCoreException;
     }
 
     private static final long DAY_SECS = 24 * 60 * 60;
-    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
-            Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
-
     private static final Set<TimelineEventType> FILE_SYSTEM_EVENTS
             = new HashSet<>(Arrays.asList(
                     TimelineEventType.FILE_MODIFIED,
@@ -105,39 +100,19 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         this.filterFunction = filterFunction;
     }
 
-    @Override
-    public boolean isRefreshRequired(ModuleContentEvent evt) {
-        return true;
-    }
-
-    @Override
-    public boolean isRefreshRequired(AbstractFile file) {
-        return true;
-    }
-
-    @Override
-    public boolean isRefreshRequired(IngestManager.IngestJobEvent evt) {
-        return (evt != null && INGEST_JOB_EVENTS.contains(evt));
-    }
-
-    @Override
-    public Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
-        return INGEST_JOB_EVENTS;
-    }
-
     /**
      * Retrieves timeline summary data.
      *
-     * @param dataSource The data source for which timeline data will be
-     * retrieved.
+     * @param dataSource    The data source for which timeline data will be
+     *                      retrieved.
      * @param recentDaysNum The maximum number of most recent days' activity to
-     * include.
+     *                      include.
+     *
      * @return The retrieved data.
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
-     * @throws NoCurrentCaseException
      */
-    public TimelineSummaryData getData(DataSource dataSource, int recentDaysNum) throws SleuthkitCaseProviderException, TskCoreException, NoCurrentCaseException {
+    public TimelineSummaryData getTimelineSummaryData(DataSource dataSource, int recentDaysNum) throws SleuthkitCaseProviderException, TskCoreException {
         TimeZone timeZone = this.timeZoneProvider.get();
         TimelineManager timelineManager = this.caseProvider.get().getTimelineManager();
 
@@ -174,10 +149,11 @@ public class TimelineSummary implements DefaultUpdateGovernor {
      * Given activity by day, converts to most recent days' activity handling
      * empty values.
      *
-     * @param dateCounts The day from epoch mapped to activity amounts for that
-     * day.
+     * @param dateCounts   The day from epoch mapped to activity amounts for
+     *                     that day.
      * @param minRecentDay The minimum recent day in days from epoch.
-     * @param maxDay The maximum recent day in days from epoch;
+     * @param maxDay       The maximum recent day in days from epoch;
+     *
      * @return The most recent daily activity amounts.
      */
     private List<DailyActivityAmount> getMostRecentActivityAmounts(Map<Long, DailyActivityAmount> dateCounts, long minRecentDay, long maxDay) {
@@ -197,17 +173,18 @@ public class TimelineSummary implements DefaultUpdateGovernor {
     /**
      * Fetches timeline events per day for a particular data source.
      *
-     * @param dataSource The data source.
+     * @param dataSource      The data source.
      * @param timelineManager The timeline manager to use while fetching the
-     * data.
-     * @param timeZone The time zone to use to determine which day activity
-     * belongs.
+     *                        data.
+     * @param timeZone        The time zone to use to determine which day
+     *                        activity belongs.
+     *
      * @return A Map mapping days from epoch to the activity for that day.
+     *
      * @throws TskCoreException
-     * @throws NoCurrentCaseException
      */
     private Map<Long, DailyActivityAmount> getTimelineEventsByDay(DataSource dataSource, TimelineManager timelineManager, TimeZone timeZone)
-            throws TskCoreException, NoCurrentCaseException {
+            throws TskCoreException, SleuthkitCaseProviderException {
         RootFilter rootFilter = this.filterFunction.apply(dataSource);
 
         // get events for data source
@@ -251,12 +228,14 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         /**
          * Main constructor.
          *
-         * @param minDate Earliest usage date recorded for the data source.
-         * @param maxDate Latest usage date recorded for the data source.
+         * @param minDate            Earliest usage date recorded for the data
+         *                           source.
+         * @param maxDate            Latest usage date recorded for the data
+         *                           source.
          * @param recentDaysActivity A list of activity prior to and including
-         * max date sorted by min to max date.
-         * @param dataSource The data source for which this data applies. the
-         * latest usage date by day.
+         *                           max date sorted by min to max date.
+         * @param dataSource         The data source for which this data
+         *                           applies. the latest usage date by day.
          */
         TimelineSummaryData(Date minDate, Date maxDate, List<DailyActivityAmount> recentDaysActivity, DataSource dataSource) {
             this.minDate = minDate;
@@ -281,7 +260,7 @@ public class TimelineSummary implements DefaultUpdateGovernor {
 
         /**
          * @return A list of activity prior to and including the latest usage
-         * date by day sorted min to max date.
+         *         date by day sorted min to max date.
          */
         public List<DailyActivityAmount> getMostRecentDaysActivity() {
             return histogramActivity;
@@ -307,8 +286,10 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         /**
          * Main constructor.
          *
-         * @param day The day for which activity is being measured.
-         * @param fileActivityCount The amount of file activity timeline events.
+         * @param day                   The day for which activity is being
+         *                              measured.
+         * @param fileActivityCount     The amount of file activity timeline
+         *                              events.
          * @param artifactActivityCount The amount of artifact timeline events.
          */
         DailyActivityAmount(Date day, long fileActivityCount, long artifactActivityCount) {
@@ -337,6 +318,29 @@ public class TimelineSummary implements DefaultUpdateGovernor {
         public long getArtifactActivityCount() {
             return artifactActivityCount;
         }
-
     }
+
+    /**
+     * Creates a DateFormat formatter that uses UTC for time zone.
+     *
+     * @param formatString The date format string.
+     * @return The data format.
+     */
+    public static DateFormat getUtcFormat(String formatString) {
+        return new SimpleDateFormat(formatString, Locale.getDefault());
+    }
+    
+    /**
+     * Formats a date using a DateFormat. In the event that the date is null,
+     * returns a null string.
+     *
+     * @param date      The date to format.
+     * @param formatter The DateFormat to use to format the date.
+     *
+     * @return The formatted string generated from the formatter or null if the
+     *         date is null.
+     */
+    public static String formatDate(Date date, DateFormat formatter) {
+        return date == null ? null : formatter.format(date);
+    }       
 }

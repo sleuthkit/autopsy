@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import java.awt.Cursor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.RightAlignedTableCellRenderer;
 import java.awt.EventQueue;
@@ -42,7 +43,6 @@ import static javax.swing.SwingConstants.RIGHT;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 - 2020 Basis Technology Corp.
+ * Copyright 2019 - 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,26 +18,19 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
+import java.awt.Color;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.coreutils.FileTypeUtils;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Provides information for the DataSourceSummaryCountsPanel.
+ * Helper class for getting summary information on the known files present in the
+ * specified DataSource..
  */
-public class TypesSummary implements DefaultUpdateGovernor {
-
-    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = new HashSet<>(
-            Arrays.asList(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED));
+public class TypesSummary {
 
     private final SleuthkitCaseProvider provider;
 
@@ -57,25 +50,6 @@ public class TypesSummary implements DefaultUpdateGovernor {
         this.provider = provider;
     }
 
-    @Override
-    public boolean isRefreshRequired(ModuleContentEvent evt) {
-        return true;
-    }
-
-    @Override
-    public boolean isRefreshRequired(AbstractFile file) {
-        return true;
-    }
-
-    @Override
-    public boolean isRefreshRequired(IngestManager.IngestJobEvent evt) {
-        return (evt != null && INGEST_JOB_EVENTS.contains(evt));
-    }
-
-    @Override
-    public Set<IngestManager.IngestJobEvent> getIngestJobEventUpdates() {
-        return INGEST_JOB_EVENTS;
-    }
 
     /**
      * Get count of regular files (not directories) in a data source.
@@ -168,5 +142,60 @@ public class TypesSummary implements DefaultUpdateGovernor {
 
         return DataSourceInfoUtilities.getCountOfRegularFiles(provider.get(), currentDataSource,
                 "type=" + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType());
+    }
+
+    /**
+     * Information concerning a particular file type category.
+     */
+    public static class FileTypeCategoryData {
+
+        private final String label;
+        private final Set<String> mimeTypes;
+        private final Color color;
+
+        /**
+         * Main constructor.
+         *
+         * @param label The label for this slice.
+         * @param mimeTypes The mime types associated with this slice.
+         * @param color The color associated with this slice.
+         */
+        public FileTypeCategoryData(String label, Set<String> mimeTypes, Color color) {
+            this.label = label;
+            this.mimeTypes = mimeTypes;
+            this.color = color;
+        }
+
+        /**
+         * Constructor that accepts FileTypeCategory.
+         *
+         * @param label The label for this slice.
+         * @param mimeTypes The mime types associated with this slice.
+         * @param color The color associated with this slice.
+         */
+        public FileTypeCategoryData(String label, FileTypeUtils.FileTypeCategory fileCategory, Color color) {
+            this(label, fileCategory.getMediaTypes(), color);
+        }
+
+        /**
+         * @return The label for this category.
+         */
+        public String getLabel() {
+            return label;
+        }
+
+        /**
+         * @return The mime types associated with this category.
+         */
+        public Set<String> getMimeTypes() {
+            return mimeTypes;
+        }
+
+        /**
+         * @return The color associated with this category.
+         */
+        public Color getColor() {
+            return color;
+        }
     }
 }

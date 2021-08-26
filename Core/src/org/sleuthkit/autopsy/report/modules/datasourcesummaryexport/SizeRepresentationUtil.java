@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020-2021 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.ui;
+package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
 import java.text.DecimalFormat;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 
 /**
  * This class provides utilities for representing storage size in most relevant
  * units (i.e. bytes, megabytes, etc.).
  */
-public final class SizeRepresentationUtil {
+final class SizeRepresentationUtil {
 
     private static final int SIZE_CONVERSION_CONSTANT = 1000;
     private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##");
@@ -43,37 +42,49 @@ public final class SizeRepresentationUtil {
         "SizeRepresentationUtil_units_petabytes=PB"
     })
     enum SizeUnit {
-        BYTES(Bundle.SizeRepresentationUtil_units_bytes(), 0),
-        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), 1),
-        MB(Bundle.SizeRepresentationUtil_units_megabytes(), 2),
-        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), 3),
-        TB(Bundle.SizeRepresentationUtil_units_terabytes(), 4),
-        PB(Bundle.SizeRepresentationUtil_units_petabytes(), 5);
+        BYTES(Bundle.SizeRepresentationUtil_units_bytes(), "#", 0),
+        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), "#,##0.00,", 1),
+        MB(Bundle.SizeRepresentationUtil_units_megabytes(), "#,##0.00,,", 2),
+        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), "#,##0.00,,,", 3),
+        TB(Bundle.SizeRepresentationUtil_units_terabytes(), "#,##0.00,,,,", 4),
+        PB(Bundle.SizeRepresentationUtil_units_petabytes(), "#,##0.00,,,,,", 5);
 
         private final String suffix;
+        private final String excelFormatString;
         private final long divisor;
 
         /**
          * Main constructor.
          * @param suffix The string suffix to use for size unit.
+         * @param excelFormatString The excel format string to use for this size unit.
          * @param power The power of 1000 of bytes for this size unit.
          */
-        SizeUnit(String suffix, int power) {
+        SizeUnit(String suffix, String excelFormatString, int power) {
             this.suffix = suffix;
+            
+            // based on https://www.mrexcel.com/board/threads/how-do-i-format-cells-to-show-gb-mb-kb.140135/
+            this.excelFormatString = String.format("%s \"%s\"", excelFormatString, suffix);
             this.divisor = (long) Math.pow(SIZE_CONVERSION_CONSTANT, power);
         }
 
         /**
          * @return The string suffix to use for size unit.
          */
-        public String getSuffix() {
+        String getSuffix() {
             return suffix;
+        }
+
+        /**
+         * @return The excel format string to use for this size unit.
+         */
+        String getExcelFormatString() {
+            return excelFormatString;
         }
 
         /**
          * @return The divisor to convert from bytes to this unit.
          */
-        public long getDivisor() {
+        long getDivisor() {
             return divisor;
         }
     }
@@ -153,7 +164,12 @@ public final class SizeRepresentationUtil {
         if (bytes == null) {
             return new DefaultCellModel<>("");
         } else {
-            return new DefaultCellModel<>(bytes, SizeRepresentationUtil::getSizeString);
+            SizeUnit unit = SizeRepresentationUtil.getSizeUnit(bytes);
+            if (unit == null) {
+                unit = SizeUnit.BYTES;
+            }
+
+            return new DefaultCellModel<>(bytes, SizeRepresentationUtil::getSizeString, unit.getExcelFormatString());
         }
     }
 

@@ -16,33 +16,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.uiutils;
+package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
-
 /**
  * The default cell model.
  */
-public class DefaultCellModel<T> implements GuiCellModel {
+class DefaultCellModel<T> implements CellModel {
 
     private final T data;
     private final String text;
-    private String tooltip;
     private CellModel.HorizontalAlign horizontalAlignment;
-    private List<MenuItem> popupMenu;
-    private Supplier<List<MenuItem>> menuItemSupplier;
+    private final String excelFormatString;
 
     /**
      * Main constructor.
      *
      * @param data The data to be displayed in the cell.
      */
-    public DefaultCellModel(T data) {
-        this(data, null);
+    DefaultCellModel(T data) {
+        this(data, null, null);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param data            The data to be displayed in the cell.
+     * @param stringConverter The means of converting that data to a string or
+     *                        null to use .toString method on object.
+     */
+    DefaultCellModel(T data, Function<T, String> stringConverter) {
+        this(data, stringConverter, null);
     }
 
     /**
@@ -51,16 +55,21 @@ public class DefaultCellModel<T> implements GuiCellModel {
      * @param data              The data to be displayed in the cell.
      * @param stringConverter   The means of converting that data to a string or
      *                          null to use .toString method on object.
+     * @param excelFormatString The apache poi excel format string to use with
+     *                          the data.
+     *
+     * NOTE: Only certain data types can be exported. See
+     * ExcelTableExport.createCell() for types.
      */
-    public DefaultCellModel(T data, Function<T, String> stringConverter) {
+    DefaultCellModel(T data, Function<T, String> stringConverter, String excelFormatString) {
         this.data = data;
+        this.excelFormatString = excelFormatString;
 
         if (stringConverter == null) {
             text = this.data == null ? "" : this.data.toString();
         } else {
             text = stringConverter.apply(this.data);
         }
-        this.tooltip = text;
     }
 
     @Override
@@ -74,26 +83,14 @@ public class DefaultCellModel<T> implements GuiCellModel {
     }
 
     @Override
-    public String getTooltip() {
-        return tooltip;
-    }
-
-    /**
-     * Sets the tooltip for this cell model.
-     *
-     * @param tooltip The tooltip for the cell model.
-     *
-     * @return As a utility, returns this.
-     */
-    public DefaultCellModel<T> setTooltip(String tooltip) {
-        this.tooltip = tooltip;
-        return this;
-    }
-
-    @Override
     public HorizontalAlign getHorizontalAlignment() {
         return horizontalAlignment;
     }
+    
+    @Override
+    public String getExcelFormatString() {
+        return this.excelFormatString;
+    }    
 
     /**
      * Sets the horizontal alignment for this cell model.
@@ -102,43 +99,8 @@ public class DefaultCellModel<T> implements GuiCellModel {
      *
      * @return As a utility, returns this.
      */
-    public DefaultCellModel<T> setHorizontalAlignment(CellModel.HorizontalAlign alignment) {
+    DefaultCellModel<T> setHorizontalAlignment(CellModel.HorizontalAlign alignment) {
         this.horizontalAlignment = alignment;
-        return this;
-    }
-
-    @Override
-    public List<MenuItem> getPopupMenu() {
-        if (popupMenu != null) {
-            return Collections.unmodifiableList(popupMenu);
-        }
-        if (menuItemSupplier != null) {
-            return this.menuItemSupplier.get();
-        }
-        return null;
-    }
-
-    /**
-     * Sets a function to lazy load the popup menu items.
-     *
-     * @param menuItemSupplier The lazy load function for popup items.
-     *
-     * @return
-     */
-    public DefaultCellModel<T> setPopupMenuRetriever(Supplier<List<MenuItem>> menuItemSupplier) {
-        this.menuItemSupplier = menuItemSupplier;
-        return this;
-    }
-
-    /**
-     * Sets the list of items for a popup menu
-     *
-     * @param popupMenu
-     *
-     * @return As a utility, returns this.
-     */
-    public DefaultCellModel<T> setPopupMenu(List<MenuItem> popupMenu) {
-        this.popupMenu = popupMenu == null ? null : new ArrayList<>(popupMenu);
         return this;
     }
 
