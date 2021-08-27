@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-
 import org.openide.util.lookup.Lookups;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -36,10 +35,8 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
@@ -353,7 +350,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to get aggregate score for content with id: " + this.content.getId(), ex);
         }
-        
+
         String significanceDisplay = score.getSignificance().getDisplayName();
         String description = Bundle.AbstractContentNode_getScorePropertyAndDescription_description(significanceDisplay);
         return Pair.of(score, description);
@@ -372,12 +369,19 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     /**
      * Returns occurrences/count property for the node.
      *
-     * @param attributeType      the type of the attribute to count
-     * @param attributeValue     the value of the attribute to count
-     * @param defaultDescription a description to use when none is determined by
-     *                           the getCountPropertyAndDescription method
+     * @param attributeType      The type of the attribute to count.
+     * @param attributeValue     The value of the attribute to count.
+     * @param fileObjectId       The object id of the file whose associated
+     *                           instances should not be counted.
+     * @param caseId             The id of the current case for ignoring the
+     *                           current instance.
+     * @param defaultDescription A description to use when none is determined by
+     *                           the getCountPropertyAndDescription method.
      *
      * @return count property for the underlying content of the node.
      */
-    abstract protected Pair<Long, String> getCountPropertyAndDescription(Type attributeType, String attributeValue, String defaultDescription);
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, Long fileObjectId, int caseId, String defaultDescription) {
+        //Null implementation of method.
+        return Pair.of(-1L, NO_DESCR);
+    }
 }

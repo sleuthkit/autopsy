@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import javax.swing.Action;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -137,7 +136,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(listener, null);
 
         @Override
@@ -146,7 +145,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
             Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNTS_ADDED), weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
         }
-        
+
         @Override
         protected void addNotify() {
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNTS_ADDED, Case.Events.OS_ACCOUNTS_DELETED), listener);
@@ -343,11 +342,6 @@ public final class OsAccounts implements AutopsyVisitableItem {
         @Override
         protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
             return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-        }
-
-        @Override
-        protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
-            return null;
         }
 
         @Override

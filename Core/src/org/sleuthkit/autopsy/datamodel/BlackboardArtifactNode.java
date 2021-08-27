@@ -229,7 +229,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-                        
+
         for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
             if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
                 srcContent = lookupContent;
@@ -272,7 +272,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact, lookupIsAssociatedFile));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-        
+
         try {
             //The lookup for a file may or may not exist so we define the srcContent as the parent.
             srcContent = artifact.getParent();
@@ -312,10 +312,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
     }
-    
+
     /**
      * Returns the artifact type of the artifact.
+     *
      * @param artifact The artifact.
+     *
      * @return The artifact type or null if no type could be retrieved.
      */
     private static BlackboardArtifact.Type getType(BlackboardArtifact artifact) {
@@ -447,10 +449,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * action to view it in the timeline.
          */
         try {
-            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact) &&
-                    // don't show ViewArtifactInTimelineAction for AnalysisResults.
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)
+                    && // don't show ViewArtifactInTimelineAction for AnalysisResults.
                     (!(this.artifact instanceof AnalysisResult))) {
-                
+
                 actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
         } catch (TskCoreException ex) {
@@ -857,7 +859,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     /**
      * Computes the value of the other occurrences property ("O" in S, C, O) for
-     * the artifact represented by this node. The value of the other occurrences
+     * the artifact represented by this node.The value of the other occurrences
      * property is the number of other data sources this artifact appears in
      * according to a correlation attribute instance lookup in the central
      * repository, plus one for the data source for this instance of the
@@ -867,6 +869,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      *                           for the central repsoitory lookup.
      * @param attributeValue     The correlation attribute instane value to use
      *                           for the central repsoitory lookup.
+     * @param fileObjId
      * @param defaultDescription A default description.
      *
      * @return The value of the occurrences property as a data sources count and
@@ -874,12 +877,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      *
      */
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(Type corrAttrType, String attributeValue, String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(Type corrAttrType, String attributeValue, Long fileObjId, int caseId, String defaultDescription) {
         Long count = -1L;
         String description = defaultDescription;
         try {
             if (corrAttrType != null && StringUtils.isNotBlank(attributeValue)) {
-                count = CentralRepository.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(corrAttrType, attributeValue);
+                count = CentralRepository.getInstance().getCountCasesWithOtherInstances(corrAttrType, attributeValue, fileObjId, caseId);
                 description = Bundle.BlackboardArtifactNode_createSheet_count_description(count, corrAttrType.getDisplayName());
             } else if (corrAttrType != null) {
                 description = Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationValues_description();
@@ -920,7 +923,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Adds a "custom" property to the property sheet of this node, indepoendent
+     * Adds a "custom" property to the property sheet of this node, independent
      * of the artifact this node represents or its source content.
      *
      * @param property The custom property.
@@ -1135,7 +1138,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}"})
     @Deprecated
     protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
-        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute.getCorrelationType(), attribute.getCorrelationValue(), Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationAttributes_description());
+        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute.getCorrelationType(), attribute.getCorrelationValue(), attribute.getFileObjectId(), attribute.getCorrelationCase().getID(), Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationAttributes_description());
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), countAndDescription.getRight(), countAndDescription.getLeft()));
     }
 

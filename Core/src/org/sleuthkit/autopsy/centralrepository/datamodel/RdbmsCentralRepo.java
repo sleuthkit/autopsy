@@ -1497,6 +1497,47 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     @Override
+    public Long getCountCasesWithOtherInstances(CorrelationAttributeInstance.Type aType, String value, Long fileObjectId, int caseId) throws CentralRepoException, CorrelationAttributeNormalizationException {
+        String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
+        System.out.println("GET CASES Type: " + aType + " Value: " + normalizedValue + " fileID: " + fileObjectId + " caseId: " + caseId);
+        Connection conn = connect();
+        System.out.println("CONNECTED");
+        Long instanceCount = 0L;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(aType);
+        String sql
+                = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM "
+                + tableName
+                + " WHERE value=? AND NOT (file_obj_id=? AND case_id=?)) AS "   
+                + tableName
+                + "_other_case_count";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, normalizedValue);
+            preparedStatement.setLong(2, fileObjectId);
+            preparedStatement.setInt(3, caseId);
+            System.out.println("PREPARED STATEMENT: " + preparedStatement.toString());
+            resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            instanceCount = resultSet.getLong(1);
+            System.out.println("INSTANCES: " + instanceCount);
+        } catch (SQLException ex) {
+            throw new CentralRepoException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
+        } finally {
+            CentralRepoDbUtil.closeStatement(preparedStatement);
+            CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeConnection(conn);
+        }
+
+        return instanceCount;
+    }
+    
+    
+    
+    @Override
     public Long getCountUniqueDataSources() throws CentralRepoException {
         Connection conn = connect();
 

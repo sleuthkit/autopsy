@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -411,14 +412,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "# {0} - occurrenceCount",
         "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the MD5 correlation value"})
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue,
-            String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, Long fileObjectId, int caseId, String defaultDescription) {
+   
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
         String description = defaultDescription;
         try {
             //don't perform the query if there is no correlation value
             if (attributeType != null && StringUtils.isNotBlank(attributeValue)) {
-                count = CentralRepository.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
+                count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attributeType, attributeValue, fileObjectId, caseId);
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
             } else if (attributeType != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
@@ -427,7 +428,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
-        }
+        } 
         return Pair.of(count, description);
     }
 

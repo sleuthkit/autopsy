@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,6 +76,8 @@ class GetSCOTask implements Runnable {
         if (CentralRepository.isEnabled()) {
             Type type = null;
             String value = null;
+            Long fileObjectId = null;
+            int caseId = fileAttribute.getCorrelationCase().getID(); 
             String description = Bundle.GetSCOTask_occurrences_defaultDescription();
             if (contentNode instanceof BlackboardArtifactNode) {
                 BlackboardArtifact bbArtifact = ((BlackboardArtifactNode) contentNode).getArtifact();
@@ -92,6 +94,7 @@ class GetSCOTask implements Runnable {
                         if (bbArtifact.getParent() instanceof AbstractFile) {
                             type = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(CorrelationAttributeInstance.FILES_TYPE_ID);
                             value = ((AbstractFile) bbArtifact.getParent()).getMd5Hash();
+                            fileObjectId = bbArtifact.getParent().getId();
                         }
                     } catch (TskCoreException | CentralRepoException ex) {
                         logger.log(Level.WARNING, "Unable to get correlation type or value to determine value for O column for artifact", ex);
@@ -112,11 +115,13 @@ class GetSCOTask implements Runnable {
                 try {
                     type = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(CorrelationAttributeInstance.FILES_TYPE_ID);
                     value = ((AbstractFile) contentNode.getContent()).getMd5Hash();
+                    fileObjectId = contentNode.getContent().getId();
+                    
                 } catch (CentralRepoException ex) {
                     logger.log(Level.WARNING, "Unable to get correlation type to determine value for O column for file", ex);
                 }
             }
-            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(type, value, description));
+            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(type, value, fileObjectId, caseId, description));
         }
 
         // signal SCO data is available.
