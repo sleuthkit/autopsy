@@ -116,7 +116,7 @@ public final class OtherOccurrences {
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
         if (bbArtifact != null && CentralRepository.isEnabled()) {
-            ret.addAll(CorrelationAttributeUtil.makeCorrAttrsForCorrelation(bbArtifact));
+            ret.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(bbArtifact));
         }
 
         // we can correlate based on the MD5 if it is enabled      

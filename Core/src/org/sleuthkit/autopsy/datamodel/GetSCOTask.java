@@ -97,7 +97,7 @@ class GetSCOTask implements Runnable {
                         logger.log(Level.WARNING, "Unable to get correlation type or value to determine value for O column for artifact", ex);
                     }
                 } else {
-                    List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForCorrelation(bbArtifact);
+                    List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForSearch(bbArtifact);
                     if (listOfPossibleAttributes.size() > 1) {
                         //Don't display anything if there is more than 1 correlation property for an artifact but let the user know
                         description = Bundle.GetSCOTask_occurrences_multipleProperties();
