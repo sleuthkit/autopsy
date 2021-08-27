@@ -1499,9 +1499,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     @Override
     public Long getCountCasesWithOtherInstances(CorrelationAttributeInstance.Type aType, String value, Long fileObjectId, int caseId) throws CentralRepoException, CorrelationAttributeNormalizationException {
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
-        System.out.println("GET CASES Type: " + aType + " Value: " + normalizedValue + " fileID: " + fileObjectId + " caseId: " + caseId);
         Connection conn = connect();
-        System.out.println("CONNECTED");
         Long instanceCount = 0L;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -1519,11 +1517,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             preparedStatement.setString(1, normalizedValue);
             preparedStatement.setLong(2, fileObjectId);
             preparedStatement.setInt(3, caseId);
-            System.out.println("PREPARED STATEMENT: " + preparedStatement.toString());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
-            System.out.println("INSTANCES: " + instanceCount);
         } catch (SQLException ex) {
             throw new CentralRepoException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
         } finally {
