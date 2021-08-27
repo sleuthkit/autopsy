@@ -24,6 +24,7 @@ import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -38,6 +39,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,8 +48,10 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * A Panel that shows the media (thumbnails) for the selected account.
@@ -65,6 +69,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     private final MessageDataContent contentViewer;
 
     private MediaViewerWorker worker;
+    private SelectionWorker selectionWorker;
 
     @Messages({
         "MediaViewer_Name=Media Attachments"
@@ -110,6 +115,10 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
 
         if (worker != null) {
             worker.cancel(true);
+        }
+        
+        if(selectionWorker != null) {
+            selectionWorker.cancel(true);
         }
 
         worker = new MediaViewerWorker(info);
@@ -181,21 +190,63 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
      */
     private void handleNodeSelectionChange() {
         final Node[] nodes = tableEM.getSelectedNodes();
+        contentViewer.setNode(null);
+        
+        if(selectionWorker != null) {
+            selectionWorker.cancel(true);
+        }
 
         if (nodes != null && nodes.length == 1) {
             AbstractContent thumbnail = nodes[0].getLookup().lookup(AbstractContent.class);
             if (thumbnail != null) {
-                try {
-                    Content parentContent = thumbnail.getParent();
-                    if (parentContent != null && parentContent instanceof BlackboardArtifact) {
-                        contentViewer.setNode(new BlackboardArtifactNode((BlackboardArtifact) parentContent));
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Unable to get parent Content from AbstraceContent instance.", ex); //NON-NLS
+                selectionWorker = new SelectionWorker(thumbnail);
+                worker.execute();
+            }
+        }
+    }
+
+    /**
+     * A SwingWorker to get the artifact associated with the selected thumbnail.
+     */
+    private class SelectionWorker extends SwingWorker<BlackboardArtifact, Void> {
+
+        private final AbstractContent thumbnail;
+
+        // Construct a SelectionWorker.
+        SelectionWorker(AbstractContent thumbnail) {
+            this.thumbnail = thumbnail;
+        }
+
+        @Override
+        protected BlackboardArtifact doInBackground() throws Exception {
+            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            List<BlackboardArtifact> artifactsList = skCase.getBlackboardArtifacts(TSK_ASSOCIATED_OBJECT, thumbnail.getId());
+            for (BlackboardArtifact contextArtifact : artifactsList) {
+                BlackboardAttribute associatedArtifactAttribute = contextArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                if (associatedArtifactAttribute != null) {
+                    long artifactId = associatedArtifactAttribute.getValueLong();
+                    return contextArtifact.getSleuthkitCase().getBlackboardArtifact(artifactId);
                 }
             }
-        } else {
-            contentViewer.setNode(null);
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            if (isCancelled()) {
+                return;
+            }
+
+            try {
+                BlackboardArtifact artifact = get();
+                if (artifact != null) {
+                    contentViewer.setNode(new BlackboardArtifactNode(artifact));
+                } else {
+                    contentViewer.setNode(null);
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Failed message viewer based on thumbnail selection. thumbnailID = " + thumbnail.getId(), ex);
+            }
         }
     }
 
