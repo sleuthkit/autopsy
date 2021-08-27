@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.directorytree;
+package org.sleuthkit.autopsy.discovery.search;
 
 /**
- * Lookup interface for File Search (to deal with circular deps)
+ * Interface for providing feedback on if a search has been cancelled.
+ *
  */
-public interface FileSearchProvider {
+public interface SearchContext {
 
-    public void showDialog(Long dataSourceID);
-
-    @Deprecated
-    public void showDialog();
+    /**
+     * Returns true if the search has been cancelled, false otherwise.
+     *
+     * @return True if the search has been cancelled, false otherwise.
+     */
+    boolean searchIsCancelled();
 }
