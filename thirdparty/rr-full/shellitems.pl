@@ -27,6 +27,7 @@
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 use Time::Local;
+use Encode::Unicode;
 
 my %guids = ("{bb64f8a7-bee7-4e1a-ab8d-7d8273f7fdb6}" => "Action Center",
     "{7a979262-40ce-46ff-aeee-7884ac3b6136}" => "Add Hardware",
@@ -634,10 +635,10 @@ sub parseFolderEntry {
 	$longname =~ s/\x00//g;
 	
 	if ($longname ne "") {
-		$item{name} = $longname;
+		$item{name} = _uniToAscii($longname);
 	}
 	else {
-		$item{name} = $shortname;
+		$item{name} = _uniToAscii($shortname);
 	}
 	return %item;
 }
@@ -716,7 +717,7 @@ sub parseFolderEntry2 {
 		
 	$item{name} = (split(/\x00\x00/,$str,2))[0];
 	$item{name} =~ s/\x13\x20/\x2D\x00/;
-	$item{name} =~ s/\x00//g;
+	$item{name} = _uniToAscii($item{name});
 	
 	return %item;
 }
@@ -835,6 +836,16 @@ sub getNum48 {
 		$n2 = ($n2 *16777216);
 		return $n1 + $n2;
 	}
+}
+
+#---------------------------------------------------------------------
+# _uniToAscii()
+#---------------------------------------------------------------------
+sub _uniToAscii {
+  my $str = $_[0];
+  Encode::from_to($str,'UTF-16LE','utf8');
+  $str = Encode::decode_utf8($str);
+  return $str;
 }
 
 1;

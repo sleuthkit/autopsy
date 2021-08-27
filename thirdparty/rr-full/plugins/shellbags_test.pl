@@ -8,6 +8,7 @@
 #-----------------------------------------------------------
 package shellbags_test;
 use strict;
+use Encode::Unicode;
 
 require 'shellitems.pl';
 
@@ -100,7 +101,7 @@ sub traverse {
  		my $type = unpack("C",substr($values{$v},2,1));
 		my $size = unpack("v",substr($values{$v},0,2));
 #		probe($values{$v});
-		
+
 # Need to first check to see if the parent of the item was a zip folder
 # and if the 'zipsubfolder' value is set to 1		
 		if (exists ${$parent}{zipsubfolder} && ${$parent}{zipsubfolder} == 1) {
@@ -411,12 +412,22 @@ sub parseFolderItem {
 	$longname =~ s/\x00//g;
 	
 	if ($longname ne "") {
-		$item{name} = $longname;
+		$item{name} = _uniToAscii($longname);
 	}
 	else {
-		$item{name} = $shortname;
+		$item{name} = _uniToAscii($shortname);
 	}
 	return %item;
+}
+
+#---------------------------------------------------------------------
+# _uniToAscii()
+#---------------------------------------------------------------------
+sub _uniToAscii {
+  my $str = $_[0];
+  Encode::from_to($str,'UTF-16LE','utf8');
+  $str = Encode::decode_utf8($str);
+  return $str;
 }
 
 1;

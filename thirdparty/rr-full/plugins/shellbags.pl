@@ -42,6 +42,7 @@
 package shellbags;
 use strict;
 use Time::Local;
+use Encode::Unicode;
 
 my %config = (hive          => "USRCLASS\.DAT",
 							hivemask      => 32,
@@ -779,7 +780,7 @@ sub parseFolderEntry {
 				$tag = 0;
 			}
 			else {
-				$str .= $s;
+			    $str .= $s;
 				$cnt++;
 			}
 		}	
@@ -799,7 +800,7 @@ sub parseFolderEntry {
 				$tag = 0;
 			}
 			else {
-				$str .= $s;
+			    $str .= $s;
 				$cnt++;
 			}
 		}
@@ -858,13 +859,12 @@ sub parseFolderEntry {
 	
 		my $str = substr($data,$ofs,length($data) - 30);
 		my $longname = (split(/\00\00/,$str,2))[0];
-		$longname =~ s/\00//g;
 	
 		if ($longname ne "") {
-			$item{name} = $longname;
+			$item{name} = _uniToAscii($longname);
 		}
 		else {
-			$item{name} = $shortname;
+			$item{name} = _uniToAscii($shortname);
 		}
 	}
 	return %item;
@@ -957,7 +957,7 @@ sub parseFolderEntry2 {
 	
 	$item{name} = (split(/\00\00/,$str,2))[0];
 	$item{name} =~ s/\13\20/\2D\00/;
-	$item{name} =~ s/\00//g;
+	$item{name} = _uniToAscii($item{name});
 	
 	return %item;
 }
@@ -1024,7 +1024,7 @@ sub shellItem0x52 {
 			$tag = 0;
 		}
 		else {
-			$item{name} .= $d;
+            $item{name} .= $d;
 			$cnt += 2;
 		}
 	}	
@@ -1117,6 +1117,16 @@ sub getNum48 {
 		$n2 = ($n2 *16777216);
 		return $n1 + $n2;
 	}
+}
+
+#---------------------------------------------------------------------
+# _uniToAscii()
+#---------------------------------------------------------------------
+sub _uniToAscii {
+  my $str = $_[0];
+  Encode::from_to($str,'UTF-16LE','utf8');
+  $str = Encode::decode_utf8($str);
+  return $str;
 }
 
 1;
