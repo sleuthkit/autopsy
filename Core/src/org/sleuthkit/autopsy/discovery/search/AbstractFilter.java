@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,14 +54,18 @@ public abstract class AbstractFilter {
      * @param caseDb         The case database
      * @param centralRepoDb  The central repo database. Can be null if the
      *                       filter does not require it.
+     * @param context        The SearchContext the search which is applying this
+     *                       filter is being performed from.
      *
      * @return The list of results that match this filter (and any that came
      *         before it)
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException Thrown when the user has cancelled
+     *                                     the search.
      */
     public List<Result> applyAlternateFilter(List<Result> currentResults, SleuthkitCase caseDb,
-            CentralRepository centralRepoDb) throws DiscoveryException {
+            CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
         return new ArrayList<>();
     }
 

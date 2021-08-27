@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.directorytree;
+package org.sleuthkit.autopsy.discovery.search;
 
 /**
- * Lookup interface for File Search (to deal with circular deps)
+ * Implementation of SearchContext for testing to ensure NPEs are not thrown and
+ * the context indicates the expected cancellation status.
  */
-public interface FileSearchProvider {
+public class TestSearchContextImpl implements SearchContext {
 
-    public void showDialog(Long dataSourceID);
+    private final boolean isCancelled;
 
-    @Deprecated
-    public void showDialog();
+    public TestSearchContextImpl(boolean hasBeenCancelled) {
+        isCancelled = hasBeenCancelled;
+    }
+
+    @Override
+    public boolean searchIsCancelled() {
+        return isCancelled;
+    }
 }
