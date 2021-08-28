@@ -252,7 +252,7 @@ public class AnalysisResultsViewModel {
 
             try {
                 nodeContent = Optional.of(content);
-                
+
                 // get the aggregate score of that content
                 aggregateScore = Optional.ofNullable(content.getAggregateScore());
 

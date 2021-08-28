@@ -40,6 +40,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -564,6 +566,51 @@ public class CorrelationAttributeUtil {
             return null;
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
+            return null;
+        }
+    }
+
+    /**
+     * Makes a correlation attribute instance of a given type from an OS
+     * account. Checks address if it is null, or one of the ones always present
+     * on a windows system and thus not unique.
+     *
+     * @param osAccoun   The OS account.
+     * @param dataSource The data source content object.
+     *
+     * @return The correlation attribute instance or null, if an error occurred.
+     */
+    public static CorrelationAttributeInstance makeCorrAttr(OsAccount osAccount, Content dataSource) {
+
+        Optional<String> accountAddr = osAccount.getAddr();
+        // Check address if it is null or one of the ones below we want to ignore it since they will always be one a windows system
+        // and they are not unique
+        if (!accountAddr.isPresent() || accountAddr.get().equals("S-1-5-18") || accountAddr.get().equals("S-1-5-19") || accountAddr.get().equals("S-1-5-20")) {
+            return null;
+        }
+        try {
+
+            CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
+            CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
+                    CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
+                    accountAddr.get(),
+                    correlationCase,
+                    CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource),
+                    "",
+                    "",
+                    TskData.FileKnown.KNOWN,
+                    osAccount.getId());
+
+            return correlationAttributeInstance;
+
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
+            return null;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);  //NON-NLS
+            return null;
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
             return null;
         }
     }
