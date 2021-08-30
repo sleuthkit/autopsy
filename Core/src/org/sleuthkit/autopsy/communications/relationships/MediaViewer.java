@@ -111,7 +111,7 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
     @Override
     public void setSelectionInfo(SelectionInfo info) {
         contentViewer.setNode(null);
-        thumbnailViewer.resetComponent();
+        thumbnailViewer.setNode(null);
 
         if (worker != null) {
             worker.cancel(true);
@@ -199,8 +199,9 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
         if (nodes != null && nodes.length == 1) {
             AbstractContent thumbnail = nodes[0].getLookup().lookup(AbstractContent.class);
             if (thumbnail != null) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 selectionWorker = new SelectionWorker(thumbnail);
-                worker.execute();
+                selectionWorker.execute();
             }
         }
     }
@@ -246,6 +247,8 @@ final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerM
                 }
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Failed message viewer based on thumbnail selection. thumbnailID = " + thumbnail.getId(), ex);
+            } finally {
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             }
         }
     }
