@@ -8,7 +8,6 @@
 #-----------------------------------------------------------
 package shellbags_test;
 use strict;
-use Encode::Unicode;
 
 require 'shellitems.pl';
 
@@ -412,22 +411,13 @@ sub parseFolderItem {
 	$longname =~ s/\x00//g;
 	
 	if ($longname ne "") {
-		$item{name} = _uniToAscii($longname);
+		$item{name} = Utf16ToUtf8($longname);
 	}
 	else {
-		$item{name} = _uniToAscii($shortname);
+		$item{name} = Utf16ToUtf8($shortname);
 	}
 	return %item;
 }
 
-#---------------------------------------------------------------------
-# _uniToAscii()
-#---------------------------------------------------------------------
-sub _uniToAscii {
-  my $str = $_[0];
-  Encode::from_to($str,'UTF-16LE','utf8');
-  $str = Encode::decode_utf8($str);
-  return $str;
-}
 
 1;

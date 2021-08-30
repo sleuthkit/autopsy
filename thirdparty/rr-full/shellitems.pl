@@ -635,10 +635,10 @@ sub parseFolderEntry {
 	$longname =~ s/\x00//g;
 	
 	if ($longname ne "") {
-		$item{name} = _uniToAscii($longname);
+		$item{name} = Utf16ToUtf8($longname);
 	}
 	else {
-		$item{name} = _uniToAscii($shortname);
+		$item{name} = Utf16ToUtf8($shortname);
 	}
 	return %item;
 }
@@ -717,7 +717,7 @@ sub parseFolderEntry2 {
 		
 	$item{name} = (split(/\x00\x00/,$str,2))[0];
 	$item{name} =~ s/\x13\x20/\x2D\x00/;
-	$item{name} = _uniToAscii($item{name});
+	$item{name} = Utf16ToUtf8($item{name});
 	
 	return %item;
 }
@@ -839,9 +839,9 @@ sub getNum48 {
 }
 
 #---------------------------------------------------------------------
-# _uniToAscii()
+# Utf16ToUtf8()
 #---------------------------------------------------------------------
-sub _uniToAscii {
+sub Utf16ToUtf8 {
   my $str = $_[0];
   Encode::from_to($str,'UTF-16LE','utf8');
   $str = Encode::decode_utf8($str);
