@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
  * enough time for the JFileChooser to be initialized in the background before
  * the UI user causes an event which will launch the JFileChooser. If the
  * JFileChooser is not initialized prior to the event occurring, the EDT will be
- * blocked , but the wait cursor will appear.
+ * blocked, but the wait cursor will appear.
  *
  * https://stackoverflow.com/questions/49792375/jfilechooser-is-very-slow-when-using-windows-look-and-feel
  */
@@ -54,10 +54,11 @@ public final class JFileChooserFactory {
 
     private final FutureTask<JFileChooser> futureFileChooser;
     private JFileChooser chooser;
+    private final ExecutorService executor;
 
     /**
-     * Create a new instance of the factory. The constructor will kick of an
-     * executor to that will execute the task of initializing the JFileChooser.
+     * Create a new instance of the factory. The constructor will kick off an
+     * executor to execute the initializing the JFileChooser task.
      */
     public JFileChooserFactory() {
         this(null);
@@ -80,7 +81,7 @@ public final class JFileChooserFactory {
             futureFileChooser = new FutureTask<>(new ChooserCallable(cls));
         }
 
-        ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("JFileChooser-background-thread").build());
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("JFileChooser-background-thread").build());
         executor.execute(futureFileChooser);
     }
 
@@ -104,14 +105,14 @@ public final class JFileChooserFactory {
                     chooser = futureFileChooser.get();
                 } catch (InterruptedException | ExecutionException ex) {
                     // An exception is generally not expected. On the off chance
-                    // one does occur save the sisutation by created a new
+                    // one does occur save the situation by created a new
                     // instance in the EDT.
-                    // If an exception does occur
                     logger.log(Level.WARNING, "Failed to initialize JFileChooser in background thread.");
                     chooser = new JFileChooser();
                 }
             } finally {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                executor.shutdown();
             }
         }
 
