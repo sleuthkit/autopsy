@@ -40,17 +40,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @ServiceProvider(service = DataContentViewer.class, position = 7)
 public class AnalysisResultsContentViewer implements DataContentViewer {
+
     private static final Logger logger = Logger.getLogger(AnalysisResultsContentPanel.class.getName());
-    
+
     // isPreferred value
     private static final int PREFERRED_VALUE = 3;
-    
+
     private final AnalysisResultsViewModel viewModel = new AnalysisResultsViewModel();
     private final AnalysisResultsContentPanel panel = new AnalysisResultsContentPanel();
-    
+
     private SwingWorker<?, ?> worker = null;
-
-
 
     @NbBundle.Messages({
         "AnalysisResultsContentViewer_title=Analysis Results"
@@ -135,11 +134,11 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
             if (content instanceof AnalysisResult) {
                 return true;
             }
-            
+
             if (content == null || content instanceof BlackboardArtifact) {
                 continue;
             }
-            
+
             try {
                 if (Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().hasAnalysisResults(content.getId())) {
                     return true;
@@ -148,7 +147,7 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
                 logger.log(Level.SEVERE, "Unable to get analysis results for file with obj id " + content.getId(), ex);
             }
         }
-        
+
         return false;
     }
 
