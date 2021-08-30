@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
@@ -230,11 +226,12 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     /**
      * Save a new or edited profile.
      */
-    void store() {
+    boolean store() {
         if (!isValidDefinition(false)) {
-            return;
+            return false;
         }
         saveSettings();
+        return true;
     }
 
     void load() {
@@ -242,6 +239,8 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     /**
      * Checks that information entered constitutes a valid ingest profile.
+     * 
+     * @param dispayWarnings boolean flag whether to display warnings if an error occurred.
      *
      * @return true for valid, false for invalid.
      */
