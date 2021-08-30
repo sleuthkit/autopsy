@@ -283,8 +283,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (letters and digits only):",
         "CommandLineIngestSettingPanel_empty_report_name_mgs=Report profile name was empty, no profile created.",
         "CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created.",
-        "CommandLineIngestSettingPanel_invalid_report_name_mgs=Report profile name contained only illegal characters, no profile created.",
-        "# {0} - sanitized report name", "CommandLineIngestSettingPanel_report_name_changed_mgs=Report profile name contained illegal characters. Sanitized report name is:  {0}"
+        "CommandLineIngestSettingPanel_invalid_report_name_mgs=Report profile name contained illegal characters, no profile created."
     })
     private void bnEditReportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditReportSettingsActionPerformed
         String reportName = getReportName();
@@ -304,14 +303,11 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
                 // sanitize report name
                 String originalReportName = reportName;
                 reportName = reportName.replaceAll("[^A-Za-z0-9]", "");
-                if (reportName.isEmpty()) {
+                if (reportName.isEmpty() || (!(originalReportName.equals(reportName)))) {
                     // report name contained only invalid characters, display error
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_invalid_report_name_mgs());
                     return;
-                } else if (!(originalReportName.equals(reportName))) {
-                    // alert the user that the name has changed
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_report_name_changed_mgs(reportName));
-                }
+                }               
             }
         }
 
