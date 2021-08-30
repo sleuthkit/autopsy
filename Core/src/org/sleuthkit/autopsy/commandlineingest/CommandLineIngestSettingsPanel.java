@@ -280,18 +280,16 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         add(nodePanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     @Messages({
-        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (commas not allowed):",
+        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (letters and digits only):",
         "CommandLineIngestSettingPanel_empty_report_name_mgs=Report profile name was empty, no profile created.",
-        "CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created."
+        "CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created.",
+        "CommandLineIngestSettingPanel_invalid_report_name_mgs=Report profile name contained only illegal characters, no profile created.",
+        "# {0} - sanitized report name", "CommandLineIngestSettingPanel_report_name_changed_mgs=Report profile name contained illegal characters. Sanitized report name is:  {0}"
     })
     private void bnEditReportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditReportSettingsActionPerformed
         String reportName = getReportName();
         if (reportName.equals(Bundle.CommandListIngestSettingsPanel_Make_Config())) {
             reportName = JOptionPane.showInputDialog(this, Bundle.CommandListIngestSettingsPanel_Report_Name_Msg());
-            
-            // sanitize report name. Remove all commas because in CommandLineOptionProcessor we use commas
-            // to separate multiple report names
-            reportName = reportName.replaceAll(",", "");
 
             // User hit cancel
             if (reportName == null) {
@@ -302,6 +300,18 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
             } else if (doesReportProfileNameExist(reportName)) {
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_existing_report_name_mgs());
                 return;
+            } else {
+                // sanitize report name
+                String originalReportName = reportName;
+                reportName = reportName.replaceAll("[^A-Za-z0-9]", "");
+                if (reportName.isEmpty()) {
+                    // report name contained only invalid characters, display error
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_invalid_report_name_mgs());
+                    return;
+                } else if (!(originalReportName.equals(reportName))) {
+                    // alert the user that the name has changed
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_report_name_changed_mgs(reportName));
+                }
             }
         }
 
