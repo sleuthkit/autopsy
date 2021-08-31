@@ -416,7 +416,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         do {
             option = JOptionPane.CANCEL_OPTION; 
             dialog.display(panel);
-        } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
+        } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition(true));
 
         if (option == JOptionPane.OK_OPTION) {
 
