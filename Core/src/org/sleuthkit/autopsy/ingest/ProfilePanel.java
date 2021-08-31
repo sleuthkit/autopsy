@@ -35,7 +35,7 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         "ProfilePanel.profileNameLabel.text=Profile Name:",
         "ProfilePanel.newProfileText=NewEmptyProfile",
         "ProfilePanel.messages.profilesMustBeNamed=Ingest profile must be named.",
-        "ProfilePanel.messages.profileNameContainsIllegalCharacter=Profile name contains an illegal character. Only letters and digits are allowed."})
+        "ProfilePanel.messages.profileNameContainsIllegalCharacter=Profile name contains an illegal character. Only \nletters, digits, and underscore characters are allowed."})
 
     private final IngestJobSettingsPanel ingestSettingsPanel;
     private final IngestJobSettings settings;
@@ -257,7 +257,7 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         }
 
         // check if the name contains illegal characters
-        String sanitizedName = profileName.replaceAll("[^A-Za-z0-9]", "");
+        String sanitizedName = profileName.replaceAll("[^A-Za-z0-9_]", "");
         if (!(profileName.equals(sanitizedName))) {
             if (dispayWarnings) {
                 NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
