@@ -280,7 +280,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         add(nodePanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     @Messages({
-        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (letters and digits only):",
+        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (letters, digits, and underscore characters only):",
         "CommandLineIngestSettingPanel_empty_report_name_mgs=Report profile name was empty, no profile created.",
         "CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created.",
         "CommandLineIngestSettingPanel_invalid_report_name_mgs=Report profile name contained illegal characters, no profile created."
@@ -302,7 +302,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
             } else {
                 // sanitize report name
                 String originalReportName = reportName;
-                reportName = reportName.replaceAll("[^A-Za-z0-9]", "");
+                reportName = reportName.replaceAll("[^A-Za-z0-9_]", "");
                 if (reportName.isEmpty() || (!(originalReportName.equals(reportName)))) {
                     // report name contained only invalid characters, display error
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_invalid_report_name_mgs());
