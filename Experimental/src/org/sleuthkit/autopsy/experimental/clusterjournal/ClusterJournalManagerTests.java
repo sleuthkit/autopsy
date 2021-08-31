@@ -157,7 +157,7 @@ public class ClusterJournalManagerTests {
 
             List<CaseRecord> caseRecords = createCasesTest(manager, testDs);
 
-            createJobsUpdateStatusTest(caseRecords, manager);
+            createJobsUpdateStatusTest(caseRecords, manager, testDs);
 
         } finally {
             // drop db when done
@@ -174,8 +174,8 @@ public class ClusterJournalManagerTests {
     }
 
     /**
-     * Creates case records with the ClusterJournalManager, verifies their creation,
-     * and returns the created cases.
+     * Creates case records with the ClusterJournalManager, verifies their
+     * creation, and returns the created cases.
      *
      * @param manager The manager.
      * @param testDs  The test data source in order to verify tables independent
@@ -189,25 +189,38 @@ public class ClusterJournalManagerTests {
     private List<CaseRecord> createCasesTest(ClusterJournalManager manager, DataSource testDs) throws SQLException, IllegalStateException {
         String case1Str = "Case_1";
         String case2Str = "Case_2";
-        CaseRecord case1 = manager.getOrCreateCaseRecord(case1Str);
-        manager.getOrCreateCaseRecord(case2Str);
-        List<CaseRecord> caseRecords = getList(testDs, "SELECT case_id, name FROM cases",
-                (rs) -> new CaseRecord(rs.getLong("case_id"), rs.getString("name")))
+        Date caseDate = new Date();
+        CaseRecord case1 = manager.getOrCreateCaseRecord(case1Str, Optional.of(caseDate));
+        manager.getOrCreateCaseRecord(case2Str, Optional.of(caseDate));
+        List<CaseRecord> caseRecords = getList(testDs, "SELECT case_id, name, created_date FROM cases",
+                (rs) -> new CaseRecord(rs.getLong("case_id"), rs.getString("name"), Optional.ofNullable(rs.getTimestamp("created_date"))))
                 .stream()
                 .sorted((a, b) -> Long.compare(a.getId(), b.getId()))
                 .collect(Collectors.toList());
         assertTrue(caseRecords.size() == 2, "Expected 2 cases created; received {0} instead", getStr(caseRecords));
         assertTrue(caseRecords.get(0).getName().equals(case1Str), "Expected first case to be {0} but was {1}", case1Str, caseRecords.get(0).getName());
+
+        assertTrue(caseDate.equals(caseRecords.get(0).getCreatedDate().get()),
+                "Expected first case to have created date of  {0} but was {1}",
+                caseDate,
+                caseRecords.get(0).getCreatedDate().get());
         assertTrue(caseRecords.get(1).getName().equals(case2Str), "Expected first case to be {0} but was {1}", case2Str, caseRecords.get(1).getName());
+
+        assertTrue(caseDate.equals(caseRecords.get(1).getCreatedDate().get()),
+                "Expected second case to have created date of  {0} but was {1}",
+                caseDate,
+                caseRecords.get(1).getCreatedDate().get());
+
         // verify repeat case returns previous
-        CaseRecord repeatCase = manager.getOrCreateCaseRecord(case1Str);
+        CaseRecord repeatCase = manager.getOrCreateCaseRecord(case1Str, Optional.of(new Date()));
         assertTrue(case1.getId() == repeatCase.getId(), "Expected repeat case (id: {0}) to have same id as case1 (id: {1})", repeatCase.getId(), case1.getId());
         return caseRecords;
     }
 
     /**
      * Tests that the database is not initially present so data is not
-     * overwritten, creates the database and schema with the cluster journal manager.
+     * overwritten, creates the database and schema with the cluster journal
+     * manager.
      *
      * @param host     The pg host.
      * @param port     The pg port.
@@ -265,7 +278,7 @@ public class ClusterJournalManagerTests {
      *
      * @throws SQLException
      */
-    private void createJobsUpdateStatusTest(List<CaseRecord> caseRecords, ClusterJournalManager manager) throws SQLException {
+    private void createJobsUpdateStatusTest(List<CaseRecord> caseRecords, ClusterJournalManager manager, ComboPooledDataSource testDs) throws SQLException {
         // create 12 (6 for each case) records (verify in db)
         String dsPrefix = "ds_";
         Map<Long, List<IngestJobRecord>> jobRecords = new HashMap<>();
@@ -290,7 +303,7 @@ public class ClusterJournalManagerTests {
                 .flatMap(lst -> lst.stream())
                 .collect(Collectors.toList());
 
-        verifyStatus(manager, allRecords, null, null);
+        verifyStatus(manager, testDs, allRecords, null, null, null);
 
         // set initial 4 records for each case to running
         List<IngestJobRecord> running1 = setStatus(manager, jobRecords, 4, IngestJobStatus.RUNNING);
@@ -304,7 +317,7 @@ public class ClusterJournalManagerTests {
                         .isPresent())
                 .collect(Collectors.toList());
 
-        verifyStatus(manager, pending1, running1, null);
+        verifyStatus(manager, testDs, pending1, running1, null, null);
 
         // set initial 2 of each case (which should have been running) to done
         List<IngestJobRecord> done2 = setStatus(manager, jobRecords, 2, IngestJobStatus.DONE);
@@ -318,7 +331,17 @@ public class ClusterJournalManagerTests {
                         .isPresent())
                 .collect(Collectors.toList());
 
-        verifyStatus(manager, pending1, running2, done2);
+        verifyStatus(manager, testDs, pending1, running2, done2, null);
+
+        IngestJobRecord erroneous = manager.setJobError(done2.get(0).getId(), true).get();
+
+        assertTrue(done2.get(0).getCaseName().equals(erroneous.getCaseName())
+                && done2.get(0).getCaseId() == erroneous.getCaseId()
+                && done2.get(0).getDataSourceName().equals(erroneous.getDataSourceName()),
+                "Expected erroneous sent and received to be equivalent except for status changes but received {0} when previous was {1}.",
+                done2.get(0), erroneous);
+
+        verifyStatus(manager, testDs, pending1, running2, done2, Arrays.asList(erroneous));
     }
 
     /**
@@ -371,16 +394,20 @@ public class ClusterJournalManagerTests {
      * Verifies counts and expected ids for statuses of records.
      *
      * @param manager            The manager to use to retrieve items.
+     * @param testDs             The database connection pool.
      * @param expectedPendingIds The expected pending ids. Null is equivalent to
      *                           empty list.
      * @param expectedRunningIds The expected running ids. Null is equivalent to
      *                           empty list.
      * @param expectedDoneIds    The expected done ids. Null is equivalent to
      *                           empty list.
+     * @param erroneous          The records with errors.
      *
      * @throws SQLException
      */
-    private static void verifyStatus(ClusterJournalManager manager, List<IngestJobRecord> expectedPendingIds, List<IngestJobRecord> expectedRunningIds, List<IngestJobRecord> expectedDoneIds) throws SQLException {
+    private static void verifyStatus(ClusterJournalManager manager, ComboPooledDataSource testDs, List<IngestJobRecord> expectedPendingIds,
+            List<IngestJobRecord> expectedRunningIds, List<IngestJobRecord> expectedDoneIds, List<IngestJobRecord> erroneousRecords) throws SQLException {
+
         List<Pair<IngestJobStatus, List<IngestJobRecord>>> itemsToCheck = Arrays.asList(
                 Pair.of(IngestJobStatus.PENDING, expectedPendingIds),
                 Pair.of(IngestJobStatus.RUNNING, expectedRunningIds),
@@ -400,11 +427,36 @@ public class ClusterJournalManagerTests {
                     fromDatabase.size(),
                     getStr(fromDatabase));
 
-            List<IngestJobRecord> intersection = fromDatabase.stream()
+            List<IngestJobRecord> difference = fromDatabase.stream()
                     .filter(r -> !expectedIds.contains(r.getId()))
                     .collect(Collectors.toList());
 
-            assertTrue(intersection.size() == 0, "Expected all ids to overlap, but the following records were not expected: {0}", intersection);
+            assertTrue(difference.size() == 0, "Expected all ids to overlap, but the following records were not expected: {0}", difference);
         }
+
+        // handle error records
+        List<Long> errorIds = new ArrayList<>();
+
+        try (Connection conn = testDs.getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT job_id FROM ingest_jobs WHERE error_occurred = TRUE")) {
+            while (rs.next()) {
+                errorIds.add(rs.getLong("job_id"));
+            }
+        }
+        List<IngestJobRecord> expectedErrors = erroneousRecords == null ? Collections.emptyList() : erroneousRecords;
+
+        assertTrue(errorIds.size() == expectedErrors.size(),
+                "Expected {0} items but received {1} of {2}",
+                expectedErrors.size(),
+                errorIds.size(),
+                getStr(errorIds));
+
+        
+        List<IngestJobRecord> difference = expectedErrors.stream()
+                .filter(r -> !errorIds.contains(r.getId()))
+                .collect(Collectors.toList());
+
+        assertTrue(difference.size() == 0, "Expected all error ids to overlap, but the following were expected and not seen: {0}", difference);
     }
 }

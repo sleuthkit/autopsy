@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -55,7 +56,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -2234,8 +2234,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         /**
-         * Updates the cluster journal with the given status for the provided ingest
-         * job.
+         * Updates the cluster journal with the given status for the provided
+         * ingest job.
          *
          * @param job    The ingest job.
          * @param status The new status for the job.
@@ -2250,9 +2250,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             String dataSourceName = job.getManifest().getDataSourceFileName();
 
             try {
-                CaseRecord caseRecord = manager.getOrCreateCaseRecord(caseName);
+                CaseRecord caseRecord = manager.getOrCreateCaseRecord(caseName, Optional.of(job.getManifest().getDateFileCreated()));
                 IngestJobRecord jobRecord = manager.getOrCreateJobRecord(caseRecord.getId(), dataSourceName);
                 manager.setJobStatus(jobRecord.getId(), status, dateToUse);
+                manager.setJobError(jobRecord.getId(), job.getErrorsOccurred());
             } catch (Exception ex) {
                 // firewall exception to prevent any exception from disrupting processing of data source.
                 sysLogger.log(Level.WARNING, "An error occurred while updating cluster journal database.", ex);

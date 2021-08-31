@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.experimental.clusterjournal;
 
+import java.util.Date;
+import java.util.Optional;
+
 /**
  * A record for a case processed by auto ingest.
  */
@@ -25,16 +28,19 @@ public class CaseRecord {
 
     private final long id;
     private final String name;
+    private final Optional<Date> createdDate;
 
     /**
      * Main constructor.
      *
      * @param id   The cluster journal id of the case.
      * @param name The unique name of the case.
+     * @param createdDate The date the case was created.
      */
-    CaseRecord(long id, String name) {
+    CaseRecord(long id, String name, Optional<Date> createdDate) {
         this.id = id;
         this.name = name;
+        this.createdDate = createdDate;
     }
 
     /**
@@ -51,8 +57,15 @@ public class CaseRecord {
         return name;
     }
 
+    /**
+     * @return The date the case was created.
+     */
+    public Optional<Date> getCreatedDate() {
+        return createdDate;
+    }
+
     @Override
     public String toString() {
-        return "CaseRecord{" + "id=" + id + ", name=" + name + '}';
+        return "CaseRecord{" + "id=" + id + ", name=" + name + ", createdDate=" + createdDate + '}';
     }
 }
