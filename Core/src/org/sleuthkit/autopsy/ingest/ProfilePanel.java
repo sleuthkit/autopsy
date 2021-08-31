@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
@@ -39,13 +35,12 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         "ProfilePanel.profileNameLabel.text=Profile Name:",
         "ProfilePanel.newProfileText=NewEmptyProfile",
         "ProfilePanel.messages.profilesMustBeNamed=Ingest profile must be named.",
-        "ProfilePanel.messages.profileNameContainsIllegalCharacter=Profile name contains an illegal character"})
+        "ProfilePanel.messages.profileNameContainsIllegalCharacter=Profile name contains an illegal character. Only letters and digits are allowed."})
 
     private final IngestJobSettingsPanel ingestSettingsPanel;
     private final IngestJobSettings settings;
     private IngestProfile profile;
     private final static String NEW_PROFILE_NAME = NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.newProfileText");
-    private static final List<String> ILLEGAL_NAME_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", "/", ":", "*", "?", "\"", "<", ">")));
 
     /**
      * Creates new form ProfilePanel
@@ -231,8 +226,12 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     /**
      * Save a new or edited profile.
      */
-    void store() {
+    boolean store() {
+        if (!isValidDefinition(false)) {
+            return false;
+        }
         saveSettings();
+        return true;
     }
 
     void load() {
@@ -240,41 +239,33 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     /**
      * Checks that information entered constitutes a valid ingest profile.
+     * 
+     * @param dispayWarnings boolean flag whether to display warnings if an error occurred.
      *
      * @return true for valid, false for invalid.
      */
-    boolean isValidDefinition() {
-        if (getProfileName().isEmpty()) {
-            NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                    NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.messages.profilesMustBeNamed"),
-                    NotifyDescriptor.WARNING_MESSAGE);
-            DialogDisplayer.getDefault().notify(notifyDesc);
-            return false;
-        }
-        if (!containsOnlyLegalChars(getProfileName(), ILLEGAL_NAME_CHARS)) {
-            NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                    NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.messages.profileNameContainsIllegalCharacter"),
-                    NotifyDescriptor.WARNING_MESSAGE);
-            DialogDisplayer.getDefault().notify(notifyDesc);
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Checks an input string for the use of illegal characters.
-     *
-     * @param toBeChecked  The input string.
-     * @param illegalChars The characters deemed to be illegal.
-     *
-     * @return True if the string does not contain illegal characters, false
-     *         otherwise.
-     */
-    private static boolean containsOnlyLegalChars(String toBeChecked, List<String> illegalChars) {
-        for (String illegalChar : illegalChars) {
-            if (toBeChecked.contains(illegalChar)) {
-                return false;
+    boolean isValidDefinition(boolean dispayWarnings) {
+        String profileName = getProfileName();
+        if (profileName.isEmpty()) {
+            if (dispayWarnings) {
+                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                        NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.messages.profilesMustBeNamed"),
+                        NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDesc);
             }
+            return false;
+        }
+
+        // check if the name contains illegal characters
+        String sanitizedName = profileName.replaceAll("[^A-Za-z0-9]", "");
+        if (!(profileName.equals(sanitizedName))) {
+            if (dispayWarnings) {
+                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                        NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.messages.profileNameContainsIllegalCharacter"),
+                        NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDesc);
+            }
+            return false;
         }
         return true;
     }

@@ -1,8 +1,9 @@
 CommandLineIngestSettingPanel_empty_report_name_mgs=Report profile name was empty, no profile created.
 CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created.
+CommandLineIngestSettingPanel_invalid_report_name_mgs=Report profile name contained illegal characters, no profile created.
 CommandListIngestSettingsPanel_Default_Report_DisplayName=Default
 CommandListIngestSettingsPanel_Make_Config=Make new profile...
-CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (commas not allowed):
+CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (letters and digits only):
 OpenIDE-Module-Name=CommandLineAutopsy
 OptionsCategory_Keywords_Command_Line_Ingest_Settings=Command Line Ingest Settings
 OptionsCategory_Keywords_General=Options
