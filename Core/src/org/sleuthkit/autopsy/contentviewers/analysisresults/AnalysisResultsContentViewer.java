@@ -19,33 +19,28 @@
 package org.sleuthkit.autopsy.contentviewers.analysisresults;
 
 import java.awt.Component;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
-import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.datamodel.AnalysisResultItem;
 
 /**
- * Displays a list of analysis results as a content viewer.
+ * A content viewer that displays the analysis results for a Content object.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 7)
 public class AnalysisResultsContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(AnalysisResultsContentPanel.class.getName());
-
-    // isPreferred value
     private static final int PREFERRED_VALUE = 3;
-
     private final AnalysisResultsViewModel viewModel = new AnalysisResultsViewModel();
     private final AnalysisResultsContentPanel panel = new AnalysisResultsContentPanel();
 
@@ -87,27 +82,35 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
         "AnalysisResultsContentViewer_setNode_loadingMessage=Loading...",
         "AnalysisResultsContentViewer_setNode_errorMessage=There was an error loading results.",})
     public synchronized void setNode(Node node) {
-        // reset the panel
         panel.reset();
 
-        // if there is a worker running, cancel it
         if (worker != null) {
             worker.cancel(true);
             worker = null;
         }
 
-        // if no node, nothing to do
         if (node == null) {
             return;
         }
 
+        TskContentItem contentItem;
+        AnalysisResultItem analysisResultItem = node.getLookup().lookup(AnalysisResultItem.class);
+        if (Objects.nonNull(analysisResultItem)) {
+            
+        } else {
+        TskContentItem contentItem = node.getLookup().lookup(TskContentItem.class);
+            
+        }
+            
+            
+            
         // show a loading message
         panel.showMessage(Bundle.AnalysisResultsContentViewer_setNode_loadingMessage());
+        TskContentItem contentItem = node.getLookup().lookup(TskContentItem.class);
 
-        // create the worker
+        
         worker = new DataFetchWorker<>(
-                // load a view model from the node
-                (selectedNode) -> viewModel.getAnalysisResults(selectedNode),
+                (selectedNode) -> viewModel.getAnalysisResults(node.getLookup().lookup(TskContentItem.class), node.getLookup().lookup(AnalysisResultItem.class),
                 (nodeAnalysisResults) -> {
                     if (nodeAnalysisResults.getResultType() == DataFetchResult.ResultType.SUCCESS) {
                         // if successful, display the results
@@ -125,34 +128,26 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
 
     @Override
     public boolean isSupported(Node node) {
-        if (node == null) {
+        if (Objects.isNull(node)) {
             return false;
         }
 
-        // There needs to either be a file with an AnalysisResult or an AnalysisResult in the lookup.
-        for (Content content : node.getLookup().lookupAll(Content.class)) {
-            if (content instanceof AnalysisResult) {
-                return true;
-            }
+        AnalysisResultItem analysisResultItem = node.getLookup().lookup(AnalysisResultItem.class);
+        if (Objects.nonNull(analysisResultItem)) {
+            return true;
+        }        
+                
+        TskContentItem contentItem = node.getLookup().lookup(TskContentItem.class);
+        if (Objects.isNull(contentItem)) {
+            return false;
+        }        
 
-            if (content == null || content instanceof BlackboardArtifact) {
-                continue;
-            }
-
-            try {
-                if (Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().hasAnalysisResults(content.getId())) {
-                    return true;
-                }
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.SEVERE, "Unable to get analysis results for file with obj id " + content.getId(), ex);
-            }
-        }
-
-        return false;
+        return (contentItem.getAnalyisisResults().isEmpty() == false);
     }
 
     @Override
     public int isPreferred(Node node) {
         return PREFERRED_VALUE;
     }
+
 }

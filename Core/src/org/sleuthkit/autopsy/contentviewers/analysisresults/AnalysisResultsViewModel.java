@@ -30,7 +30,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.AnalysisResultItem;
+import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -94,7 +97,7 @@ public class AnalysisResultsViewModel {
         private final List<ResultDisplayAttributes> analysisResults;
         private final Optional<AnalysisResult> selectedResult;
         private final Optional<Score> aggregateScore;
-        private final Optional<Content> content;
+        private final Content content;
 
         /**
          * Constructor.
@@ -105,7 +108,7 @@ public class AnalysisResultsViewModel {
          * @param aggregateScore  The aggregate score or empty if no score.
          * @param content         The content associated with these results.
          */
-        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult, Optional<Score> aggregateScore, Optional<Content> content) {
+        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult, Optional<Score> aggregateScore, Content content) {
             this.analysisResults = analysisResults;
             this.selectedResult = selectedResult;
             this.aggregateScore = aggregateScore;
@@ -146,7 +149,7 @@ public class AnalysisResultsViewModel {
          * @return The content associated with these results or empty if not
          *         present.
          */
-        Optional<Content> getContent() {
+        Content getContent() {
             return content;
         }
     }
@@ -226,6 +229,8 @@ public class AnalysisResultsViewModel {
     }
 
     /**
+     * RJCTODO
+     *
      * Returns the view model data representing the analysis results to be
      * displayed for the node.
      *
@@ -233,63 +238,16 @@ public class AnalysisResultsViewModel {
      *
      * @return The analysis results view model data to display.
      */
-    NodeResults getAnalysisResults(Node node) {
-        if (node == null) {
-            return new NodeResults(Collections.emptyList(), Optional.empty(), Optional.empty(), Optional.empty());
-        }
-
+    NodeResults getAnalysisResults(TskContentItem contentItem, Optional<AnalysisResult> selectedResult) {
+        Content content = contentItem.getTskContent();
         Optional<Score> aggregateScore = Optional.empty();
-        Optional<Content> nodeContent = Optional.empty();
-        // maps id of analysis result to analysis result to prevent duplication
-        Map<Long, AnalysisResult> allAnalysisResults = new HashMap<>();
-        Optional<AnalysisResult> selectedResult = Optional.empty();
-
-        // Find first content that is not an artifact within node
-        for (Content content : node.getLookup().lookupAll(Content.class)) {
-            if (content == null || content instanceof BlackboardArtifact) {
-                continue;
-            }
-
-            try {
-                nodeContent = Optional.of(content);
-
-                // get the aggregate score of that content
-                aggregateScore = Optional.ofNullable(content.getAggregateScore());
-
-                // and add all analysis results to mapping
-                content.getAllAnalysisResults().stream()
-                        .forEach((ar) -> allAnalysisResults.put(ar.getArtifactID(), ar));
-
-                break;
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Unable to get analysis results for content with obj id " + content.getId(), ex);
-            }
+        try {
+            aggregateScore = Optional.ofNullable(content.getAggregateScore());
+            
+        } catch (TskCoreException ex) {
+            // RJCTODO: log error
         }
-
-        // Find any analysis results in the node
-        Collection<? extends AnalysisResult> analysisResults = node.getLookup().lookupAll(AnalysisResult.class);
-        if (analysisResults.size() > 0) {
-
-            // get any items with a score
-            List<AnalysisResult> filteredResults = analysisResults.stream()
-                    .collect(Collectors.toList());
-
-            // add them to the map to display
-            filteredResults.forEach((ar) -> allAnalysisResults.put(ar.getArtifactID(), ar));
-
-            // the selected result will be the highest scored analysis result in the node.
-            selectedResult = filteredResults.stream()
-                    .max((a, b) -> a.getScore().compareTo(b.getScore()));
-
-            // if no aggregate score determined at this point, use the selected result score.
-            if (!aggregateScore.isPresent()) {
-                aggregateScore = selectedResult.flatMap(selectedRes -> Optional.ofNullable(selectedRes.getScore()));
-            }
-        }
-
-        // get view model representation
-        List<ResultDisplayAttributes> displayAttributes = getOrderedDisplayAttributes(allAnalysisResults.values());
-
-        return new NodeResults(displayAttributes, selectedResult, aggregateScore, nodeContent);
+        List<ResultDisplayAttributes> displayAttributes = getOrderedDisplayAttributes(contentItem.getAnalyisisResults());;
+        return new NodeResults(displayAttributes, selectedResult, aggregateScore, content);
     }
 }
