@@ -56,7 +56,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
-import org.apache.commons.collections.CollectionUtils;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -1127,11 +1126,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         Date dateToUse = date == null && status != IngestJobStatus.PENDING ? new Date() : date;
         String caseName = job.getManifest().getCaseName();
-        String dataSourceName = job.getManifest().getDataSourceFileName();
+        String dataSourcePath = job.getManifest().getDataSourcePath().toAbsolutePath().toString();
 
         try {
             CaseRecord caseRecord = manager.getOrCreateCaseRecord(caseName, Optional.of(job.getManifest().getDateFileCreated()));
-            IngestJobRecord jobRecord = manager.getOrCreateJobRecord(caseRecord.getId(), dataSourceName);
+            IngestJobRecord jobRecord = manager.getOrCreateJobRecord(caseRecord.getId(), dataSourcePath);
             manager.setJobStatus(jobRecord.getId(), status, dateToUse);
             manager.setJobError(jobRecord.getId(), job.getErrorsOccurred());
         } catch (Exception ex) {
@@ -1227,7 +1226,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
 
                 // track newly added pending jobs
-                if (CollectionUtils.isNotEmpty(curJobs)) {
+                if (curJobs != null && !curJobs.isEmpty()) {
                     Set<AutoIngestJob> oldJobsSet = new HashSet<>(oldJobs == null ? Collections.emptyList() : oldJobs);
                     for (AutoIngestJob pendingJob : curJobs) {
                         if (!oldJobsSet.contains(pendingJob)) {

@@ -291,9 +291,9 @@ public class ClusterActivityManagerTests {
                         "Expected case names to be equal.  Received {0}; expected {1}.",
                         created.getCaseName(), c.getName());
 
-                assertTrue(created.getDataSourceName().equals(dsPrefix + jIdx),
+                assertTrue(created.getDataSourcePath().equals(dsPrefix + jIdx),
                         "Expected data source names to be equal.  Received {0}; expected {1}.",
-                        created.getDataSourceName(), dsPrefix + jIdx);
+                        created.getDataSourcePath(), dsPrefix + jIdx);
 
                 recList.add(created);
             }
@@ -337,7 +337,7 @@ public class ClusterActivityManagerTests {
 
         assertTrue(done2.get(0).getCaseName().equals(erroneous.getCaseName())
                 && done2.get(0).getCaseId() == erroneous.getCaseId()
-                && done2.get(0).getDataSourceName().equals(erroneous.getDataSourceName()),
+                && done2.get(0).getDataSourcePath().equals(erroneous.getDataSourcePath()),
                 "Expected erroneous sent and received to be equivalent except for status changes but received {0} when previous was {1}.",
                 done2.get(0), erroneous);
 
@@ -370,7 +370,7 @@ public class ClusterActivityManagerTests {
                         curRec.getId(), updatedRecord.getId());
                 assertTrue(curRec.getCaseName().equals(updatedRecord.getCaseName())
                         && updatedRecord.getCaseId() == curRec.getCaseId()
-                        && updatedRecord.getDataSourceName().equals(curRec.getDataSourceName()),
+                        && updatedRecord.getDataSourcePath().equals(curRec.getDataSourcePath()),
                         "Expected sent and received to be equivalent except for status changes but received {0} when previous was {1}.",
                         updatedRecord, curRec);
 
