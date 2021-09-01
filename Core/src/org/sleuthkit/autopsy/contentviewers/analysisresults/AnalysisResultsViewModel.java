@@ -20,9 +20,8 @@ package org.sleuthkit.autopsy.contentviewers.analysisresults;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,18 +29,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.AnalysisResultItem;
 import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
  * Creates a representation of a list of analysis results gathered from a node.
  */
 public class AnalysisResultsViewModel {
@@ -75,7 +71,7 @@ public class AnalysisResultsViewModel {
          * @return The attributes to display.
          */
         List<Pair<String, String>> getAttributesToDisplay() {
-            return attributesToDisplay;
+            return Collections.unmodifiableList(attributesToDisplay);
         }
 
         /**
@@ -97,7 +93,7 @@ public class AnalysisResultsViewModel {
         private final List<ResultDisplayAttributes> analysisResults;
         private final Optional<AnalysisResult> selectedResult;
         private final Optional<Score> aggregateScore;
-        private final Content content;
+        private final Optional<Content> content;
 
         /**
          * Constructor.
@@ -108,7 +104,7 @@ public class AnalysisResultsViewModel {
          * @param aggregateScore  The aggregate score or empty if no score.
          * @param content         The content associated with these results.
          */
-        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult, Optional<Score> aggregateScore, Content content) {
+        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult, Optional<Score> aggregateScore, Optional<Content> content) {
             this.analysisResults = analysisResults;
             this.selectedResult = selectedResult;
             this.aggregateScore = aggregateScore;
@@ -121,7 +117,7 @@ public class AnalysisResultsViewModel {
          * @return The analysis results to be displayed.
          */
         List<ResultDisplayAttributes> getAnalysisResults() {
-            return analysisResults;
+            return Collections.unmodifiableList(analysisResults);
         }
 
         /**
@@ -149,7 +145,7 @@ public class AnalysisResultsViewModel {
          * @return The content associated with these results or empty if not
          *         present.
          */
-        Content getContent() {
+        Optional<Content> getContent() {
             return content;
         }
     }
@@ -229,8 +225,6 @@ public class AnalysisResultsViewModel {
     }
 
     /**
-     * RJCTODO
-     *
      * Returns the view model data representing the analysis results to be
      * displayed for the node.
      *
@@ -238,16 +232,49 @@ public class AnalysisResultsViewModel {
      *
      * @return The analysis results view model data to display.
      */
-    NodeResults getAnalysisResults(TskContentItem contentItem, Optional<AnalysisResult> selectedResult) {
-        Content content = contentItem.getTskContent();
-        Optional<Score> aggregateScore = Optional.empty();
-        try {
-            aggregateScore = Optional.ofNullable(content.getAggregateScore());
-            
-        } catch (TskCoreException ex) {
-            // RJCTODO: log error
+    NodeResults getAnalysisResults(Node node) {
+        if (node == null) {
+            return new NodeResults(Collections.emptyList(), Optional.empty(), Optional.empty(), Optional.empty());
         }
-        List<ResultDisplayAttributes> displayAttributes = getOrderedDisplayAttributes(contentItem.getAnalyisisResults());;
-        return new NodeResults(displayAttributes, selectedResult, aggregateScore, content);
+
+        Content analyzedContent = null;
+        AnalysisResult selectedAnalysisResult = null;
+        Score aggregateScore = null;
+        List<AnalysisResult> analysisResults = Collections.emptyList();
+        long selectedObjectId = 0;
+        try {
+            AnalysisResultItem analysisResultItem = node.getLookup().lookup(AnalysisResultItem.class);
+            if (Objects.nonNull(analysisResultItem)) {
+                /*
+                 * The content represented by the Node is an analysis result.
+                 * Set this analysis result as the analysis result to be
+                 * selected in the content viewer and get the analyzed content
+                 * as the source of the analysis results to display.
+                 */
+                selectedAnalysisResult = analysisResultItem.getAnalysisResult();
+                selectedObjectId = selectedAnalysisResult.getId();
+                analyzedContent = selectedAnalysisResult.getParent();
+            } else {
+                /*
+                 * The content represented by the Node is something other than
+                 * an analysis result. Use it as the source of the analysis
+                 * results to display.
+                 */
+                TskContentItem contentItem = node.getLookup().lookup(TskContentItem.class);
+                analyzedContent = contentItem.getTskContent();
+                selectedObjectId = analyzedContent.getId();
+            }
+            aggregateScore = analyzedContent.getAggregateScore();
+            analysisResults = analyzedContent.getAllAnalysisResults();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Error get analysis result data for selected Content (object ID=%d)", selectedObjectId), ex);
+        }
+
+        /*
+         * Use the data collected above to construct the view model.
+         */
+        List<ResultDisplayAttributes> displayAttributes = getOrderedDisplayAttributes(analysisResults);
+        return new NodeResults(displayAttributes, Optional.ofNullable(selectedAnalysisResult), Optional.ofNullable(aggregateScore), Optional.ofNullable(analyzedContent));
     }
+    
 }
