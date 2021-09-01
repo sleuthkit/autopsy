@@ -267,7 +267,7 @@ public class AnalysisResultsViewModel {
             aggregateScore = analyzedContent.getAggregateScore();
             analysisResults = analyzedContent.getAllAnalysisResults();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error get analysis result data for selected Content (object ID=%d)", selectedObjectId), ex);
+            logger.log(Level.SEVERE, String.format("Error getting analysis result data for selected Content (object ID=%d)", selectedObjectId), ex);
         }
 
         /*
