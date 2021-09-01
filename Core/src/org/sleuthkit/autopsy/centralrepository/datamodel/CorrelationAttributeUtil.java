@@ -80,7 +80,6 @@ public class CorrelationAttributeUtil {
         return Bundle.CorrelationAttributeUtil_emailaddresses_text();
     }
 
-
     /**
      * Makes zero to many correlation attribute instances from the attributes of
      * artifacts that have correlatable data. The intention of this method is to
@@ -106,23 +105,22 @@ public class CorrelationAttributeUtil {
 
         return CorrelationAttributeUtil.makeCorrAttrsForSearch(artifact);
     }
-    
+
     //public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(AbstactFile file) {
     // @@@ TODO Call into makeCorrAttrsForSearch(file) when API changes
     // AND move logic that perhaps in the ingest module into here. 
     //    return makeCorrAttrsForSearch(file);
     //}
-    
     public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(Content content) {
         return new ArrayList<>();
     }
-   
+
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(Content content) {
         return new ArrayList<>();
     }
-    
+
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(AnalysisResult artifact) {
-        try {     
+        try {
             if (BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.equals(artifact.getType())) {
                 BlackboardAttribute assocArtifactAttr = artifact.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT);
                 if (assocArtifactAttr != null) {
@@ -131,9 +129,9 @@ public class CorrelationAttributeUtil {
                 }
             }
             Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
-            
+
             return CorrelationAttributeUtil.makeCorrAttrsForSearch(content);
-        // @@@ TODO ADD Error Handling
+            // @@@ TODO ADD Error Handling
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         } catch (NoCurrentCaseException ex) {
@@ -141,8 +139,7 @@ public class CorrelationAttributeUtil {
         }
         return new ArrayList<>();
     }
-    
-    
+
     /**
      * Makes zero to many correlation attribute instances from the attributes of
      * artifacts that have correlatable data. The intention of this method is to
@@ -170,7 +167,7 @@ public class CorrelationAttributeUtil {
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(DataArtifact artifact) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
         try {
-            
+
             List<BlackboardAttribute> attributes = artifact.getAttributes();
 
             int artifactTypeID = artifact.getArtifactTypeID();
@@ -335,8 +332,6 @@ public class CorrelationAttributeUtil {
             }
         }
     }
-
-
 
     /**
      * Makes a correlation attribute instance for an account artifact.
@@ -600,11 +595,10 @@ public class CorrelationAttributeUtil {
 
     // @@@ BC: This seems like it should go into a DB-specific class because it is 
     // much different from the other methods in this class. It is going to the DB for data.
-    
     /**
-     * Gets the correlation attribute instance for a file. This method goes to the CR
-     * to get an actual instance.  It does not simply package the data from file
-     * into a generic instance object.
+     * Gets the correlation attribute instance for a file. This method goes to
+     * the CR to get an actual instance. It does not simply package the data
+     * from file into a generic instance object.
      *
      * @param file The file.
      *
@@ -682,7 +676,8 @@ public class CorrelationAttributeUtil {
     }
 
     /**
-     * Makes a correlation attribute instance for a file. Will include the specific object ID.
+     * Makes a correlation attribute instance for a file. Will include the
+     * specific object ID.
      *
      * IMPORTANT: The correlation attribute instance is NOT added to the central
      * repository by this method.
@@ -700,23 +695,23 @@ public class CorrelationAttributeUtil {
      * @return The correlation attribute instance or null, if an error occurred.
      */
     // @@@ TODO: Make this look like other makeCorrAttrsForSearch and return a list 
-    public static CorrelationAttributeInstance makeCorrAttrsForSearch(AbstractFile file) {
-
+    public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(AbstractFile file) {
+        List<CorrelationAttributeInstance> fileTypeList = new ArrayList<>(); // will be an empty or single element list as was decided in 7852
         if (!isSupportedAbstractFileType(file)) {
-            return null;
+            return fileTypeList;
         }
 
         // We need a hash to make the correlation artifact instance.
         String md5 = file.getMd5Hash();
         if (md5 == null || md5.isEmpty() || HashUtility.isNoDataMd5(md5)) {
-            return null;
+            return fileTypeList;
         }
 
         try {
             CorrelationAttributeInstance.Type filesType = CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
 
             CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
-            return new CorrelationAttributeInstance(
+            fileTypeList.add(new CorrelationAttributeInstance(
                     filesType,
                     file.getMd5Hash(),
                     correlationCase,
@@ -724,21 +719,17 @@ public class CorrelationAttributeUtil {
                     file.getParentPath() + file.getName(),
                     "",
                     TskData.FileKnown.UNKNOWN,
-                    file.getId());
-
+                    file.getId()));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error querying case database (%s)", file), ex); // NON-NLS
-            return null;
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
-            return null;
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
-            return null;
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
-            return null;
         }
+        return fileTypeList;
     }
 
     /**

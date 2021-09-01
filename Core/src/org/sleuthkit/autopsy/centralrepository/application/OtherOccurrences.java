@@ -53,7 +53,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.SleuthkitCase;
