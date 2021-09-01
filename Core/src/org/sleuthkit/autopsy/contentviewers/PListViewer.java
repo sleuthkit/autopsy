@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,6 +56,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
 
@@ -75,6 +76,8 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
     private ExplorerManager explorerManager;
 
     private NSObject rootDict;
+    
+    private final JFileChooserFactory fileChooserHelper = new JFileChooserFactory();
 
     /**
      * Creates new form PListViewer
@@ -203,7 +206,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
             return;
         }
 
-        final JFileChooser fileChooser = new JFileChooser();
+        final JFileChooser fileChooser = fileChooserHelper.getChooser();
         fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
         fileChooser.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
 
