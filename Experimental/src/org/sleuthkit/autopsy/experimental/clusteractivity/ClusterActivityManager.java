@@ -417,7 +417,7 @@ public class ClusterActivityManager {
      *
      * @param jobId     The job id.
      * @param newStatus The status to set for the job.
-     * @param date      The timestamp for when.
+     * @param date      The timestamp for when (can be null for RUNNING jobs).
      *
      * @return The job record if an update is made.
      *

@@ -56,6 +56,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
+import org.apache.commons.collections.CollectionUtils;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -1113,6 +1114,33 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     /**
+     * Updates the cluster activity with the given status for the provided
+     * ingest job.
+     *
+     * @param job    The ingest job.
+     * @param status The new status for the job.
+     * @param date   The timestamp of the update. If null is provided, then
+     *               current date will be used.
+     */
+    private void setClusterActivityStatus(AutoIngestJob job, IngestJobStatus status, Date date) {
+        ClusterActivityManager manager = AutoIngestManager.this.clusterActivityManager;
+
+        Date dateToUse = date == null && status != IngestJobStatus.PENDING ? new Date() : date;
+        String caseName = job.getManifest().getCaseName();
+        String dataSourceName = job.getManifest().getDataSourceFileName();
+
+        try {
+            CaseRecord caseRecord = manager.getOrCreateCaseRecord(caseName, Optional.of(job.getManifest().getDateFileCreated()));
+            IngestJobRecord jobRecord = manager.getOrCreateJobRecord(caseRecord.getId(), dataSourceName);
+            manager.setJobStatus(jobRecord.getId(), status, dateToUse);
+            manager.setJobError(jobRecord.getId(), job.getErrorsOccurred());
+        } catch (Exception ex) {
+            // firewall exception to prevent any exception from disrupting processing of data source.
+            sysLogger.log(Level.WARNING, "An error occurred while updating cluster journal database.", ex);
+        }
+    }
+
+    /**
      * A task that submits an input directory scan task to the input directory
      * scan task executor.
      */
@@ -1189,9 +1217,23 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 newCompletedJobsList.clear();
                 Files.walkFileTree(rootInputDirectory, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, this);
                 Collections.sort(newPendingJobsList);
+                List<AutoIngestJob> oldJobs = null;
+                List<AutoIngestJob> curJobs = null;
                 synchronized (jobsLock) {
+                    oldJobs = AutoIngestManager.this.pendingJobs;
+                    curJobs = newPendingJobsList;
                     AutoIngestManager.this.pendingJobs = newPendingJobsList;
                     AutoIngestManager.this.completedJobs = newCompletedJobsList;
+                }
+
+                // track newly added pending jobs
+                if (CollectionUtils.isNotEmpty(curJobs)) {
+                    Set<AutoIngestJob> oldJobsSet = new HashSet<>(oldJobs == null ? Collections.emptyList() : oldJobs);
+                    for (AutoIngestJob pendingJob : curJobs) {
+                        if (!oldJobsSet.contains(pendingJob)) {
+                            setClusterActivityStatus(pendingJob, IngestJobStatus.PENDING, null);
+                        }
+                    }
                 }
 
             } catch (Exception ex) {
@@ -2230,33 +2272,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     setChanged();
                     notifyObservers(Event.JOB_COMPLETED);
                 }
-            }
-        }
-
-        /**
-         * Updates the cluster journal with the given status for the provided
-         * ingest job.
-         *
-         * @param job    The ingest job.
-         * @param status The new status for the job.
-         * @param date   The timestamp of the update. If null is provided, then
-         *               current date will be used.
-         */
-        private void setClusterActivityStatus(AutoIngestJob job, IngestJobStatus status, Date date) {
-            ClusterActivityManager manager = AutoIngestManager.this.clusterActivityManager;
-
-            Date dateToUse = date == null ? new Date() : date;
-            String caseName = job.getManifest().getCaseName();
-            String dataSourceName = job.getManifest().getDataSourceFileName();
-
-            try {
-                CaseRecord caseRecord = manager.getOrCreateCaseRecord(caseName, Optional.of(job.getManifest().getDateFileCreated()));
-                IngestJobRecord jobRecord = manager.getOrCreateJobRecord(caseRecord.getId(), dataSourceName);
-                manager.setJobStatus(jobRecord.getId(), status, dateToUse);
-                manager.setJobError(jobRecord.getId(), job.getErrorsOccurred());
-            } catch (Exception ex) {
-                // firewall exception to prevent any exception from disrupting processing of data source.
-                sysLogger.log(Level.WARNING, "An error occurred while updating cluster journal database.", ex);
             }
         }
 
