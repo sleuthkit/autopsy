@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -62,7 +61,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * d) The content of that TSK_COMMENT attribute will be of the form "Previous
  * Case: case1,case2...caseN"
  */
-public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
+public class PastCasesSummary {
 
     /**
      * Return type for results items in the past cases tab.
@@ -87,21 +86,16 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
          * @return Data for the cases with same id table.
          */
         public List<Pair<String, Long>> getSameIdsResults() {
-            return sameIdsResults;
+            return Collections.unmodifiableList(sameIdsResults);
         }
 
         /**
          * @return Data for the tagged notable table.
          */
         public List<Pair<String, Long>> getTaggedNotable() {
-            return taggedNotable;
+            return Collections.unmodifiableList(taggedNotable);
         }
     }
-
-    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-            ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-    ));
 
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
     private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COMMENT);
@@ -145,11 +139,6 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
 
         this.caseProvider = provider;
         this.logger = logger;
-    }
-
-    @Override
-    public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return ARTIFACT_UPDATE_TYPE_IDS;
     }
 
     /**
@@ -224,7 +213,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      * @return The list of unique cases and their occurrences sorted from max to
      *         min.
      */
-    private List<Pair<String, Long>> getCaseCounts(Stream<String> cases) {
+    private static List<Pair<String, Long>> getCaseCounts(Stream<String> cases) {
         Collection<List<String>> groupedCases = cases
                 // group by case insensitive compare of cases
                 .collect(Collectors.groupingBy((caseStr) -> caseStr.toUpperCase().trim()))

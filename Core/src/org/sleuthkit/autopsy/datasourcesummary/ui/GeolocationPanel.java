@@ -34,7 +34,6 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityCountsList;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityData;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityRecordCount;
@@ -43,9 +42,8 @@ import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.autopsy.geolocation.GeoFilter;
@@ -79,9 +77,9 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
          * Main constructor.
          *
          * @param mostRecentData The data to be displayed in the most recent
-         * table.
+         *                       table.
          * @param mostCommonData The data to be displayed in the most common
-         * table.
+         *                       table.
          */
         GeolocationViewModel(List<Pair<String, Integer>> mostRecentData, List<Pair<String, Integer>> mostCommonData) {
             this.mostRecentData = mostRecentData;
@@ -147,7 +145,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
 
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
-    private final GeolocationSummary whereUsedData;
+    private final GeolocationSummaryGetter whereUsedData;
 
     private final DataFetcher<DataSource, GeolocationViewModel> geolocationFetcher;
 
@@ -155,15 +153,15 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      * Main constructor.
      */
     public GeolocationPanel() {
-        this(new GeolocationSummary());
+        this(new GeolocationSummaryGetter());
     }
 
     /**
      * Main constructor.
      *
-     * @param whereUsedData The GeolocationSummary instance to use.
+     * @param whereUsedData The GeolocationSummaryGetter instance to use.
      */
-    public GeolocationPanel(GeolocationSummary whereUsedData) {
+    public GeolocationPanel(GeolocationSummaryGetter whereUsedData) {
         super(whereUsedData);
 
         this.whereUsedData = whereUsedData;
@@ -183,7 +181,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      * Means of rendering data to be shown in the tables.
      *
      * @param result The result of fetching data for a data source and
-     * processing into view model data.
+     *               processing into view model data.
      */
     private void handleData(DataFetchResult<GeolocationViewModel> result) {
         showCityContent(DataFetchResult.getSubResult(result, (dr) -> dr.getMostCommonData()), mostCommonTable, commonViewInGeolocationBtn);
@@ -194,6 +192,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      * Retrieves the city name to display from the record.
      *
      * @param record The record for the city to display.
+     *
      * @return The display name (city, country).
      */
     private static String getCityName(CityRecord record) {
@@ -221,6 +220,7 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      * formats the city name).
      *
      * @param cityCount The CityRecordCount representing a row.
+     *
      * @return The city/count pair to be displayed as a row.
      */
     private Pair<String, Integer> formatRecord(CityRecordCount cityCount) {
@@ -239,7 +239,8 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      * 'unknown').
      *
      * @param countsList The CityCountsList object representing the data to be
-     * displayed in the table.
+     *                   displayed in the table.
+     *
      * @return The list of city/count tuples to be displayed as a row.
      */
     private List<Pair<String, Integer>> formatList(CityCountsList countsList) {
@@ -263,10 +264,11 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     }
 
     /**
-     * Converts CityData from GeolocationSummary into data that can be directly
-     * put into table in this panel.
+     * Converts CityData from GeolocationSummaryGetter into data that can be
+     * directly put into table in this panel.
      *
      * @param cityData The city data.
+     *
      * @return The view model data.
      */
     private GeolocationViewModel convertToViewModel(CityData cityData) {
@@ -280,8 +282,8 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     /**
      * Shows data in a particular table.
      *
-     * @param result The result to be displayed in the table.
-     * @param table The table where the data will be displayed.
+     * @param result          The result to be displayed in the table.
+     * @param table           The table where the data will be displayed.
      * @param goToGeolocation The corresponding geolocation navigation button.
      */
     private void showCityContent(DataFetchResult<List<Pair<String, Integer>>> result, JTablePanel<Pair<String, Integer>> table, JButton goToGeolocation) {
@@ -296,9 +298,9 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
      * Action to open the geolocation window.
      *
      * @param dataSource The data source for which the window should filter.
-     * @param daysLimit The limit for how recently the waypoints should be (for
-     * most recent table) or null for most recent filter to not be set (for most
-     * common table).
+     * @param daysLimit  The limit for how recently the waypoints should be (for
+     *                   most recent table) or null for most recent filter to
+     *                   not be set (for most common table).
      */
     private void openGeolocationWindow(DataSource dataSource, Integer daysLimit) {
         // notify dialog (if in dialog) should close.
@@ -347,19 +349,6 @@ public class GeolocationPanel extends BaseDataSourceSummaryPanel {
     protected void onNewDataSource(DataSource dataSource) {
         disableNavButtons();
         onNewDataSource(dataFetchComponents, tables, dataSource);
-    }
-
-    @Override
-    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
-        GeolocationViewModel model = getFetchResult(geolocationFetcher, "Geolocation sheets", dataSource);
-        if (model == null) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.asList(
-                getTableExport(DEFAULT_TEMPLATE, Bundle.GeolocationPanel_mostRecent_tabName(), model.getMostRecentData()),
-                getTableExport(DEFAULT_TEMPLATE, Bundle.GeolocationPanel_mostCommon_tabName(), model.getMostCommonData())
-        );
     }
 
     @Override
