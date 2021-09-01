@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.clusterjournal;
+package org.sleuthkit.autopsy.experimental.clusteractivity;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.sql.Connection;
@@ -40,13 +40,13 @@ import javax.sql.DataSource;
 /**
  * Captures auto ingest events like start of ingest job or completion.
  */
-public class ClusterJournalManager {
+public class ClusterActivityManager {
 
-    private static final String DB_NAME = "cluster_journal";
+    private static final String DB_NAME = "cluster_activity";
     private static final String PG_JDBC_BASE_URI = "jdbc:postgresql://";
     private static final String PG_JDBC_DRIVER = "org.postgresql.Driver";
 
-    private static ClusterJournalManager instance;
+    private static ClusterActivityManager instance;
 
     /**
      * Returns singleton instance of the cluster journal manager for auto
@@ -56,7 +56,7 @@ public class ClusterJournalManager {
      *
      * @throws UserPreferencesException
      */
-    public synchronized static ClusterJournalManager getInstance() throws ClusterJournalException {
+    public synchronized static ClusterActivityManager getInstance() throws ClusterActivityException {
         if (instance == null) {
             String dbName = DB_NAME;
             CaseDbConnectionInfo connectionInfo = getConnectionInfo();
@@ -72,7 +72,7 @@ public class ClusterJournalManager {
 
             verifyOrCreateSchema(dataSource, dbName);
 
-            instance = new ClusterJournalManager(dataSource);
+            instance = new ClusterActivityManager(dataSource);
         }
 
         return instance;
@@ -83,13 +83,13 @@ public class ClusterJournalManager {
      *
      * @return The connection preferences.
      *
-     * @throws ClusterJournalException
+     * @throws ClusterActivityException
      */
-    static CaseDbConnectionInfo getConnectionInfo() throws ClusterJournalException {
+    static CaseDbConnectionInfo getConnectionInfo() throws ClusterActivityException {
         try {
             return UserPreferences.getDatabaseConnectionInfo();
         } catch (UserPreferencesException ex) {
-            throw new ClusterJournalException("An error occurred while fetching multiuser settings.", ex);
+            throw new ClusterActivityException("An error occurred while fetching multiuser settings.", ex);
         }
     }
 
@@ -100,15 +100,15 @@ public class ClusterJournalManager {
      * @param dataSource The data source.
      * @param dbName     The database name for error reporting purposes.
      *
-     * @throws ClusterJournalException
+     * @throws ClusterActivityException
      */
-    static void verifyOrCreateSchema(DataSource dataSource, String dbName) throws ClusterJournalException {
+    static void verifyOrCreateSchema(DataSource dataSource, String dbName) throws ClusterActivityException {
         try (final Connection dbConn = dataSource.getConnection()) {
             if (!createDbSchema(dbConn)) {
-                throw new ClusterJournalException("Unable to create schema for: " + dbName);
+                throw new ClusterActivityException("Unable to create schema for: " + dbName);
             }
         } catch (SQLException ex) {
-            throw new ClusterJournalException(MessageFormat.format(
+            throw new ClusterActivityException(MessageFormat.format(
                     "An error occurred while verifying that schema in database {0} was properly configured.", dbName),
                     ex);
         }
@@ -125,17 +125,17 @@ public class ClusterJournalManager {
      * @param dbName   The name of the pg database. If empty, the root
      *                 "postgres" database is used.
      *
-     * @throws ClusterJournalException
+     * @throws ClusterActivityException
      */
-    static void verifyOrCreatePgDb(String host, String port, String userName, String password, String dbName) throws ClusterJournalException {
+    static void verifyOrCreatePgDb(String host, String port, String userName, String password, String dbName) throws ClusterActivityException {
         try (Connection pgConn = getPgConnection(host, port, userName, password, Optional.empty())) {
             if (!verifyDatabaseExists(pgConn, dbName)) {
                 if (!createDatabase(pgConn, dbName, userName)) {
-                    throw new ClusterJournalException("Unable to create ClusterJournalManager database: " + dbName);
+                    throw new ClusterActivityException("Unable to create ClusterActivityManager database: " + dbName);
                 }
             }
         } catch (SQLException | ClassNotFoundException ex) {
-            throw new ClusterJournalException(MessageFormat.format("An error occurred while verifying that postgres database {0} exists.", dbName), ex);
+            throw new ClusterActivityException(MessageFormat.format("An error occurred while verifying that postgres database {0} exists.", dbName), ex);
         }
     }
 
@@ -306,7 +306,7 @@ public class ClusterJournalManager {
      * @param dataSource The pooled data source connection to use. This assumes
      *                   that database and schema exist.
      */
-    ClusterJournalManager(ComboPooledDataSource dataSource) {
+    ClusterActivityManager(ComboPooledDataSource dataSource) {
         this.dataSource = dataSource;
     }
 

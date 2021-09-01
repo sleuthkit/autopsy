@@ -97,11 +97,11 @@ import org.sleuthkit.autopsy.datasourceprocessors.AddDataSourceCallback;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.AutoIngestJobException;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
-import org.sleuthkit.autopsy.experimental.clusterjournal.CaseRecord;
-import org.sleuthkit.autopsy.experimental.clusterjournal.ClusterJournalException;
-import org.sleuthkit.autopsy.experimental.clusterjournal.ClusterJournalManager;
-import org.sleuthkit.autopsy.experimental.clusterjournal.IngestJobRecord;
-import org.sleuthkit.autopsy.experimental.clusterjournal.IngestJobStatus;
+import org.sleuthkit.autopsy.experimental.clusteractivity.CaseRecord;
+import org.sleuthkit.autopsy.experimental.clusteractivity.ClusterActivityException;
+import org.sleuthkit.autopsy.experimental.clusteractivity.ClusterActivityManager;
+import org.sleuthkit.autopsy.experimental.clusteractivity.IngestJobRecord;
+import org.sleuthkit.autopsy.experimental.clusteractivity.IngestJobStatus;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -178,7 +178,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private List<AutoIngestJob> completedJobs;
     private IngestStream currentIngestStream = null;
     private CoordinationService coordinationService;
-    private ClusterJournalManager clusterJournalManager;
+    private ClusterActivityManager clusterActivityManager;
     private JobProcessingTask jobProcessingTask;
     private Future<?> jobProcessingTaskFuture;
     private Path rootInputDirectory;
@@ -254,8 +254,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         try {
-            clusterJournalManager = ClusterJournalManager.getInstance();
-        } catch (ClusterJournalException ex) {
+            clusterActivityManager = ClusterActivityManager.getInstance();
+        } catch (ClusterActivityException ex) {
             throw new AutoIngestManagerException("Unable to instantiate the cluster job manager.", ex);
         }
 
@@ -2187,7 +2187,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             setChanged();
             notifyObservers(Event.JOB_STARTED);
             eventPublisher.publishRemotely(new AutoIngestJobStartedEvent(currentJob));
-            setClusterJournalStatus(currentJob, IngestJobStatus.RUNNING, currentJob.getProcessingStageStartDate());
+            setClusterActivityStatus(currentJob, IngestJobStatus.RUNNING, currentJob.getProcessingStageStartDate());
             try {
                 if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                     return;
@@ -2225,7 +2225,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         completedJobs.add(currentJob);
                     }
                     eventPublisher.publishRemotely(new AutoIngestJobCompletedEvent(currentJob, retry));
-                    setClusterJournalStatus(currentJob, IngestJobStatus.DONE, currentJob.getCompletedDate());
+                    setClusterActivityStatus(currentJob, IngestJobStatus.DONE, currentJob.getCompletedDate());
                     currentJob = null;
                     setChanged();
                     notifyObservers(Event.JOB_COMPLETED);
@@ -2242,8 +2242,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @param date   The timestamp of the update. If null is provided, then
          *               current date will be used.
          */
-        private void setClusterJournalStatus(AutoIngestJob job, IngestJobStatus status, Date date) {
-            ClusterJournalManager manager = AutoIngestManager.this.clusterJournalManager;
+        private void setClusterActivityStatus(AutoIngestJob job, IngestJobStatus status, Date date) {
+            ClusterActivityManager manager = AutoIngestManager.this.clusterActivityManager;
 
             Date dateToUse = date == null ? new Date() : date;
             String caseName = job.getManifest().getCaseName();

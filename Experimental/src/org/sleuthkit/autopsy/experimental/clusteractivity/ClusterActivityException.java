@@ -3,18 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.experimental.clusterjournal;
+package org.sleuthkit.autopsy.experimental.clusteractivity;
 
 /**
- * Exception thrown if there is a problem in the ClusterJournalManager initialization.
+ * Exception thrown if there is a problem in the ClusterActivityManager initialization.
  */
-public class ClusterJournalException extends Exception {
+public class ClusterActivityException extends Exception {
     
     /**
      * Main constructor.
      * @param message The message.
      */
-    ClusterJournalException(String message) {
+    ClusterActivityException(String message) {
         super(message);
     }
 
@@ -23,7 +23,7 @@ public class ClusterJournalException extends Exception {
      * @param message The message.
      * @param exception The inner exception.
      */
-    ClusterJournalException(String message, Throwable exception) {
+    ClusterActivityException(String message, Throwable exception) {
         super(message, exception);
     }
     
