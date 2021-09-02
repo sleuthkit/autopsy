@@ -370,7 +370,8 @@ public class ClusterActivityManager {
 
     /**
      * Returns the job record denoted by the case id and data source or creates
-     * a new entry.
+     * a new entry. A newly created ingest job record will always have a pending
+     * status.
      *
      * @param caseId         The case id in the cluster journal.
      * @param dataSourcePath The data source name (caseId and dataSourcePath
@@ -480,10 +481,13 @@ public class ClusterActivityManager {
 
     /**
      * Sets the job error status.
-     * @param jobId The job id.
+     *
+     * @param jobId         The job id.
      * @param errorOccurred Whether or not an error occurred.
+     *
      * @return The updated job record if the job record is present.
-     * @throws SQLException 
+     *
+     * @throws SQLException
      */
     public Optional<IngestJobRecord> setJobError(long jobId, boolean errorOccurred) throws SQLException {
         String updateStr = "UPDATE ingest_jobs SET error_occurred = ? WHERE job_id = ?";
