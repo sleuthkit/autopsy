@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.clusterjournal;
+package org.sleuthkit.autopsy.experimental.clusteractivity;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.sql.Connection;
@@ -40,13 +40,13 @@ import javax.sql.DataSource;
 /**
  * Captures auto ingest events like start of ingest job or completion.
  */
-public class ClusterJournalManager {
+public class ClusterActivityManager {
 
-    private static final String DB_NAME = "cluster_journal";
+    private static final String DB_NAME = "cluster_activity";
     private static final String PG_JDBC_BASE_URI = "jdbc:postgresql://";
     private static final String PG_JDBC_DRIVER = "org.postgresql.Driver";
 
-    private static ClusterJournalManager instance;
+    private static ClusterActivityManager instance;
 
     /**
      * Returns singleton instance of the cluster journal manager for auto
@@ -56,7 +56,7 @@ public class ClusterJournalManager {
      *
      * @throws UserPreferencesException
      */
-    public synchronized static ClusterJournalManager getInstance() throws ClusterJournalException {
+    public synchronized static ClusterActivityManager getInstance() throws ClusterActivityException {
         if (instance == null) {
             String dbName = DB_NAME;
             CaseDbConnectionInfo connectionInfo = getConnectionInfo();
@@ -72,7 +72,7 @@ public class ClusterJournalManager {
 
             verifyOrCreateSchema(dataSource, dbName);
 
-            instance = new ClusterJournalManager(dataSource);
+            instance = new ClusterActivityManager(dataSource);
         }
 
         return instance;
@@ -83,13 +83,13 @@ public class ClusterJournalManager {
      *
      * @return The connection preferences.
      *
-     * @throws ClusterJournalException
+     * @throws ClusterActivityException
      */
-    static CaseDbConnectionInfo getConnectionInfo() throws ClusterJournalException {
+    static CaseDbConnectionInfo getConnectionInfo() throws ClusterActivityException {
         try {
             return UserPreferences.getDatabaseConnectionInfo();
         } catch (UserPreferencesException ex) {
-            throw new ClusterJournalException("An error occurred while fetching multiuser settings.", ex);
+            throw new ClusterActivityException("An error occurred while fetching multiuser settings.", ex);
         }
     }
 
@@ -100,15 +100,15 @@ public class ClusterJournalManager {
      * @param dataSource The data source.
      * @param dbName     The database name for error reporting purposes.
      *
-     * @throws ClusterJournalException
+     * @throws ClusterActivityException
      */
-    static void verifyOrCreateSchema(DataSource dataSource, String dbName) throws ClusterJournalException {
+    static void verifyOrCreateSchema(DataSource dataSource, String dbName) throws ClusterActivityException {
         try (final Connection dbConn = dataSource.getConnection()) {
             if (!createDbSchema(dbConn)) {
-                throw new ClusterJournalException("Unable to create schema for: " + dbName);
+                throw new ClusterActivityException("Unable to create schema for: " + dbName);
             }
         } catch (SQLException ex) {
-            throw new ClusterJournalException(MessageFormat.format(
+            throw new ClusterActivityException(MessageFormat.format(
                     "An error occurred while verifying that schema in database {0} was properly configured.", dbName),
                     ex);
         }
@@ -125,17 +125,17 @@ public class ClusterJournalManager {
      * @param dbName   The name of the pg database. If empty, the root
      *                 "postgres" database is used.
      *
-     * @throws ClusterJournalException
+     * @throws ClusterActivityException
      */
-    static void verifyOrCreatePgDb(String host, String port, String userName, String password, String dbName) throws ClusterJournalException {
+    static void verifyOrCreatePgDb(String host, String port, String userName, String password, String dbName) throws ClusterActivityException {
         try (Connection pgConn = getPgConnection(host, port, userName, password, Optional.empty())) {
             if (!verifyDatabaseExists(pgConn, dbName)) {
                 if (!createDatabase(pgConn, dbName, userName)) {
-                    throw new ClusterJournalException("Unable to create ClusterJournalManager database: " + dbName);
+                    throw new ClusterActivityException("Unable to create ClusterActivityManager database: " + dbName);
                 }
             }
         } catch (SQLException | ClassNotFoundException ex) {
-            throw new ClusterJournalException(MessageFormat.format("An error occurred while verifying that postgres database {0} exists.", dbName), ex);
+            throw new ClusterActivityException(MessageFormat.format("An error occurred while verifying that postgres database {0} exists.", dbName), ex);
         }
     }
 
@@ -267,7 +267,7 @@ public class ClusterJournalManager {
 
             stmt.execute("CREATE TABLE IF NOT EXISTS ingest_jobs(\n"
                     + "	job_id SERIAL PRIMARY KEY, \n"
-                    + "	data_source_name TEXT, \n"
+                    + "	data_source_path TEXT, \n"
                     + "	start_time TIMESTAMP WITHOUT TIME ZONE, \n"
                     + "	end_time TIMESTAMP WITHOUT TIME ZONE,\n"
                     + "	status SMALLINT,\n"
@@ -276,7 +276,7 @@ public class ClusterJournalManager {
                     + "	FOREIGN KEY(case_id) REFERENCES cases(case_id) ON DELETE CASCADE\n"
                     + ")");
 
-            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS ingest_jobs_case_ds_idx ON ingest_jobs(case_id, data_source_name);");
+            stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS ingest_jobs_case_ds_idx ON ingest_jobs(case_id, data_source_path);");
 
             stmt.execute("CREATE TABLE IF NOT EXISTS db_versions(\n"
                     + "	major_version INTEGER, \n"
@@ -306,7 +306,7 @@ public class ClusterJournalManager {
      * @param dataSource The pooled data source connection to use. This assumes
      *                   that database and schema exist.
      */
-    ClusterJournalManager(ComboPooledDataSource dataSource) {
+    ClusterActivityManager(ComboPooledDataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -370,42 +370,43 @@ public class ClusterJournalManager {
 
     /**
      * Returns the job record denoted by the case id and data source or creates
-     * a new entry.
+     * a new entry. A newly created ingest job record will always have a pending
+     * status.
      *
      * @param caseId         The case id in the cluster journal.
-     * @param dataSourceName The data source name (caseId and dataSourceName
+     * @param dataSourcePath The data source name (caseId and dataSourcePath
      *                       must be unique)
      *
      * @return The found or created job record.
      *
      * @throws SQLException
      */
-    public IngestJobRecord getOrCreateJobRecord(long caseId, String dataSourceName) throws SQLException {
+    public IngestJobRecord getOrCreateJobRecord(long caseId, String dataSourcePath) throws SQLException {
         try (Connection conn = dataSource.getConnection();
                 // taken from https://stackoverflow.com/a/40325406
                 PreparedStatement query = conn.prepareStatement("WITH ins AS (\n"
-                        + "   INSERT INTO ingest_jobs(data_source_name, case_id, status, start_time, end_time, error_occurred) "
+                        + "   INSERT INTO ingest_jobs(data_source_path, case_id, status, start_time, end_time, error_occurred) "
                         + "       VALUES(?, ?, " + IngestJobStatus.PENDING.getDbVal() + ", NULL, NULL, FALSE)\n"
                         + "   ON CONFLICT DO NOTHING\n"
                         + "   RETURNING *\n"
                         + "   )\n"
-                        + "SELECT j.job_id, j.data_source_name, j.start_time, j.end_time, j.status, j.case_id, j.error_occurred, c.name AS case_name\n"
-                        + "FROM (SELECT job_id, data_source_name, start_time, end_time, status, error_occurred, case_id FROM ins\n"
+                        + "SELECT j.job_id, j.data_source_path, j.start_time, j.end_time, j.status, j.case_id, j.error_occurred, c.name AS case_name\n"
+                        + "FROM (SELECT job_id, data_source_path, start_time, end_time, status, error_occurred, case_id FROM ins\n"
                         + "UNION ALL\n"
-                        + "(SELECT job_id, data_source_name, start_time, end_time, status, error_occurred, case_id FROM ingest_jobs\n"
-                        + "WHERE data_source_name = ? AND case_id = ?)) j\n"
+                        + "(SELECT job_id, data_source_path, start_time, end_time, status, error_occurred, case_id FROM ingest_jobs\n"
+                        + "WHERE data_source_path = ? AND case_id = ?)) j\n"
                         + "INNER JOIN cases c ON c.case_id = j.case_id ")) {
 
-            query.setString(1, dataSourceName);
+            query.setString(1, dataSourcePath);
             query.setLong(2, caseId);
-            query.setString(3, dataSourceName);
+            query.setString(3, dataSourcePath);
             query.setLong(4, caseId);
 
             try (ResultSet queryResults = query.executeQuery()) {
                 if (!queryResults.next()) {
                     throw new SQLException(MessageFormat.format(
-                            "Expected a job to be created or previous to be returned, but received no results caseId: {0}, dataSourceName: {1}.",
-                            caseId, dataSourceName));
+                            "Expected a job to be created or previous to be returned, but received no results caseId: {0}, dataSourcePath: {1}.",
+                            caseId, dataSourcePath));
                 }
                 return getJobRecord(queryResults);
             }
@@ -417,7 +418,7 @@ public class ClusterJournalManager {
      *
      * @param jobId     The job id.
      * @param newStatus The status to set for the job.
-     * @param date      The timestamp for when.
+     * @param date      The timestamp for when (can be null for RUNNING jobs).
      *
      * @return The job record if an update is made.
      *
@@ -442,7 +443,7 @@ public class ClusterJournalManager {
         String fullClause = "WITH updated AS (" + updateStr + " RETURNING *) "
                 + "SELECT "
                 + "updated.job_id, "
-                + "updated.data_source_name, "
+                + "updated.data_source_path, "
                 + "updated.start_time, "
                 + "updated.end_time, "
                 + "updated.status, "
@@ -480,10 +481,13 @@ public class ClusterJournalManager {
 
     /**
      * Sets the job error status.
-     * @param jobId The job id.
+     *
+     * @param jobId         The job id.
      * @param errorOccurred Whether or not an error occurred.
+     *
      * @return The updated job record if the job record is present.
-     * @throws SQLException 
+     *
+     * @throws SQLException
      */
     public Optional<IngestJobRecord> setJobError(long jobId, boolean errorOccurred) throws SQLException {
         String updateStr = "UPDATE ingest_jobs SET error_occurred = ? WHERE job_id = ?";
@@ -491,7 +495,7 @@ public class ClusterJournalManager {
         String fullClause = "WITH updated AS (" + updateStr + " RETURNING *) "
                 + "SELECT "
                 + "updated.job_id, "
-                + "updated.data_source_name, "
+                + "updated.data_source_path, "
                 + "updated.start_time, "
                 + "updated.end_time, "
                 + "updated.status, "
@@ -531,7 +535,7 @@ public class ClusterJournalManager {
                 PreparedStatement query = conn.prepareStatement(
                         "SELECT "
                         + "ingest_jobs.job_id, "
-                        + "ingest_jobs.data_source_name, "
+                        + "ingest_jobs.data_source_path, "
                         + "ingest_jobs.start_time, "
                         + "ingest_jobs.end_time, "
                         + "ingest_jobs.status, "
@@ -569,7 +573,7 @@ public class ClusterJournalManager {
                 rs.getLong("job_id"),
                 rs.getLong("case_id"),
                 rs.getString("case_name"),
-                rs.getString("data_source_name"),
+                rs.getString("data_source_path"),
                 Optional.ofNullable(rs.getTimestamp("start_time")),
                 Optional.ofNullable(rs.getTimestamp("end_time")),
                 IngestJobStatus.getFromDbVal(rs.getInt("status")).orElse(null),

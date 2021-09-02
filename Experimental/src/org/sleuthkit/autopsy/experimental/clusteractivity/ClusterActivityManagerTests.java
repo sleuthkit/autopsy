@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.clusterjournal;
+package org.sleuthkit.autopsy.experimental.clusteractivity;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.sql.Connection;
@@ -40,9 +40,9 @@ import org.apache.commons.lang3.tuple.Pair;
 /**
  *
  * Runs tests against the pg database specified in settings to test the
- * ClusterJournalManager.
+ * ClusterActivityManager.
  */
-public class ClusterJournalManagerTests {
+public class ClusterActivityManagerTests {
 
     /**
      * The tables in the database.
@@ -146,14 +146,14 @@ public class ClusterJournalManagerTests {
      *
      * @throws ClassNotFoundException
      * @throws SQLException
-     * @throws ClusterJournalException
+     * @throws ClusterActivityException
      */
-    public void runTests(String host, String port, String userName, String pword, String dbName) throws ClassNotFoundException, SQLException, ClusterJournalException {
-        ClusterJournalManager manager = null;
+    public void runTests(String host, String port, String userName, String pword, String dbName) throws ClassNotFoundException, SQLException, ClusterActivityException {
+        ClusterActivityManager manager = null;
         try {
             ComboPooledDataSource testDs = verifyDbAndSchemaTest(host, port, userName, pword, dbName);
 
-            manager = new ClusterJournalManager(testDs);
+            manager = new ClusterActivityManager(testDs);
 
             List<CaseRecord> caseRecords = createCasesTest(manager, testDs);
 
@@ -166,7 +166,7 @@ public class ClusterJournalManagerTests {
                 manager = null;
             }
 
-            try (Connection conn = ClusterJournalManager.getPgConnection(host, port, userName, pword, Optional.empty());
+            try (Connection conn = ClusterActivityManager.getPgConnection(host, port, userName, pword, Optional.empty());
                     Statement stmt = conn.createStatement()) {
                 stmt.execute("DROP DATABASE " + dbName);
             }
@@ -174,7 +174,7 @@ public class ClusterJournalManagerTests {
     }
 
     /**
-     * Creates case records with the ClusterJournalManager, verifies their
+     * Creates case records with the ClusterActivityManager, verifies their
      * creation, and returns the created cases.
      *
      * @param manager The manager.
@@ -186,7 +186,7 @@ public class ClusterJournalManagerTests {
      * @throws SQLException
      * @throws IllegalStateException
      */
-    private List<CaseRecord> createCasesTest(ClusterJournalManager manager, DataSource testDs) throws SQLException, IllegalStateException {
+    private List<CaseRecord> createCasesTest(ClusterActivityManager manager, DataSource testDs) throws SQLException, IllegalStateException {
         String case1Str = "Case_1";
         String case2Str = "Case_2";
         Date caseDate = new Date();
@@ -230,30 +230,30 @@ public class ClusterJournalManagerTests {
      *
      * @return The data source to use for connections to the created database.
      *
-     * @throws ClusterJournalException
+     * @throws ClusterActivityException
      * @throws IllegalStateException
      * @throws SQLException
      * @throws ClassNotFoundException
      */
-    private ComboPooledDataSource verifyDbAndSchemaTest(String host, String port, String userName, String pword, String dbName) throws ClusterJournalException, IllegalStateException, SQLException, ClassNotFoundException {
+    private ComboPooledDataSource verifyDbAndSchemaTest(String host, String port, String userName, String pword, String dbName) throws ClusterActivityException, IllegalStateException, SQLException, ClassNotFoundException {
         // if db exists throw (shouldn't exist on start)
-        try (Connection conn = ClusterJournalManager.getPgConnection(host, port, userName, pword, Optional.empty())) {
-            if (ClusterJournalManager.verifyDatabaseExists(conn, dbName)) {
+        try (Connection conn = ClusterActivityManager.getPgConnection(host, port, userName, pword, Optional.empty())) {
+            if (ClusterActivityManager.verifyDatabaseExists(conn, dbName)) {
                 onErr("Database {0} shouldn't exist when running tests.  "
                         + "Please drop the database and try again.", dbName);
             }
 
             // verify or create database (check externally)
-            ClusterJournalManager.verifyOrCreatePgDb(host, port, userName, pword, dbName);
+            ClusterActivityManager.verifyOrCreatePgDb(host, port, userName, pword, dbName);
 
-            if (!ClusterJournalManager.verifyDatabaseExists(conn, dbName)) {
+            if (!ClusterActivityManager.verifyDatabaseExists(conn, dbName)) {
                 onErr("Unable to create database {0}", dbName);
             }
         }
-        ComboPooledDataSource testDs = ClusterJournalManager.getDataSource(host, port, userName, pword, dbName);
+        ComboPooledDataSource testDs = ClusterActivityManager.getDataSource(host, port, userName, pword, dbName);
         // verify or create schema (check externally) and verify that the schema isn't changed.
         for (int i = 0; i < 2; i++) {
-            ClusterJournalManager.verifyOrCreateSchema(testDs, dbName);
+            ClusterActivityManager.verifyOrCreateSchema(testDs, dbName);
             String tableListStr = ALL_TABLES.stream()
                     .map(t -> "'" + t + "'")
                     .collect(Collectors.joining(", "));
@@ -278,7 +278,7 @@ public class ClusterJournalManagerTests {
      *
      * @throws SQLException
      */
-    private void createJobsUpdateStatusTest(List<CaseRecord> caseRecords, ClusterJournalManager manager, ComboPooledDataSource testDs) throws SQLException {
+    private void createJobsUpdateStatusTest(List<CaseRecord> caseRecords, ClusterActivityManager manager, ComboPooledDataSource testDs) throws SQLException {
         // create 12 (6 for each case) records (verify in db)
         String dsPrefix = "ds_";
         Map<Long, List<IngestJobRecord>> jobRecords = new HashMap<>();
@@ -291,9 +291,9 @@ public class ClusterJournalManagerTests {
                         "Expected case names to be equal.  Received {0}; expected {1}.",
                         created.getCaseName(), c.getName());
 
-                assertTrue(created.getDataSourceName().equals(dsPrefix + jIdx),
+                assertTrue(created.getDataSourcePath().equals(dsPrefix + jIdx),
                         "Expected data source names to be equal.  Received {0}; expected {1}.",
-                        created.getDataSourceName(), dsPrefix + jIdx);
+                        created.getDataSourcePath(), dsPrefix + jIdx);
 
                 recList.add(created);
             }
@@ -337,7 +337,7 @@ public class ClusterJournalManagerTests {
 
         assertTrue(done2.get(0).getCaseName().equals(erroneous.getCaseName())
                 && done2.get(0).getCaseId() == erroneous.getCaseId()
-                && done2.get(0).getDataSourceName().equals(erroneous.getDataSourceName()),
+                && done2.get(0).getDataSourcePath().equals(erroneous.getDataSourcePath()),
                 "Expected erroneous sent and received to be equivalent except for status changes but received {0} when previous was {1}.",
                 done2.get(0), erroneous);
 
@@ -357,7 +357,7 @@ public class ClusterJournalManagerTests {
      *
      * @throws SQLException
      */
-    private List<IngestJobRecord> setStatus(ClusterJournalManager manager, Map<Long, List<IngestJobRecord>> jobRecords, int count, IngestJobStatus status) throws SQLException {
+    private List<IngestJobRecord> setStatus(ClusterActivityManager manager, Map<Long, List<IngestJobRecord>> jobRecords, int count, IngestJobStatus status) throws SQLException {
         // switch 8 to running (verify in db and get status)
         Date startDate = new Date();
         List<IngestJobRecord> changed = new ArrayList<>();
@@ -370,7 +370,7 @@ public class ClusterJournalManagerTests {
                         curRec.getId(), updatedRecord.getId());
                 assertTrue(curRec.getCaseName().equals(updatedRecord.getCaseName())
                         && updatedRecord.getCaseId() == curRec.getCaseId()
-                        && updatedRecord.getDataSourceName().equals(curRec.getDataSourceName()),
+                        && updatedRecord.getDataSourcePath().equals(curRec.getDataSourcePath()),
                         "Expected sent and received to be equivalent except for status changes but received {0} when previous was {1}.",
                         updatedRecord, curRec);
 
@@ -405,7 +405,7 @@ public class ClusterJournalManagerTests {
      *
      * @throws SQLException
      */
-    private static void verifyStatus(ClusterJournalManager manager, ComboPooledDataSource testDs, List<IngestJobRecord> expectedPendingIds,
+    private static void verifyStatus(ClusterActivityManager manager, ComboPooledDataSource testDs, List<IngestJobRecord> expectedPendingIds,
             List<IngestJobRecord> expectedRunningIds, List<IngestJobRecord> expectedDoneIds, List<IngestJobRecord> erroneousRecords) throws SQLException {
 
         List<Pair<IngestJobStatus, List<IngestJobRecord>>> itemsToCheck = Arrays.asList(

@@ -16,8 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.clusterjournal;
+package org.sleuthkit.autopsy.experimental.clusteractivity;
 
+import java.io.File;
 import java.util.Date;
 import java.util.Optional;
 
@@ -29,6 +30,7 @@ public class IngestJobRecord {
     private final long id;
     private final long caseId;
     private final String caseName;
+    private final String dataSourcePath;
     private final String dataSourceName;
     private final Optional<Date> startTime;
     private final Optional<Date> endTime;
@@ -41,16 +43,43 @@ public class IngestJobRecord {
      * @param id             The id of the job.
      * @param caseId         The parent case id in the event log.
      * @param caseName       The name of the case.
+     * @param dataSourcePath The path of the data source.
+     * @param startTime      The start time of processing.
+     * @param endTime        The end time of processing.
+     * @param status         The current status.
+     * @param ingestError    There was an error on ingest.
+     */
+    public IngestJobRecord(long id, long caseId, String caseName, String dataSourcePath, Optional<Date> startTime, Optional<Date> endTime, IngestJobStatus status, boolean ingestError) {
+        this(
+                id,
+                caseId,
+                caseName,
+                dataSourcePath,
+                dataSourcePath == null ? null : new File(dataSourcePath).getName(),
+                startTime,
+                endTime,
+                status,
+                ingestError);
+    }
+
+    /**
+     * Main constructor.
+     *
+     * @param id             The id of the job.
+     * @param caseId         The parent case id in the event log.
+     * @param caseName       The name of the case.
+     * @param dataSourcePath The path of the data source.
      * @param dataSourceName The name of the data source.
      * @param startTime      The start time of processing.
      * @param endTime        The end time of processing.
      * @param status         The current status.
      * @param ingestError    There was an error on ingest.
      */
-    public IngestJobRecord(long id, long caseId, String caseName, String dataSourceName, Optional<Date> startTime, Optional<Date> endTime, IngestJobStatus status, boolean ingestError) {
+    public IngestJobRecord(long id, long caseId, String caseName, String dataSourcePath, String dataSourceName, Optional<Date> startTime, Optional<Date> endTime, IngestJobStatus status, boolean ingestError) {
         this.id = id;
         this.caseId = caseId;
         this.caseName = caseName;
+        this.dataSourcePath = dataSourcePath;
         this.dataSourceName = dataSourceName;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -77,6 +106,13 @@ public class IngestJobRecord {
      */
     public String getCaseName() {
         return caseName;
+    }
+
+    /**
+     * @return The name of the data source.
+     */
+    public String getDataSourcePath() {
+        return dataSourcePath;
     }
 
     /**
@@ -116,8 +152,7 @@ public class IngestJobRecord {
 
     @Override
     public String toString() {
-        return "IngestJobRecord{" + "id=" + id + ", caseId=" + caseId + ", caseName=" + caseName + ", dataSourceName=" + dataSourceName + ", startTime=" + startTime + ", endTime=" + endTime + ", status=" + status + ", ingestError=" + ingestError + '}';
+        return "IngestJobRecord{" + "id=" + id + ", caseId=" + caseId + ", caseName=" + caseName + ", dataSourceName=" + dataSourcePath + ", startTime=" + startTime + ", endTime=" + endTime + ", status=" + status + ", ingestError=" + ingestError + '}';
     }
-    
-    
+
 }
