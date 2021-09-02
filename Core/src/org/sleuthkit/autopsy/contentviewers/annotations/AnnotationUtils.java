@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers.application;
+package org.sleuthkit.autopsy.contentviewers.annotations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,76 +53,76 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * The business logic for the Annotations content panel.
  */
-public class Annotations {
+public class AnnotationUtils {
 
     @NbBundle.Messages({
-        "Annotations.title=Annotations",
-        "Annotations.toolTip=Displays tags and comments associated with the selected content.",
-        "Annotations.centralRepositoryEntry.title=Central Repository Comments",
-        "Annotations.centralRepositoryEntryDataLabel.case=Case:",
-        "Annotations.centralRepositoryEntryDataLabel.type=Type:",
-        "Annotations.centralRepositoryEntryDataLabel.comment=Comment:",
-        "Annotations.centralRepositoryEntryDataLabel.path=Path:",
-        "Annotations.tagEntry.title=Tags",
-        "Annotations.tagEntryDataLabel.tag=Tag:",
-        "Annotations.tagEntryDataLabel.tagUser=Examiner:",
-        "Annotations.tagEntryDataLabel.comment=Comment:",
-        "Annotations.fileHitEntry.artifactCommentTitle=Artifact Comment",
-        "Annotations.fileHitEntry.hashSetHitTitle=Hash Set Hit Comments",
-        "Annotations.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments",
-        "Annotations.fileHitEntry.setName=Set Name:",
-        "Annotations.fileHitEntry.comment=Comment:",
-        "Annotations.sourceFile.title=Source File",
-        "Annotations.onEmpty=No annotations were found for this particular item."
+        "AnnotationUtils.title=Annotations",
+        "AnnotationUtils.toolTip=Displays tags and comments associated with the selected content.",
+        "AnnotationUtils.centralRepositoryEntry.title=Central Repository Comments",
+        "AnnotationUtils.centralRepositoryEntryDataLabel.case=Case:",
+        "AnnotationUtils.centralRepositoryEntryDataLabel.type=Type:",
+        "AnnotationUtils.centralRepositoryEntryDataLabel.comment=Comment:",
+        "AnnotationUtils.centralRepositoryEntryDataLabel.path=Path:",
+        "AnnotationUtils.tagEntry.title=Tags",
+        "AnnotationUtils.tagEntryDataLabel.tag=Tag:",
+        "AnnotationUtils.tagEntryDataLabel.tagUser=Examiner:",
+        "AnnotationUtils.tagEntryDataLabel.comment=Comment:",
+        "AnnotationUtils.fileHitEntry.artifactCommentTitle=Artifact Comment",
+        "AnnotationUtils.fileHitEntry.hashSetHitTitle=Hash Set Hit Comments",
+        "AnnotationUtils.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments",
+        "AnnotationUtils.fileHitEntry.setName=Set Name:",
+        "AnnotationUtils.fileHitEntry.comment=Comment:",
+        "AnnotationUtils.sourceFile.title=Source File",
+        "AnnotationUtils.onEmpty=No annotations were found for this particular item."
     })
 
-    private static final Logger logger = Logger.getLogger(Annotations.class.getName());
+    private static final Logger logger = Logger.getLogger(AnnotationUtils.class.getName());
 
     private static final String EMPTY_HTML = "<html><head></head><body></body></html>";
 
     // describing table values for a tag
     private static final List<ItemEntry<Tag>> TAG_ENTRIES = Arrays.asList(
-            new ItemEntry<>(Bundle.Annotations_tagEntryDataLabel_tag(),
+            new ItemEntry<>(Bundle.AnnotationUtils_tagEntryDataLabel_tag(),
                     (tag) -> (tag.getName() != null) ? tag.getName().getDisplayName() : null),
-            new ItemEntry<>(Bundle.Annotations_tagEntryDataLabel_tagUser(), (tag) -> tag.getUserName()),
-            new ItemEntry<>(Bundle.Annotations_tagEntryDataLabel_comment(), (tag) -> tag.getComment())
+            new ItemEntry<>(Bundle.AnnotationUtils_tagEntryDataLabel_tagUser(), (tag) -> tag.getUserName()),
+            new ItemEntry<>(Bundle.AnnotationUtils_tagEntryDataLabel_comment(), (tag) -> tag.getComment())
     );
 
     private static final SectionConfig<Tag> TAG_CONFIG
-            = new SectionConfig<>(Bundle.Annotations_tagEntry_title(), TAG_ENTRIES);
+            = new SectionConfig<>(Bundle.AnnotationUtils_tagEntry_title(), TAG_ENTRIES);
 
     // file set attributes and table configurations
     private static final List<ItemEntry<BlackboardArtifact>> FILESET_HIT_ENTRIES = Arrays.asList(
-            new ItemEntry<>(Bundle.Annotations_fileHitEntry_setName(),
+            new ItemEntry<>(Bundle.AnnotationUtils_fileHitEntry_setName(),
                     (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME)),
-            new ItemEntry<>(Bundle.Annotations_fileHitEntry_comment(),
+            new ItemEntry<>(Bundle.AnnotationUtils_fileHitEntry_comment(),
                     (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT))
     );
 
     private static final SectionConfig<BlackboardArtifact> INTERESTING_FILE_CONFIG
-            = new SectionConfig<>(Bundle.Annotations_fileHitEntry_interestingFileHitTitle(), FILESET_HIT_ENTRIES);
+            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_interestingFileHitTitle(), FILESET_HIT_ENTRIES);
 
     private static final SectionConfig<BlackboardArtifact> HASHSET_CONFIG
-            = new SectionConfig<>(Bundle.Annotations_fileHitEntry_hashSetHitTitle(), FILESET_HIT_ENTRIES);
+            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_hashSetHitTitle(), FILESET_HIT_ENTRIES);
 
     private static final SectionConfig<BlackboardArtifact> ARTIFACT_COMMENT_CONFIG
-            = new SectionConfig<>(Bundle.Annotations_fileHitEntry_artifactCommentTitle(), FILESET_HIT_ENTRIES);
+            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_artifactCommentTitle(), FILESET_HIT_ENTRIES);
 
     // central repository attributes and table configuration
     private static final List<ItemEntry<CorrelationAttributeInstance>> CR_COMMENTS_ENTRIES = Arrays.asList(
-            new ItemEntry<>(Bundle.Annotations_centralRepositoryEntryDataLabel_case(),
+            new ItemEntry<>(Bundle.AnnotationUtils_centralRepositoryEntryDataLabel_case(),
                     cai -> (cai.getCorrelationCase() != null) ? cai.getCorrelationCase().getDisplayName() : null),
-            new ItemEntry<>(Bundle.Annotations_centralRepositoryEntryDataLabel_comment(), cai -> cai.getComment()),
-            new ItemEntry<>(Bundle.Annotations_centralRepositoryEntryDataLabel_path(), cai -> cai.getFilePath())
+            new ItemEntry<>(Bundle.AnnotationUtils_centralRepositoryEntryDataLabel_comment(), cai -> cai.getComment()),
+            new ItemEntry<>(Bundle.AnnotationUtils_centralRepositoryEntryDataLabel_path(), cai -> cai.getFilePath())
     );
 
     private static final SectionConfig<CorrelationAttributeInstance> CR_COMMENTS_CONFIG
-            = new SectionConfig<>(Bundle.Annotations_centralRepositoryEntry_title(), CR_COMMENTS_ENTRIES);
+            = new SectionConfig<>(Bundle.AnnotationUtils_centralRepositoryEntry_title(), CR_COMMENTS_ENTRIES);
 
     /*
      * Private constructor for this utility class.
      */
-    private Annotations() {
+    private AnnotationUtils() {
 
     }
 
@@ -205,7 +205,7 @@ public class Annotations {
             contentRendered = contentRendered || filesetRendered;
         }
 
-        Element sourceFileSection = appendSection(parent, Bundle.Annotations_sourceFile_title());
+        Element sourceFileSection = appendSection(parent, Bundle.AnnotationUtils_sourceFile_title());
         sourceFileSection.attr("class", ContentViewerHtmlStyles.getSpacedSectionClassName());
 
         Element sourceFileContainer = sourceFileSection.appendElement("div");
@@ -464,7 +464,7 @@ public class Annotations {
      *
      * @return If there was actual content rendered for this set of entries.
      */
-    private static <T> boolean appendEntries(Element parent, Annotations.SectionConfig<T> config, List<? extends T> items,
+    private static <T> boolean appendEntries(Element parent, AnnotationUtils.SectionConfig<T> config, List<? extends T> items,
             boolean isSubsection, boolean isFirstSection) {
         if (items == null || items.isEmpty()) {
             return false;
