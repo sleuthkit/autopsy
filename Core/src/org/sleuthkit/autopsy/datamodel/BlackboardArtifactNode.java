@@ -43,6 +43,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -81,6 +82,7 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
 
 /**
@@ -229,7 +231,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-                        
+
         for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
             if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
                 srcContent = lookupContent;
@@ -272,7 +274,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact, lookupIsAssociatedFile));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-        
+
         try {
             //The lookup for a file may or may not exist so we define the srcContent as the parent.
             srcContent = artifact.getParent();
@@ -312,10 +314,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
     }
-    
+
     /**
      * Returns the artifact type of the artifact.
+     *
      * @param artifact The artifact.
+     *
      * @return The artifact type or null if no type could be retrieved.
      */
     private static BlackboardArtifact.Type getType(BlackboardArtifact artifact) {
@@ -437,6 +441,19 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         return this.artifact;
     }
 
+    /**
+     * Returns the source content of the artifact.
+     *
+     * @return The source content of the artifact.
+     */
+    @Beta
+    public Content getSourceContent() {
+        return this.srcContent;
+    }
+
+    @NbBundle.Messages({
+        "BlackboardArtifactNode_getActions_viewSourceDataArtifact=View Source Data Artifact in Timeline... "
+    })
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
@@ -447,10 +464,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * action to view it in the timeline.
          */
         try {
-            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact) &&
-                    // don't show ViewArtifactInTimelineAction for AnalysisResults.
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)
+                    && // don't show ViewArtifactInTimelineAction for AnalysisResults.
                     (!(this.artifact instanceof AnalysisResult))) {
-                
+
                 actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
         } catch (TskCoreException ex) {
@@ -476,10 +493,17 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * If the source content of the artifact represented by this node is a
          * file, add an action to view the file in the data source tree.
          */
-        AbstractFile file = getLookup().lookup(AbstractFile.class
-        );
-        if (null != file) {
-            actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
+        if (this.srcContent instanceof AbstractFile) {
+            actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction((AbstractFile) this.srcContent));
+        } else if (this.srcContent instanceof DataArtifact) {
+            try {
+                if (ViewArtifactInTimelineAction.hasSupportedTimeStamp((DataArtifact) this.srcContent)) {
+                    actionsList.add(new ViewArtifactInTimelineAction((DataArtifact) this.srcContent,
+                            Bundle.BlackboardArtifactNode_getActions_viewSourceDataArtifact()));
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting source data artifact timestamp (artifact objID={0})", this.srcContent.getId()), ex); //NON-NLS
+            }
         }
 
         return actionsList.toArray(new Action[actionsList.size()]);

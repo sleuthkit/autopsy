@@ -63,9 +63,9 @@ import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
-import static org.sleuthkit.autopsy.directorytree.Bundle.DataResultFilterNode_viewSourceArtifact_text;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -80,6 +80,7 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -98,8 +99,8 @@ public class DataResultFilterNode extends FilterNode {
     // Assumptions are made in GetPreferredActionsDisplayableItemNodeVisitor that
     // sourceEm is the directory tree explorer manager.
     private final ExplorerManager sourceEm;
-    
-       /**
+
+    /**
      * Constructs a node used to wrap another node before passing it to the
      * result viewers. The wrapper node defines the actions associated with the
      * wrapped node and may filter out some of its children.
@@ -107,7 +108,7 @@ public class DataResultFilterNode extends FilterNode {
      * @param node The node to wrap.
      */
     public DataResultFilterNode(Node node) {
-       this(node, null);
+        this(node, null);
     }
 
     /**
@@ -240,20 +241,52 @@ public class DataResultFilterNode extends FilterNode {
         protected Node[] createNodes(Node key) {
             // if displaying the results from the Data Source tree
             // filter out artifacts
-          
+
             // In older versions of Autopsy,  attachments were children of email/message artifacts
             // and hence email/messages with attachments are shown in the tree data source tree,
             BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
             if (art != null && filterArtifacts
                     && ((FilterNodeUtils.showMessagesInDatasourceTree() == false)
-                         || (FilterNodeUtils.showMessagesInDatasourceTree()
-                                && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
-                                && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()))) {
+                    || (FilterNodeUtils.showMessagesInDatasourceTree()
+                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()))) {
                 return new Node[]{};
             }
-                
+
             return new Node[]{new DataResultFilterNode(key, sourceEm)};
         }
+    }
+
+    /**
+     * Get the menu action for view source X (file, data artifact, os account)
+     * for an analysis result.
+     *
+     * @param content The content to navigate to.
+     *
+     * @return The ViewContextAction that will navigate to the specified content
+     *         in the results / tree view to be used with an analysis result.
+     */
+    @NbBundle.Messages({
+        "# {0} - contentType",
+        "DataResultFilterNode_getViewSourceDisplayName_baseMessage=View Source {0}",
+        "DataResultFilterNode_getViewSourceDisplayName_type_File=File",
+        "DataResultFilterNode_getViewSourceDisplayName_type_DataArtifact=Data Artifact",
+        "DataResultFilterNode_getViewSourceDisplayName_type_OSAccount=OS Account",
+        "DataResultFilterNode_getViewSourceDisplayName_type_Unknown=Content"
+    })
+    private static ViewContextAction getResultViewContext(Content content) {
+        String type = Bundle.DataResultFilterNode_getViewSourceDisplayName_type_Unknown();
+        if (content instanceof AbstractFile) {
+            type = Bundle.DataResultFilterNode_getViewSourceDisplayName_type_File();
+        } else if (content instanceof DataArtifact) {
+            type = Bundle.DataResultFilterNode_getViewSourceDisplayName_type_DataArtifact();
+        } else if (content instanceof OsAccount) {
+            type = Bundle.DataResultFilterNode_getViewSourceDisplayName_type_OSAccount();
+        }
+
+        String menuDisplayName = Bundle.DataResultFilterNode_getViewSourceDisplayName_baseMessage(type);
+
+        return new ViewContextAction(menuDisplayName, content);
     }
 
     @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result")
@@ -276,33 +309,9 @@ public class DataResultFilterNode extends FilterNode {
             for (Action a : ban.getActions(true)) {
                 actionsList.add(a);
             }
-            
-            //Add seperator between the decorated actions and the actions from the node itself.
-            actionsList.add(null);
-            BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
-            final int artifactTypeID = ba.getArtifactTypeID();
 
-            if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
-                    || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                if (ban.getLookup().lookup(AbstractFile.class) != null) {
-                    // We only want the "View File in Directory" actions if we have a file...it is
-                    // possible that we have a keyword hit on a Report.
-                    actionsList.add(new ViewContextAction(
-                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), ban));
-                }
-            } else if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-                try {
-                    if (ba.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT) != null) {
-                        //action to go to the source artifact
-                        actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
-                        
-                        // action to go to the source file of the artifact
-                        actionsList.add(new ViewContextAction(
-                                NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
-                    }
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.WARNING, "Error looking up attributes for artifact with ID=" + ba.getId());
-                }
+            if (ban.getArtifact() instanceof AnalysisResult) {
+                actionsList.add(getResultViewContext(ban.getSourceContent()));
             } else {
                 // if the artifact links to another file, add an action to go to
                 // that file
@@ -366,12 +375,12 @@ public class DataResultFilterNode extends FilterNode {
                 actionsList.add(ExtractAction.getInstance());
                 actionsList.add(ExportCSVAction.getInstance());
                 actionsList.add(null); // creates a menu separator
-                
+
                 // don't show AddContentTagAction for data artifacts.
                 if (!(ban.getArtifact() instanceof DataArtifact)) {
                     actionsList.add(AddContentTagAction.getInstance());
                 }
-                
+
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
 
                 // don't show DeleteFileContentTagAction for data artifacts.
@@ -488,12 +497,12 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
-            
+
             Action preferredAction = ban.getPreferredAction();
-            if(preferredAction instanceof AbstractAction) {
+            if (preferredAction instanceof AbstractAction) {
                 return (AbstractAction) preferredAction;
             }
-            
+
             BlackboardArtifact artifact = ban.getArtifact();
             try {
                 if ((artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())
@@ -567,7 +576,7 @@ public class DataResultFilterNode extends FilterNode {
             // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
             // to set that wrapped node as the selection and root context of the 
             // directory tree explorer manager (sourceEm)
-            if(sourceEm == null || sourceEm.getSelectedNodes().length == 0) {
+            if (sourceEm == null || sourceEm.getSelectedNodes().length == 0) {
                 return null;
             }
             final Node currentSelectionInDirectoryTree = sourceEm.getSelectedNodes()[0];
@@ -610,7 +619,7 @@ public class DataResultFilterNode extends FilterNode {
          * @return
          */
         private AbstractAction openParent(AbstractNode node) {
-            if(sourceEm == null) {
+            if (sourceEm == null) {
                 return null;
             }
             // @@@ Why do we ignore node?
