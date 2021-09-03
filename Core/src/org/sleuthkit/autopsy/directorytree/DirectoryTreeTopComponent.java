@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -1223,47 +1224,61 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * Does depth-first search to find os account list node where the provided os account is a child.
-     * @param node The node.
+     * Does depth-first search to find os account list node where the provided
+     * os account is a child.
+     *
+     * @param node      The node.
      * @param osAccount The os account.
+     *
      * @return The parent list node of the os account if found or empty if not.
      */
-    private Optional<Node> getOsAccountListNode(Node node, OsAccount osAccount) {
+    private Optional<Node> getOsAccountListNode(Node node, OsAccount osAccount, Set<Host> hosts) {
         if (node == null) {
             return Optional.empty();
-        } else if (node.getLookup().lookup(Host.class) != null
+        }
+
+        Host nodeHost = node.getLookup().lookup(Host.class);
+        if ((nodeHost != null && hosts != null && hosts.contains(nodeHost))
+                || node.getLookup().lookup(DataSource.class) != null
                 || node.getLookup().lookup(Person.class) != null
-                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))
-                || node.getLookup().lookup(DataSource.class) != null) {
+                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
 
             return Stream.of(node.getChildren().getNodes(true))
-                    .map(childNode -> getOsAccountListNode(childNode, osAccount))
+                    .map(childNode -> getOsAccountListNode(childNode, osAccount, hosts))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .findFirst();
 
-        } else if (OsAccounts.getListName().equals(node.getName())) {
-            boolean isOsAccountParent = Stream.of(node.getChildren().getNodes(true))
-                    .filter(osAcctNd -> {
-                        OsAccount osAcctOfNd = osAcctNd.getLookup().lookup(OsAccount.class);
-                        return osAcctOfNd != null && osAcctOfNd.getId() == osAccount.getId();
-                    })
-                    .findFirst()
-                    .isPresent();
-
-            return isOsAccountParent ? Optional.of(node) : Optional.empty();
-        } else {
-            return Optional.empty();
         }
+
+        if (OsAccounts.getListName().equals(node.getName())) {
+            return Optional.of(node);
+        }
+
+        return Optional.empty();
     }
 
     /**
      * Navigates to the os account if the os account is found in the tree.
+     *
      * @param osAccount The os account.
      */
     void viewOsAccount(OsAccount osAccount) {
+        Set<Host> hosts = null;
+
+        if (CasePreferences.getGroupItemsInTreeByDataSource()) {
+            try {
+                hosts = new HashSet<>(Case.getCurrentCase().getSleuthkitCase().getOsAccountManager().getHosts(osAccount));
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.WARNING, "Unable to get valid hosts for osAccount: " + osAccount, ex);
+                return;
+            }
+        }
+        
+        final Set<Host> finalHosts = hosts;
+
         Optional<Node> osAccountListNodeOpt = Stream.of(em.getRootContext().getChildren().getNodes(true))
-                .map(nd -> getOsAccountListNode(nd, osAccount))
+                .map(nd -> getOsAccountListNode(nd, osAccount, finalHosts))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .findFirst();

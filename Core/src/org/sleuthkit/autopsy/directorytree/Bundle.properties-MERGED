@@ -10,7 +10,6 @@ DataResultFilterNode_getViewSourceDisplayName_baseMessage=View Source {0}
 DataResultFilterNode_getViewSourceDisplayName_type_DataArtifact=Data Artifact
 DataResultFilterNode_getViewSourceDisplayName_type_File=File
 DataResultFilterNode_getViewSourceDisplayName_type_OSAccount=OS Account
-DataResultFilterNode_getViewSourceDisplayName_type_Unknown=Content
 # {0} - dataSourceCount
 DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contains {0} data sources. Would you like to group by data source for faster loading?
 DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?
