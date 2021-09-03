@@ -105,13 +105,39 @@ public class CorrelationAttributeUtil {
     public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(Content content) {
         if (content instanceof DataArtifact) {
             return makeCorrAttrsToSave((DataArtifact) content);
-        } else if (!(content instanceof AnalysisResult)) {
-            return makeCorrAttrsForSearch(content);
-        } else {
+        } else if (content instanceof AnalysisResult) {
+            //AnalysisResults should already have the correlation attributes they are correlating on saved
+            //This check replaces the check explicitly excluding keyword hits and interesting items that existed prior to the AnalysisResult designation
             return new ArrayList<>();
+        } else {
+            return makeCorrAttrsForSearch(content);
         }
     }
 
+    /**
+     * Makes zero to many correlation attribute instances from the attributes of
+     * content that have correlatable data. The intention of this method is to
+     * use the results to correlate with, not to save. If you want to save,
+     * please use makeCorrAttrsToSave. An artifact that can have correlatable
+     * data != An artifact that should be the source of data in the CR, so
+     * results may be too lenient.
+     *
+     * IMPORTANT: The correlation attribute instances are NOT added to the
+     * central repository by this method.
+     *
+     * TODO (Jira-6088): The methods in this low-level, utility class should
+     * throw exceptions instead of logging them. The reason for this is that the
+     * clients of the utility class, not the utility class itself, should be in
+     * charge of error handling policy, per the Autopsy Coding Standard. Note
+     * that clients of several of these methods currently cannot determine
+     * whether receiving a null return value is an error or not, plus null
+     * checking is easy to forget, while catching exceptions is enforced.
+     *
+     * @param Content A Content object.
+     *
+     * @return A list, possibly empty, of correlation attribute instances for
+     *         the content.
+     */
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(Content content) {
         if (content instanceof DataArtifact) {
             return makeCorrAttrsForSearch((DataArtifact) content);
@@ -152,30 +178,6 @@ public class CorrelationAttributeUtil {
         return correlationAttrs;
     }
 
-    /**
-     * Makes zero to many correlation attribute instances from the attributes of
-     * artifacts that have correlatable data. The intention of this method is to
-     * use the results to correlate with, not to save. If you want to save,
-     * please use makeCorrAttrsToSave. An artifact that can have correlatable
-     * data != An artifact that should be the source of data in the CR, so
-     * results may be too lenient.
-     *
-     * IMPORTANT: The correlation attribute instances are NOT added to the
-     * central repository by this method.
-     *
-     * TODO (Jira-6088): The methods in this low-level, utility class should
-     * throw exceptions instead of logging them. The reason for this is that the
-     * clients of the utility class, not the utility class itself, should be in
-     * charge of error handling policy, per the Autopsy Coding Standard. Note
-     * that clients of several of these methods currently cannot determine
-     * whether receiving a null return value is an error or not, plus null
-     * checking is easy to forget, while catching exceptions is enforced.
-     *
-     * @param artifact An artifact.
-     *
-     * @return A list, possibly empty, of correlation attribute instances for
-     *         the artifact.
-     */
     private static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(DataArtifact artifact) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
         try {
