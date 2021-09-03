@@ -83,6 +83,7 @@ import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
+import org.sleuthkit.autopsy.datamodel.OsAccounts;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
@@ -95,6 +96,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -1218,6 +1220,71 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .findFirst();
+    }
+
+    /**
+     * Does depth-first search to find os account list node where the provided os account is a child.
+     * @param node The node.
+     * @param osAccount The os account.
+     * @return The parent list node of the os account if found or empty if not.
+     */
+    private Optional<Node> getOsAccountListNode(Node node, OsAccount osAccount) {
+        if (node == null) {
+            return Optional.empty();
+        } else if (node.getLookup().lookup(Host.class) != null
+                || node.getLookup().lookup(Person.class) != null
+                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))
+                || node.getLookup().lookup(DataSource.class) != null) {
+
+            return Stream.of(node.getChildren().getNodes(true))
+                    .map(childNode -> getOsAccountListNode(childNode, osAccount))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .findFirst();
+
+        } else if (OsAccounts.getListName().equals(node.getName())) {
+            boolean isOsAccountParent = Stream.of(node.getChildren().getNodes(true))
+                    .filter(osAcctNd -> {
+                        OsAccount osAcctOfNd = osAcctNd.getLookup().lookup(OsAccount.class);
+                        return osAcctOfNd != null && osAcctOfNd.getId() == osAccount.getId();
+                    })
+                    .findFirst()
+                    .isPresent();
+
+            return isOsAccountParent ? Optional.of(node) : Optional.empty();
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Navigates to the os account if the os account is found in the tree.
+     * @param osAccount The os account.
+     */
+    void viewOsAccount(OsAccount osAccount) {
+        Optional<Node> osAccountListNodeOpt = Stream.of(em.getRootContext().getChildren().getNodes(true))
+                .map(nd -> getOsAccountListNode(nd, osAccount))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+
+        if (!osAccountListNodeOpt.isPresent()) {
+            return;
+        }
+
+        Node osAccountListNode = osAccountListNodeOpt.get();
+
+        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) osAccountListNode).getOriginal();
+        undecoratedParentNode.setChildNodeSelectionInfo((osAcctNd) -> {
+            OsAccount osAcctOfNd = osAcctNd.getLookup().lookup(OsAccount.class);
+            return osAcctOfNd != null && osAcctOfNd.getId() == osAccount.getId();
+        });
+        getTree().expandNode(osAccountListNode);
+        try {
+            em.setExploredContextAndSelection(osAccountListNode, new Node[]{osAccountListNode});
+        } catch (PropertyVetoException ex) {
+            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+        }
     }
 
     /**

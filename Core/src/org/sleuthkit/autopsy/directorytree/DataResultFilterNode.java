@@ -258,6 +258,54 @@ public class DataResultFilterNode extends FilterNode {
     }
 
     /**
+     * An action that navigates to an artifact.
+     */
+    private static class ViewArtifactAction extends AbstractAction {
+
+        private final BlackboardArtifact artifact;
+
+        /**
+         * Main constructor.
+         *
+         * @param artifact    The artifact to navigate to in the action.
+         * @param displayName The display name of the menu item.
+         */
+        ViewArtifactAction(BlackboardArtifact artifact, String displayName) {
+            super(displayName);
+            this.artifact = artifact;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            DirectoryTreeTopComponent.findInstance().viewArtifact(artifact);
+        }
+    }
+
+    /**
+     * An action that navigates to an os account.
+     */
+    private static class ViewOsAccountAction extends AbstractAction {
+
+        private final OsAccount osAccount;
+
+        /**
+         * Main constructor.
+         *
+         * @param osAccount   The os account to navigate to in the action.
+         * @param displayName The display name of the menu item.
+         */
+        ViewOsAccountAction(OsAccount osAccount, String displayName) {
+            super(displayName);
+            this.osAccount = osAccount;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            DirectoryTreeTopComponent.findInstance().viewOsAccount(osAccount);
+        }
+    }
+
+    /**
      * Get the menu action for view source X (file, data artifact, os account)
      * for an analysis result.
      *
@@ -271,22 +319,27 @@ public class DataResultFilterNode extends FilterNode {
         "DataResultFilterNode_getViewSourceDisplayName_baseMessage=View Source {0}",
         "DataResultFilterNode_getViewSourceDisplayName_type_File=File",
         "DataResultFilterNode_getViewSourceDisplayName_type_DataArtifact=Data Artifact",
-        "DataResultFilterNode_getViewSourceDisplayName_type_OSAccount=OS Account",
-        "DataResultFilterNode_getViewSourceDisplayName_type_Unknown=Content"
+        "DataResultFilterNode_getViewSourceDisplayName_type_OSAccount=OS Account"
     })
-    private static ViewContextAction getResultViewContext(Content content) {
-        String type = Bundle.DataResultFilterNode_getViewSourceDisplayName_type_Unknown();
-        if (content instanceof AbstractFile) {
-            type = Bundle.DataResultFilterNode_getViewSourceDisplayName_type_File();
-        } else if (content instanceof DataArtifact) {
-            type = Bundle.DataResultFilterNode_getViewSourceDisplayName_type_DataArtifact();
+    private static Action getContentNavigateAction(Content content) {
+        if (content instanceof DataArtifact) {
+            return new ViewArtifactAction(
+                    (DataArtifact) content,
+                    Bundle.DataResultFilterNode_getViewSourceDisplayName_baseMessage(
+                            Bundle.DataResultFilterNode_getViewSourceDisplayName_type_DataArtifact()));
         } else if (content instanceof OsAccount) {
-            type = Bundle.DataResultFilterNode_getViewSourceDisplayName_type_OSAccount();
+            return new ViewOsAccountAction(
+                    (OsAccount) content,
+                    Bundle.DataResultFilterNode_getViewSourceDisplayName_baseMessage(
+                            Bundle.DataResultFilterNode_getViewSourceDisplayName_type_OSAccount()));
+        } else if (content instanceof AbstractFile) {
+            return new ViewContextAction(
+                    Bundle.DataResultFilterNode_getViewSourceDisplayName_baseMessage(
+                            Bundle.DataResultFilterNode_getViewSourceDisplayName_type_File()),
+                    content);
+        } else {
+            return null;
         }
-
-        String menuDisplayName = Bundle.DataResultFilterNode_getViewSourceDisplayName_baseMessage(type);
-
-        return new ViewContextAction(menuDisplayName, content);
     }
 
     @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result")
@@ -311,7 +364,10 @@ public class DataResultFilterNode extends FilterNode {
             }
 
             if (ban.getArtifact() instanceof AnalysisResult) {
-                actionsList.add(getResultViewContext(ban.getSourceContent()));
+                Action contentNavigateAction = getContentNavigateAction(ban.getSourceContent());
+                if (contentNavigateAction != null) {
+                    actionsList.add(contentNavigateAction);
+                }
             } else {
                 // if the artifact links to another file, add an action to go to
                 // that file

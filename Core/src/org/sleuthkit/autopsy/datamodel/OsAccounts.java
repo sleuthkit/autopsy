@@ -63,9 +63,19 @@ public final class OsAccounts implements AutopsyVisitableItem {
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/os-account.png";
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final String REALM_DATA_AVAILABLE_EVENT = "REALM_DATA_AVAILABLE_EVENT";
+    private static final String LIST_NAME = Bundle.OsAccount_listNode_name();
 
     private SleuthkitCase skCase;
     private final long filteringDSObjId;
+
+    /**
+     * Returns the name of the OsAccountListNode to be used for id purposes.
+     *
+     * @return The name of the OsAccountListNode to be used for id purposes.
+     */
+    public static String getListName() {
+        return LIST_NAME;
+    }
 
     public OsAccounts(SleuthkitCase skCase) {
         this(skCase, 0);
@@ -94,8 +104,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
          */
         public OsAccountListNode() {
             super(Children.create(new OsAccountNodeFactory(), true));
-            setName(Bundle.OsAccount_listNode_name());
-            setDisplayName(Bundle.OsAccount_listNode_name());
+            setName(LIST_NAME);
+            setDisplayName(LIST_NAME);
             setIconBaseWithExtension("org/sleuthkit/autopsy/images/os-account.png");
         }
 
@@ -137,7 +147,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(listener, null);
 
         @Override
@@ -146,7 +156,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
             Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNTS_ADDED), weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
         }
-        
+
         @Override
         protected void addNotify() {
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNTS_ADDED, Case.Events.OS_ACCOUNTS_DELETED), listener);
