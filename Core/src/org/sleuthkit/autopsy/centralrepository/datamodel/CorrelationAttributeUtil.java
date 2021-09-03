@@ -63,17 +63,6 @@ public class CorrelationAttributeUtil {
             ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()
     ));
 
-    private static final Set<Integer> FILE_ARTIFACT_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID(),
-            ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID(),
-            ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-            ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID(),
-            ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
-            ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID(),
-            ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID(),
-            ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
-    ));
-
     /**
      * Gets a string that is expected to be the same string that is stored in
      * the correlation_types table in the central repository as the display name
@@ -94,8 +83,7 @@ public class CorrelationAttributeUtil {
         //The account fields in these types are expected to be saved in a TSK_ACCOUNT artifact, which will be processed
         if (artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
                 || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
-                || artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
-                || FILE_ARTIFACT_TYPE_IDS.contains(artifactTypeID)) {
+                || artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
             return new ArrayList<>();
         }
         return CorrelationAttributeUtil.makeCorrAttrsForSearch(artifact);
@@ -178,8 +166,7 @@ public class CorrelationAttributeUtil {
                     return CorrelationAttributeUtil.makeCorrAttrsForSearch(sourceArtifact);
                 }
             }
-            Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(analysisResult.getObjectID());
-            correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(content));
+            correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(analysisResult.getParent()));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get information regarding correlation attributes from AnalysisResult", ex);
         } catch (NoCurrentCaseException ex) {
@@ -203,9 +190,6 @@ public class CorrelationAttributeUtil {
                         && !domainsToSkip.contains(domainAttr.getValueString())) {
                     makeCorrAttrFromArtifactAttr(correlationAttrs, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID, attributes);
                 }
-            } else if (FILE_ARTIFACT_TYPE_IDS.contains(artifactTypeID) && artifact.getParent() instanceof AbstractFile) {
-                //if it is one of the types in this set we instead want to correlate on the parent file
-                correlationAttrs.addAll(makeCorrAttrsForSearch((AbstractFile) artifact.getParent()));
             } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                 // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
                 Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
