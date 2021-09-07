@@ -1409,34 +1409,45 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact art) {
         Node interestingItemsRootNode = typesChildren.findChild(NbBundle
                 .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text"));
+        
         Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
+        String setName = null;
         try {
-            String setName = null;
-            List<BlackboardAttribute> attributes = art.getAttributes();
-            for (BlackboardAttribute att : attributes) {
-                int typeId = att.getAttributeType().getTypeID();
-                if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                    setName = att.getValueString();
-                }
-            }
-            Node setNode = interestingItemsRootChildren.findChild(setName);
-            if (setNode == null) {
-                return null;
-            }
-
-            Children fileArtifactChildren = setNode.getChildren();
-            Node[] fileArtifactNodes = fileArtifactChildren == null ? null : fileArtifactChildren.getNodes();
-            if (fileArtifactNodes == null || fileArtifactNodes.length != 2) {
-                return null;
-            }
-
-            return (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID())
-                    ? fileArtifactNodes[0]
-                    : fileArtifactNodes[1];
+            setName = art.getAttributes().stream()
+                    .filter(attr -> attr.getAttributeType().getTypeID() == BlackboardAttribute.Type.TSK_SET_NAME.getTypeID())
+                    .map(attr -> attr.getValueString())
+                    .findFirst()
+                    .orElse(null);
+            
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
         }
+        
+        // if no set name, no set node will be identified.
+        if (setName == null) {
+            return null;
+        }
+            
+        Stream<Node> typeNodes = interestingItemsRootChildren != null ? Stream.of(interestingItemsRootChildren.getNodes(true)) : Stream.empty();
+
+        Children setNodeChildren = typeNodes
+                .filter((nd) -> {
+                    BlackboardArtifact.Type ndType = nd.getLookup().lookup(BlackboardArtifact.Type.class);
+                    return ndType != null && ndType.getTypeID() == art.getArtifactTypeID();
+                })
+                .findFirst()
+                .flatMap(typeNode -> Optional.ofNullable(typeNode.getChildren()))
+                .orElse(null);
+
+        // set node children for type could not be found, so return null.
+        if (setNodeChildren == null) {
+            return null;
+        }
+        
+        // make sure data is fully loaded
+        setNodeChildren.getNodes(true);
+        return interestingItemsRootChildren.findChild(setName);
     }
 
     /**
