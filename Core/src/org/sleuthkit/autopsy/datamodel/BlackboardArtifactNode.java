@@ -28,10 +28,8 @@ import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -557,56 +555,85 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         return c;
     }
-    
-    private <T> List<T> getNonNull(T...items) {
-        return Stream.of(items)
+
+    private <T> List<T> getNonNull(Stream<T> items) {
+        return items
                 .filter(i -> i != null)
                 .collect(Collectors.toList());
     }
 
-    @NbBundle.Messages({
+    private <T> List<T> getNonNull(T... items) {
+        return getNonNull(Stream.of(items));
+    }
+
+    private <T> List<T> getNonNull(List<T> items) {
+        return getNonNull(items.stream());
+    }
+
+    @Messages({
         "BlackboardArtifactNode_getActions_viewSourceDataArtifact=View Source Data Artifact in Timeline... "
     })
     @Override
     public Action[] getActions(boolean context) {
         Node parentFileNode = getParentFileNode(srcContent);
+        boolean hasFileContent = parentFileNode != null;
 
-        final Collection<AbstractFile> selectedFilesList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        int selectedFileCount = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size();
+        int selectedArtifactCount = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).size();
 
-        final Collection<BlackboardArtifact> selectedArtifactsList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+        List<List<Action>> actionsLists = new ArrayList<>();
 
-        super.getActions(context);
+        actionsLists.add(getNonNull(super.getActions(context)));
 
         // break
-        getTimelineArtifactAction();
-        getTimelineFileAction(artifact);
-        getTimelineSrcContentAction();
+        actionsLists.add(getNonNull(
+                getTimelineArtifactAction(this.artifact),
+                getTimelineFileAction(this.artifact),
+                getTimelineSrcContentAction(this.srcContent)
+        ));
 
         // break 
-        getSrcContentAction();
-        getFileAction();
+        actionsLists.add(getNonNull(
+                getViewSrcContentAction(this.srcContent),
+                getViewFileAction(this.artifact),
+                getExtractWithPasswordAction(this.srcContent)
+        ));
 
         // break
-        getExtractWithPasswordAction(srcContent);
-        getReportActions(srcContent);
+        actionsLists.add(getNonNull(
+                this.srcContent instanceof Report
+                        ? DataModelActionsFactory.getActions(content, false)
+                        : Collections.emptyList()
+        ));
 
         // break
-        getSrcContentViewerActions();
-        
+        actionsLists.add(getNonNull(
+                getSrcContentViewerActions(parentFileNode, selectedFileCount)
+        ));
+
         // break 
-        getExtractExportActions(hasSrcFile);
+        actionsLists.add(getNonNull(getExtractExportActions(hasFileContent)));
 
         // break
-        getTagActions();
+        actionsLists.add(getNonNull(getTagActions(hasFileContent, this.artifact, selectedFileCount, selectedArtifactCount)));
 
         // break?
-        if (n != null) {
-            actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        }
+        actionsLists.add(getNonNull(ContextMenuExtensionPoint.getActions()));
+        
+        // add in null between each list group.
+        return actionsLists.stream()
+                .filter((lst) -> lst != null && !lst.isEmpty())
+                .flatMap(lst -> Stream.concat(lst.stream(), Stream.of(null)))
+                .toArray(sz -> new Action[sz]);
     }
 
+    /**
+     * Creates an action to navigate to src content in tree hierarchy.
+     *
+     * @param content The content.
+     *
+     * @return The action or null if no action derived.
+     */
     @Messages({
         "# {0} - contentType",
         "BlackboardArtifactNode_getSrcContentAction_baseMessage=View Source {0} in Directory",
@@ -616,27 +643,27 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode_getSrcContentAction_type_Content=Content",
         "BlackboardArtifactNode_getSrcContentAction_viewSrcFile=test"
     })
-    private Action getSrcContentAction() {
-        if (srcContent instanceof DataArtifact) {
+    private Action getViewSrcContentAction(Content content) {
+        if (content instanceof DataArtifact) {
             return new ViewArtifactAction(
-                    (DataArtifact) srcContent,
+                    (DataArtifact) content,
                     Bundle.BlackboardArtifactNode_getSrcContentAction_baseMessage(
                             Bundle.BlackboardArtifactNode_getSrcContentAction_type_DataArtifact()));
-        } else if (srcContent instanceof OsAccount) {
+        } else if (content instanceof OsAccount) {
             return new ViewOsAccountAction(
-                    (OsAccount) srcContent,
+                    (OsAccount) content,
                     Bundle.BlackboardArtifactNode_getSrcContentAction_baseMessage(
                             Bundle.BlackboardArtifactNode_getSrcContentAction_type_OSAccount()));
-        } else if (srcContent instanceof AbstractFile) {
+        } else if (content instanceof AbstractFile) {
             return new ViewContextAction(
                     Bundle.BlackboardArtifactNode_getSrcContentAction_baseMessage(
                             Bundle.BlackboardArtifactNode_getSrcContentAction_type_File()),
-                    srcContent);
-        } else if (srcContent instanceof Content && artifact instanceof DataArtifact) {
+                    content);
+        } else if (content instanceof Content && artifact instanceof DataArtifact) {
             return new ViewContextAction(
                     Bundle.BlackboardArtifactNode_getSrcContentAction_baseMessage(
                             Bundle.BlackboardArtifactNode_getSrcContentAction_type_Content()),
-                    srcContent);
+                    content);
         } else {
             return null;
         }
@@ -651,7 +678,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @return An action to go to a linked file if a file linked by TSK_PATH_ID
      *         exists. Otherwise, null is returned.
      */
-    private Action getFileAction(BlackboardArtifact artifact) {
+    private Action getViewFileAction(BlackboardArtifact artifact) {
         // if the artifact links to another file, add an action to go to
         // that file
         Content c = findLinkedContent(artifact);
@@ -687,20 +714,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } else {
             return null;
         }
-    }
-
-    /**
-     * Returns report actions if content instanceof report. Otherwise returns an
-     * empty list.
-     *
-     * @param content The content.
-     *
-     * @return The list of report actions.
-     */
-    private List<Action> getReportActions(Content content) {
-        return content instanceof Report
-                ? DataModelActionsFactory.getActions(content, false)
-                : Collections.emptyList();
     }
 
     /**
