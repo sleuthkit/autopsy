@@ -282,7 +282,7 @@ final public class CorrelationAttributeNormalizer {
         if (imsiWithoutSeperators.matches(validImsiRegex)) {
             return imsiWithoutSeperators;
         } else {
-            throw new CorrelationAttributeNormalizationException("Data provided was not a valid Imsi. : " + data);
+            throw new CorrelationAttributeNormalizationException("Data provided was not a valid IMSI. : " + data);
         }
     }
 
@@ -306,7 +306,7 @@ final public class CorrelationAttributeNormalizer {
         if (macWithoutSeperators.matches(validMacRegex)) {
             return macWithoutSeperators;
         } else {
-            throw new CorrelationAttributeNormalizationException("Data provided was not a valid Imsi. : " + data);
+            throw new CorrelationAttributeNormalizationException("Data provided was not a valid MAC address. : " + data);
         }
     }
 
@@ -335,7 +335,7 @@ final public class CorrelationAttributeNormalizer {
         if (imeiWithoutSeperators.matches(validImeiRegex)) {
             return imeiWithoutSeperators;
         } else {
-            throw new CorrelationAttributeNormalizationException("Data provided was not a valid Imsi. : " + data);
+            throw new CorrelationAttributeNormalizationException("Data provided was not a valid IMEI. : " + data);
         }
     }
 
