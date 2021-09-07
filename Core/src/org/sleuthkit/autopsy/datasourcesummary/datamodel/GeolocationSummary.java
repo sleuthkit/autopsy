@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import org.sleuthkit.autopsy.geolocation.AbstractWaypointFetcher;
 import org.sleuthkit.autopsy.geolocation.GeoFilter;
 import org.sleuthkit.autopsy.geolocation.MapWaypoint;
@@ -45,7 +44,7 @@ import org.sleuthkit.datamodel.DataSource;
 /**
  * Gathers summary data about Geolocation information for a data source.
  */
-public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
+public class GeolocationSummary {
 
     /**
      * A count of hits for a particular city.
@@ -59,8 +58,8 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
          * Main constructor.
          *
          * @param cityRecord The record for the city including name, country,
-         * and location.
-         * @param count The number of hits in proximity to that city.
+         *                   and location.
+         * @param count      The number of hits in proximity to that city.
          */
         CityRecordCount(CityRecord cityRecord, int count) {
             this.cityRecord = cityRecord;
@@ -69,7 +68,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
         /**
          * @return The record for the city including name, country, and
-         * location.
+         *         location.
          */
         public CityRecord getCityRecord() {
             return cityRecord;
@@ -96,8 +95,8 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
         /**
          * Main constructor.
          *
-         * @param mostCommon The list of most common cities seen.
-         * @param mostRecent The list of most recent cities seen.
+         * @param mostCommon     The list of most common cities seen.
+         * @param mostRecent     The list of most recent cities seen.
          * @param mostRecentSeen
          */
         CityData(CityCountsList mostCommon, CityCountsList mostRecent, Long mostRecentSeen) {
@@ -122,7 +121,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
         /**
          * @return The time stamp in seconds from epoch of the most recently
-         * seen city
+         *         seen city
          */
         public Long getMostRecentSeen() {
             return mostRecentSeen;
@@ -142,10 +141,10 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
         /**
          * Main constructor.
          *
-         * @param counts The list of cities and the count of how many points are
-         * closest to that city.
+         * @param counts     The list of cities and the count of how many points
+         *                   are closest to that city.
          * @param otherCount The count of points where no closest city was
-         * determined due to not being close enough.
+         *                   determined due to not being close enough.
          */
         CityCountsList(List<CityRecordCount> counts, int otherCount) {
             this.counts = Collections.unmodifiableList(new ArrayList<>(counts));
@@ -154,7 +153,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
         /**
          * @return The list of cities and the count of how many points are
-         * closest to that city.
+         *         closest to that city.
          */
         public List<CityRecordCount> getCounts() {
             return counts;
@@ -162,7 +161,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
         /**
          * @return The count of points where no closest city was determined due
-         * to not being close enough.
+         *         to not being close enough.
          */
         public int getOtherCount() {
             return otherCount;
@@ -183,10 +182,10 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
          * Main constructor.
          *
          * @param mapWaypoints The way points found for the data source.
-         * @param tracks A list of sets where each set is a track in the data
-         * source.
-         * @param areas A list of areas where each set is an area in the data
-         * source.
+         * @param tracks       A list of sets where each set is a track in the
+         *                     data source.
+         * @param areas        A list of areas where each set is an area in the
+         *                     data source.
          */
         private GeoResult(Set<MapWaypoint> mapWaypoints, List<Set<MapWaypoint>> tracks, List<Set<MapWaypoint>> areas) {
             this.mapWaypoints = mapWaypoints;
@@ -250,6 +249,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
          * A supplier method that can throw an exception of E.
          *
          * @return The object type.
+         *
          * @throws E The exception type.
          */
         T get() throws E;
@@ -277,13 +277,12 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
     /**
      * @return Returns all the geolocation artifact types.
      */
-    public List<ARTIFACT_TYPE> getGeoTypes() {
+    public static List<ARTIFACT_TYPE> getGeoTypes() {
         return GPS_ARTIFACT_TYPES;
     }
 
-    @Override
-    public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return GPS_ARTIFACT_TYPE_IDS;
+    public static Set<Integer> getArtifactTypeIdsForRefresh() {
+        return Collections.unmodifiableSet(GPS_ARTIFACT_TYPE_IDS);
     }
 
     /**
@@ -291,13 +290,14 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * the event where either time is null.
      *
      * @param minTime The minimum time. If null is provided, this function will
-     * return false.
-     * @param time The time to check. If null is provided and the min time is
-     * non-null, then this function will return false.
+     *                return false.
+     * @param time    The time to check. If null is provided and the min time is
+     *                non-null, then this function will return false.
+     *
      * @return If minTime == null then false. If minTime != null && time == null
-     * then false. Otherwise time >= minTime.
+     *         then false. Otherwise time >= minTime.
      */
-    private boolean greaterThanOrEqual(Long minTime, Long time) {
+    private static boolean greaterThanOrEqual(Long minTime, Long time) {
         if (minTime != null && time != null && time >= minTime) {
             return true;
         } else {
@@ -310,12 +310,13 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * a total of waypoints whose time stamp is greater than or equal to
      * minTime.
      *
-     * @param points The list of way points.
+     * @param points  The list of way points.
      * @param minTime The minimum time for most recent points count.
+     *
      * @return A pair where the left value is the total count of way points and
-     * the right is the total list of way points that are >= minTime.
+     *         the right is the total list of way points that are >= minTime.
      */
-    private Pair<Integer, Integer> getCounts(List<Long> points, Long minTime) {
+    private static Pair<Integer, Integer> getCounts(List<Long> points, Long minTime) {
         if (points == null) {
             return EMPTY_COUNT;
         }
@@ -332,7 +333,8 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * the point is null, null is returned.
      *
      * @param cityMapper The means of mapping a point to the closest city.
-     * @param pt The geolocation point.
+     * @param pt         The geolocation point.
+     *
      * @return A tuple of the closest city and timestamp in seconds from epoch.
      */
     private Pair<CityRecord, Long> getClosestWithTime(ClosestCityMapper cityMapper, MapWaypoint pt) {
@@ -351,10 +353,12 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * into a stream of the unique cities identified in this grouping and the
      * latest time stamp for each grouping.
      *
-     * @param points The points in the grouping.
+     * @param points     The points in the grouping.
      * @param cityMapper The means of mapping a point to the closest city.
+     *
      * @return A stream of tuples where each tuple will be a unique city (or
-     * null if a closest is not determined) and the latest timestamp for each.
+     *         null if a closest is not determined) and the latest timestamp for
+     *         each.
      */
     private Stream<Pair<CityRecord, Long>> reduceGrouping(Set<MapWaypoint> points, ClosestCityMapper cityMapper) {
         if (points == null) {
@@ -367,7 +371,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
             if (pair == null) {
                 continue;
             }
-            
+
             CityRecord city = pair.getLeft();
             Long prevTime = timeMapping.get(city);
             Long curTime = pair.getRight();
@@ -375,7 +379,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
                 timeMapping.put(city, curTime);
             }
         }
-        
+
         return timeMapping.entrySet().stream()
                 .map(e -> Pair.of(e.getKey(), e.getValue()));
     }
@@ -385,10 +389,12 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * of tuples where each tuple represents a point with the closest city and
      * the time stamp in seconds from epoch.
      *
-     * @param geoResult The result from the Geolocation API.
+     * @param geoResult  The result from the Geolocation API.
      * @param cityMapper The means of mapping a point to the closest city.
+     *
      * @return A list of tuples where each tuple represents a point to be
-     * counted with a combination of the closest city and the timestamp.
+     *         counted with a combination of the closest city and the timestamp.
+     *
      * @throws IOException
      */
     private Stream<Pair<CityRecord, Long>> processGeoResult(GeoResult geoResult, ClosestCityMapper cityMapper) {
@@ -398,7 +404,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
 
         List<Set<MapWaypoint>> areas = (geoResult.getAreas() == null) ? Collections.emptyList() : geoResult.getAreas();
         List<Set<MapWaypoint>> tracks = (geoResult.getTracks() == null) ? Collections.emptyList() : geoResult.getTracks();
-        
+
         Stream<Pair<CityRecord, Long>> reducedGroupings = Stream.of(areas, tracks)
                 .flatMap((groupingList) -> groupingList.stream())
                 .flatMap((grouping) -> reduceGrouping(grouping, cityMapper));
@@ -407,7 +413,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
                 .flatMap((groupingList) -> groupingList.stream())
                 .flatMap((group) -> group.stream())
                 .collect(Collectors.toSet());
-        
+
         Set<MapWaypoint> pointSet = geoResult.getMapWaypoints() == null ? Collections.emptySet() : geoResult.getMapWaypoints();
         Stream<Pair<CityRecord, Long>> citiesForPoints = pointSet.stream()
                 // it appears that AbstractWaypointFetcher.handleFilteredWaypointSet returns all points 
@@ -423,8 +429,8 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * number of found hits (i.e. most hits is first index).
      *
      * @param dataSource The data source.
-     * @param daysCount Number of days to go back.
-     * @param maxCount Maximum number of results.
+     * @param daysCount  Number of days to go back.
+     * @param maxCount   Maximum number of results.
      *
      * @return The sorted list.
      *
@@ -507,11 +513,12 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
          * Main constructor.
          *
          * @param asyncResult Geolocation fetches results in a callback which is
-         * already handled by other mechanisms in data source summary. The
-         * BlockingQueue blocks until a result is received from geolocation.
-         * @param filters The applicable filters for geolocation.
+         *                    already handled by other mechanisms in data source
+         *                    summary. The BlockingQueue blocks until a result
+         *                    is received from geolocation.
+         * @param filters     The applicable filters for geolocation.
          */
-        public PointFetcher(BlockingQueue<GeoResult> asyncResult, GeoFilter filters) {
+        PointFetcher(BlockingQueue<GeoResult> asyncResult, GeoFilter filters) {
             super(filters);
             this.asyncResult = asyncResult;
         }
@@ -531,6 +538,7 @@ public class GeolocationSummary implements DefaultArtifactUpdateGovernor {
      * Fetches all GPS data for the data source from the current case.
      *
      * @param dataSource The data source.
+     *
      * @return The GPS data pertaining to the data source.
      * @throws SleuthkitCaseProviderException
      * @throws GeoLocationDataException

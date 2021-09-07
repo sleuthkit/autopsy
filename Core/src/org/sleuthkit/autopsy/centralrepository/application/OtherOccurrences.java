@@ -87,27 +87,10 @@ public final class OtherOccurrences {
 
         if (osAccountAddr.isPresent()) {
             try {
-                for (OsAccountInstance instance : osAccount.getOsAccountInstances()) {
-                    DataSource osAccountDataSource = instance.getDataSource();
-                    try {
-                        CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
-                        CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
-                                CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
-                                osAccountAddr.get(),
-                                correlationCase,
-                                CorrelationDataSource.fromTSKDataSource(correlationCase, instance.getDataSource()),
-                                "",
-                                "",
-                                TskData.FileKnown.KNOWN,
-                                osAccount.getId());
-
+                for (OsAccountInstance instance : osAccount.getOsAccountInstances()) {                    
+                    CorrelationAttributeInstance correlationAttributeInstance = CorrelationAttributeUtil.makeCorrAttr(instance.getOsAccount(), instance.getDataSource());
+                    if (correlationAttributeInstance != null) {
                         ret.add(correlationAttributeInstance);
-                    } catch (CentralRepoException ex) {
-                        logger.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", osAccountAddr.get()), ex);  //NON-NLS
-                    } catch (NoCurrentCaseException ex) {
-                        logger.log(Level.WARNING, String.format("Exception while getting open case looking up osAccount %s.", osAccountAddr.get()), ex);  //NON-NLS
-                    } catch (CorrelationAttributeNormalizationException ex) {
-                        logger.log(Level.SEVERE, String.format("Exception with Correlation Attribute Normalization for osAccount %s.", osAccountAddr.get()), ex);  //NON-NLS
                     }
                 }
             } catch (TskCoreException ex) {

@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011 Basis Technology Corp.
+ *
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,14 +28,26 @@ import org.openide.util.Lookup;
  */
 public class FileSearchAction extends AbstractAction {
 
+    private final Long dataSourceId;
+
+    public FileSearchAction(String title, long dataSourceID) {
+        super(title);
+        dataSourceId = dataSourceID;
+    }
+
     public FileSearchAction(String title) {
         super(title);
+        dataSourceId = null;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         FileSearchProvider searcher = Lookup.getDefault().lookup(FileSearchProvider.class);
-        searcher.showDialog();
+        if (dataSourceId == null) {
+            searcher.showDialog();
+        } else {
+            searcher.showDialog(dataSourceId);
+        }
     }
 
 }

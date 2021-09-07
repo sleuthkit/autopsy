@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
 import java.io.File;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,7 +53,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
  * time, the data being provided for domains is fictitious and is done as a
  * placeholder.
  */
-public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
+public class UserActivitySummary {
 
     /**
      * Functions that determine the folder name of a list of path elements. If
@@ -138,16 +137,6 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 .compareToIgnoreCase((b.getProgramName() == null ? "" : b.getProgramName()));
     };
 
-    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID(),
-            ARTIFACT_TYPE.TSK_MESSAGE.getTypeID(),
-            ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID(),
-            ARTIFACT_TYPE.TSK_CALLLOG.getTypeID(),
-            ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(),
-            ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID(),
-            ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID()
-    ));
-
     private static final Set<String> DEVICE_EXCLUDE_LIST = new HashSet<>(Arrays.asList("ROOT_HUB", "ROOT_HUB20"));
     private static final Set<String> DOMAIN_EXCLUDE_LIST = new HashSet<>(Arrays.asList("127.0.0.1", "LOCALHOST"));
 
@@ -186,27 +175,55 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         this.logger = logger;
     }
 
-    @Override
-    public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return ARTIFACT_UPDATE_TYPE_IDS;
-    }
-
     /**
      * Throws an IllegalArgumentException if count <= 0.
      *
      * @param count The count being checked.
      */
-    private void assertValidCount(int count) {
+    private static void assertValidCount(int count) {
         if (count <= 0) {
             throw new IllegalArgumentException("Count must be greater than 0");
         }
     }
+    
+    /**
+     * Determines a short folder name if any. Otherwise, returns empty string.
+     *
+     * @param strPath The string path.
+     * @param applicationName The application name.
+     *
+     * @return The short folder name or empty string if not found.
+     */
+    public static String getShortFolderName(String strPath, String applicationName) {
+        if (strPath == null) {
+            return "";
+        }
+
+        List<String> pathEls = new ArrayList<>(Arrays.asList(applicationName));
+
+        File file = new File(strPath);
+        while (file != null && org.apache.commons.lang.StringUtils.isNotBlank(file.getName())) {
+            pathEls.add(file.getName());
+            file = file.getParentFile();
+        }
+
+        Collections.reverse(pathEls);
+
+        for (Function<List<String>, String> matchEntry : SHORT_FOLDER_MATCHERS) {
+            String result = matchEntry.apply(pathEls);
+            if (org.apache.commons.lang.StringUtils.isNotBlank(result)) {
+                return result;
+            }
+        }
+
+        return "";
+    }    
 
     /**
      * Gets a list of recent domains based on the datasource.
      *
      * @param dataSource The datasource to query for recent domains.
-     * @param count The max count of items to return.
+     * @param count      The max count of items to return.
      *
      * @return The list of items retrieved from the database.
      *
@@ -242,13 +259,13 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * Creates a TopDomainsResult from data or null if no visit date exists
      * within DOMAIN_WINDOW_MS of mostRecentMs.
      *
-     * @param domain The domain.
-     * @param visits The list of the artifact and its associated time in
-     * milliseconds.
+     * @param domain       The domain.
+     * @param visits       The list of the artifact and its associated time in
+     *                     milliseconds.
      * @param mostRecentMs The most recent visit of any domain.
      *
      * @return The TopDomainsResult or null if no visits to this domain within
-     * 30 days of mostRecentMs.
+     *         30 days of mostRecentMs.
      */
     private TopDomainsResult getDomainsResult(String domain, List<Pair<BlackboardArtifact, Long>> visits, long mostRecentMs) {
         long visitCount = 0;
@@ -288,9 +305,9 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param dataSource The datasource.
      *
      * @return A tuple where the first value is the latest web history accessed
-     * date in milliseconds and the second value maps normalized (lowercase;
-     * trimmed) domain names to when those domains were visited and the relevant
-     * artifact.
+     *         date in milliseconds and the second value maps normalized
+     *         (lowercase; trimmed) domain names to when those domains were
+     *         visited and the relevant artifact.
      *
      * @throws TskCoreException
      * @throws SleuthkitCaseProviderException
@@ -357,7 +374,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param artifact The artifact.
      *
      * @return The TopWebSearchResult or null if the search string or date
-     * accessed cannot be determined.
+     *         accessed cannot be determined.
      */
     private static TopWebSearchResult getWebSearchResult(BlackboardArtifact artifact) {
         String searchString = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_TEXT);
@@ -372,10 +389,11 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * term.
      *
      * @param dataSource The data source.
-     * @param count The maximum number of records to be shown (must be > 0).
+     * @param count      The maximum number of records to be shown (must be >
+     *                   0).
      *
      * @return The list of most recent web searches where most recent search
-     * appears first.
+     *         appears first.
      *
      * @throws
      * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
@@ -462,6 +480,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      *
      * @param r1 A result.
      * @param r2 Another result.
+     *
      * @return The most recent one with a non-null date.
      */
     private TopDeviceAttachedResult getMostRecentDevice(TopDeviceAttachedResult r1, TopDeviceAttachedResult r2) {
@@ -480,10 +499,11 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * Retrieves most recent devices used by most recent date attached.
      *
      * @param dataSource The data source.
-     * @param count The maximum number of records to be shown (must be > 0).
+     * @param count      The maximum number of records to be shown (must be >
+     *                   0).
      *
      * @return The list of most recent devices attached where most recent device
-     * attached appears first.
+     *         attached appears first.
      *
      * @throws
      * org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException
@@ -528,7 +548,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * @param artifact The artifact.
      *
      * @return The TopAccountResult or null if the account type or message date
-     * cannot be determined.
+     *         cannot be determined.
      */
     private static TopAccountResult getMessageAccountResult(BlackboardArtifact artifact) {
         String type = DataSourceInfoUtilities.getStringOrNull(artifact, TYPE_MESSAGE_TYPE);
@@ -542,12 +562,12 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * Obtains a TopAccountResult from a blackboard artifact. The date is
      * maximum of any found dates for attribute types provided.
      *
-     * @param artifact The artifact.
+     * @param artifact    The artifact.
      * @param messageType The type of message this is.
-     * @param dateAttrs The date attribute types.
+     * @param dateAttrs   The date attribute types.
      *
      * @return The TopAccountResult or null if the account type or max date are
-     * not provided.
+     *         not provided.
      */
     private static TopAccountResult getAccountResult(BlackboardArtifact artifact, String messageType, BlackboardAttribute.Type... dateAttrs) {
         String type = messageType;
@@ -636,39 +656,6 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
                 .limit(count)
                 // get as list
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Determines a short folder name if any. Otherwise, returns empty string.
-     *
-     * @param strPath The string path.
-     * @param applicationName The application name.
-     *
-     * @return The short folder name or empty string if not found.
-     */
-    public String getShortFolderName(String strPath, String applicationName) {
-        if (strPath == null) {
-            return "";
-        }
-
-        List<String> pathEls = new ArrayList<>(Arrays.asList(applicationName));
-
-        File file = new File(strPath);
-        while (file != null && org.apache.commons.lang.StringUtils.isNotBlank(file.getName())) {
-            pathEls.add(file.getName());
-            file = file.getParentFile();
-        }
-
-        Collections.reverse(pathEls);
-
-        for (Function<List<String>, String> matchEntry : SHORT_FOLDER_MATCHERS) {
-            String result = matchEntry.apply(pathEls);
-            if (org.apache.commons.lang.StringUtils.isNotBlank(result)) {
-                return result;
-            }
-        }
-
-        return "";
     }
 
     /**
@@ -764,12 +751,12 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
      * be ignored and all items will be returned.
      *
      * @param dataSource The datasource. If the datasource is null, an empty
-     * list will be returned.
-     * @param count The number of results to return. This value must be > 0 or
-     * an IllegalArgumentException will be thrown.
+     *                   list will be returned.
+     * @param count      The number of results to return. This value must be > 0
+     *                   or an IllegalArgumentException will be thrown.
      *
      * @return The sorted list and limited to the count if last run or run count
-     * information is available on any item.
+     *         information is available on any item.
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
@@ -840,7 +827,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
          * Main constructor.
          *
          * @param lastAccessed The date of last access.
-         * @param artifact The relevant blackboard artifact.
+         * @param artifact     The relevant blackboard artifact.
          */
         public LastAccessedArtifact(Date lastAccessed, BlackboardArtifact artifact) {
             this.lastAccessed = lastAccessed;
@@ -875,7 +862,7 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
          *
          * @param searchString The search string.
          * @param dateAccessed The latest date searched.
-         * @param artifact The relevant blackboard artifact.
+         * @param artifact     The relevant blackboard artifact.
          */
         public TopWebSearchResult(String searchString, Date dateAccessed, BlackboardArtifact artifact) {
             super(dateAccessed, artifact);
@@ -918,11 +905,11 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         /**
          * Main constructor.
          *
-         * @param deviceId The device id.
+         * @param deviceId     The device id.
          * @param dateAccessed The date last attached.
-         * @param deviceMake The device make.
-         * @param deviceModel The device model.
-         * @param artifact The relevant blackboard artifact.
+         * @param deviceMake   The device make.
+         * @param deviceModel  The device model.
+         * @param artifact     The relevant blackboard artifact.
          */
         public TopDeviceAttachedResult(String deviceId, Date dateAccessed, String deviceMake, String deviceModel, BlackboardArtifact artifact) {
             super(dateAccessed, artifact);
@@ -965,8 +952,8 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
          * Main constructor.
          *
          * @param accountType The account type.
-         * @param lastAccess The date the account was last accessed.
-         * @param artifact The artifact indicating last access.
+         * @param lastAccess  The date the account was last accessed.
+         * @param artifact    The artifact indicating last access.
          */
         public TopAccountResult(String accountType, Date lastAccess, BlackboardArtifact artifact) {
             super(lastAccess, artifact);
@@ -992,10 +979,10 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
         /**
          * Describes a top domain result.
          *
-         * @param domain The domain.
+         * @param domain     The domain.
          * @param visitTimes The number of times it was visited.
-         * @param lastVisit The date of the last visit.
-         * @param artifact The relevant blackboard artifact.
+         * @param lastVisit  The date of the last visit.
+         * @param artifact   The relevant blackboard artifact.
          */
         public TopDomainsResult(String domain, Long visitTimes, Date lastVisit, BlackboardArtifact artifact) {
             super(lastVisit, artifact);
@@ -1032,8 +1019,8 @@ public class UserActivitySummary implements DefaultArtifactUpdateGovernor {
          *
          * @param programName The name of the program.
          * @param programPath The path of the program.
-         * @param runTimes The number of runs.
-         * @param artifact The relevant blackboard artifact.
+         * @param runTimes    The number of runs.
+         * @param artifact    The relevant blackboard artifact.
          */
         TopProgramsResult(String programName, String programPath, Long runTimes, Date lastRun, BlackboardArtifact artifact) {
             super(lastRun, artifact);

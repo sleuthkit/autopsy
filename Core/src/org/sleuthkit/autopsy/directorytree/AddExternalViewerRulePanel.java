@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
@@ -35,7 +36,9 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 class AddExternalViewerRulePanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(AddExternalViewerRulePanel.class.getName());
-    private final JFileChooser fc = new JFileChooser();
+    private static final long serialVersionUID = 1L;
+    private JFileChooser fc;
+    private final JFileChooserFactory chooserHelper = new JFileChooserFactory();
     private static final GeneralFilter exeFilter = new GeneralFilter(GeneralFilter.EXECUTABLE_EXTS, GeneralFilter.EXECUTABLE_DESC);
 
     enum EVENT {
@@ -47,10 +50,6 @@ class AddExternalViewerRulePanel extends javax.swing.JPanel {
      */
     AddExternalViewerRulePanel() {
         initComponents();
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setMultiSelectionEnabled(false);
-        fc.setFileFilter(exeFilter);
         customize();
     }
 
@@ -260,6 +259,13 @@ class AddExternalViewerRulePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
+        if(fc == null) {
+            fc = chooserHelper.getChooser();
+            fc.setDragEnabled(false);
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setMultiSelectionEnabled(false);
+            fc.setFileFilter(exeFilter);
+        }
         int returnState = fc.showOpenDialog(this);
         if (returnState == JFileChooser.APPROVE_OPTION) {
             String path = fc.getSelectedFile().getPath();

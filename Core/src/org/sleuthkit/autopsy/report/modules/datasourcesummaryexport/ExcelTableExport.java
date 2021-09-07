@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.uiutils;
+package org.sleuthkit.autopsy.report.modules.datasourcesummaryexport;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,15 +24,15 @@ import java.util.Optional;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelExportException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport.ExcelSheetExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ExcelItemExportable;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.ItemDimensions;
+import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelExport.ExcelExportException;
+import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelExport.ExcelSheetExport;
+import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelSpecialFormatExport.ExcelItemExportable;
+import org.sleuthkit.autopsy.report.modules.datasourcesummaryexport.ExcelSpecialFormatExport.ItemDimensions;
 
 /**
  * An excel sheet export of table data.
  */
-public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheetExport, ExcelItemExportable {
+class ExcelTableExport<T, C extends CellModel> implements ExcelSheetExport, ExcelItemExportable {
 
     private final String sheetName;
     private final List<ColumnModel<T, C>> columns;
@@ -47,7 +47,7 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
      * @param columns The columns of the table.
      * @param data The data to export.
      */
-    public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data) {
+    ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data) {
         this(sheetName, columns, data, 0);
     }
 
@@ -60,7 +60,7 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
      * @param data The data to export.
      * @param columnIndent The column indent.
      */
-    public ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data, int columnIndent) {
+    ExcelTableExport(String sheetName, List<ColumnModel<T, C>> columns, List<T> data, int columnIndent) {
         this.sheetName = sheetName;
         this.columns = columns;
         this.data = data;
@@ -104,7 +104,7 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
      * @throws ExcelExportException
      * @return The number of rows (including the header) written.
      */
-    private static <T, C extends ExcelCellModel> int renderSheet(
+    private static <T, C extends CellModel> int renderSheet(
             Sheet sheet,
             ExcelExport.WorksheetEnv worksheetEnv,
             int rowStart,
@@ -127,8 +127,8 @@ public class ExcelTableExport<T, C extends ExcelCellModel> implements ExcelSheet
             T rowData = safeData.get(rowNum);
             Row row = sheet.createRow(rowNum + rowStart + 1);
             for (int colNum = 0; colNum < columns.size(); colNum++) {
-                ColumnModel<T, ? extends ExcelCellModel> colModel = columns.get(colNum);
-                ExcelCellModel cellModel = colModel.getCellRenderer().apply(rowData);
+                ColumnModel<T, ? extends CellModel> colModel = columns.get(colNum);
+                CellModel cellModel = colModel.getCellRenderer().apply(rowData);
                 ExcelExport.createCell(worksheetEnv, row, colNum + colStart, cellModel, Optional.empty());
             }
         }

@@ -664,7 +664,8 @@ public final class CaseEventListener implements PropertyChangeListener {
         "CaseEventsListener.prevCaseComment.text=Users seen in previous cases",
         "CaseEventsListener.prevExists.text=Previously Seen Users (Central Repository)"})
     /**
-     * Add OsAccount Instance to CR and find interesting items based on the OsAccount
+     * Add OsAccount Instance to CR and find interesting items based on the
+     * OsAccount
      */
     private final class OsAccountInstancesAddedTask implements Runnable {
 
@@ -680,7 +681,7 @@ public final class CaseEventListener implements PropertyChangeListener {
         @Override
         public void run() {
             //Nothing to do here if the central repo is not enabled or if ingest is running but is set to not save data/make artifacts
-            if (!CentralRepository.isEnabled() 
+            if (!CentralRepository.isEnabled()
                     || (IngestManager.getInstance().isIngestRunning() && !(IngestEventsListener.isFlagSeenDevices() || IngestEventsListener.shouldCreateCrProperties()))) {
                 return;
             }
@@ -690,27 +691,15 @@ public final class CaseEventListener implements PropertyChangeListener {
             for (OsAccountInstance osAccountInstance : addedOsAccountNew) {
                 try {
                     OsAccount osAccount = osAccountInstance.getOsAccount();
-                    Optional<String> accountAddr = osAccount.getAddr();
-                    // Check address if it is null or one of the ones below we want to ignore it since they will always be one a windows system
-                    // and they are not unique
-                    if (!accountAddr.isPresent() || accountAddr.get().equals("S-1-5-18") || accountAddr.get().equals("S-1-5-19") || accountAddr.get().equals("S-1-5-20")) {
+                    CorrelationAttributeInstance correlationAttributeInstance = CorrelationAttributeUtil.makeCorrAttr(osAccount, osAccountInstance.getDataSource());
+                    if (correlationAttributeInstance == null) {
                         return;
                     }
+
+                    Optional<String> accountAddr = osAccount.getAddr();
                     try {
-
-                        CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
-                        CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
-                                CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
-                                accountAddr.get(),
-                                correlationCase,
-                                CorrelationDataSource.fromTSKDataSource(correlationCase, osAccountInstance.getDataSource()),
-                                "",
-                                "",
-                                TskData.FileKnown.KNOWN,
-                                osAccount.getId());
-
                         // Save to the database if requested
-                        if(IngestEventsListener.shouldCreateCrProperties()) {
+                        if (IngestEventsListener.shouldCreateCrProperties()) {
                             dbManager.addArtifactInstance(correlationAttributeInstance);
                         }
 
@@ -766,14 +755,11 @@ public final class CaseEventListener implements PropertyChangeListener {
                             }
                         }
 
-                    } catch (CentralRepoException ex) {
-                        LOGGER.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
-                    } catch (NoCurrentCaseException ex) {
-                        LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);  //NON-NLS
                     } catch (CorrelationAttributeNormalizationException ex) {
                         LOGGER.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
+                    } catch (CentralRepoException ex) {
+                        LOGGER.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
                     }
-
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Cannot get central repository for OsAccount: " + "OsAccount", ex);
                 }

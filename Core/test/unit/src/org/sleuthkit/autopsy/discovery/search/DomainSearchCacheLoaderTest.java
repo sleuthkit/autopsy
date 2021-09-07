@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,7 @@ public class DomainSearchCacheLoaderTest {
                 new DiscoveryAttributes.DataSourceAttribute(),
                 Group.GroupSortingAlgorithm.BY_GROUP_NAME,
                 ResultsSorter.SortingMethod.BY_DOMAIN_NAME,
-                caseDb, null);
+                caseDb, null, new TestSearchContextImpl(false));
 
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         when(loader.getResultDomainsFromDatabase(key)).thenReturn(domains);
@@ -88,7 +88,7 @@ public class DomainSearchCacheLoaderTest {
                 new DiscoveryAttributes.NoGroupingAttribute(),
                 Group.GroupSortingAlgorithm.BY_GROUP_NAME,
                 ResultsSorter.SortingMethod.BY_DOMAIN_NAME,
-                caseDb, null);
+                caseDb, null, new TestSearchContextImpl(false));
 
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         when(loader.getResultDomainsFromDatabase(key)).thenReturn(domains);
@@ -121,7 +121,7 @@ public class DomainSearchCacheLoaderTest {
                 new DiscoveryAttributes.NoGroupingAttribute(),
                 Group.GroupSortingAlgorithm.BY_GROUP_NAME,
                 ResultsSorter.SortingMethod.BY_DATA_SOURCE,
-                caseDb, null);
+                caseDb, null, new TestSearchContextImpl(false));
 
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         when(loader.getResultDomainsFromDatabase(key)).thenReturn(domains);
@@ -155,7 +155,7 @@ public class DomainSearchCacheLoaderTest {
                 new DiscoveryAttributes.DataSourceAttribute(),
                 Group.GroupSortingAlgorithm.BY_GROUP_SIZE,
                 ResultsSorter.SortingMethod.BY_DOMAIN_NAME,
-                caseDb, null);
+                caseDb, null, new TestSearchContextImpl(false));
 
         DomainSearchCacheLoader loader = mock(DomainSearchCacheLoader.class);
         when(loader.getResultDomainsFromDatabase(key)).thenReturn(domains);
@@ -173,4 +173,5 @@ public class DomainSearchCacheLoaderTest {
             }
         }
     }
+
 }

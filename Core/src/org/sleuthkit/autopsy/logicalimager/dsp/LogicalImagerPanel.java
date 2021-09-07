@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,7 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Panel for adding an logical image file from drive letters. Allows the user to
@@ -64,10 +65,10 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
     private static final int NUMBER_OF_VISIBLE_COLUMNS = 2;
     private static final String[] EMPTY_LIST_DATA = {};
 
-    private final JFileChooser fileChooser = new JFileChooser();
     private final Pattern regex = Pattern.compile("Logical_Imager_(.+)_(\\d{4})(\\d{2})(\\d{2})_(\\d{2})_(\\d{2})_(\\d{2})");
     private Path manualImageDirPath;
     private DefaultTableModel imageTableModel;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Creates new form LogicalImagerPanel
@@ -80,6 +81,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         configureImageTable();
         jScrollPane1.setBorder(null);
         clearImageTable();
+        chooserHelper = new JFileChooserFactory();
     }
 
     /**
@@ -316,6 +318,7 @@ final class LogicalImagerPanel extends JPanel implements DocumentListener {
         "LogicalImagerPanel.messageLabel.directoryFormatInvalid=Directory {0} does not match format Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS"
     })
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
+        JFileChooser fileChooser = chooserHelper.getChooser();
         imageTable.clearSelection();
         manualImageDirPath = null;
         setErrorMessage(NO_IMAGE_SELECTED);

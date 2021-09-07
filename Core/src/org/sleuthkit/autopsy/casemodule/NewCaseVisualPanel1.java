@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * The JPanel for the first page of the new case wizard.
@@ -37,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
 
-    private final JFileChooser fileChooser = new JFileChooser();
+    private final JFileChooserFactory fileChooserHelper = new JFileChooserFactory();
     private final NewCaseWizardPanel1 wizPanel;
 
     /**
@@ -353,8 +354,9 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
      * @param evt the action event
      */
     private void caseDirBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_caseDirBrowseButtonActionPerformed
+        JFileChooser fileChooser = fileChooserHelper.getChooser();
         fileChooser.setDragEnabled(false);
-        if (!caseParentDirTextField.getText().trim().equals("")) {
+        if (!caseParentDirTextField.getText().trim().isEmpty()) {
             fileChooser.setCurrentDirectory(new File(caseParentDirTextField.getText()));
         }
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);

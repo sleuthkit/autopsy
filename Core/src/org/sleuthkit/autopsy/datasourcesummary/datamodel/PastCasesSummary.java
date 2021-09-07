@@ -32,7 +32,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -64,7 +63,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * d) The content of that TSK_OTHER_CASES attribute will be of the form
  * "case1,case2...caseN"
  */
-public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
+public class PastCasesSummary {
 
     /**
      * Return type for results items in the past cases tab.
@@ -89,14 +88,14 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
          * @return Data for the cases with same id table.
          */
         public List<Pair<String, Long>> getSameIdsResults() {
-            return sameIdsResults;
+            return Collections.unmodifiableList(sameIdsResults);
         }
 
         /**
          * @return Data for the tagged notable table.
          */
         public List<Pair<String, Long>> getTaggedNotable() {
-            return taggedNotable;
+            return Collections.unmodifiableList(taggedNotable);
         }
     }
 
@@ -145,11 +144,6 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
 
         this.caseProvider = provider;
         this.logger = logger;
-    }
-
-    @Override
-    public Set<Integer> getArtifactTypeIdsForRefresh() {
-        return ARTIFACT_UPDATE_TYPE_IDS;
     }
 
     /**
@@ -216,7 +210,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      * @return The list of unique cases and their occurrences sorted from max to
      *         min.
      */
-    private List<Pair<String, Long>> getCaseCounts(Stream<String> cases) {
+    private static List<Pair<String, Long>> getCaseCounts(Stream<String> cases) {
         Collection<List<String>> groupedCases = cases
                 // group by case insensitive compare of cases
                 .collect(Collectors.groupingBy((caseStr) -> caseStr.toUpperCase().trim()))
@@ -243,10 +237,11 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      */
-    private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
+    private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
 
         BlackboardArtifact sourceArtifact = null;
-        Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());        
+        SleuthkitCase skCase = caseProvider.get();
+        Content content = skCase.getContentById(artifact.getObjectID());        
         if (content instanceof BlackboardArtifact) {
             sourceArtifact = (BlackboardArtifact) content;
         }
@@ -263,7 +258,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      */
-    private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
+    private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
         BlackboardArtifact parent = getParentArtifact(artifact);
         if (parent == null) {
             return false;
@@ -284,7 +279,7 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
      * @throws NoCurrentCaseException
      */
     public PastCasesResult getPastCasesData(DataSource dataSource)
-            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException, NoCurrentCaseException {
+            throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
 
         if (dataSource == null) {
             return null;
@@ -294,32 +289,20 @@ public class PastCasesSummary implements DefaultArtifactUpdateGovernor {
 
         List<String> deviceArtifactCases = new ArrayList<>();
         List<String> nonDeviceArtifactCases = new ArrayList<>();
-        
-        for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID(), dataSource.getId())) {
-            List<String> cases = getCasesFromArtifact(artifact);
-            if (cases == null || cases.isEmpty()) {
-                continue;
-            }
+        for (Integer typeId : ARTIFACT_UPDATE_TYPE_IDS) {
+            for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(typeId, dataSource.getId())) {
+                List<String> cases = getCasesFromArtifact(artifact);
+                if (cases == null || cases.isEmpty()) {
+                    continue;
+                }
 
-            if (hasDeviceAssociatedArtifact(artifact)) {
-                deviceArtifactCases.addAll(cases);
-            } else {
-                nonDeviceArtifactCases.addAll(cases);
+                if (hasDeviceAssociatedArtifact(artifact)) {
+                    deviceArtifactCases.addAll(cases);
+                } else {
+                    nonDeviceArtifactCases.addAll(cases);
+                }
             }
-        }
-        
-        for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE.getTypeID(), dataSource.getId())) {
-            List<String> cases = getCasesFromArtifact(artifact);
-            if (cases == null || cases.isEmpty()) {
-                continue;
-            }
-
-            if (hasDeviceAssociatedArtifact(artifact)) {
-                deviceArtifactCases.addAll(cases);
-            } else {
-                nonDeviceArtifactCases.addAll(cases);
-            }
-        }        
+        }      
         
         return new PastCasesResult(
                 getCaseCounts(deviceArtifactCases.stream()),
