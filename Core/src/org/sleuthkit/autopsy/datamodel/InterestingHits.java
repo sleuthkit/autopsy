@@ -96,12 +96,22 @@ public class InterestingHits implements AutopsyVisitableItem {
         interestingResults.update();
     }
 
+    /**
+     * Cache of result ids mapped by artifact type -> set name -> artifact id.
+     */
     private class InterestingResults extends Observable {
 
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<BlackboardArtifact.Type, Map<String, Set<Long>>> interestingItemsMap = new LinkedHashMap<>();
 
-        public List<String> getSetNames(BlackboardArtifact.Type type) {
+        /**
+         * Returns all the set names for a given interesting item type.
+         *
+         * @param type The interesting item type.
+         *
+         * @return The set names.
+         */
+        List<String> getSetNames(BlackboardArtifact.Type type) {
             List<String> setNames;
             synchronized (interestingItemsMap) {
                 Map<String, Set<Long>> setMapping = interestingItemsMap.getOrDefault(type, Collections.emptyMap());
@@ -111,13 +121,25 @@ public class InterestingHits implements AutopsyVisitableItem {
             return setNames;
         }
 
-        public Set<Long> getArtifactIds(BlackboardArtifact.Type type, String setName) {
+        /**
+         * Returns all artifact ids belonging to the specified interesting item
+         * type and set name.
+         *
+         * @param type    The interesting item type.
+         * @param setName The set name.
+         *
+         * @return The artifact ids in that set name and type.
+         */
+        Set<Long> getArtifactIds(BlackboardArtifact.Type type, String setName) {
             synchronized (interestingItemsMap) {
                 return interestingItemsMap.getOrDefault(type, Collections.emptyMap()).getOrDefault(setName, Collections.emptySet());
             }
         }
 
-        public void update() {
+        /**
+         * Triggers a fetch from the database to update this cache.
+         */
+        void update() {
             synchronized (interestingItemsMap) {
                 interestingItemsMap.clear();
             }
@@ -225,11 +247,19 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Creates nodes for all sets for a specified interesting item type.
+     */
     private class SetNameFactory extends ChildFactory.Detachable<String> implements Observer {
 
         private final BlackboardArtifact.Type type;
 
-        public SetNameFactory(BlackboardArtifact.Type type) {
+        /**
+         * Constructor.
+         *
+         * @param type The artifact type to filter these sets.
+         */
+        SetNameFactory(BlackboardArtifact.Type type) {
             this.type = type;
         }
 
@@ -250,24 +280,26 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * A node for a set to be displayed in the tree.
+     */
     public class SetNameNode extends DisplayableItemNode implements Observer {
 
-        private final BlackboardArtifact.Type type;
         private final String setName;
+        private final BlackboardArtifact.Type type;
 
         public SetNameNode(BlackboardArtifact.Type type, String setName) {//, Set<Long> children) {
             super(Children.create(new HitFactory(type, setName), true), Lookups.singleton(setName));
             this.setName = setName;
             this.type = type;
-            super.setName(setName);
+            super.setName(type.getDisplayName() + "_" + setName);
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
             interestingResults.addObserver(this);
         }
 
         private void updateDisplayName() {
-            int sizeOfSet = interestingResults.getArtifactIds(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, setName).size()
-                    + interestingResults.getArtifactIds(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, setName).size();
+            int sizeOfSet = interestingResults.getArtifactIds(type, setName).size();
             super.setDisplayName(setName + " (" + sizeOfSet + ")");
         }
 
@@ -313,6 +345,9 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Shows an Interesting Item type node (i.e. file hit or artifact hit).
+     */
     private class HitTypeFactory extends ChildFactory.Detachable<BlackboardArtifact.Type> implements Observer {
 
         /*
@@ -399,8 +434,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact.Type> list) {
-            list.add(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT);
-            list.add(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT);
+            list.addAll(ART_TYPES.values());
             return true;
         }
 
@@ -415,10 +449,18 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Parent node for interesting item type that shows child set nodes.
+     */
     public class InterestingItemTypeNode extends DisplayableItemNode implements Observer {
 
         private final BlackboardArtifact.Type type;
 
+        /**
+         * Main constructor.
+         *
+         * @param type The artifact type to display.
+         */
         private InterestingItemTypeNode(BlackboardArtifact.Type type) {
             super(Children.create(new SetNameFactory(type), true), Lookups.singleton(type));
             this.type = type;
@@ -478,12 +520,22 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Factory for creating individual interesting item BlackboardArtifactNodes.
+     */
     private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
 
         private final BlackboardArtifact.Type type;
         private final String setName;
         private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
 
+        /**
+         * Main constructor.
+         *
+         * @param type    The Interesting Item type of artifacts to be
+         *                displayed.
+         * @param setName The set name of artifacts to be displayed.
+         */
         private HitFactory(BlackboardArtifact.Type type, String setName) {
             /**
              * The node name passed to the parent constructor must be the same
