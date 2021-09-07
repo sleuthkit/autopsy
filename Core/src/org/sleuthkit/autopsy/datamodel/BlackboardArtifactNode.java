@@ -556,19 +556,19 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         return c;
     }
 
-    private <T> List<T> getNonNull(Stream<T> items) {
-        return items
+    
+
+    /**
+     * Returns a list of non null actions from the given possibly null options.
+     * @param items The items to purge of null items.
+     * @return The list of non-null actions.
+     */
+    private List<Action> getNonNull(Action... items) {
+        return Stream.of(items)
                 .filter(i -> i != null)
                 .collect(Collectors.toList());
     }
 
-    private <T> List<T> getNonNull(T... items) {
-        return getNonNull(Stream.of(items));
-    }
-
-    private <T> List<T> getNonNull(List<T> items) {
-        return getNonNull(items.stream());
-    }
 
     @Messages({
         "BlackboardArtifactNode_getActions_viewSourceDataArtifact=View Source Data Artifact in Timeline... "
@@ -583,47 +583,47 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         List<List<Action>> actionsLists = new ArrayList<>();
 
-        actionsLists.add(getNonNull(super.getActions(context)));
-
-        // break
         actionsLists.add(getNonNull(
-                getTimelineArtifactAction(this.artifact),
-                getTimelineFileAction(this.artifact),
-                getTimelineSrcContentAction(this.srcContent)
+                getTimelineArtifactAction(this.artifact)
         ));
 
-        // break 
         actionsLists.add(getNonNull(
-                getViewSrcContentAction(this.srcContent),
-                getViewFileAction(this.artifact),
+                getTimelineFileAction(this.artifact),
+                getViewFileAction(this.artifact)
+        ));
+        
+        actionsLists.add(getNonNull(
+                getTimelineSrcContentAction(this.srcContent),
+                getViewSrcContentAction(this.srcContent)
+        ));
+        
+        actionsLists.add(getNonNull(
                 getExtractWithPasswordAction(this.srcContent)
         ));
 
-        // break
-        actionsLists.add(getNonNull(
+        actionsLists.add(
                 this.srcContent instanceof Report
                         ? DataModelActionsFactory.getActions(content, false)
                         : Collections.emptyList()
-        ));
+        );
 
-        // break
-        actionsLists.add(getNonNull(
-                getSrcContentViewerActions(parentFileNode, selectedFileCount)
-        ));
+        actionsLists.add(getSrcContentViewerActions(parentFileNode, selectedFileCount));
+ 
+        actionsLists.add(getExtractExportActions(hasFileContent));
 
-        // break 
-        actionsLists.add(getNonNull(getExtractExportActions(hasFileContent)));
+        actionsLists.add(getTagActions(hasFileContent, this.artifact, selectedFileCount, selectedArtifactCount));
 
-        // break
-        actionsLists.add(getNonNull(getTagActions(hasFileContent, this.artifact, selectedFileCount, selectedArtifactCount)));
+        actionsLists.add(ContextMenuExtensionPoint.getActions());
 
-        // break?
-        actionsLists.add(getNonNull(ContextMenuExtensionPoint.getActions()));
+        actionsLists.add(Arrays.asList(super.getActions(context)));
         
-        // add in null between each list group.
         return actionsLists.stream()
+                // remove any empty lists
                 .filter((lst) -> lst != null && !lst.isEmpty())
-                .flatMap(lst -> Stream.concat(lst.stream(), Stream.of(null)))
+                // add in null between each list group
+                .flatMap(lst -> Stream.concat(Stream.of((Action) null), lst.stream()))
+                // skip the first null
+                .skip(1)
                 .toArray(sz -> new Action[sz]);
     }
 
