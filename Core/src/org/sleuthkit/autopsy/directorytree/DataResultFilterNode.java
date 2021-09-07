@@ -22,8 +22,7 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -34,54 +33,25 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
-import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
-import org.sleuthkit.autopsy.actions.AddContentTagAction;
-import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
-import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCountNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCaseNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.InstanceDataSourceNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CentralRepoCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
-import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
-import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
-import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.LocalFile;
-import org.sleuthkit.datamodel.LocalDirectory;
-import org.sleuthkit.datamodel.SlackFile;
-import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.DataArtifact;
-import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -257,91 +227,6 @@ public class DataResultFilterNode extends FilterNode {
         }
     }
 
-    /**
-     * An action that navigates to an artifact.
-     */
-    private static class ViewArtifactAction extends AbstractAction {
-
-        private final BlackboardArtifact artifact;
-
-        /**
-         * Main constructor.
-         *
-         * @param artifact    The artifact to navigate to in the action.
-         * @param displayName The display name of the menu item.
-         */
-        ViewArtifactAction(BlackboardArtifact artifact, String displayName) {
-            super(displayName);
-            this.artifact = artifact;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            DirectoryTreeTopComponent.findInstance().viewArtifact(artifact);
-        }
-    }
-
-    /**
-     * An action that navigates to an os account.
-     */
-    private static class ViewOsAccountAction extends AbstractAction {
-
-        private final OsAccount osAccount;
-
-        /**
-         * Main constructor.
-         *
-         * @param osAccount   The os account to navigate to in the action.
-         * @param displayName The display name of the menu item.
-         */
-        ViewOsAccountAction(OsAccount osAccount, String displayName) {
-            super(displayName);
-            this.osAccount = osAccount;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            DirectoryTreeTopComponent.findInstance().viewOsAccount(osAccount);
-        }
-    }
-
-    /**
-     * Get the menu action for view source X (file, data artifact, os account)
-     * for an analysis result.
-     *
-     * @param content The content to navigate to.
-     *
-     * @return The ViewContextAction that will navigate to the specified content
-     *         in the results / tree view to be used with an analysis result.
-     */
-    @NbBundle.Messages({
-        "# {0} - contentType",
-        "DataResultFilterNode_getViewSourceDisplayName_baseMessage=View Source {0}",
-        "DataResultFilterNode_getViewSourceDisplayName_type_File=File",
-        "DataResultFilterNode_getViewSourceDisplayName_type_DataArtifact=Data Artifact",
-        "DataResultFilterNode_getViewSourceDisplayName_type_OSAccount=OS Account"
-    })
-    private static Action getContentNavigateAction(Content content) {
-        if (content instanceof DataArtifact) {
-            return new ViewArtifactAction(
-                    (DataArtifact) content,
-                    Bundle.DataResultFilterNode_getViewSourceDisplayName_baseMessage(
-                            Bundle.DataResultFilterNode_getViewSourceDisplayName_type_DataArtifact()));
-        } else if (content instanceof OsAccount) {
-            return new ViewOsAccountAction(
-                    (OsAccount) content,
-                    Bundle.DataResultFilterNode_getViewSourceDisplayName_baseMessage(
-                            Bundle.DataResultFilterNode_getViewSourceDisplayName_type_OSAccount()));
-        } else if (content instanceof AbstractFile) {
-            return new ViewContextAction(
-                    Bundle.DataResultFilterNode_getViewSourceDisplayName_baseMessage(
-                            Bundle.DataResultFilterNode_getViewSourceDisplayName_type_File()),
-                    content);
-        } else {
-            return null;
-        }
-    }
-
     @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result")
     /**
      * Uses the default nodes actions per node, adds some custom ones and
@@ -351,116 +236,7 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public List<Action> visit(BlackboardArtifactNode ban) {
-            //set up actions for artifact node based on its Content object
-            //TODO all actions need to be consolidated in single place!
-            //they should be set in individual Node subclass and using a utility to get Actions per Content sub-type
-            // TODO UPDATE: There is now a DataModelActionsFactory utility;
-
-            List<Action> actionsList = new ArrayList<>();
-
-            //merge predefined specific node actions if bban subclasses have their own
-            for (Action a : ban.getActions(true)) {
-                actionsList.add(a);
-            }
-
-            if (ban.getArtifact() instanceof AnalysisResult) {
-                Action contentNavigateAction = getContentNavigateAction(ban.getSourceContent());
-                if (contentNavigateAction != null) {
-                    actionsList.add(contentNavigateAction);
-                }
-            } else {
-                // if the artifact links to another file, add an action to go to
-                // that file
-                Content c = findLinked(ban);
-                if (c != null) {
-                    actionsList.add(new ViewContextAction(
-                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), c));
-                }
-                // action to go to the source file of the artifact
-                Content fileContent = ban.getLookup().lookup(AbstractFile.class);
-                if (fileContent == null) {
-                    Content content = ban.getLookup().lookup(Content.class);
-                    actionsList.add(new ViewContextAction("View Source Content in Directory", content));
-                } else {
-                    actionsList.add(new ViewContextAction(
-                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
-                }
-            }
-            Content c = ban.getLookup().lookup(File.class);
-            Node n = null;
-            if (c != null) {
-                n = new FileNode((AbstractFile) c);
-            } else if ((c = ban.getLookup().lookup(Directory.class)) != null) {
-                n = new DirectoryNode((Directory) c);
-            } else if ((c = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
-                n = new VirtualDirectoryNode((VirtualDirectory) c);
-            } else if ((c = ban.getLookup().lookup(LocalDirectory.class)) != null) {
-                n = new LocalDirectoryNode((LocalDirectory) c);
-            } else if ((c = ban.getLookup().lookup(LayoutFile.class)) != null) {
-                n = new LayoutFileNode((LayoutFile) c);
-            } else if ((c = ban.getLookup().lookup(LocalFile.class)) != null
-                    || (c = ban.getLookup().lookup(DerivedFile.class)) != null) {
-                n = new LocalFileNode((AbstractFile) c);
-                if (FileTypeExtensions.getArchiveExtensions().contains("." + ((AbstractFile) c).getNameExtension().toLowerCase())) {
-                    try {
-                        if (c.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0) {
-                            actionsList.add(new ExtractArchiveWithPasswordAction((AbstractFile) c));
-                        }
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
-                    }
-                }
-            } else if ((c = ban.getLookup().lookup(SlackFile.class)) != null) {
-                n = new SlackFileNode((SlackFile) c);
-            } else if ((c = ban.getLookup().lookup(Report.class)) != null) {
-                actionsList.addAll(DataModelActionsFactory.getActions(c, false));
-            }
-            if (n != null) {
-                final Collection<AbstractFile> selectedFilesList
-                        = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-                actionsList.add(null); // creates a menu separator
-                actionsList.add(new NewWindowViewAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), n));
-                if (selectedFilesList.size() == 1) {
-                    actionsList.add(new ExternalViewerAction(
-                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), n));
-                } else {
-                    actionsList.add(ExternalViewerShortcutAction.getInstance());
-                }
-                actionsList.add(null); // creates a menu separator
-                actionsList.add(ExtractAction.getInstance());
-                actionsList.add(ExportCSVAction.getInstance());
-                actionsList.add(null); // creates a menu separator
-
-                // don't show AddContentTagAction for data artifacts.
-                if (!(ban.getArtifact() instanceof DataArtifact)) {
-                    actionsList.add(AddContentTagAction.getInstance());
-                }
-
-                actionsList.add(AddBlackboardArtifactTagAction.getInstance());
-
-                // don't show DeleteFileContentTagAction for data artifacts.
-                if ((!(ban.getArtifact() instanceof DataArtifact)) && (selectedFilesList.size() == 1)) {
-                    actionsList.add(DeleteFileContentTagAction.getInstance());
-                }
-            } else {
-                // There's no specific file associated with the artifact, but
-                // we can still tag the artifact itself
-                actionsList.add(null);
-                actionsList.add(AddBlackboardArtifactTagAction.getInstance());
-            }
-
-            final Collection<BlackboardArtifact> selectedArtifactsList
-                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if (selectedArtifactsList.size() == 1) {
-                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
-            }
-
-            if (n != null) {
-                actionsList.addAll(ContextMenuExtensionPoint.getActions());
-            }
-
-            return actionsList;
+            return Arrays.asList(ban.getActions(true));
         }
 
         @Override
@@ -476,44 +252,8 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
-            //preserve the default node's actions
-            List<Action> actions = new ArrayList<>();
-
-            for (Action action : ditem.getActions(true)) {
-                actions.add(action);
-            }
-
-            return actions;
+            return Arrays.asList(ditem.getActions(true));
         }
-
-        private Content findLinked(BlackboardArtifactNode ba) {
-            BlackboardArtifact art = ba.getLookup().lookup(BlackboardArtifact.class);
-            Content c = null;
-            try {
-                for (BlackboardAttribute attr : art.getAttributes()) {
-                    if (attr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
-                        switch (attr.getAttributeType().getValueType()) {
-                            case INTEGER:
-                                int i = attr.getValueInt();
-                                if (i != -1) {
-                                    c = art.getSleuthkitCase().getContentById(i);
-                                }
-                                break;
-                            case LONG:
-                                long l = attr.getValueLong();
-                                if (l != -1) {
-                                    c = art.getSleuthkitCase().getContentById(l);
-                                }
-                                break;
-                        }
-                    }
-                }
-            } catch (TskException ex) {
-                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file", ex); //NON-NLS
-            }
-            return c;
-        }
-
     }
 
     /*

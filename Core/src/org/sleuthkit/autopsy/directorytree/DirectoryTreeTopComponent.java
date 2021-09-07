@@ -1263,7 +1263,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @param osAccount The os account.
      */
-    void viewOsAccount(OsAccount osAccount) {
+    public void viewOsAccount(OsAccount osAccount) {
         Set<Host> hosts = null;
 
         if (CasePreferences.getGroupItemsInTreeByDataSource()) {
