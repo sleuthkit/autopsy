@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * A panel to allow the user to set the custom properties of the geolocation
@@ -46,6 +47,8 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
     private static final long serialVersionUID = 1L;
     
     private static final Logger logger = Logger.getLogger(GeolocationSettingsPanel.class.getName());
+    
+    private static final JFileChooserFactory chooserHelper = new JFileChooserFactory();
 
     /**
      * Creates new GeolocationSettingsPanel
@@ -313,7 +316,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
     }// </editor-fold>//GEN-END:initComponents
 
     private void zipFileBrowseBntActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zipFileBrowseBntActionPerformed
-        JFileChooser fileWindow = new JFileChooser();
+        JFileChooser fileWindow = chooserHelper.getChooser();
         fileWindow.setFileSelectionMode(JFileChooser.FILES_ONLY);
         GeneralFilter fileFilter = new GeneralFilter(Arrays.asList(".zip"), "Zips (*.zip)"); //NON-NLS
         fileWindow.setDragEnabled(false);
@@ -374,7 +377,7 @@ final class GeolocationSettingsPanel extends javax.swing.JPanel implements Optio
     }//GEN-LAST:event_mbtilesRBtnActionPerformed
 
     private void mbtilesBrowseBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mbtilesBrowseBtnActionPerformed
-        JFileChooser fileWindow = new JFileChooser();
+        JFileChooser fileWindow = chooserHelper.getChooser();
         fileWindow.setFileSelectionMode(JFileChooser.FILES_ONLY);
         GeneralFilter fileFilter = new GeneralFilter(Arrays.asList(".mbtiles"), "MBTiles (*.mbtiles)"); //NON-NLS
         fileWindow.setDragEnabled(false);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -110,7 +110,7 @@ public class ImageNode extends AbstractContentNode<Image> {
             actionsList.add(a);
         }
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
-        actionsList.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+        actionsList.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text(), content.getId()));
         actionsList.add(new ViewSummaryInformationAction(content.getId()));
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));

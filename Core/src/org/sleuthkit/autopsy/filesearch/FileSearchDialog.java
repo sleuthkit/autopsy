@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,8 @@ import org.openide.windows.WindowManager;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class FileSearchDialog extends javax.swing.JDialog {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Creates new form FileSearchDialog
      */
@@ -46,6 +48,15 @@ final class FileSearchDialog extends javax.swing.JDialog {
                 setVisible(false);
             }
         });
+    }
+
+    /**
+     * Set the data source filter to select the specified data source initially.
+     *
+     * @param dataSourceId - The data source to select.
+     */
+    void setSelectedDataSourceFilter(long dataSourceId) {
+        fileSearchPanel1.setDataSourceFilter(dataSourceId);
     }
 
     /**

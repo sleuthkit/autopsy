@@ -262,6 +262,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      * Shut down parts of the AutoIngestDashboard which were initialized
      */
     void shutDown() {
+        scheduledRefreshThreadPoolExecutor.shutdownNow();
         if (autoIngestMonitor != null) {
             autoIngestMonitor.shutDown();
         }

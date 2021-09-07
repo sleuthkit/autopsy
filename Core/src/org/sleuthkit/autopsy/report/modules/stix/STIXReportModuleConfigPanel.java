@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.report.modules.stix;
 
 import java.io.File;
 import javax.swing.JFileChooser;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Configuration panel for STIX report generation.
@@ -29,6 +30,7 @@ public class STIXReportModuleConfigPanel extends javax.swing.JPanel {
 
     String stixFile = null;
     boolean showAllResults;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Creates new form STIXReportModuleConfigPanel
@@ -37,6 +39,7 @@ public class STIXReportModuleConfigPanel extends javax.swing.JPanel {
         initComponents();
         showAllResults = false;
         jCheckBox1.setSelected(false);
+        chooserHelper = new JFileChooserFactory();
     }
     
     void setConfiguration(STIXReportModuleSettings settings) {
@@ -138,7 +141,7 @@ public class STIXReportModuleConfigPanel extends javax.swing.JPanel {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
 
-        JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = chooserHelper.getChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         File currentSelection = new File(jStixFileTextField.getText());

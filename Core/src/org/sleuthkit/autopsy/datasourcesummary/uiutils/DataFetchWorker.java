@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import javax.swing.SwingWorker;

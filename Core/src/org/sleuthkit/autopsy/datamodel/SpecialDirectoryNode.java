@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2019 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,7 +65,7 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
         actions.add(ExtractAction.getInstance());
         actions.add(ExportCSVAction.getInstance());
         actions.add(null); // creates a menu separator
-        actions.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+        actions.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text(), content.getId()));
         if (content.isDataSource()) {
             actions.add(new ViewSummaryInformationAction(content.getId()));
             actions.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));

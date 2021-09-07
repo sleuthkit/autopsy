@@ -76,29 +76,28 @@ With our connection in hand, we can do some queries. In our sample database, we 
 stmt = dbConn.createStatement()
 resultSet = stmt.executeQuery("SELECT * FROM contacts")\endverbatim
 
-For each row, we are going to get the values for the name, e-mail, and phone number and make a TSK_CONTACT artifact. Recall from the first tutorial that posting artifacts to the blackboard allows modules to communicate with each other and also allows you to easily display data to the user. The TSK_CONTACT artifact is for storing contact information.
+For each row, we are going to get the values for the name, e-mail, and phone number and make a TSK_CONTACT artifact. Recall from the first tutorial that posting artifacts to the blackboard allows modules to communicate with each other and also allows you to easily display data to the user. The TSK_CONTACT artifact is for storing contact information. The <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest/artifact_catalog_page.html">artifact catalog</a> shows that TSK_CONTACT is a data artifact, so we will be using the newDataArtifact() method to create each one.
 
 The basic approach in our example is to make an artifact of a given type (TSK_CONTACT) and have it be associated with the database it came from. We then make attributes for the name, email, and phone. The following code does this for each row in the database:
 \verbatim
 while resultSet.next():
-
-  # Make an artifact on the blackboard and give it attributes
-  art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
-
-  name  = resultSet.getString("name")
-  art.addAttribute(BlackboardAttribute(
-     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID(),
-     ContactsDbIngestModuleFactory.moduleName, name))
-
-  email = resultSet.getString("email")
-  art.addAttribute(BlackboardAttribute(
-     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(),
-     ContactsDbIngestModuleFactory.moduleName, email))
-
-  phone = resultSet.getString("phone")
-  art.addAttribute(BlackboardAttribute(
-     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(),
-     ContactsDbIngestModuleFactory.moduleName, phone))\endverbatim
+	try: 
+		name  = resultSet.getString("name")
+		email = resultSet.getString("email")
+		phone = resultSet.getString("phone")
+	except SQLException as e:
+		self.log(Level.INFO, "Error getting values from contacts table (" + e.getMessage() + ")")
+	
+	
+	# Make an artifact on the blackboard, TSK_CONTACT and give it attributes for each of the fields
+	art = file.newDataArtifact(BlackboardArtifact.Type.TSK_CONTACT, Arrays.asList(
+		BlackboardAttribute(BlackboardAttribute.Type.TSK_NAME_PERSON,
+							ContactsDbIngestModuleFactory.moduleName, name),
+		BlackboardAttribute(BlackboardAttribute.Type.TSK_EMAIL,
+							ContactsDbIngestModuleFactory.moduleName, email),
+		BlackboardAttribute(BlackboardAttribute.Type.TSK_PHONE_NUMBER,
+							ContactsDbIngestModuleFactory.moduleName, phone)
+	))\endverbatim
 	 
 That's it. We've just found the databases, queried them, and made artifacts for the user to see. There are some final things though. First, we should fire off an event so that the UI updates and refreshes with the new artifacts. We can fire just one event after each database is parsed (or you could fire one for each artifact - it's up to you).
 
@@ -112,6 +111,8 @@ And the final thing is to clean up. We should close the database connections and
 stmt.close()
 dbConn.close()
 os.remove(lclDbPath)\endverbatim
+
+The final version of findContactsDb.py can be found on <a href="https://github.com/sleuthkit/autopsy/blob/develop/pythonExamples/Aug2015DataSourceTutorial/FindContactsDb.py">github</a>.
 
 \subsection python_tutorial2_niceties Niceties
 

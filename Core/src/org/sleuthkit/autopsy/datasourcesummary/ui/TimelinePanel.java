@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,39 +20,29 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.Color;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.logging.Level;
 import org.apache.commons.collections.CollectionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineDataSourceUtils;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.DailyActivityAmount;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.TimelineSummaryData;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.OrderedKey;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries.OrderedKey;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries.BarChartItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.KeyValueItemExportable;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelSpecialFormatExport.TitledExportable;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
@@ -78,19 +68,9 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     private static final long serialVersionUID = 1L;
 
     private static final String EARLIEST_LATEST_FORMAT_STR = "MMM d, yyyy";
-    private static final DateFormat EARLIEST_LATEST_FORMAT = getUtcFormat(EARLIEST_LATEST_FORMAT_STR);
-    private static final DateFormat CHART_FORMAT = getUtcFormat("MMM d, yyyy");
+    private static final DateFormat EARLIEST_LATEST_FORMAT = TimelineSummary.getUtcFormat(EARLIEST_LATEST_FORMAT_STR);
+    private static final DateFormat CHART_FORMAT = TimelineSummary.getUtcFormat("MMM d, yyyy");
     private static final int MOST_RECENT_DAYS_COUNT = 30;
-
-    /**
-     * Creates a DateFormat formatter that uses UTC for time zone.
-     *
-     * @param formatString The date format string.
-     * @return The data format.
-     */
-    private static DateFormat getUtcFormat(String formatString) {
-        return new SimpleDateFormat(formatString, Locale.getDefault());
-    }
 
     // components displayed in the tab
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
@@ -108,13 +88,13 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
 
     public TimelinePanel() {
-        this(new TimelineSummary());
+        this(new TimelineSummaryGetter());
     }
 
     /**
      * Creates new form PastCasesPanel
      */
-    public TimelinePanel(TimelineSummary timelineData) {
+    public TimelinePanel(TimelineSummaryGetter timelineData) {
         super(timelineData);
 
         dataFetcher = (dataSource) -> timelineData.getData(dataSource, MOST_RECENT_DAYS_COUNT);
@@ -126,29 +106,18 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         initComponents();
     }
 
-    /**
-     * Formats a date using a DateFormat. In the event that the date is null,
-     * returns a null string.
-     *
-     * @param date The date to format.
-     * @param formatter The DateFormat to use to format the date.
-     * @return The formatted string generated from the formatter or null if the
-     * date is null.
-     */
-    private static String formatDate(Date date, DateFormat formatter) {
-        return date == null ? null : formatter.format(date);
-    }
-
     private static final Color FILE_EVT_COLOR = new Color(228, 22, 28);
     private static final Color ARTIFACT_EVT_COLOR = new Color(21, 227, 100);
 
     /**
-     * Converts DailyActivityAmount data retrieved from TimelineSummary into
-     * data to be displayed as a bar chart.
+     * Converts DailyActivityAmount data retrieved from TimelineSummaryGetter
+     * into data to be displayed as a bar chart.
      *
-     * @param recentDaysActivity The data retrieved from TimelineSummary.
+     * @param recentDaysActivity    The data retrieved from
+     *                              TimelineSummaryGetter.
      * @param showIntermediateDates If true, shows all dates. If false, shows
-     * only first and last date.
+     *                              only first and last date.
+     *
      * @return The data to be displayed in the BarChart.
      */
     private List<BarChartSeries> parseChartData(List<DailyActivityAmount> recentDaysActivity, boolean showIntermediateDates) {
@@ -167,7 +136,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
             long fileAmt = curItem.getFileActivityCount();
             long artifactAmt = curItem.getArtifactActivityCount() * 100;
             String formattedDate = (showIntermediateDates || i == 0 || i == recentDaysActivity.size() - 1)
-                    ? formatDate(curItem.getDay(), CHART_FORMAT) : "";
+                    ? TimelineSummary.formatDate(curItem.getDay(), CHART_FORMAT) : "";
 
             OrderedKey thisKey = new OrderedKey(formattedDate, i);
             fileEvtCounts.add(new BarChartItem(thisKey, fileAmt));
@@ -191,8 +160,8 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
      * @param result The result to be displayed on this tab.
      */
     private void handleResult(DataFetchResult<TimelineSummaryData> result) {
-        earliestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMinDate(), EARLIEST_LATEST_FORMAT)));
-        latestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMaxDate(), EARLIEST_LATEST_FORMAT)));
+        earliestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> TimelineSummary.formatDate(r.getMinDate(), EARLIEST_LATEST_FORMAT)));
+        latestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> TimelineSummary.formatDate(r.getMaxDate(), EARLIEST_LATEST_FORMAT)));
         last30DaysChart.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseChartData(r.getMostRecentDaysActivity(), false)));
 
         if (result != null
@@ -242,8 +211,8 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
      * Action that occurs when 'View in Timeline' button is pressed.
      *
      * @param dataSource The data source to filter to.
-     * @param minDate The min date for the zoom of the window.
-     * @param maxDate The max date for the zoom of the window.
+     * @param minDate    The min date for the zoom of the window.
+     * @param maxDate    The max date for the zoom of the window.
      */
     private void openFilteredChart(DataSource dataSource, Date minDate, Date maxDate) {
         OpenTimelineAction openTimelineAction = CallableSystemAction.get(OpenTimelineAction.class);
@@ -266,7 +235,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
             if (minDate != null && maxDate != null) {
                 timeSpan = new Interval(new DateTime(minDate), new DateTime(maxDate));
             }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to view time range in Timeline view", ex);
         }
 
@@ -291,43 +260,6 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     public void close() {
         ingestRunningLabel.unregister();
         super.close();
-    }
-
-    /**
-     * Create a default cell model to be use with excel export in the earliest /
-     * latest date format.
-     *
-     * @param date The date.
-     * @return The cell model.
-     */
-    private static DefaultCellModel<?> getEarliestLatestCell(Date date) {
-        return new DefaultCellModel<>(date, (dt) -> dt == null ? "" : EARLIEST_LATEST_FORMAT.format(dt), EARLIEST_LATEST_FORMAT_STR);
-    }
-
-    @Messages({
-        "TimelinePanel_getExports_sheetName=Timeline",
-        "TimelinePanel_getExports_activityRange=Activity Range",
-        "TimelinePanel_getExports_earliest=Earliest:",
-        "TimelinePanel_getExports_latest=Latest:",
-        "TimelinePanel_getExports_dateColumnHeader=Date",
-        "TimelinePanel_getExports_chartName=Last 30 Days",})
-    @Override
-    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
-        TimelineSummaryData summaryData = getFetchResult(dataFetcher, "Timeline", dataSource);
-        if (summaryData == null) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.asList(
-                new ExcelSpecialFormatExport(Bundle.TimelinePanel_getExports_sheetName(),
-                        Arrays.asList(
-                                new TitledExportable(Bundle.TimelinePanel_getExports_activityRange(), Collections.emptyList()),
-                                new KeyValueItemExportable(Bundle.TimelinePanel_getExports_earliest(), getEarliestLatestCell(summaryData.getMinDate())),
-                                new KeyValueItemExportable(Bundle.TimelinePanel_getExports_latest(), getEarliestLatestCell(summaryData.getMaxDate())),
-                                new BarChartExport(Bundle.TimelinePanel_getExports_dateColumnHeader(),
-                                        "#,###",
-                                        Bundle.TimelinePanel_getExports_chartName(),
-                                        parseChartData(summaryData.getMostRecentDaysActivity(), true)))));
     }
 
     /**

@@ -70,7 +70,7 @@ final class AutoIngestJobsNode extends AbstractNode {
      *                 refresh events
      */
     AutoIngestJobsNode(AutoIngestMonitor monitor, AutoIngestJobStatus status, EventBus eventBus) {
-        super(Children.create(new AutoIngestNodeChildren(monitor, status, eventBus), true));
+        super(Children.create(new AutoIngestNodeChildren(monitor, status, eventBus), false));
         refreshChildrenEventBus = eventBus;
     }
 

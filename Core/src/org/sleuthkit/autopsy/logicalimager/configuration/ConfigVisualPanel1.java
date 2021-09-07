@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +50,7 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 import org.sleuthkit.autopsy.logicalimager.dsp.DriveListUtils;
 
 /**
@@ -63,6 +64,7 @@ final class ConfigVisualPanel1 extends JPanel {
     private static final String DEFAULT_CONFIG_FILE_NAME = "logical-imager-config.json";
     private static final String UPDATE_UI_EVENT_NAME = "UPDATE_UI";
     private String configFilename;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Creates new form ConfigVisualPanel1
@@ -74,6 +76,7 @@ final class ConfigVisualPanel1 extends JPanel {
             refreshDriveList();
             updateControls();
         });
+        chooserHelper = new JFileChooserFactory();
     }
 
     @NbBundle.Messages({
@@ -332,7 +335,7 @@ final class ConfigVisualPanel1 extends JPanel {
         "ConfigVisualPanel1.configurationError=Configuration error",})
     private void chooseFile(String title) {
         final String jsonExt = ".json"; // NON-NLS
-        JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = chooserHelper.getChooser();
         fileChooser.setDialogTitle(title);
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);

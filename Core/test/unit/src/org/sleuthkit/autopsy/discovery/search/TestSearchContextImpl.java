@@ -16,17 +16,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourcesummary.uiutils;
+package org.sleuthkit.autopsy.discovery.search;
 
 /**
- * Basic interface for a cell model.
+ * Implementation of SearchContext for testing to ensure NPEs are not thrown and
+ * the context indicates the expected cancellation status.
  */
-public interface ExcelCellModel extends CellModel {
+public class TestSearchContextImpl implements SearchContext {
 
-    /**
-     * @return The format string to be used with Apache POI during excel
-     * export or null if none necessary.
-     */
-    String getExcelFormatString();
-    
+    private final boolean isCancelled;
+
+    public TestSearchContextImpl(boolean hasBeenCancelled) {
+        isCancelled = hasBeenCancelled;
+    }
+
+    @Override
+    public boolean searchIsCancelled() {
+        return isCancelled;
+    }
 }

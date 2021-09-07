@@ -75,6 +75,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 @NbBundle.Messages({"IngestEventsListener.ingestmodule.name=Central Repository"})
 public class IngestEventsListener {
+
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
@@ -513,8 +514,8 @@ public class IngestEventsListener {
             try {
                 dataSource = ((DataSourceAnalysisEvent) event).getDataSource();
                 /*
-                 * We only care about Images for the purpose of
-                 * updating hash values.
+                 * We only care about Images for the purpose of updating hash
+                 * values.
                  */
                 if (!(dataSource instanceof Image)) {
                     return;

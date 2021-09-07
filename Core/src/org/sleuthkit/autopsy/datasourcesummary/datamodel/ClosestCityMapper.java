@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,6 +64,7 @@ class ClosestCityMapper {
      * Retrieves singleton instance of this class.
      *
      * @return The singleton instance of this class.
+     *
      * @throws IOException
      */
     static ClosestCityMapper getInstance() throws IOException {
@@ -95,8 +96,9 @@ class ClosestCityMapper {
      * Main Constructor loading from an input stream.
      *
      * @param citiesInputStream The input stream for the csv text file
-     * containing the cities.
-     * @param logger The logger to be used with this.
+     *                          containing the cities.
+     * @param logger            The logger to be used with this.
+     *
      * @throws IOException
      */
     private ClosestCityMapper(InputStream citiesInputStream, java.util.logging.Logger logger) throws IOException {
@@ -109,6 +111,7 @@ class ClosestCityMapper {
      * city can be determined.
      *
      * @param point The point to locate.
+     *
      * @return The closest city or null if no close city can be found.
      */
     CityRecord findClosest(CityRecord point) {
@@ -120,6 +123,7 @@ class ClosestCityMapper {
      * returned.
      *
      * @param s The string to parse.
+     *
      * @return The double value or null if value cannot be parsed.
      */
     private Double tryParse(String s) {
@@ -138,8 +142,9 @@ class ClosestCityMapper {
      * Parses a country name and transforms values like "last, first" to "first
      * last" (i.e. "Korea, South" becomes "South Korea").
      *
-     * @param orig The original string value.
+     * @param orig    The original string value.
      * @param lineNum The line number that this country was found.
+     *
      * @return The country name.
      */
     private String parseCountryName(String orig, int lineNum) {
@@ -159,9 +164,10 @@ class ClosestCityMapper {
     /**
      * Parses a row from the csv creating a city record.
      *
-     * @param csvRow The row of data where each item in the list is each column
-     * in the row.
+     * @param csvRow  The row of data where each item in the list is each column
+     *                in the row.
      * @param lineNum The line number for this csv row.
+     *
      * @return The parsed CityRecord or null if none can be determined.
      */
     private CityRecord getCsvCityRecord(List<String> csvRow, int lineNum) {
@@ -199,8 +205,9 @@ class ClosestCityMapper {
     /**
      * Parses a row of the csv into individual column values.
      *
-     * @param line The line to parse.
+     * @param line    The line to parse.
      * @param lineNum The line number in the csv where this line is.
+     *
      * @return The list of column values.
      */
     private List<String> parseCsvLine(String line, int lineNum) {
@@ -222,10 +229,12 @@ class ClosestCityMapper {
      * Parses all lines in the csv file input stream into a list of city
      * records.
      *
-     * @param csvInputStream The csv file input stream.
+     * @param csvInputStream  The csv file input stream.
      * @param ignoreHeaderRow Whether or not there is a header row in the csv
-     * file.
+     *                        file.
+     *
      * @return The list of city records.
+     *
      * @throws IOException
      */
     private List<CityRecord> parseCsvLines(InputStream csvInputStream, boolean ignoreHeaderRow) throws IOException {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * The action associated with the Case/Open Case menu item via the layer.xml
@@ -64,6 +65,8 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
     private static final Logger LOGGER = Logger.getLogger(CaseOpenAction.class.getName());
     private final FileFilter caseMetadataFileFilter;
 
+    private final JFileChooserFactory fileChooserHelper;
+
     /**
      * Constructs the action associated with the Case/Open Case menu item via
      * the layer.xml file, a toolbar button, and the Open Case button of the
@@ -72,6 +75,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
      */
     public CaseOpenAction() {
         caseMetadataFileFilter = new FileNameExtensionFilter(NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(), CaseMetadata.getFileExtension()), CaseMetadata.getFileExtension().substring(1));
+        fileChooserHelper = new JFileChooserFactory();
     }
 
     /**
@@ -80,7 +84,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
      * to open the case described by the file.
      */
     void openCaseSelectionWindow() {        
-        JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = fileChooserHelper.getChooser();
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
