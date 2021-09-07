@@ -120,6 +120,19 @@ public class InterestingHits implements AutopsyVisitableItem {
             Collections.sort(setNames);
             return setNames;
         }
+        
+        /**
+         * Returns all types currently in the map.
+         * @return The types present in the map.
+         */
+        List<BlackboardArtifact.Type> getTypes() {
+            List<BlackboardArtifact.Type> types;
+            synchronized (interestingItemsMap) {
+                types = new ArrayList<>(interestingItemsMap.keySet());
+            }
+            Collections.sort(types, (a,b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()));
+            return types;
+        }
 
         /**
          * Returns all artifact ids belonging to the specified interesting item
@@ -164,7 +177,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                     .map(id -> id.toString())
                     .collect(Collectors.joining(", "));
 
-            String query = "SELECT value_text, blackboard_artifacts.artifact_obj_id, artifact_type_id " //NON-NLS
+            String query = "SELECT value_text, blackboard_artifacts.artifact_obj_id, blackboard_artifacts.artifact_type_id " //NON-NLS
                     + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
                     + "attribute_type_id=" + setNameId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
@@ -434,7 +447,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact.Type> list) {
-            list.addAll(ART_TYPES.values());
+            list.addAll(interestingResults.getTypes());
             return true;
         }
 
@@ -482,7 +495,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         public boolean isLeafTypeNode() {
-            return true;
+            return false;
         }
 
         @Override
