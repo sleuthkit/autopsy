@@ -70,6 +70,7 @@ import org.sleuthkit.datamodel.Score;
  */
 @NbBundle.Messages({"IngestEventsListener.ingestmodule.name=Central Repository"})
 public class IngestEventsListener {
+
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(DATA_ADDED);
@@ -246,15 +247,15 @@ public class IngestEventsListener {
                         originalArtifact.getArtifactID()));
         makeAndPostInterestingArtifact(originalArtifact, attributesForNewArtifact, Bundle.IngestEventsListener_prevExists_text());
     }
-    
-    
+
     /**
      * Make an interesting item artifact to flag the passed in artifact.
      *
      * @param originalArtifact         Artifact in current case we want to flag
      * @param attributesForNewArtifact Attributes to assign to the new
      *                                 Interesting items artifact
-     * @param configuration            The configuration to be specified for the new interesting artifact hit
+     * @param configuration            The configuration to be specified for the
+     *                                 new interesting artifact hit
      */
     private static void makeAndPostInterestingArtifact(BlackboardArtifact originalArtifact, Collection<BlackboardAttribute> attributesForNewArtifact, String configuration) {
         try {
@@ -263,8 +264,8 @@ public class IngestEventsListener {
             Blackboard blackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_ARTIFACT_HIT, attributesForNewArtifact)) {
-                  BlackboardArtifact newInterestingArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                BlackboardArtifact newInterestingArtifact = abstractFile.newAnalysisResult(
+                        BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, Score.SCORE_LIKELY_NOTABLE,
                         null, configuration, null, attributesForNewArtifact)
                         .getAnalysisResult();
 
@@ -368,8 +369,8 @@ public class IngestEventsListener {
             try {
                 dataSource = ((DataSourceAnalysisEvent) event).getDataSource();
                 /*
-                 * We only care about Images for the purpose of
-                 * updating hash values.
+                 * We only care about Images for the purpose of updating hash
+                 * values.
                  */
                 if (!(dataSource instanceof Image)) {
                     return;

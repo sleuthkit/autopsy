@@ -311,18 +311,18 @@ public final class CaseEventListener implements PropertyChangeListener {
          * Sets the known status for the correlation attribute instance for the
          * given abstract file.
          *
-         * @param af The abstract file for which to set the correlation
-         * attribute instance.
+         * @param af          The abstract file for which to set the correlation
+         *                    attribute instance.
          * @param knownStatus The new known status for the correlation attribute
-         * instance.
+         *                    instance.
          */
         private void setContentKnownStatus(AbstractFile af, TskData.FileKnown knownStatus) {
-            final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeCorrAttrFromFile(af);
-
-            if (eamArtifact != null) {
+            final List<CorrelationAttributeInstance> md5CorrelationAttr = CorrelationAttributeUtil.makeCorrAttrsForSearch(af);
+            if (!md5CorrelationAttr.isEmpty()) {
+                //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistancy with other makeCorrAttrsForSearch methods per 7852 
                 // send update to Central Repository db
                 try {
-                    dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
+                    dbManager.setAttributeInstanceKnownStatus(md5CorrelationAttr.get(0), knownStatus);
                 } catch (CentralRepoException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database while setting artifact known status.", ex); //NON-NLS
                 }
@@ -407,7 +407,7 @@ public final class CaseEventListener implements PropertyChangeListener {
          * for the item. If there are, set known status as notable. If not set
          * status as unknown.
          *
-         * @param content The content for the tag that was added or deleted.
+         * @param content    The content for the tag that was added or deleted.
          * @param bbArtifact The artifact for the tag that was added or deleted.
          */
         private void handleTagChange(Content content, BlackboardArtifact bbArtifact) {
@@ -452,11 +452,11 @@ public final class CaseEventListener implements PropertyChangeListener {
          * Sets the known status of a blackboard artifact in the central
          * repository.
          *
-         * @param bbArtifact The blackboard artifact to set known status.
+         * @param bbArtifact  The blackboard artifact to set known status.
          * @param knownStatus The new known status.
          */
         private void setArtifactKnownStatus(BlackboardArtifact bbArtifact, TskData.FileKnown knownStatus) {
-            List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsForCorrelation(bbArtifact);
+            List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsForSearch(bbArtifact);
             for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                 try {
                     dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
@@ -528,7 +528,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                     if (!hasTagWithConflictingKnownStatus) {
                         //Get the correlation atttributes that correspond to the current BlackboardArtifactTag if their status should be changed
                         //with the initial set of correlation attributes this should be a single correlation attribute
-                        List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsForCorrelation(bbTag.getArtifact());
+                        List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsForSearch(bbTag.getArtifact());
                         for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                             CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
                         }
@@ -566,9 +566,10 @@ public final class CaseEventListener implements PropertyChangeListener {
                     if (!hasTagWithConflictingKnownStatus) {
                         Content taggedContent = contentTag.getContent();
                         if (taggedContent instanceof AbstractFile) {
-                            final CorrelationAttributeInstance eamArtifact = CorrelationAttributeUtil.makeCorrAttrFromFile((AbstractFile) taggedContent);
-                            if (eamArtifact != null) {
-                                CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                            final List<CorrelationAttributeInstance> eamArtifact = CorrelationAttributeUtil.makeCorrAttrsForSearch((AbstractFile) taggedContent);
+                            if (!eamArtifact.isEmpty()) {
+                                //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistancy with other makeCorrAttrsForSearch methods per 7852 
+                                CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact.get(0), tagName.getKnownStatus());
                             }
                         }
                     }

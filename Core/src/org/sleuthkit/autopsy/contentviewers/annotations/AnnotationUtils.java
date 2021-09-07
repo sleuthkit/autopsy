@@ -372,7 +372,7 @@ public class AnnotationUtils {
             return new ArrayList<>();
         }
 
-        List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys = CorrelationAttributeUtil.makeCorrAttrsForCorrelation(artifact)
+        List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys = CorrelationAttributeUtil.makeCorrAttrsForSearch(artifact)
                 .stream()
                 .map(cai -> Pair.of(cai.getCorrelationType(), cai.getCorrelationValue()))
                 .collect(Collectors.toList());
