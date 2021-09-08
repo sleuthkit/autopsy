@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * An abstract base class for Actions that allow users to tag Sleuth Kit data
+ * An abstract super class for Actions that allow users to tag Sleuth Kit data
  * model objects.
  */
 abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
@@ -54,7 +54,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
     private final Collection<Content> contentObjsToTag;
 
     /**
-     * Constructs an instance of an abstract base class for Actions that allow
+     * Constructs an instance of an abstract super class for Actions that allow
      * users to tag Sleuth Kit data model objects.
      *
      * @param menuText The menu item text.
@@ -71,7 +71,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
     }
 
     /**
-     * Getz the collection of content which may have been specified for this
+     * Get the collection of content which may have been specified for this
      * action. Empty collection returned when no content was specified.
      *
      * @return The specified content for this action.

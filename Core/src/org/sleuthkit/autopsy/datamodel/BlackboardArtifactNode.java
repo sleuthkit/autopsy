@@ -368,7 +368,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * NOTE: The creation of an Autopsy Data Model independent of the
          * NetBeans nodes is a work in progress. At the time this comment is
          * being written, this object is only being used to indicate the item
-         * represented by this BlacboardArtifactNode.
+         * represented by this BlackboardArtifactNode.
          */
         BlackboardArtifactItem<?> artifactItem;
         if (artifact instanceof AnalysisResult) {
