@@ -127,6 +127,13 @@ public final class IconsUtil {
             imageFile = "gps-area.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_YARA_HIT.getTypeID()) {
             imageFile = "yara_16.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID()) {
+            imageFile = "previously-seen.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_PREVIOUSLY_UNSEEN.getTypeID()) {
+            imageFile = "previously-unseen.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE.getTypeID()) {
+            imageFile = "previously-notable.png"; //NON-NLS
+            //imageFile = "red-circle-exclamation.png"; //NON-NLS
         } else {
             imageFile = "artifact-icon.png"; //NON-NLS
         }

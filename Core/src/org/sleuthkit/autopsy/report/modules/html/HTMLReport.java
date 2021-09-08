@@ -394,6 +394,16 @@ public class HTMLReport implements TableReportModule {
                 case TSK_YARA_HIT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/yara_16.png"); //NON-NLS
                     break;
+                case TSK_PREVIOUSLY_SEEN:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/previously-seen.png"); //NON-NLS
+                    break;
+                case TSK_PREVIOUSLY_UNSEEN:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/previously-unseen.png"); //NON-NLS
+                    break;
+                case TSK_PREVIOUSLY_NOTABLE:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/previously-notable.png"); //NON-NLS
+                    //in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"); //NON-NLS
+                    break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = {0}", dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
