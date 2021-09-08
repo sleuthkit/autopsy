@@ -536,9 +536,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     new ViewFileInTimelineAction(linkedFile, Bundle.BlackboardArtifactNode_getActions_viewLinkedFileInTimelineAction())
             ));
         }
-        
-        //actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
 
+        //actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
         actionsLists.add(getNonNull(
                 getViewSrcContentAction(this.artifact, this.srcContent),
                 getTimelineSrcContentAction(this.srcContent)
@@ -555,7 +554,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         Node parentFileNode = getParentFileNode(srcContent);
         int selectedFileCount = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size();
         int selectedArtifactCount = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).size();
-        
+
         actionsLists.add(getSrcContentViewerActions(parentFileNode, selectedFileCount));
 
         if (parentFileNode != null) {
@@ -689,22 +688,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private List<Action> getTagActions(boolean hasSrcFile, BlackboardArtifact artifact, int selectedFileCount, int selectedArtifactCount) {
         List<Action> actionsList = new ArrayList<>();
 
-        if (hasSrcFile) {
-            // don't show AddContentTagAction for data artifacts.
-            if (!(artifact instanceof DataArtifact)) {
-                actionsList.add(AddContentTagAction.getInstance());
-            }
+        // don't show AddContentTagAction for data artifacts.
+        if (hasSrcFile && !(artifact instanceof DataArtifact)) {
+            actionsList.add(AddContentTagAction.getInstance());
+        }
 
-            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
+        actionsList.add(AddBlackboardArtifactTagAction.getInstance());
 
-            // don't show DeleteFileContentTagAction for data artifacts.
-            if ((!(artifact instanceof DataArtifact)) && (selectedFileCount == 1)) {
-                actionsList.add(DeleteFileContentTagAction.getInstance());
-            }
-        } else {
-            // There's no specific file associated with the artifact, but
-            // we can still tag the artifact itself
-            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
+        // don't show DeleteFileContentTagAction for data artifacts.
+        if (hasSrcFile && (!(artifact instanceof DataArtifact)) && (selectedFileCount == 1)) {
+            actionsList.add(DeleteFileContentTagAction.getInstance());
         }
 
         if (selectedArtifactCount == 1) {
