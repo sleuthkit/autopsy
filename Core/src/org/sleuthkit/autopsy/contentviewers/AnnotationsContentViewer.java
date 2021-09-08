@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.contentviewers.application.Annotations;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.jsoup.nodes.Document;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 
 /**
  * Annotations view of file contents.
@@ -135,7 +136,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public int isPreferred(Node node) {
-        return 1;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 
     @Override

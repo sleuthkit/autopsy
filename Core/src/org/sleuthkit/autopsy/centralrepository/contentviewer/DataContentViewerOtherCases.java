@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.datamodel.OsAccount;
 
 /**
@@ -83,8 +84,7 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
 
     @Override
     public int isPreferred(Node node) {
-        return 1;
-
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 
     @Override

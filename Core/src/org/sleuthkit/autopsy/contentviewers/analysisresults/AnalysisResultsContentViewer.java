@@ -27,6 +27,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
@@ -44,7 +45,7 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
     private static final Logger logger = Logger.getLogger(AnalysisResultsContentPanel.class.getName());
 
     // isPreferred value
-    private static final int PREFERRED_VALUE = 3;
+    private static final int PREFERRED_VALUE = ViewerPriority.viewerPriority.LevelThree.getFlag();;
 
     private final AnalysisResultsViewModel viewModel = new AnalysisResultsViewModel();
     private final AnalysisResultsContentPanel panel = new AnalysisResultsContentPanel();
