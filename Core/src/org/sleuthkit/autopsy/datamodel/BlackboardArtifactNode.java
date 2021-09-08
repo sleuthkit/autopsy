@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.actions.ViewArtifactAction;
+import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
 import com.google.common.annotations.Beta;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -471,53 +473,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         return this.artifact;
     }
 
-    /**
-     * An action that navigates to an artifact.
-     */
-    private static class ViewArtifactAction extends AbstractAction {
 
-        private final BlackboardArtifact artifact;
-
-        /**
-         * Main constructor.
-         *
-         * @param artifact    The artifact to navigate to in the action.
-         * @param displayName The display name of the menu item.
-         */
-        ViewArtifactAction(BlackboardArtifact artifact, String displayName) {
-            super(displayName);
-            this.artifact = artifact;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            DirectoryTreeTopComponent.findInstance().viewArtifact(artifact);
-        }
-    }
-
-    /**
-     * An action that navigates to an os account.
-     */
-    private static class ViewOsAccountAction extends AbstractAction {
-
-        private final OsAccount osAccount;
-
-        /**
-         * Main constructor.
-         *
-         * @param osAccount   The os account to navigate to in the action.
-         * @param displayName The display name of the menu item.
-         */
-        ViewOsAccountAction(OsAccount osAccount, String displayName) {
-            super(displayName);
-            this.osAccount = osAccount;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            DirectoryTreeTopComponent.findInstance().viewOsAccount(osAccount);
-        }
-    }
 
     /**
      * Returns the content that the artifact links to via the TSK_PATH_ID
@@ -556,11 +512,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         return c;
     }
 
-    
-
     /**
      * Returns a list of non null actions from the given possibly null options.
+     *
      * @param items The items to purge of null items.
+     *
      * @return The list of non-null actions.
      */
     private List<Action> getNonNull(Action... items) {
@@ -568,7 +524,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 .filter(i -> i != null)
                 .collect(Collectors.toList());
     }
-
 
     @Messages({
         "BlackboardArtifactNode_getActions_viewSourceDataArtifact=View Source Data Artifact in Timeline... "
@@ -584,31 +539,27 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         List<List<Action>> actionsLists = new ArrayList<>();
 
         actionsLists.add(getNonNull(
-                getTimelineArtifactAction(this.artifact)
+                getViewFileAction(this.artifact),
+                getViewSrcContentAction(this.srcContent)
         ));
 
         actionsLists.add(getNonNull(
+                getTimelineArtifactAction(this.artifact),
                 getTimelineFileAction(this.artifact),
-                getViewFileAction(this.artifact)
+                getTimelineSrcContentAction(this.srcContent)
+                
         ));
-        
-        actionsLists.add(getNonNull(
-                getTimelineSrcContentAction(this.srcContent),
-                getViewSrcContentAction(this.srcContent)
-        ));
-        
+
         actionsLists.add(getNonNull(
                 getExtractWithPasswordAction(this.srcContent)
         ));
 
-        actionsLists.add(
-                this.srcContent instanceof Report
-                        ? DataModelActionsFactory.getActions(content, false)
-                        : Collections.emptyList()
-        );
+        if (this.srcContent instanceof Report) {
+            actionsLists.add(DataModelActionsFactory.getActions(this.srcContent, false));
+        }
 
         actionsLists.add(getSrcContentViewerActions(parentFileNode, selectedFileCount));
- 
+
         actionsLists.add(getExtractExportActions(hasFileContent));
 
         actionsLists.add(getTagActions(hasFileContent, this.artifact, selectedFileCount, selectedArtifactCount));
@@ -616,7 +567,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         actionsLists.add(ContextMenuExtensionPoint.getActions());
 
         actionsLists.add(Arrays.asList(super.getActions(context)));
-        
+
         return actionsLists.stream()
                 // remove any empty lists
                 .filter((lst) -> lst != null && !lst.isEmpty())
@@ -646,7 +597,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private Action getViewSrcContentAction(Content content) {
         if (content instanceof DataArtifact) {
             return new ViewArtifactAction(
-                    (DataArtifact) content,
+                    (BlackboardArtifact) content,
                     Bundle.BlackboardArtifactNode_getSrcContentAction_baseMessage(
                             Bundle.BlackboardArtifactNode_getSrcContentAction_type_DataArtifact()));
         } else if (content instanceof OsAccount) {
@@ -678,14 +629,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @return An action to go to a linked file if a file linked by TSK_PATH_ID
      *         exists. Otherwise, null is returned.
      */
+    @Messages({
+        "BlackboardArtifactNode_getViewFileAction_viewFileInDir=View File in Directory"
+    })
     private Action getViewFileAction(BlackboardArtifact artifact) {
         // if the artifact links to another file, add an action to go to
         // that file
         Content c = findLinkedContent(artifact);
         return (c == null)
                 ? null
-                : new ViewContextAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), c);
+                : new ViewContextAction(Bundle.BlackboardArtifactNode_getViewFileAction_viewFileInDir(), c);
     }
 
     /**
@@ -801,7 +754,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @return The list of actions or an empty list.
      */
     @Messages({
-        "BlackboardArtifactNode_getSrcContentViewerActions_viewInNewWin=View in New Window",
+        "BlackboardArtifactNode_getSrcContentViewerActions_viewInNewWin=View Item in New Window",
         "BlackboardArtifactNode_getSrcContentViewerActions_openInExtViewer=Open in External Viewer  Ctrl+E"
     })
     private List<Action> getSrcContentViewerActions(Node srcFileNode, int selectedFileCount) {
@@ -830,8 +783,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             return ViewFileInTimelineAction.createViewSourceFileAction((AbstractFile) srcContent);
         } else if (srcContent instanceof DataArtifact) {
             try {
-                if (ViewArtifactInTimelineAction.hasSupportedTimeStamp((DataArtifact) srcContent)) {
-                    return new ViewArtifactInTimelineAction((DataArtifact) srcContent,
+                if (ViewArtifactInTimelineAction.hasSupportedTimeStamp((BlackboardArtifact) srcContent)) {
+                    return new ViewArtifactInTimelineAction((BlackboardArtifact) srcContent,
                             Bundle.BlackboardArtifactNode_getActions_viewSourceDataArtifact());
                 }
             } catch (TskCoreException ex) {
@@ -876,10 +829,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     private Action getTimelineArtifactAction(BlackboardArtifact art) {
         try {
-            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(art)
-                    && // don't show ViewArtifactInTimelineAction for AnalysisResults.
-                    (!(art instanceof AnalysisResult))) {
-
+            // don't show ViewArtifactInTimelineAction for AnalysisResults.
+            if (!(art instanceof AnalysisResult) && ViewArtifactInTimelineAction.hasSupportedTimeStamp(art)) {
                 return new ViewArtifactInTimelineAction(art);
             }
         } catch (TskCoreException ex) {
