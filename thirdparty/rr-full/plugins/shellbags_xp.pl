@@ -37,6 +37,9 @@ package shellbags_xp;
 use strict;
 use Time::Local;
 
+require 'shellitems.pl';
+
+
 my %config = (hive          => "NTUSER\.DAT",
 							hivemask      => 32,
 							output        => "report",
@@ -779,10 +782,10 @@ sub parseFolderEntry {
 	$longname =~ s/\x00//g;
 	
 	if ($longname ne "") {
-		$item{name} = $longname;
+		$item{name} = Utf16ToUtf8($longname);
 	}
 	else {
-		$item{name} = $shortname;
+		$item{name} = _Utf16ToUtf8($shortname);
 	}
 	return %item;
 }
@@ -871,7 +874,7 @@ sub parseFolderEntry2 {
 	
 	$item{name} = (split(/\x00\x00/,$str,2))[0];
 	$item{name} =~ s/\x13\x20/\x2D\x00/;
-	$item{name} =~ s/\x00//g;
+	$item{name} = Utf16ToUtf8($item{name});
 	
 	return %item;
 }
@@ -930,5 +933,6 @@ sub printData {
 	}
 	return @display;
 }
+
 
 1;
