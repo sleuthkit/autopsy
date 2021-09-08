@@ -81,6 +81,7 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
 
 /**
@@ -232,7 +233,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-        
+
         srcContent = getSourceContentFromLookup(artifact);
         if (srcContent == null) {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
@@ -366,18 +367,22 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          *
          * NOTE: The creation of an Autopsy Data Model independent of the
          * NetBeans nodes is a work in progress. At the time this comment is
-         * being written, this object is only used by the analysis content
-         * viewer.
+         * being written, this object is only being used to indicate the item
+         * represented by this BlacboardArtifactNode.
          */
-        TskContentItem artifactItem;
+        BlackboardArtifactItem<?> artifactItem;
         if (artifact instanceof AnalysisResult) {
             artifactItem = new AnalysisResultItem((AnalysisResult) artifact);
         } else {
-            artifactItem = new TskContentItem(artifact);
+            artifactItem = new DataArtifactItem((DataArtifact) artifact);
         }
 
         /*
          * Create the Lookup.
+         *
+         * NOTE: For now, we are putting both the Autopsy Data Model item and
+         * the Sleuth Kit Data Model item in the Lookup so that code that is not
+         * aware of the new Autopsy Data Model will still function.
          */
         if (content == null) {
             return Lookups.fixed(artifact, artifactItem);
@@ -385,7 +390,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             return Lookups.fixed(artifact, artifactItem, content);
         }
     }
-    
+
     /**
      * Finds the source content in the Lookup created by createLookup() method.
      *

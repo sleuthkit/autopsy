@@ -23,7 +23,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * An abstract super class for an Autopsy Data Model item class with an
- * underlying BlackboardArtifact Sleuth Kit Data Model object.
+ * underlying BlackboardArtifact Sleuth Kit Data Model object, i.e., a
+ * DataArtifact or an AnalysisResult.
  *
  * @param <T> The concrete BlackboardArtifact sub class type.
  */

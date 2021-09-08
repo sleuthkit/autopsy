@@ -22,30 +22,20 @@ import com.google.common.annotations.Beta;
 import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
- * An Autopsy Data Model item with an underlying analysis result Sleuth Kit Data
+ * An Autopsy Data Model item with an underlying AnalysisResult Sleuth Kit Data
  * Model object.
  */
-public class AnalysisResultItem extends TskContentItem {
+public class AnalysisResultItem extends BlackboardArtifactItem<AnalysisResult> {
 
     /**
      * Constructs an Autopsy Data Model item with an underlying AnalysisResult
      * Sleuth Kit Data Model object.
      *
-     * @param analysisResult The analysis result.
+     * @param analysisResult The AnalysisResult object.
      */
     @Beta
     AnalysisResultItem(AnalysisResult analysisResult) {
         super(analysisResult);
-    }
-
-    /**
-     * Gets the underlying analysis result.
-     *
-     * @return The analysis result.
-     */
-    @Beta
-    public AnalysisResult getAnalysisResult() {
-        return (AnalysisResult) (getTskContent());
     }
 
 }
