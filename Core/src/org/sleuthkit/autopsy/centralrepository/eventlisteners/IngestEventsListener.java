@@ -656,7 +656,7 @@ public class IngestEventsListener {
                             }
                             
                             // flag previously seen devices and communication accounts (emails, phones, etc)
-                            if (flagPreviousItemsEnabled
+                            if (flagPreviousItemsEnabled && !previousOccurrences.isEmpty()
                                     && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.USBID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.ICCID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMEI_TYPE_ID
