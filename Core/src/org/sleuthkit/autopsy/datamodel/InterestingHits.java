@@ -117,12 +117,13 @@ public class InterestingHits implements AutopsyVisitableItem {
                 Map<String, Set<Long>> setMapping = interestingItemsMap.getOrDefault(type, Collections.emptyMap());
                 setNames = new ArrayList<>(setMapping.keySet());
             }
-            Collections.sort(setNames);
+            Collections.sort(setNames, (a, b) -> a.compareToIgnoreCase(b));
             return setNames;
         }
-        
+
         /**
          * Returns all types currently in the map.
+         *
          * @return The types present in the map.
          */
         List<BlackboardArtifact.Type> getTypes() {
@@ -130,7 +131,7 @@ public class InterestingHits implements AutopsyVisitableItem {
             synchronized (interestingItemsMap) {
                 types = new ArrayList<>(interestingItemsMap.keySet());
             }
-            Collections.sort(types, (a,b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()));
+            Collections.sort(types, (a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()));
             return types;
         }
 
@@ -288,6 +289,17 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
+        protected void addNotify() {
+            interestingResults.update();
+            interestingResults.addObserver(this);
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            interestingResults.deleteObserver(this);
+        }
+
+        @Override
         public void update(Observable o, Object arg) {
             refresh(true);
         }
@@ -318,7 +330,7 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         public boolean isLeafTypeNode() {
-            return false;
+            return true;
         }
 
         @Override

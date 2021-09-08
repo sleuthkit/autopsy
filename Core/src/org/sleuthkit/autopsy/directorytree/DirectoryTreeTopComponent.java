@@ -1409,7 +1409,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact art) {
         Node interestingItemsRootNode = typesChildren.findChild(NbBundle
                 .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text"));
-        
+
         Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
         String setName = null;
         try {
@@ -1418,17 +1418,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     .map(attr -> attr.getValueString())
                     .findFirst()
                     .orElse(null);
-            
+
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
         }
-        
+
         // if no set name, no set node will be identified.
         if (setName == null) {
             return null;
         }
-            
+
         Stream<Node> typeNodes = interestingItemsRootChildren != null ? Stream.of(interestingItemsRootChildren.getNodes(true)) : Stream.empty();
 
         Children setNodeChildren = typeNodes
@@ -1444,10 +1444,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (setNodeChildren == null) {
             return null;
         }
-        
+
         // make sure data is fully loaded
-        setNodeChildren.getNodes(true);
-        return interestingItemsRootChildren.findChild(setName);
+        final String finalSetName = setName;
+        return Stream.of(setNodeChildren.getNodes(true))
+                .filter(setNode -> finalSetName.equals(setNode.getLookup().lookup(String.class)))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
