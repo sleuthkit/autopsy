@@ -102,7 +102,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * @param content Underlying Content instances
      */
     AbstractContentNode(T content) {
-        this(content, Lookups.singleton(content));
+        this(content, Lookups.fixed(content, new TskContentItem(content)));
     }
 
     /**

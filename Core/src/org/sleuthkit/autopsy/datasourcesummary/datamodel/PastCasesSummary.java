@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,41 +25,43 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Provides information about how a datasource relates to a previous case. NOTE:
- * This code is fragile and has certain expectations about how the central
+ * Provides information about how a data source relates to a previous case.
+ * NOTE: This code is fragile and has certain expectations about how the central
  * repository handles creating artifacts. So, if the central repository changes
  * ingest process, this code could break. This code expects that the central
  * repository ingest module:
  *
- * a) Creates a TSK_INTERESTING_FILE_HIT artifact for a file whose hash is in
- * the central repository as a notable file.
+ * a) Creates a TSK_PREVIOUSLY_NOTABLE artifact for a file whose hash is in the
+ * central repository as a notable file.
  *
- * b) Creates a TSK_INTERESTING_ARTIFACT_HIT artifact for a matching id in the
- * central repository.
+ * b) Creates a TSK_PREVIOUSLY_SEEN artifact for a matching id in the central
+ * repository.
  *
- * c) The created artifact will have a TSK_COMMENT attribute attached where one
- * of the sources for the attribute matches
+ * c) The created artifact will have a TSK_OTHER_CASES attribute attached where
+ * one of the sources for the attribute matches
  * CentralRepoIngestModuleFactory.getModuleName(). The module display name at
  * time of ingest will match CentralRepoIngestModuleFactory.getModuleName() as
  * well.
  *
- * d) The content of that TSK_COMMENT attribute will be of the form "Previous
- * Case: case1,case2...caseN"
+ * d) The content of that TSK_OTHER_CASES attribute will be of the form
+ * "case1,case2...caseN"
  */
 public class PastCasesSummary {
 
@@ -97,9 +99,13 @@ public class PastCasesSummary {
         }
     }
 
+    private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
+            ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID(), 
+            ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE.getTypeID()
+    ));
+
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
-    private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_COMMENT);
-    private static final BlackboardAttribute.Type TYPE_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
+    private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_OTHER_CASES);
 
     private static final Set<Integer> CR_DEVICE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(),
@@ -109,7 +115,6 @@ public class PastCasesSummary {
     ));
 
     private static final String CASE_SEPARATOR = ",";
-    private static final String PREFIX_END = ":";
 
     private final SleuthkitCaseProvider caseProvider;
     private final java.util.logging.Logger logger;
@@ -161,9 +166,8 @@ public class PastCasesSummary {
     }
 
     /**
-     * Gets a list of cases from the TSK_COMMENT of an artifact. The cases
-     * string is expected to be of a form of "Previous Case:
-     * case1,case2...caseN".
+     * Gets a list of cases from the TSK_OTHER_CASES of an artifact. The cases
+     * string is expected to be of a form of "case1,case2...caseN".
      *
      * @param artifact The artifact.
      *
@@ -189,14 +193,7 @@ public class PastCasesSummary {
             return Collections.emptyList();
         }
 
-        String commentStr = commentAttr.getValueString();
-
-        int prefixCharIdx = commentStr.indexOf(PREFIX_END);
-        if (prefixCharIdx < 0 || prefixCharIdx >= commentStr.length() - 1) {
-            return Collections.emptyList();
-        }
-
-        String justCasesStr = commentStr.substring(prefixCharIdx + 1).trim();
+        String justCasesStr = commentAttr.getValueString().trim();
         return Stream.of(justCasesStr.split(CASE_SEPARATOR))
                 .map(String::trim)
                 .collect(Collectors.toList());
@@ -231,30 +228,24 @@ public class PastCasesSummary {
     }
 
     /**
-     * Given an artifact with a TYPE_ASSOCIATED_ARTIFACT attribute, retrieves
-     * the related artifact.
+     * Given a TSK_PREVIOUSLY_SEEN or TSK_PREVIOUSLY_NOTABLE artifact, retrieves it's parent artifact.
      *
-     * @param artifact The artifact with the TYPE_ASSOCIATED_ARTIFACT attribute.
+     * @param artifact The input artifact.
      *
      * @return The artifact if found or null if not.
      *
-     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
      */
-    private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
-        Long parentId = DataSourceInfoUtilities.getLongOrNull(artifact, TYPE_ASSOCIATED_ARTIFACT);
-        if (parentId == null) {
-            return null;
-        }
+    private BlackboardArtifact getParentArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
 
+        BlackboardArtifact sourceArtifact = null;
         SleuthkitCase skCase = caseProvider.get();
-        try {
-            return skCase.getArtifactByArtifactId(parentId);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING,
-                    String.format("There was an error fetching the parent artifact of a TSK_INTERESTING_ARTIFACT_HIT (parent id: %d)", parentId),
-                    ex);
-            return null;
+        Content content = skCase.getContentById(artifact.getObjectID());        
+        if (content instanceof BlackboardArtifact) {
+            sourceArtifact = (BlackboardArtifact) content;
         }
+        return sourceArtifact;
     }
 
     /**
@@ -264,9 +255,10 @@ public class PastCasesSummary {
      *
      * @return True if there is a device associated artifact.
      *
-     * @throws SleuthkitCaseProviderException
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
      */
-    private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProviderException {
+    private boolean hasDeviceAssociatedArtifact(BlackboardArtifact artifact) throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
         BlackboardArtifact parent = getParentArtifact(artifact);
         if (parent == null) {
             return false;
@@ -284,6 +276,7 @@ public class PastCasesSummary {
      *
      * @throws SleuthkitCaseProviderException
      * @throws TskCoreException
+     * @throws NoCurrentCaseException
      */
     public PastCasesResult getPastCasesData(DataSource dataSource)
             throws SleuthkitCaseProvider.SleuthkitCaseProviderException, TskCoreException {
@@ -296,26 +289,24 @@ public class PastCasesSummary {
 
         List<String> deviceArtifactCases = new ArrayList<>();
         List<String> nonDeviceArtifactCases = new ArrayList<>();
+        for (Integer typeId : ARTIFACT_UPDATE_TYPE_IDS) {
+            for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(typeId, dataSource.getId())) {
+                List<String> cases = getCasesFromArtifact(artifact);
+                if (cases == null || cases.isEmpty()) {
+                    continue;
+                }
 
-        for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(), dataSource.getId())) {
-            List<String> cases = getCasesFromArtifact(artifact);
-            if (cases == null || cases.isEmpty()) {
-                continue;
+                if (hasDeviceAssociatedArtifact(artifact)) {
+                    deviceArtifactCases.addAll(cases);
+                } else {
+                    nonDeviceArtifactCases.addAll(cases);
+                }
             }
-
-            if (hasDeviceAssociatedArtifact(artifact)) {
-                deviceArtifactCases.addAll(cases);
-            } else {
-                nonDeviceArtifactCases.addAll(cases);
-            }
-        }
-
-        Stream<String> filesCases = skCase.getBlackboard().getArtifacts(ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(), dataSource.getId()).stream()
-                .flatMap((art) -> getCasesFromArtifact(art).stream());
-
+        }      
+        
         return new PastCasesResult(
                 getCaseCounts(deviceArtifactCases.stream()),
-                getCaseCounts(Stream.concat(filesCases, nonDeviceArtifactCases.stream()))
+                getCaseCounts(nonDeviceArtifactCases.stream())
         );
     }
 }

@@ -22,10 +22,12 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -63,7 +65,7 @@ class ShellBagParser {
 
         ShellBagParser sbparser = new ShellBagParser();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(regfile))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(regfile), StandardCharsets.UTF_8))) {
             String line = reader.readLine();
             while (line != null) {
                 line = line.trim();
