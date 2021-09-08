@@ -228,7 +228,7 @@ public interface IngestModuleFactory {
      *
      * @return A file ingest module instance.
      */
-    default FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+    default FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         throw new UnsupportedOperationException();
     }
 
@@ -238,9 +238,9 @@ public interface IngestModuleFactory {
      *
      * @return True or false.
      */
-    default boolean isDataArtifactIngestModuleFactory() {
-        return false;
-    }
+//    default boolean isDataArtifactIngestModuleFactory() {
+//        return false;
+//    }
 
     /**
      * Creates a data artifact ingest module instance.
@@ -267,8 +267,8 @@ public interface IngestModuleFactory {
      *
      * @return A file ingest module instance.
      */
-    default DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
-        throw new UnsupportedOperationException();
-    }
+//    default DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
+//        throw new UnsupportedOperationException();
+//    }
 
 }
