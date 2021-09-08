@@ -1271,9 +1271,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             treeNode = getHashsetNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
             treeNode = getKeywordHitNode(typesChildren, art);
-        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
-                || typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-            treeNode = getInterestingItemNode(typesChildren, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
             treeNode = getEmailNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
@@ -1401,16 +1402,22 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @param typesChildren The children object of the same category as
      *                      interesting item.
+     * @param artifactType  The type of the artifact (interesting hit or
+     *                      artifact).
      * @param art           The artifact.
      *
      * @return The interesting item artifact's parent node or null if cannot be
      *         found.
      */
-    private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact art) {
-        Node interestingItemsRootNode = typesChildren.findChild(NbBundle
-                .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text"));
-
-        Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
+    private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact.Type artifactType, BlackboardArtifact art) {
+        Node interestingItemsRootNode = typesChildren.findChild(artifactType.getDisplayName());
+        Children setNodeChildren = (interestingItemsRootNode == null) ? null : interestingItemsRootNode.getChildren();
+        
+        // set node children for type could not be found, so return null.
+        if (setNodeChildren == null) {
+            return null;
+        }
+        
         String setName = null;
         try {
             setName = art.getAttributes().stream()
@@ -1426,22 +1433,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         // if no set name, no set node will be identified.
         if (setName == null) {
-            return null;
-        }
-
-        Stream<Node> typeNodes = interestingItemsRootChildren != null ? Stream.of(interestingItemsRootChildren.getNodes(true)) : Stream.empty();
-
-        Children setNodeChildren = typeNodes
-                .filter((nd) -> {
-                    BlackboardArtifact.Type ndType = nd.getLookup().lookup(BlackboardArtifact.Type.class);
-                    return ndType != null && ndType.getTypeID() == art.getArtifactTypeID();
-                })
-                .findFirst()
-                .flatMap(typeNode -> Optional.ofNullable(typeNode.getChildren()))
-                .orElse(null);
-
-        // set node children for type could not be found, so return null.
-        if (setNodeChildren == null) {
             return null;
         }
 
