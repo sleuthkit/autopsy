@@ -1481,7 +1481,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    final private class CreditCardNumberFactory extends ObservingChildren<Long> {
+    final private class CreditCardNumberFactory extends ObservingChildren<DataArtifact> {
 
         private final BinResult bin;
 
@@ -1502,10 +1502,10 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<Long> list) {
+        protected boolean createKeys(List<DataArtifact> list) {
 
             String query
-                    = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
+                    = "SELECT blackboard_artifacts.artifact_obj_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
@@ -1517,7 +1517,7 @@ final public class Accounts implements AutopsyVisitableItem {
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    list.add(rs.getLong("artifact_id")); //NON-NLS
+                    list.add(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_obj_id"))); //NON-NLS
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
@@ -1527,18 +1527,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node[] createNodesForKey(Long artifactID) {
-            if (skCase == null) {
-                return new Node[0];
-            }
-
-            try {
-                DataArtifact art = skCase.getBlackboard().getDataArtifactById(artifactID);
-                return new Node[]{new AccountArtifactNode(art)};
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
-                return new Node[0];
-            }
+        protected Node[] createNodesForKey(DataArtifact artifact) {
+            return new Node[]{new AccountArtifactNode(artifact)};
         }
     }
 
