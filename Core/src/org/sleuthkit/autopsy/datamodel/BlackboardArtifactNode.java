@@ -395,18 +395,22 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          *
          * NOTE: The creation of an Autopsy Data Model independent of the
          * NetBeans nodes is a work in progress. At the time this comment is
-         * being written, this object is only used by the analysis content
-         * viewer.
+         * being written, this object is only being used to indicate the item
+         * represented by this BlackboardArtifactNode.
          */
-        TskContentItem artifactItem;
+        BlackboardArtifactItem<?> artifactItem;
         if (artifact instanceof AnalysisResult) {
             artifactItem = new AnalysisResultItem((AnalysisResult) artifact);
         } else {
-            artifactItem = new TskContentItem(artifact);
+            artifactItem = new DataArtifactItem((DataArtifact) artifact);
         }
 
         /*
          * Create the Lookup.
+         *
+         * NOTE: For now, we are putting both the Autopsy Data Model item and
+         * the Sleuth Kit Data Model item in the Lookup so that code that is not
+         * aware of the new Autopsy Data Model will still function.
          */
         if (content == null) {
             return Lookups.fixed(artifact, artifactItem);

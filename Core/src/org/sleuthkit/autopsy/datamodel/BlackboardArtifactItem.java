@@ -19,23 +19,26 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.annotations.Beta;
-import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * An Autopsy Data Model item with an underlying AnalysisResult Sleuth Kit Data
- * Model object.
+ * An abstract super class for an Autopsy Data Model item class with an
+ * underlying BlackboardArtifact Sleuth Kit Data Model object, i.e., a
+ * DataArtifact or an AnalysisResult.
+ *
+ * @param <T> The concrete BlackboardArtifact sub class type.
  */
-public class AnalysisResultItem extends BlackboardArtifactItem<AnalysisResult> {
+public abstract class BlackboardArtifactItem<T extends BlackboardArtifact> extends TskContentItem<T> {
 
     /**
-     * Constructs an Autopsy Data Model item with an underlying AnalysisResult
-     * Sleuth Kit Data Model object.
+     * Constructs an Autopsy Data Model item with an underlying
+     * BlackboardArtifact Sleuth Kit Data Model object.
      *
-     * @param analysisResult The AnalysisResult object.
+     * @param blackboardArtifact The BlackboardArtifact object.
      */
     @Beta
-    AnalysisResultItem(AnalysisResult analysisResult) {
-        super(analysisResult);
+    BlackboardArtifactItem(T blackboardArtifact) {
+        super(blackboardArtifact);
     }
 
 }

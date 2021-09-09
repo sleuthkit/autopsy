@@ -318,7 +318,7 @@ public final class IngestJobSettings {
 
         // Add modules that are going to be used for this ingest depending on type.
         for (IngestModuleFactory moduleFactory : allModuleFactories) {
-            if (moduleFactory.isDataArtifactIngestModuleFactory() || ingestType.equals(IngestType.ALL_MODULES)) {
+            if (/*moduleFactory.isDataArtifactIngestModuleFactory() ||*/ ingestType.equals(IngestType.ALL_MODULES)) {
                 moduleFactories.add(moduleFactory);
             } else if (this.ingestType.equals(IngestType.DATA_SOURCE_ONLY) && moduleFactory.isDataSourceIngestModuleFactory()) {
                 moduleFactories.add(moduleFactory);
