@@ -23,14 +23,12 @@ import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
 import com.google.common.annotations.Beta;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -93,7 +90,6 @@ import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
@@ -114,7 +110,6 @@ import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SlackFile;
-import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -516,9 +511,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     @Messages({
-        "BlackboardArtifactNode_getActions_viewSourceDataArtifact=View Source Data Artifact in Timeline... ",
-        "BlackboardArtifactNode_getActions_viewLinkedFileAction=View File in Directory",
-        "BlackboardArtifactNode_getActions_viewLinkedFileInTimelineAction=View File in Timeline..."
+        "# {0} - type",
+        "BlackboardArtifactNode_getActions_viewAssociatedFileAction=View {0} in Directory",
+        "# {0} - type",
+        "BlackboardArtifactNode_getActions_viewAssociatedFileInTimelineAction=View {0} in Timeline..."
     })
     @Override
     public Action[] getActions(boolean context) {
@@ -532,12 +528,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         AbstractFile linkedFile = getLinkedFile(this.artifact);
         if (linkedFile != null) {
             actionsLists.add(Arrays.asList(
-                    new ViewContextAction(Bundle.BlackboardArtifactNode_getActions_viewLinkedFileAction(), linkedFile),
-                    new ViewFileInTimelineAction(linkedFile, Bundle.BlackboardArtifactNode_getActions_viewLinkedFileInTimelineAction())
+                    new ViewContextAction(
+                            Bundle.BlackboardArtifactNode_getActions_viewAssociatedFileAction(
+                                    getAssociatedTypeStr(this.artifactType)),
+                            linkedFile),
+                    new ViewFileInTimelineAction(linkedFile,
+                            Bundle.BlackboardArtifactNode_getActions_viewAssociatedFileInTimelineAction(
+                                    getAssociatedTypeStr(this.artifactType)))
             ));
         }
 
-        //actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
         actionsLists.add(getNonNull(
                 getViewSrcContentAction(this.artifact, this.srcContent),
                 getTimelineSrcContentAction(this.srcContent)
@@ -578,6 +578,54 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
+     * Returns the name of the artifact based on the artifact type to be used
+     * with the associated file string in a right click menu.
+     *
+     * @param artifactType The artifact type.
+     *
+     * @return The artifact type name.
+     */
+    @Messages({
+        "BlackboardArtifactNode_getAssociatedTypeStr_webCache=Cached File",
+        "BlackboardArtifactNode_getAssociatedTypeStr_webDownload=Downloaded File",
+        "BlackboardArtifactNode_getAssociatedTypeStr_associated=Associated File",})
+    private String getAssociatedTypeStr(BlackboardArtifact.Type artifactType) {
+        if (BlackboardArtifact.Type.TSK_WEB_CACHE.equals(artifactType)) {
+            return Bundle.BlackboardArtifactNode_getAssociatedTypeStr_webCache();
+        } else if (BlackboardArtifact.Type.TSK_WEB_DOWNLOAD.equals(artifactType)) {
+            return Bundle.BlackboardArtifactNode_getAssociatedTypeStr_webDownload();
+        } else {
+            return Bundle.BlackboardArtifactNode_getAssociatedTypeStr_associated();
+        }
+    }
+
+    /**
+     * Returns the name to represent the type of the content (file, data
+     * artifact, os account, item).
+     *
+     * @param content The content.
+     *
+     * @return The name of the type of content.
+     */
+    @Messages({
+        "BlackboardArtifactNode_getViewSrcContentAction_type_File=File",
+        "BlackboardArtifactNode_getViewSrcContentAction_type_DataArtifact=Data Artifact",
+        "BlackboardArtifactNode_getViewSrcContentAction_type_OSAccount=OS Account",
+        "BlackboardArtifactNode_getViewSrcContentAction_type_unknown=Item"
+    })
+    private String getContentTypeStr(Content content) {
+        if (content instanceof AbstractFile) {
+            return Bundle.BlackboardArtifactNode_getViewSrcContentAction_type_File();
+        } else if (content instanceof DataArtifact) {
+            return Bundle.BlackboardArtifactNode_getViewSrcContentAction_type_DataArtifact();
+        } else if (content instanceof OsAccount) {
+            return Bundle.BlackboardArtifactNode_getViewSrcContentAction_type_OSAccount();
+        } else {
+            return Bundle.BlackboardArtifactNode_getViewSrcContentAction_type_unknown();
+        }
+    }
+
+    /**
      * Returns a linked file or null if no linked file found. Also logs any
      * exception and returns null.
      *
@@ -603,20 +651,24 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @return The action or null if no action derived.
      */
     @Messages({
-        "BlackboardArtifactNode_getSrcContentAction_actionDisplayName=View Source Item in Directory"
+        "# {0} - contentType",
+        "BlackboardArtifactNode_getSrcContentAction_actionDisplayName=View Source {0} in Directory"
     })
     private Action getViewSrcContentAction(BlackboardArtifact artifact, Content content) {
         if (content instanceof DataArtifact) {
             return new ViewArtifactAction(
                     (BlackboardArtifact) content,
-                    Bundle.BlackboardArtifactNode_getSrcContentAction_actionDisplayName());
+                    Bundle.BlackboardArtifactNode_getSrcContentAction_actionDisplayName(
+                            getContentTypeStr(content)));
         } else if (content instanceof OsAccount) {
             return new ViewOsAccountAction(
                     (OsAccount) content,
-                    Bundle.BlackboardArtifactNode_getSrcContentAction_actionDisplayName());
+                    Bundle.BlackboardArtifactNode_getSrcContentAction_actionDisplayName(
+                            getContentTypeStr(content)));
         } else if (content instanceof AbstractFile || artifact instanceof DataArtifact) {
             return new ViewContextAction(
-                    Bundle.BlackboardArtifactNode_getSrcContentAction_actionDisplayName(),
+                    Bundle.BlackboardArtifactNode_getSrcContentAction_actionDisplayName(
+                            getContentTypeStr(content)),
                     content);
         } else {
             return null;
@@ -740,15 +792,21 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      *
      * @return The src content navigation action or null.
      */
-    @NbBundle.Messages({"BlackboardArtifactNode_getTimelineSrcContentAction_actionDisplayName=View Source Item in Timeline... "})
+    @NbBundle.Messages({
+        "# {0} - contentType",
+        "BlackboardArtifactNode_getTimelineSrcContentAction_actionDisplayName=View Source {0} in Timeline... "
+    })
     private Action getTimelineSrcContentAction(Content srcContent) {
         if (srcContent instanceof AbstractFile) {
-            return new ViewFileInTimelineAction((AbstractFile) srcContent, Bundle.BlackboardArtifactNode_getTimelineSrcContentAction_actionDisplayName());
+            return new ViewFileInTimelineAction((AbstractFile) srcContent,
+                    Bundle.BlackboardArtifactNode_getTimelineSrcContentAction_actionDisplayName(
+                            getContentTypeStr(srcContent)));
         } else if (srcContent instanceof DataArtifact) {
             try {
                 if (ViewArtifactInTimelineAction.hasSupportedTimeStamp((BlackboardArtifact) srcContent)) {
                     return new ViewArtifactInTimelineAction((BlackboardArtifact) srcContent,
-                            Bundle.BlackboardArtifactNode_getTimelineSrcContentAction_actionDisplayName());
+                            Bundle.BlackboardArtifactNode_getTimelineSrcContentAction_actionDisplayName(
+                                    getContentTypeStr(srcContent)));
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, MessageFormat.format("Error getting source data artifact timestamp (artifact objID={0})", srcContent.getId()), ex); //NON-NLS
@@ -766,11 +824,14 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      *
      * @return The action or null if no action should exist.
      */
+    @Messages({
+        "BlackboardArtifactNode_getTimelineArtifactAction_displayName=View Selected Item in Timeline... "
+    })
     private Action getTimelineArtifactAction(BlackboardArtifact art) {
         try {
             // don't show ViewArtifactInTimelineAction for AnalysisResults.
             if (!(art instanceof AnalysisResult) && ViewArtifactInTimelineAction.hasSupportedTimeStamp(art)) {
-                return new ViewArtifactInTimelineAction(art);
+                return new ViewArtifactInTimelineAction(art, Bundle.BlackboardArtifactNode_getTimelineArtifactAction_displayName());
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, MessageFormat.format("Error getting artifact timestamp (artifact objID={0})", art.getId()), ex); //NON-NLS
