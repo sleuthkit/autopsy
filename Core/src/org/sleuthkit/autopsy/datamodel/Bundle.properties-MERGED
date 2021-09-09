@@ -79,9 +79,9 @@ BlackboardArtifactNode.createSheet.srcFile.origName=Original Name
 BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated file has been tagged.
 BlackboardArtifactNode.createSheet.tags.displayName=Tags
 # {0} - type
-BlackboardArtifactNode_getActions_viewAssociatedFileAction=View {0} in Directory
+BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory
 # {0} - type
-BlackboardArtifactNode_getActions_viewAssociatedFileInTimelineAction=View {0} in Timeline...
+BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline...
 BlackboardArtifactNode_getAssociatedTypeStr_associated=Associated File
 BlackboardArtifactNode_getAssociatedTypeStr_webCache=Cached File
 BlackboardArtifactNode_getAssociatedTypeStr_webDownload=Downloaded File

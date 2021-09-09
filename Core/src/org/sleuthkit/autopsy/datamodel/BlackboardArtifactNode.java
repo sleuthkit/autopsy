@@ -29,6 +29,7 @@ import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -514,43 +515,31 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 .collect(Collectors.toList());
     }
 
-    @Messages({
-        "# {0} - type",
-        "BlackboardArtifactNode_getActions_viewAssociatedFileAction=View {0} in Directory",
-        "# {0} - type",
-        "BlackboardArtifactNode_getActions_viewAssociatedFileInTimelineAction=View {0} in Timeline..."
-    })
     @Override
     public Action[] getActions(boolean context) {
         // groupings of actions where each group will be separated by a divider
         List<List<Action>> actionsLists = new ArrayList<>();
 
+        // view artifact in timeline
         actionsLists.add(getNonNull(
                 getTimelineArtifactAction(this.artifact)
         ));
 
-        AbstractFile linkedFile = getLinkedFile(this.artifact);
-        if (linkedFile != null) {
-            actionsLists.add(Arrays.asList(
-                    new ViewContextAction(
-                            Bundle.BlackboardArtifactNode_getActions_viewAssociatedFileAction(
-                                    getAssociatedTypeStr(this.artifactType)),
-                            linkedFile),
-                    new ViewFileInTimelineAction(linkedFile,
-                            Bundle.BlackboardArtifactNode_getActions_viewAssociatedFileInTimelineAction(
-                                    getAssociatedTypeStr(this.artifactType)))
-            ));
-        }
-
+        // view associated file (TSK_PATH_ID attr) in directory and timeline
+        actionsLists.add(getAssociatedFileActions(this.artifact, this.artifactType));
+        
+        // view source content in directory and timeline
         actionsLists.add(getNonNull(
                 getViewSrcContentAction(this.artifact, this.srcContent),
                 getTimelineSrcContentAction(this.srcContent)
         ));
 
+        // extract with password from encrypted file
         actionsLists.add(getNonNull(
                 getExtractWithPasswordAction(this.srcContent)
         ));
 
+        // menu options for artifact with report parent
         if (this.srcContent instanceof Report) {
             actionsLists.add(DataModelActionsFactory.getActions(this.srcContent, false));
         }
@@ -559,16 +548,21 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         int selectedFileCount = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size();
         int selectedArtifactCount = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).size();
 
+        // view source content if source content is some sort of file
         actionsLists.add(getSrcContentViewerActions(parentFileNode, selectedFileCount));
 
+        // extract / export if source content is some sort of file
         if (parentFileNode != null) {
             actionsLists.add(Arrays.asList(ExtractAction.getInstance(), ExportCSVAction.getInstance()));
         }
 
+        // file and result tagging
         actionsLists.add(getTagActions(parentFileNode != null, this.artifact, selectedFileCount, selectedArtifactCount));
 
+        // menu extension items (i.e. add to central repository)
         actionsLists.add(ContextMenuExtensionPoint.getActions());
 
+        // netbeans default items (i.e. properties)
         actionsLists.add(Arrays.asList(super.getActions(context)));
 
         return actionsLists.stream()
@@ -630,20 +624,39 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Returns a linked file or null if no linked file found. Also logs any
-     * exception and returns null.
+     * Returns actions for navigating to an associated file in the directory or
+     * in the timeline.
      *
-     * @param artifact The artifact whose linked file will be identified.
-     *
-     * @return The linked file to the artifact using TSK_PATH_ID
+     * @param artifact The artifact whose associated file will be identified.
+     * @param artifactType The type of artifact.
+     * 
+     * @return The actions or an empty list.
      */
-    private AbstractFile getLinkedFile(BlackboardArtifact artifact) {
+    @Messages({
+        "# {0} - type",
+        "BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory",
+        "# {0} - type",
+        "BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline..."
+    })
+    private List<Action> getAssociatedFileActions(BlackboardArtifact artifact, BlackboardArtifact.Type artifactType) {
         try {
-            return findLinked(artifact);
+            AbstractFile associatedFile = findLinked(artifact);
+            if (associatedFile != null) {
+                return Arrays.asList(
+                        new ViewContextAction(
+                                Bundle.BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileAction(
+                                        getAssociatedTypeStr(artifactType)),
+                                associatedFile),
+                        new ViewFileInTimelineAction(associatedFile,
+                                Bundle.BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileInTimelineAction(
+                                        getAssociatedTypeStr(artifactType)))
+                );
+            }
+
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, MessageFormat.format("Error getting linked file of artifact (artifact objID={0})", artifact.getId()), ex); //NON-NLS
         }
-        return null;
+        return Collections.emptyList();
     }
 
     /**
