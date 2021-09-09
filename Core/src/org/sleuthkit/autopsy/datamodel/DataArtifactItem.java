@@ -19,23 +19,23 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.annotations.Beta;
-import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
- * An Autopsy Data Model item with an underlying AnalysisResult Sleuth Kit Data
+ * An Autopsy Data Model item with an underlying DataArtifact Sleuth Kit Data
  * Model object.
  */
-public class AnalysisResultItem extends BlackboardArtifactItem<AnalysisResult> {
+public class DataArtifactItem extends BlackboardArtifactItem<DataArtifact> {
 
     /**
-     * Constructs an Autopsy Data Model item with an underlying AnalysisResult
+     * Constructs an Autopsy Data Model item with an underlying DataArtifact
      * Sleuth Kit Data Model object.
      *
-     * @param analysisResult The AnalysisResult object.
+     * @param dataArtifact The DataArtifact object.
      */
     @Beta
-    AnalysisResultItem(AnalysisResult analysisResult) {
-        super(analysisResult);
+    DataArtifactItem(DataArtifact dataArtifact) {
+        super(dataArtifact);
     }
 
 }

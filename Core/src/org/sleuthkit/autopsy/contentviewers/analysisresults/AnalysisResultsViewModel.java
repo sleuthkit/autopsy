@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2021-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -251,7 +251,7 @@ public class AnalysisResultsViewModel {
                  * selected in the content viewer and get the analyzed content
                  * as the source of the analysis results to display.
                  */
-                selectedAnalysisResult = analysisResultItem.getAnalysisResult();
+                selectedAnalysisResult = analysisResultItem.getTskContent();
                 selectedObjectId = selectedAnalysisResult.getId();
                 analyzedContent = selectedAnalysisResult.getParent();
             } else {
@@ -260,7 +260,7 @@ public class AnalysisResultsViewModel {
                  * an analysis result. Use it as the source of the analysis
                  * results to display.
                  */
-                TskContentItem contentItem = node.getLookup().lookup(TskContentItem.class);
+                TskContentItem<?> contentItem = node.getLookup().lookup(TskContentItem.class);
                 analyzedContent = contentItem.getTskContent();
                 selectedObjectId = analyzedContent.getId();
             }

@@ -132,7 +132,7 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
             return true;
         }
 
-        TskContentItem contentItem = node.getLookup().lookup(TskContentItem.class);
+        TskContentItem<?> contentItem = node.getLookup().lookup(TskContentItem.class);
         if (!Objects.isNull(contentItem)) {
             Content content = contentItem.getTskContent();
             try {
