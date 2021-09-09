@@ -546,7 +546,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         Node parentFileNode = getParentFileNode(srcContent);
         int selectedFileCount = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size();
-        int selectedArtifactCount = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).size();
+        int selectedArtifactCount = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactItem.class).size();
 
         // view source content if source content is some sort of file
         actionsLists.add(getSrcContentViewerActions(parentFileNode, selectedFileCount));
@@ -728,7 +728,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @return The action or null if not appropriate source content.
      */
     private Action getExtractWithPasswordAction(Content srcContent) {
-        if ((srcContent instanceof LocalFile || srcContent instanceof DerivedFile)
+        if ((srcContent instanceof AbstractFile)
                 && FileTypeExtensions.getArchiveExtensions()
                         .contains("." + ((AbstractFile) srcContent).getNameExtension().toLowerCase())) {
             try {
