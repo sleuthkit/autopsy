@@ -372,9 +372,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          */
         BlackboardArtifactItem<?> artifactItem;
         if (artifact instanceof AnalysisResult) {
-            artifactItem = new AnalysisResultItem((AnalysisResult) artifact);
+            artifactItem = new AnalysisResultItem((AnalysisResult) artifact, content);
         } else {
-            artifactItem = new DataArtifactItem((DataArtifact) artifact);
+            artifactItem = new DataArtifactItem((DataArtifact) artifact, content);
         }
 
         /*

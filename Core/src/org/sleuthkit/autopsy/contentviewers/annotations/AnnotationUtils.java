@@ -127,17 +127,30 @@ public class AnnotationUtils {
 
     }
 
+    /**
+     * Returns the artifact and content to display within a pair.
+     *
+     * @param node The node to display.
+     *
+     * @return The pair of artifact (or null if not present) and content (either
+     *         artifact parent content, the node content, or null).
+     */
     private static Pair<BlackboardArtifact, Content> getDisplayContent(Node node) {
         BlackboardArtifactItem<?> artItem = node.getLookup().lookup(BlackboardArtifactItem.class);
         BlackboardArtifact artifact = artItem == null ? null : artItem.getTskContent();
 
         Content content = artItem != null
-                ? TBD
+                ? artItem.getSourceContent()
                 : node.getLookup().lookup(AbstractFile.class);
 
         return Pair.of(artifact, content);
     }
 
+    /**
+     * Returns whether or not the node is supported by the annotation viewer.
+     * @param node The node to display.
+     * @return True if the node is supported.
+     */
     public static boolean isSupported(Node node) {
         return getDisplayContent(node).getRight() != null;
     }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.annotations.Beta;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 
 /**
@@ -32,10 +33,11 @@ public class DataArtifactItem extends BlackboardArtifactItem<DataArtifact> {
      * Sleuth Kit Data Model object.
      *
      * @param dataArtifact The DataArtifact object.
+     * @param sourceContent The source content of the DataArtifact.
      */
     @Beta
-    DataArtifactItem(DataArtifact dataArtifact) {
-        super(dataArtifact);
+    DataArtifactItem(DataArtifact dataArtifact, Content sourceContent) {
+        super(dataArtifact, sourceContent);
     }
 
 }
