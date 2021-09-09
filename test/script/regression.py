@@ -16,18 +16,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import sys
+import subprocess
+import os
+
+# import db_diff
+sys.path.insert(0, os.path.join(subprocess.getoutput("cygpath -u $TSK_HOME"), "db_diff"))
 
 from tskdbdiff import TskDbDiff, TskDbDiffException, PGSettings
 import codecs
 import datetime
 import logging
-import os
+
 import re
 import shutil
 import socket
 import sqlite3
-import subprocess
-import sys
 from sys import platform as _platform
 import time
 import traceback

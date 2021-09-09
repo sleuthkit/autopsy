@@ -81,11 +81,12 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
 
 /**
- * A BlackboardArtifactNode is an AbstractNode implementation that can be used
- * to represent an artifact of any type.
+ * An AbstractNode implementation that can be used to represent an data artifact
+ * or analysis result of any type.
  */
 public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifact> {
 
@@ -219,37 +220,37 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private final PropertyChangeListener weakListener = WeakListeners.propertyChange(listener, null);
 
     /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
+     * Constructs an AbstractNode implementation that can be used to represent a
+     * data artifact or analysis result of any type. The Lookup of the Node will
+     * contain the data artifact or analysis result and its parent content as
+     * its source content.
      *
-     * @param artifact The artifact to represent.
-     * @param iconPath The path to the icon for the artifact type.
+     * @param artifact The data artifact or analysis result.
+     * @param iconPath The path to the icon for the data artifact or analysis
+     *                 result type.
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-                        
-        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
-            if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
-                srcContent = lookupContent;
-                try {
-                    /*
-                     * Calling this getter causes the unique path of the source
-                     * content to be cached in the Content object. This is
-                     * advantageous as long as this node is constructed in a
-                     * background thread instead of a UI thread.
-                     */
-                    srcContent.getUniquePath();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
-                }
-                break;
-            }
-        }
+
+        srcContent = getSourceContentFromLookup(artifact);
         if (srcContent == null) {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
+
+        try {
+            /*
+             * Calling this getter causes the unique path of the source content
+             * to be cached in the Content object. This is advantageous as long
+             * as this node is constructed in a background thread instead of a
+             * UI thread.
+             */
+            srcContent.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
+        }
+
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -259,26 +260,28 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
+     * Constructs an AbstractNode implementation that can be used to represent a
+     * data artifact or analysis result of any type. The Lookup of the Node will
+     * contain the data artifact or analysis result and its source content,
+     * either the parent content or the associated file.
      *
-     * @param artifact               The artifact to represent.
-     * @param lookupIsAssociatedFile True if the Content lookup should be made
-     *                               for the associated file instead of the
-     *                               parent file.
+     * @param artifact                  The data artifact or analysis result.
+     * @param useAssociatedFileInLookup True if the source content in the Lookup
+     *                                  should be the associated file instead of
+     *                                  the parent content.
      */
     @Beta
-    public BlackboardArtifactNode(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
-        super(artifact, createLookup(artifact, lookupIsAssociatedFile));
+    public BlackboardArtifactNode(BlackboardArtifact artifact, boolean useAssociatedFileInLookup) {
+        super(artifact, createLookup(artifact, useAssociatedFileInLookup));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-        
+
         try {
-            //The lookup for a file may or may not exist so we define the srcContent as the parent.
             srcContent = artifact.getParent();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, MessageFormat.format("Error getting the parent of the artifact for (artifact objID={0})", artifact.getId()), ex);
         }
+
         if (srcContent != null) {
             try {
                 /*
@@ -294,6 +297,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } else {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
+
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -304,18 +308,22 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
+     * Constructs an AbstractNode implementation that can be used to represent a
+     * data artifact or analysis result of any type. The Lookup of the Node will
+     * contain the data artifact or analysis result and its parent content as
+     * its source content.
      *
-     * @param artifact The artifact to represent.
+     * @param artifact The data artifact or analysis result.
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
     }
-    
+
     /**
      * Returns the artifact type of the artifact.
+     *
      * @param artifact The artifact.
+     *
      * @return The artifact type or null if no type could be retrieved.
      */
     private static BlackboardArtifact.Type getType(BlackboardArtifact artifact) {
@@ -331,54 +339,82 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * Creates a Lookup object for this node and populates it with both the
      * artifact this node represents and its source content.
      *
-     * @param artifact The artifact this node represents.
+     * @param artifact          The artifact this node represents.
+     * @param useAssociatedFile True if the source content in the Lookup should
+     *                          be the associated file instead of the parent
+     *                          content.
      *
      * @return The Lookup.
      */
-    private static Lookup createLookup(BlackboardArtifact artifact) {
-        final long objectID = artifact.getObjectID();
+    private static Lookup createLookup(BlackboardArtifact artifact, boolean useAssociatedFile) {
+        /*
+         * Get the source content.
+         */
+        Content content = null;
         try {
-            Content content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
-            if (content == null) {
-                return Lookups.fixed(artifact);
+            if (useAssociatedFile) {
+                content = getPathIdFile(artifact);
             } else {
-                return Lookups.fixed(artifact, content);
+                long srcObjectID = artifact.getObjectID();
+                content = contentCache.get(srcObjectID, () -> artifact.getSleuthkitCase().getContentById(srcObjectID));
             }
         } catch (ExecutionException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
-            return Lookups.fixed(artifact);
+            logger.log(Level.SEVERE, MessageFormat.format("Error getting source/associated content (artifact object ID={0})", artifact.getId()), ex); //NON-NLS
+        }
+
+        /*
+         * Make an Autopsy Data Model wrapper for the artifact.
+         *
+         * NOTE: The creation of an Autopsy Data Model independent of the
+         * NetBeans nodes is a work in progress. At the time this comment is
+         * being written, this object is only being used to indicate the item
+         * represented by this BlackboardArtifactNode.
+         */
+        BlackboardArtifactItem<?> artifactItem;
+        if (artifact instanceof AnalysisResult) {
+            artifactItem = new AnalysisResultItem((AnalysisResult) artifact);
+        } else {
+            artifactItem = new DataArtifactItem((DataArtifact) artifact);
+        }
+
+        /*
+         * Create the Lookup.
+         *
+         * NOTE: For now, we are putting both the Autopsy Data Model item and
+         * the Sleuth Kit Data Model item in the Lookup so that code that is not
+         * aware of the new Autopsy Data Model will still function.
+         */
+        if (content == null) {
+            return Lookups.fixed(artifact, artifactItem);
+        } else {
+            return Lookups.fixed(artifact, artifactItem, content);
         }
     }
 
     /**
-     * Creates a Lookup object for this node and populates it with both the
-     * artifact this node represents and its source content.
+     * Finds the source content in the Lookup created by createLookup() method.
      *
-     * @param artifact               The artifact this node represents.
-     * @param lookupIsAssociatedFile True if the Content lookup should be made
-     *                               for the associated file instead of the
-     *                               parent file.
+     * @param artifact Artifact who's source Content we are trying to find.
      *
-     * @return The Lookup.
+     * @return Source Content of the input artifact, if one exists. Null
+     *         otherwise.
      */
-    private static Lookup createLookup(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
-        Content content = null;
-        if (lookupIsAssociatedFile) {
-            try {
-                content = getPathIdFile(artifact);
-            } catch (ExecutionException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
-                content = null;
+    private Content getSourceContentFromLookup(BlackboardArtifact artifact) {
+        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
+            /*
+             * NOTE: createLookup() saves the artifact and its source content
+             * (if one exists). However, createLookup() has to be static because
+             * it is being called by super(), therefore it can't store the
+             * source content in this.srcContent class variable. That's why we
+             * have to have the logic below, which reads the Lookup contents,
+             * and decides that the source content is the entry in Lookup that
+             * is NOT the input artifact.
+             */
+            if ((lookupContent != null) && (lookupContent.getId() != artifact.getId())) {
+                return lookupContent;
             }
-            if (content == null) {
-                return Lookups.fixed(artifact);
-            } else {
-                return Lookups.fixed(artifact, content);
-            }
-        } else {
-            return createLookup(artifact);
         }
-
+        return null;
     }
 
     /**
@@ -447,10 +483,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * action to view it in the timeline.
          */
         try {
-            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact) &&
-                    // don't show ViewArtifactInTimelineAction for AnalysisResults.
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)
+                    && // don't show ViewArtifactInTimelineAction for AnalysisResults.
                     (!(this.artifact instanceof AnalysisResult))) {
-                
+
                 actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
         } catch (TskCoreException ex) {

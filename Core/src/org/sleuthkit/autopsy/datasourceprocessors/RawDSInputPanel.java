@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Allows examiner to supply a raw data source.
@@ -41,7 +42,8 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
     private static final long TWO_GB = 2000000000L;
     private static final long serialVersionUID = 1L;    //default
     private final String PROP_LASTINPUT_PATH = "LBL_LastInputFile_PATH";
-    private final JFileChooser fc = new JFileChooser();
+    private JFileChooser fc;
+    private JFileChooserFactory chooserHelper = new JFileChooserFactory();
     // Externally supplied name is used to store settings 
     private final String contextName;
     /**
@@ -51,11 +53,6 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
         initComponents();
 
         errorLabel.setVisible(false);
-
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setMultiSelectionEnabled(false);
-
         this.contextName = context;
     }
 
@@ -200,18 +197,25 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
     }// </editor-fold>//GEN-END:initComponents
     @SuppressWarnings("deprecation")
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-      String oldText = pathTextField.getText();
-      // set the current directory of the FileChooser if the ImagePath Field is valid
-      File currentDir = new File(oldText);
-      if (currentDir.exists()) {
-          fc.setCurrentDirectory(currentDir);
-      }
+        if (fc == null) {
+            fc = chooserHelper.getChooser();
+            fc.setDragEnabled(false);
+            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fc.setMultiSelectionEnabled(false);
+        }
 
-      int retval = fc.showOpenDialog(this);
-      if (retval == JFileChooser.APPROVE_OPTION) {
-          String path = fc.getSelectedFile().getPath();
-          pathTextField.setText(path);
-      }
+        String oldText = pathTextField.getText();
+        // set the current directory of the FileChooser if the ImagePath Field is valid
+        File currentDir = new File(oldText);
+        if (currentDir.exists()) {
+            fc.setCurrentDirectory(currentDir);
+        }
+
+        int retval = fc.showOpenDialog(this);
+        if (retval == JFileChooser.APPROVE_OPTION) {
+            String path = fc.getSelectedFile().getPath();
+            pathTextField.setText(path);
+        }
     }//GEN-LAST:event_browseButtonActionPerformed
 
     private void j2GBBreakupRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_j2GBBreakupRadioButtonActionPerformed

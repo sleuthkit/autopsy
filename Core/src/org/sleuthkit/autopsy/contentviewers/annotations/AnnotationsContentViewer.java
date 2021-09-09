@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.contentviewers.annotations;
 
 import java.awt.Component;
 import java.util.concurrent.ExecutionException;
@@ -28,9 +28,6 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.contentviewers.application.Annotations;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.jsoup.nodes.Document;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
@@ -162,7 +159,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         
         @Override
         protected String doInBackground() throws Exception {
-           Document doc = Annotations.buildDocument(node);
+           Document doc = AnnotationUtils.buildDocument(node);
            
            if(isCancelled()) {
                return null;

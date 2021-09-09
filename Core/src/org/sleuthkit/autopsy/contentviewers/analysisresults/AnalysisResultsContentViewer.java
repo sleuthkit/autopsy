@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.contentviewers.analysisresults;
 
 import java.awt.Component;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
@@ -29,15 +30,15 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
-import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.autopsy.datamodel.AnalysisResultItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Displays a list of analysis results as a content viewer.
+ * A content viewer that displays the analysis results for a Content object.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 7)
 public class AnalysisResultsContentViewer implements DataContentViewer {
@@ -46,7 +47,6 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
 
     // isPreferred value
     private static final int PREFERRED_VALUE = ViewerPriority.viewerPriority.LevelThree.getFlag();;
-
     private final AnalysisResultsViewModel viewModel = new AnalysisResultsViewModel();
     private final AnalysisResultsContentPanel panel = new AnalysisResultsContentPanel();
 
@@ -126,26 +126,24 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
 
     @Override
     public boolean isSupported(Node node) {
-        if (node == null) {
+        if (Objects.isNull(node)) {
             return false;
         }
 
-        // There needs to either be a file with an AnalysisResult or an AnalysisResult in the lookup.
-        for (Content content : node.getLookup().lookupAll(Content.class)) {
-            if (content instanceof AnalysisResult) {
-                return true;
-            }
+        AnalysisResultItem analysisResultItem = node.getLookup().lookup(AnalysisResultItem.class);
+        if (Objects.nonNull(analysisResultItem)) {
+            return true;
+        }
 
-            if (content == null || content instanceof BlackboardArtifact) {
-                continue;
-            }
-
+        TskContentItem<?> contentItem = node.getLookup().lookup(TskContentItem.class);
+        if (!Objects.isNull(contentItem)) {
+            Content content = contentItem.getTskContent();
             try {
                 if (Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().hasAnalysisResults(content.getId())) {
                     return true;
                 }
             } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.SEVERE, "Unable to get analysis results for file with obj id " + content.getId(), ex);
+                logger.log(Level.SEVERE, String.format("Error getting analysis results for Content (object ID = %d)", content.getId()), ex);
             }
         }
 
@@ -156,4 +154,5 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
     public int isPreferred(Node node) {
         return PREFERRED_VALUE;
     }
+
 }
