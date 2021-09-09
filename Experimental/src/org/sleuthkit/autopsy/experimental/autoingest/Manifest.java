@@ -41,7 +41,6 @@ public final class Manifest implements Serializable {
     private final Date dateFileCreated;
     private final String caseName;
     private final String deviceId;
-
     private final String dataSourceFileName;
     private final Map<String, String> manifestProperties;
 
