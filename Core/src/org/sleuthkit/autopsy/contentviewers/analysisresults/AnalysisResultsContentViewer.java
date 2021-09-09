@@ -46,7 +46,7 @@ public class AnalysisResultsContentViewer implements DataContentViewer {
     private static final Logger logger = Logger.getLogger(AnalysisResultsContentPanel.class.getName());
 
     // isPreferred value
-    private static final int PREFERRED_VALUE = ViewerPriority.viewerPriority.LevelThree.getFlag();;
+    private static final int PREFERRED_VALUE = ViewerPriority.viewerPriority.LevelThree.getFlag();
     private final AnalysisResultsViewModel viewModel = new AnalysisResultsViewModel();
     private final AnalysisResultsContentPanel panel = new AnalysisResultsContentPanel();
 

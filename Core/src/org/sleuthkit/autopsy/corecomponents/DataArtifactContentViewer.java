@@ -69,9 +69,9 @@ public class DataArtifactContentViewer extends javax.swing.JPanel implements Dat
     private final static String ERROR_TEXT = NbBundle.getMessage(DataArtifactContentViewer.class, "DataArtifactContentViewer.errorText");
 
     // Value to return in isPreferred if this viewer is less preferred.
-    private static final int LESS_PREFERRED = ViewerPriority.viewerPriority.LevelThree.getFlag();;
+    private static final int LESS_PREFERRED = ViewerPriority.viewerPriority.LevelThree.getFlag();
     // Value to return in isPreferred if this viewer is more preferred.
-    private static final int MORE_PREFERRED = ViewerPriority.viewerPriority.LevelSix.getFlag();;
+    private static final int MORE_PREFERRED = ViewerPriority.viewerPriority.LevelSix.getFlag();
 
     private Node currentNode; // @@@ Remove this when the redundant setNode() calls problem is fixed. 
     private int currentPage = 1;
