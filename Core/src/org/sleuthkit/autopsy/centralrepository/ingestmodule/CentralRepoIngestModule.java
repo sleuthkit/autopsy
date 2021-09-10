@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,10 +48,12 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -69,6 +71,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = false;
     static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = false;
+    static final boolean DEFAULT_FLAG_UNIQUE_DEVICES = false;
     static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
 
     private final static Logger logger = Logger.getLogger(CentralRepoIngestModule.class.getName());
@@ -83,6 +86,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private final boolean flagPreviouslySeenDevices;
     private Blackboard blackboard;
     private final boolean createCorrelationProperties;
+    private final boolean flagUniqueArtifacts;
 
     /**
      * Instantiate the Central Repository ingest module.
@@ -93,6 +97,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
         flagPreviouslySeenDevices = settings.isFlagPreviousDevices();
         createCorrelationProperties = settings.shouldCreateCorrelationProperties();
+        flagUniqueArtifacts = settings.isFlagUniqueArtifacts();
     }
 
     @Override
@@ -151,7 +156,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
                 List<String> caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
                 HealthMonitor.submitTimingMetric(timingMetric);
                 if (!caseDisplayNamesList.isEmpty()) {
-                    postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
+                    postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList, filesType, md5);
                 }
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
@@ -249,6 +254,9 @@ final class CentralRepoIngestModule implements FileIngestModule {
         if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.shouldCreateCrProperties()) {
             IngestEventsListener.setCreateCrProperties(createCorrelationProperties);
         }
+        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagUniqueArtifacts()) {
+            IngestEventsListener.setFlagUniqueArtifacts(flagUniqueArtifacts);
+        }        
 
         if (CentralRepository.isEnabled() == false) {
             /*
@@ -327,26 +335,33 @@ final class CentralRepoIngestModule implements FileIngestModule {
     }
 
     /**
-     * Post a new interesting artifact for the file marked bad.
+     * Post a new "previously seen" artifact for the file marked bad.
      *
      * @param abstractFile     The file from which to create an artifact.
      * @param caseDisplayNames Case names to be added to a TSK_COMMON attribute.
      */
-    private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
+    private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames, CorrelationAttributeInstance.Type aType, String value) {
+        String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
+        String justification = "Previously marked as notable in cases " + prevCases;
         Collection<BlackboardAttribute> attributes = Arrays.asList(
                 new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
                         Bundle.CentralRepoIngestModule_prevTaggedSet_text()),
                 new BlackboardAttribute(
-                        TSK_COMMENT, MODULE_NAME,
-                        Bundle.CentralRepoIngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
+                        TSK_CORRELATION_TYPE, MODULE_NAME,
+                        aType.getDisplayName()),
+                new BlackboardAttribute(
+                        TSK_CORRELATION_VALUE, MODULE_NAME,
+                        value),
+                new BlackboardAttribute(
+                        TSK_OTHER_CASES, MODULE_NAME,
+                        prevCases));
         try {
-
             // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_FILE_HIT, attributes)) {
+            if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_NOTABLE, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
-                        null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), null, attributes)
+                        BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, Score.SCORE_NOTABLE, 
+                        null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), justification, attributes)
                         .getAnalysisResult();
                 try {
                     // index the artifact for keyword search

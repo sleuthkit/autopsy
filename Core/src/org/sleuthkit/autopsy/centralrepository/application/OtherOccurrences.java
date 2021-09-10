@@ -53,7 +53,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -116,7 +115,7 @@ public final class OtherOccurrences {
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
         if (bbArtifact != null && CentralRepository.isEnabled()) {
-            ret.addAll(CorrelationAttributeUtil.makeCorrAttrsForCorrelation(bbArtifact));
+            ret.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(bbArtifact));
         }
 
         // we can correlate based on the MD5 if it is enabled      
