@@ -90,19 +90,13 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
     @Override
     public boolean isSupported(Node node) {
 
-        // Is supported if one of the following is true:
-        // - The central repo is enabled and the node is not null
-        // - The central repo is disabled and the backing file has a valid MD5 hash
+        // Is supported if:
+        // The central repo is enabled and the node is not null
         // And the node has information which could be correlated on.
-        if (CentralRepository.isEnabled() && node != null) {
-            return OtherOccurrences.getAbstractFileFromNode(node) != null || OtherOccurrences.getBlackboardArtifactFromNode(node) != null || node.getLookup().lookup(OsAccount.class) != null;
-        } else if (node != null) {
-            AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
-            return file != null
-                    && file.getSize() > 0
-                    && ((file.getMd5Hash() != null) && (!file.getMd5Hash().isEmpty()));
-        }
-        return false;
+        return CentralRepository.isEnabled() && node != null
+                && (OtherOccurrences.getAbstractFileFromNode(node) != null
+                || OtherOccurrences.getBlackboardArtifactFromNode(node) != null
+                || node.getLookup().lookup(OsAccount.class) != null);
     }
 
     @Override
