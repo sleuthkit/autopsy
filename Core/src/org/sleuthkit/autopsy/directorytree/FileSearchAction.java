@@ -23,31 +23,28 @@ import javax.swing.AbstractAction;
 import org.openide.util.Lookup;
 
 /**
- *
- * @author dfickling
+ * The “File Search by Attributes” action for data sources in the tree.
  */
 public class FileSearchAction extends AbstractAction {
 
-    private final Long dataSourceId;
+    private final long dataSourceId;
 
+    /**
+     * Main constructor.
+     *
+     * @param title        The display name for the action.
+     * @param dataSourceID The data source id of the item that is selected in
+     *                     the tree.
+     */
     public FileSearchAction(String title, long dataSourceID) {
         super(title);
         dataSourceId = dataSourceID;
     }
 
-    public FileSearchAction(String title) {
-        super(title);
-        dataSourceId = null;
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         FileSearchProvider searcher = Lookup.getDefault().lookup(FileSearchProvider.class);
-        if (dataSourceId == null) {
-            searcher.showDialog();
-        } else {
-            searcher.showDialog(dataSourceId);
-        }
+        searcher.showDialog(dataSourceId);
     }
 
 }

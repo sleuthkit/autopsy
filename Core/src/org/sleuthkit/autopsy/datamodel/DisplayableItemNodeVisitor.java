@@ -181,15 +181,13 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(EmptyNode.MessageNode emptyNode);
 
-    T visit(InterestingHits.InterestingItemTypeNode aThis);
-
     /*
      * Attachments
      */
     T visit(AttachmentNode node);
-    
+
     T visit(OsAccounts.OsAccountNode node);
-    
+
     T visit(OsAccounts.OsAccountListNode node);
 
     T visit(PersonNode node);
@@ -197,12 +195,12 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(HostNode node);
 
     T visit(DataSourcesNode node);
-    
+
     /*
      * Unsupported node
      */
     T visit(UnsupportedContentNode ucn);
-    
+
     T visit(LocalFilesDataSourceNode lfdsn);
 
     /**
@@ -330,11 +328,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
             return defaultVisit(ftByMimeTypeEmptyNode);
-        }
-
-        @Override
-        public T visit(InterestingHits.InterestingItemTypeNode interestingItemTypeNode) {
-            return defaultVisit(interestingItemTypeNode);
         }
 
         @Override
@@ -546,12 +539,12 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(AttachmentNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(OsAccounts.OsAccountNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(OsAccounts.OsAccountListNode node) {
             return defaultVisit(node);
@@ -571,12 +564,12 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(PersonNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(UnsupportedContentNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(LocalFilesDataSourceNode node) {
             return defaultVisit(node);

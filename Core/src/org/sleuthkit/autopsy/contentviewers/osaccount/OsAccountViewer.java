@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -141,7 +142,7 @@ public class OsAccountViewer extends javax.swing.JPanel implements DataContentVi
 
     @Override
     public int isPreferred(Node node) {
-        return 1;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 
     /**
