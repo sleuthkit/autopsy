@@ -55,7 +55,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountInstance;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -86,7 +85,7 @@ public final class OtherOccurrences {
 
         if (osAccountAddr.isPresent()) {
             try {
-                for (OsAccountInstance instance : osAccount.getOsAccountInstances()) {                    
+                for (OsAccountInstance instance : osAccount.getOsAccountInstances()) {
                     CorrelationAttributeInstance correlationAttributeInstance = CorrelationAttributeUtil.makeCorrAttr(instance.getOsAccount(), instance.getDataSource());
                     if (correlationAttributeInstance != null) {
                         ret.add(correlationAttributeInstance);
@@ -147,25 +146,6 @@ public final class OtherOccurrences {
                 }
             } catch (CentralRepoException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
-            }
-            // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.  
-        } else if (file != null && file.getSize() > 0) {
-            String md5 = file.getMd5Hash();
-            if (md5 != null && !md5.isEmpty()) {
-                try {
-                    final CorrelationAttributeInstance.Type fileAttributeType
-                            = CorrelationAttributeInstance.getDefaultCorrelationTypes()
-                                    .stream()
-                                    .filter(attrType -> attrType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID)
-                                    .findAny()
-                                    .get();
-                    //The Central Repository is not enabled
-                    ret.add(new CorrelationAttributeInstance(fileAttributeType, md5, null, null, "", "", TskData.FileKnown.UNKNOWN, file.getId()));
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
-                } catch (CorrelationAttributeNormalizationException ex) {
-                    logger.log(Level.INFO, String.format("Unable to create CorrelationAttributeInstance for value %s", md5), ex); // NON-NLS
-                }
             }
         }
         return ret;
@@ -270,42 +250,10 @@ public final class OtherOccurrences {
             logger.log(Level.INFO, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-        } 
+        }
 
         return new HashMap<>(
                 0);
-    }
-
-    /**
-     * Get all other abstract files in the current case with the same MD5 as the
-     * selected node.
-     *
-     * @param corAttr  The CorrelationAttribute containing the MD5 to search for
-     * @param openCase The current case
-     * @param file     The current file.
-     *
-     * @return List of matching AbstractFile objects
-     *
-     * @throws NoCurrentCaseException
-     * @throws TskCoreException
-     * @throws CentralRepoException
-     */
-    public static List<AbstractFile> getCaseDbMatches(CorrelationAttributeInstance corAttr, Case openCase, AbstractFile file) throws NoCurrentCaseException, TskCoreException, CentralRepoException {
-        List<AbstractFile> caseDbArtifactInstances = new ArrayList<>();
-        if (file != null) {
-            String md5 = corAttr.getCorrelationValue();
-            SleuthkitCase tsk = openCase.getSleuthkitCase();
-            List<AbstractFile> matches = tsk.findAllFilesWhere(String.format("md5 = '%s'", new Object[]{md5}));
-
-            for (AbstractFile fileMatch : matches) {
-                if (file.equals(fileMatch)) {
-                    continue; // If this is the file the user clicked on
-                }
-                caseDbArtifactInstances.add(fileMatch);
-            }
-        }
-        return caseDbArtifactInstances;
-
     }
 
     /**

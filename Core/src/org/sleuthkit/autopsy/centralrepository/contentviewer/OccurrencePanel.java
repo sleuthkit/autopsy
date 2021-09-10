@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -202,13 +201,9 @@ final class OccurrencePanel extends javax.swing.JPanel {
                 }
                 String caseDate = "";
                 try {
-                    if (occurrence.isCentralRepoNode()) {
-                        if (CentralRepository.isEnabled()) {
-                            CorrelationCase partialCase = occurrence.getCorrelationAttributeInstance().getCorrelationCase();
-                            caseDate = CentralRepository.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
-                        }
-                    } else {
-                        caseDate = Case.getCurrentCase().getCreatedDate();
+                    if (CentralRepository.isEnabled()) {
+                        CorrelationCase partialCase = occurrence.getCorrelationAttributeInstance().getCorrelationCase();
+                        caseDate = CentralRepository.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
                     }
                 } catch (CentralRepoException ex) {
                     LOGGER.log(Level.WARNING, "Error getting case created date for other occurrence content viewer", ex);

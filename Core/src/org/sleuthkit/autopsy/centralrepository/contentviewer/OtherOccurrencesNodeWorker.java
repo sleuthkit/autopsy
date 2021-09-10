@@ -28,7 +28,6 @@ import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.application.NodeData;
 import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.centralrepository.contentviewer.OtherOccurrencesNodeWorker.OtherOccurrencesData;
@@ -85,7 +84,7 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
         }
         Collection<CorrelationAttributeInstance> correlationAttributes = new ArrayList<>();
         if (osAccount != null) {
-            correlationAttributes = OtherOccurrences.getCorrelationAttributeFromOsAccount(node, osAccount);    
+            correlationAttributes = OtherOccurrences.getCorrelationAttributeFromOsAccount(node, osAccount);
         } else {
             correlationAttributes = OtherOccurrences.getCorrelationAttributesFromNode(node, file);
         }
@@ -93,23 +92,13 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
         Set<String> dataSources = new HashSet<>();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
             for (NodeData nodeData : OtherOccurrences.getCorrelatedInstances(file, deviceId, dataSourceName, corAttr).values()) {
-                if (nodeData.isCentralRepoNode()) {
-                    try {
-                        dataSources.add(OtherOccurrences.makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
-                        caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
-                    } catch (CentralRepoException ex) {
-                        logger.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
-                    }
-                } else {
-                    try {
-                        dataSources.add(OtherOccurrences.makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
-                        caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
-                    } catch (NoCurrentCaseException ex) {
-                        logger.log(Level.WARNING, "No current case open for other occurrences", ex);
-                    }
+                try {
+                    dataSources.add(OtherOccurrences.makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                    caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
+                } catch (CentralRepoException ex) {
+                    logger.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
                 }
                 totalCount++;
-
                 if (isCancelled()) {
                     break;
                 }
