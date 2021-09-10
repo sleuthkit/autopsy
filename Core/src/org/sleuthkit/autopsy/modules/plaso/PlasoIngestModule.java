@@ -326,7 +326,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 // If the description is empty use the event type display name
                 // as the description.
                 if (description == null || description.isEmpty()) {
-                    if (eventType != TimelineEventType.OTHER) {
+                    if (eventType != TimelineEventType.STANDARD_ARTIFACT_CATCH_ALL) {
                         description = eventType.getDisplayName();
                     } else {
                         continue;
@@ -440,7 +440,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                         return TimelineEventType.REGISTRY;
                 }
             default:
-                return TimelineEventType.OTHER;
+                return TimelineEventType.STANDARD_ARTIFACT_CATCH_ALL;
         }
     }
 
