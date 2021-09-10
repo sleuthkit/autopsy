@@ -182,9 +182,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
-                CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
+                CorrelationAttributeInstance corInstance = getFirstCorrelationAttributeInstance();
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, corInstance))
                 );
             }
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
@@ -194,17 +194,17 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
-                CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
+                CorrelationAttributeInstance corInstance = getFirstCorrelationAttributeInstance();
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, corInstance))
                 );
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
             CommentChangedEvent event = (CommentChangedEvent) evt;
             if (event.getContentID() == content.getId()) {
                 List<Tag> tags = getAllTagsFromDatabase();
-                CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
-                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute)));
+                CorrelationAttributeInstance corInstance = getFirstCorrelationAttributeInstance();
+                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, corInstance)));
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             this.setDisplayName(evt.getNewValue().toString());
@@ -411,16 +411,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "# {0} - occurrenceCount",
         "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the MD5 correlation value"})
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue,
-            String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attributeInstance, String defaultDescription) {
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
         String description = defaultDescription;
         try {
             //don't perform the query if there is no correlation value
-            if (attributeType != null && StringUtils.isNotBlank(attributeValue)) {
-                count = CentralRepository.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
+            if (attributeInstance != null && StringUtils.isNotBlank(attributeInstance.getCorrelationValue())) {
+                count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attributeInstance);
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
-            } else if (attributeType != null) {
+            } else if (attributeInstance != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
         } catch (CentralRepoException ex) {
@@ -491,10 +490,13 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     @Override
-    protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
+    protected CorrelationAttributeInstance getFirstCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;
         if (CentralRepository.isEnabled() && !UserPreferences.getHideSCOColumns()) {
-            attribute = CorrelationAttributeUtil.getCorrAttrForFile(content);
+            List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForSearch(content);
+            if (!listOfPossibleAttributes.isEmpty()) {
+                attribute = listOfPossibleAttributes.get(0);
+            }
         }
         return attribute;
     }

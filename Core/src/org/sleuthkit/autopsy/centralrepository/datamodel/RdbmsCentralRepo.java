@@ -1090,7 +1090,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         String insertSQL;
         switch (CentralRepoDbManager.getSavedDbChoice().getDbPlatform()) {
             case POSTGRESQL:
-                insertSQL =  "INSERT INTO accounts (account_type_id, account_unique_identifier) VALUES (?, ?) " + getConflictClause();  //NON-NLS
+                insertSQL = "INSERT INTO accounts (account_type_id, account_unique_identifier) VALUES (?, ?) " + getConflictClause();  //NON-NLS
                 break;
             case SQLITE:
                 insertSQL = "INSERT OR IGNORE INTO accounts (account_type_id, account_unique_identifier) VALUES (?, ?) "; //NON-NLS
@@ -1098,7 +1098,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             default:
                 throw new CentralRepoException(String.format("Cannot add account to currently selected CR database platform %s", CentralRepoDbManager.getSavedDbChoice().getDbPlatform())); //NON-NLS
         }
-        
 
         try (Connection connection = connect();
                 PreparedStatement preparedStatement = connection.prepareStatement(insertSQL);) {
@@ -1193,7 +1192,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      * @return CentralRepoAccount for the give type/id. May return null if not
      *         found.
      *
-     * @throws CentralRepoException  If there is an error accessing Central Repository.
+     * @throws CentralRepoException      If there is an error accessing Central
+     *                                   Repository.
      * @throws InvalidAccountIDException If the account identifier is not valid.
      */
     @Override
@@ -1491,6 +1491,59 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeConnection(conn);
+        }
+
+        return instanceCount;
+    }
+
+    @Override
+    public Long getCountCasesWithOtherInstances(CorrelationAttributeInstance instance) throws CentralRepoException, CorrelationAttributeNormalizationException {
+        Long instanceCount = 0L;
+        if (instance != null) {
+            Long sourceObjID = instance.getFileObjectId();
+            //We know that instances have a correlation case but that correlation case may have a null ID if it is not in the CR, although it should be.
+            int correlationCaseId = instance.getCorrelationCase().getID();
+            String normalizedValue = CorrelationAttributeNormalizer.normalize(instance.getCorrelationType(), instance.getCorrelationValue());
+            Connection conn = connect();
+            PreparedStatement preparedStatement = null;
+            String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(instance.getCorrelationType());
+            ResultSet resultSet = null;
+            try {
+                if (correlationCaseId > 0 && sourceObjID != null) {
+                    //the current case is in the CR we can ignore this case source file to ensure we don't count the current item   
+                    //this will also work regardless of the instance itself being a database instance
+                    String sql
+                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM "
+                            + tableName
+                            + " WHERE value=? AND NOT (file_obj_id=? AND case_id=?)) AS "
+                            + tableName
+                            + "_other_case_count";
+                    preparedStatement = conn.prepareStatement(sql);
+                    preparedStatement.setString(1, normalizedValue);
+                    preparedStatement.setLong(2, sourceObjID);
+                    preparedStatement.setInt(3, correlationCaseId);
+                } else {
+                    //the current case is not in the CR so the current instance can't be so we can just count all other cases with the instance
+                    //we won't know if it exists elsewhere in this case because this case is not in the CR
+                    String sql
+                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM "
+                            + tableName
+                            + " WHERE value=? AS "
+                            + tableName
+                            + "_other_case_count";
+                    preparedStatement = conn.prepareStatement(sql);
+                    preparedStatement.setString(1, normalizedValue);
+                }
+                resultSet = preparedStatement.executeQuery();
+                resultSet.next();
+                instanceCount = resultSet.getLong(1);
+            } catch (SQLException ex) {
+                throw new CentralRepoException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
+            } finally {
+                CentralRepoDbUtil.closeStatement(preparedStatement);
+                CentralRepoDbUtil.closeResultSet(resultSet);
+                CentralRepoDbUtil.closeConnection(conn);
+            }
         }
 
         return instanceCount;
@@ -2556,13 +2609,13 @@ abstract class RdbmsCentralRepo implements CentralRepository {
 
     @Override
     public void executeCommand(String sql, List<Object> params) throws CentralRepoException {
-      
+
         try (Connection conn = connect();) {
-            
+
             PreparedStatement preparedStatement = conn.prepareStatement(sql);
-                
-             // Fill in the params
-             if (params != null) {
+
+            // Fill in the params
+            if (params != null) {
                 int paramIndex = 1;
                 for (Object param : params) {
                     preparedStatement.setObject(paramIndex, param);
@@ -2582,10 +2635,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             throw new CentralRepoException("Query callback is null");
         }
 
-       
-        try ( Connection conn = connect();)   {
-             PreparedStatement preparedStatement = conn.prepareStatement(sql);
-             
+        try (Connection conn = connect();) {
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+
             // fill in the params
             if (params != null) {
                 int paramIndex = 1;
@@ -2600,7 +2652,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             }
         } catch (SQLException ex) {
             throw new CentralRepoException(String.format("Error executing prepared statement for SQL query %s", sql), ex);
-        } 
+        }
     }
 
     @Override

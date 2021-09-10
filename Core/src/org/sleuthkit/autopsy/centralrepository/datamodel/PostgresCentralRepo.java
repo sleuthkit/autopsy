@@ -205,7 +205,7 @@ final class PostgresCentralRepo extends RdbmsCentralRepo {
             }
         }
     }
-
+    
     @Override
     protected String getConflictClause() {
         return CONFLICT_CLAUSE;
@@ -268,5 +268,6 @@ final class PostgresCentralRepo extends RdbmsCentralRepo {
         }
         return columnExists;
     }
+
 
 }

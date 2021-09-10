@@ -53,7 +53,6 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
@@ -830,20 +829,21 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Gets the correlation attribute for the MD5 hash of the source file of the
-     * artifact represented by this node. The correlation attribute instance can
-     * only be returned if the central repository is enabled and the source
-     * content is a file.
+     * Gets the first correlation attribute instance associated with the
+     * artifact this node represents.
      *
-     * @return The correlation attribute instance, may be null.
+     * @return The first correlation attribute instance, may be null.
      */
     @Override
-    protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
-        CorrelationAttributeInstance correlationAttribute = null;
-        if (CentralRepository.isEnabled() && srcContent instanceof AbstractFile) {
-            correlationAttribute = CorrelationAttributeUtil.getCorrAttrForFile((AbstractFile) srcContent);
+    protected CorrelationAttributeInstance getFirstCorrelationAttributeInstance() {
+        CorrelationAttributeInstance attribute = null;
+        if (CentralRepository.isEnabled() && !UserPreferences.getHideSCOColumns()) {
+            List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForSearch(content);
+            if (!listOfPossibleAttributes.isEmpty()) {
+                attribute = listOfPossibleAttributes.get(0);
+            }
         }
-        return correlationAttribute;
+        return attribute;
     }
 
     /**
@@ -856,7 +856,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * repository.
      *
      * @param tags      The tags applied to the artifact and its source content.
-     * @param attribute A correlation attribute instance Ffor the central
+     * @param attribute A correlation attribute instance for the central
      *                  repository lookup.
      *
      * @return The value of the comment property.
@@ -891,39 +891,21 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         return status;
     }
 
-    /**
-     * Computes the value of the other occurrences property ("O" in S, C, O) for
-     * the artifact represented by this node. The value of the other occurrences
-     * property is the number of other data sources this artifact appears in
-     * according to a correlation attribute instance lookup in the central
-     * repository, plus one for the data source for this instance of the
-     * artifact.
-     *
-     * @param corrAttrType       The correlation attribute instance type to use
-     *                           for the central repsoitory lookup.
-     * @param attributeValue     The correlation attribute instane value to use
-     *                           for the central repsoitory lookup.
-     * @param defaultDescription A default description.
-     *
-     * @return The value of the occurrences property as a data sources count and
-     *         a description string.
-     *
-     */
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(Type corrAttrType, String attributeValue, String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
         Long count = -1L;
         String description = defaultDescription;
         try {
-            if (corrAttrType != null && StringUtils.isNotBlank(attributeValue)) {
-                count = CentralRepository.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(corrAttrType, attributeValue);
-                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count, corrAttrType.getDisplayName());
-            } else if (corrAttrType != null) {
+            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
+                count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attribute);
+                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count, attribute.getCorrelationType().getDisplayName());
+            } else if (attribute != null) {
                 description = Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationValues_description();
             }
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error querying central repository for other occurences count (artifact objID={0}, corrAttrType={1}, corrAttrValue={2})", artifact.getId(), corrAttrType, attributeValue), ex);
+            logger.log(Level.SEVERE, MessageFormat.format("Error querying central repository for other occurences count (artifact objID={0}, corrAttrType={1}, corrAttrValue={2})", artifact.getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error normalizing correlation attribute for central repository query (artifact objID={0}, corrAttrType={2}, corrAttrValue={3})", artifact.getId(), corrAttrType, attributeValue), ex);
+            logger.log(Level.SEVERE, MessageFormat.format("Error normalizing correlation attribute for central repository query (artifact objID={0}, corrAttrType={2}, corrAttrValue={3})", artifact.getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
         }
         return Pair.of(count, description);
     }
@@ -956,7 +938,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Adds a "custom" property to the property sheet of this node, indepoendent
+     * Adds a "custom" property to the property sheet of this node, independent
      * of the artifact this node represents or its source content.
      *
      * @param property The custom property.
@@ -1171,7 +1153,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}"})
     @Deprecated
     protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
-        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute.getCorrelationType(), attribute.getCorrelationValue(), Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationAttributes_description());
+        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute, Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationAttributes_description());
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), countAndDescription.getRight(), countAndDescription.getLeft()));
     }
 
