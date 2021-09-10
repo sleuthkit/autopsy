@@ -569,7 +569,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
 
         boolean scoHasBeenAdded = false;
-        if (BlackboardArtifact.Category.ANALYSIS_RESULT == artifactType.getCategory()
+        if (artifact instanceof AnalysisResult
                 && !(artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                 || artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
             updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
@@ -607,32 +607,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
 
-        if (!UserPreferences.getHideSCOColumns() && !scoHasBeenAdded) {
-            /*
-             * Add S(core), C(omments), and O(ther occurences) columns to the
-             * sheet and start a background task to compute the value of these
-             * properties for the artifact represented by this node. The task
-             * will fire a PropertyChangeEvent when the computation is completed
-             * and this node's PropertyChangeListener will update the sheet.
-             */
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_score_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
-                    VALUE_LOADING,
-                    ""));
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_comment_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
-                    VALUE_LOADING,
-                    ""));
-            if (CentralRepository.isEnabled()) {
-                sheetSet.put(new NodeProperty<>(
-                        Bundle.BlackboardArtifactNode_createSheet_count_name(),
-                        Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
-                        VALUE_LOADING,
-                        ""));
-            }
-            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+        if (!scoHasBeenAdded) {
+            addSCOColumns(sheetSet);
         }
 
         /*
@@ -1123,34 +1099,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
                 NO_DESCR,
                 getDisplayName()));
-
-        if (!UserPreferences.getHideSCOColumns()) {
-            /*
-             * Add S(core), C(omments), and O(ther occurences) columns to the
-             * sheet and start a background task to compute the value of these
-             * properties for the artifact represented by this node. The task
-             * will fire a PropertyChangeEvent when the computation is completed
-             * and this node's PropertyChangeListener will update the sheet.
-             */
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_score_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
-                    VALUE_LOADING,
-                    ""));
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_comment_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
-                    VALUE_LOADING,
-                    ""));
-            if (CentralRepository.isEnabled()) {
-                sheetSet.put(new NodeProperty<>(
-                        Bundle.BlackboardArtifactNode_createSheet_count_name(),
-                        Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
-                        VALUE_LOADING,
-                        ""));
-            }
-            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
-        }
+        
+        addSCOColumns(sheetSet);
 
         sheetSet.put(new NodeProperty<>(
                 Bundle.BlackboardArtifactNode_analysisSheet_sourceType_name(),
@@ -1181,6 +1131,36 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 Bundle.BlackboardArtifactNode_analysisSheet_justifaction_name(),
                 NO_DESCR,
                 result.getJustification()));
+    }
+    
+    private void addSCOColumns(Sheet.Set sheetSet) {
+        if (!UserPreferences.getHideSCOColumns()) {
+            /*
+             * Add S(core), C(omments), and O(ther occurences) columns to the
+             * sheet and start a background task to compute the value of these
+             * properties for the artifact represented by this node. The task
+             * will fire a PropertyChangeEvent when the computation is completed
+             * and this node's PropertyChangeListener will update the sheet.
+             */
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                    VALUE_LOADING,
+                    ""));
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                    VALUE_LOADING,
+                    ""));
+            if (CentralRepository.isEnabled()) {
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                        Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                        VALUE_LOADING,
+                        ""));
+            }
+            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+        }
     }
 
     private String getSourceObjType() {
