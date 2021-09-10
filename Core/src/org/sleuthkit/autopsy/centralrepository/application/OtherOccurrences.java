@@ -263,13 +263,6 @@ public final class OtherOccurrences {
                     nodeDataMap.put(uniquePathKey, newNode);
                 }
             }
-            if (file != null && corAttr.getCorrelationType().getDisplayName().equals("Files")) {
-                List<AbstractFile> caseDbFiles = getCaseDbMatches(corAttr, openCase, file);
-
-                for (AbstractFile caseDbFile : caseDbFiles) {
-                    addOrUpdateNodeData(openCase, nodeDataMap, caseDbFile);
-                }
-            }
             return nodeDataMap;
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
@@ -277,11 +270,7 @@ public final class OtherOccurrences {
             logger.log(Level.INFO, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-        } catch (TskCoreException ex) {
-            // do nothing. 
-            // @@@ Review this behavior
-            logger.log(Level.SEVERE, "Exception while querying open case.", ex); // NON-NLS
-        }
+        } 
 
         return new HashMap<>(
                 0);

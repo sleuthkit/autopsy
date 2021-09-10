@@ -329,8 +329,8 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     }
 
                     casesTableModel.clearTable();
-                    
-                    OtherOccurrenceOneTypeWorker.OneTypeData data = get();   
+
+                    OtherOccurrenceOneTypeWorker.OneTypeData data = get();
                     correlationAttributes.addAll(data.getCorrelationAttributesToAdd());
                     for (CorrelationCase corCase : data.getCaseNames().values()) {
                         casesTableModel.addCorrelationCase(new CorrelationCaseWrapper(corCase));
@@ -447,12 +447,8 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                         for (NodeData nodeData : correlatedNodeDataMap.values()) {
                             for (int selectedRow : selectedCaseIndexes) {
                                 try {
-                                    if (nodeData.isCentralRepoNode()) {
-                                        if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
-                                                && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
-                                            dataSourcesTableModel.addNodeData(nodeData);
-                                        }
-                                    } else if (currentCaseName != null && (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(currentCaseName))) {
+                                    if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
+                                            && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
                                         dataSourcesTableModel.addNodeData(nodeData);
                                     }
                                 } catch (CentralRepoException ex) {
@@ -505,15 +501,9 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                             for (int selectedDataSourceRow : selectedDataSources) {
                                 int rowModelIndex = dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow);
                                 try {
-                                    if (nodeData.isCentralRepoNode()) {
-                                        if (dataSourcesTableModel.getCaseUUIDForRow(rowModelIndex).equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
-                                                && dataSourcesTableModel.getDeviceIdForRow(rowModelIndex).equals(nodeData.getDeviceID())) {
-                                            filesTableModel.addNodeData(nodeData);
-                                        }
-                                    } else {
-                                        if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                            filesTableModel.addNodeData(nodeData);
-                                        }
+                                    if (dataSourcesTableModel.getCaseUUIDForRow(rowModelIndex).equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
+                                            && dataSourcesTableModel.getDeviceIdForRow(rowModelIndex).equals(nodeData.getDeviceID())) {
+                                        filesTableModel.addNodeData(nodeData);
                                     }
                                 } catch (CentralRepoException ex) {
                                     logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
@@ -876,8 +866,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             int rowIndex = filesTable.getSelectedRow();
             List<NodeData> selectedFile = filesTableModel.getListOfNodesForFile(rowIndex);
             if (!selectedFile.isEmpty() && selectedFile.get(0) instanceof NodeData) {
-                NodeData instanceData = selectedFile.get(0);
-                enableCentralRepoActions = instanceData.isCentralRepoNode();
+                enableCentralRepoActions = true;
             }
         }
         showCaseDetailsMenuItem.setVisible(enableCentralRepoActions);
