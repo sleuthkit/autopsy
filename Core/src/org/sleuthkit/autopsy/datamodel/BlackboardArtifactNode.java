@@ -89,6 +89,7 @@ import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -131,6 +132,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private final BlackboardArtifact.Type artifactType;
     private Content srcContent;
     private volatile String translatedSourceName;
+    private final String sourceObjTypeName;
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -259,7 +261,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
         }
-
+        sourceObjTypeName = getSourceObjType(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -306,7 +308,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } else {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
-
+        sourceObjTypeName = getSourceObjType(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -1106,7 +1108,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 Bundle.BlackboardArtifactNode_analysisSheet_sourceType_name(),
                 Bundle.BlackboardArtifactNode_analysisSheet_sourceType_name(),
                 NO_DESCR,
-                getSourceObjType()));
+                sourceObjTypeName));
 
         sheetSet.put(new NodeProperty<>(
                 Bundle.BlackboardArtifactNode_analysisSheet_score_name(),
@@ -1163,28 +1165,38 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
     }
 
-    private String getSourceObjType() {
-        if (srcContent instanceof BlackboardArtifact) {
-            BlackboardArtifact srcArtifact = (BlackboardArtifact) srcContent;
+    /**
+     * Returns a displayable type string for the given content object.
+     * 
+     * If the content object is a artifact of a custom type then this method
+     * may cause a DB call BlackboardArtifact.getType
+     * 
+     * @param source The object to determine the type of.
+     * 
+     * @return A string representing the content type.
+     */
+    private String getSourceObjType(Content source) {
+        if (source instanceof BlackboardArtifact) {
+            BlackboardArtifact srcArtifact = (BlackboardArtifact) source;
             try {
                 return srcArtifact.getType().getDisplayName();
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, "Failed to get custom artifact type id=" + source.getId(), ex);
             }
         } else if (srcContent instanceof Volume) {
-            return "Volumn";
+            return TskData.ObjectType.VOL.toString();
         } else if (srcContent instanceof AbstractFile) {
-            return "File";
+            return TskData.ObjectType.ABSTRACTFILE.toString();
         } else if (srcContent instanceof Image) {
-            return "Disk Image";
+            return TskData.ObjectType.IMG.toString();
         } else if (srcContent instanceof VolumeSystem) {
-            return "File";
+            return TskData.ObjectType.VS.toString();
         } else if (srcContent instanceof OsAccount) {
-            return "Os Account";
+            return TskData.ObjectType.OS_ACCOUNT.toString();
         } else if (srcContent instanceof HostAddress) {
-            return "Host Address";
+            return TskData.ObjectType.HOST_ADDRESS.toString();
         } else if (srcContent instanceof Pool) {
-            return "Pool";
+            return TskData.ObjectType.POOL.toString();
         }
         return "";
     }
