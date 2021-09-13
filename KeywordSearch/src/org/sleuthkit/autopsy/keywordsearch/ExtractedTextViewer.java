@@ -373,32 +373,7 @@ public class ExtractedTextViewer implements TextViewer {
 
     @Override
     public int isPreferred(Node node) {
-        AdHocQueryResult adhocResult = node.getLookup().lookup(AdHocQueryResult.class);
-        if (adhocResult != null) {
-            //The presence of an AdHocQueryResult indicates that this is a Keyword Hit and has a high preference for this content viewer
-            return 7;
-        }
-
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        if (artifact == null) {
-            return 4;
-        } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-            return 7;
-        } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-            try {
-                BlackboardAttribute attribute = artifact.getAttribute(TSK_ACCOUNT_TYPE);
-                if (attribute != null && Account.Type.CREDIT_CARD.getTypeName().equals(attribute.getValueString())) {
-                    return 7;
-                } else {
-                    return 4;
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting TSK_ACCOUNT_TYPE attribute from artifact " + artifact.getArtifactID(), ex);
-                return 4;
-            }
-        } else {
-            return 4;
-        }
+        return 4;
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,30 +30,44 @@ import javax.annotation.concurrent.Immutable;
 public final class Manifest implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final Path filePath;
+    
+    // NOTE: Path is not Serializable. That's why we have to have a String as well,
+    // for scenarios when we send Manifest via ActiveMQ to other nodes.
+    private transient Path filePath;
+    private final String filePathString;
+    private transient Path dataSourcePath;
+    private final String dataSourcePathString;
+    
     private final Date dateFileCreated;
     private final String caseName;
     private final String deviceId;
-    private final Path dataSourcePath;
     private final String dataSourceFileName;
     private final Map<String, String> manifestProperties;
 
     public Manifest(Path manifestFilePath, Date dateFileCreated, String caseName, String deviceId, Path dataSourcePath, Map<String, String> manifestProperties) {
-        this.filePath = Paths.get(manifestFilePath.toString());
+        this.filePathString = manifestFilePath.toString();
+        this.filePath = Paths.get(filePathString);
+
         this.dateFileCreated = new Date(dateFileCreated.getTime());
         this.caseName = caseName;
         this.deviceId = deviceId;
         if (null != dataSourcePath) {
-            this.dataSourcePath = Paths.get(dataSourcePath.toString());
+            this.dataSourcePathString = dataSourcePath.toString();
+            this.dataSourcePath = Paths.get(dataSourcePathString);
             dataSourceFileName = dataSourcePath.getFileName().toString();
         } else {
+            this.dataSourcePathString = "";
             this.dataSourcePath = Paths.get("");
             dataSourceFileName = "";
         }
         this.manifestProperties = new HashMap<>(manifestProperties);
-    }    
+    }
     
     public Path getFilePath() {
+        // after potential deserialization Path will be null because it is transient
+        if (filePath == null) {
+            this.filePath = Paths.get(filePathString);
+        }
         return this.filePath;
     }
 
@@ -70,6 +84,10 @@ public final class Manifest implements Serializable {
     }
 
     public Path getDataSourcePath() {
+        // after potential deserialization Path will be null because it is transient
+        if (dataSourcePath == null) {
+            this.dataSourcePath = Paths.get(dataSourcePathString);
+        }
         return dataSourcePath;
     }
 

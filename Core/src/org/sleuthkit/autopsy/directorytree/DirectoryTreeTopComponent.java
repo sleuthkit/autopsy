@@ -1353,9 +1353,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             treeNode = getHashsetNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
             treeNode = getKeywordHitNode(typesChildren, art);
-        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
-                || typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-            treeNode = getInterestingItemNode(typesChildren, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
             treeNode = getEmailNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
@@ -1483,42 +1484,46 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @param typesChildren The children object of the same category as
      *                      interesting item.
+     * @param artifactType  The type of the artifact (interesting hit or
+     *                      artifact).
      * @param art           The artifact.
      *
      * @return The interesting item artifact's parent node or null if cannot be
      *         found.
      */
-    private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact art) {
-        Node interestingItemsRootNode = typesChildren.findChild(NbBundle
-                .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text"));
-        Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
+    private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact.Type artifactType, BlackboardArtifact art) {
+        Node interestingItemsRootNode = typesChildren.findChild(artifactType.getDisplayName());
+        Children setNodeChildren = (interestingItemsRootNode == null) ? null : interestingItemsRootNode.getChildren();
+        
+        // set node children for type could not be found, so return null.
+        if (setNodeChildren == null) {
+            return null;
+        }
+        
+        String setName = null;
         try {
-            String setName = null;
-            List<BlackboardAttribute> attributes = art.getAttributes();
-            for (BlackboardAttribute att : attributes) {
-                int typeId = att.getAttributeType().getTypeID();
-                if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                    setName = att.getValueString();
-                }
-            }
-            Node setNode = interestingItemsRootChildren.findChild(setName);
-            if (setNode == null) {
-                return null;
-            }
+            setName = art.getAttributes().stream()
+                    .filter(attr -> attr.getAttributeType().getTypeID() == BlackboardAttribute.Type.TSK_SET_NAME.getTypeID())
+                    .map(attr -> attr.getValueString())
+                    .findFirst()
+                    .orElse(null);
 
-            Children fileArtifactChildren = setNode.getChildren();
-            Node[] fileArtifactNodes = fileArtifactChildren == null ? null : fileArtifactChildren.getNodes();
-            if (fileArtifactNodes == null || fileArtifactNodes.length != 2) {
-                return null;
-            }
-
-            return (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID())
-                    ? fileArtifactNodes[0]
-                    : fileArtifactNodes[1];
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
         }
+
+        // if no set name, no set node will be identified.
+        if (setName == null) {
+            return null;
+        }
+
+        // make sure data is fully loaded
+        final String finalSetName = setName;
+        return Stream.of(setNodeChildren.getNodes(true))
+                .filter(setNode -> finalSetName.equals(setNode.getLookup().lookup(String.class)))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
