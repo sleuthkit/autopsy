@@ -326,19 +326,6 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     abstract protected List<Tag> getAllTagsFromDatabase();
 
     /**
-     * Returns the first correlation attribute instance for the underlying
-     * content of the node.
-     *
-     * Default implementation is a null implementation.
-     *
-     * @return The first correlation attribute instance for the underlying
-     *         content of the node.
-     */
-    protected CorrelationAttributeInstance getFirstCorrelationAttributeInstance() {
-        return null;
-    }
-
-    /**
      * Returns Score property for the node.
      *
      * @param tags list of tags.
@@ -367,12 +354,12 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      *
      * Default implementation is a null implementation.
      *
-     * @param tags      list of tags
-     * @param attribute correlation attribute instance
+     * @param tags       The list of tags.
+     * @param attributes The list of correlation attribute instances.
      *
      * @return Comment property for the underlying content of the node.
      */
-    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
+    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
         return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
     }
 

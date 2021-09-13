@@ -182,9 +182,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
-                CorrelationAttributeInstance corInstance = getFirstCorrelationAttributeInstance();
+                List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
+                listWithJustFileAttr.add(CorrelationAttributeUtil.getCorrAttrForFile(content));
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, corInstance))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr))
                 );
             }
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
@@ -194,17 +195,19 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
-                CorrelationAttributeInstance corInstance = getFirstCorrelationAttributeInstance();
+                List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
+                listWithJustFileAttr.add(CorrelationAttributeUtil.getCorrAttrForFile(content));
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, corInstance))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr))
                 );
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
             CommentChangedEvent event = (CommentChangedEvent) evt;
             if (event.getContentID() == content.getId()) {
                 List<Tag> tags = getAllTagsFromDatabase();
-                CorrelationAttributeInstance corInstance = getFirstCorrelationAttributeInstance();
-                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, corInstance)));
+                List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
+                listWithJustFileAttr.add(CorrelationAttributeUtil.getCorrAttrForFile(content));
+                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr)));
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             this.setDisplayName(evt.getNewValue().toString());
@@ -433,7 +436,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
     @Override
-    protected HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
+    protected HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
 
         DataResultViewerTable.HasCommentStatus status = !tags.isEmpty() ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
 
@@ -444,11 +447,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 break;
             }
         }
-        if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
-            if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
-                status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
-            } else {
-                status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
+        if (attributes != null && !attributes.isEmpty()) {
+            for (CorrelationAttributeInstance attribute : attributes) {
+                if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+                    if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                        status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                    } else {
+                        status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
+                    }
+                    break;
+                }
             }
         }
         return status;
@@ -487,18 +495,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     @Override
     protected List<Tag> getAllTagsFromDatabase() {
         return new ArrayList<>(getContentTagsFromDatabase());
-    }
-
-    @Override
-    protected CorrelationAttributeInstance getFirstCorrelationAttributeInstance() {
-        CorrelationAttributeInstance attribute = null;
-        if (CentralRepository.isEnabled() && !UserPreferences.getHideSCOColumns()) {
-            List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForSearch(content);
-            if (!listOfPossibleAttributes.isEmpty()) {
-                attribute = listOfPossibleAttributes.get(0);
-            }
-        }
-        return attribute;
     }
 
     static String getContentPath(AbstractFile file) {
