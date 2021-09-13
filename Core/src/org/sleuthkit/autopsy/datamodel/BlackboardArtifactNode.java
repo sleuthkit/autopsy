@@ -54,7 +54,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -371,9 +370,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          */
         BlackboardArtifactItem<?> artifactItem;
         if (artifact instanceof AnalysisResult) {
-            artifactItem = new AnalysisResultItem((AnalysisResult) artifact);
+            artifactItem = new AnalysisResultItem((AnalysisResult) artifact, content);
         } else {
-            artifactItem = new DataArtifactItem((DataArtifact) artifact);
+            artifactItem = new DataArtifactItem((DataArtifact) artifact, content);
         }
 
         /*
@@ -829,24 +828,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Gets the first correlation attribute instance associated with the
-     * artifact this node represents.
-     *
-     * @return The first correlation attribute instance, may be null.
-     */
-    @Override
-    protected CorrelationAttributeInstance getFirstCorrelationAttributeInstance() {
-        CorrelationAttributeInstance attribute = null;
-        if (CentralRepository.isEnabled() && !UserPreferences.getHideSCOColumns()) {
-            List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForSearch(content);
-            if (!listOfPossibleAttributes.isEmpty()) {
-                attribute = listOfPossibleAttributes.get(0);
-            }
-        }
-        return attribute;
-    }
-
-    /**
      * Computes the value of the comment property ("C" in S, C, O) for the
      * artifact represented by this node.
      *
@@ -862,7 +843,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @return The value of the comment property.
      */
     @Override
-    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
+    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
 
         /*
          * Has a tag with a comment been applied to the artifact or its source
@@ -880,11 +861,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * Does the given correlation attribute instance have a comment in the
          * central repository?
          */
-        if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
-            if (status == HasCommentStatus.TAG_COMMENT) {
-                status = HasCommentStatus.CR_AND_TAG_COMMENTS;
-            } else {
-                status = HasCommentStatus.CR_COMMENT;
+        if (attributes != null && !attributes.isEmpty()) {
+            for (CorrelationAttributeInstance attribute : attributes) {
+                if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+                    if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                        status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                    } else {
+                        status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
+                    }
+                    break;
+                }
             }
         }
 
@@ -1175,7 +1161,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.comment.displayName=C"})
     @Deprecated
     protected final void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags, CorrelationAttributeInstance attribute) {
-        HasCommentStatus status = getCommentProperty(tags, attribute);
+        List<CorrelationAttributeInstance> attributes = new ArrayList<>();
+        attributes.add(attribute);
+        HasCommentStatus status = getCommentProperty(tags, attributes);
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR, status));
     }
 

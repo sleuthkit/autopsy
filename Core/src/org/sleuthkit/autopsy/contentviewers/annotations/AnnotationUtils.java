@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNor
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -127,6 +128,34 @@ public class AnnotationUtils {
     }
 
     /**
+     * Returns the artifact and content to display within a pair.
+     *
+     * @param node The node to display.
+     *
+     * @return The pair of artifact (or null if not present) and content (either
+     *         artifact parent content, the node content, or null).
+     */
+    private static Pair<BlackboardArtifact, Content> getDisplayContent(Node node) {
+        BlackboardArtifactItem<?> artItem = node.getLookup().lookup(BlackboardArtifactItem.class);
+        BlackboardArtifact artifact = artItem == null ? null : artItem.getTskContent();
+
+        Content content = artItem != null
+                ? artItem.getSourceContent()
+                : node.getLookup().lookup(AbstractFile.class);
+
+        return Pair.of(artifact, content);
+    }
+
+    /**
+     * Returns whether or not the node is supported by the annotation viewer.
+     * @param node The node to display.
+     * @return True if the node is supported.
+     */
+    public static boolean isSupported(Node node) {
+        return getDisplayContent(node).getRight() != null;
+    }
+
+    /**
      * Returns the formatted Annotation information for the given node. If no
      * data was found the method will return null;
      *
@@ -139,35 +168,15 @@ public class AnnotationUtils {
         Document html = Jsoup.parse(EMPTY_HTML);
         Element body = html.getElementsByTag("body").first();
 
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        Content sourceFile = null;
-
-        try {
-            if (artifact != null) {
-                /*
-                 * Get the source content based on the artifact to ensure we
-                 * display the correct data instead of whatever was in the node.
-                 */
-                sourceFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
-            } else {
-                /*
-                 * No artifact is present, so get the content based on what's
-                 * present in the node. In this case, the selected item IS the
-                 * source file.
-                 */
-                sourceFile = node.getLookup().lookup(AbstractFile.class);
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format(
-                    "Exception while trying to retrieve a Content instance from the BlackboardArtifact '%s' (id=%d).",
-                    artifact.getDisplayName(), artifact.getArtifactID()), ex);
-        }
+        Pair<BlackboardArtifact, Content> displayPair = getDisplayContent(node);
+        BlackboardArtifact artifact = displayPair.getLeft();
+        Content srcContent = displayPair.getRight();
 
         boolean somethingWasRendered = false;
         if (artifact != null) {
-            somethingWasRendered = renderArtifact(body, artifact, sourceFile);
+            somethingWasRendered = renderArtifact(body, artifact, srcContent);
         } else {
-            somethingWasRendered = renderContent(body, sourceFile, false);
+            somethingWasRendered = renderContent(body, srcContent, false);
         }
 
         if (!somethingWasRendered) {
@@ -605,23 +614,6 @@ public class AnnotationUtils {
         header.text(headerText);
         header.attr("class", ContentViewerHtmlStyles.getHeaderClassName());
         return subsectionDiv;
-    }
-
-    /**
-     * Appends a message to the parent element. This is typically used in the
-     * event that no data exists for a certain type.
-     *
-     * @param parent  The parent element that will have this message appended to
-     *                it.
-     * @param message The message to append.
-     *
-     * @return The paragraph element for the new message.
-     */
-    private static Element appendMessage(Element parent, String message) {
-        Element messageEl = parent.appendElement("p");
-        messageEl.text(message);
-        messageEl.attr("class", ContentViewerHtmlStyles.getMessageClassName());
-        return messageEl;
     }
 
     /**

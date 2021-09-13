@@ -115,10 +115,21 @@ public interface DataContentViewer {
      * selected node is an artifact, the level may be determined by both the
      * artifact and its associated file.
      *
-     * Level 6 - Used for data artifact viewers. These have higher priority over
+     * Level 8 - Used for viewers that summarize a data artifact and display a 
+     * relevant subset to help the examiner decide if they should look into it
+     * further. Not currently used by any modules, but an example would be a
+     * module that summarizes an email message.
+     * 
+     * Level 7 - Used for data artifact viewers. These have higher priority over
      * file content viewers because a Node will likely have the ‘source’ file
      * for a data artifact and we want to give the artifact priority. Currently
      * used by the Data Artifacts viewer.
+     * 
+     * Level 6 - Used for type-specific
+     * file content viewers that summarize the file content and display a
+     * relevant subset. These viewers help the examiner determine if the file is
+     * worth looking into further. Examples of this would be Video Triage Module
+     * that displays a subset of a video or a document.
      *
      * Level 5 - Used for type-specific file content viewers that are optimized
      * for that type, such as displaying an image or a PDF file with images and
