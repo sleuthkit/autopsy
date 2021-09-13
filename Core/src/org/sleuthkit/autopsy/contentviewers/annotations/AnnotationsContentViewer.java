@@ -27,7 +27,6 @@ import static org.openide.util.NbBundle.Messages;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.jsoup.nodes.Document;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
@@ -44,12 +43,12 @@ import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
     "AnnotationsContentViewer.onEmpty=No annotations were found for this particular item."
 })
 public class AnnotationsContentViewer extends javax.swing.JPanel implements DataContentViewer {
-    
+
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(AnnotationsContentViewer.class.getName());
-    
+
     private AnnotationWorker worker;
-    
+
     /**
      * Creates an instance of AnnotationsContentViewer.
      */
@@ -61,20 +60,19 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     @Override
     public void setNode(Node node) {
         resetComponent();
-        
-        if(worker != null) {
+
+        if (worker != null) {
             worker.cancel(true);
             worker = null;
         }
-        
-        if(node == null) {
+
+        if (node == null) {
             return;
         }
 
         worker = new AnnotationWorker(node);
         worker.execute();
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -128,7 +126,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public boolean isSupported(Node node) {
-     return node != null && node.getLookup().lookup(AbstractFile.class) != null;
+        return AnnotationUtils.isSupported(node);
     }
 
     @Override
@@ -145,48 +143,49 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     public void resetComponent() {
         textPanel.setText("");
     }
-    
+
     /**
      * A SwingWorker that will fetch the annotation information for the given
      * node.
      */
     private class AnnotationWorker extends SwingWorker<String, Void> {
+
         private final Node node;
-        
+
         AnnotationWorker(Node node) {
             this.node = node;
         }
-        
+
         @Override
         protected String doInBackground() throws Exception {
-           Document doc = AnnotationUtils.buildDocument(node);
-           
-           if(isCancelled()) {
-               return null;
-           }
-           
-           if(doc != null) {
-               return doc.html();
-           } else {
-               return "<span class='" + ContentViewerHtmlStyles.getMessageClassName() + "'>" + Bundle.AnnotationsContentViewer_onEmpty() + "</span>";
-           }
+            Document doc = AnnotationUtils.buildDocument(node);
+
+            if (isCancelled()) {
+                return null;
+            }
+
+            if (doc != null) {
+                return doc.html();
+            } else {
+                return "<span class='" + ContentViewerHtmlStyles.getMessageClassName() + "'>" + Bundle.AnnotationsContentViewer_onEmpty() + "</span>";
+            }
         }
-        
+
         @Override
         public void done() {
             if (isCancelled()) {
                 return;
             }
-            
+
             try {
                 String text = get();
                 ContentViewerHtmlStyles.setStyles(textPanel);
                 textPanel.setText(text);
                 textPanel.setCaretPosition(0);
             } catch (InterruptedException | ExecutionException ex) {
-               logger.log(Level.SEVERE, "Failed to get annotation information for node", ex);
-            } 
+                logger.log(Level.SEVERE, "Failed to get annotation information for node", ex);
+            }
         }
-    
+
     }
 }
