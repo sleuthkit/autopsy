@@ -37,6 +37,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -207,7 +208,7 @@ public final class ContextViewer extends javax.swing.JPanel implements DataConte
     @Override
     public int isPreferred(Node node) {
         // this is a low preference viewer.
-        return 1;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 
     @NbBundle.Messages({

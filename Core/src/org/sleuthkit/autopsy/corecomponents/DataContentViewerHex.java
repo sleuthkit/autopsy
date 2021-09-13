@@ -42,6 +42,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
@@ -582,7 +583,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
     @Override
     public int isPreferred(Node node) {
-        return 1;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 
     @Override

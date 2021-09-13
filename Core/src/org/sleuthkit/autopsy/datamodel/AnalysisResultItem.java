@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.annotations.Beta;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * An Autopsy Data Model item with an underlying AnalysisResult Sleuth Kit Data
@@ -32,10 +33,11 @@ public class AnalysisResultItem extends BlackboardArtifactItem<AnalysisResult> {
      * Sleuth Kit Data Model object.
      *
      * @param analysisResult The AnalysisResult object.
+     * @param sourceContent The source content of the AnalysisResult.
      */
     @Beta
-    AnalysisResultItem(AnalysisResult analysisResult) {
-        super(analysisResult);
+    AnalysisResultItem(AnalysisResult analysisResult, Content sourceContent) {
+        super(analysisResult, sourceContent);
     }
 
 }

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.annotations.Beta;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * An abstract super class for an Autopsy Data Model item class with an
@@ -30,15 +31,24 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public abstract class BlackboardArtifactItem<T extends BlackboardArtifact> extends TskContentItem<T> {
 
+    private final Content sourceContent;
+
     /**
      * Constructs an Autopsy Data Model item with an underlying
      * BlackboardArtifact Sleuth Kit Data Model object.
      *
      * @param blackboardArtifact The BlackboardArtifact object.
+     * @param sourceContent      The source content of the artifact.
      */
     @Beta
-    BlackboardArtifactItem(T blackboardArtifact) {
+    BlackboardArtifactItem(T blackboardArtifact, Content sourceContent) {
         super(blackboardArtifact);
+        this.sourceContent = sourceContent;
     }
 
+    @Beta
+    @Override
+    public Content getSourceContent() {
+        return this.sourceContent;
+    }
 }

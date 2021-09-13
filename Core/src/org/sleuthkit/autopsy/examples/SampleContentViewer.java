@@ -31,6 +31,7 @@ package org.sleuthkit.autopsy.examples;
 
 import java.awt.Component;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -168,6 +169,6 @@ class SampleContentViewer extends javax.swing.JPanel implements DataContentViewe
     @Override
     public int isPreferred(Node node) {
         // we return 1 since this module will operate on nearly all files
-        return 1;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 }
