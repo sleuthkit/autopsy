@@ -37,9 +37,12 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactTagNode;
 import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TskException;
 
@@ -72,7 +75,6 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
             String dataSourceName = "";
             Map<String, CorrelationCase> caseNames = new HashMap<>();
             Case currentCase = Case.getCurrentCaseThrows();
-
             //the file is used for determining a correlation instance is not the selected instance
             AbstractFile file = node.getLookup().lookup(AbstractFile.class);
             try {
@@ -82,10 +84,12 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
                     dataSourceName = dataSource.getName();
                 }
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Exception occurred while trying to get the data source, current case, and device id for an AbstractFile in the other occurrences viewer", ex);
+                // do nothing. 
+                // @@@ Review this behavior
                 return data;
             }
             Collection<CorrelationAttributeInstance> correlationAttributes = new ArrayList<>();
+
             if (osAccount != null) {
                 correlationAttributes.addAll(OtherOccurrences.getCorrelationAttributeFromOsAccount(node, osAccount));
             } else {
@@ -93,11 +97,20 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
                 Content content = null;
                 if (contentItem != null) {
                     content = contentItem.getTskContent();
+                } else { //fallback and check ContentTags 
+                    ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class);
+                    BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
+                    if (nodeBbArtifactTag != null) {
+                        content = nodeBbArtifactTag.getArtifact();
+                    } else if (nodeContentTag != null) {
+                        content = nodeContentTag.getContent();
+                    }
                 }
                 if (content != null) {
                     correlationAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(content));
                 }
             }
+
             int totalCount = 0;
             Set<String> dataSources = new HashSet<>();
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
