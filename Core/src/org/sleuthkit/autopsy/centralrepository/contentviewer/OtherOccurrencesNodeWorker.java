@@ -69,19 +69,29 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
         OtherOccurrencesData data = null;
         if (CentralRepository.isEnabled()) {
             OsAccount osAccount = node.getLookup().lookup(OsAccount.class);
-
             String deviceId = "";
             String dataSourceName = "";
             Map<String, CorrelationCase> caseNames = new HashMap<>();
             Case currentCase = Case.getCurrentCaseThrows();
-
+            //the file is currently being used for determining a correlation instance is not the selected instance 
+            // for the purposes of ignoring the currently selected item
+            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+            try {
+                if (file != null) {
+                    Content dataSource = file.getDataSource();
+                    deviceId = currentCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
+                    dataSourceName = dataSource.getName();
+                }
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Exception occurred while trying to get the data source, current case, and device id for an AbstractFile in the other occurrences viewer", ex);
+                return data;
+            }
             Collection<CorrelationAttributeInstance> correlationAttributes = new ArrayList<>();
-            Content content = null;
             if (osAccount != null) {
-                content = osAccount;
                 correlationAttributes.addAll(OtherOccurrences.getCorrelationAttributeFromOsAccount(node, osAccount));
             } else {
                 TskContentItem<?> contentItem = node.getLookup().lookup(TskContentItem.class);
+                Content content = null;
                 if (contentItem != null) {
                     content = contentItem.getTskContent();
                 } else { //fallback and check ContentTags 
@@ -97,16 +107,7 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
                     correlationAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(content));
                 }
             }
-            try {
-                if (content != null) {
-                    Content dataSource = file.getDataSource();
-                    deviceId = currentCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
-                    dataSourceName = dataSource.getName();
-                }
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Exception occurred while trying to get the data source, current case, and device id for an AbstractFile in the other occurrences viewer", ex);
-                return data;
-            }
+
             int totalCount = 0;
             Set<String> dataSources = new HashSet<>();
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
@@ -123,11 +124,9 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
                     }
                 }
             }
-
             if (!isCancelled()) {
                 data = new OtherOccurrencesData(correlationAttributes, file, dataSourceName, deviceId, caseNames, totalCount, dataSources.size(), OtherOccurrences.getEarliestCaseDate());
             }
-
         }
         return data;
     }
