@@ -98,7 +98,7 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
                     ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class);
                     BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
                     if (nodeBbArtifactTag != null) {
-                        content = nodeBbArtifactTag.getContent();
+                        content = nodeBbArtifactTag.getArtifact();
                     } else if (nodeContentTag != null) {
                         content = nodeContentTag.getContent();
                     }
