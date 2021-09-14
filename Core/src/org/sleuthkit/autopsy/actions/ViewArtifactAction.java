@@ -18,9 +18,14 @@
  */
 package org.sleuthkit.autopsy.actions;
 
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
-import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -29,6 +34,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class ViewArtifactAction extends AbstractAction {
 
+    private static final Logger logger = Logger.getLogger(ViewArtifactAction.class.getName());
     private final BlackboardArtifact artifact;
 
     /**
@@ -44,7 +50,27 @@ public class ViewArtifactAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().viewArtifact(artifact));
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                DirectoryTreeTopComponent.findInstance().viewArtifact(artifact);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                } catch (InterruptedException ex) {
+                    logger.log(Level.SEVERE, "Unexpected interrupt while navigating to artifact.", ex);
+                } catch (ExecutionException ex) {
+                    logger.log(Level.SEVERE, "Error navigating to artifact.", ex);
+                }
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+        }.execute();
     }
-    
+
 }

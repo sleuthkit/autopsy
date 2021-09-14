@@ -18,16 +18,23 @@
  */
 package org.sleuthkit.autopsy.actions;
 
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
-import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.OsAccount;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * An action that navigates to an os account.
  */
 public class ViewOsAccountAction extends AbstractAction {
+
+    private static final Logger logger = Logger.getLogger(ViewOsAccountAction.class.getName());
 
     private final OsAccount osAccount;
 
@@ -44,7 +51,27 @@ public class ViewOsAccountAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        SwingUtilities.invokeLater(() -> DirectoryTreeTopComponent.findInstance().viewOsAccount(osAccount));
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                DirectoryTreeTopComponent.findInstance().viewOsAccount(osAccount);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                } catch (InterruptedException ex) {
+                    logger.log(Level.SEVERE, "Unexpected interrupt while navigating to OS Account.", ex);
+                } catch (ExecutionException ex) {
+                    logger.log(Level.SEVERE, "Error navigating to OS Account.", ex);
+                }
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+        }.execute();
     }
-    
+
 }
