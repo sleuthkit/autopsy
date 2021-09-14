@@ -27,11 +27,11 @@ import javax.swing.JPanel;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
 import org.sleuthkit.datamodel.OsAccount;
 
 /**
@@ -94,8 +94,8 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
         // The central repo is enabled and the node is not null
         // And the node has information which could be correlated on.
         return CentralRepository.isEnabled() && node != null
-                && (OtherOccurrences.getAbstractFileFromNode(node) != null
-                || OtherOccurrences.getBlackboardArtifactFromNode(node) != null
+                && (node.getLookup().lookup(AbstractFile.class) != null
+                || node.getLookup().lookup(BlackboardArtifactItem.class) != null
                 || node.getLookup().lookup(OsAccount.class) != null);
     }
 

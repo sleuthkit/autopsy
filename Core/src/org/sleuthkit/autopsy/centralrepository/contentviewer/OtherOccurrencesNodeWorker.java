@@ -32,9 +32,12 @@ import org.sleuthkit.autopsy.centralrepository.application.NodeData;
 import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.centralrepository.contentviewer.OtherOccurrencesNodeWorker.OtherOccurrencesData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.OsAccount;
@@ -61,54 +64,62 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
 
     @Override
     protected OtherOccurrencesData doInBackground() throws Exception {
-        OsAccount osAccount = node.getLookup().lookup(OsAccount.class);
-        AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
-        if (osAccount != null) {
-            file = node.getLookup().lookup(AbstractFile.class);
-        }
-        String deviceId = "";
-        String dataSourceName = "";
-        Map<String, CorrelationCase> caseNames = new HashMap<>();
-        Case currentCase = Case.getCurrentCaseThrows();
         OtherOccurrencesData data = null;
-        try {
-            if (file != null) {
-                Content dataSource = file.getDataSource();
-                deviceId = currentCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
-                dataSourceName = dataSource.getName();
-            }
-        } catch (TskException ex) {
-            // do nothing. 
-            // @@@ Review this behavior
-            return null;
-        }
-        Collection<CorrelationAttributeInstance> correlationAttributes = new ArrayList<>();
-        if (osAccount != null) {
-            correlationAttributes = OtherOccurrences.getCorrelationAttributeFromOsAccount(node, osAccount);
-        } else {
-            correlationAttributes = OtherOccurrences.getCorrelationAttributesFromNode(node, file);
-        }
-        int totalCount = 0;
-        Set<String> dataSources = new HashSet<>();
-        for (CorrelationAttributeInstance corAttr : correlationAttributes) {
-            for (NodeData nodeData : OtherOccurrences.getCorrelatedInstances(file, deviceId, dataSourceName, corAttr).values()) {
-                try {
-                    dataSources.add(OtherOccurrences.makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
-                    caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
-                }
-                totalCount++;
-                if (isCancelled()) {
-                    break;
-                }
-            }
-        }
+        if (CentralRepository.isEnabled()) {
+            OsAccount osAccount = node.getLookup().lookup(OsAccount.class);
 
-        if (!isCancelled()) {
-            data = new OtherOccurrencesData(correlationAttributes, file, dataSourceName, deviceId, caseNames, totalCount, dataSources.size(), OtherOccurrences.getEarliestCaseDate());
-        }
+            String deviceId = "";
+            String dataSourceName = "";
+            Map<String, CorrelationCase> caseNames = new HashMap<>();
+            Case currentCase = Case.getCurrentCaseThrows();
 
+            //the file is used for determining a correlation instance is not the selected instance
+            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+            try {
+                if (file != null) {
+                    Content dataSource = file.getDataSource();
+                    deviceId = currentCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
+                    dataSourceName = dataSource.getName();
+                }
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Exception occurred while trying to get the data source, current case, and device id for an AbstractFile in the other occurrences viewer", ex);
+                return data;
+            }
+            Collection<CorrelationAttributeInstance> correlationAttributes = new ArrayList<>();
+            if (osAccount != null) {
+                correlationAttributes.addAll(OtherOccurrences.getCorrelationAttributeFromOsAccount(node, osAccount));
+            } else {
+                TskContentItem<?> contentItem = node.getLookup().lookup(TskContentItem.class);
+                Content content = null;
+                if (contentItem != null) {
+                    content = contentItem.getTskContent();
+                }
+                if (content != null) {
+                    correlationAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(content));
+                }
+            }
+            int totalCount = 0;
+            Set<String> dataSources = new HashSet<>();
+            for (CorrelationAttributeInstance corAttr : correlationAttributes) {
+                for (NodeData nodeData : OtherOccurrences.getCorrelatedInstances(deviceId, dataSourceName, corAttr).values()) {
+                    try {
+                        dataSources.add(OtherOccurrences.makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                        caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
+                    } catch (CentralRepoException ex) {
+                        logger.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
+                    }
+                    totalCount++;
+                    if (isCancelled()) {
+                        break;
+                    }
+                }
+            }
+
+            if (!isCancelled()) {
+                data = new OtherOccurrencesData(correlationAttributes, file, dataSourceName, deviceId, caseNames, totalCount, dataSources.size(), OtherOccurrences.getEarliestCaseDate());
+            }
+
+        }
         return data;
     }
 
