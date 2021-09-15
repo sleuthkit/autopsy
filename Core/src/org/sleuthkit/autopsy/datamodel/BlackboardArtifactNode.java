@@ -132,6 +132,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private Content srcContent;
     private volatile String translatedSourceName;
     private final String sourceObjTypeName;
+    private final String srcContentShortDescription;
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -261,6 +262,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
         }
         sourceObjTypeName = getSourceObjType(srcContent);
+        srcContentShortDescription = getContentShortDescription(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -308,6 +310,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
         sourceObjTypeName = getSourceObjType(srcContent);
+        srcContentShortDescription = getContentShortDescription(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -1099,7 +1102,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
                 Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
                 NO_DESCR,
-                getDisplayName()));
+                srcContentShortDescription));
         
         addSCOColumns(sheetSet);
 
@@ -1196,6 +1199,28 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             return TskData.ObjectType.HOST_ADDRESS.toString();
         } else if (srcContent instanceof Pool) {
             return TskData.ObjectType.POOL.toString();
+        }
+        return "";
+    }
+    
+    /**
+     * Returns a short description for the given content object.
+     * 
+     * @param content The content object.
+     * 
+     * @return A short description\label.
+     */
+    private String getContentShortDescription(Content content) {
+        if(content != null) {
+            if(content instanceof BlackboardArtifact) {
+                try{
+                    return ((BlackboardArtifact)content).getShortDescription();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to get short description for artifact id=" + content.getId(), ex);
+                }
+            } 
+
+            return content.getName();
         }
         return "";
     }
