@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
+import org.apache.commons.lang3.tuple.Pair;
 
 import static org.openide.util.NbBundle.Messages;
 import org.openide.nodes.Node;
@@ -36,10 +37,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.jsoup.nodes.Document;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
-import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
-import org.sleuthkit.autopsy.guiutils.RefreshThrottler.Refresher;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -71,37 +75,59 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT
     );
 
-    /**
-     * Refresher used with refresh throttler to listen for artifact events.
-     */
-    private final Refresher refresher = new Refresher() {
+    private final PropertyChangeListener ingestEventListener = (evt) -> {
+        Long curArtifactId = AnnotationsContentViewer.this.curArtifactId;
+        Long curContentId = AnnotationsContentViewer.this.curContentId;
 
-        @Override
-        public void refresh() {
-            AnnotationsContentViewer.this.refresh();
+        if (curArtifactId == null && curContentId == null) {
+            return;
         }
 
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            if (IngestManager.IngestModuleEvent.DATA_ADDED.toString().equals(evt.getPropertyName()) && evt.getOldValue() instanceof ModuleDataEvent) {
-                ModuleDataEvent moduleDataEvent = (ModuleDataEvent) evt.getOldValue();
-                if (ARTIFACT_TYPES_OF_INTEREST.contains(moduleDataEvent.getBlackboardArtifactType())) {
-                    return true;
+        Pair<Long, Long> artifactContentId = getIdsFromEvent(evt);
+        Long artifactId = artifactContentId.getLeft();
+        Long contentId = artifactContentId.getRight();
+
+        if ((curArtifactId != null && curArtifactId == artifactId) || (curContentId != null && curContentId == contentId)) {
+            refresh();
+        }
+    };
+    
+    private final PropertyChangeListener weakIngestEventListener = WeakListeners.propertyChange(ingestEventListener, null);
+
+    private final PropertyChangeListener caseEventListener = (evt) -> {
+        Long curArtifactId = AnnotationsContentViewer.this.curArtifactId;
+        Long curContentId = AnnotationsContentViewer.this.curContentId;
+
+        if (curArtifactId == null && curContentId == null) {
+            return;
+        }
+        
+        // if it is a module data event
+        if (IngestManager.IngestModuleEvent.DATA_ADDED.toString().equals(evt.getPropertyName())
+                && evt.getOldValue() instanceof ModuleDataEvent) {
+
+            ModuleDataEvent moduleDataEvent = (ModuleDataEvent) evt.getOldValue();
+
+            // if an artifact is relevant, refresh
+            if (ARTIFACT_TYPES_OF_INTEREST.contains(moduleDataEvent.getBlackboardArtifactType())) {
+                for (BlackboardArtifact artifact : moduleDataEvent.getArtifacts()) {
+                    if (artifact.getArtifactID() == curArtifactId || artifact.getObjectID() == curContentId) {
+                        refresh();
+                        return;
+                    }
                 }
             }
-            return false;
         }
     };
 
-    private final RefreshThrottler refreshThrottler = new RefreshThrottler(refresher);
-
-    private final PropertyChangeListener caseEventListener = (pcl) -> refresh();
     private final PropertyChangeListener weakCaseEventListener = WeakListeners.propertyChange(caseEventListener, null);
 
     private final Object updateLock = new Object();
 
     private AnnotationWorker worker = null;
     private Node node;
+    private Long curArtifactId;
+    private Long curContentId;
 
     /**
      * Creates an instance of AnnotationsContentViewer.
@@ -122,21 +148,80 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      */
     private void registerListeners() {
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakCaseEventListener);
-        refreshThrottler.registerForIngestModuleEvents();
+        IngestManager.getInstance().addIngestJobEventListener(weakIngestEventListener);
     }
 
     /**
      * Unregisters case event and ingest event listeners.
      */
     private void unregisterListeners() {
-        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, caseEventListener);
-        refreshThrottler.unregisterEventListener();
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakCaseEventListener);
+        IngestManager.getInstance().removeIngestJobEventListener(weakIngestEventListener);
     }
 
     @Override
     public void setNode(Node node) {
         this.node = node;
         updateData(this.node, true);
+    }
+
+    /**
+     * Returns a pair of the artifact id (or null) and the content id (or null)
+     * for the case event.
+     *
+     * @param evt The case event.
+     *
+     * @return A pair of the artifact id (or null) and the content id (or null)
+     *         for the case event.
+     */
+    private static Pair<Long, Long> getIdsFromEvent(PropertyChangeEvent evt) {
+        Case.Events eventType = null;
+        try {
+            eventType = Case.Events.valueOf(evt.getPropertyName());
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, "Unknown event type: " + evt.getPropertyName(), ex);
+            return Pair.of(null, null);
+        }
+
+        Long artifactId = null;
+        Long contentId = null;
+
+        switch (eventType) {
+            case BLACKBOARD_ARTIFACT_TAG_ADDED:
+                if (evt instanceof BlackBoardArtifactTagAddedEvent) {
+                    BlackboardArtifact art = ((BlackBoardArtifactTagAddedEvent) evt).getAddedTag().getArtifact();
+                    artifactId = art.getArtifactID();
+                    contentId = art.getObjectID();
+                }
+                break;
+            case BLACKBOARD_ARTIFACT_TAG_DELETED:
+                if (evt instanceof BlackBoardArtifactTagDeletedEvent) {
+                    artifactId = ((BlackBoardArtifactTagDeletedEvent) evt).getDeletedTagInfo().getArtifactID();
+                    contentId = ((BlackBoardArtifactTagDeletedEvent) evt).getDeletedTagInfo().getContentID();
+                }
+                break;
+            case CONTENT_TAG_ADDED:
+                if (evt instanceof ContentTagAddedEvent) {
+                    contentId = ((ContentTagAddedEvent) evt).getAddedTag().getContent().getId();
+                }
+                break;
+            case CONTENT_TAG_DELETED:
+                if (evt instanceof ContentTagDeletedEvent) {
+                    contentId = ((ContentTagDeletedEvent) evt).getDeletedTagInfo().getContentID();
+                }
+                break;
+            case CR_COMMENT_CHANGED:
+                if (evt instanceof CommentChangedEvent) {
+                    long commentObjId = ((CommentChangedEvent) evt).getContentID();
+                    artifactId = commentObjId;
+                    contentId = commentObjId;
+                }
+                break;
+            default:
+                break;
+        };
+
+        return Pair.of(artifactId, contentId);
     }
 
     /**
@@ -249,6 +334,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     @Override
     public void resetComponent() {
         textPanel.setText("");
+
     }
 
     /**
