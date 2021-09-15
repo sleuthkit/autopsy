@@ -182,8 +182,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
-                List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
-                listWithJustFileAttr.add(CorrelationAttributeUtil.getCorrAttrForFile(content));
+                List<CorrelationAttributeInstance> listWithJustFileAttr = CorrelationAttributeUtil.makeCorrAttrsForSearch(content);
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
                         new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr))
                 );
@@ -195,8 +194,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
-                List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
-                listWithJustFileAttr.add(CorrelationAttributeUtil.getCorrAttrForFile(content));
+                List<CorrelationAttributeInstance> listWithJustFileAttr = CorrelationAttributeUtil.makeCorrAttrsForSearch(content);
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
                         new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr))
                 );
@@ -205,8 +203,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             CommentChangedEvent event = (CommentChangedEvent) evt;
             if (event.getContentID() == content.getId()) {
                 List<Tag> tags = getAllTagsFromDatabase();
-                List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
-                listWithJustFileAttr.add(CorrelationAttributeUtil.getCorrAttrForFile(content));
+                List<CorrelationAttributeInstance> listWithJustFileAttr = CorrelationAttributeUtil.makeCorrAttrsForSearch(content);
                 updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr)));
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {

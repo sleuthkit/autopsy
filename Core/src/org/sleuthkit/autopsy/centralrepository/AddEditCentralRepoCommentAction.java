@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2020 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,16 +62,13 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      */
     public AddEditCentralRepoCommentAction(AbstractFile file) {
         fileId = file.getId();
-        correlationAttributeInstance = CorrelationAttributeUtil.getCorrAttrForFile(file);
-        if (correlationAttributeInstance == null) {
-            addToDatabase = true;
-            final List<CorrelationAttributeInstance> md5CorrelationAttr = CorrelationAttributeUtil.makeCorrAttrsForSearch(file);
-            if (!md5CorrelationAttr.isEmpty()) {
-                //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistancy with other makeCorrAttrsForSearch methods per 7852 
-                correlationAttributeInstance = md5CorrelationAttr.get(0);
-            } else {
-                correlationAttributeInstance = null;
-            }
+        final List<CorrelationAttributeInstance> md5CorrelationAttr = CorrelationAttributeUtil.makeCorrAttrsForSearch(file);
+        if (!md5CorrelationAttr.isEmpty()) {
+            //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistancy with other makeCorrAttrsForSearch methods per 7852 
+            correlationAttributeInstance = md5CorrelationAttr.get(0);
+            addToDatabase = !correlationAttributeInstance.isDatabaseInstance();
+        } else {
+            correlationAttributeInstance = null;
         }
         if (file.getSize() == 0) {
             putValue(Action.NAME, Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoCommentEmptyFile());
