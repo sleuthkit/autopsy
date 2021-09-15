@@ -95,14 +95,12 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     private final RefreshThrottler refreshThrottler = new RefreshThrottler(refresher);
 
-    
     private final PropertyChangeListener caseEventListener = (pcl) -> refresh();
     private final PropertyChangeListener weakCaseEventListener = WeakListeners.propertyChange(caseEventListener, null);
-    
+
     private final Object updateLock = new Object();
 
     private AnnotationWorker worker = null;
-
     private Node node;
 
     /**
@@ -146,7 +144,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      */
     private void refresh() {
         if (this.isVisible()) {
-            updateData(this.node, false);   
+            updateData(this.node, false);
         }
     }
 
