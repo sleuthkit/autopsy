@@ -376,10 +376,8 @@ public interface CentralRepository {
     Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
-     * Retrieves number of unique cases which have correlation attributes *
-     * which are not associated with the specified file with the same type and
-     * value. Gets the count of cases that have an instance of a given
-     * correlation attribute.
+     * Gets the count of cases that have an instance of a given correlation
+     * attribute.
      *
      * This count will ignore the specified instance of the correlation
      * attribute and any other instances of this correlation attribute existing
