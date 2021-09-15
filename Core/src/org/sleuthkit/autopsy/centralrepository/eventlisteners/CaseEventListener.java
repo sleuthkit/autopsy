@@ -322,7 +322,7 @@ public final class CaseEventListener implements PropertyChangeListener {
         private void setContentKnownStatus(AbstractFile af, TskData.FileKnown knownStatus) {
             final List<CorrelationAttributeInstance> md5CorrelationAttr = CorrelationAttributeUtil.makeCorrAttrsForSearch(af);
             if (!md5CorrelationAttr.isEmpty()) {
-                //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistancy with other makeCorrAttrsForSearch methods per 7852 
+                //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistency with other makeCorrAttrsForSearch methods per 7852 
                 // send update to Central Repository db
                 try {
                     dbManager.setAttributeInstanceKnownStatus(md5CorrelationAttr.get(0), knownStatus);
@@ -436,7 +436,6 @@ public final class CaseEventListener implements PropertyChangeListener {
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to obtain tags manager for case.", ex);
-                return;
             }
         }
 
@@ -569,9 +568,9 @@ public final class CaseEventListener implements PropertyChangeListener {
                     if (!hasTagWithConflictingKnownStatus) {
                         Content taggedContent = contentTag.getContent();
                         if (taggedContent instanceof AbstractFile) {
-                            final List<CorrelationAttributeInstance> eamArtifact = CorrelationAttributeUtil.makeCorrAttrsForSearch((AbstractFile) taggedContent);
+                            final List<CorrelationAttributeInstance> eamArtifact = CorrelationAttributeUtil.makeCorrAttrsForSearch(taggedContent);
                             if (!eamArtifact.isEmpty()) {
-                                //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistancy with other makeCorrAttrsForSearch methods per 7852 
+                                //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistency with other makeCorrAttrsForSearch methods per 7852 
                                 CentralRepository.getInstance().setAttributeInstanceKnownStatus(eamArtifact.get(0), tagName.getKnownStatus());
                             }
                         }
