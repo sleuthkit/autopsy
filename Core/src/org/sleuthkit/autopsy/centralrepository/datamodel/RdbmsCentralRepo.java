@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2020 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1501,7 +1501,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         Long instanceCount = 0L;
         if (instance != null) {
             Long sourceObjID = instance.getFileObjectId();
-            //We know that instances have a correlation case but that correlation case may have a null ID if it is not in the CR, although it should be.
+            //The CorrelationAttributeInstance will have a CorrelationCase, however that correlation case's ID will be null if the case is not in the CR.
             int correlationCaseId = instance.getCorrelationCase().getID();
             String normalizedValue = CorrelationAttributeNormalizer.normalize(instance.getCorrelationType(), instance.getCorrelationValue());
             Connection conn = connect();
@@ -1510,12 +1510,11 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             ResultSet resultSet = null;
             try {
                 if (correlationCaseId > 0 && sourceObjID != null) {
-                    //the current case is in the CR we can ignore this case source file to ensure we don't count the current item   
-                    //this will also work regardless of the instance itself being a database instance
+                    //The CorrelationCase is in the Central repository.  
                     String sql
-                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM "
+                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM " //Get distinct cases with a matching value in the corresponding table from the central repository.
                             + tableName
-                            + " WHERE value=? AND NOT (file_obj_id=? AND case_id=?)) AS "
+                            + " WHERE value=? AND NOT (file_obj_id=? AND case_id=?)) AS " //Check the file_obj_id AND case_id to ensure we ignore the currently selected instance. 
                             + tableName
                             + "_other_case_count";
                     preparedStatement = conn.prepareStatement(sql);
@@ -1523,10 +1522,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                     preparedStatement.setLong(2, sourceObjID);
                     preparedStatement.setInt(3, correlationCaseId);
                 } else {
-                    //the current case is not in the CR so the current instance can't be so we can just count all other cases with the instance
-                    //we won't know if it exists elsewhere in this case because this case is not in the CR
+                    //The CorrelationCase is NOT in the central repository. 
                     String sql
-                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM "
+                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM " //Get all distinct cases with a matching value in the corresponding table from the central repository.
                             + tableName
                             + " WHERE value=? AS "
                             + tableName
