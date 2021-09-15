@@ -18,7 +18,12 @@
  */
 package org.sleuthkit.autopsy.contentviewers.annotations;
 
+import com.google.common.collect.ImmutableSet;
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
@@ -29,8 +34,15 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.jsoup.nodes.Document;
+import org.openide.util.WeakListeners;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
+import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
+import org.sleuthkit.autopsy.guiutils.RefreshThrottler.Refresher;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Annotations view of file contents.
@@ -47,7 +59,49 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(AnnotationsContentViewer.class.getName());
 
-    private AnnotationWorker worker;
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(
+            Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
+            Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
+            Case.Events.CONTENT_TAG_ADDED,
+            Case.Events.CONTENT_TAG_DELETED,
+            Case.Events.CR_COMMENT_CHANGED);
+
+    private static final Set<BlackboardArtifact.Type> ARTIFACT_TYPES_OF_INTEREST = ImmutableSet.of(
+            BlackboardArtifact.Type.TSK_HASHSET_HIT,
+            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT
+    );
+
+    /**
+     * Refresher used with refresh throttler to listen for artifact events.
+     */
+    private final Refresher refresher = new Refresher() {
+
+        @Override
+        public void refresh() {
+            AnnotationsContentViewer.this.refresh();
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            if (IngestManager.IngestModuleEvent.DATA_ADDED.toString().equals(evt.getPropertyName()) && evt.getOldValue() instanceof ModuleDataEvent) {
+                ModuleDataEvent moduleDataEvent = (ModuleDataEvent) evt.getOldValue();
+                if (ARTIFACT_TYPES_OF_INTEREST.contains(moduleDataEvent.getBlackboardArtifactType())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    };
+
+    private final RefreshThrottler refreshThrottler = new RefreshThrottler(refresher);
+
+    private final PropertyChangeListener caseEventListener = WeakListeners.propertyChange((pcl) -> refresh(), null);
+
+    private final Object updateLock = new Object();
+
+    private AnnotationWorker worker = null;
+
+    private Node node;
 
     /**
      * Creates an instance of AnnotationsContentViewer.
@@ -55,23 +109,74 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     public AnnotationsContentViewer() {
         initComponents();
         ContentViewerHtmlStyles.setupHtmlJTextPane(textPanel);
+        registerListeners();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        unregisterListeners();
+    }
+
+    /**
+     * Registers case event and ingest event listeners.
+     */
+    private void registerListeners() {
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, caseEventListener);
+        refreshThrottler.registerForIngestModuleEvents();;
+    }
+
+    /**
+     * Unregisters case event and ingest event listeners.
+     */
+    private void unregisterListeners() {
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, caseEventListener);
+        refreshThrottler.unregisterEventListener();
     }
 
     @Override
     public void setNode(Node node) {
-        resetComponent();
+        this.node = node;
+        updateData(this.node, true);
+    }
 
-        if (worker != null) {
-            worker.cancel(true);
-            worker = null;
-        }
+    /**
+     * Refreshes the data displayed.
+     */
+    private void refresh() {
+        updateData(this.node, false);
+    }
 
+    /**
+     * Updates data displayed in the viewer.
+     *
+     * @param node       The node to use for data.
+     * @param forceReset If true, forces a reset cancelling the previous worker
+     *                   if one exists and clearing data in the component. If
+     *                   false, only submits a worker if no previous worker is
+     *                   running.
+     */
+    private void updateData(Node node, boolean forceReset) {
         if (node == null) {
             return;
         }
 
-        worker = new AnnotationWorker(node);
-        worker.execute();
+        if (forceReset) {
+            resetComponent();
+        }
+
+        synchronized (updateLock) {
+            if (worker != null) {
+                if (forceReset) {
+                    worker.cancel(true);
+                    worker = null;
+                } else {
+                    return;
+                }
+            }
+
+            worker = new AnnotationWorker(node, forceReset);
+            worker.execute();
+        }
     }
 
     /**
@@ -151,9 +256,18 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     private class AnnotationWorker extends SwingWorker<String, Void> {
 
         private final Node node;
+        private final boolean resetCaretPosition;
 
-        AnnotationWorker(Node node) {
+        /**
+         * Main constructor.
+         *
+         * @param node               The node for which data will be fetched.
+         * @param resetCaretPosition Whether or not to reset the caret position
+         *                           when finished.
+         */
+        AnnotationWorker(Node node, boolean resetCaretPosition) {
             this.node = node;
+            this.resetCaretPosition = resetCaretPosition;
         }
 
         @Override
@@ -173,17 +287,25 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
         @Override
         public void done() {
-            if (isCancelled()) {
-                return;
+            if (!isCancelled()) {
+                try {
+                    String text = get();
+                    ContentViewerHtmlStyles.setStyles(textPanel);
+                    textPanel.setText(text);
+
+                    if (resetCaretPosition) {
+                        textPanel.setCaretPosition(0);
+                    }
+
+                } catch (InterruptedException | ExecutionException ex) {
+                    logger.log(Level.SEVERE, "Failed to get annotation information for node", ex);
+                }
             }
 
-            try {
-                String text = get();
-                ContentViewerHtmlStyles.setStyles(textPanel);
-                textPanel.setText(text);
-                textPanel.setCaretPosition(0);
-            } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.SEVERE, "Failed to get annotation information for node", ex);
+            synchronized (updateLock) {
+                if (worker == this) {
+                    worker = null;
+                }
             }
         }
 
