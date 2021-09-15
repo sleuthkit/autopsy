@@ -95,8 +95,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     private final RefreshThrottler refreshThrottler = new RefreshThrottler(refresher);
 
-    private final PropertyChangeListener caseEventListener = WeakListeners.propertyChange((pcl) -> refresh(), null);
-
+    
+    private final PropertyChangeListener caseEventListener = (pcl) -> refresh();
+    private final PropertyChangeListener weakCaseEventListener = WeakListeners.propertyChange(caseEventListener, null);
+    
     private final Object updateLock = new Object();
 
     private AnnotationWorker worker = null;
@@ -121,8 +123,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * Registers case event and ingest event listeners.
      */
     private void registerListeners() {
-        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, caseEventListener);
-        refreshThrottler.registerForIngestModuleEvents();;
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakCaseEventListener);
+        refreshThrottler.registerForIngestModuleEvents();
     }
 
     /**
@@ -143,7 +145,9 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * Refreshes the data displayed.
      */
     private void refresh() {
-        updateData(this.node, false);
+        if (this.isVisible()) {
+            updateData(this.node, false);   
+        }
     }
 
     /**
