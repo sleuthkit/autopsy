@@ -595,6 +595,88 @@ public class CorrelationAttributeUtil {
         }
     }
 
+    // @@@ BC: This seems like it should go into a DB-specific class because it is 
+    // much different from the other methods in this class. It is going to the DB for data.
+    /**
+     * Gets the correlation attribute instance for a file. This method goes to
+     * the CR to get an actual instance. It does not simply package the data
+     * from file into a generic instance object.
+     *
+     * @param file The file.
+     *
+     * TODO (Jira-6088): The methods in this low-level, utility class should
+     * throw exceptions instead of logging them. The reason for this is that the
+     * clients of the utility class, not the utility class itself, should be in
+     * charge of error handling policy, per the Autopsy Coding Standard. Note
+     * that clients of several of these methods currently cannot determine
+     * whether receiving a null return value is an error or not, plus null
+     * checking is easy to forget, while catching exceptions is enforced.
+     *
+     * @return The correlation attribute instance or null, if no such
+     *         correlation attribute instance was found or an error occurred.
+     */
+    public static CorrelationAttributeInstance getCorrAttrForFile(AbstractFile file) {
+
+        if (!isSupportedAbstractFileType(file)) {
+            return null;
+        }
+
+        CorrelationAttributeInstance.Type type;
+        CorrelationCase correlationCase;
+        CorrelationDataSource correlationDataSource;
+
+        try {
+            type = CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
+            correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
+            if (null == correlationCase) {
+                //if the correlationCase is not in the Central repo then attributes generated in relation to it will not be
+                return null;
+            }
+            correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Error getting querying case database (%s)", file), ex); // NON-NLS
+            return null;
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
+            return null;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
+            return null;
+        }
+
+        CorrelationAttributeInstance correlationAttributeInstance;
+        try {
+            correlationAttributeInstance = CentralRepository.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, file.getId());
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
+            return null;
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+            return null;
+        }
+
+        /*
+         * If no correlation attribute instance was found when querying by file
+         * object ID, try searching by file path instead. This is necessary
+         * because file object IDs were not stored in the central repository in
+         * early versions of its schema.
+         */
+        if (correlationAttributeInstance == null && file.getMd5Hash() != null) {
+            String filePath = (file.getParentPath() + file.getName()).toLowerCase();
+            try {
+                correlationAttributeInstance = CentralRepository.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, file.getMd5Hash(), filePath);
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
+                return null;
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+                return null;
+            }
+        }
+
+        return correlationAttributeInstance;
+    }
+
     /**
      * Makes a correlation attribute instance for a file. Will include the
      * specific object ID.
