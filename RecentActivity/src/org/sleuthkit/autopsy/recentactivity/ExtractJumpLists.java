@@ -178,6 +178,8 @@ final class ExtractJumpLists extends Extract {
         DerivedFile derivedFile;
         String lnkFileName = "";
 
+        logger.log(Level.WARNING, String.format("processing file %s", jumpListFile)); //NON-NLS
+        
         try (POIFSFileSystem fs = new POIFSFileSystem(new File(jumpListFile))) {
                 DirectoryEntry root = fs.getRoot();
                 for (Entry entry : root) {
@@ -217,8 +219,14 @@ final class ExtractJumpLists extends Extract {
                                                                          TskData.EncodingType.NONE);
                                 derivedFiles.add(derivedFile);
 
-                            } catch (IOException | JLnkParserException e) {
-                                logger.log(Level.WARNING, String.format("No such document, or the Entry represented by documentName is not a DocumentEntry link file is %s", jumpListFile), e); //NON-NLS
+                            } catch (IOException | JLnkParserException ex) {
+                                logger.log(Level.WARNING, String.format("No such document, or the Entry represented by documentName is not a DocumentEntry link file is %s", jumpListFile), ex); //NON-NLS
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.WARNING, String.format("Error trying to add dervived file %s", linkFileName), ex); //NON-NLS
+                            } catch (IndexOutOfBoundsException ex) {
+                                // There is some type of corruption within the file that cannot be handled, ignoring it and moving on to next file
+                                // in the jumplist.
+                                logger.log(Level.WARNING, String.format("Error parsing the the jumplist file %s", jumpListFile), ex); //NON-NLS                
                             }
                         }
                     } else {
@@ -230,9 +238,9 @@ final class ExtractJumpLists extends Extract {
                 }
             } catch (NotOLE2FileException | EmptyFileException ex1) {
                  logger.log(Level.WARNING, String.format("Error file not a valid OLE2 Document $s", jumpListFile)); //NON-NLS
-            } catch (IOException | TskCoreException ex) {
+            } catch (IOException ex) {
                  logger.log(Level.WARNING, String.format("Error lnk parsing the file to get recent files $s", jumpListFile), ex); //NON-NLS
-            }
+            } 
             
         return derivedFiles;    
         
