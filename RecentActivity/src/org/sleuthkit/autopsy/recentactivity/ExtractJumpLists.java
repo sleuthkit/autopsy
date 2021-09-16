@@ -177,8 +177,6 @@ final class ExtractJumpLists extends Extract {
         List<DerivedFile> derivedFiles = new ArrayList<>();
         DerivedFile derivedFile;
         String lnkFileName = "";
-
-        logger.log(Level.WARNING, String.format("processing file %s", jumpListFile)); //NON-NLS
         
         try (POIFSFileSystem fs = new POIFSFileSystem(new File(jumpListFile))) {
                 DirectoryEntry root = fs.getRoot();
@@ -222,7 +220,7 @@ final class ExtractJumpLists extends Extract {
                             } catch (IOException | JLnkParserException ex) {
                                 logger.log(Level.WARNING, String.format("No such document, or the Entry represented by documentName is not a DocumentEntry link file is %s", jumpListFile), ex); //NON-NLS
                             } catch (TskCoreException ex) {
-                                logger.log(Level.WARNING, String.format("Error trying to add dervived file %s", linkFileName), ex); //NON-NLS
+                                logger.log(Level.WARNING, String.format("Error trying to add dervived file %s", lnkFileName), ex); //NON-NLS
                             } catch (IndexOutOfBoundsException ex) {
                                 // There is some type of corruption within the file that cannot be handled, ignoring it and moving on to next file
                                 // in the jumplist.
