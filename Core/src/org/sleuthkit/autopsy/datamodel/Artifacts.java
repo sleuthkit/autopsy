@@ -250,18 +250,16 @@ public class Artifacts {
                 KeywordHits.RootNode keywordsNode = new KeywordHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(keywordsNode, TSK_KEYWORD_HIT);
 
-            } else if (TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == typeId
-                    || TSK_INTERESTING_FILE_HIT.getTypeID() == typeId) {
-
-                InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, dsObjId).new RootNode();
-                return new TypeNodeKey(interestingHitsNode,
-                        TSK_INTERESTING_ARTIFACT_HIT,
-                        TSK_INTERESTING_FILE_HIT);
-
+            } else if (TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == typeId) {
+                InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, TSK_INTERESTING_ARTIFACT_HIT, dsObjId).new RootNode();
+                return new TypeNodeKey(interestingHitsNode, TSK_INTERESTING_ARTIFACT_HIT);
+            } else if (TSK_INTERESTING_FILE_HIT.getTypeID() == typeId) {
+                InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, TSK_INTERESTING_FILE_HIT, dsObjId).new RootNode();
+                return new TypeNodeKey(interestingHitsNode, TSK_INTERESTING_FILE_HIT);
             } else if (TSK_HASHSET_HIT.getTypeID() == typeId) {
                 HashsetHits.RootNode hashsetHits = new HashsetHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(hashsetHits, TSK_HASHSET_HIT);
-                
+
             } else {
                 return new TypeNodeKey(type, dsObjId);
             }
@@ -278,7 +276,7 @@ public class Artifacts {
          */
         private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
         private final Category category;
-                
+
         private final PropertyChangeListener weakPcl;
 
         /**
@@ -293,7 +291,7 @@ public class Artifacts {
             super();
             this.filteringDSObjId = filteringDSObjId;
             this.category = category;
-            
+
             PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -322,9 +320,9 @@ public class Artifacts {
 
             weakPcl = WeakListeners.propertyChange(pcl, null);
         }
-        
+
         @Override
-        protected void addNotify() { 
+        protected void addNotify() {
             super.addNotify();
             refreshThrottler.registerForIngestModuleEvents();
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -632,7 +630,7 @@ public class Artifacts {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
@@ -643,7 +641,7 @@ public class Artifacts {
 
         @Override
         protected void onRemove() {
-            if(refreshThrottler != null) {
+            if (refreshThrottler != null) {
                 refreshThrottler.unregisterEventListener();
             }
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
@@ -663,14 +661,14 @@ public class Artifacts {
 
                     case ANALYSIS_RESULT:
                         arts = (filteringDSObjId > 0)
-                            ? blackboard.getAnalysisResultsByType(type.getTypeID(), filteringDSObjId)
-                            : blackboard.getAnalysisResultsByType(type.getTypeID());
+                                ? blackboard.getAnalysisResultsByType(type.getTypeID(), filteringDSObjId)
+                                : blackboard.getAnalysisResultsByType(type.getTypeID());
                         break;
                     case DATA_ARTIFACT:
                     default:
                         arts = (filteringDSObjId > 0)
-                            ? blackboard.getDataArtifacts(type.getTypeID(), filteringDSObjId)
-                            : blackboard.getDataArtifacts(type.getTypeID());
+                                ? blackboard.getDataArtifacts(type.getTypeID(), filteringDSObjId)
+                                : blackboard.getDataArtifacts(type.getTypeID());
                         break;
                 }
 
@@ -679,9 +677,9 @@ public class Artifacts {
                     //See JIRA-5969
                     art.getAttributes();
                 }
-                
+
                 @SuppressWarnings("unchecked")
-                List<BlackboardArtifact> toRet = (List<BlackboardArtifact>)(List<?>)arts;    
+                List<BlackboardArtifact> toRet = (List<BlackboardArtifact>) (List<?>) arts;
                 return toRet;
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Trying to access case when no case is open.", ex); //NON-NLS

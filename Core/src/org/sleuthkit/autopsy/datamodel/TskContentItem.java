@@ -20,27 +20,30 @@ package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.annotations.Beta;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An Autopsy Data Model item with an underlying Sleuth Kit Data Model object
  * that implements the Sleuth Kit Data Model's Content interface.
+ *
+ * @param <T> The type of the underlying Sleuth Kit Data Model object.
  */
 @Beta
-public class TskContentItem {
+public class TskContentItem<T extends Content> {
 
-    private final Content tskContent;
+    private final T content;
 
     /**
      * Constructs an Autopsy Data Model item with an underlying Sleuth Kit Data
      * Model object that implements the Sleuth Kit Data Model's Content
      * interface.
      *
-     * @param content The underlying Sleuth Kit Data Model object.
+     * @param content The Sleuth Kit Data Model object.
      *
      */
     @Beta
-    TskContentItem(Content sleuthKitContent) {
-        this.tskContent = sleuthKitContent;
+    TskContentItem(T content) {
+        this.content = content;
     }
 
     /**
@@ -49,8 +52,12 @@ public class TskContentItem {
      * @return The Sleuth Kit Data Model object.
      */
     @Beta
-    public Content getTskContent() {
-        return tskContent;
+    public T getTskContent() {
+        return content;
     }
 
+    @Beta
+    public Content getSourceContent() throws TskCoreException {
+        return this.content.getParent();
+    }
 }

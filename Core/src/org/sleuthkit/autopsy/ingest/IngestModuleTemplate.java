@@ -85,13 +85,13 @@ public final class IngestModuleTemplate {
         return moduleFactory.createFileIngestModule(settings);
     }
 
-    public boolean isDataArtifactIngestModuleTemplate() {
-        return moduleFactory.isDataArtifactIngestModuleFactory();
-    }
+//    public boolean isDataArtifactIngestModuleTemplate() {
+//        return moduleFactory.isDataArtifactIngestModuleFactory();
+//    }
     
-    public DataArtifactIngestModule createDataArtifactIngestModule() {
-        return moduleFactory.createDataArtifactIngestModule(settings);
-    }
+//    public DataArtifactIngestModule createDataArtifactIngestModule() {
+//        return moduleFactory.createDataArtifactIngestModule(settings);
+//    }
     
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;

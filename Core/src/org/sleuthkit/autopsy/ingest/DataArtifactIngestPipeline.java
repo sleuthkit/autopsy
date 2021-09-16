@@ -44,10 +44,10 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
     @Override
     Optional<PipelineModule<DataArtifactIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
         Optional<IngestTaskPipeline.PipelineModule<DataArtifactIngestTask>> module = Optional.empty();
-        if (template.isDataArtifactIngestModuleTemplate()) {
-            DataArtifactIngestModule ingestModule = template.createDataArtifactIngestModule();
-            module = Optional.of(new DataArtifactIngestPipelineModule(ingestModule, template.getModuleName()));
-        }
+//        if (template.isDataArtifactIngestModuleTemplate()) {
+//            DataArtifactIngestModule ingestModule = template.createDataArtifactIngestModule();
+//            module = Optional.of(new DataArtifactIngestPipelineModule(ingestModule, template.getModuleName()));
+//        }
         return module;
     }
 
