@@ -225,7 +225,7 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
     private void updateOutlineViewPanel() {
         int nodeCount = outlineViewPanel.getExplorerManager().getRootContext().getChildren().getNodesCount();
         if (nodeCount == 0) {
-            outlineViewPanel.hideOutlineView(Bundle.ContactsViewer_noContacts_message());
+            outlineViewPanel.hideOutlineView(Bundle.CallLogViewer_noCallLogs());
         } else {
             outlineViewPanel.showOutlineView();
         }
