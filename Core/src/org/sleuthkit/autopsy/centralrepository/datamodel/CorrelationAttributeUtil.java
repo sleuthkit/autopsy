@@ -617,7 +617,7 @@ public class CorrelationAttributeUtil {
      */
     public static CorrelationAttributeInstance getCorrAttrForFile(AbstractFile file) {
 
-        if (!isSupportedAbstractFileType(file)) {
+        if (!CentralRepository.isEnabled() || !isSupportedAbstractFileType(file)) {
             return null;
         }
 

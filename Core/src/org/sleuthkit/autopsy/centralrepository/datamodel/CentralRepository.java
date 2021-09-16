@@ -109,7 +109,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public void newDbInfo(String name, String value) throws CentralRepoException;
+    void newDbInfo(String name, String value) throws CentralRepoException;
 
     /**
      * Set the data source object id for a specific entry in the data_sources
@@ -130,7 +130,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public String getDbInfo(String name) throws CentralRepoException;
+    String getDbInfo(String name) throws CentralRepoException;
 
     /**
      * Update the value for a name in the name/value db_info table.
@@ -140,7 +140,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public void updateDbInfo(String name, String value) throws CentralRepoException;
+    void updateDbInfo(String name, String value) throws CentralRepoException;
 
     /**
      * Creates new Case in the database
@@ -376,17 +376,20 @@ public interface CentralRepository {
     Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
-     * Retrieves number of unique cases which have correlation attributes other
-     * which are not associated with the specified file with the same type and
-     * value.
+     * Gets the count of cases that have an instance of a given correlation
+     * attribute.
+     *
+     * This count will ignore the specified instance of the correlation
+     * attribute and any other instances of this correlation attribute existing
+     * on the same object.
      *
      * @param instance The instance having its cases with other occurrences
      *                 counted.
      *
-     * @return Number of cases with additional instances of this attribute type
-     *         and value.
+     * @return Number of cases with additional instances of this
+     *         CorrelationAttributeInstance.
      */
-    public Long getCountCasesWithOtherInstances(CorrelationAttributeInstance instance) throws CentralRepoException, CorrelationAttributeNormalizationException;
+    Long getCountCasesWithOtherInstances(CorrelationAttributeInstance instance) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves number of data sources in the database.
@@ -528,7 +531,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public void deleteReferenceSet(int referenceSetID) throws CentralRepoException;
+    void deleteReferenceSet(int referenceSetID) throws CentralRepoException;
 
     /**
      * Check whether a reference set with the given parameters exists in the
@@ -543,7 +546,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws CentralRepoException;
+    boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws CentralRepoException;
 
     /**
      * Check whether a reference set with the given name/version is in the
@@ -557,7 +560,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public boolean referenceSetExists(String referenceSetName, String version) throws CentralRepoException;
+    boolean referenceSetExists(String referenceSetName, String version) throws CentralRepoException;
 
     /**
      * Check if the given file hash is in this reference set. Only searches the
@@ -570,7 +573,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
+    boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves the given file HashHitInfo if the given file hash is in this
@@ -596,7 +599,7 @@ public interface CentralRepository {
      *
      * @return true if the hash is found in the reference set
      */
-    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws CentralRepoException, CorrelationAttributeNormalizationException;
+    boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Is the artifact known as bad according to the reference entries?
@@ -805,7 +808,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public void upgradeSchema() throws CentralRepoException, SQLException, IncompatibleCentralRepoException;
+    void upgradeSchema() throws CentralRepoException, SQLException, IncompatibleCentralRepoException;
 
     /**
      * Gets an exclusive lock (if applicable). Will return the lock if
@@ -818,7 +821,7 @@ public interface CentralRepository {
      * @throws CentralRepoException if the coordination service is running but
      *                              we fail to get the lock
      */
-    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws CentralRepoException;
+    CoordinationService.Lock getExclusiveMultiUserDbLock() throws CentralRepoException;
 
     /**
      * Process the Artifact instance in the EamDb
@@ -849,7 +852,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;
+    void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;
 
     /**
      * Executes an INSERT/UPDATE/DELETE sql as a prepared statement, on the

@@ -212,8 +212,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting value for name.", ex);
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -505,8 +505,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting case details.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -565,8 +565,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting case details.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -602,8 +602,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting all cases.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -787,8 +787,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting data source.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -851,8 +851,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting data source.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -885,8 +885,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting all data sources.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -1390,8 +1390,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
         return artifactInstances;
@@ -1432,8 +1432,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting count of artifact instances by artifactType and artifactValue.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -1488,8 +1488,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -1501,7 +1501,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         Long instanceCount = 0L;
         if (instance != null) {
             Long sourceObjID = instance.getFileObjectId();
-            //We know that instances have a correlation case but that correlation case may have a null ID if it is not in the CR, although it should be.
+            //The CorrelationAttributeInstance will have a CorrelationCase, however that correlation case's ID will be null if the case is not in the CR.
             int correlationCaseId = instance.getCorrelationCase().getID();
             String normalizedValue = CorrelationAttributeNormalizer.normalize(instance.getCorrelationType(), instance.getCorrelationValue());
             Connection conn = connect();
@@ -1510,12 +1510,11 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             ResultSet resultSet = null;
             try {
                 if (correlationCaseId > 0 && sourceObjID != null) {
-                    //the current case is in the CR we can ignore this case source file to ensure we don't count the current item   
-                    //this will also work regardless of the instance itself being a database instance
+                    //The CorrelationCase is in the Central repository.  
                     String sql
-                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM "
+                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM " //Get distinct cases with a matching value in the corresponding table from the central repository.
                             + tableName
-                            + " WHERE value=? AND NOT (file_obj_id=? AND case_id=?)) AS "
+                            + " WHERE value=? AND NOT (file_obj_id=? AND case_id=?)) AS " //Check the file_obj_id AND case_id to ensure we ignore the currently selected instance. 
                             + tableName
                             + "_other_case_count";
                     preparedStatement = conn.prepareStatement(sql);
@@ -1523,10 +1522,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                     preparedStatement.setLong(2, sourceObjID);
                     preparedStatement.setInt(3, correlationCaseId);
                 } else {
-                    //the current case is not in the CR so the current instance can't be so we can just count all other cases with the instance
-                    //we won't know if it exists elsewhere in this case because this case is not in the CR
+                    //The CorrelationCase is NOT in the central repository. 
                     String sql
-                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM "
+                            = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM " //Get all distinct cases with a matching value in the corresponding table from the central repository.
                             + tableName
                             + " WHERE value=? AS "
                             + tableName
@@ -1540,8 +1538,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             } catch (SQLException ex) {
                 throw new CentralRepoException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
             } finally {
-                CentralRepoDbUtil.closeStatement(preparedStatement);
                 CentralRepoDbUtil.closeResultSet(resultSet);
+                CentralRepoDbUtil.closeStatement(preparedStatement);
                 CentralRepoDbUtil.closeConnection(conn);
             }
         }
@@ -1567,8 +1565,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error counting data sources.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -1614,8 +1612,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error counting artifact instances by caseName/dataSource.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -1941,8 +1939,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -2012,8 +2010,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -2099,9 +2097,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting/setting artifact instance knownStatus=" + knownStatus.getName(), ex); // NON-NLS
         } finally {
+            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeStatement(preparedUpdate);
             CentralRepoDbUtil.closeStatement(preparedQuery);
-            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -2141,8 +2139,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting count of notable artifact instances.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -2196,8 +2194,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -2248,8 +2246,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -2392,8 +2390,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error determining if value (" + normalizeValued + ") is in reference set " + referenceSetID, ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -2431,8 +2429,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error determining if value (" + normalizeValued + ") is in reference set " + referenceSetID, ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -2475,8 +2473,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error determining if artifact is notable by reference.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -2516,8 +2514,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting all artifact instances from instances table", ex);
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -2562,8 +2560,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting all artifact instances from instances table", ex);
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -2601,8 +2599,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error running query", ex);
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -2687,8 +2685,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error inserting new organization.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(generatedKeys);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -2720,8 +2718,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting all organizations.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -2753,8 +2751,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting organization by id.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -2905,9 +2903,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error executing query when attempting to delete organization by id.", ex); // NON-NLS
         } finally {
+            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeStatement(checkIfUsedStatement);
             CentralRepoDbUtil.closeStatement(deleteOrgStatement);
-            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -2969,9 +2967,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error inserting new global set.", ex); // NON-NLS
         } finally {
+            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeStatement(preparedStatement1);
             CentralRepoDbUtil.closeStatement(preparedStatement2);
-            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -3006,8 +3004,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting reference set by id.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement1);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement1);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -3045,8 +3043,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting reference sets.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement1);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement1);
             CentralRepoDbUtil.closeConnection(conn);
         }
         return results;
@@ -3123,8 +3121,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             throw new CentralRepoException("Error testing whether reference set exists (name: " + referenceSetName
                     + " version: " + version, ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement1);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement1);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -3214,8 +3212,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting reference instances by type and value.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement1);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement1);
             CentralRepoDbUtil.closeConnection(conn);
         }
 
@@ -3295,9 +3293,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error inserting new correlation type.", ex); // NON-NLS
         } finally {
+            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeStatement(preparedStatementQuery);
-            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeConnection(conn);
         }
         return typeId;
@@ -3349,9 +3347,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error inserting new correlation type.", ex); // NON-NLS
         } finally {
+            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeStatement(preparedStatementQuery);
-            CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeConnection(conn);
         }
         return typeId;
@@ -3397,8 +3395,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting enabled correlation types.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -3432,8 +3430,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting supported correlation types.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
@@ -3526,8 +3524,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         } catch (SQLException ex) {
             throw new CentralRepoException("Error getting correlation type by id.", ex); // NON-NLS
         } finally {
-            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeResultSet(resultSet);
+            CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
     }
