@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.contentviewers.annotations.AnnotationUtils.DisplayTskItems;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -70,6 +71,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             Case.Events.CONTENT_TAG_DELETED,
             Case.Events.CR_COMMENT_CHANGED);
 
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
+
     private static final Set<BlackboardArtifact.Type> ARTIFACT_TYPES_OF_INTEREST = ImmutableSet.of(
             BlackboardArtifact.Type.TSK_HASHSET_HIT,
             BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT
@@ -83,25 +86,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             return;
         }
 
-        Pair<Long, Long> artifactContentId = getIdsFromEvent(evt);
-        Long artifactId = artifactContentId.getLeft();
-        Long contentId = artifactContentId.getRight();
-
-        if ((curArtifactId != null && curArtifactId == artifactId) || (curContentId != null && curContentId == contentId)) {
-            refresh();
-        }
-    };
-    
-    private final PropertyChangeListener weakIngestEventListener = WeakListeners.propertyChange(ingestEventListener, null);
-
-    private final PropertyChangeListener caseEventListener = (evt) -> {
-        Long curArtifactId = AnnotationsContentViewer.this.curArtifactId;
-        Long curContentId = AnnotationsContentViewer.this.curContentId;
-
-        if (curArtifactId == null && curContentId == null) {
-            return;
-        }
-        
         // if it is a module data event
         if (IngestManager.IngestModuleEvent.DATA_ADDED.toString().equals(evt.getPropertyName())
                 && evt.getOldValue() instanceof ModuleDataEvent) {
@@ -111,12 +95,33 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             // if an artifact is relevant, refresh
             if (ARTIFACT_TYPES_OF_INTEREST.contains(moduleDataEvent.getBlackboardArtifactType())) {
                 for (BlackboardArtifact artifact : moduleDataEvent.getArtifacts()) {
-                    if (artifact.getArtifactID() == curArtifactId || artifact.getObjectID() == curContentId) {
+                    if ((curArtifactId != null && artifact.getArtifactID() == curArtifactId)
+                            || (curContentId != null && artifact.getObjectID() == curContentId)) {
                         refresh();
                         return;
                     }
                 }
             }
+        }
+    };
+
+    private final PropertyChangeListener weakIngestEventListener = WeakListeners.propertyChange(ingestEventListener, null);
+
+    private final PropertyChangeListener caseEventListener = (evt) -> {
+        Long curArtifactId = AnnotationsContentViewer.this.curArtifactId;
+        Long curContentId = AnnotationsContentViewer.this.curContentId;
+
+        if (curArtifactId == null && curContentId == null) {
+            return;
+        }
+
+        Pair<Long, Long> artifactContentId = getIdsFromEvent(evt);
+        Long artifactId = artifactContentId.getLeft();
+        Long contentId = artifactContentId.getRight();
+
+        // if there is a match of content id or artifact id and the event, refresh
+        if ((curArtifactId != null && curArtifactId.equals(artifactId)) || (curContentId != null && curContentId.equals(contentId))) {
+            refresh();
         }
     };
 
@@ -138,17 +143,17 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         registerListeners();
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        unregisterListeners();
-    }
-
     /**
      * Registers case event and ingest event listeners.
      */
     private void registerListeners() {
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakCaseEventListener);
-        IngestManager.getInstance().addIngestJobEventListener(weakIngestEventListener);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakIngestEventListener);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        unregisterListeners();
     }
 
     /**
@@ -156,12 +161,15 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      */
     private void unregisterListeners() {
         Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakCaseEventListener);
-        IngestManager.getInstance().removeIngestJobEventListener(weakIngestEventListener);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakIngestEventListener);
     }
 
     @Override
     public void setNode(Node node) {
         this.node = node;
+        DisplayTskItems displayItems = AnnotationUtils.getDisplayContent(node);
+        this.curArtifactId = displayItems.getArtifact() == null ? null : displayItems.getArtifact().getArtifactID();
+        this.curContentId = displayItems.getContent() == null ? null : displayItems.getContent().getId();
         updateData(this.node, true);
     }
 
