@@ -364,6 +364,15 @@ final class RegexQuery implements KeywordSearchQuery {
                     }
 
                     offset = hitMatcher.end();
+                    if (offset > 1) {
+                        /* NOTE: some of our regex patterns look for boundary characters immediately before and
+                        * after the keyword hit (e.g. PHONE_NUMBER_REGEX, IP_ADDRESS_REGEX). After a match, Java 
+                        * pattern mather re-starts at the first character not matched by the previous match. This
+                        * basically requires two boundary characters to be present between each pattern match. 
+                        * To mitigate this we are resetting the offest one character back.
+                        */
+                        offset--;
+                    }
                     final ATTRIBUTE_TYPE artifactAttributeType = originalKeyword.getArtifactAttributeType();
 
                     // We attempt to reduce false positives for phone numbers and IP address hits
