@@ -519,21 +519,28 @@ public class CorrelationAttributeUtil {
                         srcContent.getId());
             } else {
                 if (!(srcContent instanceof AbstractFile)) {
-                    logger.log(Level.SEVERE, "Error creating artifact instance of type {0}. Source content of artifact with ID: {1} is not an AbstractFile",
-                            new Object[]{correlationType.getDisplayName(), artifact.getId()});
-                    return null;
-                }
-                AbstractFile bbSourceFile = (AbstractFile) srcContent;
-
-                return new CorrelationAttributeInstance(
+                    return new CorrelationAttributeInstance(
                         correlationType,
                         value,
                         correlationCase,
                         CorrelationDataSource.fromTSKDataSource(correlationCase, dataSrc),
-                        bbSourceFile.getParentPath() + bbSourceFile.getName(),
+                        "",
                         "",
                         TskData.FileKnown.UNKNOWN,
-                        bbSourceFile.getId());
+                        srcContent.getId());
+                } else {
+                    AbstractFile bbSourceFile = (AbstractFile) srcContent;
+
+                    return new CorrelationAttributeInstance(
+                            correlationType,
+                            value,
+                            correlationCase,
+                            CorrelationDataSource.fromTSKDataSource(correlationCase, dataSrc),
+                            bbSourceFile.getParentPath() + bbSourceFile.getName(),
+                            "",
+                            TskData.FileKnown.UNKNOWN,
+                            bbSourceFile.getId());
+                }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error getting querying case database (%s)", artifact), ex); // NON-NLS
