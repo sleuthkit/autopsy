@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
@@ -179,27 +180,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     contentCache.invalidateAll();
                 }
             } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
-                SCOData scoData = (SCOData) evt.getNewValue();
-                if (scoData.getScoreAndDescription() != null) {
-                    updateSheet(new NodeProperty<>(
-                            Bundle.BlackboardArtifactNode_createSheet_score_name(),
-                            Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
-                            scoData.getScoreAndDescription().getRight(),
-                            scoData.getScoreAndDescription().getLeft()));
-                }
-                if (scoData.getComment() != null) {
-                    updateSheet(new NodeProperty<>(
-                            Bundle.BlackboardArtifactNode_createSheet_comment_name(),
-                            Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
-                            NO_DESCR, scoData.getComment()));
-                }
-                if (scoData.getCountAndDescription() != null) {
-                    updateSheet(new NodeProperty<>(
-                            Bundle.BlackboardArtifactNode_createSheet_count_name(),
-                            Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
-                            scoData.getCountAndDescription().getRight(),
-                            scoData.getCountAndDescription().getLeft()));
-                }
+                updateSCOColumns((SCOData) evt.getNewValue());
             } else if (eventType.equals(FileNameTransTask.getPropertyName())) {
                 /*
                  * Replace the value of the Source File property with the
@@ -1223,6 +1204,41 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             return content.getName();
         }
         return "";
+    }
+    
+    /**
+     * Update the SCO columns with the data retrieved in the background
+     * thread. 
+     * 
+     * @param scoData The data for the SCO columns.
+     */
+    private void updateSCOColumns(final SCOData scoData) {
+        // Make sure this happens in the EDT
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (scoData.getScoreAndDescription() != null) {
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                            scoData.getScoreAndDescription().getRight(),
+                            scoData.getScoreAndDescription().getLeft()));
+                }
+                if (scoData.getComment() != null) {
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                            NO_DESCR, scoData.getComment()));
+                }
+                if (scoData.getCountAndDescription() != null) {
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                            scoData.getCountAndDescription().getRight(),
+                            scoData.getCountAndDescription().getLeft()));
+                }
+            }
+        });
     }
 
     /**
