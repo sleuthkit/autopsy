@@ -397,18 +397,6 @@ final class RegexQuery implements KeywordSearchQuery {
                     if (originalKeyword.searchTermIsLiteral()) {
                         hit = hit.replaceAll("^" + KeywordSearchList.BOUNDARY_CHARACTERS + "*", "");
                         hit = hit.replaceAll(KeywordSearchList.BOUNDARY_CHARACTERS + "*$", "");
-
-                        /**
-                         * The Solr StandardTokenizerFactory maximum token
-                         * length is 255 and attempts to search for tokens
-                         * larger than this limit fail when we attempt to
-                         * highlight later. I have't found a programmatic
-                         * mechanism to get this value so I'm hardcoding it
-                         * here.
-                         */
-                        if (hit.length() > 255) {
-                            break;
-                        }
                     }
 
                     /**

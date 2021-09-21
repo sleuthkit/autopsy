@@ -229,6 +229,8 @@ public class IngestEventsListener {
      * @param originalArtifact Original artifact that we want to flag
      * @param caseDisplayNames List of case names artifact was previously seen
      *                         in
+     * @param aType            The correlation type.
+     * @param value            The correlation value.
      */
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
         "IngestEventsListener.prevCaseComment.text=Previous Case: "})
@@ -259,6 +261,8 @@ public class IngestEventsListener {
      * @param originalArtifact the artifact to create the "previously seen" item for
      * @param caseDisplayNames the case names the artifact was previously seen
      *                         in
+     * @param aType            The correlation type.
+     * @param value            The correlation value.
      */
     @NbBundle.Messages({"IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)",
         "# {0} - typeName",
@@ -303,6 +307,8 @@ public class IngestEventsListener {
      *
      * @param originalArtifact the artifact to create the "previously unseen" item
      *                         for
+     * @param aType            The correlation type.
+     * @param value            The correlation value.
      */
     static private void makeAndPostPreviouslyUnseenArtifact(BlackboardArtifact originalArtifact, CorrelationAttributeInstance.Type aType, String value) {
                 Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
@@ -319,6 +325,7 @@ public class IngestEventsListener {
     /**
      * Make an artifact to flag the passed in artifact.
      *
+     * @param newArtifactType          Type of artifact to create.
      * @param originalArtifact         Artifact in current case we want to flag
      * @param attributesForNewArtifact Attributes to assign to the new artifact
      * @param configuration            The configuration to be specified for the new artifact hit

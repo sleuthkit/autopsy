@@ -43,6 +43,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -79,8 +80,15 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.HostAddress;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
+import org.sleuthkit.datamodel.Image;
 
 /**
  * An AbstractNode implementation that can be used to represent an data artifact
@@ -121,6 +129,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private final BlackboardArtifact.Type artifactType;
     private Content srcContent;
     private volatile String translatedSourceName;
+    private final String sourceObjTypeName;
+    private final String srcContentShortDescription;
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -231,8 +241,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-
+        
         srcContent = getSourceContentFromLookup(artifact);
+
         if (srcContent == null) {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
@@ -248,7 +259,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
         }
-
+        sourceObjTypeName = getSourceObjType(srcContent);
+        srcContentShortDescription = getContentShortDescription(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -295,7 +307,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } else {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
-
+        sourceObjTypeName = getSourceObjType(srcContent);
+        srcContentShortDescription = getContentShortDescription(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -557,17 +570,25 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             sheet.put(sheetSet);
         }
 
-        /*
-         * Add the name of the source content of the artifact represented by
-         * this node to the sheet. The value of this property is the same as the
-         * display name of the node and this a "special" property that displays
-         * the node's icon as well as the display name.
-         */
-        sheetSet.put(new NodeProperty<>(
-                Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
-                Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
-                NO_DESCR,
-                getDisplayName()));
+        boolean scoHasBeenAdded = false;
+        if (artifact instanceof AnalysisResult
+                && !(artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+                || artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
+            updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
+            scoHasBeenAdded = true;
+        } else {
+            /*
+             * Add the name of the source content of the artifact represented by
+             * this node to the sheet. The value of this property is the same as
+             * the display name of the node and this a "special" property that
+             * displays the node's icon as well as the display name.
+             */
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
+                    NO_DESCR,
+                    getDisplayName()));
+        }
 
         if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             /*
@@ -588,32 +609,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
 
-        if (!UserPreferences.getHideSCOColumns()) {
-            /*
-             * Add S(core), C(omments), and O(ther occurences) columns to the
-             * sheet and start a background task to compute the value of these
-             * properties for the artifact represented by this node. The task
-             * will fire a PropertyChangeEvent when the computation is completed
-             * and this node's PropertyChangeListener will update the sheet.
-             */
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_score_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
-                    VALUE_LOADING,
-                    ""));
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_comment_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
-                    VALUE_LOADING,
-                    ""));
-            if (CentralRepository.isEnabled()) {
-                sheetSet.put(new NodeProperty<>(
-                        Bundle.BlackboardArtifactNode_createSheet_count_name(),
-                        Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
-                        VALUE_LOADING,
-                        ""));
-            }
-            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+        if (!scoHasBeenAdded) {
+            addSCOColumns(sheetSet);
         }
 
         /*
@@ -837,8 +834,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * repository.
      *
      * @param tags      The tags applied to the artifact and its source content.
-     * @param attribute A correlation attribute instance for the central
-     *                  repository lookup.
+     * @param attributes A correlation attribute instance for the central
+     *                   repository lookup.
      *
      * @return The value of the comment property.
      */
@@ -1053,6 +1050,149 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         return visitor.visit(this);
     }
 
+    @Messages({
+        "BlackboardArtifactNode_analysisSheet_sourceType_name=Source Type",
+        "BlackboardArtifactNode_analysisSheet_soureName_name=Source Name",
+        "BlackboardArtifactNode_analysisSheet_score_name=Score",
+        "BlackboardArtifactNode_analysisSheet_conclusion_name=Conclusion",
+        "BlackboardArtifactNode_analysisSheet_configuration_name=Configuration",
+        "BlackboardArtifactNode_analysisSheet_justifaction_name=Justification"
+    })
+
+    /**
+     * Add the columns to the Sheet.Set for AnalysisResults.
+     *
+     * @param result   The AnalysisResult the sheet is being created.
+     * @param sheetSet The sheetSet to add the values to.
+     */
+    private void updateSheetForAnalysisResult(AnalysisResult result, Sheet.Set sheetSet) {
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
+                NO_DESCR,
+                srcContentShortDescription));
+        
+        addSCOColumns(sheetSet);
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_sourceType_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_sourceType_name(),
+                NO_DESCR,
+                sourceObjTypeName));
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_score_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_score_name(),
+                NO_DESCR,
+                result.getScore().getSignificance().getDisplayName()));
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_conclusion_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_conclusion_name(),
+                NO_DESCR,
+                result.getConclusion()));
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_configuration_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_configuration_name(),
+                NO_DESCR,
+                result.getConfiguration()));
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_justifaction_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_justifaction_name(),
+                NO_DESCR,
+                result.getJustification()));
+    }
+    
+    private void addSCOColumns(Sheet.Set sheetSet) {
+        if (!UserPreferences.getHideSCOColumns()) {
+            /*
+             * Add S(core), C(omments), and O(ther occurences) columns to the
+             * sheet and start a background task to compute the value of these
+             * properties for the artifact represented by this node. The task
+             * will fire a PropertyChangeEvent when the computation is completed
+             * and this node's PropertyChangeListener will update the sheet.
+             */
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                    VALUE_LOADING,
+                    ""));
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                    VALUE_LOADING,
+                    ""));
+            if (CentralRepository.isEnabled()) {
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                        Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                        VALUE_LOADING,
+                        ""));
+            }
+            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+        }
+    }
+
+    /**
+     * Returns a displayable type string for the given content object.
+     * 
+     * If the content object is a artifact of a custom type then this method
+     * may cause a DB call BlackboardArtifact.getType
+     * 
+     * @param source The object to determine the type of.
+     * 
+     * @return A string representing the content type.
+     */
+    private String getSourceObjType(Content source) {
+        if (source instanceof BlackboardArtifact) {
+            BlackboardArtifact srcArtifact = (BlackboardArtifact) source;
+            try {
+                return srcArtifact.getType().getDisplayName();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to get custom artifact type id=" + source.getId(), ex);
+            }
+        } else if (srcContent instanceof Volume) {
+            return TskData.ObjectType.VOL.toString();
+        } else if (srcContent instanceof AbstractFile) {
+            return TskData.ObjectType.ABSTRACTFILE.toString();
+        } else if (srcContent instanceof Image) {
+            return TskData.ObjectType.IMG.toString();
+        } else if (srcContent instanceof VolumeSystem) {
+            return TskData.ObjectType.VS.toString();
+        } else if (srcContent instanceof OsAccount) {
+            return TskData.ObjectType.OS_ACCOUNT.toString();
+        } else if (srcContent instanceof HostAddress) {
+            return TskData.ObjectType.HOST_ADDRESS.toString();
+        } else if (srcContent instanceof Pool) {
+            return TskData.ObjectType.POOL.toString();
+        }
+        return "";
+    }
+    
+    /**
+     * Returns a short description for the given content object.
+     * 
+     * @param content The content object.
+     * 
+     * @return A short description/label.
+     */
+    private String getContentShortDescription(Content content) {
+        if(content != null) {
+            if(content instanceof BlackboardArtifact) {
+                try{
+                    return ((BlackboardArtifact)content).getShortDescription();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to get short description for artifact id=" + content.getId(), ex);
+                }
+            } 
+
+            return content.getName();
+        }
+        return "";
+    }
+
     /**
      * Adds the score property for the artifact represented by this node to the
      * node property sheet.
@@ -1166,5 +1306,4 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         HasCommentStatus status = getCommentProperty(tags, attributes);
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR, status));
     }
-
 }
