@@ -1,0 +1,42 @@
+﻿/*! \page install_multiuser_storage_page Configurer le stockage partagé
+
+\section multiuser_storage Aperçu
+
+Le cluster aura besoin d'un stockage partagé accessible depuis:
+- Les clients Autopsy
+- Le serveur Solr (selon la configuration)
+
+Ce stockage partagé sera utilisé à la fois pour les sources de données et les sorties de cas, vous aurez donc besoin de beaucoup d'espace.
+
+La configuration spécifique du stockage partagé dépendra du type de partage de fichiers dont vous disposez. Les exemples illustrent le partage de fichiers Windows, Linux Samba ou un NAS utilisant FibreChannel.
+
+Vous trouverez ci-dessous quelques directives générales à utiliser lors de l'installation et de la configuration.
+
+\subsection multiuser_storage_req Conditions
+- Tous les ordinateurs devront accéder au stockage partagé par le même chemin. Ainsi, tous doivent avoir les mêmes lettres de lecteurs ou être capables de résoudre les mêmes noms d'hôte (pour les chemins UNC).
+- Si Solr est exécuté en tant que service Windows, vous devrez probablement utiliser des chemins UNC. Le service n'aura pas accès aux lettres de lecteurs pour les lecteurs montés sur le réseau (comme le partage de fichiers Windows). Si vous possédez un NAS matériel, vous pourrez peut-être utiliser des lettres de lecteurs.
+- Les comptes d'utilisateurs exécutés par Autopsy et Solr auront besoin d'autorisations pour lire et écrire sur le stockage partagé. Voir \ref multiuser_users pour obtenir des conseils sur la sélection des comptes utilisateurs et l'enregistrement des informations d'identification.
+
+
+\subsection multiuser_storage_con Considérations
+- Vous obtiendrez probablement de meilleures performances en ayant des lecteurs différents pour les entrées (images disque) et les sorties (dossiers de cas).
+- Si vous séparez les partages, le partage "entrées" peut être fourni en lecture seule si vous ne souhaitez pas que les clients modifient les sources de données.
+
+
+\subsection multiuser_storage_ex Exemple
+- Serveur Windows
+- Disques SSD dédiés pour les entrées (sources de données) et les sorties (dossier de cas).
+- Chaque lecteur est partagé avec les noms «DataSources» et «Cases».
+- Si le serveur ne fait pas partie d'un domaine, des comptes locaux sont créés dessus pour chaque utilisateur qui exécutera Autopsy ou Solr. Chaque compte aura le même mot de passe sur tous les systèmes.
+- Si Solr est exécuté en tant que compte NetworkService, accordez l'accès aux partages de l'ordinateur exécutant Solr (c'est-à-dire pas seulement à un utilisateur spécifique).
+
+
+\subsection multiuser_storage_test Essai
+- Avant de procéder à la configuration d'autres services, vous devez tester que les ordinateurs peuvent accéder au partage. Les problèmes d'autorisation de partages sont le défi de configuration le plus courant.
+- Connectez-vous à un ordinateur qui deviendra éventuellement un client Autopsy en utilisant un compte sous lequel Autopsy fonctionnera.
+- Accédez au partage, tel que \\\\autopsy_storage\\Cases.
+- Si vous êtes invité à entrer un mot de passe, alors soit:
+ - Stockez les informations d'identification, comme indiqué dans la section \ref multiuser_users_store.  Vous devrez répéter cette procédure sur tous les clients et le serveur Solr.
+ - Reconfigurez le serveur de stockage partagé si l'invite était due à une erreur. Vous pouvez aussi vous assurer qu'ils ont tous les deux le même mot de passe.
+
+*/

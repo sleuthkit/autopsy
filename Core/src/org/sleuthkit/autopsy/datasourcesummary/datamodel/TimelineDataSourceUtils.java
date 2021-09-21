@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.datamodel;
 
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.TimeLineModule;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
@@ -60,10 +59,9 @@ public class TimelineDataSourceUtils {
      * @param dataSource The data source.
      * @return The root filter representing a default filter with only this data
      * source selected.
-     * @throws NoCurrentCaseException
      * @throws TskCoreException
      */
-    public RootFilter getDataSourceFilter(DataSource dataSource) throws NoCurrentCaseException, TskCoreException {
+    public RootFilter getDataSourceFilter(DataSource dataSource) throws TskCoreException {
         RootFilterState filterState = getDataSourceFilterState(dataSource);
         return filterState == null ? null : filterState.getActiveFilter();
     }
@@ -75,10 +73,9 @@ public class TimelineDataSourceUtils {
      * @param dataSource The data source.
      * @return The root filter state representing a default filter with only
      * this data source selected.
-     * @throws NoCurrentCaseException
      * @throws TskCoreException
      */
-    public RootFilterState getDataSourceFilterState(DataSource dataSource) throws NoCurrentCaseException, TskCoreException {
+    public RootFilterState getDataSourceFilterState(DataSource dataSource) throws TskCoreException {
         TimeLineController controller = TimeLineModule.getController();
         RootFilterState dataSourceState = controller.getEventsModel().getDefaultEventFilterState().copyOf();
 

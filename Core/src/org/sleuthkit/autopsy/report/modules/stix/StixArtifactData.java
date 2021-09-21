@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -41,7 +42,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 class StixArtifactData {
-
     private static final String MODULE_NAME = "Stix";
 
     private AbstractFile file;
@@ -87,8 +87,11 @@ class StixArtifactData {
 
         // Create artifact if it doesn't already exist.
         if (!blackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
-            BlackboardArtifact bba = file.newArtifact(TSK_INTERESTING_FILE_HIT);
-            bba.addAttributes(attributes);
+            BlackboardArtifact bba = file.newAnalysisResult(
+                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                    null, setName, null, 
+                    attributes)
+                    .getAnalysisResult();
 
             try {
                 /*

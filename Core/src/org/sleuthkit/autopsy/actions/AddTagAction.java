@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2020 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,22 +44,29 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * An abstract base class for Actions that allow users to tag SleuthKit data
+ * An abstract super class for Actions that allow users to tag Sleuth Kit data
  * model objects.
  */
 abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
     private static final long serialVersionUID = 1L;
     private static final String NO_COMMENT = "";
-    private final Collection<Content> content = new HashSet<>();
+    private final Collection<Content> contentObjsToTag;
 
+    /**
+     * Constructs an instance of an abstract super class for Actions that allow
+     * users to tag Sleuth Kit data model objects.
+     *
+     * @param menuText The menu item text.
+     */
     AddTagAction(String menuText) {
         super(menuText);
+        contentObjsToTag = new HashSet<>();
     }
 
     @Override
     public JMenuItem getPopupPresenter() {
-        content.clear();
+        contentObjsToTag.clear();
         return new TagMenu();
     }
 
@@ -70,7 +77,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
      * @return The specified content for this action.
      */
     Collection<Content> getContentToTag() {
-        return Collections.unmodifiableCollection(content);
+        return Collections.unmodifiableCollection(contentObjsToTag);
     }
 
     /**
@@ -83,8 +90,8 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
      *         apply to the Content specified.
      */
     public JMenuItem getMenuForContent(Collection<? extends Content> contentToTag) {
-        content.clear();
-        content.addAll(contentToTag);
+        contentObjsToTag.clear();
+        contentObjsToTag.addAll(contentToTag);
         return new TagMenu();
     }
 
@@ -111,6 +118,11 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
      */
     abstract protected void addTag(TagName tagName, String comment);
 
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
     /**
      * Instances of this class implement a context menu user interface for
      * creating or selecting a tag name for a tag and specifying an optional tag
@@ -126,7 +138,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             super(getActionDisplayName());
 
             // Get the current set of tag names.
-            Map<String, TagName> tagNamesMap = null;
+            Map<String, TagName> tagNamesMap;
             List<String> standardTagNames = TagsManager.getStandardTagNames();
             Map<String, JMenu> tagSetMenuMap = new HashMap<>();
             List<JMenuItem> standardTagMenuitems = new ArrayList<>();
@@ -240,5 +252,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
             return tagNameItem;
         }
+
     }
+
 }

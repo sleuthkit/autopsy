@@ -1,0 +1,50 @@
+/*! \page host_page Hosts (Hôtes)
+
+
+[TOC]
+
+\section host_use Utilisation des hôtes
+
+\subsection host_wizard Association d'une source de données à un hôte
+
+Chaque source de données doit être associée à un hôte (host). La première étape du \ref ds_add "processus d'ajout d'une source de données" consiste à sélectionner un hôte pour la source de données que vous êtes sur le point d'ajouter au cas. Cet hôte peut être généré automatiquement, saisi par l'utilisateur ou sélectionné dans la liste des hôtes déjà présents dans le cas.
+
+\image html data_source_host_select.png
+
+\subsection host_view Affichage des hôtes
+
+Les hôtes sont affichés dans l'\ref tree_viewer_page. En fonction des \ref view_options_page sélectionnées, les hôtes peuvent être regroupés sous des "personnes".
+
+\image html ui_tree_top_ds.png
+
+\subsection host_os_accounts Comptes de système d'exploitation
+
+Les comptes de système d'exploitation peuvent être affichés dans le nœud "OS Accounts" de l'arborescence. Chaque compte de système d'exploitation est associé à un hôte et les informations sur l'hôte sont affichées dans l'onglet "OS Accounts" de la visionneuse de contenu.
+
+\image html host_os_accounts.png
+
+\section host_management Gérer les hôtes
+
+\subsection host_menu Menu "Manage Hosts"
+
+Allez sur Case->Manage Hosts pour ouvrir le panneau de gestion des hôtes.
+
+\image html manage_hosts.png
+
+Ici, vous pouvez voir tous les hôtes dans le cas, ajouter de nouveaux hôtes, changer le nom d'un hôte existant et supprimer les hôtes qui ne sont pas utilisés.
+
+\subsection host_merge Fusion d'hôtes
+
+Au cours du traitement d'un cas, il peut devenir évident que deux hôtes (ou plus) doivent être combinés. La fusion d'un hôte dans un autre déplacera toutes les sources de données de l'hôte source vers l'hôte de destination et déplacera ou combinera tous les comptes de système d'exploitation trouvés.
+
+
+Pour fusionner des hôtes, cliquez avec le bouton droit sur l'hôte que vous souhaitez fusionner dans un autre hôte.
+
+\image html host_merge.png
+
+Une fenêtre de confirmation s'affiche indiquant que cela ne peut pas être annulé. Après avoir validé cette action, les hôtes seront fusionnés et le nœud de l'arborescence se mettra à jour en affichant les données combinées.
+
+\image html host_merge_result.png
+
+
+*/

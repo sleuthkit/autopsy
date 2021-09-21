@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,11 +33,10 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.guiutils.SimpleTableCellRenderer;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -303,7 +302,7 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         private String getStringForColumn(BlackboardArtifact artifact, BlackboardAttribute bba, int columnIndex) throws TskCoreException {
             if (columnIndex == 0 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
-                return TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact));
+                return TimeZoneUtils.getFormattedTime(bba.getValueLong());
             } else if (columnIndex == 1) {
                 if (artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD || artifactType == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE) {
                     if (bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
@@ -339,7 +338,7 @@ final class ArtifactsListPanel extends AbstractArtifactListPanel {
             final BlackboardArtifact artifact = getArtifactByRow(rowIndex);
             for (BlackboardAttribute bba : artifact.getAttributes()) {
                 if (columnIndex == 0 && bba.getAttributeType().getTypeName().startsWith("TSK_DATETIME") && !StringUtils.isBlank(bba.getDisplayString())) {
-                    return TimeUtilities.epochToTime(bba.getValueLong(), ContentUtils.getTimeZone(artifact));
+                    return TimeZoneUtils.getFormattedTime(bba.getValueLong());
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {
                     return bba.getDisplayString();
                 } else if (columnIndex == 1 && bba.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID() && !StringUtils.isBlank(bba.getDisplayString())) {

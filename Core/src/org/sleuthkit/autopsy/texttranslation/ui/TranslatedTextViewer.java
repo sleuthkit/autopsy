@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -140,7 +141,7 @@ public final class TranslatedTextViewer implements TextViewer {
     public int isPreferred(Node node) {
         // Returning zero makes it unlikely this object will be the preferred content viewer, 
         // i.e., the active tab, when the content viewers are first displayed.
-        return 0;
+        return ViewerPriority.viewerPriority.LevelZero.getFlag();
     }
 
     /**

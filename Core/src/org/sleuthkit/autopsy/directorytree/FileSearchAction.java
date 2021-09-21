@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011 Basis Technology Corp.
+ *
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,19 +23,28 @@ import javax.swing.AbstractAction;
 import org.openide.util.Lookup;
 
 /**
- *
- * @author dfickling
+ * The “File Search by Attributes” action for data sources in the tree.
  */
 public class FileSearchAction extends AbstractAction {
 
-    public FileSearchAction(String title) {
+    private final long dataSourceId;
+
+    /**
+     * Main constructor.
+     *
+     * @param title        The display name for the action.
+     * @param dataSourceID The data source id of the item that is selected in
+     *                     the tree.
+     */
+    public FileSearchAction(String title, long dataSourceID) {
         super(title);
+        dataSourceId = dataSourceID;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         FileSearchProvider searcher = Lookup.getDefault().lookup(FileSearchProvider.class);
-        searcher.showDialog();
+        searcher.showDialog(dataSourceId);
     }
 
 }

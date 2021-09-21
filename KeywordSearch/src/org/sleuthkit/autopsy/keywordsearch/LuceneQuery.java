@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
@@ -236,14 +237,6 @@ class LuceneQuery implements KeywordSearchQuery {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        BlackboardArtifact bba;
-        try {
-            bba = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-        } catch (TskCoreException e) {
-            logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
-            return null;
-        }
-
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
@@ -270,10 +263,13 @@ class LuceneQuery implements KeywordSearchQuery {
         );
 
         try {
-            bba.addAttributes(attributes); //write out to bb
-            return bba;
+            return content.newAnalysisResult(
+                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                    null, listName, null, 
+                    attributes)
+                    .getAnalysisResult();
         } catch (TskCoreException e) {
-            logger.log(Level.WARNING, "Error adding bb attributes to artifact", e); //NON-NLS
+            logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
             return null;
         }
     }

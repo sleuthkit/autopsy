@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2018 Basis Technology Corp.
+ *
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,135 +20,121 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Nodes for the images
+ * A top-level structural node (child of the invisible root node) in the main
+ * tree view when the user has selected the group by data type option. It
+ * appears as the parent node of the "directory tree" nodes that are the roots
+ * of the file trees for the individual data sources in a case. For example:
+ * "Data Sources" -> "Data Source X", "Data Source Y", where "Data Sources" is
+ * an instance of this node. The siblings of this node are the "Views, "Analysis
+ * Results," "Os Accounts," "Tags," and "Reports" nodes.
  */
+@Messages({
+    "DataSourcesHostsNode_name=Data Sources"
+})
 public class DataSourcesNode extends DisplayableItemNode {
 
-    private static final String NAME = NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.name");
-    
+    /*
+     * Custom Keys implementation that listens for new data sources being added.
+     */
+    public static class DataSourcesByTypeChildren extends ChildFactory.Detachable<HostDataSources> {
+
+        private static final Set<Case.Events> UPDATE_EVTS = EnumSet.of(Case.Events.DATA_SOURCE_ADDED,
+                Case.Events.HOSTS_ADDED,
+                Case.Events.HOSTS_DELETED,
+                Case.Events.HOSTS_UPDATED);
+
+        private static final Set<String> UPDATE_EVT_STRS = UPDATE_EVTS.stream()
+                .map(evt -> evt.name())
+                .collect(Collectors.toSet());
+
+        private static final Logger logger = Logger.getLogger(DataSourcesByTypeChildren.class.getName());
+
+        private final PropertyChangeListener pcl = new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String eventType = evt.getPropertyName();
+                if (UPDATE_EVT_STRS.contains(eventType)) {
+                    refresh(true);
+                }
+            }
+        };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+
+        @Override
+        protected void addNotify() {
+            Case.addEventTypeSubscriber(UPDATE_EVTS, weakPcl);
+        }
+
+        @Override
+        protected void finalize() throws Throwable{
+            Case.removeEventTypeSubscriber(UPDATE_EVTS, weakPcl);
+            super.finalize();
+        }
+
+        @Override
+        protected boolean createKeys(List<HostDataSources> toPopulate) {
+            try {
+                Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getAllHosts().stream()
+                        .map(HostDataSources::new)
+                        .sorted()
+                        .forEach(toPopulate::add);
+
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
+            }
+
+            return true;
+        }
+
+        @Override
+        protected Node createNodeForKey(HostDataSources key) {
+            return new HostNode(key);
+        }
+
+    }
+
+    private static final String NAME = Bundle.DataSourcesHostsNode_name();
+
     /**
      * @return The name used to identify the node of this type with a lookup.
      */
     public static String getNameIdentifier() {
         return NAME;
     }
-    
-    private final String displayName;
 
-    // NOTE: The images passed in via argument will be ignored.
-    @Deprecated
-    public DataSourcesNode(List<Content> images) {
-        this(0);
-    }
-
-    public DataSourcesNode() {
-        this(0);
-    }
-
-    public DataSourcesNode(long dsObjId) {
-        super(Children.create(new DataSourcesNodeChildren(dsObjId), false), Lookups.singleton(NAME));
-        displayName = (dsObjId > 0) ?  NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.group_by_datasource.name") : NAME;
-        init();
-    }
-    
-    private void init() {
+    /**
+     * Main constructor.
+     */
+    DataSourcesNode() {
+        super(Children.create(new DataSourcesByTypeChildren(), true), Lookups.singleton(NAME));
         setName(NAME);
-        setDisplayName(displayName);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png"); //NON-NLS
+        setDisplayName(NAME);
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png");
     }
 
     @Override
     public String getItemType() {
         return getClass().getName();
-    }
-
-    /*
-     * Custom Keys implementation that listens for new data sources being added.
-     */
-    public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
-
-        private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
-        private final long datasourceObjId;
- 
-        List<Content> currentKeys;
-
-        public DataSourcesNodeChildren() {
-           this(0);
-        }
-
-        public DataSourcesNodeChildren(long dsObjId) {
-            super("ds_" + Long.toString(dsObjId));
-            this.currentKeys = new ArrayList<>();
-            this.datasourceObjId = dsObjId;
-        }
-        
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                    refresh(true);
-                }
-            }
-        };
-
-        @Override
-        protected void onAdd() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-        }
-
-        @Override
-        protected void onRemove() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-            currentKeys.clear();
-        }
-
-        @Override
-        protected List<Content> makeKeys() {
-            try {
-                if (datasourceObjId == 0) {
-                    currentKeys = Case.getCurrentCaseThrows().getDataSources();
-                }
-                else {
-                    Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(datasourceObjId);
-                    currentKeys = new ArrayList<>(Arrays.asList(content));
-                }
-                
-                Collections.sort(currentKeys, new Comparator<Content>() {
-                    @Override
-                    public int compare(Content content1, Content content2) {
-                        String content1Name = content1.getName().toLowerCase();
-                        String content2Name = content2.getName().toLowerCase();
-                        return content1Name.compareTo(content2Name);
-                    }
-
-                });
-                
-            } catch (TskCoreException | NoCurrentCaseException | TskDataException ex) {
-                logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
-            }
-            
-            return currentKeys;
-        }
     }
 
     @Override

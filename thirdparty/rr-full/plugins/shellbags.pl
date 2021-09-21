@@ -779,7 +779,7 @@ sub parseFolderEntry {
 				$tag = 0;
 			}
 			else {
-				$str .= $s;
+			    $str .= $s;
 				$cnt++;
 			}
 		}	
@@ -799,7 +799,7 @@ sub parseFolderEntry {
 				$tag = 0;
 			}
 			else {
-				$str .= $s;
+			    $str .= $s;
 				$cnt++;
 			}
 		}
@@ -858,13 +858,12 @@ sub parseFolderEntry {
 	
 		my $str = substr($data,$ofs,length($data) - 30);
 		my $longname = (split(/\00\00/,$str,2))[0];
-		$longname =~ s/\00//g;
 	
 		if ($longname ne "") {
-			$item{name} = $longname;
+			$item{name} = Utf16ToUtf8($longname);
 		}
 		else {
-			$item{name} = $shortname;
+			$item{name} = UTF16ToUtf8($shortname);
 		}
 	}
 	return %item;
@@ -957,7 +956,7 @@ sub parseFolderEntry2 {
 	
 	$item{name} = (split(/\00\00/,$str,2))[0];
 	$item{name} =~ s/\13\20/\2D\00/;
-	$item{name} =~ s/\00//g;
+	$item{name} = Utf16ToUtf8($item{name});
 	
 	return %item;
 }
@@ -1024,7 +1023,7 @@ sub shellItem0x52 {
 			$tag = 0;
 		}
 		else {
-			$item{name} .= $d;
+            $item{name} .= $d;
 			$cnt += 2;
 		}
 	}	
@@ -1118,5 +1117,16 @@ sub getNum48 {
 		return $n1 + $n2;
 	}
 }
+
+#---------------------------------------------------------------------
+# Utf16ToUtf8()
+#---------------------------------------------------------------------
+sub Utf16ToUtf8 {
+  my $str = $_[0];
+  Encode::from_to($str,'UTF-16LE','utf8');
+  $str = Encode::decode_utf8($str);
+  return $str;
+}
+
 
 1;

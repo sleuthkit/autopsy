@@ -22,6 +22,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -29,6 +30,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
+import java.util.HashMap;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
@@ -87,6 +89,7 @@ class RecentDocumentsByLnk extends Extract {
 
         dataFound = true;
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        HashMap<String, String> recentFileMap = new HashMap<>();
         for (AbstractFile recentFile : recentFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -111,6 +114,8 @@ class RecentDocumentsByLnk extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             String path = lnk.getBestPath();
+            if (recentFileMap.get(path + File.separator + recentFile.getName()) == null) {
+                recentFileMap.put(path + File.separator + recentFile.getName(), recentFile.getName());
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                     NbBundle.getMessage(this.getClass(),
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
@@ -136,6 +141,7 @@ class RecentDocumentsByLnk extends Extract {
                logger.log(Level.SEVERE, String.format("Failed to create TSK_RECENT_OBJECT artifact for file %d", recentFile.getId()), ex); 
             }
         }
+        }
         
         if (!context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
@@ -152,13 +158,12 @@ class RecentDocumentsByLnk extends Extract {
      * @returnv BlackboardArtifact or a null value 
      */  
     private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
-        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         String normalizePathName = FilenameUtils.normalize(filePathName, true);
         String fileName = FilenameUtils.getName(normalizePathName);
         String filePath = FilenameUtils.getPath(normalizePathName);
         List<AbstractFile> sourceFiles;
         try {
-            sourceFiles = fileManager.findFiles(dataSource, fileName, filePath); //NON-NLS
+            sourceFiles = currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, fileName, filePath);
             for (AbstractFile sourceFile : sourceFiles) {
                 if (sourceFile.getParentPath().endsWith(filePath)) {
                     return createAssociatedArtifact(sourceFile, bba);

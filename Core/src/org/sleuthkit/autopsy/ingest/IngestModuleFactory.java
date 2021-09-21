@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,14 +91,13 @@ public interface IngestModuleFactory {
      * family of ingest modules the factory creates. For example, the Autopsy
      * core hash lookup ingest module factory provides a global settings panel
      * to import and create hash databases. The hash databases are then enabled
-     * or disabled per ingest job using an ingest job settings panel. If the
-     * module family does not have global settings, the factory may extend
-     * IngestModuleFactoryAdapter to get an implementation of this method that
-     * returns false.
+     * or disabled per ingest job using an ingest job settings panel.
      *
      * @return True if the factory provides a global settings panel.
      */
-    boolean hasGlobalSettingsPanel();
+    default boolean hasGlobalSettingsPanel() {
+        return false;
+    }
 
     /**
      * Gets a user interface panel that allows a user to change settings that
@@ -106,68 +105,64 @@ public interface IngestModuleFactory {
      * creates. For example, the Autopsy core hash lookup ingest module factory
      * provides a global settings panel to import and create hash databases. The
      * imported hash databases are then enabled or disabled per ingest job using
-     * ingest an ingest job settings panel. If the module family does not have a
-     * global settings, the factory may extend IngestModuleFactoryAdapter to get
-     * an implementation of this method that throws an
-     * UnsupportedOperationException.
+     * ingest an ingest job settings panel.
      *
      * @return A global settings panel.
      */
-    IngestModuleGlobalSettingsPanel getGlobalSettingsPanel();
+    default IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Gets the default per ingest job settings for instances of the family of
      * ingest modules the factory creates. For example, the Autopsy core hash
      * lookup ingest modules family uses hash databases imported or created
      * using its global settings panel. All of the hash databases are enabled by
-     * default for an ingest job. If the module family does not have per ingest
-     * job settings, the factory may extend IngestModuleFactoryAdapter to get an
-     * implementation of this method that returns an instance of the
-     * NoIngestModuleJobSettings class.
+     * default for an ingest job.
      *
      * @return The default ingest job settings.
      */
-    IngestModuleIngestJobSettings getDefaultIngestJobSettings();
+    default IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
+        return new NoIngestModuleIngestJobSettings();
+    }
 
     /**
      * Queries the factory to determine if it provides user a interface panel to
      * allow a user to make per ingest job settings for instances of the family
      * of ingest modules the factory creates. For example, the Autopsy core hash
      * lookup ingest module factory provides an ingest job settings panels to
-     * enable or disable hash databases per ingest job. If the module family
-     * does not have per ingest job settings, the factory may extend
-     * IngestModuleFactoryAdapter to get an implementation of this method that
-     * returns false.
+     * enable or disable hash databases per ingest job.
      *
      * @return True if the factory provides ingest job settings panels.
      */
-    boolean hasIngestJobSettingsPanel();
+    default boolean hasIngestJobSettingsPanel() {
+        return false;
+    }
 
     /**
      * Gets a user interface panel that can be used to set per ingest job
      * settings for instances of the family of ingest modules the factory
      * creates. For example, the core hash lookup ingest module factory provides
      * an ingest job settings panel to enable or disable hash databases per
-     * ingest job. If the module family does not have per ingest job settings,
-     * the factory may extend IngestModuleFactoryAdapter to get an
-     * implementation of this method that throws an
-     * UnsupportedOperationException.
+     * ingest job.
      *
      * @param settings Per ingest job settings to initialize the panel.
      *
      * @return An ingest job settings panel.
      */
-    IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings);
+    default IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Queries the factory to determine if it is capable of creating data source
-     * ingest modules. If the module family does not include data source ingest
-     * modules, the factory may extend IngestModuleFactoryAdapter to get an
-     * implementation of this method that returns false.
+     * ingest modules.
      *
      * @return True if the factory can create data source ingest modules.
      */
-    boolean isDataSourceIngestModuleFactory();
+    default boolean isDataSourceIngestModuleFactory() {
+        return false;
+    }
 
     /**
      * Creates a data source ingest module instance.
@@ -189,26 +184,24 @@ public interface IngestModuleFactory {
      * correctly. Also, more than one ingest job may be in progress at any given
      * time. This must also be taken into consideration when sharing resources
      * between module instances. modules.
-     * <p>
-     * If the module family does not include data source ingest modules, the
-     * factory may extend IngestModuleFactoryAdapter to get an implementation of
-     * this method that throws an UnsupportedOperationException.
      *
-     * @param settings The settings for the ingest job.
+     * @param ingestOptions The settings for the ingest job.
      *
      * @return A data source ingest module instance.
      */
-    DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings);
+    default DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Queries the factory to determine if it is capable of creating file ingest
-     * modules. If the module family does not include file ingest modules, the
-     * factory may extend IngestModuleFactoryAdapter to get an implementation of
-     * this method that returns false.
+     * modules.
      *
      * @return True if the factory can create file ingest modules.
      */
-    boolean isFileIngestModuleFactory();
+    default boolean isFileIngestModuleFactory() {
+        return false;
+    }
 
     /**
      * Creates a file ingest module instance.
@@ -230,14 +223,52 @@ public interface IngestModuleFactory {
      * correctly. Also, more than one ingest job may be in progress at any given
      * time. This must also be taken into consideration when sharing resources
      * between module instances. modules.
-     * <p>
-     * If the module family does not include file ingest modules, the factory
-     * may extend IngestModuleFactoryAdapter to get an implementation of this
-     * method that throws an UnsupportedOperationException.
      *
      * @param settings The settings for the ingest job.
      *
      * @return A file ingest module instance.
      */
-    FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings);
+    default FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Queries the factory to determine if it is capable of creating data
+     * artifact ingest modules.
+     *
+     * @return True or false.
+     */
+//    default boolean isDataArtifactIngestModuleFactory() {
+//        return false;
+//    }
+
+    /**
+     * Creates a data artifact ingest module instance.
+     * <p>
+     * Autopsy will generally use the factory to several instances of each type
+     * of module for each ingest job it performs. Completing an ingest job
+     * entails processing a single data source (e.g., a disk image) and all of
+     * the files from the data source, including files extracted from archives
+     * and any unallocated space (made to look like a series of files). The data
+     * source is passed through one or more pipelines of data source ingest
+     * modules. The files are passed through one or more pipelines of file
+     * ingest modules.
+     * <p>
+     * The ingest framework may use multiple threads to complete an ingest job,
+     * but it is guaranteed that there will be no more than one module instance
+     * per thread. However, if the module instances must share resources, the
+     * modules are responsible for synchronizing access to the shared resources
+     * and doing reference counting as required to release those resources
+     * correctly. Also, more than one ingest job may be in progress at any given
+     * time. This must also be taken into consideration when sharing resources
+     * between module instances. modules.
+     *
+     * @param settings The settings for the ingest job.
+     *
+     * @return A file ingest module instance.
+     */
+//    default DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
+//        throw new UnsupportedOperationException();
+//    }
+
 }

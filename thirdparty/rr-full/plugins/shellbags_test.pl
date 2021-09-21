@@ -100,7 +100,7 @@ sub traverse {
  		my $type = unpack("C",substr($values{$v},2,1));
 		my $size = unpack("v",substr($values{$v},0,2));
 #		probe($values{$v});
-		
+
 # Need to first check to see if the parent of the item was a zip folder
 # and if the 'zipsubfolder' value is set to 1		
 		if (exists ${$parent}{zipsubfolder} && ${$parent}{zipsubfolder} == 1) {
@@ -411,12 +411,13 @@ sub parseFolderItem {
 	$longname =~ s/\x00//g;
 	
 	if ($longname ne "") {
-		$item{name} = $longname;
+		$item{name} = Utf16ToUtf8($longname);
 	}
 	else {
-		$item{name} = $shortname;
+		$item{name} = Utf16ToUtf8($shortname);
 	}
 	return %item;
 }
+
 
 1;

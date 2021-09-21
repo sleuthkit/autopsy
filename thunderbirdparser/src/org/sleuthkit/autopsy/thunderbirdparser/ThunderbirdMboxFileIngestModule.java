@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.thunderbirdparser;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,6 +60,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Relationship;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
@@ -240,8 +242,16 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                     // encrypted pst: Add encrypted file artifact
                     try {
 
-                    BlackboardArtifact artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                    artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
+                    String encryptionFileLevel = NbBundle.getMessage(this.getClass(), 
+                                        "ThunderbirdMboxFileIngestModule.encryptionFileLevel");
+                    BlackboardArtifact artifact = abstractFile.newAnalysisResult(
+                            BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, 
+                            Score.SCORE_NOTABLE, null, null, encryptionFileLevel, Arrays.asList(
+                                new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, 
+                                        EmailParserModuleFactory.getModuleName(), 
+                                        encryptionFileLevel)
+                            ))
+                            .getAnalysisResult();
 
                     try {
                         // index the artifact for keyword search
@@ -759,8 +769,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 return null;
             }
 
-            bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
-            bbart.addAttributes(bbattributes);
+            bbart = abstractFile.newDataArtifact(
+                    new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG), 
+                    bbattributes);
 
             if (context.fileIngestIsCancelled()) {
                 return null;

@@ -31,7 +31,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,14 +177,6 @@ final class ChromeCacheExtractor {
             currentCase = Case.getCurrentCaseThrows();
             fileManager = currentCase.getServices().getFileManager();
              
-            // Create an output folder to save any derived files
-            absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName, context.getJobId());
-            relOutputFolderName = Paths.get(RAImageIngestModule.getRelModuleOutputPath(currentCase, moduleName, context.getJobId())).normalize().toString();
-            
-            File dir = new File(absOutputFolderName);
-            if (dir.exists() == false) {
-                dir.mkdirs();
-            }
         } catch (NoCurrentCaseException ex) {
             String msg = "Failed to get current case."; //NON-NLS
             throw new IngestModuleException(msg, ex);
@@ -276,6 +271,17 @@ final class ChromeCacheExtractor {
             // Identify each cache folder by searching for the index files in each
             List<AbstractFile> indexFiles = findIndexFiles(); 
             
+            if (indexFiles.size() > 0) {
+                // Create an output folder to save any derived files
+                absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName, context.getJobId());
+                relOutputFolderName = Paths.get(RAImageIngestModule.getRelModuleOutputPath(currentCase, moduleName, context.getJobId())).normalize().toString();
+            
+                File dir = new File(absOutputFolderName);
+                if (dir.exists() == false) {
+                    dir.mkdirs();
+                }
+            }
+
             // Process each of the cache folders
             for (AbstractFile indexFile: indexFiles) {  
                 
@@ -540,22 +546,16 @@ final class ChromeCacheExtractor {
         webAttr.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
                 moduleName, cachedItemFile.getId()));
 
-        Optional<Long> optional = cacheEntryFile.getOsAccountObjectId();
-        OsAccount account = null;
-        if(optional.isPresent()) {
-            account = currentCase.getSleuthkitCase().getOsAccountManager().getOsAccountByObjectId(optional.get());
-        }
-        BlackboardArtifact webCacheArtifact = cacheEntryFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_CACHE), webAttr, account);
+        BlackboardArtifact webCacheArtifact = cacheEntryFile.newDataArtifact(new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_WEB_CACHE), webAttr);
         artifactsAdded.add(webCacheArtifact);
 
         // Create a TSK_ASSOCIATED_OBJECT on the f_XXX or derived file file back to the CACHE entry
-        BlackboardArtifact associatedObjectArtifact = cachedItemFile.newArtifact(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
-        if (associatedObjectArtifact != null) {
-            associatedObjectArtifact.addAttribute(
-                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
-                                moduleName, webCacheArtifact.getArtifactID()));
-            artifactsAdded.add(associatedObjectArtifact);
-        }
+        BlackboardArtifact associatedObjectArtifact = cachedItemFile.newDataArtifact(
+                new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT), 
+                Arrays.asList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, 
+                        moduleName, webCacheArtifact.getArtifactID())));
+        
+        artifactsAdded.add(associatedObjectArtifact);
     }
     
     /**
@@ -570,8 +570,13 @@ final class ChromeCacheExtractor {
         
         List<AbstractFile> effFiles = fileManager.findFiles(dataSource, "f_%", cachePath); //NON-NLS 
         for (AbstractFile abstractFile : effFiles ) {
+            String cacheKey = cachePath + abstractFile.getName();
             if (cachePath.equals(abstractFile.getParentPath()) && abstractFile.isFile()) {
-                this.externalFilesTable.put(cachePath + abstractFile.getName(), abstractFile);
+                // Don't overwrite an allocated version with an unallocated version
+                if (abstractFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)
+                        || !externalFilesTable.containsKey(cacheKey)) {
+                    this.externalFilesTable.put(cacheKey, abstractFile);
+                }
             }
         }
     }
@@ -594,21 +599,51 @@ final class ChromeCacheExtractor {
         if (fileCopyCache.containsKey(fileTableKey)) {
             return Optional.of(fileCopyCache.get(fileTableKey).getAbstractFile());
         }
-        
-        
-        List<AbstractFile> cacheFiles = fileManager.findFiles(dataSource, cacheFileName, cacheFolderName); //NON-NLS
+
+        List<AbstractFile> cacheFiles = currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, 
+                cacheFileName, cacheFolderName);
         if (!cacheFiles.isEmpty()) {
-            for (AbstractFile abstractFile: cacheFiles ) {
-                if (abstractFile.getUniquePath().trim().endsWith(DEFAULT_CACHE_PATH_STR)) {
-                    return Optional.of(abstractFile);
+            // Sort the list for consistency. Preference is:
+            // - In correct subfolder and allocated
+            // - In correct subfolder and unallocated
+            // - In incorrect subfolder and allocated
+            Collections.sort(cacheFiles, new Comparator<AbstractFile>() {
+                @Override
+                public int compare(AbstractFile file1, AbstractFile file2) {
+                    try {
+                        if (file1.getUniquePath().trim().endsWith(DEFAULT_CACHE_PATH_STR)
+                                && ! file2.getUniquePath().trim().endsWith(DEFAULT_CACHE_PATH_STR)) {
+                            return -1;
+                        }
+                        
+                        if (file2.getUniquePath().trim().endsWith(DEFAULT_CACHE_PATH_STR)
+                                && ! file1.getUniquePath().trim().endsWith(DEFAULT_CACHE_PATH_STR)) {
+                            return 1;
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Error getting unique path for file with ID " + file1.getId() + " or " + file2.getId(), ex);
+                    }
+                        
+                    if (file1.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)
+                            && ! file2.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
+                        return -1;
+                    }
+                    if (file2.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)
+                            && ! file1.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
+                        return 1;
+                    }
+
+                    return Long.compare(file1.getId(), file2.getId());
                 }
-            }
+            });
+            
+            // The best match will be the first element
             return Optional.of(cacheFiles.get(0));
         }
         
         return Optional.empty(); 
     }
-    
+   
      /**
      * Finds the "index" file that exists in each user's cache.  This is used to 
      * enumerate all of the caches on the system. 

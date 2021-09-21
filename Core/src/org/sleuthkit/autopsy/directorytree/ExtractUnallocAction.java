@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -35,7 +36,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
+import static javax.swing.JFileChooser.SAVE_DIALOG;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
@@ -44,6 +47,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -63,53 +67,47 @@ import org.sleuthkit.datamodel.VolumeSystem;
 final class ExtractUnallocAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
+    private static final long serialVersionUID = 1L;
 
-    private final List<OutputFileData> filesToExtract = new ArrayList<>();
     private static final Set<String> volumesInProgress = new HashSet<>();
     private static final Set<Long> imagesInProgress = new HashSet<>();
     private static String userDefinedExportPath;
-    private long currentImage = 0L;
-    private final boolean isImage;
+
+    private final Volume volume;
+    private final Image image;
+
+    private final JFileChooserFactory chooserFactory;
 
     /**
      * Create an instance of ExtractUnallocAction with a volume.
      *
-     * @param title The title
+     * @param title  The title
      * @param volume The volume set for extraction.
      */
-    public ExtractUnallocAction(String title, Volume volume) {
-        super(title);
-        isImage = false;
-        try {
-            OutputFileData outputFileData = new OutputFileData(volume);
-            filesToExtract.add(outputFileData);
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            setEnabled(false);
-        }
-
+    ExtractUnallocAction(String title, Volume volume) {
+        this(title, null, volume);
+        
     }
 
     /**
      * Create an instance of ExtractUnallocAction with an image.
-     * 
+     *
      * @param title The title.
      * @param image The image set for extraction.
+     *
      * @throws NoCurrentCaseException If no case is open.
      */
-    public ExtractUnallocAction(String title, Image image) throws NoCurrentCaseException {
+    ExtractUnallocAction(String title, Image image) {
+        this(title, image, null);
+    }
+
+    ExtractUnallocAction(String title, Image image, Volume volume) {
         super(title);
-        isImage = true;
-        currentImage = image.getId();
-        if (hasVolumeSystem(image)) {
-            for (Volume v : getVolumes(image)) {
-                OutputFileData outputFileData = new OutputFileData(v);
-                filesToExtract.add(outputFileData);
-            }
-        } else {
-            OutputFileData outputFileData = new OutputFileData(image);
-            filesToExtract.add(outputFileData);
-        }
+
+        this.volume = null;
+        this.image = image;
+        
+        chooserFactory = new JFileChooserFactory(CustomFileChooser.class);
     }
 
     /**
@@ -126,114 +124,35 @@ final class ExtractUnallocAction extends AbstractAction {
         "ExtractUnallocAction.noOpenCase.errMsg=No open case available."})
     @Override
     public void actionPerformed(ActionEvent event) {
-        if (filesToExtract != null && filesToExtract.isEmpty() == false) {
-            // This check doesn't absolutely guarantee that the image won't be in progress when we make the worker, 
-            // but in general it will suffice.
-            if (isImage && isImageInProgress(currentImage)) {
-                MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.notifyMsg.unallocAlreadyBeingExtr.msg"));
-                //JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already being extracted on this Image. Please select a different Image.");
-                return;
-            }
-            Case openCase;
-            try {
-                openCase = Case.getCurrentCaseThrows();
-            } catch (NoCurrentCaseException ex) {
-                MessageNotifyUtil.Message.info(Bundle.ExtractUnallocAction_noOpenCase_errMsg());
-                return;
-            }
-            List<OutputFileData> copyList = new ArrayList<OutputFileData>() {
-                {
-                    addAll(filesToExtract);
-                }
-            };
 
-            JFileChooser fileChooser = new JFileChooser() {
-                @Override
-                public void approveSelection() {
-                    File f = getSelectedFile();
-                    if (!f.exists() && getDialogType() == SAVE_DIALOG || !f.canWrite()) {
-                        JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(),
-                                "ExtractUnallocAction.msgDlg.folderDoesntExist.msg"));
-                        return;
-                    }
-                    super.approveSelection();
-                }
-            };
-
-            fileChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
-            fileChooser.setDialogTitle(
-                    NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.dlgTitle.selectDirToSaveTo.msg"));
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            fileChooser.setAcceptAllFileFilterUsed(false);
-            int returnValue = fileChooser.showSaveDialog((Component) event.getSource());
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
-                String destination = fileChooser.getSelectedFile().getPath();
-                
-                updateExportDirectory(destination, openCase);
-                
-                for (OutputFileData outputFileData : filesToExtract) {
-                    outputFileData.setPath(destination);
-
-                    if (outputFileData.layoutFiles != null && outputFileData.layoutFiles.size() > 0 && (!isVolumeInProgress(outputFileData.getFileName()))) {
-                        //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat  
-
-                        // Check if there is already a file with this name
-                        if (outputFileData.fileInstance.exists()) {
-                            int res = JOptionPane.showConfirmDialog(new Frame(), NbBundle.getMessage(this.getClass(),
-                                    "ExtractUnallocAction.confDlg.unallocFileAlreadyExist.msg",
-                                    outputFileData.getFileName()));
-                            if (res == JOptionPane.YES_OPTION) {
-                                // If the user wants to overwrite, delete the exising output file
-                                outputFileData.fileInstance.delete();
-                            } else {
-                                // Otherwise remove it from the list of output files
-                                copyList.remove(outputFileData);
-                            }
-                        }
-
-                        if (!isImage & !copyList.isEmpty()) {
-                            try {
-                                ExtractUnallocWorker worker = new ExtractUnallocWorker(outputFileData);
-                                worker.execute();
-                            } catch (TskCoreException ex) {
-                                logger.log(Level.WARNING, "Already extracting unallocated space into {0}", outputFileData.getFileName());
-                                MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.volumeInProgress", outputFileData.getFileName()));
-                            }
-                        }
-                    } else {
-                        // The output file for this volume could not be created for one of the following reasons
-                        if (outputFileData.layoutFiles == null) {
-                            MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.volumeError"));
-                            logger.log(Level.SEVERE, "Tried to get unallocated content but the list of unallocated files was null"); //NON-NLS
-                        } else if (outputFileData.layoutFiles.isEmpty()) {
-                            MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.noFiles"));
-                            logger.log(Level.WARNING, "No unallocated files found in volume"); //NON-NLS
-                            copyList.remove(outputFileData);
-                        } else {
-                            MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.volumeInProgress", outputFileData.getFileName()));
-                            logger.log(Level.WARNING, "Tried to get unallocated content but the volume is locked");  // NON_NLS
-                            copyList.remove(outputFileData);
-                        }
-                    }
-                }
-
-                // This needs refactoring. The idea seems to be that we'll take advantage of the loop above to
-                // check whether each output file exists but wait until this point to make a worker
-                // to extract everything (the worker in the above loop doesn't get created because isImage is true)
-                // It's also unclear to me why we need the two separate worker types.
-                if (isImage && !copyList.isEmpty()) {
-                    try {
-                        ExtractUnallocWorker worker = new ExtractUnallocWorker(copyList);
-                        worker.execute();
-                    } catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error creating ExtractUnallocWorker", ex);
-                        MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.imageError"));
-                    }
-                }
-            }
+        Case openCase;
+        try {
+            openCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
+            MessageNotifyUtil.Message.info(Bundle.ExtractUnallocAction_noOpenCase_errMsg());
+            return;
         }
+
+        JFileChooser fileChooser = chooserFactory.getChooser();
+
+        fileChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
+        if (JFileChooser.APPROVE_OPTION != fileChooser.showSaveDialog((Component) event.getSource())) {
+            return;
+        }
+
+        String destination = fileChooser.getSelectedFile().getPath();
+        updateExportDirectory(destination, openCase);
+
+        if (image != null && isImageInProgress(image.getId())) {
+            MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.notifyMsg.unallocAlreadyBeingExtr.msg"));
+            JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already being extracted on this Image. Please select a different Image.");
+            return;
+        }
+
+        ExtractUnallocWorker worker = new ExtractUnallocWorker(openCase, destination);
+        worker.execute();
     }
-    
+
     /**
      * Get the export directory path.
      *
@@ -333,38 +252,14 @@ final class ExtractUnallocAction extends AbstractAction {
         private boolean canceled = false;
         private final List<OutputFileData> outputFileDataList = new ArrayList<>();
         private File currentlyProcessing;
-        private final int totalSizeinMegs;
+        private int totalSizeinMegs;
         long totalBytes = 0;
+        private final String destination;
+        private Case openCase;
 
-        ExtractUnallocWorker(OutputFileData outputFileData) throws TskCoreException {
-            //Getting the total megs this worker is going to be doing
-            addVolumeInProgress(outputFileData.getFileName());
-            outputFileDataList.add(outputFileData);
-            totalBytes = outputFileData.getSizeInBytes();
-            totalSizeinMegs = toMb(totalBytes);
-        }
-
-        ExtractUnallocWorker(List<OutputFileData> outputFileDataList) throws TskCoreException {
-            addImageInProgress(currentImage);
-
-            //Getting the total megs this worker is going to be doing            
-            for (OutputFileData outputFileData : outputFileDataList) {
-                try {
-                    // If a volume is locked, skip it but continue trying to process any other requested volumes
-                    addVolumeInProgress(outputFileData.getFileName());
-                    totalBytes += outputFileData.getSizeInBytes();
-                    this.outputFileDataList.add(outputFileData);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Already extracting data into {0}", outputFileData.getFileName());
-                }
-            }
-
-            // If we don't have anything to output (because of locking), throw an exception
-            if (this.outputFileDataList.isEmpty()) {
-                throw new TskCoreException("No unallocated files can be extracted");
-            }
-
-            totalSizeinMegs = toMb(totalBytes);
+        ExtractUnallocWorker(Case openCase, String destination) {
+            this.destination = destination;
+            this.openCase = openCase;
         }
 
         private int toMb(long bytes) {
@@ -380,6 +275,7 @@ final class ExtractUnallocAction extends AbstractAction {
         @Override
         protected Integer doInBackground() {
             try {
+                initalizeFilesToExtract();
                 progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.progress.extractUnalloc.title"), new Cancellable() {
                     @Override
@@ -403,29 +299,29 @@ final class ExtractUnallocAction extends AbstractAction {
                 for (OutputFileData outputFileData : this.outputFileDataList) {
                     currentlyProcessing = outputFileData.getFile();
                     logger.log(Level.INFO, "Writing Unalloc file to {0}", currentlyProcessing.getPath()); //NON-NLS
-                    OutputStream outputStream = new FileOutputStream(currentlyProcessing);
-                    long bytes = 0;
-                    int i = 0;
-                    while (i < outputFileData.getLayouts().size() && bytes != outputFileData.getSizeInBytes()) {
-                        LayoutFile layoutFile = outputFileData.getLayouts().get(i);
-                        long offsetPerFile = 0L;
-                        int bytesRead;
-                        while (offsetPerFile != layoutFile.getSize() && !canceled) {
-                            if (++kbs % 128 == 0) {
-                                mbs++;
-                                progress.progress(NbBundle.getMessage(this.getClass(),
-                                        "ExtractUnallocAction.processing.counter.msg",
-                                        mbs, totalSizeinMegs), mbs - 1);
+                    try (OutputStream outputStream = new FileOutputStream(currentlyProcessing)) {
+                        long bytes = 0;
+                        int i = 0;
+                        while (i < outputFileData.getLayouts().size() && bytes != outputFileData.getSizeInBytes()) {
+                            LayoutFile layoutFile = outputFileData.getLayouts().get(i);
+                            long offsetPerFile = 0L;
+                            int bytesRead;
+                            while (offsetPerFile != layoutFile.getSize() && !canceled) {
+                                if (++kbs % 128 == 0) {
+                                    mbs++;
+                                    progress.progress(NbBundle.getMessage(this.getClass(),
+                                            "ExtractUnallocAction.processing.counter.msg",
+                                            mbs, totalSizeinMegs), mbs - 1);
+                                }
+                                bytesRead = layoutFile.read(buf, offsetPerFile, MAX_BYTES);
+                                offsetPerFile += bytesRead;
+                                outputStream.write(buf, 0, bytesRead);
                             }
-                            bytesRead = layoutFile.read(buf, offsetPerFile, MAX_BYTES);
-                            offsetPerFile += bytesRead;
-                            outputStream.write(buf, 0, bytesRead);
+                            bytes += layoutFile.getSize();
+                            i++;
                         }
-                        bytes += layoutFile.getSize();
-                        i++;
+                        outputStream.flush();
                     }
-                    outputStream.flush();
-                    outputStream.close();
 
                     if (canceled) {
                         outputFileData.getFile().delete();
@@ -448,8 +344,8 @@ final class ExtractUnallocAction extends AbstractAction {
 
         @Override
         protected void done() {
-            if (isImage) {
-                removeImageInProgress(currentImage);
+            if (image != null) {
+                removeImageInProgress(image.getId());
             }
             for (OutputFileData u : outputFileDataList) {
                 removeVolumeInProgress(u.getFileName());
@@ -468,9 +364,114 @@ final class ExtractUnallocAction extends AbstractAction {
                 MessageNotifyUtil.Notify.error(
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.title"),
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.done.errMsg.msg", ex.getMessage()));
+                logger.log(Level.SEVERE, "Failed to extract unallocated space", ex);
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             }
+        }
+
+        private void initalizeFilesToExtract() throws TskCoreException {
+            List<OutputFileData> filesToExtract = new ArrayList<>();
+
+            if (volume != null) {
+                OutputFileData outputFileData = new OutputFileData(volume, openCase);
+                filesToExtract.add(outputFileData);
+
+            } else {
+                if (hasVolumeSystem(image)) {
+                    for (Volume v : getVolumes(image)) {
+                        OutputFileData outputFileData = new OutputFileData(v, openCase);
+                        filesToExtract.add(outputFileData);
+                    }
+                } else {
+                    OutputFileData outputFileData = new OutputFileData(image, openCase);
+                    filesToExtract.add(outputFileData);
+                }
+            }
+
+            if (filesToExtract.isEmpty() == false) {
+
+                List<OutputFileData> copyList = new ArrayList<OutputFileData>() {
+                    {
+                        addAll(filesToExtract);
+                    }
+                };
+
+                for (OutputFileData outputFileData : filesToExtract) {
+                    outputFileData.setPath(destination);
+                    if (outputFileData.getLayouts() != null && !outputFileData.getLayouts().isEmpty() && (!isVolumeInProgress(outputFileData.getFileName()))) {
+                        //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat  
+
+                        // Check if there is already a file with this name
+                        if (outputFileData.getFile().exists()) {
+                            final Result dialogResult = new Result();
+                            try {
+                                SwingUtilities.invokeAndWait(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        dialogResult.set(JOptionPane.showConfirmDialog(new Frame(), NbBundle.getMessage(this.getClass(),
+                                                "ExtractUnallocAction.confDlg.unallocFileAlreadyExist.msg",
+                                                outputFileData.getFileName())));
+                                    }
+                                });
+                            } catch (InterruptedException | InvocationTargetException ex) {
+                               logger.log(Level.SEVERE, "An error occured launching confirmation dialog for extract unalloc actions", ex);
+                            }
+
+                            if (dialogResult.value == JOptionPane.YES_OPTION) {
+                                // If the user wants to overwrite, delete the exising output file
+                                outputFileData.getFile().delete();
+                            } else {
+                                // Otherwise remove it from the list of output files
+                                copyList.remove(outputFileData);
+                            }
+                        }
+                    } else {
+                        // The output file for this volume could not be created for one of the following reasons
+                        if (outputFileData.getLayouts() == null) {
+                            logger.log(Level.SEVERE, "Tried to get unallocated content but the list of unallocated files was null"); //NON-NLS
+                        } else if (outputFileData.getLayouts().isEmpty()) {
+                            logger.log(Level.WARNING, "No unallocated files found in volume"); //NON-NLS
+                            copyList.remove(outputFileData);
+                        } else {
+                            logger.log(Level.WARNING, "Tried to get unallocated content but the volume is locked");  // NON_NLS
+                            copyList.remove(outputFileData);
+                        }
+                    }
+                }
+
+                if (!copyList.isEmpty()) {
+
+                    setDataFileList(copyList);
+
+                }
+            }
+        }
+
+        private void setDataFileList(List<OutputFileData> outputFileDataList) throws TskCoreException {
+
+            if (image != null) {
+                addImageInProgress(image.getId());
+            }
+
+            //Getting the total megs this worker is going to be doing            
+            for (OutputFileData outputFileData : outputFileDataList) {
+                try {
+                    // If a volume is locked, skip it but continue trying to process any other requested volumes
+                    addVolumeInProgress(outputFileData.getFileName());
+                    totalBytes += outputFileData.getSizeInBytes();
+                    this.outputFileDataList.add(outputFileData);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Already extracting data into {0}", outputFileData.getFileName());
+                }
+            }
+
+            // If we don't have anything to output (because of locking), throw an exception
+            if (this.outputFileDataList.isEmpty()) {
+                throw new TskCoreException("No unallocated files can be extracted");
+            }
+
+            totalSizeinMegs = toMb(totalBytes);
         }
     }
 
@@ -659,14 +660,14 @@ final class ExtractUnallocAction extends AbstractAction {
          *
          * @throws NoCurrentCaseException if there is no open case.
          */
-        OutputFileData(Image img) throws NoCurrentCaseException {
+        OutputFileData(Image img, Case openCase) {
             this.layoutFiles = getUnallocFiles(img);
             Collections.sort(layoutFiles, new SortObjId());
             this.volumeId = 0;
             this.imageId = img.getId();
             this.imageName = img.getName();
             this.fileName = this.imageName + "-Unalloc-" + this.imageId + "-" + 0 + ".dat"; //NON-NLS
-            this.fileInstance = new File(Case.getCurrentCaseThrows().getExportDirectory() + File.separator + this.fileName);
+            this.fileInstance = new File(openCase.getExportDirectory() + File.separator + this.fileName);
             this.sizeInBytes = calcSizeInBytes();
         }
 
@@ -677,7 +678,7 @@ final class ExtractUnallocAction extends AbstractAction {
          *
          * @throws NoCurrentCaseException if there is no open case.
          */
-        OutputFileData(Volume volume) throws NoCurrentCaseException {
+        OutputFileData(Volume volume, Case openCase) {
             try {
                 this.imageName = volume.getDataSource().getName();
                 this.imageId = volume.getDataSource().getId();
@@ -688,7 +689,7 @@ final class ExtractUnallocAction extends AbstractAction {
                 this.imageId = 0;
             }
             this.fileName = this.imageName + "-Unalloc-" + this.imageId + "-" + volumeId + ".dat"; //NON-NLS
-            this.fileInstance = new File(Case.getCurrentCaseThrows().getExportDirectory() + File.separator + this.fileName);
+            this.fileInstance = new File(openCase.getExportDirectory() + File.separator + this.fileName);
             this.layoutFiles = getUnallocFiles(volume);
             Collections.sort(layoutFiles, new SortObjId());
             this.sizeInBytes = calcSizeInBytes();
@@ -737,6 +738,48 @@ final class ExtractUnallocAction extends AbstractAction {
 
         void setPath(String path) {
             this.fileInstance = new File(path + File.separator + this.fileName);
+        }
+    }
+
+    // A Custome JFileChooser for this Action Class.
+    public static class CustomFileChooser extends JFileChooser {
+
+        private static final long serialVersionUID = 1L;
+
+        public CustomFileChooser() {
+            initalize();
+        }
+
+        private void initalize() {
+            setDialogTitle(
+                    NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.dlgTitle.selectDirToSaveTo.msg"));
+            setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            setAcceptAllFileFilterUsed(false);
+        }
+
+        @Override
+        public void approveSelection() {
+            File f = getSelectedFile();
+            if (!f.exists() && getDialogType() == SAVE_DIALOG || !f.canWrite()) {
+                JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(),
+                        "ExtractUnallocAction.msgDlg.folderDoesntExist.msg"));
+                return;
+            }
+            super.approveSelection();
+        }
+    }
+
+    // Small helper class for use with SwingUtilities involkAndWait to get
+    // the result from the launching of the JOptionPane.
+    private class Result {
+        private int value;
+
+        void set(int value) {
+            this.value = value;
+        }
+
+        int value() {
+            return value;
         }
     }
 }

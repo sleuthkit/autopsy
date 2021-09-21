@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,45 +25,34 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
 /**
- * Menu item lists DataResult tabs.
+ * Class to provide menu access to the various result viewers.
  */
 class SearchResultMenu extends JMenuItem implements DynamicMenuContent {
 
-    SearchResultMenu() {
+    private static final long serialVersionUID = 1L;
 
-    }
-
+    @NbBundle.Messages({"SearchResultMenu.resultViewers.text=Result Viewers"})
     @Override
     public JComponent[] getMenuPresenters() {
+        JMenu submenu = new JMenu(Bundle.SearchResultMenu_resultViewers_text());
         List<String> dataResultsIds = DataResultTopComponent.getActiveComponentIds();
-        DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
-        DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
-
-        List<JComponent> menuItems = new ArrayList<JComponent>();
-
-        // add the main "DirectoryListing"
-        JMenuItem dlItem = new JMenuItem(directoryListing.getName());
-        dlItem.addActionListener(new OpenTopComponentAction(directoryListing));
-        dlItem.setEnabled(directoryTree.isOpened());
-
-        menuItems.add(dlItem);
-
-        // add search results if there are any
-        if (dataResultsIds.size() > 0) {
-            JMenu submenu = new JMenu(NbBundle.getMessage(this.getClass(), "SearchResultMenu.menu.dataRes.text"));
-            for (String resultTabId : dataResultsIds) {
-                JMenuItem item = new JMenuItem(resultTabId);
-                item.addActionListener(new OpenTopComponentAction(resultTabId));
-                submenu.add(item);
+        if (Case.isCaseOpen()) {
+            // add search results if there are any
+            if (!dataResultsIds.isEmpty()) {
+                for (String resultTabId : dataResultsIds) {
+                    JMenuItem item = new JMenuItem(resultTabId);
+                    item.addActionListener(new OpenTopComponentAction(resultTabId));
+                    submenu.add(item);
+                }
             }
-
-            menuItems.add(submenu);
         }
-
+        submenu.setEnabled(!dataResultsIds.isEmpty());
+        List<JComponent> menuItems = new ArrayList<>();
+        menuItems.add(submenu);
         return menuItems.toArray(new JComponent[menuItems.size()]);
     }
 
@@ -71,4 +60,10 @@ class SearchResultMenu extends JMenuItem implements DynamicMenuContent {
     public JComponent[] synchMenuPresenters(JComponent[] jcs) {
         return getMenuPresenters();
     }
+
+    @Override
+    public boolean isEnabled() {
+        return Case.isCaseOpen();
+    }
+
 }

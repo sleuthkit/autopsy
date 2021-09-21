@@ -1,0 +1,39 @@
+/*! \page email_parser_page Email Parser (Analyseur d’email)
+
+[TOC]
+
+
+Qu'est ce que ça fait
+========
+
+Le module "Email Parser" identifie les fichiers au format MBOX, EML et PST en fonction des signatures de fichier, en extrait les e-mails, en ajoutant les résultats au Blackboard. Ce module ignore les fichiers connus et cré un artefact dans le Blackboard pour chaque message. Il ajoute les pièces jointes aux e-mails en tant que fichiers attachés.
+
+Cela permet à l'utilisateur d'identifier les communications par courrier électronique à partir du système en cours d'analyse.
+
+Configuration
+=======
+
+Aucune configuration n'est requise.
+
+
+Utilisation du module
+======
+Explorez la partie "Results", "E-Mail Messages" de l'arborescence pour passer en revue les résultats de ce module.
+
+Paramètres d'intégration
+------
+Aucun paramètre à l'exécution de ce module n'est requis.
+
+Voir les résultats
+------
+Les résultats s'affichent dans la partie "Results", "E-Mail Messages" de l'\ref tree_viewer_page.
+
+\image html email_results.PNG
+
+Si un e-mail comporte une pièce jointe, l'onglet "Attachments" de la \ref content_viewer_page sera actif.
+
+\image html email_attachments.png
+
+Vous pouvez faire un clic-droit et sélectionner "View File in Directory" pour accéder au fichier joint. Vous pouvez également basculer vers l'onglet "Thumbnails" pour voir un aperçu de toutes les images en pièces jointes.
+
+*/

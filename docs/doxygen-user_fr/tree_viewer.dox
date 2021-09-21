@@ -1,0 +1,75 @@
+/*! \page tree_viewer_page Arborescence
+
+[TOC]
+
+
+L'arborescence sur le côté gauche de la fenêtre principale est l'endroit où vous pouvez parcourir les fichiers dans les sources de données du cas et trouver les résultats enregistrés à partir des analyses automatisées (Ingest). L'arborescence a sept zones principales:
+- <b>Persons / Hosts / Data Sources:</b> Cela montre la hiérarchie arborescente de répertoires des sources de données. Vous pouvez accéder à un fichier ou à un répertoire spécifique ici. Chaque source de données ajoutée au cas est représentée sous la forme d'une sous-arborescence distincte. Si vous ajoutez une source de données plusieurs fois, elle apparaît plusieurs fois.
+- <b>File Views:</b> Des types spécifiques de fichiers provenant des sources de données sont affichés ici, agrégés par type ou par d'autres propriétés. Les fichiers ici peuvent provenir de plusieurs sources de données.
+- <b>Data Artifacts:</b> C'est l'un des principaux endroits où les résultats des \ref ingest_page en cours apparaissent.
+- <b>Analysis Results:</b> C'est l'un des autres principaux endroits où les résultats des \ref ingest_page en cours apparaissent.
+- <b>OS Accounts:</b> C'est ici que vous pouvez voir à la fois les résultats de l'analyse automatisée exécutée en arrière-plan et les résultats de votre recherche.
+- <b>Tags:</b> C'est là que les fichiers et les résultats qui ont été \ref tagging_page "marqués" sont affichés.
+- <b>Reports:</b> Les rapports que vous avez générés ou que les modules d'acquisition ont créés s'affichent ici.
+
+Vous pouvez également utiliser l'option "Group by Person/Host" disponible via la page \ref view_options_page pour déplacer les nœuds d'arborescence Views, Results, et Tags  sous les catégories "Persons" et "Hosts" correspondantes. Cela peut être utile dans les cas très volumineux pour réduire la taille de chaque sous-arborescence.
+
+\section ui_tree_ds Persons / Hosts / Data Sources (Personnes / Hôtes / Sources de données)
+Par défaut, le nœud supérieur de l'arborescence contiendra toutes les sources de données du cas. Le nœud "Data Sources" est organisé par hôte, puis par source de données elle-même. Un clic droit sur les différents nœuds dans la zone "Data Sources" de l'arborescence vous permettra d'obtenir plus d'options pour chaque source de données et son contenu. 
+
+\image html ui_tree_top_ds.png
+
+Si l'option "Group by Person/Host" a été sélectionnée dans le panneau \ref view_options_group "Options", les hôtes et les sources de données seront organisés par rapport à toutes les personnes ayant été associées aux hôtes. De plus, le reste des nœuds (Views, Results, etc...) se trouve sous chaque source de données.
+
+\image html ui_tree_top_persons.png
+
+\subsection ui_tree_persons Persons (Personnes)
+
+Si l'option "Group by Person/Host" a été sélectionnée dans le panneau \ref view_options_group "Options", les nœuds de niveau supérieur afficheront les personnes. Les personnes sont créées manuellement et peuvent être associées à un ou plusieurs hôtes. Pour ajouter ou supprimer une personne d'un hôte, cliquez avec le bouton droit sur l'hôte et sélectionnez l'option appropriée.
+
+\image html ui_person_select.png
+
+Vous pouvez modifier et supprimer des personnes en faisant un clic droit sur le nœud.
+
+\subsection ui_tree_hosts Hosts (Hôtes)
+
+Toutes les sources de données sont organisées sous des nœuds "Hosts" (Hôtes). Voir la page \ref host_page "Hôtes" pour plus d'informations sur l'utilisation des hôtes.
+
+\subsection ui_tree_ds_node Data Sources (Sources de données)
+Sous les hôtes se trouvent les nœuds de chaque source de données. 
+
+L'espace non alloué (Unallocated space) représente les parties d'un système de fichiers qui ne sont actuellement utilisées pour rien. L'espace non alloué peut contenir des fichiers supprimés et d'autres artefacts intéressants. Dans une source de données d'image disque, l'espace non alloué est stocké dans des blocs situés à des emplacements distincts dans le système de fichiers. Cependant, en raison du fonctionnement des outils de carving, il est préférable d'alimenter ces outils avec un seul et grand fichier d'espace non alloué. Autopsy permet d'accéder aux deux méthodes d'examen de l'espace non alloué.
+\li <b>Blocs individuels dans un volume</b> - Pour chaque volume, il y a un dossier "virtuel" nommé "$Unalloc". Ce dossier contient tous les blocs non alloués individuels situés de façon contiguës (fichiers d'espace non alloué) à la manière dont l'image les stocke. Vous pouvez faire un clic droit et extraire tout fichier d'espace non alloué de la même manière que vous pouvez extraire tout autre type de fichier dans la zone "Data Sources".
+\li <b>Fichiers uniques</b> - Faites un clic droit sur un volume et sélectionnez "Extract Unallocated Space as Single File" pour concaténer tous les fichiers d'espace non alloués du volume en un seul fichier continu. (Si vous le souhaitez, vous pouvez faire un clic droit sur une image et sélectionner "Extract Unallocated Space to Single Files", ce qui fera la même chose mais une fois pour chaque volume de l'image).
+
+Un exemple de l'option d'extraction de fichier unique est illustré ci-dessous.
+\image html extracting-unallocated-space.PNG
+
+\section ui_tree_views File Views (Vues des fichiers)
+
+La zone "Views" filtre tous les fichiers du cas en fonction de certaines propriétés du fichier. 
+- <b>File Types</b> - Trie les fichiers par extension ou par type MIME et les affiche dans le groupe approprié. Par exemple, les fichiers avec les extensions .mp3 et .wav se retrouvent dans le groupe "Audio".
+- <b>Deleted Files</b> - Affiche les fichiers qui ont été supprimés, mais dont les noms ont été récupérés.
+- <b>File Size</b> - Trie les fichiers en fonction de leur taille.
+
+\section ui_tree_results Data Artifacts (Artefacts de données)
+
+Cette section présente les artefacts de données créés en exécutant les modules d'acquisition. En général, les artefacts de données contiennent des informations concrètes extraites de la source de données. Par exemple, des journaux d'appels et des messages de journaux de communication ou des signets Web extraits d'une base de données de navigateur.
+
+\section ui_tree_analysis_results Analysis Results (Résultats d'analyse)
+
+Cette section affiche les résultats d'analyse créés en exécutant les modules d'acquisition. En général, les résultats d'analyse contiennent des informations intéressantes pour l'utilisateur. Par exemple, si l'utilisateur établit une liste de \ref hash_db_page "hachages notables", tous les hits de l'ensemble de hachage apparaîtront ici. 
+
+\section ui_tree_os_accounts OS Accounts (Comptes de système d'exploitation)
+
+Cette section montre les comptes de système d'exploitation trouvés dans le cas. Voir la rubrique \ref host_os_accounts à titre d'exemple.
+
+\section ui_tree_tags Tags (Marquages)
+
+Tout élément que vous marquez s'affiche ici pour que vous puissiez le retrouver facilement. Voir la page \ref tagging_page pour plus d'informations.
+
+\section ui_tree_reports Reports (Rapports)
+
+Les rapports peuvent être ajoutés par les \subpage ingest_page ou créés en utilisant l'outil \subpage reporting_page.
+
+*/

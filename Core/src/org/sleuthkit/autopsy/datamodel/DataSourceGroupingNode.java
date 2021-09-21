@@ -30,24 +30,23 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 
-
 /**
- *  Data source grouping node - an optional grouping node in the data tree view
- * 
+ * Data source grouping node - an optional grouping node in the data tree view
+ *
  */
 class DataSourceGroupingNode extends DisplayableItemNode {
 
     private static final Logger logger = Logger.getLogger(DataSourceGroupingNode.class.getName());
 
     /**
-     * Creates a data source grouping node for the given data source. 
-     * 
-     * @param dataSource specifies the data source 
+     * Creates a data source grouping node for the given data source.
+     *
+     * @param dataSource specifies the data source
      */
     DataSourceGroupingNode(DataSource dataSource) {
 
-        super (Optional.ofNullable(createDSGroupingNodeChildren(dataSource))
-                        .orElse(new RootContentChildren(Arrays.asList(Collections.EMPTY_LIST))), 
+        super(Optional.ofNullable(createDSGroupingNodeChildren(dataSource))
+                .orElse(new RootContentChildren(Arrays.asList(Collections.EMPTY_LIST))),
                 Lookups.singleton(dataSource));
 
         if (dataSource instanceof Image) {
@@ -70,7 +69,7 @@ class DataSourceGroupingNode extends DisplayableItemNode {
     public boolean isLeafTypeNode() {
         return false;
     }
-    
+
     private static RootContentChildren createDSGroupingNodeChildren(DataSource dataSource) {
 
         long dsObjId = dataSource.getId();
@@ -78,11 +77,12 @@ class DataSourceGroupingNode extends DisplayableItemNode {
             return new RootContentChildren(Arrays.asList(
                     new DataSources(dsObjId),
                     new Views(Case.getCurrentCaseThrows().getSleuthkitCase(), dsObjId),
-                    new Results(Case.getCurrentCaseThrows().getSleuthkitCase(), dsObjId),
-                    new Tags(dsObjId) )
-            
-            );
-           
+                    new DataArtifacts(dsObjId),
+                    new AnalysisResults(dsObjId),
+                    new OsAccounts(Case.getCurrentCaseThrows().getSleuthkitCase(), dsObjId),
+                    new Tags(dsObjId)
+            ));
+
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Error getting open case.", ex); //NON-NLS
             return null;

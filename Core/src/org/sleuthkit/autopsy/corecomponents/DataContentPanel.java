@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,10 @@ import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
@@ -48,6 +50,8 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
     private Node currentNode;
     private final boolean isMain;
     private boolean listeningToTabbedPane = false;
+
+    private DataContentPanelWorker workerThread;
 
     /**
      * Creates new DataContentPanel panel The main data content panel can only
@@ -130,45 +134,41 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
     @Override
     public void setNode(Node selectedNode) {
-        // change the cursor to "waiting cursor" for this operation
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-
-            String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
-            // set the file path
-            if (selectedNode == null) {
-                setName(defaultName);
-            } else {
-                Content content = selectedNode.getLookup().lookup(Content.class);
-                if (content != null) {
-                    //String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
-                    String path = defaultName;
-                    try {
-                        path = content.getUniquePath();
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for {0}", content); //NON-NLS
-                    }
-                    setName(path);
-                } else {
-                    setName(defaultName);
-                }
+        
+        if (workerThread != null) {
+            workerThread.cancel(true);
+            workerThread = null;
+        }
+        
+        currentNode = null;
+        
+        // Reset everything
+        for (int index = 0; index < jTabbedPane1.getTabCount(); index++) {
+            jTabbedPane1.setEnabledAt(index, false);
+            String tabTitle = viewers.get(index).getTitle(selectedNode);
+            tabTitle = tabTitle == null ? "" : tabTitle;
+            if (!tabTitle.equals(jTabbedPane1.getTitleAt(index))) {
+                jTabbedPane1.setTitleAt(index, tabTitle);
             }
+                
+            viewers.get(index).resetComponent();
+        }
 
-            currentNode = selectedNode;
-
-            setupTabs(selectedNode);
-        } finally {
-            this.setCursor(null);
+        if (selectedNode != null) {
+            workerThread = new DataContentPanelWorker(selectedNode);
+            workerThread.execute();
         }
     }
 
     /**
-     * Resets the tabs based on the selected Node. If the selected node is null
-     * or not supported, disable that tab as well.
+     * Update the state of the tabs based on the given data.
      *
-     * @param selectedNode the selected content Node
+     * @param selectedNode     The currently selected node.
+     * @param supportedIndices The indices of the tabs that are supported by
+     *                         this node type.
+     * @param preferredIndex   The index of the tab which is preferred.
      */
-    public void setupTabs(Node selectedNode) {
+    private void updateTabs(Node selectedNode, List<Integer> supportedIndices, int preferredIndex) {
         // Deferring becoming a listener to the tabbed pane until this point
         // eliminates handling a superfluous stateChanged event during construction.
         if (listeningToTabbedPane == false) {
@@ -176,31 +176,12 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
             listeningToTabbedPane = true;
         }
 
-        int currTabIndex = jTabbedPane1.getSelectedIndex();
-        int totalTabs = jTabbedPane1.getTabCount();
-        int maxPreferred = 0;
-        int preferredViewerIndex = 0;
-        for (int i = 0; i < totalTabs; ++i) {
-            UpdateWrapper dcv = viewers.get(i);
-            dcv.resetComponent();
-
-            // disable an unsupported tab (ex: picture viewer)
-            if ((selectedNode == null) || (dcv.isSupported(selectedNode) == false)) {
-                jTabbedPane1.setEnabledAt(i, false);
-            } else {
-                jTabbedPane1.setEnabledAt(i, true);
-
-                // remember the viewer with the highest preference value
-                int currentPreferred = dcv.isPreferred(selectedNode);
-                if (currentPreferred > maxPreferred) {
-                    preferredViewerIndex = i;
-                    maxPreferred = currentPreferred;
-                }
-            }
+        for (Integer index : supportedIndices) {
+            jTabbedPane1.setEnabledAt(index, true);
         }
 
         // let the user decide if we should stay with the current viewer
-        int tabIndex = UserPreferences.keepPreferredContentViewer() ? currTabIndex : preferredViewerIndex;
+        int tabIndex = UserPreferences.keepPreferredContentViewer() ? jTabbedPane1.getSelectedIndex() : preferredIndex;
 
         UpdateWrapper dcv = viewers.get(tabIndex);
         // this is really only needed if no tabs were enabled 
@@ -227,7 +208,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         int currentTab = pane.getSelectedIndex();
         if (currentTab != -1) {
             UpdateWrapper dcv = viewers.get(currentTab);
-            if (dcv.isOutdated()) {
+            if (dcv.isOutdated() || dcv.getViewer() instanceof DataArtifactContentViewer) {
                 // change the cursor to "waiting cursor" for this operation
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
@@ -270,6 +251,123 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         int isPreferred(Node node) {
             return this.wrapped.isPreferred(node);
         }
+        
+        String getTitle(Node node) {
+            return this.wrapped.getTitle(node);
+        }
+        
+        DataContentViewer getViewer() {
+            return wrapped;
+        }
     }
 
+    /**
+     * SwingWorker class to determine which tabs should be enabled for the given
+     * node.
+     */
+    private class DataContentPanelWorker extends SwingWorker<WorkerResults, Void> {
+
+        private final Node node;
+
+        /**
+         * Worker constructor.
+         *
+         * @param node
+         */
+        DataContentPanelWorker(Node node) {
+            this.node = node;
+        }
+
+        @Override
+        protected WorkerResults doInBackground() throws Exception {
+
+            List<Integer> supportedViewers = new ArrayList<>();
+            int preferredViewerIndex = 0;
+            int maxPreferred = 0;
+
+            for (int index = 0; index < viewers.size(); index++) {
+                UpdateWrapper dcv = viewers.get(index);
+                if (dcv.isSupported(node)) {
+                    supportedViewers.add(index);
+
+                    int currentPreferred = dcv.isPreferred(node);
+                    if (currentPreferred > maxPreferred) {
+                        preferredViewerIndex = index;
+                        maxPreferred = currentPreferred;
+                    }
+                }
+
+                if (this.isCancelled()) {
+                    return null;
+                }
+
+            }
+            
+            return new WorkerResults(node, supportedViewers, preferredViewerIndex);
+        }
+
+        @Override
+        protected void done() {
+            // Do nothing if the thread was cancelled.
+            if (isCancelled()) {
+                return;
+            }
+
+            try {
+                WorkerResults results = get();
+                currentNode = node;
+                if (results != null) {
+                    updateTabs(results.getNode(), results.getSupportedIndices(), results.getPreferredViewerIndex());
+                }
+
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Failed to updated data content panel for node " + node.getName(), ex);
+            } finally {
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+        }
+    }
+
+    /**
+     * Utility class to store all of the data the SwingWorker collected.
+     */
+    private class WorkerResults {
+
+        private final Node node;
+        private final List<Integer> supportedViewerIndices;
+        private final int preferredViewerIndex;
+
+        WorkerResults(Node node, List<Integer> supportedViewerIndices, int preferredViewerIndex) {
+            this.node = node;
+            this.supportedViewerIndices = supportedViewerIndices;
+            this.preferredViewerIndex = preferredViewerIndex;
+        }
+
+        /**
+         * Returns the selected node.
+         *
+         * @return
+         */
+        Node getNode() {
+            return node;
+        }
+
+        /**
+         * A list of tab indices that are supported by this node type.
+         *
+         * @return A list of indices.
+         */
+        List<Integer> getSupportedIndices() {
+            return supportedViewerIndices;
+        }
+
+        /**
+         * Returns the preferred tab index for the given node type.
+         *
+         * @return A valid tab index.
+         */
+        int getPreferredViewerIndex() {
+            return preferredViewerIndex;
+        }
+    }
 }

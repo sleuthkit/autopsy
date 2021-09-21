@@ -19,33 +19,20 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.awt.Component;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.awt.Cursor;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JPanel;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
+import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
+import org.sleuthkit.datamodel.OsAccount;
 
 /**
  * View correlation results from other cases
@@ -57,13 +44,10 @@ import org.sleuthkit.datamodel.TskException;
 public final class DataContentViewerOtherCases extends JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = -1L;
-    private static final Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
+    private static final Logger logger = Logger.getLogger(DataContentViewerOtherCases.class.getName());
     private final OtherOccurrencesPanel otherOccurrencesPanel = new OtherOccurrencesPanel();
 
-    /**
-     * Could be null.
-     */
-    private AbstractFile file; //the file which the content viewer is being populated for
+    private OtherOccurrencesNodeWorker worker = null;
 
     /**
      * Creates new form DataContentViewerOtherCases
@@ -100,190 +84,55 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
 
     @Override
     public int isPreferred(Node node) {
-        return 1;
-
-    }
-
-    /**
-     * Get the associated BlackboardArtifact from a node, if it exists.
-     *
-     * @param node The node
-     *
-     * @return The associated BlackboardArtifact, or null
-     */
-    private BlackboardArtifact
-            getBlackboardArtifactFromNode(Node node) {
-        BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class
-        );
-        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class
-        );
-
-        if (nodeBbArtifactTag != null) {
-            return nodeBbArtifactTag.getArtifact();
-        } else if (nodeBbArtifact != null) {
-            return nodeBbArtifact;
-        }
-
-        return null;
-
-    }
-
-    /**
-     * Get the associated AbstractFile from a node, if it exists.
-     *
-     * @param node The node
-     *
-     * @return The associated AbstractFile, or null
-     */
-    private AbstractFile getAbstractFileFromNode(Node node) {
-        BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class
-        );
-        ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class
-        );
-        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class
-        );
-        AbstractFile nodeAbstractFile = node.getLookup().lookup(AbstractFile.class
-        );
-
-        if (nodeBbArtifactTag != null) {
-            Content content = nodeBbArtifactTag.getContent();
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeContentTag != null) {
-            Content content = nodeContentTag.getContent();
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeBbArtifact != null) {
-            Content content;
-            try {
-                content = nodeBbArtifact.getSleuthkitCase().getContentById(nodeBbArtifact.getObjectID());
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
-                return null;
-            }
-
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeAbstractFile != null) {
-            return nodeAbstractFile;
-        }
-
-        return null;
-    }
-
-    /**
-     * Determine what attributes can be used for correlation based on the node.
-     * If EamDB is not enabled, get the default Files correlation.
-     *
-     * @param node The node to correlate
-     *
-     * @return A list of attributes that can be used for correlation
-     */
-    private Collection<CorrelationAttributeInstance> getCorrelationAttributesFromNode(Node node) {
-        Collection<CorrelationAttributeInstance> ret = new ArrayList<>();
-
-        // correlate on blackboard artifact attributes if they exist and supported
-        BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
-        if (bbArtifact != null && CentralRepository.isEnabled()) {
-            ret.addAll(CorrelationAttributeUtil.makeCorrAttrsForCorrelation(bbArtifact));
-        }
-
-        // we can correlate based on the MD5 if it is enabled      
-        if (this.file != null && CentralRepository.isEnabled() && this.file.getSize() > 0) {
-            try {
-
-                List<CorrelationAttributeInstance.Type> artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
-                String md5 = this.file.getMd5Hash();
-                if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
-                    for (CorrelationAttributeInstance.Type aType : artifactTypes) {
-                        if (aType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
-                            CorrelationCase corCase = CentralRepository.getInstance().getCase(Case.getCurrentCase());
-                            try {
-                                ret.add(new CorrelationAttributeInstance(
-                                        aType,
-                                        md5,
-                                        corCase,
-                                        CorrelationDataSource.fromTSKDataSource(corCase, file.getDataSource()),
-                                        file.getParentPath() + file.getName(),
-                                        "",
-                                        file.getKnown(),
-                                        file.getId()));
-                            } catch (CorrelationAttributeNormalizationException ex) {
-                                LOGGER.log(Level.INFO, String.format("Unable to check create CorrelationAttribtueInstance for value %s and type %s.", md5, aType.toString()), ex);
-                            }
-                            break;
-                        }
-                    }
-                }
-            } catch (CentralRepoException | TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
-            }
-            // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.  
-        } else if (this.file != null && this.file.getSize() > 0) {
-            String md5 = this.file.getMd5Hash();
-            if (md5 != null && !md5.isEmpty()) {
-                try {
-                    final CorrelationAttributeInstance.Type fileAttributeType
-                            = CorrelationAttributeInstance.getDefaultCorrelationTypes()
-                                    .stream()
-                                    .filter(attrType -> attrType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID)
-                                    .findAny()
-                                    .get();
-                    //The Central Repository is not enabled
-                    ret.add(new CorrelationAttributeInstance(fileAttributeType, md5, null, null, "", "", TskData.FileKnown.UNKNOWN, this.file.getId()));
-                } catch (CentralRepoException ex) {
-                    LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
-                } catch (CorrelationAttributeNormalizationException ex) {
-                    LOGGER.log(Level.INFO, String.format("Unable to create CorrelationAttributeInstance for value %s", md5), ex); // NON-NLS
-                }
-            }
-        }
-        return ret;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 
     @Override
     public boolean isSupported(Node node) {
 
         // Is supported if one of the following is true:
-        // - The central repo is enabled and the node has correlatable content
-        //   (either through the MD5 hash of the associated file or through a BlackboardArtifact)
+        // - The central repo is enabled and the node is not null
         // - The central repo is disabled and the backing file has a valid MD5 hash
-        this.file = this.getAbstractFileFromNode(node);
-        if (CentralRepository.isEnabled()) {
-            return !getCorrelationAttributesFromNode(node).isEmpty();
-        } else {
-            return this.file != null
-                    && this.file.getSize() > 0
-                    && ((this.file.getMd5Hash() != null) && (!this.file.getMd5Hash().isEmpty()));
+        // And the node has information which could be correlated on.
+        if (CentralRepository.isEnabled() && node != null) {
+            return OtherOccurrences.getAbstractFileFromNode(node) != null || OtherOccurrences.getBlackboardArtifactFromNode(node) != null || node.getLookup().lookup(OsAccount.class) != null;
+        } else if (node != null) {
+            AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
+            return file != null
+                    && file.getSize() > 0
+                    && ((file.getMd5Hash() != null) && (!file.getMd5Hash().isEmpty()));
         }
+        return false;
     }
 
     @Override
     public void setNode(Node node) {
-
         otherOccurrencesPanel.reset(); // reset the table to empty.
+        otherOccurrencesPanel.showPanelLoadingMessage();
+
         if (node == null) {
             return;
         }
-        //could be null
-        this.file = this.getAbstractFileFromNode(node);
-        String dataSourceName = "";
-        String deviceId = "";
-        try {
-            if (this.file != null) {
-                Content dataSource = this.file.getDataSource();
-                dataSourceName = dataSource.getName();
-                deviceId = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
-            }
-        } catch (TskException | NoCurrentCaseException ex) {
-            // do nothing. 
-            // @@@ Review this behavior
-        }
-        otherOccurrencesPanel.populateTable(getCorrelationAttributesFromNode(node), dataSourceName, deviceId, file);
 
+        if (worker != null) {
+            worker.cancel(true);
+        }
+        worker = new OtherOccurrencesNodeWorker(node) {
+            @Override
+            public void done() {
+                try {
+                    if (!isCancelled()) {
+                        OtherOccurrencesData data = get();
+                        otherOccurrencesPanel.populateTable(data);
+                        otherOccurrencesPanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    DataContentViewerOtherCases.logger.log(Level.SEVERE, "Failed to update OtherOccurrencesPanel", ex);
+                }
+            }
+        };
+        otherOccurrencesPanel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        worker.execute();
     }
 
     /**

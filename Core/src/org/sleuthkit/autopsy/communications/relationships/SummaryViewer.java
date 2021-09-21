@@ -51,6 +51,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
     private static final Logger logger = Logger.getLogger(SummaryViewer.class.getName());
 
+    private SummaryPanelWorker worker;
+
     @Messages({
         "SummaryViewer_TabTitle=Summary",
         "SummaryViewer_FileRefNameColumn_Title=Path",
@@ -62,7 +64,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_Account_Description=This account represents a device in the case.",
         "SummaryViewer_Account_Description_MuliSelect=Summary information is not available when multiple accounts are selected.",
         "SummaryViewer_Country_Code=Country: ",
-        "SummaryViewer_Select_account_for_persona=<Select a single account to see Persona(s)>"
+        "SummaryViewer_Select_account_for_persona=<Select a single account to see Persona(s)>",
+        "SummaryViewer_loading_count_message=Loading...."
     })
 
     /**
@@ -85,8 +88,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         clearControls();
 
         caseReferencesPanel.hideOutlineView(Bundle.SummaryViewer_CentralRepository_Message());
-        ((SummaryPersonaPane)personaPanel).setMessage(Bundle.SummaryViewer_Select_account_for_persona());
-        ((SummaryPersonaPane)personaPanel).showMessagePanel();
+        ((SummaryPersonaPane) personaPanel).setMessage(Bundle.SummaryViewer_Select_account_for_persona());
+        ((SummaryPersonaPane) personaPanel).showMessagePanel();
     }
 
     @Override
@@ -143,19 +146,17 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                 accoutDescriptionLabel.setText(Bundle.SummaryViewer_Device_Account_Description());
             }
 
-            AccountSummary summaryDetails = new AccountSummary(account, info.getArtifacts());
-
-            thumbnailsDataLabel.setText(Integer.toString(summaryDetails.getThumbnailCnt()));
-            callLogsDataLabel.setText(Integer.toString(summaryDetails.getCallLogCnt()));
-            contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
-            messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt() + summaryDetails.getEmailCnt()));
-            attachmentDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
-            referencesDataLabel.setText(Integer.toString(summaryDetails.getReferenceCnt()));
-            contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
+            thumbnailsDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            callLogsDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            contactsDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            messagesDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            attachmentDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            referencesDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            contactsDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
 
             caseReferencesPanel.setNode(new AbstractNode(Children.create(new CorrelationCaseChildNodeFactory(info.getAccounts()), true)));
 
-            updateOtherAccountInfo(account);
+            updateOtherAccountInfo(info, account);
 
             setEnabled(true);
         }
@@ -207,13 +208,21 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_Fetching_References=<Fetching File References>",
         "SummaryViewer_Persona_CR_Message=<Enable Central Repository to view Personas>"
     })
-    private void updateOtherAccountInfo(final Account account) {
-        SummaryPanelWorker worker = new SummaryPanelWorker(account) {
+    private void updateOtherAccountInfo(SelectionInfo info, Account account) {
+        if (worker != null) {
+            worker.cancel(true);
+        }
+
+        worker = new SummaryPanelWorker(info, account) {
             @Override
             protected void done() {
+                if (isCancelled()) {
+                    return;
+                }
+
                 try {
                     SummaryPanelWorker.SummaryWorkerResults results = get();
-                    
+
                     List<String> fileRefList = results.getPaths();
 
                     if (fileRefList != null) {
@@ -224,7 +233,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
                     CardLayout cardLayout = (CardLayout) fileRefPane.getLayout();
                     cardLayout.show(fileRefPane, "listPanelCard");
-                    
+
                     List<Persona> personaList = results.getPersonaList();
 
                     if (CentralRepository.isEnabled()) {
@@ -234,10 +243,18 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                         ((SummaryPersonaPane) personaPanel).showMessagePanel();
                     }
 
- 
+                    AccountSummary summaryDetails = results.getAccountSummary();
+                    thumbnailsDataLabel.setText(Integer.toString(summaryDetails.getThumbnailCnt()));
+                    callLogsDataLabel.setText(Integer.toString(summaryDetails.getCallLogCnt()));
+                    contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
+                    messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt() + summaryDetails.getEmailCnt()));
+                    attachmentDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
+                    referencesDataLabel.setText(Integer.toString(summaryDetails.getReferenceCnt()));
+                    contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
+
                 } catch (InterruptedException | ExecutionException ex) {
                     logger.log(Level.WARNING, String.format(("Failed to get data for account: %d"), account.getAccountID()), ex);
-                } 
+                }
             }
         };
 

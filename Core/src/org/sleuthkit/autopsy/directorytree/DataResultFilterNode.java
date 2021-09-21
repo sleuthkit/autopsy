@@ -79,6 +79,7 @@ import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -290,11 +291,18 @@ public class DataResultFilterNode extends FilterNode {
                             NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), ban));
                 }
             } else if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-                //action to go to the source artifact
-                actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
-                // action to go to the source file of the artifact
-                actionsList.add(new ViewContextAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
+                try {
+                    if (ba.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT) != null) {
+                        //action to go to the source artifact
+                        actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
+                        
+                        // action to go to the source file of the artifact
+                        actionsList.add(new ViewContextAction(
+                                NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
+                    }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.WARNING, "Error looking up attributes for artifact with ID=" + ba.getId());
+                }
             } else {
                 // if the artifact links to another file, add an action to go to
                 // that file
@@ -358,10 +366,16 @@ public class DataResultFilterNode extends FilterNode {
                 actionsList.add(ExtractAction.getInstance());
                 actionsList.add(ExportCSVAction.getInstance());
                 actionsList.add(null); // creates a menu separator
-                actionsList.add(AddContentTagAction.getInstance());
+                
+                // don't show AddContentTagAction for data artifacts.
+                if (!(ban.getArtifact() instanceof DataArtifact)) {
+                    actionsList.add(AddContentTagAction.getInstance());
+                }
+                
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
 
-                if (selectedFilesList.size() == 1) {
+                // don't show DeleteFileContentTagAction for data artifacts.
+                if ((!(ban.getArtifact() instanceof DataArtifact)) && (selectedFilesList.size() == 1)) {
                     actionsList.add(DeleteFileContentTagAction.getInstance());
                 }
             } else {

@@ -1,0 +1,148 @@
+/*! \page quick_start_guide Guide de démarrage rapide
+
+[TOC]
+
+
+\section s1 Cas et sources de données
+
+Autopsy organise les données par <strong>cas</strong>.  Chaque cas peut avoir une ou plusieurs <strong>sources de données</strong>, qui peut être une image disque, un ensemble de fichiers logiques, un périphérique connecté via USB, etc...
+
+Les cas peuvent être mono-utilisateur ou multi-utilisateurs. Les cas multi-utilisateurs permettent à plusieurs analystes d'examiner les données en même temps et de collaborer, mais nécessitent la configuration de serveurs open source supplémentaires.
+
+Lorsque vous disposez de plusieurs sources de données et que vous décidez de créer un cas, considérez les faits suivants:
+- Vous ne pouvez ouvrir qu'un seul cas à la fois
+- Les rapports sont générés au niveau du cas
+- L'application peut ralentir lorsqu'il y a de nombreuses sources de données volumineuses dans le même cas
+
+\subsection s1a Créer un cas
+Pour créer un cas, utilisez soit l'option "Create New Case" sur l'écran de bienvenue, soit à partir du menu "Case". Cela lancera l'<strong>assistant de création d'un nouveau cas</strong>. Vous devrez lui fournir le nom du cas et un répertoire dans lequel stocker les résultats du cas. Vous pouvez éventuellement fournir le numéro de dossier et le nom de l'analyste.
+
+\subsection s1b Ajouter une source de données
+L'étape suivante consiste à ajouter une source de données d'entrée au cas. L'<strong>assistant d'ajout d'une source de données</strong> démarre automatiquement une fois le cas créé ou vous pouvez le démarrer manuellement à partir du menu &quot;Case&quot; ou de la barre d'outils. Vous devrez choisir le type de source de données à ajouter (image, disque local ou fichiers et dossiers logiques). Ensuite, indiquez-lui l'emplacement de la source à ajouter.
+        
+
+- Pour une image disque, accédez au premier fichier image (Autopsy trouvera le reste des fichiers). Autopsy prend actuellement en charge les fichiers E01 et raw (dd).
+- Pour un disque local, sélectionnez l'un des disques détectés. Autopsy ajoutera la vue actuelle du disque au cas (c'est-à-dire un instantané des méta-données). Cependant, le contenu des fichiers individuels (pas les métadonnées) est mis à jour avec les modifications apportées au disque. Vous pouvez éventuellement créer une copie de toutes les données lues à partir du disque local vers un fichier VHD, ce qui peut être utile pour les situations de triage. Remarquez bien que vous devrez peut-être exécuter Autopsy en tant qu'administrateur pour détecter tous les disques.
+- Pour les fichiers logiques (un seul fichier ou dossier de fichiers), utilisez le bouton "Add" pour ajouter au cas un ou plusieurs fichiers ou dossiers de votre système. Les dossiers seront ajoutés de manière récursive au dossier.
+
+Ensuite, Autopsy vous demandera de configurer les Ingest Modules (modules d'acquisition).
+
+
+\subsection s1c Ingest Modules (modules d'acquisition)
+
+Les modules d'acquisition sont chargés de l'analyse du contenu de la source de données et s'exécuteront en arrière-plan. Les modules d'acquisition analysent les fichiers dans un ordre de priorité afin que les fichiers situés dans le répertoire d'un utilisateur soient analysés avant les fichiers dans d'autres dossiers. Il existe des modules d'acquistion tiers qui peuvent être ajoutés à Autopsy.
+
+Les modules d'acquisition standard inclus avec Autopsy sont:
+- <strong>\subpage recent_activity_page</strong> extrait l'activité de l'utilisateur telle qu'elle est enregistrée par les navigateurs Web et le système d'exploitation. Exécute également "Regripper" sur les ruches de la Base de registre. 
+- <strong>\subpage hash_db_page</strong> utilise des ensembles de hachage pour ignorer les fichiers connus du NIST NSRL et signaler les fichiers défavorablement connus. Utilisez le bouton "Global Settings" pour ajouter et configurer les ensembles de hachage à utiliser pendant ce processus. Vous obtiendrez des informations sur les accès aux fichiers défavorablement connus au fur et à mesure de l'acquisition. Vous pouvez ultérieurement ajouter des ensembles de hachage via le menu Tools -&gt; Options dans l'interface utilisateur principale. Vous pouvez télécharger un index du NIST NSRL à partir de http://sourceforge.net/projects/autopsy/files/NSRL/
+- <strong>\subpage file_type_identification_page</strong> détermine les types de fichiers en fonction de leurs signatures et les regroupe en fonction de leur type MIME. Il stocke les résultats dans le Blackboard et de nombreux modules en dépendent. Il utilise la bibliothèque open source Tika. Vous pouvez définir vos propres types de fichiers personnalisés dans Tools, Options, File Types.
+- <strong>\subpage extension_mismatch_detector_page</strong> utilise les résultats du module "File Type Identification" et marque les fichiers dont l'extension n'est pas traditionnellement associée au type de fichier détecté. Ignore les fichiers "connus" (NSRL). Vous pouvez personnaliser les types MIME et les extensions de fichier par type MIME dans Tools, Options, File Extension Mismatch.
+- <strong>\subpage embedded_file_extractor_page</strong> ouvre les fichiers ZIP, RAR, ainsi que d'autres formats d'archive, DOC, DOCX, PPT, PPTX, XLS et XLSX et renvoie les fichiers intégrés dans ces derniers via la chaîne d'acquisition pour analyse.
+- <strong>\subpage EXIF_parser_page</strong> extrait les informations EXIF des fichiers JPEG et publie les résultats dans l'arborescence de l'interface utilisateur principale. Convertit également les fichiers HEIC/HEIF au format JPEG et extrait les données EXIF de ces JPEG.
+- <strong>\subpage keyword_search_page</strong> utilise des listes de mots clés pour identifier les fichiers contenant des mots spécifiques. Vous pouvez sélectionner les listes de mots clés pour faire des recherches automatisées et vous pouvez créer de nouvelles listes à l'aide du bouton "Global Settings". Notez que la recherche par mot-clé vous permet toujours d'effectuer des recherches une fois l'acquisition terminée. Les mots clés inclus dans les listes que vous avez sélectionnées lors de l'acquisition seront recherchés à intervalles réguliers et vous obtiendrez les résultats en temps réel. Vous n'avez pas besoin d'attendre que tous les fichiers soient indexés avant d'effectuer une recherche par mot-clé, mais vous n'obtiendrez que les résultats ressortant de fichiers qui ont déjà été indexés lorsque vous effectuez votre recherche.
+- <strong>\subpage email_parser_page</strong> identifie les fichiers Thunderbird MBOX et les fichiers au format PST en fonction des signatures de fichiers, en extrayant les e-mails, et en ajoutant les résultats au Blackboard.
+- <strong>\subpage encryption_page</strong> recherche les fichiers chiffrés.
+- <strong>\subpage interesting_files_identifier_page</strong> recherche des fichiers et des répertoires en fonction des règles spécifiées par l'utilisateur dans Tools, Options, Interesting Files. Il fonctionne comme un "module d'alerte" de fichier. Il génère des messages dans la boîte de notification lorsque des fichiers spécifiés sont trouvés.
+- <strong>\subpage cr_ingest_module</strong> ajoute des hachages de fichiers et d'autres propriétés extraites à un référentiel central pour une future corrélation et pour marquer les fichiers notables précédemment analysés.
+- <strong>\subpage photorec_carver_page</strong> effectue du carving de fichiers sur l'espace non alloué et les envoie à travers la chaîne de traitement des fichiers.
+- <strong>\subpage vm_extractor_page</strong> extrait les données des fichiers de machine virtuelle.
+- <strong>\subpage data_source_integrity_page</strong> calcule une somme de contrôle sur les fichiers E01 et la compare avec la somme de contrôle interne du fichier E01 pour s'assurer qu'elles correspondent.
+- <strong>\subpage drone_page</strong> extrait les données des fichiers de drone.
+- <strong>\subpage plaso_page</strong> utilise Plaso pour créer des évènements de la \ref timeline_page "Timeline" (Chronologie).
+- <strong>\subpage yara_page</strong> utilise un ensemble de règles Yara pour rechercher dans les fichiers des modèles textuels ou binaires.
+- <strong>\subpage android_analyzer_page</strong> et <strong>\subpage aleapp_page</strong> vous permet d'analyser les éléments classiques de systèmes Android. Place des artefacts dans le BlackBoard.
+- <strong>\subpage ileapp_page</strong> extrait les données des sources de données iOS.
+- <strong>\subpage gpx_page</strong> extrait les données de géolocalisation des fichiers .gpx.
+
+Lorsque vous sélectionnez un module, vous aurez la possibilité de modifier ses paramètres. Par exemple, vous pouvez configurer les listes de recherche de mots clés à utiliser lors de l'acquisition et les ensembles de hachage à utiliser. Reportez-vous à l'aide de chaque module pour plus de détails sur leurs configurations.
+
+Pendant que les modules d'acquisition s'exécutent en arrière-plan, vous verrez une barre de progression en bas à droite. Vous pouvez utiliser l'interface graphique pour examiner les résultats au fur et à mesure de l'analyse et effectuer d'autres tâches dans le même temps que l'acquisition.
+
+\section s2 Bases de l'analyse
+
+Une fois que les modules d'acquisition ont commencé à analyser la source de données, vous verrez l'interface d'analyse principale. Vous pouvez choisir de rechercher des éléments spécifiques, de parcourir des dossiers spécifiques ou de consulter les résultats des modules d'acquisition.
+
+\image html screenshot.PNG
+
+Vous commencerez toutes vos opérations d'analyse à partir de l'arborescence de gauche.
+
+- Le nœud racine Data Sources affiche toutes les données du cas.
+  - Les nœuds d'image individuels montrent la structure du système de fichiers des images disque ou des disques locaux en fonction de votre cas.
+  - Les nœuds LogicalFileSet affichent les fichiers logiques dans le cas.
+- Le nœud Views affiche les mêmes données sous une perspective différente, par exemple, organisées par type de fichier.
+- Le nœud Results affiche la sortie des modules d'acquisition.
+
+Lorsque vous sélectionnez un nœud dans l'arborescence de gauche, une liste de fichiers s'affiche dans la partie supérieure droite. Vous pouvez utiliser l'onglet Thumbnail en haut gauche pour afficher les images. Lorsque vous sélectionnez un fichier dans cette partie supérieure droite, son contenu s'affiche en bas de la fenêtre. Vous pouvez utiliser les onglets de cette partie inférieure pour afficher le texte du fichier, une image ou les données hexadécimales.
+
+Si vous affichez des fichiers à partir des nœuds Views et Results, vous pouvez cliquer avec le bouton droit sur un fichier pour accéder à son emplacement dans le système de fichiers. Cette fonctionnalité est utile pour voir ce que l'utilisateur a stocké dans le même dossier que le fichier que vous regardez actuellement. Vous pouvez également cliquer avec le bouton droit sur un fichier pour l'extraire sur le système local.
+
+Si vous souhaitez rechercher des mots-clés uniques, vous pouvez utiliser la zone de recherche en haut à droite de la fenêtre du programme. Les résultats seront affichés dans un tableau en haut à droite.
+
+L'arbrorescence à gauche ainsi que le tableau à droite ont une fonction \ref ui_quick_search qui peut être utilisée pour trouver rapidement un nœud visible.
+
+Vous pouvez marquer (ajouter un signet) les fichiers que vous souhaitez afin de pouvoir les retrouver plus rapidement plus tard ou de les inclure spécifiquement dans un rapport.
+
+\section s3 Autres interfaces d'analyse
+
+En plus de l'interface utilisateur à 3 panneaux avec l'arborescence à gauche, il existe d'autres interfaces plus spécialisées.
+
+\subsection s3b Images/Videos
+
+Cette galerie d'images se concentre sur l'affichage des images et des vidéos de la source de données organisées par dossier. Elle vous montrera les fichiers dès qu'ils auront été hachés et les données EXIF extraites. Vous pouvez l'ouvrir depuis le menu "Tools" ou via le bouton "Images/Videos" de la barre d'outils.  Voir la section \subpage image_gallery_page pour plus de détails. 
+
+\subsection s3c Communications
+
+L'interface "Communications" se concentre sur l'affichage des comptes avec lesquels les communications ont le plus été effectuées et les messages qui ont été envoyés. Elle vous permet de vous concentrer sur certaines relations ou communications dans une certaine plage de date. Vous pouvez l'ouvrir depuis le menu "Tools" ou via le bouton "Communications" de la barre d'outils.  Voir la section \subpage communications_page pour plus de détails. 
+
+\subsection s3d Geolocation (Géolocalisations)
+
+Le panneau "Geolocation" affiche une carte avec des marqueurs pour tous les résultats de géolocalisation trouvés dans le cas. Vous pouvez l'ouvrir depuis le menu "Tools" ou via le bouton "Geolocation" de la barre d'outils.  Voir la section \subpage geolocation_page pour plus de détails. 
+
+\subsection s3a Timeline (Chronologie)
+
+La fonction "Timeline" peut être ouverte à partir du menu "Tools" ou via le bouton "Timeline" de la barre d'outils. Cela vous permettra de voir le système de fichiers et d'autres événements organisés par heure à l'aide de diverses techniques d'affichage. Voir la section \subpage timeline_page pour plus de détails. 
+
+\subsection s3e Discovery (Découverte)
+
+Le panneau "Discovery" vous permet de rechercher différents types de données dans un cas et de les afficher sous une forme facilement intelligible. Vous pouvez l'ouvrir depuis le menu "Tools" ou via le bouton "Discovery" de la barre d'outils.  Voir la section \subpage discovery_page section pour plus de détails.
+
+\subsection s3f Personas (Personnages)
+
+Le panneau "Personas" est pour créer et gérer des "personnages". La création d'un personnage vous permet d'associer un ou plusieurs comptes à un nom et à d'autres données. Vous pouvez l'ouvrir depuis le menu "Tools". Voir la section \subpage personas_page section pour plus de détails. 
+
+\section s5 Exemples de cas d'utilisation
+Dans cette section, nous présenterons des exemples sur la façon d'effectuer des tâches d'analyse courantes.
+
+\subsection s5a Artefacts Web
+
+Si vous souhaitez afficher l'activité Web récente de l'utilisateur, assurez-vous que le module d'acquisition "Recent Activity" a été activé.
+Vous pouvez ensuite aller au niveau du nœud &quot;Results &quot; dans l'arborescence sur le côté gauche de l'interface, puis sur le nœud &quot;Extracted Data&quot;.
+Là, vous pouvez trouver les signets, les cookies, les téléchargements et l'historique de navigation.
+
+\subsection s5b Hachages de fichiers défavorablement connus
+
+Si vous voulez voir si la source de données contient des fichiers défavorablement connus, assurez-vous que le module d'acquisition "Hash Lookup" a été activé.
+Vous pouvez ensuite aller au niveau de la section &quot;Hashset Hits&quot; de la zone &quot;Results&quot; située dans l'arborescence sur le côté gauche de l'interface.
+Notez que la recherche de hachage peut prendre un certain temps, donc cette section sera mise à jour constamment tant que le processus d'acquisition sera en cours.
+Utilisez la boîte de notification des modules d'acquisition ("Ingest Modules") pour garder un visuel sur les fichiers défavorablement connus récemment trouvés.
+
+Lorsque vous trouvez un fichier défavorablement connu dans cette interface, vous pouvez faire un clic droit sur ce fichier pour l'afficher également dans son emplacement d'origine.
+Vous pouvez trouver des fichiers supplémentaires qui sont pertinents et stockés dans le même dossier que ce fichier.
+
+\subsection s5c Médias: images et vidéos
+
+Si vous souhaitez voir toutes les images et vidéos sur l'image disque, accédez à la section &quot;Views&quot; située dans l'arborescence sur le côté gauche de l'interface, puis dans la zone &quot;File Types&quot;.
+Sélectionnez soit &quot;Images&quot; soit &quot;Videos&quot;.
+Vous pouvez utiliser l'onglet Thumbnail dans la cadre situé en haut à droite, pour afficher les miniatures de toutes les images.
+
+
+Vous pouvez sélectionner une image ou une vidéo dans la partie supérieure droite et afficher la vidéo ou l'image dans la zone inférieure droite de la fenêtre. La vidéo sera lue avec le son.
+
+\section s6 Rapports
+
+Un rapport final peut être généré qui inclura tous les résultats de l'analyse, à l'aide du bouton &quot;Generate Report&quot; de la barre d'outils. Les rapports peuvent être générés aux formats HTML, XLS, KML et autres.
+
+Vous pouvez retrouver plus tard vos rapports générés en accédant à l'arborescence et en ouvrant le nœud Reports en bas.
+ 
+
+*/

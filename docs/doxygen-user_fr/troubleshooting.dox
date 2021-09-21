@@ -1,0 +1,134 @@
+﻿/*! \page troubleshooting_page Dépannage
+
+[TOC]
+
+
+Si vous rencontrez une erreur, nous vous encourageons à publier sur le forum (https://sleuthkit.discourse.group/), en précisant autant d'informations que possible: 
+<ul>
+<li>Votre système d'exploitation et la version d'Autopsy
+<li>Qu'est-ce qui a conduit à l'erreur. Par exemple:
+<ul>
+<li>Quel type de source de données était en cours de traitement?
+<li>Quels modules d'acquisition étaient en cours d'exécution? Vous pouvez générer un \ref ingest_monitoring "instantané de la progression de l'acquisition" pour afficher l'état actuel de l'acquisition.
+<li>Quelle visionneuse spécialisée utilisiez-vous?
+</ul>
+<li>L'erreur affichée à l'écran (le cas échéant)
+<li>Une \ref troubleshooting_stack "capture du thread d'activité" ou une capture écran de l'\ref ingest_monitoring "instantané de la progression de l'acquisition" si Autopsy semble bloqué
+<li>S'il y avait des erreurs dans les \ref troubleshooting_logs "logs"
+</ul>
+
+\section troubleshooting_specific_issues Problèmes spécifiques
+\subsection troubleshooting_fond_size Taille de police trop petite
+
+Sous Windows, vous pouvez apporter les modifications suivantes s'il est difficile de naviguer dans l'application dans les systèmes à haute résolution d'écran:
+
+<ol>
+<li>Faites un clic droit sur l'icône de l'application sur votre bureau, menu Démarrer, etc...
+<li>Choisissez Propriétés.
+<li>Accédez à l'onglet Compatibilité.
+<li>Cliquez sur le bouton "Modifier les paramètres PPP élevés".
+<li>Sélectionnez "Remplacer le comportement de mise à l'échelle PPP élevé".
+<li>Modifiez dans la liste déroulante "Mise à l'échelle effectuée par:" sur "Système".
+<li>Redémarrez Autopsy.
+</ol>
+
+Sous Linux, vous pouvez fournir la taille de la police avec l'argument de ligne de commande "--fontsize XX", mais toutes les boîtes de dialogue ne répondent pas correctement et une partie du texte risque d'être coupée.
+
+\section troubleshooting_general Dépannage général
+
+\subsection troubleshooting_reset_ui Réinitialiser l'interface utilisateur
+
+Si la fenêtre d'Autopsy ne ressemble plus à la fenêtre par défaut : \ref uilayout_page (par exemple, si une visionneuse a disparu ou s'il y a un espace vide étrange), vous pouvez la réinitialiser. Pour ce faire, allez dans Window->Reset Windows. Cela entraînera le redémarrage d'Autopsy. Si vous avez un cas ouvert, il se rouvrira après la réinitialisation.
+
+\image html reset_windows.png
+
+Si la réinitialisation des fenêtres ne résout pas le problème, vous devrez peut-être supprimer votre dossier utilisateur comme décrit dans la section suivante.
+
+\subsection troubleshooting_user_folder Suppression du dossier utilisateur Autopsy
+
+Si Autopsy commence à se comporter de manière étrange, arrête complètement de se charger ou si des éléments de menu disparaissent, vous devrez probablement supprimer votre dossier utilisateur. Cela entrainera essentiellement une nouvelle installation. Sous Windows, le dossier utilisateur se trouve dans "C:\Users\(nom d'utilisateur)\AppData\Roaming\autopsy".
+Notez que si vous supprimez ce dossier, vous perdrez tous vos paramètres d'Autopsy, y compris les listes de mots clés, les ensembles de fichiers intéressants et la configuration générale. Si vous souhaitez conserver ces paramètres, vous pouvez faire ce qui suit:
+<ul>
+<li>Faites une copie du dossier d'Autopsy.
+<li>Supprimer le dossier d'Autopsy.
+<li>Ouvrez Autopsy pour régénérer le dossier avec les paramètres par défaut.
+<li>Fermez Autopsy et copiez les anciens fichiers de configuration qui semblent pertinents. Par exemple, si vous souhaitez restaurer vos ensembles de hachage, vous pourrez recopier le dossier "HashDatabases" et le fichier "hashLookup.settings".
+</ul>
+
+Vous pouvez également copier le nouveau dossier utilisateur quelque part, déplacer votre ancienne version et remplacer les dossiers jusqu'à ce qu'il fonctionne à nouveau.
+
+\subsection troubleshooting_logs Affichage des journaux (logs)
+
+Les journaux sont généralement les plus utiles pour déterminer pourquoi une erreur s'est produite. Il existe deux ensembles de journaux: les journaux système et les journaux de cas. Il existe une option dans l'interface utilisateur pour ouvrir le dossier des journaux:
+
+\image html troubleshooting_log_menu.png
+
+Si vous avez un cas ouvert, cliquez sur "Help" puis "Open Log Folder" pour ouvrir le dossier contenant les journaux de cas. Sinon, ce sera le dossier des journaux système qui s'ouvrira. Vous pouvez également accéder à ces dossiers de manière classique:
+<ul>
+<li> Journaux de cas: (dossier du cas)\\Logs
+<li>Journaux système: C:\\Users\\(nom d'utilisateur)\\AppData\\Roaming\\autopsy\\var\\log (pour Windows)
+</ul>
+
+Dans les deux cas, le journal probablement le plus intéressante est "autopsy.log.0", bien qu'il puisse s'agir de l'une des anciennes versions si vous avez fermé et réouvert Autopsy depuis que l'erreur s'est produite. Vous rechercherez des entrées commençant par "SEVERE" et éventuellement "WARNING" s'il n'y a pas d'erreurs graves. Notez qu'il n'est pas inhabituel d'avoir de nombreux avertissements dans le journal. Voici un exemple d'erreur grave avec une trace de pile:
+
+\verbatim
+Sep 23, 2020 9:48:24 AM org.sleuthkit.autopsy.casemodule.services.TagNameDefinition saveToCase
+SEVERE: Error saving tag name definition
+org.sleuthkit.datamodel.TskCoreException: Error adding row for Follow Up tag name to tag_names table
+	at org.sleuthkit.datamodel.SleuthkitCase.addOrUpdateTagName(SleuthkitCase.java:9846)
+	at org.sleuthkit.autopsy.casemodule.services.TagNameDefinition.saveToCase(TagNameDefinition.java:239)
+	at org.sleuthkit.autopsy.casemodule.services.TagsManager.<init>(TagsManager.java:288)
+	at org.sleuthkit.autopsy.casemodule.services.Services.<init>(Services.java:50)
+	at org.sleuthkit.autopsy.casemodule.Case.openCaseLevelServices(Case.java:2480)
+	at org.sleuthkit.autopsy.casemodule.Case.open(Case.java:1993)
+	at org.sleuthkit.autopsy.casemodule.Case.lambda$doOpenCaseAction$6(Case.java:1863)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: java.sql.SQLException: ResultSet closed
+	at org.sqlite.core.CoreResultSet.checkOpen(CoreResultSet.java:76)
+	at org.sqlite.jdbc3.JDBC3ResultSet.findColumn(JDBC3ResultSet.java:39)
+	at org.sqlite.jdbc3.JDBC3ResultSet.getLong(JDBC3ResultSet.java:422)
+	at com.mchange.v2.c3p0.impl.NewProxyResultSet.getLong(NewProxyResultSet.java:424)
+	at org.sleuthkit.datamodel.SleuthkitCase.addOrUpdateTagName(SleuthkitCase.java:9843)
+	... 10 more
+\endverbatim
+
+Si le message d'erreur ne vous aide pas à résoudre le problème vous-même, veuillez poster sur le <a href="https://sleuthkit.discourse.group/">forum</a> y compris la trace de pile complète (si disponible).
+
+\subsection troubleshooting_stack Création d'une capture du thread d'activité
+
+Vous pouvez également générer une capture du thread de l'état actuel. Ceci est utile si un module d'acquisition ou un autre processus semble être bloqué. Pour générer une capture de thread, allez sur "Help" puis "Thread Dump" dans l'interface utilisateur. 
+
+\image html troubleshooting_thread.png
+
+Vous verrez alors un fichier similaire à celui-ci dans une visionneuse de texte:
+
+\verbatim"Module-Actions" Id=222 RUNNABLE
+	at sun.management.ThreadImpl.getThreadInfo1(Native Method)
+	at sun.management.ThreadImpl.getThreadInfo(ThreadImpl.java:178)
+	at org.sleuthkit.autopsy.actions.ThreadDumpAction$ThreadDumper.createThreadDump(ThreadDumpAction.java:120)
+	at org.sleuthkit.autopsy.actions.ThreadDumpAction$ThreadDumper.doInBackground(ThreadDumpAction.java:91)
+	at org.sleuthkit.autopsy.actions.ThreadDumpAction$ThreadDumper.doInBackground(ThreadDumpAction.java:87)
+	at javax.swing.SwingWorker$1.call(SwingWorker.java:295)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at javax.swing.SwingWorker.run(SwingWorker.java:334)
+	...
+
+
+"IM-start-ingest-jobs-0" Id=218 WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@7ceb341e
+	at sun.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@7ceb341e
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+\endverbatim
+
+Si la capture de thread indique quelque chose à propos d'un blocage, cela vous indiquera d'où vient le problème. Veuillez signaler tout blocage sur le <a href="https://sleuthkit.discourse.group/">forum</a>. Même si cela ne vous semble pas être le cas, la capture de thread pourra vous aider à diagnostiquer votre problème, alors pensez à l'inclure dans votre message.
+
+*/

@@ -60,6 +60,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -208,21 +209,31 @@ final class DiscoveryUiUtils {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     static void setScoreIcon(ResultFile resultFile, javax.swing.JLabel scoreLabel) {
-        switch (resultFile.getScore()) {
-            case NOTABLE_SCORE:
-                scoreLabel.setIcon(NOTABLE_SCORE_ICON);
-                break;
-            case INTERESTING_SCORE:
-                scoreLabel.setIcon(INTERESTING_SCORE_ICON);
-                break;
-            case NO_SCORE:  // empty case - this is interpreted as an intentional fall-through
-            default:
-                scoreLabel.setIcon(null);
-                break;
+        ImageIcon icon = null;
+        
+        Score score = resultFile.getScore();
+        if (score != null && score.getSignificance() != null) {
+            switch (score.getSignificance()) {
+                case NOTABLE:
+                    icon = NOTABLE_SCORE_ICON;
+                    break;
+                case LIKELY_NOTABLE: 
+                    icon = INTERESTING_SCORE_ICON;
+                    break;
+                case LIKELY_NONE:
+                case NONE:
+                case UNKNOWN:
+                default:
+                    icon = null;
+                    break;
+            }    
         }
+        
+        scoreLabel.setIcon(icon);
         scoreLabel.setToolTipText(resultFile.getScoreDescription());
     }
-
+    
+    
     /**
      * Get the size of the icons used by the UI.
      *

@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -130,7 +131,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     throw new TskCoreException("Error indexing content", ex1);
                 }
             }
-            ingester.commit();
+            // only do a Solr commit if ingest is not running. If ingest is running, the changes will 
+            // be committed via a periodic commit or via final commit after the ingest job has finished.
+            if (!IngestManager.getInstance().isIngestRunning()) {
+                ingester.commit();
+            }
         }
     }
 
@@ -461,5 +466,4 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
     }
-
 }

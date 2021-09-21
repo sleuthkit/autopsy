@@ -35,6 +35,7 @@ import jarray
 import inspect
 from java.lang import System
 from java.util.logging import Level
+from org.sleuthkit.datamodel import Score
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import ReadContentInputStream
@@ -54,6 +55,7 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
+from java.util import Arrays
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the anlaysis.
@@ -115,7 +117,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
             return IngestModule.ProcessResult.OK
 
         # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
 
         # For an example, we will flag files with .txt in the name and make a blackboard artifact.
         if file.getName().lower().endswith(".txt"):
@@ -125,21 +127,17 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artifact.  Refer to the developer docs for other examples.
-            art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
-                  SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
-            art.addAttribute(att)
+            attrs = Arrays.asList(BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
+                  SampleJythonFileIngestModuleFactory.moduleName, "Text Files"))
+
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE,
+                                         None, "Text Files", None, attrs).getAnalysisResult()
 
             try:
-                # index the artifact for keyword search
-                blackboard.indexArtifact(art)
+                # post the artifact for listeners of artifact events
+                blackboard.postArtifact(art, SampleJythonFileIngestModuleFactory.moduleName)
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
-
-            # Fire an event to notify the UI and others that there is a new artifact
-            IngestServices.getInstance().fireModuleDataEvent(
-                ModuleDataEvent(SampleJythonFileIngestModuleFactory.moduleName,
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))
 
             # For the example (this wouldn't be needed normally), we'll query the blackboard for data that was added
             # by other modules. We then iterate over its attributes.  We'll just print them, but you would probably

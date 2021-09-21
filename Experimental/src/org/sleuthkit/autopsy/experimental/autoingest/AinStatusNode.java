@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +40,7 @@ final class AinStatusNode extends AbstractNode {
      * Construct a new AinStatusNode.
      */
     AinStatusNode(AutoIngestMonitor monitor) {
-        super(Children.create(new AinStatusChildren(monitor), false));
+        super(Children.create(new AinStatusChildren(monitor), true));
     }
 
     /**
@@ -151,7 +151,8 @@ final class AinStatusNode extends AbstractNode {
                         || nodeState.getState() == AutoIngestNodeState.State.RUNNING) {
                     actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.PauseResumeAction(nodeState));
                 }
-                actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.ShutdownAction(nodeState));
+                actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.ShutdownAction(nodeState)); 
+                actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.GenerateThreadDumpControlAction(nodeState));
             }
             return actions.toArray(new Action[actions.size()]);
         }

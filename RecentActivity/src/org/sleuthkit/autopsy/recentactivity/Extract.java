@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -51,7 +50,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -159,13 +158,13 @@ abstract class Extract {
      * @throws TskCoreException
      */
     BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
-        Optional<OsAccount> optional = getOsAccount(content);
-        if (optional.isPresent() && type.getCategory() == BlackboardArtifact.Category.DATA_ARTIFACT) {
-            return content.newDataArtifact(type, attributes, optional.get());
-        } else {
-            BlackboardArtifact bbart = content.newArtifact(type.getTypeID());
-            bbart.addAttributes(attributes);
-            return bbart;
+        switch (type.getCategory()) {
+            case DATA_ARTIFACT:
+                return content.newDataArtifact(type, attributes);
+            case ANALYSIS_RESULT:
+                return content.newAnalysisResult(type, Score.SCORE_UNKNOWN, null, null, null, attributes).getAnalysisResult();
+            default:
+                throw new TskCoreException("Unknown category type: " + type.getCategory().getDisplayName());
         }
     }
 
@@ -536,29 +535,5 @@ abstract class Extract {
         }
          
         return tempFile;
-    }
-    
-    /**
-     * Return the appropriate OsAccount for the given file.
-     * 
-     * @param file
-     * 
-     * @return An Optional OsACcount object.
-     * 
-     * @throws TskCoreException 
-     */
-    Optional<OsAccount> getOsAccount(Content content) throws TskCoreException {
-        if(content instanceof AbstractFile) {
-            if(osAccountCache == null) {
-                Optional<Long> accountId = ((AbstractFile)content).getOsAccountObjectId();
-                if(accountId.isPresent()) {
-                    return Optional.ofNullable(tskCase.getOsAccountManager().getOsAccountByObjectId(accountId.get()));
-                }
-                return Optional.empty();
-            } 
-
-            return osAccountCache.getOsAccount(((AbstractFile)content));
-        }
-        return Optional.empty();
     }
 }

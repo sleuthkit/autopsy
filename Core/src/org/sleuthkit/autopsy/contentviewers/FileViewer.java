@@ -29,6 +29,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -38,7 +39,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class FileViewer extends javax.swing.JPanel implements DataContentViewer {
 
-    private static final int CONFIDENCE_LEVEL = 5;
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(FileViewer.class.getName());
 
@@ -226,18 +226,18 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 mimeType = fileTypeDetector.getMIMEType(file);
             } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to initialize FileTypeDetector.", ex); //NON-NLS
-                return 0;
+                return ViewerPriority.viewerPriority.LevelZero.getFlag();
             }
         }
 
         if (mimeType.equalsIgnoreCase("application/octet-stream")) {
-            return 0;
+            return ViewerPriority.viewerPriority.LevelZero.getFlag();
         } else {
             if (null != getSupportingViewer(file)) {
-                return CONFIDENCE_LEVEL;
+                return ViewerPriority.viewerPriority.LevelFive.getFlag();
             }
         }
 
-        return 0;
+        return ViewerPriority.viewerPriority.LevelZero.getFlag();
     }
 }

@@ -48,10 +48,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -72,7 +72,7 @@ import org.sleuthkit.datamodel.TskData;
 final class RegexQuery implements KeywordSearchQuery {
 
     public static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
-
+    
     /**
      * Lucene regular expressions do not support the following Java predefined
      * and POSIX character classes. There are other valid Java character classes
@@ -397,18 +397,6 @@ final class RegexQuery implements KeywordSearchQuery {
                     if (originalKeyword.searchTermIsLiteral()) {
                         hit = hit.replaceAll("^" + KeywordSearchList.BOUNDARY_CHARACTERS + "*", "");
                         hit = hit.replaceAll(KeywordSearchList.BOUNDARY_CHARACTERS + "*$", "");
-
-                        /**
-                         * The Solr StandardTokenizerFactory maximum token
-                         * length is 255 and attempts to search for tokens
-                         * larger than this limit fail when we attempt to
-                         * highlight later. I have't found a programmatic
-                         * mechanism to get this value so I'm hardcoding it
-                         * here.
-                         */
-                        if (hit.length() > 255) {
-                            break;
-                        }
                     }
 
                     /**
@@ -590,18 +578,10 @@ final class RegexQuery implements KeywordSearchQuery {
          * Create a "plain vanilla" keyword hit artifact with keyword and regex
          * attributes
          */
-        BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
 
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
-
-        try {
-            newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
-            return null;
-        }
 
         if (StringUtils.isNotBlank(listName)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
@@ -621,8 +601,10 @@ final class RegexQuery implements KeywordSearchQuery {
         }
 
         try {
-            newArtifact.addAttributes(attributes);
-            return newArtifact;
+            return content.newAnalysisResult(
+                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                    null, listName, null, attributes)
+                    .getAnalysisResult();
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;

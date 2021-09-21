@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.machinesettings.UserMachinePreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences.TempDirChoice;
 import org.sleuthkit.autopsy.report.ReportBranding;
 
@@ -82,8 +83,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final String DEFAULT_HEAP_DUMP_FILE_FIELD = "";
-    private final JFileChooser logoFileChooser;
-    private final JFileChooser tempDirChooser;
+    private JFileChooser logoFileChooser;
+    private JFileChooser tempDirChooser;
     private static final String ETC_FOLDER_NAME = "etc";
     private static final String CONFIG_FILE_EXTENSION = ".conf";
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
@@ -94,27 +95,17 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
     
     private final ReportBranding reportBranding;
-    private final JFileChooser heapFileChooser;
+    private JFileChooser heapFileChooser;
+    
+    private final JFileChooserFactory logoChooserHelper = new JFileChooserFactory();
+    private final JFileChooserFactory heapChooserHelper = new JFileChooserFactory();
+    private final JFileChooserFactory tempChooserHelper = new JFileChooserFactory();
 
     /**
      * Instantiate the Autopsy options panel.
      */
     AutopsyOptionsPanel() {
         initComponents();
-        logoFileChooser = new JFileChooser();
-        logoFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        logoFileChooser.setMultiSelectionEnabled(false);
-        logoFileChooser.setAcceptAllFileFilterUsed(false);
-        logoFileChooser.setFileFilter(new GeneralFilter(GeneralFilter.GRAPHIC_IMAGE_EXTS, GeneralFilter.GRAPHIC_IMG_DECR));
-
-        tempDirChooser = new JFileChooser();
-        tempDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        tempDirChooser.setMultiSelectionEnabled(false);
-        
-        heapFileChooser = new JFileChooser();
-        heapFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        heapFileChooser.setMultiSelectionEnabled(false);
-
         if (!isJVMHeapSettingsCapable()) {
             //32 bit JVM has a max heap size of 1.4 gb to 4 gb depending on OS
             //So disabling the setting of heap size when the JVM is not 64 bit 
@@ -1242,6 +1233,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         "# {0} - path",
         "AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_description=Unable to create temporary directory within specified path: {0}",})
     private void tempDirectoryBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempDirectoryBrowseButtonActionPerformed
+        if(tempDirChooser == null) {
+            tempDirChooser = tempChooserHelper.getChooser();
+            tempDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            tempDirChooser.setMultiSelectionEnabled(false);
+        }
         int returnState = tempDirChooser.showOpenDialog(this);
         if (returnState == JFileChooser.APPROVE_OPTION) {
             String specifiedPath = tempDirChooser.getSelectedFile().getPath();
@@ -1318,6 +1314,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_defaultLogoRBActionPerformed
 
     private void browseLogosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseLogosButtonActionPerformed
+        if(logoFileChooser == null) {
+            logoFileChooser = logoChooserHelper.getChooser();
+            logoFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            logoFileChooser.setMultiSelectionEnabled(false);
+            logoFileChooser.setAcceptAllFileFilterUsed(false);
+            logoFileChooser.setFileFilter(new GeneralFilter(GeneralFilter.GRAPHIC_IMAGE_EXTS, GeneralFilter.GRAPHIC_IMG_DECR));
+        }
         String oldLogoPath = agencyLogoPathField.getText();
         int returnState = logoFileChooser.showOpenDialog(this);
         if (returnState == JFileChooser.APPROVE_OPTION) {
@@ -1360,6 +1363,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         "AutopsyOptionsPanel_heapDumpBrowseButtonActionPerformed_fileAlreadyExistsMessage=File already exists.  Please select a new location."
     })
     private void heapDumpBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_heapDumpBrowseButtonActionPerformed
+        if(heapFileChooser == null) {
+            heapFileChooser = heapChooserHelper.getChooser();
+            heapFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            heapFileChooser.setMultiSelectionEnabled(false);
+        }
         String oldHeapPath = heapDumpFileField.getText();
         if (!StringUtils.isBlank(oldHeapPath)) {
             heapFileChooser.setCurrentDirectory(new File(oldHeapPath));

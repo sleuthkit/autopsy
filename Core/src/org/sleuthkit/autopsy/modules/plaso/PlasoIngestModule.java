@@ -326,7 +326,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 // If the description is empty use the event type display name
                 // as the description.
                 if (description == null || description.isEmpty()) {
-                    if (eventType != TimelineEventType.OTHER) {
+                    if (eventType != TimelineEventType.STANDARD_ARTIFACT_CATCH_ALL) {
                         description = eventType.getDisplayName();
                     } else {
                         continue;
@@ -345,8 +345,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                                 eventType.getTypeID()));
 
                 try {
-                    BlackboardArtifact bbart = resolvedFile.newArtifact(TSK_TL_EVENT);
-                    bbart.addAttributes(bbattributes);
+                    BlackboardArtifact bbart = resolvedFile.newDataArtifact(new BlackboardArtifact.Type(TSK_TL_EVENT), bbattributes);
                     try {
                         /*
                          * Post the artifact which will index the artifact for
@@ -441,7 +440,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                         return TimelineEventType.REGISTRY;
                 }
             default:
-                return TimelineEventType.OTHER;
+                return TimelineEventType.STANDARD_ARTIFACT_CATCH_ALL;
         }
     }
 

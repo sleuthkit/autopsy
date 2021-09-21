@@ -34,6 +34,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
@@ -58,16 +59,18 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
     private final static Logger logger = Logger.getLogger(FileTypesByExtension.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED);
-    private final SleuthkitCase skCase;
     private final FileTypes typesRoot;
 
     public FileTypesByExtension(FileTypes typesRoot) {
-        this.skCase = typesRoot.getSleuthkitCase();
         this.typesRoot = typesRoot;
     }
 
     public SleuthkitCase getSleuthkitCase() {
-        return this.skCase;
+        try {
+            return Case.getCurrentCaseThrows().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -404,7 +407,11 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
         @Override
         long calculateChildCount() throws TskCoreException {
-            return skCase.countFilesWhere(createQuery(filter));
+            try {
+                return Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere(createQuery(filter));
+            } catch (NoCurrentCaseException ex) {
+                throw new TskCoreException("No open case.", ex);
+            }
         }
     }
 

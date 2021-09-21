@@ -624,6 +624,16 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
             releaseSharedLock();
         }
     }
+    
+        @Override
+    public Long getCountCasesWithOtherInstances(CorrelationAttributeInstance instance) throws CentralRepoException, CorrelationAttributeNormalizationException {
+               try {
+            acquireSharedLock();
+            return super.getCountCasesWithOtherInstances(instance);
+        } finally {
+            releaseSharedLock();
+        }
+    }
 
     @Override
     public Long getCountUniqueDataSources() throws CentralRepoException {

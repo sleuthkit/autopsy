@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
 
@@ -38,7 +39,7 @@ import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.events.HostsChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.MergeHostMenuAction;
@@ -65,7 +66,7 @@ public class HostNode extends DisplayableItemNode {
 
         private final Host host;
         private final Function<DataSourceGrouping, Node> dataSourceToNode;
-
+        
         /**
          * Main constructor.
          *
@@ -76,7 +77,7 @@ public class HostNode extends DisplayableItemNode {
             this.host = host;
             this.dataSourceToNode = dataSourceToNode;
         }
-
+        
         /**
          * Listener for handling DATA_SOURCE_ADDED / HOST_DELETED events.
          * A host may have been deleted as part of a merge, which means its data sources could
@@ -92,15 +93,19 @@ public class HostNode extends DisplayableItemNode {
                 }
             }
         };
-
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(dataSourceAddedPcl, null);
+        
         @Override
         protected void addNotify() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
+            super.addNotify();
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), weakPcl);
         }
 
         @Override
-        protected void removeNotify() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), dataSourceAddedPcl);
+        protected void finalize() throws Throwable {
+            super.finalize();
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.HOSTS_DELETED), weakPcl);
         }
 
         @Override
@@ -119,11 +124,11 @@ public class HostNode extends DisplayableItemNode {
             }
 
             if (dataSources != null) {
-                dataSources.stream()
+                toPopulate.addAll(dataSources.stream()
                         .filter(ds -> ds != null)
                         .map(DataSourceGrouping::new)
                         .sorted((a, b) -> getNameOrEmpty(a).compareToIgnoreCase(getNameOrEmpty(b)))
-                        .forEach(toPopulate::add);
+                        .collect(Collectors.toList()));
             }
 
             return true;
@@ -177,8 +182,8 @@ public class HostNode extends DisplayableItemNode {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (hostId != null && eventType.equals(Case.Events.HOSTS_CHANGED.toString()) && evt instanceof HostsChangedEvent) {
-                ((HostsChangedEvent) evt).getNewValue().stream()
+            if (hostId != null && eventType.equals(Case.Events.HOSTS_UPDATED.toString()) && evt instanceof HostsUpdatedEvent) {
+                ((HostsUpdatedEvent) evt).getHosts().stream()
                         .filter(h -> h != null && h.getHostId() == hostId)
                         .findFirst()
                         .ifPresent((newHost) -> {
@@ -188,6 +193,8 @@ public class HostNode extends DisplayableItemNode {
             }
         }
     };
+    
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(hostChangePcl, null);
 
     /*
      * Get the host name or 'unknown host' if null.
@@ -211,7 +218,7 @@ public class HostNode extends DisplayableItemNode {
      * @param hosts The HostDataSources key.
      */
     HostNode(HostDataSources hosts) {
-        this(Children.create(new HostGroupingChildren(HOST_DATA_SOURCES, hosts.getHost()), false), hosts.getHost());
+        this(Children.create(new HostGroupingChildren(HOST_DATA_SOURCES, hosts.getHost()), true), hosts.getHost());
     }
 
     /**
@@ -221,7 +228,7 @@ public class HostNode extends DisplayableItemNode {
      * @param hostGrouping The HostGrouping key.
      */
     HostNode(HostGrouping hostGrouping) {
-        this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), false), hostGrouping.getHost());
+        this(Children.create(new HostGroupingChildren(HOST_GROUPING_CONVERTER, hostGrouping.getHost()), true), hostGrouping.getHost());
     }
 
     /**
@@ -246,8 +253,7 @@ public class HostNode extends DisplayableItemNode {
                 host == null ? Lookups.fixed(displayName) : Lookups.fixed(host, displayName));
                 
         hostId = host == null ? null : host.getHostId();
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_CHANGED),
-                WeakListeners.propertyChange(hostChangePcl, this));
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.HOSTS_UPDATED), weakPcl);
         super.setName(displayName);
         super.setDisplayName(displayName);
         this.setIconBaseWithExtension(ICON_PATH);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -318,7 +318,7 @@ public final class IngestJobSettings {
 
         // Add modules that are going to be used for this ingest depending on type.
         for (IngestModuleFactory moduleFactory : allModuleFactories) {
-            if (this.ingestType.equals(IngestType.ALL_MODULES)) {
+            if (/*moduleFactory.isDataArtifactIngestModuleFactory() ||*/ ingestType.equals(IngestType.ALL_MODULES)) {
                 moduleFactories.add(moduleFactory);
             } else if (this.ingestType.equals(IngestType.DATA_SOURCE_ONLY) && moduleFactory.isDataSourceIngestModuleFactory()) {
                 moduleFactories.add(moduleFactory);
@@ -330,7 +330,7 @@ public final class IngestJobSettings {
         for (IngestModuleFactory moduleFactory : moduleFactories) {
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
         }
-        
+
         /**
          * Hard coding Plaso to be disabled by default. loadedModuleNames is
          * passed below as the default list of enabled modules so briefly remove
@@ -361,7 +361,7 @@ public final class IngestJobSettings {
         if (plasoLoaded) {
             loadedModuleNames.add(plasoModuleName);
         }
-        
+
         /**
          * Check for missing modules and create warnings if any are found.
          */
@@ -549,7 +549,7 @@ public final class IngestJobSettings {
      * @return The file path.
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
-        String fileName =  FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
+        String fileName = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
         Path path = Paths.get(this.moduleSettingsFolderPath, fileName);
         return path.toAbsolutePath().toString();
     }

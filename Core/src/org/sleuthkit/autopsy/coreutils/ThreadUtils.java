@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,13 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /*
  * Concurrent programming utilities.
@@ -48,6 +53,36 @@ final public class ThreadUtils {
                  */
             }
         }
+    }
+
+    /**
+     * Returns the thread info for all live threads with stack trace and
+     * synchronization information. Some threads included in the returned array
+     * may have been terminated when this method returns.
+     *
+     * @return Thread dump of all live threads
+     */
+    public static String generateThreadDump() {
+        StringBuilder threadDump = new StringBuilder(System.lineSeparator());
+        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        ThreadInfo[] threadInfos = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), 100);
+        for (ThreadInfo threadInfo : threadInfos) {
+            threadDump.append(threadInfo.toString());
+            threadDump.append("\n");
+        }
+
+        long[] deadlockThreadIds = threadMXBean.findDeadlockedThreads();
+        if (deadlockThreadIds != null) {
+            threadDump.append("-------------------List of Deadlocked Thread IDs ---------------------");
+            String idsList = (Arrays
+                    .stream(deadlockThreadIds)
+                    .boxed()
+                    .collect(Collectors.toList()))
+                    .stream().map(n -> String.valueOf(n))
+                    .collect(Collectors.joining("-", "{", "}"));
+            threadDump.append(idsList);
+        }
+        return threadDump.toString();
     }
 
     private ThreadUtils() {

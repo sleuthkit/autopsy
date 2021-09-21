@@ -69,7 +69,7 @@ class AutoIngestNodeRefreshEvents {
         private final String caseName;
 
         /**
-         * Contructs a RefreshCaseEvent
+         * Constructs a RefreshCaseEvent
          *
          * @param monitor The monitor that will provide access to the current state of the jobs lists.
          * @param name The name of the case whose nodes should be refreshed.

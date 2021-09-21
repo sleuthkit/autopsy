@@ -15,24 +15,6 @@
 # governing permissions and limitations under the License.
 #
 
-AnnotationsContentViewer.centralRepositoryEntry.title=Central Repository Comments
-AnnotationsContentViewer.centralRepositoryEntryDataLabel.case=Case:
-AnnotationsContentViewer.centralRepositoryEntryDataLabel.comment=Comment:
-AnnotationsContentViewer.centralRepositoryEntryDataLabel.path=Path:
-AnnotationsContentViewer.centralRepositoryEntryDataLabel.type=Type:
-AnnotationsContentViewer.fileHitEntry.artifactCommentTitle=Artifact Comment
-AnnotationsContentViewer.fileHitEntry.comment=Comment:
-AnnotationsContentViewer.fileHitEntry.hashSetHitTitle=Hash Set Hit Comments
-AnnotationsContentViewer.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments
-AnnotationsContentViewer.fileHitEntry.setName=Set Name:
-AnnotationsContentViewer.onEmpty=No annotations were found for this particular item.
-AnnotationsContentViewer.sourceFile.title=Source File
-AnnotationsContentViewer.tagEntry.title=Tags
-AnnotationsContentViewer.tagEntryDataLabel.comment=Comment:
-AnnotationsContentViewer.tagEntryDataLabel.tag=Tag:
-AnnotationsContentViewer.tagEntryDataLabel.tagUser=Examiner:
-AnnotationsContentViewer.title=Annotations
-AnnotationsContentViewer.toolTip=Displays tags and comments associated with the selected content.
 ApplicationContentViewer.title=Application
 ApplicationContentViewer.toolTip=Displays file contents.
 FXVideoPanel.pauseButton.infoLabel.playbackErr=Unable to play video.
@@ -85,6 +67,8 @@ MediaViewVideoPanel.progressLabel.text=00:00
 MediaViewVideoPanel.infoLabel.text=info
 MediaViewImagePanel.imgFileTooLarge.msg=Could not load image file (too large): {0}
 
+Metadata.headerTitle=Metadata
+Metadata.nodeText.loading=Metadata loading...
 Metadata.nodeText.none=None
 Metadata.nodeText.truncated=(results truncated)
 Metadata.nodeText.unknown=Unknown
@@ -119,6 +103,8 @@ Metadata.nodeText.exceptionNotice.text=Error getting file metadata:
 MessageArtifactViewer.textbodyScrollPane.TabConstraints.tabTitle=Text
 JPEGViewerDummy.jLabel1.text=You are looking at a JPEG file:
 JPEGViewerDummy.jTextField1.text=jTextField1
+Metadata_dataArtifactTitle=Source File Metadata
+MetadataWorker.doInBackground.noDataMsg=No Data
 PDFViewer.encryptedDialog=This document is password protected.
 PDFViewer.errorDialog=An error occurred while opening this PDF document. Check the logs for more information. You may continue to use this feature on other PDF documents.
 PListNode.KeyCol=Key

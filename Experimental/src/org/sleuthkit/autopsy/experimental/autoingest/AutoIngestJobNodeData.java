@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ import javax.lang.model.type.TypeKind;
  */
 final class AutoIngestJobNodeData {
 
-    private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_VERSION = 3;
     private static final int DEFAULT_PRIORITY = 0;
 
     /*
@@ -47,7 +47,7 @@ final class AutoIngestJobNodeData {
      * data. This avoids the need to continuously enlarge the buffer. Once the
      * buffer has all the necessary data, it will be resized as appropriate.
      */
-    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 131637;
+    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 131641;
 
     /*
      * Version 0 fields.
@@ -78,6 +78,11 @@ final class AutoIngestJobNodeData {
      * Version 2 fields.
      */
     private long dataSourceSize;
+    
+    /*
+     * Version 3 fields.
+     */
+    private boolean ocrEnabled;
 
     /**
      * Gets the current version of the auto ingest job coordination service node
@@ -115,6 +120,7 @@ final class AutoIngestJobNodeData {
         setProcessingStageStartDate(job.getProcessingStageStartDate());
         setProcessingStageDetails(job.getProcessingStageDetails());
         setDataSourceSize(job.getDataSourceSize());
+        setOcrEnabled(job.getOcrEnabled());
     }
 
     /**
@@ -128,7 +134,7 @@ final class AutoIngestJobNodeData {
         if (null == nodeData || nodeData.length == 0) {
             throw new InvalidDataException(null == nodeData ? "Null nodeData byte array" : "Zero-length nodeData byte array");
         }
-
+        
         /*
          * Set default values for all fields.
          */
@@ -150,6 +156,7 @@ final class AutoIngestJobNodeData {
         this.processingStageDetailsDescription = "";
         this.processingStageDetailsStartDate = 0L;
         this.dataSourceSize = 0L;
+        this.ocrEnabled = false;
 
         /*
          * Get fields from node data.
@@ -191,6 +198,14 @@ final class AutoIngestJobNodeData {
                  * Get version 2 fields.
                  */
                 this.dataSourceSize = buffer.getLong();
+            }
+            
+            if (buffer.hasRemaining()) {
+                /*
+                 * Get version 3 fields.
+                 */
+                int ocrFlag = buffer.getInt();
+                this.ocrEnabled = (1 == ocrFlag);
             }
 
         } catch (BufferUnderflowException ex) {
@@ -234,6 +249,24 @@ final class AutoIngestJobNodeData {
     void setPriority(int priority) {
         this.priority = priority;
     }
+    
+    /**
+     * Gets the OCR flag for the job.
+     *
+     * @return Flag whether OCR is enabled/disabled.
+     */
+    boolean getOcrEnabled() {
+        return this.ocrEnabled;
+    }
+
+    /**
+     * Sets the OCR enabled/disabled flag for the job.
+     *
+     * @param enabled Flag whether OCR is enabled/disabled.
+     */
+    void setOcrEnabled(boolean enabled) {
+        this.ocrEnabled = enabled;
+    }    
 
     /**
      * Gets the number of times the job has crashed during processing.
@@ -567,6 +600,10 @@ final class AutoIngestJobNodeData {
             if (this.version >= 2) {
                 buffer.putLong(this.dataSourceSize);
             }
+            
+            if (this.version >= 3) {
+                buffer.putInt(this.ocrEnabled ? 1 : 0);
+            }            
         }
 
         // Prepare the array

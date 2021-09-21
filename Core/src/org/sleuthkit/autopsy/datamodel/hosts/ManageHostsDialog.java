@@ -31,10 +31,12 @@ import java.util.stream.Collectors;
 import javax.swing.JFrame;
 import javax.swing.ListModel;
 import org.apache.commons.collections4.CollectionUtils;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -59,7 +61,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
         /**
          * Main constructor.
          *
-         * @param host The host.
+         * @param host        The host.
          * @param dataSources The data sources that are children of this host.
          */
         HostListItem(Host host, List<DataSource> dataSources) {
@@ -152,7 +154,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
 
     /**
      * @return The currently selected host in the list or null if no host is
-     * selected.
+     *         selected.
      */
     Host getSelectedHost() {
         return (hostList.getSelectedValue() == null) ? null : hostList.getSelectedValue().getHost();
@@ -161,6 +163,9 @@ public class ManageHostsDialog extends javax.swing.JDialog {
     /**
      * Shows add/edit dialog, and if a value is returned, creates a new Host.
      */
+    @NbBundle.Messages({"# {0} - hostname",
+        "ManageHostsDialog.failureToAdd.txt=Unable to add new host {0} at this time.",
+        "ManageHostsDialog.seeLog.txt=  See log for more information."})
     private void addHost() {
         String newHostName = getAddEditDialogName(null);
         if (newHostName != null) {
@@ -169,7 +174,8 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 Host newHost = Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().newHost(newHostName);
                 selectedId = newHost == null ? null : newHost.getHostId();
             } catch (NoCurrentCaseException | TskCoreException e) {
-                logger.log(Level.WARNING, String.format("Unable to add new host '%s' at this time.", newHostName), e);
+                logger.log(Level.WARNING, Bundle.ManageHostsDialog_failureToAdd_txt(newHostName), e);
+                MessageNotifyUtil.Message.warn(Bundle.ManageHostsDialog_failureToAdd_txt(newHostName) + Bundle.ManageHostsDialog_seeLog_txt());
             }
             refresh();
             setSelectedHostById(selectedId);
@@ -181,12 +187,15 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      *
      * @param selectedHost
      */
+    @NbBundle.Messages({"# {0} - hostname",
+        "ManageHostsDialog.failureToDelete.txt=Unable to delete host {0} at this time."})
     private void deleteHost(Host selectedHost) {
         if (selectedHost != null && selectedHost.getName() != null) {
             try {
                 Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().deleteHost(selectedHost.getName());
             } catch (NoCurrentCaseException | TskCoreException e) {
-                logger.log(Level.WARNING, String.format("Unable to delete host '%s' at this time.", selectedHost.getName()), e);
+                logger.log(Level.WARNING, Bundle.ManageHostsDialog_failureToDelete_txt(selectedHost.getName()), e);
+                MessageNotifyUtil.Message.error(Bundle.ManageHostsDialog_failureToDelete_txt(selectedHost.getName()) + Bundle.ManageHostsDialog_seeLog_txt());
             }
             refresh();
         }
@@ -229,6 +238,9 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      *
      * @param selectedHost The selected host.
      */
+    @NbBundle.Messages({"# {0} - hostname",
+        "# {1} - hostId",
+        "ManageHostsDialog.failureToEdit.txt=Unable to update host {0} with id: {1} at this time."})
     private void editHost(Host selectedHost) {
 
         if (selectedHost != null) {
@@ -237,7 +249,8 @@ public class ManageHostsDialog extends javax.swing.JDialog {
                 try {
                     Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().updateHostName(selectedHost, newHostName);
                 } catch (NoCurrentCaseException | TskCoreException e) {
-                    logger.log(Level.WARNING, String.format("Unable to update host '%s' with id: %d at this time.", selectedHost.getName(), selectedHost.getHostId()), e);
+                    logger.log(Level.WARNING, Bundle.ManageHostsDialog_failureToEdit_txt(selectedHost.getName(), selectedHost.getHostId()), e);
+                    MessageNotifyUtil.Message.warn(Bundle.ManageHostsDialog_failureToEdit_txt(selectedHost.getName(), selectedHost.getHostId()) + Bundle.ManageHostsDialog_seeLog_txt());
                 }
 
                 HostListItem selectedItem = hostList.getSelectedValue();
@@ -254,7 +267,8 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * Shows the dialog to add or edit the name of a host.
      *
      * @param origValue The original values for the host or null if adding a
-     * host.
+     *                  host.
+     *
      * @return The new name for the host or null if operation was cancelled.
      */
     private String getAddEditDialogName(Host origValue) {
@@ -305,6 +319,7 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * host is null.
      *
      * @param h The host.
+     *
      * @return The name of the host or empty string.
      */
     private String getNameOrEmpty(Host h) {
@@ -315,8 +330,9 @@ public class ManageHostsDialog extends javax.swing.JDialog {
      * Retrieves the current list of hosts for the case.
      *
      * @return The list of hosts to be displayed in the list (sorted
-     * alphabetically).
+     *         alphabetically).
      */
+    @NbBundle.Messages({"ManageHostsDialog.failureToGetHosts.txt=There was an error while fetching hosts for current case."})
     private Map<Host, List<DataSource>> getHostListData() {
         Map<Host, List<DataSource>> hostMapping = new HashMap<>();
         try {
@@ -339,7 +355,8 @@ public class ManageHostsDialog extends javax.swing.JDialog {
             }
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "There was an error while fetching hosts for current case.", ex);
+            logger.log(Level.WARNING, Bundle.ManageHostsDialog_failureToGetHosts_txt(), ex);
+            MessageNotifyUtil.Message.warn(Bundle.ManageHostsDialog_failureToGetHosts_txt() + Bundle.ManageHostsDialog_seeLog_txt());
         }
 
         return hostMapping;

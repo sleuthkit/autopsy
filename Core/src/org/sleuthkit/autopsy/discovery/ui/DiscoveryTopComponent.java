@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -260,7 +260,6 @@ public final class DiscoveryTopComponent extends TopComponent {
     private void newSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newSearchButtonActionPerformed
         close();
         final DiscoveryDialog discDialog = DiscoveryDialog.getDiscoveryDialogInstance();
-        discDialog.cancelSearch();
         discDialog.setVisible(true);
         discDialog.validateDialog();
     }//GEN-LAST:event_newSearchButtonActionPerformed

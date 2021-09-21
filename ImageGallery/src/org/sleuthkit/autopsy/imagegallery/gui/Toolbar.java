@@ -66,6 +66,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
 import org.sleuthkit.autopsy.imagegallery.actions.TagGroupAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
@@ -236,8 +237,8 @@ public class Toolbar extends ToolBar {
     }
 
     private void initDataSourceComboBox() {
-        dataSourceComboBox.setCellFactory(param -> new DataSourceCell(dataSourcesViewable, controller.getAllDataSourcesDrawableDBStatus()));
-        dataSourceComboBox.setButtonCell(new DataSourceCell(dataSourcesViewable, controller.getAllDataSourcesDrawableDBStatus()));
+        dataSourceComboBox.setCellFactory(param -> new DataSourceCell(dataSourcesViewable, new HashMap<>()));
+        dataSourceComboBox.setButtonCell(new DataSourceCell(dataSourcesViewable, new HashMap<>()));
         dataSourceComboBox.setConverter(new StringConverter<Optional<DataSource>>() {
             @Override
             public String toString(Optional<DataSource> object) {

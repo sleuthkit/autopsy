@@ -85,7 +85,7 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     public boolean isEnabled() {
         try {
             Case openCase = Case.getCurrentCaseThrows();
-            return openCase.hasData();
+            return openCase.hasDataSource();
         } catch (NoCurrentCaseException ex) {
             return false;
         }

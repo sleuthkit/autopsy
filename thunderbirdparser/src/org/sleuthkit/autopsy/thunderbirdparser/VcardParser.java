@@ -223,10 +223,9 @@ final class VcardParser {
         try {
             // Create artifact if it doesn't already exist.
             if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, attributes)) {
-                artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
-                artifact.addAttributes(attributes);
+                artifact = abstractFile.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), attributes);
                 
-                 extractPhotos(vcard, abstractFile, artifact);
+                extractPhotos(vcard, abstractFile, artifact);
                 
                 // Add account relationships.
                 if (deviceAccountInstance != null) {
@@ -389,6 +388,9 @@ final class VcardParser {
         String telephoneText = telephone.getText();
        
         if (telephoneText == null || telephoneText.isEmpty()) {
+            if (telephone.getUri() == null) {
+                return;
+            }
             telephoneText =  telephone.getUri().getNumber();
             if (telephoneText == null || telephoneText.isEmpty()) {
                 return;
@@ -503,6 +505,9 @@ final class VcardParser {
     private void addPhoneAccountInstances(Telephone telephone, AbstractFile abstractFile, Collection<AccountFileInstance> accountInstances) {
         String telephoneText = telephone.getText();
         if (telephoneText == null || telephoneText.isEmpty()) {
+            if (telephone.getUri() == null) {
+                return;
+            }
             telephoneText =  telephone.getUri().getNumber();
             if (telephoneText == null || telephoneText.isEmpty()) {
                 return;

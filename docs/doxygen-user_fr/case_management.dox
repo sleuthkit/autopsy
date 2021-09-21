@@ -1,0 +1,56 @@
+﻿/*! \page cases_page Cases (Cas)
+
+[TOC]
+
+
+Vous devez créer un cas avant de pouvoir analyser les données dans Autopsy. Un cas peut contenir une ou plusieurs sources de données (images de disque, disque physique, fichiers logiques). Les sources de données peuvent provenir de plusieurs lecteurs sur un seul ordinateur ou de plusieurs ordinateurs. C'est vous qui voyez.
+
+Chaque cas a son propre répertoire qui est nommé en fonction du nom du cas. Le répertoire contiendra des fichiers de configuration, une base de données, des rapports et d'autres fichiers générés par les modules. Le fichier de configuration principal du cas d'Autopsy a une extension ".aut". 
+
+\section case_create Créer un cas
+
+\image html splashscreen.PNG
+
+Il existe plusieurs façons de créer un nouveau cas:
+- L'écran d'ouverture a un bouton pour créer un nouveau cas ("New Case").
+- Le menu "Case", "Create New Case"
+
+La boîte de dialogue de l'assistant de création d'un nouveau cas s'ouvrira et vous devrez entrer le nom du cas ("Case Name") et le répertoire de base ("Base Directory"). Un répertoire pour le cas sera créé à l'intérieur du répertoire de base. Si le répertoire existe déjà, vous devrez soit supprimer le répertoire existant, soit choisir une autre combinaison de noms.
+
+\image html case-newcase.PNG
+
+REMARQUE: Vous n'aurez la possibilité de créer un cas multi-utilisateur que si vous avez configuré Autopsy avec des paramètres multi-utilisateurs. Voir \ref install_multiuser_page pour les instructions d'installation et \ref creating_multi_user_cases pour plus de détails sur la création de cas multi-utilisateurs.
+
+Vous serez également invité à fournir des informations facultatives ("Optional Information") comme indiqué ci-dessous:
+
+\image html new_case_optional_info.png
+
+Tous les champs de ce panneau sont facultatifs. De plus, la section "Organization" ne sera active que si le \ref central_repo_page "référentiel central" est activé.
+
+Après avoir créé le cas, vous serez invité à ajouter une source de données, comme décrit dans \ref ds_add. 
+
+\section case_open Ouvrir un cas
+
+Pour ouvrir un cas, vous pourrez au choix:
+- Choisir "Open Case" ou "Open Recent Case" dans l'écran d'ouverture.
+- Choisir le menu "Case", "Open Case" ou "Case", "Open Recent Case"
+
+"Open Recent Case" affichera toujours un écran vous permettant de sélectionner l'un des cas récemment ouverts. "Open Case" fera une de ces deux choses:
+- Si les cas multi-utilisateurs ne sont pas activés, il affichera une fenêtre de recherche de fichier pour chercher le fichier ".aut" dans le répertoire du cas souhaité
+- Si les cas multi-utilisateurs sont activés, il affichera l'écran de sélection des cas multi-utilisateurs. Il utilise les services de coordination pour trouver la liste des cas multi-utilisateurs. Si nécessaire, le bouton "Open Single-User Case" peut être utilisé pour afficher la fenêtre classique de recherche de fichier. L'écran de sélection des cas multi-utilisateurs a une fonctionnalité \ref ui_quick_search qui peut être utilisée pour trouver rapidement un cas dans le tableau. Ce qui suit montre l'écran de sélection des cas multi-utilisateurs:
+
+\image html multi_user_case_select.png
+
+\section case_properties Affichage des détails du cas et du récapitulatif de la source de données
+Vous pouvez afficher les propriétés du cas en accédant au menu "Case" et en cliquant sur "Case Details".
+
+\image html case_properties.png
+
+La plupart des propriétés des cas peuvent être modifiées via le bouton "Edit Details".
+
+Vous pouvez afficher le résumé de la source de données en accédant au menu "Case" et en cliquant sur "Data Source Summary" ou en sélectionnant la source de données dans l'\ref tree_viewer_page puis l'onglet "Summary". Plus d'informations peuvent être trouvées sur la page \ref data_source_summary_page.
+
+\image html ds_summary_window.png
+
+
+*/

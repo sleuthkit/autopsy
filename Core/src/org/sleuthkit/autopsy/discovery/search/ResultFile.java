@@ -23,18 +23,16 @@ import org.sleuthkit.datamodel.AbstractFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.discovery.search.SearchData.Type.OTHER;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.HashUtility;
-import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -49,7 +47,7 @@ public class ResultFile extends Result {
     private final List<String> interestingSetNames;
     private final List<String> objectDetectedNames;
     private final List<AbstractFile> instances = new ArrayList<>();
-    private DataResultViewerTable.Score currentScore = DataResultViewerTable.Score.NO_SCORE;
+    private Score currentScore = Score.SCORE_UNKNOWN;
     private String scoreDescription = null;
     private boolean deleted = false;
     private Type fileType;
@@ -108,7 +106,7 @@ public class ResultFile extends Result {
      *
      * @return The score of this ResultFile.
      */
-    public DataResultViewerTable.Score getScore() {
+    public Score getScore() {
         return currentScore;
     }
 
@@ -262,9 +260,8 @@ public class ResultFile extends Result {
 
     @Override
     public int hashCode() {
-        if (this.getFirstInstance().getMd5Hash() == null
-                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())
-                || !HashUtility.isValidMd5Hash(this.getFirstInstance().getMd5Hash())) {
+        if (StringUtils.isBlank(this.getFirstInstance().getMd5Hash()) 
+                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())) {
             return super.hashCode();
         } else {
             //if the file has a valid MD5 use the hashcode of the MD5 for deduping files with the same MD5
@@ -276,9 +273,8 @@ public class ResultFile extends Result {
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof ResultFile)
-                || this.getFirstInstance().getMd5Hash() == null
-                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())
-                || !HashUtility.isValidMd5Hash(this.getFirstInstance().getMd5Hash())) {
+                || StringUtils.isBlank(this.getFirstInstance().getMd5Hash()) 
+                || HashUtility.isNoDataMd5(this.getFirstInstance().getMd5Hash())) {
             return super.equals(obj);
         } else {
             //if the file has a valid MD5 compare use the MD5 for equality check
@@ -286,56 +282,22 @@ public class ResultFile extends Result {
         }
     }
 
-    /**
-     * Get all tags from the case database that are associated with the file
-     *
-     * @return a list of tags that are associated with the file
-     */
-    private List<ContentTag> getContentTagsFromDatabase(AbstractFile file) {
-        List<ContentTag> tags = new ArrayList<>();
-        try {
-            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(file));
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Failed to get tags for file " + file.getName(), ex);
-        }
-        return tags;
-    }
-
+    
     @NbBundle.Messages({
-        "ResultFile.score.notableFile.description=At least one instance of the file was recognized as notable.",
-        "ResultFile.score.interestingResult.description=At least one instance of the file has an interesting result associated with it.",
-        "ResultFile.score.taggedFile.description=At least one instance of the file has been tagged.",
-        "ResultFile.score.notableTaggedFile.description=At least one instance of the file is tagged with a notable tag."})
+        "# {0} - significanceDisplayName",
+        "ResultFile_updateScoreAndDescription_description=Has an {0} analysis result score"
+    })
     private void updateScoreAndDescription(AbstractFile file) {
-        if (currentScore == DataResultViewerTable.Score.NOTABLE_SCORE) {
-            //already notable can return
-            return;
-        }
-        if (file.getKnown() == TskData.FileKnown.BAD) {
-            currentScore = DataResultViewerTable.Score.NOTABLE_SCORE;
-            scoreDescription = Bundle.ResultFile_score_notableFile_description();
-            return;
-        }
+        Score score = Score.SCORE_UNKNOWN;
         try {
-            if (currentScore == DataResultViewerTable.Score.NO_SCORE && !file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
-                currentScore = DataResultViewerTable.Score.INTERESTING_SCORE;
-                scoreDescription = Bundle.ResultFile_score_interestingResult_description();
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error getting artifacts for file: " + file.getName(), ex);
+            score = Case.getCurrentCaseThrows().getSleuthkitCase().getScoringManager().getAggregateScore(file.getId());
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            
         }
-        List<ContentTag> tags = getContentTagsFromDatabase(file);
-        if (!tags.isEmpty()) {
-            currentScore = DataResultViewerTable.Score.INTERESTING_SCORE;
-            scoreDescription = Bundle.ResultFile_score_taggedFile_description();
-            for (Tag tag : tags) {
-                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    currentScore = DataResultViewerTable.Score.NOTABLE_SCORE;
-                    scoreDescription = Bundle.ResultFile_score_notableTaggedFile_description();
-                    return;
-                }
-            }
-        }
+        
+        this.currentScore = score;
+        String significanceDisplay = score.getSignificance().getDisplayName();
+        this.scoreDescription =  Bundle.ResultFile_updateScoreAndDescription_description(significanceDisplay);
     }
 
     /**

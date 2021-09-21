@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
+import java.awt.Cursor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.RightAlignedTableCellRenderer;
 import java.awt.EventQueue;
 import java.beans.PropertyVetoException;
@@ -39,8 +41,8 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryNode.DataSourceSummaryEntryNode;
 import static javax.swing.SwingConstants.RIGHT;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -63,11 +65,12 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private final ExplorerManager explorerManager;
     private final List<DataSourceSummary> dataSourceSummaryList;
     private final RightAlignedTableCellRenderer rightAlignedRenderer = new RightAlignedTableCellRenderer();
+    private SwingWorker<Void, Void> rootNodeWorker = null;
 
     /**
      * Creates new form DataSourceBrowser
      */
-    DataSourceBrowser(Map<Long, String> usageMap, Map<Long, Long> fileCountsMap) {
+    DataSourceBrowser() {
         initComponents();
         rightAlignedRenderer.setHorizontalAlignment(RIGHT);
         explorerManager = new ExplorerManager();
@@ -80,13 +83,10 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
                 Bundle.DataSourceSummaryNode_column_results_header(), Bundle.DataSourceSummaryNode_column_results_header(),
                 Bundle.DataSourceSummaryNode_column_tags_header(), Bundle.DataSourceSummaryNode_column_tags_header());
         outline = outlineView.getOutline();
-
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        dataSourceSummaryList = getDataSourceSummaryList(usageMap, fileCountsMap);
+        dataSourceSummaryList = new ArrayList<>();
         outline.setRootVisible(false);
         add(outlineView, java.awt.BorderLayout.CENTER);
-        explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.DataSourceSummaryNode_column_dataSourceName_header());
         for (TableColumn column : Collections.list(outline.getColumnModel().getColumns())) {
             if (column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_files_header())
@@ -246,6 +246,52 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     @Override
     public ExplorerManager getExplorerManager() {
         return explorerManager;
+    }
+
+    /**
+     * Populate the data source browser with an updated list of the data sources
+     * and information about them.
+     *
+     * @param dsSummaryDialog      The dialog which contains this data source
+     *                             browser panel.
+     * @param selectedDataSourceId The object id for the data source which
+     *                             should be selected.
+     */
+    void populateBrowser(DataSourceSummaryDialog dsSummaryDialog, Long selectedDataSourceId) {
+        dsSummaryDialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        if (rootNodeWorker != null && !rootNodeWorker.isDone()) {
+            rootNodeWorker.cancel(true);
+        }
+
+        dataSourceSummaryList.clear();
+        rootNodeWorker = new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                Map<Long, String> usageMap = CaseDataSourcesSummary.getDataSourceTypes();
+                Map<Long, Long> fileCountsMap = CaseDataSourcesSummary.getCountsOfFiles();
+                dataSourceSummaryList.addAll(getDataSourceSummaryList(usageMap, fileCountsMap));
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
+                selectDataSource(selectedDataSourceId);
+                addObserver(dsSummaryDialog);
+                dsSummaryDialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+        };
+        rootNodeWorker.execute();
+    }
+
+    /**
+     * Cancel the worker that updates the data source summary list and updates
+     * the data source summary browser.
+     */
+    void cancel() {
+        if (rootNodeWorker != null && !rootNodeWorker.isDone()) {
+            rootNodeWorker.cancel(true);
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

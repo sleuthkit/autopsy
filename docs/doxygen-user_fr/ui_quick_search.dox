@@ -1,0 +1,27 @@
+/*! \page ui_quick_search Recherche rapide de l'interface utilisateur
+
+[TOC]
+
+
+La fonction de recherche rapide de l'interface utilisateur vous permet de rechercher une chaîne de caractères donnée dans les données d'un panneau. Elle ne recherchera pas les données dans les colonnes masquées ou les nœuds réduits.
+
+Comment l'utiliser
+-----
+Pour utiliser la recherche, vous devez sélectionner n'importe quel élément dans la zone où vous souhaitez lancer la recherche et commencer à taper des caractères au clavier. Si la recherche rapide de l'interface utilisateur est disponible dans la zone que vous avez sélectionnée, un champ de recherche apparaîtra dans le coin inférieur gauche de la zone. Au fur et à mesure que vous tapez la chaîne de caractères que vous souhaitez rechercher, elle se met à jour automatiquement pour sélectionner l'un des résultats correspondant à votre chaîne. Vous pouvez basculer entre les résultats qui correspondent à la chaîne de caractères que vous avez tapée avec les touches haut et bas. La recherche ne prend pas en charge l'utilisation d'expressions régulières mais prendra en compte n'importe quelle sous-chaîne dans les champs qu'elle recherche, pas seulement au début du champ.
+\image html quick_search_result.png 
+
+Configuration
+-----
+Par défaut, la recherche s'effectuera sur les données de tous les champs qui se trouvent dans la zone actuellement sélectionnée. La recherche ignorera également la casse par défaut. Si vous souhaitez modifier l'un de ces comportements par défaut, vous pouvez cliquer sur la loupe avec la flèche vers le bas et configurer les colonnes sur lesquelles la recherche devra s'effectuer, ainsi que le respect ou non de la casse.
+\image html quick_search_configuration.png 
+
+Où elle peut être utilisé
+-----
+- L'\ref tree_viewer_page "arborescence"
+- La \ref result_viewer_page "vue tableau" 
+- Le \ref case_open "panneau d'ouverture des cas multi-utilisateurs"
+- La vue tableau de l’outil de visualisation \ref timeline_page "Timeline"
+- Le panneau de navigation de l'outil de visualisation \ref communications_page "Communications"
+- Le panneau de messages de l'outil de visualisation \ref communications_page "Communications"
+
+*/

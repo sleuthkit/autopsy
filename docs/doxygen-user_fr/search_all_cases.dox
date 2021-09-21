@@ -1,0 +1,24 @@
+﻿/*! \page search_all_cases_page Rechercher dans tous les cas
+
+[TOC]
+
+
+\section search_all_cases_overview Aperçu
+
+La fonction de recherche dans tous les cas vous permet de rechercher dans le \ref central_repo_page avec des propriétés arbitraires. Vous devez avoir activé le référentiel central pour exécuter
+cette recherche, et vous devez avoir un cas ouvert (bien que le cas ouvert n'ait aucun effet sur les résultats de la recherche).
+
+\section search_all_cases_usage Usage
+
+Allez sur Tools->Search All Cases pour ouvrir la boîte de dialogue de recherche. Ici, vous pouvez sélectionner le type de propriété et la valeur à rechercher. Un exemple de ce à quoi la valeur devrait ressembler
+sera affiché en gris clair dans la zone "Correlation Property Value". Si la valeur saisie n'est pas valide pour ce type de propriété, un message d'erreur rouge s'affiche.
+
+\image html search_all_cases_dialog.png
+
+Une fois que vous avez cliqué sur le bouton Search, tous les résultats seront affichés dans la visionneuse de résultats. Le titre de l'onglet affichera ce qui était
+recherché ("Email Addresses" et "sample@gmail.com" dans l'exemple).
+
+\image html search_all_cases_results.png
+
+
+*/

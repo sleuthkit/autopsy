@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -53,18 +54,14 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -75,16 +72,27 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.HostAddress;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Pool;
+import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
+import org.sleuthkit.datamodel.Image;
 
 /**
- * A BlackboardArtifactNode is an AbstractNode implementation that can be used
- * to represent an artifact of any type.
+ * An AbstractNode implementation that can be used to represent an data artifact
+ * or analysis result of any type.
  */
 public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifact> {
 
@@ -110,17 +118,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             Case.Events.CURRENT_CASE);
 
     /*
-     * Artifact types for which the unique path of the artifact's source content
-     * should be displayed in the node's property sheet.
-     */
-    private static final Integer[] SHOW_UNIQUE_PATH = new Integer[]{
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-    };
-
-    /*
      * Artifact types for which the file metadata of the artifact's source file
      * should be displayed in the node's property sheet.
      */
@@ -129,8 +126,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     };
 
     private final BlackboardArtifact artifact;
+    private final BlackboardArtifact.Type artifactType;
     private Content srcContent;
     private volatile String translatedSourceName;
+    private final String sourceObjTypeName;
+    private final String srcContentShortDescription;
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -228,35 +228,39 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private final PropertyChangeListener weakListener = WeakListeners.propertyChange(listener, null);
 
     /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
+     * Constructs an AbstractNode implementation that can be used to represent a
+     * data artifact or analysis result of any type. The Lookup of the Node will
+     * contain the data artifact or analysis result and its parent content as
+     * its source content.
      *
-     * @param artifact The artifact to represent.
-     * @param iconPath The path to the icon for the artifact type.
+     * @param artifact The data artifact or analysis result.
+     * @param iconPath The path to the icon for the data artifact or analysis
+     *                 result type.
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
-        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
-            if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
-                srcContent = lookupContent;
-                try {
-                    /*
-                     * Calling this getter causes the unique path of the source
-                     * content to be cached in the Content object. This is
-                     * advantageous as long as this node is constructed in a
-                     * background thread instead of a UI thread.
-                     */
-                    srcContent.getUniquePath();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
-                }
-                break;
-            }
-        }
+        this.artifactType = getType(artifact);
+        
+        srcContent = getSourceContentFromLookup(artifact);
+
         if (srcContent == null) {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
+
+        try {
+            /*
+             * Calling this getter causes the unique path of the source content
+             * to be cached in the Content object. This is advantageous as long
+             * as this node is constructed in a background thread instead of a
+             * UI thread.
+             */
+            srcContent.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
+        }
+        sourceObjTypeName = getSourceObjType(srcContent);
+        srcContentShortDescription = getContentShortDescription(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -266,24 +270,28 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
+     * Constructs an AbstractNode implementation that can be used to represent a
+     * data artifact or analysis result of any type. The Lookup of the Node will
+     * contain the data artifact or analysis result and its source content,
+     * either the parent content or the associated file.
      *
-     * @param artifact               The artifact to represent.
-     * @param lookupIsAssociatedFile True if the Content lookup should be made
-     *                               for the associated file instead of the
-     *                               parent file.
+     * @param artifact                  The data artifact or analysis result.
+     * @param useAssociatedFileInLookup True if the source content in the Lookup
+     *                                  should be the associated file instead of
+     *                                  the parent content.
      */
     @Beta
-    public BlackboardArtifactNode(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
-        super(artifact, createLookup(artifact, lookupIsAssociatedFile));
+    public BlackboardArtifactNode(BlackboardArtifact artifact, boolean useAssociatedFileInLookup) {
+        super(artifact, createLookup(artifact, useAssociatedFileInLookup));
         this.artifact = artifact;
+        this.artifactType = getType(artifact);
+
         try {
-            //The lookup for a file may or may not exist so we define the srcContent as the parent.
             srcContent = artifact.getParent();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, MessageFormat.format("Error getting the parent of the artifact for (artifact objID={0})", artifact.getId()), ex);
         }
+
         if (srcContent != null) {
             try {
                 /*
@@ -299,6 +307,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } else {
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
+        sourceObjTypeName = getSourceObjType(srcContent);
+        srcContentShortDescription = getContentShortDescription(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
         String displayName = srcContent.getName();
         setDisplayName(displayName);
@@ -309,35 +319,30 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Constructs a BlackboardArtifactNode, an AbstractNode implementation that
-     * can be used to represent an artifact of any type.
+     * Constructs an AbstractNode implementation that can be used to represent a
+     * data artifact or analysis result of any type. The Lookup of the Node will
+     * contain the data artifact or analysis result and its parent content as
+     * its source content.
      *
-     * @param artifact The artifact to represent.
+     * @param artifact The data artifact or analysis result.
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
     }
 
     /**
-     * Creates a Lookup object for this node and populates it with both the
-     * artifact this node represents and its source content.
+     * Returns the artifact type of the artifact.
      *
-     * @param artifact The artifact this node represents.
+     * @param artifact The artifact.
      *
-     * @return The Lookup.
+     * @return The artifact type or null if no type could be retrieved.
      */
-    private static Lookup createLookup(BlackboardArtifact artifact) {
-        final long objectID = artifact.getObjectID();
+    private static BlackboardArtifact.Type getType(BlackboardArtifact artifact) {
         try {
-            Content content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
-            if (content == null) {
-                return Lookups.fixed(artifact);
-            } else {
-                return Lookups.fixed(artifact, content);
-            }
-        } catch (ExecutionException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
-            return Lookups.fixed(artifact);
+            return artifact.getType();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("Error getting the artifact type for artifact (artifact objID={0})", artifact.getId()), ex);
+            return null;
         }
     }
 
@@ -345,31 +350,82 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * Creates a Lookup object for this node and populates it with both the
      * artifact this node represents and its source content.
      *
-     * @param artifact               The artifact this node represents.
-     * @param lookupIsAssociatedFile True if the Content lookup should be made
-     *                               for the associated file instead of the
-     *                               parent file.
+     * @param artifact          The artifact this node represents.
+     * @param useAssociatedFile True if the source content in the Lookup should
+     *                          be the associated file instead of the parent
+     *                          content.
      *
      * @return The Lookup.
      */
-    private static Lookup createLookup(BlackboardArtifact artifact, boolean lookupIsAssociatedFile) {
+    private static Lookup createLookup(BlackboardArtifact artifact, boolean useAssociatedFile) {
+        /*
+         * Get the source content.
+         */
         Content content = null;
-        if (lookupIsAssociatedFile) {
-            try {
+        try {
+            if (useAssociatedFile) {
                 content = getPathIdFile(artifact);
-            } catch (ExecutionException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting source content (artifact objID={0}", artifact.getId()), ex); //NON-NLS
-                content = null;
-            }
-            if (content == null) {
-                return Lookups.fixed(artifact);
             } else {
-                return Lookups.fixed(artifact, content);
+                long srcObjectID = artifact.getObjectID();
+                content = contentCache.get(srcObjectID, () -> artifact.getSleuthkitCase().getContentById(srcObjectID));
             }
-        } else {
-            return createLookup(artifact);
+        } catch (ExecutionException ex) {
+            logger.log(Level.SEVERE, MessageFormat.format("Error getting source/associated content (artifact object ID={0})", artifact.getId()), ex); //NON-NLS
         }
 
+        /*
+         * Make an Autopsy Data Model wrapper for the artifact.
+         *
+         * NOTE: The creation of an Autopsy Data Model independent of the
+         * NetBeans nodes is a work in progress. At the time this comment is
+         * being written, this object is only being used to indicate the item
+         * represented by this BlackboardArtifactNode.
+         */
+        BlackboardArtifactItem<?> artifactItem;
+        if (artifact instanceof AnalysisResult) {
+            artifactItem = new AnalysisResultItem((AnalysisResult) artifact, content);
+        } else {
+            artifactItem = new DataArtifactItem((DataArtifact) artifact, content);
+        }
+
+        /*
+         * Create the Lookup.
+         *
+         * NOTE: For now, we are putting both the Autopsy Data Model item and
+         * the Sleuth Kit Data Model item in the Lookup so that code that is not
+         * aware of the new Autopsy Data Model will still function.
+         */
+        if (content == null) {
+            return Lookups.fixed(artifact, artifactItem);
+        } else {
+            return Lookups.fixed(artifact, artifactItem, content);
+        }
+    }
+
+    /**
+     * Finds the source content in the Lookup created by createLookup() method.
+     *
+     * @param artifact Artifact who's source Content we are trying to find.
+     *
+     * @return Source Content of the input artifact, if one exists. Null
+     *         otherwise.
+     */
+    private Content getSourceContentFromLookup(BlackboardArtifact artifact) {
+        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
+            /*
+             * NOTE: createLookup() saves the artifact and its source content
+             * (if one exists). However, createLookup() has to be static because
+             * it is being called by super(), therefore it can't store the
+             * source content in this.srcContent class variable. That's why we
+             * have to have the logic below, which reads the Lookup contents,
+             * and decides that the source content is the entry in Lookup that
+             * is NOT the input artifact.
+             */
+            if ((lookupContent != null) && (lookupContent.getId() != artifact.getId())) {
+                return lookupContent;
+            }
+        }
+        return null;
     }
 
     /**
@@ -438,7 +494,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * action to view it in the timeline.
          */
         try {
-            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)
+                    && // don't show ViewArtifactInTimelineAction for AnalysisResults.
+                    (!(this.artifact instanceof AnalysisResult))) {
+
                 actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
         } catch (TskCoreException ex) {
@@ -511,17 +570,25 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             sheet.put(sheetSet);
         }
 
-        /*
-         * Add the name of the source content of the artifact represented by
-         * this node to the sheet. The value of this property is the same as the
-         * display name of the node and this a "special" property that displays
-         * the node's icon as well as the display name.
-         */
-        sheetSet.put(new NodeProperty<>(
-                Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
-                Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
-                NO_DESCR,
-                getDisplayName()));
+        boolean scoHasBeenAdded = false;
+        if (artifact instanceof AnalysisResult
+                && !(artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+                || artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
+            updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
+            scoHasBeenAdded = true;
+        } else {
+            /*
+             * Add the name of the source content of the artifact represented by
+             * this node to the sheet. The value of this property is the same as
+             * the display name of the node and this a "special" property that
+             * displays the node's icon as well as the display name.
+             */
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
+                    NO_DESCR,
+                    getDisplayName()));
+        }
 
         if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             /*
@@ -542,32 +609,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
 
-        if (!UserPreferences.getHideSCOColumns()) {
-            /*
-             * Add S(core), C(omments), and O(ther occurences) columns to the
-             * sheet and start a background task to compute the value of these
-             * properties for the artifact represented by this node. The task
-             * will fire a PropertyChangeEvent when the computation is completed
-             * and this node's PropertyChangeListener will update the sheet.
-             */
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_score_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
-                    VALUE_LOADING,
-                    ""));
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_comment_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
-                    VALUE_LOADING,
-                    ""));
-            if (CentralRepository.isEnabled()) {
-                sheetSet.put(new NodeProperty<>(
-                        Bundle.BlackboardArtifactNode_createSheet_count_name(),
-                        Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
-                        VALUE_LOADING,
-                        ""));
-            }
-            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+        if (!scoHasBeenAdded) {
+            addSCOColumns(sheetSet);
         }
 
         /*
@@ -652,7 +695,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * If the type of the artifact represented by this node dictates the
          * addition of the source content's unique path, add it to the sheet.
          */
-        if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
+        if (artifactType != null && artifactType.getCategory() == Category.ANALYSIS_RESULT) {
             String sourcePath = ""; //NON-NLS
             try {
                 sourcePath = srcContent.getUniquePath();
@@ -680,22 +723,22 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.displayName"),
                         "",
-                        file == null ? "" : ContentUtils.getStringTime(file.getMtime(), file)));
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getMtime())));
                 sheetSet.put(new NodeProperty<>(
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.displayName"),
                         "",
-                        file == null ? "" : ContentUtils.getStringTime(file.getCtime(), file)));
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getCtime())));
                 sheetSet.put(new NodeProperty<>(
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.displayName"),
                         "",
-                        file == null ? "" : ContentUtils.getStringTime(file.getAtime(), file)));
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getAtime())));
                 sheetSet.put(new NodeProperty<>(
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.displayName"),
                         "",
-                        file == null ? "" : ContentUtils.getStringTime(file.getCrtime(), file)));
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getCrtime())));
                 sheetSet.put(new NodeProperty<>(
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.displayName"),
@@ -782,23 +825,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Gets the correlation attribute for the MD5 hash of the source file of the
-     * artifact represented by this node. The correlation attribute instance can
-     * only be returned if the central repository is enabled and the source
-     * content is a file.
-     *
-     * @return The correlation attribute instance, may be null.
-     */
-    @Override
-    protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
-        CorrelationAttributeInstance correlationAttribute = null;
-        if (CentralRepository.isEnabled() && srcContent instanceof AbstractFile) {
-            correlationAttribute = CorrelationAttributeUtil.getCorrAttrForFile((AbstractFile) srcContent);
-        }
-        return correlationAttribute;
-    }
-
-    /**
      * Computes the value of the comment property ("C" in S, C, O) for the
      * artifact represented by this node.
      *
@@ -808,13 +834,13 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * repository.
      *
      * @param tags      The tags applied to the artifact and its source content.
-     * @param attribute A correlation attribute instance Ffor the central
+     * @param attribute A correlation attribute instance for the central
      *                  repository lookup.
      *
      * @return The value of the comment property.
      */
     @Override
-    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
+    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
 
         /*
          * Has a tag with a comment been applied to the artifact or its source
@@ -832,138 +858,37 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * Does the given correlation attribute instance have a comment in the
          * central repository?
          */
-        if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
-            if (status == HasCommentStatus.TAG_COMMENT) {
-                status = HasCommentStatus.CR_AND_TAG_COMMENTS;
-            } else {
-                status = HasCommentStatus.CR_COMMENT;
+        if (attributes != null && !attributes.isEmpty()) {
+            for (CorrelationAttributeInstance attribute : attributes) {
+                if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+                    if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                        status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                    } else {
+                        status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
+                    }
+                    break;
+                }
             }
         }
 
         return status;
     }
 
-    /**
-     * Computes the value of the score property ("S" in S, C, O) for the
-     * artifact represented by this node. The score property indicates whether
-     * the artifact or its source content is notable or interesting.
-     *
-     * IMPORTANT: Notability takes precedence when computing the score.
-     *
-     * A red icon will be displayed in the property sheet if the hash of the
-     * source file has been found in a notable hash set or if either the
-     * artifact or its source content has been tagged with a notable tag. A
-     * yellow icon will be displayed if the source file belongs to an
-     * interesting file set or either the artifact or its source content has
-     * been tagged with a non-notable tag.
-     *
-     * @param tags The tags that have been applied to the artifact and its
-     *             source content.
-     *
-     * @return The value of the score property as an enum element and a
-     *         description string for dislpay in a tool tip.
-     */
     @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-        /*
-         * Is the artifact's source content marked as notable?
-         */
-        Score score = Score.NO_SCORE;
-        String description = Bundle.BlackboardArtifactNode_createSheet_noScore_description();
-        if (srcContent instanceof AbstractFile) {
-            if (((AbstractFile) srcContent).getKnown() == TskData.FileKnown.BAD) {
-                score = Score.NOTABLE_SCORE;
-                description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
-            }
-        }
-
-        /*
-         * If the artifact is a hash set hit, is the hash set a notable hashes
-         * hash set?
-         */
-        if (score == Score.NO_SCORE && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-            try {
-                BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME));
-                List<HashDbManager.HashDb> notableHashsets = HashDbManager.getInstance().getKnownBadFileHashSets();
-                for (HashDbManager.HashDb hashDb : notableHashsets) {
-                    if (hashDb.getHashSetName().equals(attr.getValueString())) {
-                        score = Score.NOTABLE_SCORE;
-                        description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
-                        break;
-                    }
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting TSK_SET_NAME attribute for TSK_HASHSET_HIT artifact (artifact objID={0})", artifact.getId()), ex);
-            }
-        }
-
-        /*
-         * Is the artifact's source content notable?
-         */
-        if (score == Score.NO_SCORE) {
-            try {
-                if (!srcContent.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).isEmpty()) {
-                    score = Score.INTERESTING_SCORE;
-                    description = Bundle.BlackboardArtifactNode_createSheet_interestingResult_description();
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting TSK_INTERESTING_ARTIFACT_HIT artifacts for source content (artifact objID={0})", artifact.getId()), ex);
-            }
-        }
-
-        /*
-         * Analyze any tags applied to the artifact or its source content. If
-         * there are tags, tha artifact is at least interesting. If one of the
-         * tags is a notable tag, the artifact is notable.
-         */
-        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.INTERESTING_SCORE)) {
-            score = Score.INTERESTING_SCORE;
-            description = Bundle.BlackboardArtifactNode_createSheet_taggedItem_description();
-            for (Tag tag : tags) {
-                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    score = Score.NOTABLE_SCORE;
-                    description = Bundle.BlackboardArtifactNode_createSheet_notableTaggedItem_description();
-                    break;
-                }
-            }
-        }
-
-        return Pair.of(score, description);
-    }
-
-    /**
-     * Computes the value of the other occurrences property ("O" in S, C, O) for
-     * the artifact represented by this node. The value of the other occurrences
-     * property is the number of other data sources this artifact appears in
-     * according to a correlation attribute instance lookup in the central
-     * repository, plus one for the data source for this instance of the
-     * artifact.
-     *
-     * @param corrAttrType       The correlation attribute instance type to use
-     *                           for the central repsoitory lookup.
-     * @param attributeValue     The correlation attribute instane value to use
-     *                           for the central repsoitory lookup.
-     * @param defaultDescription A default description.
-     *
-     * @return The value of the occurrences property as a data sources count and
-     *         a description string.
-     *
-     */
-    @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(Type corrAttrType, String attributeValue, String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
         Long count = -1L;
         String description = defaultDescription;
         try {
-            if (corrAttrType != null && StringUtils.isNotBlank(attributeValue)) {
-                count = CentralRepository.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(corrAttrType, attributeValue);
-                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count, corrAttrType.getDisplayName());
-            } else if (corrAttrType != null) {
+            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
+                count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attribute);
+                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count, attribute.getCorrelationType().getDisplayName());
+            } else if (attribute != null) {
                 description = Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationValues_description();
             }
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error querying central repository for other occurences count (artifact objID={0}, corrAttrType={1}, corrAttrValue={2})", artifact.getId(), corrAttrType, attributeValue), ex);
+            logger.log(Level.SEVERE, MessageFormat.format("Error querying central repository for other occurences count (artifact objID={0}, corrAttrType={1}, corrAttrValue={2})", artifact.getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error normalizing correlation attribute for central repository query (artifact objID={0}, corrAttrType={2}, corrAttrValue={3})", artifact.getId(), corrAttrType, attributeValue), ex);
+            logger.log(Level.SEVERE, MessageFormat.format("Error normalizing correlation attribute for central repository query (artifact objID={0}, corrAttrType={2}, corrAttrValue={3})", artifact.getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
         }
         return Pair.of(count, description);
     }
@@ -996,7 +921,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Adds a "custom" property to the property sheet of this node, indepoendent
+     * Adds a "custom" property to the property sheet of this node, independent
      * of the artifact this node represents or its source content.
      *
      * @param property The custom property.
@@ -1033,7 +958,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                     addEmailMsgProperty(map, attribute);
                 } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-                    map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), srcContent));
+                    map.put(attribute.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(attribute.getValueLong()));
                 } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
                         && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
                     /*
@@ -1099,7 +1024,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
             map.put(attribute.getAttributeType().getDisplayName(), value);
         } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-            map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), srcContent));
+            map.put(attribute.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(attribute.getValueLong()));
         } else {
             map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
         }
@@ -1125,6 +1050,149 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         return visitor.visit(this);
     }
 
+    @Messages({
+        "BlackboardArtifactNode_analysisSheet_sourceType_name=Source Type",
+        "BlackboardArtifactNode_analysisSheet_soureName_name=Source Name",
+        "BlackboardArtifactNode_analysisSheet_score_name=Score",
+        "BlackboardArtifactNode_analysisSheet_conclusion_name=Conclusion",
+        "BlackboardArtifactNode_analysisSheet_configuration_name=Configuration",
+        "BlackboardArtifactNode_analysisSheet_justifaction_name=Justification"
+    })
+
+    /**
+     * Add the columns to the Sheet.Set for AnalysisResults.
+     *
+     * @param result   The AnalysisResult the sheet is being created.
+     * @param sheetSet The sheetSet to add the values to.
+     */
+    private void updateSheetForAnalysisResult(AnalysisResult result, Sheet.Set sheetSet) {
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
+                NO_DESCR,
+                srcContentShortDescription));
+        
+        addSCOColumns(sheetSet);
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_sourceType_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_sourceType_name(),
+                NO_DESCR,
+                sourceObjTypeName));
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_score_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_score_name(),
+                NO_DESCR,
+                result.getScore().getSignificance().getDisplayName()));
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_conclusion_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_conclusion_name(),
+                NO_DESCR,
+                result.getConclusion()));
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_configuration_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_configuration_name(),
+                NO_DESCR,
+                result.getConfiguration()));
+
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_justifaction_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_justifaction_name(),
+                NO_DESCR,
+                result.getJustification()));
+    }
+    
+    private void addSCOColumns(Sheet.Set sheetSet) {
+        if (!UserPreferences.getHideSCOColumns()) {
+            /*
+             * Add S(core), C(omments), and O(ther occurences) columns to the
+             * sheet and start a background task to compute the value of these
+             * properties for the artifact represented by this node. The task
+             * will fire a PropertyChangeEvent when the computation is completed
+             * and this node's PropertyChangeListener will update the sheet.
+             */
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                    VALUE_LOADING,
+                    ""));
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                    VALUE_LOADING,
+                    ""));
+            if (CentralRepository.isEnabled()) {
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                        Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                        VALUE_LOADING,
+                        ""));
+            }
+            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+        }
+    }
+
+    /**
+     * Returns a displayable type string for the given content object.
+     * 
+     * If the content object is a artifact of a custom type then this method
+     * may cause a DB call BlackboardArtifact.getType
+     * 
+     * @param source The object to determine the type of.
+     * 
+     * @return A string representing the content type.
+     */
+    private String getSourceObjType(Content source) {
+        if (source instanceof BlackboardArtifact) {
+            BlackboardArtifact srcArtifact = (BlackboardArtifact) source;
+            try {
+                return srcArtifact.getType().getDisplayName();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to get custom artifact type id=" + source.getId(), ex);
+            }
+        } else if (srcContent instanceof Volume) {
+            return TskData.ObjectType.VOL.toString();
+        } else if (srcContent instanceof AbstractFile) {
+            return TskData.ObjectType.ABSTRACTFILE.toString();
+        } else if (srcContent instanceof Image) {
+            return TskData.ObjectType.IMG.toString();
+        } else if (srcContent instanceof VolumeSystem) {
+            return TskData.ObjectType.VS.toString();
+        } else if (srcContent instanceof OsAccount) {
+            return TskData.ObjectType.OS_ACCOUNT.toString();
+        } else if (srcContent instanceof HostAddress) {
+            return TskData.ObjectType.HOST_ADDRESS.toString();
+        } else if (srcContent instanceof Pool) {
+            return TskData.ObjectType.POOL.toString();
+        }
+        return "";
+    }
+    
+    /**
+     * Returns a short description for the given content object.
+     * 
+     * @param content The content object.
+     * 
+     * @return A short description\label.
+     */
+    private String getContentShortDescription(Content content) {
+        if(content != null) {
+            if(content instanceof BlackboardArtifact) {
+                try{
+                    return ((BlackboardArtifact)content).getShortDescription();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to get short description for artifact id=" + content.getId(), ex);
+                }
+            } 
+
+            return content.getName();
+        }
+        return "";
+    }
+
     /**
      * Adds the score property for the artifact represented by this node to the
      * node property sheet.
@@ -1146,7 +1214,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.noScore.description=No score"})
     @Deprecated
     protected final void addScorePropertyAndDescription(Sheet.Set sheetSet, List<Tag> tags) {
-        Pair<DataResultViewerTable.Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
+        Pair<Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), scoreAndDescription.getRight(), scoreAndDescription.getLeft()));
     }
 
@@ -1211,7 +1279,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}"})
     @Deprecated
     protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
-        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute.getCorrelationType(), attribute.getCorrelationValue(), Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationAttributes_description());
+        Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute, Bundle.BlackboardArtifactNode_createSheet_count_noCorrelationAttributes_description());
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), countAndDescription.getRight(), countAndDescription.getLeft()));
     }
 
@@ -1233,8 +1301,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.comment.displayName=C"})
     @Deprecated
     protected final void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags, CorrelationAttributeInstance attribute) {
-        HasCommentStatus status = getCommentProperty(tags, attribute);
+        List<CorrelationAttributeInstance> attributes = new ArrayList<>();
+        attributes.add(attribute);
+        HasCommentStatus status = getCommentProperty(tags, attributes);
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR, status));
     }
-
 }

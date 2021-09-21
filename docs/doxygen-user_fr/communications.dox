@@ -1,0 +1,83 @@
+﻿/*! \page communications_page Communications
+
+[TOC]
+
+
+\section cvt_overview Aperçu
+
+L'outil de visualisation des communications donne une vue consolidée de tous les événements de communication pour le cas. Cela permet à un analyste de visualiser rapidement les données de communication telles que:
+<ul>
+<li> Les comptes les plus couramment utilisés
+<li> Les communications dans un délai précis
+</ul>
+
+\section cvt_usage Usage
+
+L'outil de visualisation des communications est chargé via le menu Tools->Communications. 
+
+\image html cvt_main.png
+
+Dans la colonne de gauche, vous pouvez choisir les appareils à afficher, les types de données à afficher et éventuellement sélectionner une plage de temps. Vous pouvez également choisir de limiter l'affichage aux seules communications les plus récentes. Après toute modification des filtres, utilisez le bouton "Apply" pour mettre à jour les tables. Vous pouvez masquer cette colonne en cliquant sur la flèche gauche en haut de la colonne.
+
+La colonne du milieu affiche chaque compte, son appareil et son type, ainsi que le nombre de messages associés (e-mails, journaux d'appels, etc...). Par défaut, elle sera triée par ordre décroissant de fréquence. La colonne du milieu et la colonne de droite ont toutes deux une fonction de \ref ui_quick_search qui peut être utilisée pour trouver rapidement un élément visible dans le tableau de leur section.
+
+La sélection d'un compte dans la colonne du milieu affichera les données de ce compte dans la colonne de droite. Il y a quatre onglets qui affichent des informations sur le compte sélectionné.
+
+<ul>
+<li> L'onglet <b>Summary</b> affiche le nombre de fois où le compte est apparu dans différents types de données dans la section supérieure. Au milieu, s'affiche les fichiers dans lesquels ce compte a été trouvé. Si le \ref central_repo_page est activé, vous pouvez voir si des \ref personas_page "personnes" sont associées à ce compte et s'il existe d'autres cas contenant ce compte.
+
+\image html cvt_summary_tab.png
+
+<li> L'onglet <b>Messages</b> affiche tous les messages ou journaux d'appels associés au compte. Les messages seront soit dans un fil de discussion ("Thread"), soit répertoriés sous un nœud appelé "Unthreaded". Cliquer sur le nœud "Unthreaded" affichera tous les messages qui ne sont pas dans un "Thread".
+
+\image html cvt_messages_threaded.png
+
+Vous pouvez utiliser le bouton "All Messages" en bas du panneau pour afficher tous les messages. Cliquez sur un message dans un fil de discussion pour afficher tous les messages de ce fil. Vous pouvez cliquer sur un message individuel pour l'afficher dans le panneau inférieur. Cliquez sur le bouton "Threads" pour revenir à l'écran d'origine.
+
+\image html cvt_message_email.png
+
+Si le message contient des pièces jointes, vous pouvez les afficher dans l'onglet "Attachments". Si vous sélectionnez une pièce jointe, vous pouvez choisir de l'ouvrir dans une nouvelle fenêtre ou de la consulter dans l'onglet "Thumbnails".
+
+\image html cvt_message_attach.png
+
+<li> L'onglet <b>Call Logs</b> affiche toutes les entrées du journal des appels concernant le compte sélectionné.
+
+\image html cvt_call_log.png
+
+<li> L'onglet <b>Contacts</b> affiche toutes les informations sur ce compte trouvées dans un fichier de contacts.
+
+\image html cvt_contacts.png
+
+<li> L'onglet <b>Media Attachments</b> affiche les miniatures de tous les fichiers multimédias dans les messages de ce compte. Si vous cliquez sur une de ces miniatures, le message d'où provient ce fichier multimédia s'affichera .
+
+\image html cvt_media.png
+
+</ul>
+
+\section cvt_viz Visualisation
+
+L'onglet "Visualize" dans le panneau du milieu affichera un graphique d'un ou plusieurs comptes sélectionnés dans l'onglet "Browse".
+
+Pour commencer, cliquez avec le bouton droit sur le premier compte que vous souhaitez afficher.
+
+\image html cvt_select_account.png
+
+Il existe deux options, qui sont équivalentes lorsqu'aucun compte n'a été préalablement sélectionné:
+<ul>
+<li>Add Selected Account to Visualization - Ajoute ce compte et ses connexions au graphique
+<li>Visualize Only Selected Account - Efface le graphique et n'affiche que les connexions pour ce compte
+</ul>
+
+Après avoir sélectionné l'une ou l'autre option, l'onglet du milieu passera à la vue "Visualize" et le graphique sera affiché. 
+
+\image html cvt_visualize.png
+
+Les options en haut vous permettent d'effacer le graphique et de le redimensionner. Les nœuds du graphique peuvent être déplacés et les nœuds et les liens peuvent être sélectionnés pour afficher leurs messages ou leurs relations dans l'onglet de droite. Par exemple, dans l'image ci-dessous, un seul nœud a été sélectionné, de sorte que la visionneuse de messages n'affiche que les messages impliquant cette adresse e-mail.
+
+\image html cvt_links.png
+
+Si vous cliquez sur le bouton "Snapshot Report", vous pouvez générer un rapport similaire au format HTML du \ref reporting_page "module Rapports". Sélectionnez un nom pour votre rapport, qui sera enregistré dans le dossier "Reports" du cas actuel. Le "Snapshot Report" contiendra deux pages. La première présentera un résumé du cas, et la seconde le graphique actuel avec vos paramètres de filtre.
+
+\image html cvt_snapshot.png
+
+*/

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
@@ -68,8 +69,11 @@ import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -129,8 +133,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     private final Map<Long, Future<Void>> startIngestJobFutures = new ConcurrentHashMap<>();
     @GuardedBy("ingestJobsById")
     private final Map<Long, IngestJob> ingestJobsById = new HashMap<>();
-    private final ExecutorService dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;
+    private final ExecutorService dataSourceLevelIngestJobTasksExecutor;
     private final ExecutorService fileLevelIngestJobTasksExecutor;
+    private final ExecutorService resultIngestTasksExecutor;
     private final ExecutorService eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS;
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
@@ -168,6 +173,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
          * source level ingest job tasks to the data source level ingest job
          * tasks executor.
          */
+        dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;        
         long threadId = nextIngestManagerTaskId.incrementAndGet();
         dataSourceLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
@@ -184,6 +190,13 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             fileLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
             ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
         }
+
+        resultIngestTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-results-ingest-%d").build()); //NON-NLS;        
+        threadId = nextIngestManagerTaskId.incrementAndGet();
+        resultIngestTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getResultIngestTaskQueue()));
+        // RJCTODO
+        // ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
+        // RJCTODO: Where is the shut down code?
     }
 
     /**
@@ -248,9 +261,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         });
     }
 
-    /*
-     * Handles a current case opened event by clearing the ingest messages inbox
-     * and opening a remote event channel for the current case.
+    /**
+     * Handles a current case opened event by clearing the ingest messages
+     * inbox, opening a remote event channel for the current case, and
+     * registering to receive events from the event bus for the case database.
      *
      * Note that current case change events are published in a strictly
      * serialized manner, i.e., one event at a time, synchronously.
@@ -265,6 +279,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 jobEventPublisher.openRemoteEventChannel(String.format(INGEST_JOB_EVENT_CHANNEL_NAME, channelPrefix));
                 moduleEventPublisher.openRemoteEventChannel(String.format(INGEST_MODULE_EVENT_CHANNEL_NAME, channelPrefix));
             }
+            openedCase.getSleuthkitCase().registerForEvents(this);
         } catch (NoCurrentCaseException | AutopsyEventException ex) {
             logger.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.Title"),
@@ -272,10 +287,27 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         }
     }
 
-    /*
+    /**
+     * Handles artifacts posted events published by the Sleuth Kit layer
+     * blackboard via the event bus for the case database.
+     *
+     * @param tskEvent A Sleuth Kit data model ArtifactsPostedEvent from the
+     *                 case database event bus.
+     */
+    @Subscribe
+    void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent tskEvent) {
+        for (BlackboardArtifact.Type artifactType : tskEvent.getArtifactTypes()) {
+            ModuleDataEvent legacyEvent = new ModuleDataEvent(tskEvent.getModuleName(), artifactType, tskEvent.getArtifacts(artifactType));
+            AutopsyEvent autopsyEvent = new BlackboardPostEvent(legacyEvent);
+            eventPublishingExecutor.submit(new PublishEventTask(autopsyEvent, moduleEventPublisher));
+        }
+    }
+
+    /**
      * Handles a current case closed event by cancelling all ingest jobs for the
-     * case, closing the remote event channel for the case, and clearing the
-     * ingest messages inbox.
+     * case, unregistering from receiving events from the case database, closing
+     * the remote event channel for the case, and clearing the ingest messages
+     * inbox.
      *
      * Note that current case change events are published in a strictly
      * serialized manner, i.e., one event at a time, synchronously.
@@ -285,7 +317,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
          * TODO (JIRA-2227): IngestManager should wait for cancelled ingest jobs
          * to complete when a case is closed.
          */
-        this.cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
+        cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
+        Case.getCurrentCase().getSleuthkitCase().unregisterForEvents(this);
         jobEventPublisher.closeRemoteEventChannel();
         moduleEventPublisher.closeRemoteEventChannel();
         caseIsOpen = false;
@@ -455,7 +488,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             ingestJobsById.put(job.getId(), job);
         }
         IngestManager.logger.log(Level.INFO, "Starting ingest job {0}", job.getId()); //NON-NLS
-        errors = job.start();
+        try {
+            errors = job.start();
+        } catch (InterruptedException ex) {
+            return new IngestJobStartResult(null, new IngestManagerException("Interrupted while starting ingest", ex), errors); //NON-NLS
+        }
         if (errors.isEmpty()) {
             this.fireIngestJobStarted(job.getId());
         } else {
@@ -492,7 +529,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *
      * @param job The completed job.
      */
-    void finishIngestJob(IngestJob job) {
+    void finishIngestJob(IngestJob job
+    ) {
         long jobId = job.getId();
         synchronized (ingestJobsById) {
             ingestJobsById.remove(jobId);
@@ -697,18 +735,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     void fireFileIngestDone(AbstractFile file) {
         AutopsyEvent event = new FileAnalyzedEvent(file);
-        eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
-    }
-
-    /**
-     * Publishes an ingest module event signifying a blackboard post by an
-     * ingest module.
-     *
-     * @param moduleDataEvent A ModuleDataEvent with the details of the
-     *                        blackboard post.
-     */
-    void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
-        AutopsyEvent event = new BlackboardPostEvent(moduleDataEvent);
         eventPublishingExecutor.submit(new PublishEventTask(event, moduleEventPublisher));
     }
 

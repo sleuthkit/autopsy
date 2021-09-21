@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,14 +22,12 @@ import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.CaseDataSourcesSummary;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent.Reason;
@@ -57,9 +55,8 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     })
     DataSourceSummaryDialog(Frame owner) {
         super(owner, Bundle.DataSourceSummaryDialog_window_title(), true);
-        Map<Long, String> usageMap = CaseDataSourcesSummary.getDataSourceTypes();
-        Map<Long, Long> fileCountsMap = CaseDataSourcesSummary.getCountsOfFiles();
-        dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
+
+        dataSourcesPanel = new DataSourceBrowser();
         dataSourceSummaryTabbedPane = new DataSourceSummaryTabbedPane();
         dataSourceSummaryTabbedPane.setParentCloseListener(() -> DataSourceSummaryDialog.this.dispose());
         initComponents();
@@ -97,13 +94,6 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
         IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, ingestEventListener);
         this.dataSourceSummaryTabbedPane.close();
         super.dispose();
-    }
-
-    /**
-     * Make this dialog an observer of the DataSourcesPanel.
-     */
-    void enableObserver() {
-        dataSourcesPanel.addObserver(this);
     }
 
     @Override
@@ -162,22 +152,21 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     }// </editor-fold>//GEN-END:initComponents
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
+        dataSourcesPanel.cancel();
         this.dispose();
     }//GEN-LAST:event_closeButtonActionPerformed
-
-    /**
-     * Select the data source with the specicied data source id. If no data
-     * source matches the dataSourceID it will select the first datasource.
-     *
-     * @param dataSourceID the ID of the datasource to select, null will cause
-     * the first datasource to be selected
-     */
-    void selectDataSource(Long dataSourceId) {
-        dataSourcesPanel.selectDataSource(dataSourceId);
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
     private javax.swing.JSplitPane dataSourceSummarySplitPane;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Populate the data source browser with the specified data source selected.
+     *
+     * @param selectedDataSource The data source which should be selected in the data source browser.
+     */
+    void populatePanel(Long selectedDataSource) {
+        dataSourcesPanel.populateBrowser(this, selectedDataSource);
+    }
 }

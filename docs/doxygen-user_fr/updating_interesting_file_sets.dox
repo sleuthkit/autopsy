@@ -1,0 +1,26 @@
+﻿/*! \page update_interesting_files_page Mise à jour des ensembles officiels de fichiers intéressants
+
+Le module \ref interesting_files_identifier_page contient plusieurs ensembles de règles officiels. Vous pouvez sélectionner un ensemble de règles pour afficher les règles qu'il contient au milieu de la fenêtre, sur le côté droit.
+
+\image html InterestingFiles/if_official_rule_details.png
+
+Si vous pensez qu'une ou plusieurs règles devraient être incluses dans un ensemble de règles officiel, vous pouvez soumettre vos nouvelles règles en utilisant le processus ci-dessous. Consultez la section \ref interesting_files_config pour des instructions générales sur la création et l'édition d'ensembles de fichiers intéressants.
+
+<ol>
+<li> Créez un nouvel ensemble de fichiers intéressants. Donnez-lui un nom similaire à celui de l'ensemble que vous souhaitez mettre à jour pour indiquer clairement à quel ensemble appartiennent vos nouvelles règles. Ne copiez pas l'ensemble de règles existant.
+
+\image html InterestingFiles/if_create_set.png
+
+<li> Créez votre(vos) règle(s). Assurez-vous que chaque règle a un "Nom de règle" qui identifie l'application qu'elle doit détecter. Cliquez sur le bouton "Apply" sur le panneau principal lorsque vous avez terminé.
+
+\image html InterestingFiles/if_new_rule.png
+
+<li> Exportez l'ensemble au format XML.
+
+\image html InterestingFiles/if_export.png
+
+<li> Créez une "Issue" sur le Github Autopsy qui identifie l'ensemble à mettre à jour et quelles applications ont été ajoutées, puis joignez le XML. Aller sur: https://github.com/sleuthkit/autopsy/issues
+</ol>
+
+
+*/

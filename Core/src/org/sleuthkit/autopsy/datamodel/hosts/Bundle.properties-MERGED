@@ -15,6 +15,14 @@ CTL_OpenHosts=Manage Hosts
 HostNameValidator_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name.
 HostNameValidator_getValidationMessage_onEmpty=Please provide some text for the host name.
 HostNameValidator_getValidationMessage_sameAsOriginal=Please provide a new name for this host.
+# {0} - hostname
+ManageHostsDialog.failureToAdd.txt=Unable to add new host {0} at this time.
+# {0} - hostname
+ManageHostsDialog.failureToDelete.txt=Unable to delete host {0} at this time.
+# {0} - hostname
+# {1} - hostId
+ManageHostsDialog.failureToEdit.txt=Unable to update host {0} with id: {1} at this time.
+ManageHostsDialog.failureToGetHosts.txt=There was an error while fetching hosts for current case.
 # To change this license header, choose License Headers in Project Properties.
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
@@ -30,6 +38,7 @@ AddEditHostDialog.nameLabel.text=Name:
 AddEditHostDialog.okButton.text=OK
 AddEditHostDialog.cancelButton.text=Cancel
 AddEditHostDialog.inputTextField.text=jTextField1
+ManageHostsDialog.seeLog.txt=\  See log for more information.
 ManageHostsDialog_title_text=Manage Hosts
 # {0} - sourceHost
 # {1} - destHost
