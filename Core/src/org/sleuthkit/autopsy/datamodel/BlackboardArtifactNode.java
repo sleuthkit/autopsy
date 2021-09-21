@@ -834,8 +834,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * repository.
      *
      * @param tags      The tags applied to the artifact and its source content.
-     * @param attribute A correlation attribute instance for the central
-     *                  repository lookup.
+     * @param attributes A correlation attribute instance for the central
+     *                   repository lookup.
      *
      * @return The value of the comment property.
      */
@@ -1176,7 +1176,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * 
      * @param content The content object.
      * 
-     * @return A short description\label.
+     * @return A short description/label.
      */
     private String getContentShortDescription(Content content) {
         if(content != null) {
