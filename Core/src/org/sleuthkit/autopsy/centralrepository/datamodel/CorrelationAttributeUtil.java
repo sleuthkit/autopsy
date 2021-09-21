@@ -133,7 +133,7 @@ public class CorrelationAttributeUtil {
      * whether receiving a null return value is an error or not, plus null
      * checking is easy to forget, while catching exceptions is enforced.
      *
-     * @param Content A Content object.
+     * @param content A Content object.
      *
      * @return A list, possibly empty, of correlation attribute instances for
      *         the content.
@@ -298,6 +298,7 @@ public class CorrelationAttributeUtil {
      *
      * @param corrAttrInstances Correlation attributes will be added to this.
      * @param artifact          An artifact with a phone number attribute.
+     * @param attributes        List of attributes.
      *
      * @throws TskCoreException                           If there is an error
      *                                                    querying the case
@@ -393,11 +394,12 @@ public class CorrelationAttributeUtil {
      *
      * @param corrAttrInstances A list of correlation attribute instances.
      * @param artifact          An artifact.
-     * @param artAttrType       The type of the atrribute of the artifact that
-     *                          is to be made into a correlatin attribute
+     * @param artAttrType       The type of the attribute of the artifact that
+     *                          is to be made into a correlation attribute
      *                          instance.
      * @param typeId            The type ID for the desired correlation
      *                          attribute instance.
+     * @param attributes        List of attributes.
      * @param sourceContent     The source content object.
      * @param dataSource        The data source content object.
      *
@@ -427,11 +429,12 @@ public class CorrelationAttributeUtil {
      *
      * @param corrAttrInstances A list of correlation attribute instances.
      * @param artifact          An artifact.
-     * @param artAttrType       The type of the atrribute of the artifact that
-     *                          is to be made into a correlatin attribute
+     * @param artAttrType       The type of the attribute of the artifact that
+     *                          is to be made into a correlation attribute
      *                          instance.
      * @param typeId            The type ID for the desired correlation
      *                          attribute instance.
+     * @param attributes        List of attributes.
      *
      * @throws CentralRepoException If there is an error querying the central
      *                              repository.
@@ -555,7 +558,7 @@ public class CorrelationAttributeUtil {
      * account. Checks address if it is null, or one of the ones always present
      * on a windows system and thus not unique.
      *
-     * @param osAccoun   The OS account.
+     * @param osAccount   The OS account.
      * @param dataSource The data source content object.
      *
      * @return The correlation attribute instance or null, if an error occurred.
