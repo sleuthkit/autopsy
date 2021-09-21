@@ -42,11 +42,13 @@ import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -148,7 +150,9 @@ public class AnnotationUtils {
 
     /**
      * Returns whether or not the node is supported by the annotation viewer.
+     *
      * @param node The node to display.
+     *
      * @return True if the node is supported.
      */
     public static boolean isSupported(Node node) {
@@ -380,9 +384,14 @@ public class AnnotationUtils {
         if (artifact == null) {
             return new ArrayList<>();
         }
+        List<CorrelationAttributeInstance> instances = new ArrayList<>();
+        if (artifact instanceof DataArtifact) {
+            instances.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) artifact));
+        } else if (artifact instanceof AnalysisResult) {
+            instances.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) artifact));
+        }
 
-        List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys = CorrelationAttributeUtil.makeCorrAttrsForSearch(artifact)
-                .stream()
+        List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys = instances.stream()
                 .map(cai -> Pair.of(cai.getCorrelationType(), cai.getCorrelationValue()))
                 .collect(Collectors.toList());
 

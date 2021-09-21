@@ -39,9 +39,11 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TskException;
 
@@ -104,10 +106,15 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
                     }
                 }
                 if (content != null) {
-                    correlationAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(content));
+                    if (content instanceof AbstractFile) {
+                        correlationAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AbstractFile) content));
+                    } else if (content instanceof AnalysisResult) {
+                        correlationAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) content));
+                    } else if (content instanceof DataArtifact) {
+                        correlationAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) content));
+                    }
                 }
             }
-
             int totalCount = 0;
             Set<String> dataSources = new HashSet<>();
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
