@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,8 +38,11 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.VALUE_LOADING;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Host;
@@ -58,7 +60,6 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
     private static final Logger logger = Logger.getLogger(OsAccounts.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/os-account.png";
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final String REALM_DATA_AVAILABLE_EVENT = "REALM_DATA_AVAILABLE_EVENT";
 
     private SleuthkitCase skCase;
@@ -134,7 +135,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(listener, null);
 
         @Override
@@ -143,7 +144,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
             Case.removeEventTypeSubscriber(Collections.singleton(Case.Events.OS_ACCOUNTS_ADDED), weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
         }
-        
+
         @Override
         protected void addNotify() {
             Case.addEventTypeSubscriber(EnumSet.of(Case.Events.OS_ACCOUNTS_ADDED, Case.Events.OS_ACCOUNTS_DELETED), listener);
@@ -264,7 +265,13 @@ public final class OsAccounts implements AutopsyVisitableItem {
             "OsAccounts_createdTimeProperty_desc=OS Account Creation Time",
             "OsAccounts_loginNameProperty_name=loginName",
             "OsAccounts_loginNameProperty_displayName=Login Name",
-            "OsAccounts_loginNameProperty_desc=Os Account login name"
+            "OsAccounts_loginNameProperty_desc=OS Account login name",
+            "OsAccounts.createSheet.score.name=S",
+            "OsAccounts.createSheet.score.displayName=S",
+            "OsAccounts.createSheet.count.name=O",
+            "OsAccounts.createSheet.count.displayName=O",
+            "OsAccounts.createSheet.comment.name=C",
+            "OsAccounts.createSheet.comment.displayName=C"
         })
 
         /**
@@ -282,13 +289,12 @@ public final class OsAccounts implements AutopsyVisitableItem {
                 propertiesSet = Sheet.createPropertiesSet();
                 sheet.put(propertiesSet);
             }
-
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_accountNameProperty_name(),
                     Bundle.OsAccounts_accountNameProperty_displayName(),
                     Bundle.OsAccounts_accountNameProperty_desc(),
                     account.getName() != null ? account.getName() : ""));
-
+            addSCOColumns(propertiesSet);
             Optional<String> optional = account.getLoginName();
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_loginNameProperty_name(),
@@ -314,8 +320,38 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     timeDisplayStr));
 
             backgroundTasksPool.submit(new GetOsAccountRealmTask(new WeakReference<>(this), weakListener));
-
             return sheet;
+        }
+
+        private void addSCOColumns(Sheet.Set sheetSet) {
+            if (!UserPreferences.getHideSCOColumns()) {
+                /*
+                 * Add S(core), C(omments), and O(ther occurences) columns to
+                 * the sheet and start a background task to compute the value of
+                 * these properties for the artifact represented by this node.
+                 * The task will fire a PropertyChangeEvent when the computation
+                 * is completed and this node's PropertyChangeListener will
+                 * update the sheet.
+                 */
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.OsAccounts_createSheet_score_name(),
+                        Bundle.OsAccounts_createSheet_score_displayName(),
+                        VALUE_LOADING,
+                        ""));
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.OsAccounts_createSheet_comment_name(),
+                        Bundle.OsAccounts_createSheet_comment_displayName(),
+                        VALUE_LOADING,
+                        ""));
+                if (CentralRepository.isEnabled()) {
+                    sheetSet.put(new NodeProperty<>(
+                            Bundle.OsAccounts_createSheet_count_name(),
+                            Bundle.OsAccounts_createSheet_count_displayName(),
+                            VALUE_LOADING,
+                            ""));
+                }
+                backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+            }
         }
 
         @Override
