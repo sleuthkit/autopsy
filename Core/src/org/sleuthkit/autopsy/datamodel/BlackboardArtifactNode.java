@@ -99,7 +99,6 @@ import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPas
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.HostAddress;
-import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -269,7 +268,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact, false));
         this.artifact = artifact;
         this.artifactType = getType(artifact);
-        
+
         srcContent = getSourceContentFromLookup(artifact);
 
         if (srcContent == null) {
@@ -539,7 +538,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         // view associated file (TSK_PATH_ID attr) in directory and timeline
         actionsLists.add(getAssociatedFileActions(this.artifact, this.artifactType));
-        
+
         // view source content in directory and timeline
         actionsLists.add(getNonNull(
                 getViewSrcContentAction(this.artifact, this.srcContent),
@@ -639,9 +638,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * Returns actions for navigating to an associated file in the directory or
      * in the timeline.
      *
-     * @param artifact The artifact whose associated file will be identified.
+     * @param artifact     The artifact whose associated file will be
+     *                     identified.
      * @param artifactType The type of artifact.
-     * 
+     *
      * @return The actions or an empty list.
      */
     @Messages({
@@ -1196,7 +1196,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * corresponding commented correlation attribute instance in the central
      * repository.
      *
-     * @param tags      The tags applied to the artifact and its source content.
+     * @param tags       The tags applied to the artifact and its source
+     *                   content.
      * @param attributes A correlation attribute instance for the central
      *                   repository lookup.
      *
@@ -1434,7 +1435,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
                 NO_DESCR,
                 srcContentShortDescription));
-        
+
         addSCOColumns(sheetSet);
 
         sheetSet.put(new NodeProperty<>(
@@ -1467,7 +1468,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NO_DESCR,
                 result.getJustification()));
     }
-    
+
     private void addSCOColumns(Sheet.Set sheetSet) {
         if (!UserPreferences.getHideSCOColumns()) {
             /*
@@ -1500,12 +1501,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     /**
      * Returns a displayable type string for the given content object.
-     * 
-     * If the content object is a artifact of a custom type then this method
-     * may cause a DB call BlackboardArtifact.getType
-     * 
+     *
+     * If the content object is a artifact of a custom type then this method may
+     * cause a DB call BlackboardArtifact.getType
+     *
      * @param source The object to determine the type of.
-     * 
+     *
      * @return A string representing the content type.
      */
     private String getSourceObjType(Content source) {
@@ -1533,23 +1534,23 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         return "";
     }
-    
+
     /**
      * Returns a short description for the given content object.
-     * 
+     *
      * @param content The content object.
-     * 
+     *
      * @return A short description/label.
      */
     private String getContentShortDescription(Content content) {
-        if(content != null) {
-            if(content instanceof BlackboardArtifact) {
-                try{
-                    return ((BlackboardArtifact)content).getShortDescription();
+        if (content != null) {
+            if (content instanceof BlackboardArtifact) {
+                try {
+                    return ((BlackboardArtifact) content).getShortDescription();
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Failed to get short description for artifact id=" + content.getId(), ex);
                 }
-            } 
+            }
 
             return content.getName();
         }
