@@ -62,7 +62,6 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskData;
