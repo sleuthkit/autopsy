@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -121,16 +121,6 @@ public class NodeData {
      */
     public void updateComment(String newComment) {
         comment = newComment;
-    }
-
-    /**
-     * Check if this is a central repo node.
-     *
-     * @return true if this node was created from a central repo instance, false
-     *         otherwise
-     */
-    public boolean isCentralRepoNode() {
-        return (originalCorrelationInstance != null);
     }
 
     /**

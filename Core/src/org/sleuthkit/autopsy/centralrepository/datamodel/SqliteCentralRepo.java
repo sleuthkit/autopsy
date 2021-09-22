@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2020 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,8 +58,8 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
      *
      * @return the singleton instance of SqliteEamDb
      *
-     * @throws CentralRepoException if one or more default correlation type(s) have an
-     *                        invalid db table name.
+     * @throws CentralRepoException if one or more default correlation type(s)
+     *                              have an invalid db table name.
      */
     public synchronized static SqliteCentralRepo getInstance() throws CentralRepoException {
         if (instance == null) {
@@ -71,9 +71,9 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
 
     /**
      *
-     * @throws CentralRepoException if the AbstractSqlEamDb class has one or more
-     *                        default correlation type(s) having an invalid db
-     *                        table name.
+     * @throws CentralRepoException if the AbstractSqlEamDb class has one or
+     *                              more default correlation type(s) having an
+     *                              invalid db table name.
      */
     private SqliteCentralRepo() throws CentralRepoException {
         dbSettings = new SqliteCentralRepoSettings();
@@ -144,7 +144,7 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
                 CentralRepoDbUtil.closeConnection(conn);
             }
 
-            RdbmsCentralRepoFactory centralRepoSchemaFactory =  new RdbmsCentralRepoFactory(CentralRepoPlatforms.SQLITE, dbSettings);
+            RdbmsCentralRepoFactory centralRepoSchemaFactory = new RdbmsCentralRepoFactory(CentralRepoPlatforms.SQLITE, dbSettings);
             centralRepoSchemaFactory.insertDefaultDatabaseContent();
         } finally {
             releaseExclusiveLock();
@@ -229,8 +229,9 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
 
     @Override
     protected Connection getEphemeralConnection() {
-         return this.dbSettings.getEphemeralConnection();
-     }
+        return this.dbSettings.getEphemeralConnection();
+    }
+
     /**
      * Add a new name/value pair in the db_info table.
      *
@@ -626,6 +627,16 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
     }
 
     @Override
+    public Long getCountCasesWithOtherInstances(CorrelationAttributeInstance instance) throws CentralRepoException, CorrelationAttributeNormalizationException {
+        try {
+            acquireSharedLock();
+            return super.getCountCasesWithOtherInstances(instance);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+    @Override
     public Long getCountUniqueDataSources() throws CentralRepoException {
         try {
             acquireSharedLock();
@@ -830,9 +841,9 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
             super.processSelectClause(selectClause, instanceTableCallback);
         } finally {
             releaseSharedLock();
-        }        
-    }      
-    
+        }
+    }
+
     @Override
     public void executeCommand(String sql, List<Object> params) throws CentralRepoException {
         try {
@@ -842,7 +853,7 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
             releaseExclusiveLock();
         }
     }
-    
+
     @Override
     public void executeQuery(String sql, List<Object> params, CentralRepositoryDbQueryCallback queryCallback) throws CentralRepoException {
         try {
@@ -852,7 +863,7 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
             releaseSharedLock();
         }
     }
-    
+
     /**
      * Check whether a reference set with the given name/version is in the
      * central repo. Used to check for name collisions when creating reference
@@ -1214,8 +1225,8 @@ final class SqliteCentralRepo extends RdbmsCentralRepo {
      *
      * @return the lock, or null if locking is not supported
      *
-     * @throws CentralRepoException if the coordination service is running but we fail
-     *                        to get the lock
+     * @throws CentralRepoException if the coordination service is running but
+     *                              we fail to get the lock
      */
     @Override
     public CoordinationService.Lock getExclusiveMultiUserDbLock() throws CentralRepoException {

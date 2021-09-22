@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import javax.swing.Action;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -40,8 +39,6 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
@@ -343,21 +340,6 @@ public final class OsAccounts implements AutopsyVisitableItem {
         @Override
         protected List<Tag> getAllTagsFromDatabase() {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-
-        @Override
-        protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
-            return null;
-        }
-
-        @Override
-        protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
-            return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-        }
-
-        @Override
-        protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
-            return null;
         }
 
         @Override
