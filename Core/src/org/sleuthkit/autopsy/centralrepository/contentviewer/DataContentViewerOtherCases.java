@@ -94,7 +94,7 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
         //Ideally we would want to attempt to create correlation attributes for the node contents
         //and if none could be created determine that it was not supported.
         //However that winds up being more work than we really want to be performing in this method so we perform a quicker check.
-        //The result of this is that the Other Occurrences viewer could be enabled but without a correltion attributes in some situations.
+        //The result of this is that the Other Occurrences viewer could be enabled but without any correlation attributes in some situations.
         // Is supported if:
         // The central repo is enabled and the node is not null
         if (CentralRepository.isEnabled() && node != null) {
