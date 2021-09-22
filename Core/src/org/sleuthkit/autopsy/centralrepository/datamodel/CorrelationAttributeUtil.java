@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -508,9 +509,17 @@ public class CorrelationAttributeUtil {
                         new Object[]{correlationType.getDisplayName(), artifact.getObjectID()}); // NON-NLS
                 return null;
             }
+            
+            // TESTING TEMP TESTING
+            Random rand = new Random();
+            int num = rand.nextInt(100);
+            if (num % 2 == 0) {
+                srcContent = dataSrc;
+            }
 
             CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
-            if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
+            if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()
+                    || ! (srcContent instanceof AbstractFile)) {
                 return new CorrelationAttributeInstance(
                         correlationType,
                         value,
@@ -521,11 +530,6 @@ public class CorrelationAttributeUtil {
                         TskData.FileKnown.UNKNOWN,
                         srcContent.getId());
             } else {
-                if (!(srcContent instanceof AbstractFile)) {
-                    logger.log(Level.SEVERE, "Error creating artifact instance of type {0}. Source content of artifact with ID: {1} is not an AbstractFile",
-                            new Object[]{correlationType.getDisplayName(), artifact.getId()});
-                    return null;
-                }
                 AbstractFile bbSourceFile = (AbstractFile) srcContent;
 
                 return new CorrelationAttributeInstance(
