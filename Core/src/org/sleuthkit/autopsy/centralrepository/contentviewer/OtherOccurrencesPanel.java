@@ -278,7 +278,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                 if (!selectedFile.getName().endsWith(".csv")) { // NON-NLS
                     selectedFile = new File(selectedFile.toString() + ".csv"); // NON-NLS
                 }
-                CSVWorker csvWorker = new CSVWorker(selectedFile, file, dataSourceName, deviceId, Collections.unmodifiableCollection(correlationAttributes));
+                CSVWorker csvWorker = new CSVWorker(selectedFile, dataSourceName, deviceId, Collections.unmodifiableCollection(correlationAttributes));
                 csvWorker.execute();
             }
         }
@@ -329,8 +329,8 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                     }
 
                     casesTableModel.clearTable();
-                    
-                    OtherOccurrenceOneTypeWorker.OneTypeData data = get();   
+
+                    OtherOccurrenceOneTypeWorker.OneTypeData data = get();
                     correlationAttributes.addAll(data.getCorrelationAttributesToAdd());
                     for (CorrelationCase corCase : data.getCaseNames().values()) {
                         casesTableModel.addCorrelationCase(new CorrelationCaseWrapper(corCase));
@@ -426,7 +426,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        worker = new SelectionWorker(correlationAttributes, file, deviceId, dataSourceName) {
+        worker = new SelectionWorker(correlationAttributes, deviceId, dataSourceName) {
             @Override
             public void done() {
                 if (isCancelled()) {
@@ -447,12 +447,8 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                         for (NodeData nodeData : correlatedNodeDataMap.values()) {
                             for (int selectedRow : selectedCaseIndexes) {
                                 try {
-                                    if (nodeData.isCentralRepoNode()) {
-                                        if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
-                                                && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
-                                            dataSourcesTableModel.addNodeData(nodeData);
-                                        }
-                                    } else if (currentCaseName != null && (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(currentCaseName))) {
+                                    if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
+                                            && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
                                         dataSourcesTableModel.addNodeData(nodeData);
                                     }
                                 } catch (CentralRepoException ex) {
@@ -491,7 +487,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         final int[] selectedDataSources = dataSourcesTable.getSelectedRows();
         filesTableModel.clearTable();
 
-        worker = new SelectionWorker(correlationAttributes, file, deviceId, dataSourceName) {
+        worker = new SelectionWorker(correlationAttributes, deviceId, dataSourceName) {
             @Override
             public void done() {
                 if (isCancelled()) {
@@ -505,15 +501,9 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                             for (int selectedDataSourceRow : selectedDataSources) {
                                 int rowModelIndex = dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow);
                                 try {
-                                    if (nodeData.isCentralRepoNode()) {
-                                        if (dataSourcesTableModel.getCaseUUIDForRow(rowModelIndex).equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
-                                                && dataSourcesTableModel.getDeviceIdForRow(rowModelIndex).equals(nodeData.getDeviceID())) {
-                                            filesTableModel.addNodeData(nodeData);
-                                        }
-                                    } else {
-                                        if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                            filesTableModel.addNodeData(nodeData);
-                                        }
+                                    if (dataSourcesTableModel.getCaseUUIDForRow(rowModelIndex).equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
+                                            && dataSourcesTableModel.getDeviceIdForRow(rowModelIndex).equals(nodeData.getDeviceID())) {
+                                        filesTableModel.addNodeData(nodeData);
                                     }
                                 } catch (CentralRepoException ex) {
                                     logger.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
@@ -618,7 +608,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
     private class SelectionWorker extends SwingWorker<Map<UniquePathKey, NodeData>, Void> {
 
         private final Collection<CorrelationAttributeInstance> coAtInstances;
-        private final AbstractFile abstractFile;
         private final String deviceIdStr;
         private final String dataSourceNameStr;
 
@@ -630,9 +619,8 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
          * @param deviceIdStr
          * @param dataSourceNameStr
          */
-        SelectionWorker(Collection<CorrelationAttributeInstance> coAtInstances, AbstractFile abstractFile, String deviceIdStr, String dataSourceNameStr) {
+        SelectionWorker(Collection<CorrelationAttributeInstance> coAtInstances, String deviceIdStr, String dataSourceNameStr) {
             this.coAtInstances = coAtInstances;
-            this.abstractFile = abstractFile;
             this.dataSourceNameStr = dataSourceNameStr;
             this.deviceIdStr = deviceIdStr;
         }
@@ -641,7 +629,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         protected Map<UniquePathKey, NodeData> doInBackground() throws Exception {
             Map<UniquePathKey, NodeData> correlatedNodeDataMap = new HashMap<>();
             for (CorrelationAttributeInstance corAttr : coAtInstances) {
-                correlatedNodeDataMap.putAll(OtherOccurrences.getCorrelatedInstances(abstractFile, deviceIdStr, dataSourceNameStr, corAttr));
+                correlatedNodeDataMap.putAll(OtherOccurrences.getCorrelatedInstances(deviceIdStr, dataSourceNameStr, corAttr));
 
                 if (isCancelled()) {
                     return new HashMap<>();
@@ -661,7 +649,6 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         private final String dataSourceName;
         private final String deviceId;
         private final File destFile;
-        private final AbstractFile abstractFile;
 
         /**
          * Construct a CSVWorker
@@ -672,9 +659,8 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
          * @param deviceId           Id of the selected device.
          * @param correlationAttList
          */
-        CSVWorker(File destFile, AbstractFile sourceFile, String dataSourceName, String deviceId, Collection<CorrelationAttributeInstance> correlationAttList) {
+        CSVWorker(File destFile, String dataSourceName, String deviceId, Collection<CorrelationAttributeInstance> correlationAttList) {
             this.destFile = destFile;
-            this.abstractFile = sourceFile;
             this.dataSourceName = dataSourceName;
             this.deviceId = deviceId;
             this.correlationAttList = correlationAttList;
@@ -682,7 +668,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
 
         @Override
         protected Void doInBackground() throws Exception {
-            OtherOccurrences.writeOtherOccurrencesToFileAsCSV(this.destFile, this.abstractFile, this.correlationAttList, this.dataSourceName, this.deviceId);
+            OtherOccurrences.writeOtherOccurrencesToFileAsCSV(this.destFile, this.correlationAttList, this.dataSourceName, this.deviceId);
             return null;
         }
 
@@ -876,8 +862,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
             int rowIndex = filesTable.getSelectedRow();
             List<NodeData> selectedFile = filesTableModel.getListOfNodesForFile(rowIndex);
             if (!selectedFile.isEmpty() && selectedFile.get(0) instanceof NodeData) {
-                NodeData instanceData = selectedFile.get(0);
-                enableCentralRepoActions = instanceData.isCentralRepoNode();
+                enableCentralRepoActions = true;
             }
         }
         showCaseDetailsMenuItem.setVisible(enableCentralRepoActions);

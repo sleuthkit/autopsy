@@ -326,15 +326,6 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     abstract protected List<Tag> getAllTagsFromDatabase();
 
     /**
-     * Returns correlation attribute instance for the underlying content of the
-     * node.
-     *
-     * @return correlation attribute instance for the underlying content of the
-     *         node.
-     */
-    abstract protected CorrelationAttributeInstance getCorrelationAttributeInstance();
-
-    /**
      * Returns Score property for the node.
      *
      * @param tags list of tags.
@@ -352,7 +343,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to get aggregate score for content with id: " + this.content.getId(), ex);
         }
-        
+
         String significanceDisplay = score.getSignificance().getDisplayName();
         String description = Bundle.AbstractContentNode_getScorePropertyAndDescription_description(significanceDisplay);
         return Pair.of(score, description);
@@ -361,22 +352,30 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     /**
      * Returns comment property for the node.
      *
-     * @param tags      list of tags
-     * @param attribute correlation attribute instance
+     * Default implementation is a null implementation.
+     *
+     * @param tags       The list of tags.
+     * @param attributes The list of correlation attribute instances.
      *
      * @return Comment property for the underlying content of the node.
      */
-    abstract protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute);
+    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
+        return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
+    }
 
     /**
      * Returns occurrences/count property for the node.
      *
-     * @param attributeType      the type of the attribute to count
-     * @param attributeValue     the value of the attribute to count
-     * @param defaultDescription a description to use when none is determined by
-     *                           the getCountPropertyAndDescription method
+     * Default implementation is a null implementation.
+     *
+     * @param attribute          The correlation attribute for which data will
+     *                           be retrieved.
+     * @param defaultDescription A description to use when none is determined by
+     *                           the getCountPropertyAndDescription method.
      *
      * @return count property for the underlying content of the node.
      */
-    abstract protected Pair<Long, String> getCountPropertyAndDescription(Type attributeType, String attributeValue, String defaultDescription);
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
+        return Pair.of(-1L, NO_DESCR);
+    }
 }
