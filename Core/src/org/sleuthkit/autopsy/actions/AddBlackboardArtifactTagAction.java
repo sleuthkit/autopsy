@@ -71,7 +71,7 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
                 "AddBlackboardArtifactTagAction.singularTagResult");
         String pluralTagResult = NbBundle.getMessage(this.getClass(),
                 "AddBlackboardArtifactTagAction.pluralTagResult");
-        return Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class).size() > 1 ? pluralTagResult : singularTagResult;
+        return Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactItem.class).size() > 1 ? pluralTagResult : singularTagResult;
     }
 
     @Override

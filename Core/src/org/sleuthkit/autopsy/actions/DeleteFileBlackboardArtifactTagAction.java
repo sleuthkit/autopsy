@@ -21,12 +21,12 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javax.swing.AbstractAction;
@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
 import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -158,7 +159,11 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
         private static final long serialVersionUID = 1L;
 
         TagMenu() {
-            this(new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class)));
+            this(Utilities.actionsGlobalContext()
+                    .lookupAll(BlackboardArtifactItem.class)
+                    .stream()
+                    .map((bai) -> (BlackboardArtifact) bai.getTskContent())
+                    .collect(Collectors.toSet()));
         }
 
         TagMenu(Collection<BlackboardArtifact> selectedBlackboardArtifactsList) {
