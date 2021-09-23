@@ -5,6 +5,10 @@ ChromeCacheExtract_adding_artifacts_msg=Chrome Cache: Adding %d artifacts for an
 ChromeCacheExtract_adding_extracted_files_msg=Chrome Cache: Adding %d extracted files for analysis.
 ChromeCacheExtract_loading_files_msg=Chrome Cache: Loading files from %s.
 ChromeCacheExtractor.moduleName=ChromeCacheExtractor
+# {0} - module name
+# {1} - row number
+# {2} - table length
+# {3} - cache path
 ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card
@@ -152,13 +156,19 @@ Firefox.getDlV24.errMsg.errAnalyzeFile={0}: Error while trying to analyze file:{
 Firefox.getDlV24.errMsg.errParsingArtifacts={0}: Error parsing {1} Firefox web download artifacts.
 Progress_Message_Analyze_Registry=Analyzing Registry Files
 Progress_Message_Analyze_Usage=Data Sources Usage Analysis
+# {0} - browserName
 Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Bookmarks=Chrome Bookmarks Browser {0}
 Progress_Message_Chrome_Cache=Chrome Cache
+# {0} - browserName
 Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}
 Progress_Message_Chrome_FormHistory=Chrome Form History
+# {0} - browserName
 Progress_Message_Chrome_History=Chrome History Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Logins=Chrome Logins Browser {0}
 Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks
 Progress_Message_Edge_Cookies=Microsoft Edge Cookies
