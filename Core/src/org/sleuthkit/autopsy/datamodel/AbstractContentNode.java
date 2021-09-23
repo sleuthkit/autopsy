@@ -327,15 +327,13 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     /**
      * Returns Score property for the node.
      *
-     * @param tags list of tags.
-     *
      * @return Score property for the underlying content of the node.
      */
     @Messages({
         "# {0} - significanceDisplayName",
         "AbstractContentNode_getScorePropertyAndDescription_description=Has an {0} analysis result score"
     })
-    protected Pair<Score, String> getScorePropertyAndDescription(List<Tag> tags) {
+    protected Pair<Score, String> getScorePropertyAndDescription() {
         Score score = Score.SCORE_UNKNOWN;
         try {
             score = this.content.getAggregateScore();

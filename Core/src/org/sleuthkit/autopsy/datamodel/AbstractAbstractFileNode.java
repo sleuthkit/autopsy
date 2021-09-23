@@ -178,8 +178,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } else if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
             ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
             if (event.getAddedTag().getContent().equals(content)) {
-                List<Tag> tags = this.getAllTagsFromDatabase();
-                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
+
+                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription();
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
                 List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
@@ -188,14 +188,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     listWithJustFileAttr.add(corrInstance);
                 }
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(getAllTagsFromDatabase(), listWithJustFileAttr))
                 );
             }
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
             ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
             if (event.getDeletedTagInfo().getContentID() == content.getId()) {
                 List<Tag> tags = getAllTagsFromDatabase();
-                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
+                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription();
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
                 List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
@@ -204,19 +204,18 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     listWithJustFileAttr.add(corrInstance);
                 }
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(getAllTagsFromDatabase(), listWithJustFileAttr))
                 );
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
             CommentChangedEvent event = (CommentChangedEvent) evt;
             if (event.getContentID() == content.getId()) {
-                List<Tag> tags = getAllTagsFromDatabase();
                 List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
                 CorrelationAttributeInstance corrInstance = CorrelationAttributeUtil.getCorrAttrForFile(content);
                 if (corrInstance != null) {
                     listWithJustFileAttr.add(corrInstance);
                 }
-                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr)));
+                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(getAllTagsFromDatabase(), listWithJustFileAttr)));
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             this.setDisplayName(evt.getNewValue().toString());

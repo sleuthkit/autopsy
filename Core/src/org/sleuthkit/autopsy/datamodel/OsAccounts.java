@@ -29,25 +29,34 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import javax.swing.Action;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.VALUE_LOADING;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountRealm;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -207,6 +216,28 @@ public final class OsAccounts implements AutopsyVisitableItem {
                                 Bundle.OsAccounts_accountRealmNameProperty_desc(),
                                 realmNames.get(0)));
                     }
+                } else if (evt.getPropertyName().equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
+                    SCOData scoData = (SCOData) evt.getNewValue();
+                    if (scoData.getScoreAndDescription() != null) {
+                        updateSheet(new NodeProperty<>(
+                                Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                                Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                                scoData.getScoreAndDescription().getRight(),
+                                scoData.getScoreAndDescription().getLeft()));
+                    }
+                    if (scoData.getComment() != null) {
+                        updateSheet(new NodeProperty<>(
+                                Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                                Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                                NO_DESCR, scoData.getComment()));
+                    }
+                    if (scoData.getCountAndDescription() != null) {
+                        updateSheet(new NodeProperty<>(
+                                Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                                Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                                scoData.getCountAndDescription().getRight(),
+                                scoData.getCountAndDescription().getLeft()));
+                    }
                 }
             }
         };
@@ -365,7 +396,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
         @Override
         protected List<Tag> getAllTagsFromDatabase() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return new ArrayList<>();
         }
 
         @Override
@@ -414,6 +445,73 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     Exceptions.printStackTrace(ex);
                 }
             }
+        }
+
+        @NbBundle.Messages({
+            "OsAccounts.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated",
+            "# {0} - occurrenceCount",
+            "OsAccounts.createSheet.count.description=There were {0} datasource(s) found with occurrences of the OS Account correlation value"})
+        @Override
+        protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attributeInstance, String defaultDescription) {
+            Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
+            String description = defaultDescription;
+            try {
+                //don't perform the query if there is no correlation value
+                if (attributeInstance != null && StringUtils.isNotBlank(attributeInstance.getCorrelationValue())) {
+                    count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attributeInstance);
+                    description = Bundle.OsAccounts_createSheet_count_description(count);
+                } else if (attributeInstance != null) {
+                    description = Bundle.OsAccounts_createSheet_count_hashLookupNotRun_description();
+                }
+            } catch (CentralRepoException ex) {
+                logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+            }
+            return Pair.of(count, description);
+        }
+
+        /**
+         * Returns comment property for the node.
+         *
+         * @param tags       The list of tags.
+         * @param attributes The list of correlation attribute instances.
+         *
+         * @return Comment property for the underlying content of the node.
+         */
+        @Override
+        protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
+
+            /*
+             * Has a tag with a comment been applied to the OsAccount or its
+             * source content?
+             */
+            DataResultViewerTable.HasCommentStatus status = tags.size() > 0 ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
+            for (Tag tag : tags) {
+                if (!StringUtils.isBlank(tag.getComment())) {
+                    status = DataResultViewerTable.HasCommentStatus.TAG_COMMENT;
+                    break;
+                }
+            }
+
+            /*
+             * Does the given correlation attribute instance have a comment in
+             * the central repository?
+             */
+            if (attributes != null && !attributes.isEmpty()) {
+                for (CorrelationAttributeInstance attribute : attributes) {
+                    if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+                        if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                            status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                        } else {
+                            status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return status;
         }
     }
 }

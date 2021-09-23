@@ -1214,7 +1214,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.noScore.description=No score"})
     @Deprecated
     protected final void addScorePropertyAndDescription(Sheet.Set sheetSet, List<Tag> tags) {
-        Pair<Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
+        Pair<Score, String> scoreAndDescription = getScorePropertyAndDescription();
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), scoreAndDescription.getRight(), scoreAndDescription.getLeft()));
     }
 

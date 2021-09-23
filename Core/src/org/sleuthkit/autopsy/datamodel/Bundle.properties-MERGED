@@ -331,7 +331,10 @@ OpenReportAction.actionPerformed.ReportFileOpenPermissionDeniedMessage=Permissio
 OsAccount_listNode_name=OS Accounts
 OsAccounts.createSheet.comment.displayName=C
 OsAccounts.createSheet.comment.name=C
+# {0} - occurrenceCount
+OsAccounts.createSheet.count.description=There were {0} datasource(s) found with occurrences of the OS Account correlation value
 OsAccounts.createSheet.count.displayName=O
+OsAccounts.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated
 OsAccounts.createSheet.count.name=O
 OsAccounts.createSheet.score.displayName=S
 OsAccounts.createSheet.score.name=S

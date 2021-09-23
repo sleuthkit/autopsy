@@ -1503,24 +1503,27 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             Long sourceObjID = instance.getFileObjectId();
             //The CorrelationAttributeInstance will have a CorrelationCase, however that correlation case's ID will be null if the case is not in the CR.
             int correlationCaseId = instance.getCorrelationCase().getID();
+            int correlationDataSourceId = instance.getCorrelationDataSource().getID();
             String normalizedValue = CorrelationAttributeNormalizer.normalize(instance.getCorrelationType(), instance.getCorrelationValue());
             Connection conn = connect();
             PreparedStatement preparedStatement = null;
             String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(instance.getCorrelationType());
             ResultSet resultSet = null;
+            
             try {
-                if (correlationCaseId > 0 && sourceObjID != null) {
+                if (correlationCaseId > 0 && sourceObjID != null && correlationDataSourceId > 0) {
                     //The CorrelationCase is in the Central repository.  
                     String sql
                             = "SELECT count(*) FROM (SELECT DISTINCT case_id FROM " //Get distinct cases with a matching value in the corresponding table from the central repository.
                             + tableName
-                            + " WHERE value=? AND NOT (file_obj_id=? AND case_id=?)) AS " //Check the file_obj_id AND case_id to ensure we ignore the currently selected instance. 
+                            + " WHERE value=? AND NOT (file_obj_id=? AND case_id=? AND data_source_id=?)) AS " //Check the file_obj_id AND case_id to ensure we ignore the currently selected instance. 
                             + tableName
                             + "_other_case_count";
                     preparedStatement = conn.prepareStatement(sql);
                     preparedStatement.setString(1, normalizedValue);
                     preparedStatement.setLong(2, sourceObjID);
                     preparedStatement.setInt(3, correlationCaseId);
+                    preparedStatement.setInt(4, correlationDataSourceId);
                 } else {
                     //The CorrelationCase is NOT in the central repository. 
                     String sql
