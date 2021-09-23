@@ -24,12 +24,11 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 
 /**
  * Background task to get Score, Comment and Occurrences values for an Abstract
@@ -58,27 +57,23 @@ class GetSCOTask implements Runnable {
         }
         // get the SCO  column values
         List<Tag> tags = contentNode.getAllTagsFromDatabase();
-
         SCOData scoData = new SCOData();
         scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription(tags));
         //getting the correlation attribute and setting the comment column is done before the eamdb isEnabled check
-        //because the Comment column will reflect the presence of comments in the CR when the CR is enabled, but reflect tag comments regardless 
-        CorrelationAttributeInstance fileAttribute = contentNode.getCorrelationAttributeInstance();
-        scoData.setComment(contentNode.getCommentProperty(tags, fileAttribute));
+        //because the Comment column will reflect the presence of comments in the CR when the CR is enabled, but reflect tag comments regardless
+        String description = Bundle.GetSCOTask_occurrences_defaultDescription();
+        List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForSearch(contentNode.getContent());
+        scoData.setComment(contentNode.getCommentProperty(tags, listOfPossibleAttributes));
+        CorrelationAttributeInstance corInstance = null;
         if (CentralRepository.isEnabled()) {
-            Type type = null;
-            String value = null;
-            String description = Bundle.GetSCOTask_occurrences_defaultDescription();
-            List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForSearch(contentNode.getContent());
             if (listOfPossibleAttributes.size() > 1) {
                 //Don't display anything if there is more than 1 correlation property for an artifact but let the user know
                 description = Bundle.GetSCOTask_occurrences_multipleProperties();
             } else if (!listOfPossibleAttributes.isEmpty()) {
                 //there should only be one item in the list
-                type = listOfPossibleAttributes.get(0).getCorrelationType();
-                value = listOfPossibleAttributes.get(0).getCorrelationValue();
+                corInstance = listOfPossibleAttributes.get(0);
             }
-            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(type, value, description));
+            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(corInstance, description));
         }
 
         // signal SCO data is available.

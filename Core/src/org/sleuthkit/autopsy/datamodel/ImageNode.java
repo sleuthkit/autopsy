@@ -27,15 +27,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
@@ -168,9 +165,9 @@ public class ImageNode extends AbstractContentNode<Image> {
                 this.content.getTimeZone()));
 
         sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
-                        Bundle.ImageNode_createSheet_deviceId_displayName(),
-                        Bundle.ImageNode_createSheet_deviceId_desc(),
-                        content.getDeviceId()));
+                Bundle.ImageNode_createSheet_deviceId_displayName(),
+                Bundle.ImageNode_createSheet_deviceId_desc(),
+                content.getDeviceId()));
 
         return sheet;
     }
@@ -255,51 +252,5 @@ public class ImageNode extends AbstractContentNode<Image> {
     @Override
     protected List<Tag> getAllTagsFromDatabase() {
         return new ArrayList<>();
-    }
-
-    /**
-     * Returns correlation attribute instance for the underlying content of the
-     * node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @return correlation attribute instance for the underlying content of the
-     *         node.
-     */
-    @Override
-    protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
-        return null;
-    }
-
-    /**
-     * Returns comment property for the node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @param tags      list of tags
-     * @param attribute correlation attribute instance
-     *
-     * @return Comment property for the underlying content of the node.
-     */
-    @Override
-    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
-        return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-    }
-
-    /**
-     * Returns occurrences/count property for the node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @param attributeType      the type of the attribute to count
-     * @param attributeValue     the value of the attribute to coun
-     * @param defaultDescription a description to use when none is determined by
-     *                           the getCountPropertyAndDescription method
-     *
-     * @return count property for the underlying content of the node.
-     */
-    @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
-        return Pair.of(-1L, NO_DESCR);
     }
 }

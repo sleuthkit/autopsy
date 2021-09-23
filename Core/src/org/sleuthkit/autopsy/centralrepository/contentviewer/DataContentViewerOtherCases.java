@@ -24,14 +24,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JPanel;
+import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.OsAccount;
 
 /**
@@ -89,20 +91,35 @@ public final class DataContentViewerOtherCases extends JPanel implements DataCon
 
     @Override
     public boolean isSupported(Node node) {
-
-        // Is supported if one of the following is true:
-        // - The central repo is enabled and the node is not null
-        // - The central repo is disabled and the backing file has a valid MD5 hash
-        // And the node has information which could be correlated on.
+        //Ideally we would want to attempt to create correlation attributes for the node contents
+        //and if none could be created determine that it was not supported.
+        //However that winds up being more work than we really want to be performing in this method so we perform a quicker check.
+        //The result of this is that the Other Occurrences viewer could be enabled but without any correlation attributes in some situations.
+        // Is supported if:
+        // The central repo is enabled and the node is not null
         if (CentralRepository.isEnabled() && node != null) {
-            return OtherOccurrences.getAbstractFileFromNode(node) != null || OtherOccurrences.getBlackboardArtifactFromNode(node) != null || node.getLookup().lookup(OsAccount.class) != null;
-        } else if (node != null) {
-            AbstractFile file = OtherOccurrences.getAbstractFileFromNode(node);
-            return file != null
-                    && file.getSize() > 0
-                    && ((file.getMd5Hash() != null) && (!file.getMd5Hash().isEmpty()));
+            // And the node has information which could be correlated on.
+            if (node.getLookup().lookup(OsAccount.class) != null) {
+                //the node has an associated OsAccount to correlate on
+                return true;
+            }
+            if (node.getLookup().lookup(BlackboardArtifactItem.class) != null) {
+                //it has a blackboard artifact which might have a correlation attribute
+                return true;
+            }
+            if (node.getLookup().lookup(BlackboardArtifactTag.class) != null) {
+                //Blackboard artifact tags may have their underlying artifact correlated on
+                return true;
+            }
+            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+            //the AbstractFile lookup will handle the usecase for file tags as well
+            if (file != null && !StringUtils.isBlank(file.getMd5Hash())) {
+                //there is an abstractFile lookup and it has an MD5 so could be correlated on
+                return true;
+            }
         }
         return false;
+
     }
 
     @Override
