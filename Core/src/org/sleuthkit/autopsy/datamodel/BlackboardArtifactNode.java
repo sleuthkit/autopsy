@@ -157,7 +157,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private Content srcContent;
     private volatile String translatedSourceName;
     private final String sourceObjTypeName;
-    private final String srcContentShortDescription;
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -287,11 +286,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
         }
         sourceObjTypeName = getSourceObjType(srcContent);
-        srcContentShortDescription = getContentShortDescription(srcContent);
+        setDisplayNameBySourceContent();
         setName(Long.toString(artifact.getArtifactID()));
-        String displayName = srcContent.getName();
-        setDisplayName(displayName);
-        setShortDescription(displayName);
         setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
     }
@@ -335,11 +331,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
         sourceObjTypeName = getSourceObjType(srcContent);
-        srcContentShortDescription = getContentShortDescription(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
-        String displayName = srcContent.getName();
-        setDisplayName(displayName);
-        setShortDescription(displayName);
+        setDisplayNameBySourceContent();
         String iconPath = IconsUtil.getIconFilePath(artifact.getArtifactTypeID());
         setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
@@ -880,8 +873,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     @NbBundle.Messages({
-        "BlackboardArtifactNode.createSheet.srcFile.name=Source File",
-        "BlackboardArtifactNode.createSheet.srcFile.displayName=Source File",
+        "BlackboardArtifactNode.createSheet.srcFile.name=Source Name",
+        "BlackboardArtifactNode.createSheet.srcFile.displayName=Source Name",
         "BlackboardArtifactNode.createSheet.srcFile.origName=Original Name",
         "BlackboardArtifactNode.createSheet.srcFile.origDisplayName=Original Name",
         "BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type",
@@ -906,6 +899,18 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
+        
+        /*
+        * Add the name of the source content of the artifact represented by
+        * this node to the sheet. The value of this property is the same as
+        * the display name of the node and this a "special" property that
+        * displays the node's icon as well as the display name.
+        */
+       sheetSet.put(new NodeProperty<>(
+               Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
+               Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
+               NO_DESCR,
+               getDisplayName()));
 
         boolean scoHasBeenAdded = false;
         if (artifact instanceof AnalysisResult
@@ -913,20 +918,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 || artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
             updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
             scoHasBeenAdded = true;
-        } else {
-            /*
-             * Add the name of the source content of the artifact represented by
-             * this node to the sheet. The value of this property is the same as
-             * the display name of the node and this a "special" property that
-             * displays the node's icon as well as the display name.
-             */
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
-                    NO_DESCR,
-                    getDisplayName()));
-        }
-
+        } 
+        
         if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             /*
              * If machine translation is configured, add the original name of
@@ -1429,13 +1422,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param result   The AnalysisResult the sheet is being created.
      * @param sheetSet The sheetSet to add the values to.
      */
-    private void updateSheetForAnalysisResult(AnalysisResult result, Sheet.Set sheetSet) {
-        sheetSet.put(new NodeProperty<>(
-                Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
-                Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
-                NO_DESCR,
-                srcContentShortDescription));
-
+    private void updateSheetForAnalysisResult(AnalysisResult result, Sheet.Set sheetSet) {        
         addSCOColumns(sheetSet);
 
         sheetSet.put(new NodeProperty<>(
@@ -1555,6 +1542,28 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             return content.getName();
         }
         return "";
+    }
+    
+    /**
+     * Sets the displayName and short description for the node.
+     */
+    private void setDisplayNameBySourceContent() {
+        if(srcContent instanceof BlackboardArtifact) {
+            try {
+                setDisplayName(((BlackboardArtifact)srcContent).getShortDescription());
+            } catch (TskCoreException ex) {
+                // Log the error, but set the display name to
+                // Content.getName so there is something visible to the user.
+                logger.log(Level.WARNING, "Failed to get short description for artifact id = " + srcContent.getId(), ex);
+                setDisplayName(srcContent.getName());
+            }
+        } else if(srcContent instanceof OsAccount) {
+            setDisplayName(((OsAccount)srcContent).getAddr().orElse(srcContent.getName()));
+        } else {
+            setDisplayName(srcContent.getName());
+        }
+        
+        setShortDescription(getDisplayName());
     }
 
     /**
