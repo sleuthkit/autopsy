@@ -1379,8 +1379,6 @@ final class ChromeCacheExtractor {
                     }
                 } catch (TskCoreException | IngestModuleException ex) {
                     throw new TskCoreException(String.format("Failed to get external key from address %s", longKeyAddresses)); //NON-NLS 
-//                } catch (NullPointerException ex) {
-//                    String name = "a";
                 }
             }
             else {  // key stored within entry 
