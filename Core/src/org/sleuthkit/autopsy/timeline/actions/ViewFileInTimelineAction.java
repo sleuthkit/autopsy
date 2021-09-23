@@ -43,7 +43,12 @@ public final class ViewFileInTimelineAction extends AbstractAction {
 
     private final AbstractFile file;
 
-    private ViewFileInTimelineAction(AbstractFile file, String displayName) {
+    /**
+     * Constructor.
+     * @param file The file to view in the timeline.
+     * @param displayName The display name of the action.
+     */
+    public ViewFileInTimelineAction(AbstractFile file, String displayName) {
         super(displayName);
         this.file = file;
 
