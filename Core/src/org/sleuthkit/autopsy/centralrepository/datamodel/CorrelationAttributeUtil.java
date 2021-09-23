@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -508,13 +507,6 @@ public class CorrelationAttributeUtil {
                 logger.log(Level.SEVERE, "Error creating artifact instance of type {0}. Failed to load data source for content with ID: {1}",
                         new Object[]{correlationType.getDisplayName(), artifact.getObjectID()}); // NON-NLS
                 return null;
-            }
-            
-            // TESTING TEMP TESTING
-            Random rand = new Random();
-            int num = rand.nextInt(100);
-            if (num % 2 == 0) {
-                srcContent = dataSrc;
             }
 
             CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
