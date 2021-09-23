@@ -40,9 +40,22 @@ public final class ViewArtifactInTimelineAction extends AbstractAction {
 
     private final BlackboardArtifact artifact;
 
+    /**
+     * Constructor.
+     * @param artifact The artifact to navigate to in the timeline.
+     */
     @NbBundle.Messages({"ViewArtifactInTimelineAction.displayName=View Result in Timeline... "})
     public ViewArtifactInTimelineAction(BlackboardArtifact artifact) {
-        super(Bundle.ViewArtifactInTimelineAction_displayName());
+        this(artifact, Bundle.ViewArtifactInTimelineAction_displayName());
+    }
+
+        /**
+     * Constructor.
+     * @param artifact The artifact to navigate to in the timeline.
+     * @param displayName The display name for the action.
+     */
+    public ViewArtifactInTimelineAction(BlackboardArtifact artifact, String displayName) {
+        super(displayName);
         this.artifact = artifact;
         // If timeline functionality is not available this action is disabled.
         if ("false".equals(ModuleSettings.getConfigSetting("timeline", "enable_timeline"))) {

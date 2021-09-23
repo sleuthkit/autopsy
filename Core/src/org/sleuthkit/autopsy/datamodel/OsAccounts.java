@@ -70,9 +70,19 @@ public final class OsAccounts implements AutopsyVisitableItem {
     private static final Logger logger = Logger.getLogger(OsAccounts.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/os-account.png";
     private static final String REALM_DATA_AVAILABLE_EVENT = "REALM_DATA_AVAILABLE_EVENT";
+    private static final String LIST_NAME = Bundle.OsAccount_listNode_name();
 
     private SleuthkitCase skCase;
     private final long filteringDSObjId;
+
+    /**
+     * Returns the name of the OsAccountListNode to be used for id purposes.
+     *
+     * @return The name of the OsAccountListNode to be used for id purposes.
+     */
+    public static String getListName() {
+        return LIST_NAME;
+    }
 
     public OsAccounts(SleuthkitCase skCase) {
         this(skCase, 0);
@@ -101,8 +111,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
          */
         public OsAccountListNode() {
             super(Children.create(new OsAccountNodeFactory(), true));
-            setName(Bundle.OsAccount_listNode_name());
-            setDisplayName(Bundle.OsAccount_listNode_name());
+            setName(LIST_NAME);
+            setDisplayName(LIST_NAME);
             setIconBaseWithExtension("org/sleuthkit/autopsy/images/os-account.png");
         }
 
