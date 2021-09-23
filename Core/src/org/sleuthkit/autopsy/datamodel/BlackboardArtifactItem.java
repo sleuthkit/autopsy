@@ -23,13 +23,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * An super class for an Autopsy Data Model item class with an underlying
- * BlackboardArtifact Sleuth Kit Data Model object, i.e., a DataArtifact or an
- * AnalysisResult.
+ * An abstract super class for an Autopsy Data Model item class with an
+ * underlying BlackboardArtifact Sleuth Kit Data Model object, i.e., a
+ * DataArtifact or an AnalysisResult.
  *
- * @param <T> The concrete BlackboardArtifact class type.
+ * @param <T> The concrete BlackboardArtifact sub class type.
  */
-public class BlackboardArtifactItem<T extends BlackboardArtifact> extends TskContentItem<T> {
+public abstract class BlackboardArtifactItem<T extends BlackboardArtifact> extends TskContentItem<T> {
 
     private final Content sourceContent;
 
