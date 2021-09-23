@@ -592,8 +592,13 @@ final class ChromeCacheExtractor {
        
         // see if it is cached
         String fileTableKey = cacheFolderName + cacheFileName;
-        if (cacheFileName.startsWith("f_") && externalFilesTable.containsKey(fileTableKey)) {
-            return Optional.of(externalFilesTable.get(fileTableKey));
+
+        if (cacheFileName != null) {
+            if (cacheFileName.startsWith("f_") && externalFilesTable.containsKey(fileTableKey)) {
+                return Optional.of(externalFilesTable.get(fileTableKey));
+            }
+        } else {
+            return Optional.empty();
         }
         
         if (fileCopyCache.containsKey(fileTableKey)) {
@@ -1306,7 +1311,7 @@ final class ChromeCacheExtractor {
        
         private String key;     // Key may be found within the entry or may be external
         
-        CacheEntry(CacheAddress cacheAdress, FileWrapper cacheFileCopy ) throws TskCoreException {
+        CacheEntry(CacheAddress cacheAdress, FileWrapper cacheFileCopy ) throws TskCoreException, IngestModuleException {
             this.selfAddress = cacheAdress;
             this.cacheFileCopy = cacheFileCopy;
             
@@ -1315,7 +1320,11 @@ final class ChromeCacheExtractor {
             int entryOffset = DATAFILE_HDR_SIZE + cacheAdress.getStartBlock() * cacheAdress.getBlockSize();
             
             // reposition the buffer to the the correct offset
-            fileROBuf.position(entryOffset);
+            if (entryOffset < fileROBuf.capacity()) {
+                fileROBuf.position(entryOffset);
+            } else {
+                throw new IngestModuleException("Position seeked in Buffer to big"); // NON-NLS
+            }
             
             hash = fileROBuf.getInt() & UINT32_MASK;
             
@@ -1364,11 +1373,15 @@ final class ChromeCacheExtractor {
             if (longKeyAddresses != null) {
                 // Key is stored outside of the entry
                 try {
-                    CacheDataSegment data = new CacheDataSegment(longKeyAddresses, this.keyLen, true);
-                    key = data.getDataString();
+                    if (longKeyAddresses.getFilename() != null) {
+                        CacheDataSegment data = new CacheDataSegment(longKeyAddresses, this.keyLen, true);
+                        key = data.getDataString();
+                    }
                 } catch (TskCoreException | IngestModuleException ex) {
                     throw new TskCoreException(String.format("Failed to get external key from address %s", longKeyAddresses)); //NON-NLS 
-                } 
+//                } catch (NullPointerException ex) {
+//                    String name = "a";
+                }
             }
             else {  // key stored within entry 
                 StringBuilder strBuilder = new StringBuilder(MAX_KEY_LEN);
