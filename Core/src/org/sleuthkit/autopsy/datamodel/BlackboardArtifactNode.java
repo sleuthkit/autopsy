@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -888,12 +889,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             sheet.put(sheetSet);
         }
 
-        boolean scoHasBeenAdded = false;
+        GetSCOTask scoTask = null;
         if (artifact instanceof AnalysisResult
                 && !(artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                 || artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
-            updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
-            scoHasBeenAdded = true;
+            scoTask = updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
         } else {
             /*
              * Add the name of the source content of the artifact represented by
@@ -927,8 +927,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
 
-        if (!scoHasBeenAdded) {
-            addSCOColumns(sheetSet);
+        if (scoTask == null) {
+            scoTask = addSCOColumns(sheetSet);
         }
 
         /*
@@ -1146,6 +1146,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                             NO_DESCR,
                             path));
         }
+        
+        backgroundTasksPool.submit(scoTask);
 
         return sheet;
     }
@@ -1410,14 +1412,14 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param result   The AnalysisResult the sheet is being created.
      * @param sheetSet The sheetSet to add the values to.
      */
-    private void updateSheetForAnalysisResult(AnalysisResult result, Sheet.Set sheetSet) {
+    private GetSCOTask updateSheetForAnalysisResult(AnalysisResult result, Sheet.Set sheetSet) {
         sheetSet.put(new NodeProperty<>(
                 Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
                 Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
                 NO_DESCR,
                 srcContentShortDescription));
 
-        addSCOColumns(sheetSet);
+        GetSCOTask task = addSCOColumns(sheetSet);
 
         sheetSet.put(new NodeProperty<>(
                 Bundle.BlackboardArtifactNode_analysisSheet_sourceType_name(),
@@ -1448,9 +1450,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 Bundle.BlackboardArtifactNode_analysisSheet_justifaction_name(),
                 NO_DESCR,
                 result.getJustification()));
+        
+        return task;
     }
 
-    private void addSCOColumns(Sheet.Set sheetSet) {
+    private GetSCOTask addSCOColumns(Sheet.Set sheetSet) {
         if (!UserPreferences.getHideSCOColumns()) {
             /*
              * Add S(core), C(omments), and O(ther occurences) columns to the
@@ -1476,8 +1480,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         VALUE_LOADING,
                         ""));
             }
-            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+            return new GetSCOTask(new WeakReference<>(this), weakListener);
         }
+        return null;
     }
 
     /**
