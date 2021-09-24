@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -159,7 +158,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private Content srcContent;
     private volatile String translatedSourceName;
     private final String sourceObjTypeName;
-    private final String srcContentShortDescription;
 
     /*
      * A method has been provided to allow the injection of properties into this
@@ -269,11 +267,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             logger.log(Level.WARNING, MessageFormat.format("Error getting the unique path of the source content (artifact objID={0})", artifact.getId()), ex);
         }
         sourceObjTypeName = getSourceObjType(srcContent);
-        srcContentShortDescription = getContentShortDescription(srcContent);
+        setDisplayNameBySourceContent();
         setName(Long.toString(artifact.getArtifactID()));
-        String displayName = srcContent.getName();
-        setDisplayName(displayName);
-        setShortDescription(displayName);
         setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
     }
@@ -317,11 +312,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             throw new IllegalArgumentException(MessageFormat.format("Artifact missing source content (artifact objID={0})", artifact));
         }
         sourceObjTypeName = getSourceObjType(srcContent);
-        srcContentShortDescription = getContentShortDescription(srcContent);
         setName(Long.toString(artifact.getArtifactID()));
-        String displayName = srcContent.getName();
-        setDisplayName(displayName);
-        setShortDescription(displayName);
+        setDisplayNameBySourceContent();
         String iconPath = IconsUtil.getIconFilePath(artifact.getArtifactTypeID());
         setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
@@ -393,10 +385,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         BlackboardArtifactItem<?> artifactItem;
         if (artifact instanceof AnalysisResult) {
             artifactItem = new AnalysisResultItem((AnalysisResult) artifact, content);
-        } else if (artifact instanceof DataArtifact) {
-            artifactItem = new DataArtifactItem((DataArtifact) artifact, content);
         } else {
-            artifactItem = new BlackboardArtifactItem<>(artifact, content);
+            artifactItem = new DataArtifactItem((DataArtifact) artifact, content);
         }
 
         /*
@@ -862,8 +852,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     @NbBundle.Messages({
-        "BlackboardArtifactNode.createSheet.srcFile.name=Source File",
-        "BlackboardArtifactNode.createSheet.srcFile.displayName=Source File",
+        "BlackboardArtifactNode.createSheet.srcFile.name=Source Name",
+        "BlackboardArtifactNode.createSheet.srcFile.displayName=Source Name",
         "BlackboardArtifactNode.createSheet.srcFile.origName=Original Name",
         "BlackboardArtifactNode.createSheet.srcFile.origDisplayName=Original Name",
         "BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type",
@@ -888,6 +878,18 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
+        
+        /*
+        * Add the name of the source content of the artifact represented by
+        * this node to the sheet. The value of this property is the same as
+        * the display name of the node and this a "special" property that
+        * displays the node's icon as well as the display name.
+        */
+       sheetSet.put(new NodeProperty<>(
+               Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
+               Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
+               NO_DESCR,
+               getDisplayName()));
 
         GetSCOTask scoTask = null;
         if (artifact instanceof AnalysisResult
@@ -1417,7 +1419,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
                 Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
                 NO_DESCR,
-                srcContentShortDescription));
+                getDisplayName()));
 
         GetSCOTask task = addSCOColumns(sheetSet);
 
@@ -1520,28 +1522,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         return "";
     }
-
-    /**
-     * Returns a short description for the given content object.
-     *
-     * @param content The content object.
-     *
-     * @return A short description/label.
-     */
-    private String getContentShortDescription(Content content) {
-        if (content != null) {
-            if (content instanceof BlackboardArtifact) {
-                try {
-                    return ((BlackboardArtifact) content).getShortDescription();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to get short description for artifact id=" + content.getId(), ex);
-                }
-            }
-
-            return content.getName();
-        }
-        return "";
-    }
     
     /**
      * Update the SCO columns with the data retrieved in the background
@@ -1576,6 +1556,28 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 }
             }
         });
+    }
+
+    /**
+     * Sets the displayName of the node based on the source content.
+     */
+    private void setDisplayNameBySourceContent() {
+        if(srcContent instanceof BlackboardArtifact) {
+            try {
+                setDisplayName(((BlackboardArtifact)srcContent).getShortDescription());
+            } catch (TskCoreException ex) {
+                // Log the error, but set the display name to
+                // Content.getName so there is something visible to the user.
+                logger.log(Level.WARNING, "Failed to get short description for artifact id = " + srcContent.getId(), ex);
+                setDisplayName(srcContent.getName());
+            }
+        } else if(srcContent instanceof OsAccount) {
+            setDisplayName(((OsAccount)srcContent).getAddr().orElse(srcContent.getName()));
+        } else {
+            setDisplayName(srcContent.getName());
+        }
+        
+        setShortDescription(getDisplayName());
     }
 
     /**
