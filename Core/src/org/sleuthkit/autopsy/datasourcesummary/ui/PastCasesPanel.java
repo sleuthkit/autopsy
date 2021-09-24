@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.DataSource;
     "PastCasesPanel_caseColumn_title=Case",
     "PastCasesPanel_countColumn_title=Count",
     "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run.",
-    "PastCasesPanel_notableFileTable_tabName=Cases with Common Notable",
+    "PastCasesPanel_notableFileTable_tabName=Cases with Common Notable Items at Time Of Ingest",
     "PastCasesPanel_sameIdsTable_tabName=Past Cases with the Same Devices",})
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
