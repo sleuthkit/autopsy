@@ -318,7 +318,13 @@ final class ExtractZoneIdentifier extends Extract {
          */
         ZoneIdentifierInfo(AbstractFile zoneFile) throws IOException {
             fileName = zoneFile.getName();
-            properties.load(new ReadContentInputStream(zoneFile));
+            // properties.load will throw IllegalArgument if unicode characters are found in the zone file.
+            try {
+                properties.load(new ReadContentInputStream(zoneFile));
+            } catch (IllegalArgumentException ex) {
+                String message = String.format("Unable to parse Zone Id for File %s", fileName); //NON-NLS
+                LOG.log(Level.WARNING, message);   
+            }
         }
 
         /**
