@@ -25,8 +25,8 @@ import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -89,7 +89,7 @@ public final class OtherOccurrences {
                 logger.log(Level.INFO, String.format("Unable to check create CorrelationAttribtueInstance for osAccount %s.", osAccountAddr.get()), ex);
             }
         }
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     /**

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -86,7 +87,7 @@ public class CorrelationAttributeUtil {
         if (artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
                 || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()
                 || artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
         return CorrelationAttributeUtil.makeCorrAttrsForSearch(artifact);
     }
@@ -109,7 +110,7 @@ public class CorrelationAttributeUtil {
     }
 
     public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(AnalysisResult file) {
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(OsAccountInstance osAccountInstance) {
@@ -354,7 +355,7 @@ public class CorrelationAttributeUtil {
         /*
          * Normalize the phone number.
          */
-        List<CorrelationAttributeInstance> corrAttrInstances = new ArrayList<>();
+        List<CorrelationAttributeInstance> corrAttrInstances = Collections.emptyList();
         if (value != null
                 && CorrelationAttributeNormalizer.isValidPhoneNumber(value)) {
             value = CorrelationAttributeNormalizer.normalizePhone(value);
