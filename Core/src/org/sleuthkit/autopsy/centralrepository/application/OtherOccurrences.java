@@ -25,8 +25,8 @@ import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -76,23 +76,20 @@ public final class OtherOccurrences {
      * @return A list of attributes that can be used for correlation
      */
     public static Collection<CorrelationAttributeInstance> getCorrelationAttributeFromOsAccount(Node node, OsAccount osAccount) {
-        Collection<CorrelationAttributeInstance> ret = new ArrayList<>();
         Optional<String> osAccountAddr = osAccount.getAddr();
-
         if (osAccountAddr.isPresent()) {
             try {
                 for (OsAccountInstance instance : osAccount.getOsAccountInstances()) {
-                    CorrelationAttributeInstance correlationAttributeInstance = CorrelationAttributeUtil.makeCorrAttr(instance.getOsAccount(), instance.getDataSource());
-                    if (correlationAttributeInstance != null) {
-                        ret.add(correlationAttributeInstance);
+                    List<CorrelationAttributeInstance> correlationAttributeInstances = CorrelationAttributeUtil.makeCorrAttrsForSearch(instance);
+                    if (!correlationAttributeInstances.isEmpty()) {
+                        return correlationAttributeInstances;
                     }
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.INFO, String.format("Unable to check create CorrelationAttribtueInstance for osAccount %s.", osAccountAddr.get()), ex);
             }
         }
-
-        return ret;
+        return Collections.emptyList();
     }
 
     /**
