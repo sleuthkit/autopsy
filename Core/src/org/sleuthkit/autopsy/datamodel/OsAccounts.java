@@ -56,7 +56,6 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountRealm;
-import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -201,6 +200,26 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
         private OsAccount account;
 
+        @Messages({
+            "OsAccounts_accountNameProperty_name=Name",
+            "OsAccounts_accountNameProperty_displayName=Name",
+            "OsAccounts_accountNameProperty_desc=Os Account name",
+            "OsAccounts_accountRealmNameProperty_name=RealmName",
+            "OsAccounts_accountRealmNameProperty_displayName=Realm Name",
+            "OsAccounts_accountRealmNameProperty_desc=OS Account Realm Name",
+            "OsAccounts_createdTimeProperty_name=creationTime",
+            "OsAccounts_createdTimeProperty_displayName=Creation Time",
+            "OsAccounts_createdTimeProperty_desc=OS Account Creation Time",
+            "OsAccounts_loginNameProperty_name=loginName",
+            "OsAccounts_loginNameProperty_displayName=Login Name",
+            "OsAccounts_loginNameProperty_desc=OS Account login name",
+            "OsAccounts.createSheet.score.name=S",
+            "OsAccounts.createSheet.score.displayName=S",
+            "OsAccounts.createSheet.count.name=O",
+            "OsAccounts.createSheet.count.displayName=O",
+            "OsAccounts.createSheet.comment.name=C",
+            "OsAccounts.createSheet.comment.displayName=C"
+        })
         private final PropertyChangeListener listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -230,21 +249,21 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     SCOData scoData = (SCOData) evt.getNewValue();
                     if (scoData.getScoreAndDescription() != null) {
                         updateSheet(new NodeProperty<>(
-                                Bundle.BlackboardArtifactNode_createSheet_score_name(),
-                                Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                                Bundle.OsAccounts_createSheet_score_name(),
+                                Bundle.OsAccounts_createSheet_score_displayName(),
                                 scoData.getScoreAndDescription().getRight(),
                                 scoData.getScoreAndDescription().getLeft()));
                     }
                     if (scoData.getComment() != null) {
                         updateSheet(new NodeProperty<>(
-                                Bundle.BlackboardArtifactNode_createSheet_comment_name(),
-                                Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                                Bundle.OsAccounts_createSheet_comment_name(),
+                                Bundle.OsAccounts_createSheet_comment_displayName(),
                                 NO_DESCR, scoData.getComment()));
                     }
                     if (scoData.getCountAndDescription() != null) {
                         updateSheet(new NodeProperty<>(
-                                Bundle.BlackboardArtifactNode_createSheet_count_name(),
-                                Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                                Bundle.OsAccounts_createSheet_count_name(),
+                                Bundle.OsAccounts_createSheet_count_displayName(),
                                 scoData.getCountAndDescription().getRight(),
                                 scoData.getCountAndDescription().getLeft()));
                     }
@@ -293,27 +312,6 @@ public final class OsAccounts implements AutopsyVisitableItem {
         OsAccount getOsAccount() {
             return account;
         }
-
-        @Messages({
-            "OsAccounts_accountNameProperty_name=Name",
-            "OsAccounts_accountNameProperty_displayName=Name",
-            "OsAccounts_accountNameProperty_desc=Os Account name",
-            "OsAccounts_accountRealmNameProperty_name=RealmName",
-            "OsAccounts_accountRealmNameProperty_displayName=Realm Name",
-            "OsAccounts_accountRealmNameProperty_desc=OS Account Realm Name",
-            "OsAccounts_createdTimeProperty_name=creationTime",
-            "OsAccounts_createdTimeProperty_displayName=Creation Time",
-            "OsAccounts_createdTimeProperty_desc=OS Account Creation Time",
-            "OsAccounts_loginNameProperty_name=loginName",
-            "OsAccounts_loginNameProperty_displayName=Login Name",
-            "OsAccounts_loginNameProperty_desc=OS Account login name",
-            "OsAccounts.createSheet.score.name=S",
-            "OsAccounts.createSheet.score.displayName=S",
-            "OsAccounts.createSheet.count.name=O",
-            "OsAccounts.createSheet.count.displayName=O",
-            "OsAccounts.createSheet.comment.name=C",
-            "OsAccounts.createSheet.comment.displayName=C"
-        })
 
         /**
          * Refreshes this node's property sheet.
