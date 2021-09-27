@@ -434,7 +434,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
          * Data concerning an OS Account loaded asynchronously (and not at sheet
          * creation).
          */
-        static class AsynchOsAcctData {
+        private static class AsynchOsAcctData {
 
             private final long osAccountId;
             private final OsAccountRealm osAcctRealm;
