@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -194,6 +195,7 @@ class SummaryHelpers {
         }
     }
 
+    @NbBundle.Messages({"SummaryHelper.documentSummary.unable.to.read=Unable to extract text from file."})
     /**
      * Get the beginning of text from the specified AbstractFile.
      *
@@ -217,7 +219,7 @@ class SummaryHelpers {
         } catch (IOException ex) {
             return Bundle.FileSearch_documentSummary_noBytes();
         } catch (TextExtractor.InitReaderException ex) {
-            return Bundle.FileSearch_documentSummary_noPreview();
+            return Bundle.SummaryHelper_documentSummary_unable_to_read();
         }
     }
 

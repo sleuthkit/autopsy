@@ -170,7 +170,7 @@ public class TypesSummary {
          * Constructor that accepts FileTypeCategory.
          *
          * @param label The label for this slice.
-         * @param mimeTypes The mime types associated with this slice.
+         * @param fileCategory The category associated with this slice.
          * @param color The color associated with this slice.
          */
         public FileTypeCategoryData(String label, FileTypeUtils.FileTypeCategory fileCategory, Color color) {

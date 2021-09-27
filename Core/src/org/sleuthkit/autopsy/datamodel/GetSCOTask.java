@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -29,6 +30,10 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Background task to get Score, Comment and Occurrences values for an Abstract
@@ -62,7 +67,18 @@ class GetSCOTask implements Runnable {
         //getting the correlation attribute and setting the comment column is done before the eamdb isEnabled check
         //because the Comment column will reflect the presence of comments in the CR when the CR is enabled, but reflect tag comments regardless
         String description = Bundle.GetSCOTask_occurrences_defaultDescription();
-        List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForSearch(contentNode.getContent());
+
+        List<CorrelationAttributeInstance> listOfPossibleAttributes = new ArrayList<>();
+        Content contentFromNode = contentNode.getContent();
+        if (contentFromNode instanceof AbstractFile) {
+            listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AbstractFile) contentFromNode));
+        } else if (contentFromNode instanceof AnalysisResult) {
+            listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) contentFromNode));
+        } else if (contentFromNode instanceof DataArtifact) {
+            listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) contentFromNode));
+        } else {
+            //JIRA-TODO : add code for Jira-7938 OsAccounts
+        }
         scoData.setComment(contentNode.getCommentProperty(tags, listOfPossibleAttributes));
         CorrelationAttributeInstance corInstance = null;
         if (CentralRepository.isEnabled()) {

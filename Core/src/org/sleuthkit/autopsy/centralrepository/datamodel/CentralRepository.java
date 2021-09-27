@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2020 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

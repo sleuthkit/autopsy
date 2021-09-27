@@ -42,11 +42,13 @@ import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -135,7 +137,7 @@ public class AnnotationUtils {
      * @return The pair of artifact (or null if not present) and content (either
      *         artifact parent content, the node content, or null).
      */
-    private static Pair<BlackboardArtifact, Content> getDisplayContent(Node node) {
+    static DisplayTskItems getDisplayContent(Node node) {
         BlackboardArtifactItem<?> artItem = node.getLookup().lookup(BlackboardArtifactItem.class);
         BlackboardArtifact artifact = artItem == null ? null : artItem.getTskContent();
 
@@ -143,16 +145,18 @@ public class AnnotationUtils {
                 ? artItem.getSourceContent()
                 : node.getLookup().lookup(AbstractFile.class);
 
-        return Pair.of(artifact, content);
+        return new DisplayTskItems(artifact, content);
     }
 
     /**
      * Returns whether or not the node is supported by the annotation viewer.
+     *
      * @param node The node to display.
+     *
      * @return True if the node is supported.
      */
     public static boolean isSupported(Node node) {
-        return getDisplayContent(node).getRight() != null;
+        return getDisplayContent(node).getContent() != null;
     }
 
     /**
@@ -168,9 +172,9 @@ public class AnnotationUtils {
         Document html = Jsoup.parse(EMPTY_HTML);
         Element body = html.getElementsByTag("body").first();
 
-        Pair<BlackboardArtifact, Content> displayPair = getDisplayContent(node);
-        BlackboardArtifact artifact = displayPair.getLeft();
-        Content srcContent = displayPair.getRight();
+        DisplayTskItems displayItems = getDisplayContent(node);
+        BlackboardArtifact artifact = displayItems.getArtifact();
+        Content srcContent = displayItems.getContent();
 
         boolean somethingWasRendered = false;
         if (artifact != null) {
@@ -380,9 +384,14 @@ public class AnnotationUtils {
         if (artifact == null) {
             return new ArrayList<>();
         }
+        List<CorrelationAttributeInstance> instances = new ArrayList<>();
+        if (artifact instanceof DataArtifact) {
+            instances.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) artifact));
+        } else if (artifact instanceof AnalysisResult) {
+            instances.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) artifact));
+        }
 
-        List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys = CorrelationAttributeUtil.makeCorrAttrsForSearch(artifact)
-                .stream()
+        List<Pair<CorrelationAttributeInstance.Type, String>> lookupKeys = instances.stream()
                 .map(cai -> Pair.of(cai.getCorrelationType(), cai.getCorrelationValue()))
                 .collect(Collectors.toList());
 
@@ -677,4 +686,39 @@ public class AnnotationUtils {
         }
     }
 
+    /**
+     * The TSK items that are being displayed as deciphered from the netbeans
+     * node.
+     */
+    static class DisplayTskItems {
+
+        private final BlackboardArtifact artifact;
+        private final Content content;
+
+        /**
+         * Main constructor.
+         *
+         * @param artifact The artifact being displayed or null.
+         * @param content  The parent content or source file being displayed or
+         *                 null.
+         */
+        DisplayTskItems(BlackboardArtifact artifact, Content content) {
+            this.artifact = artifact;
+            this.content = content;
+        }
+
+        /**
+         * @return The selected artifact or null if no selected artifact.
+         */
+        BlackboardArtifact getArtifact() {
+            return artifact;
+        }
+
+        /**
+         * @return The parent content or source file being displayed or null.
+         */
+        Content getContent() {
+            return content;
+        }
+    }
 }

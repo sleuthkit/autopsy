@@ -62,6 +62,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskData;
 
@@ -229,6 +230,8 @@ public class IngestEventsListener {
      * @param originalArtifact Original artifact that we want to flag
      * @param caseDisplayNames List of case names artifact was previously seen
      *                         in
+     * @param aType            The correlation type.
+     * @param value            The correlation value.
      */
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
         "IngestEventsListener.prevCaseComment.text=Previous Case: "})
@@ -259,6 +262,8 @@ public class IngestEventsListener {
      * @param originalArtifact the artifact to create the "previously seen" item for
      * @param caseDisplayNames the case names the artifact was previously seen
      *                         in
+     * @param aType            The correlation type.
+     * @param value            The correlation value.
      */
     @NbBundle.Messages({"IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)",
         "# {0} - typeName",
@@ -303,6 +308,8 @@ public class IngestEventsListener {
      *
      * @param originalArtifact the artifact to create the "previously unseen" item
      *                         for
+     * @param aType            The correlation type.
+     * @param value            The correlation value.
      */
     static private void makeAndPostPreviouslyUnseenArtifact(BlackboardArtifact originalArtifact, CorrelationAttributeInstance.Type aType, String value) {
                 Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
@@ -319,6 +326,7 @@ public class IngestEventsListener {
     /**
      * Make an artifact to flag the passed in artifact.
      *
+     * @param newArtifactType          Type of artifact to create.
      * @param originalArtifact         Artifact in current case we want to flag
      * @param attributesForNewArtifact Attributes to assign to the new artifact
      * @param configuration            The configuration to be specified for the new artifact hit
@@ -540,7 +548,10 @@ public class IngestEventsListener {
 
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
                 // makeCorrAttrToSave will filter out artifacts which should not be sources of CR data.
-                List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsToSave(bbArtifact);
+                List<CorrelationAttributeInstance> convertedArtifacts = new ArrayList<>();
+                if (bbArtifact instanceof DataArtifact){
+                    convertedArtifacts.addAll(CorrelationAttributeUtil.makeCorrAttrsToSave((DataArtifact)bbArtifact));
+                }                 
                 for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                     try {
                         // Only do something with this artifact if it's unique within the job
