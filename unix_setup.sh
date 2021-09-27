@@ -25,13 +25,6 @@ while getopts "j:" o; do
 done
 
 
-
-if [[ -z "${SLEUTHKIT_SRC_DIR}" ]] || [[ -z "${TSK_BRANCH}" ]]; then
-    usage
-    exit 1
-fi
-
-
 # In the beginning...
 echo "---------------------------------------------"
 echo "Checking prerequisites and preparing Autopsy:"
@@ -54,7 +47,8 @@ fi
 echo -n "Checking for Java..."
 if [ -n "$JAVA_PATH"]; then 
     if [ -x "$JAVA_PATH/bin/java" ]; then
-        # TODO
+        sed -Ei '/^#?\s*jdkhome=/d' etc/autopsy.conf
+        echo "jdkhome=$JAVA_PATH" >> etc/autopsy.conf
     else
         echo "ERROR: Java was not found in $JAVA_PATH."
         exit 1

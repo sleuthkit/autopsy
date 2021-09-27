@@ -18,17 +18,6 @@ then
     exit 1
 fi
 
-# put this in bash_profile
-# https://stackoverflow.com/questions/22502759/mac-os-x-10-9-setting-permanent-environment-variables
-export JAVA_HOME=$(/usr/libexec/java_home -v 1.8) && \
-echo "Java home is now: $JAVA_HOME" && \
-echo 'export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)' | tee ~/.bash_profile ~/.bashrc
-if [[ $? -ne 0 ]] 
-then
-    echo "Unable to properly set up JAVA_HOME." >> /dev/stderr
-    exit 1
-fi
-
 OPEN_JDK_LN=/usr/local/opt/openjdk && \
 rm $ && \
 ln -s $JAVA_HOME $OPEN_JDK_LN
