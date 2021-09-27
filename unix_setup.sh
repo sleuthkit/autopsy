@@ -8,6 +8,30 @@
 TSK_VERSION=4.11.0
 
 
+usage() { 
+    echo "Usage: unix_setup.sh [-j java_home]" 1>&2;
+}
+
+while getopts "j:" o; do
+    case "${o}" in
+        j)
+            JAVA_PATH=${OPTARG}
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+
+
+if [[ -z "${SLEUTHKIT_SRC_DIR}" ]] || [[ -z "${TSK_BRANCH}" ]]; then
+    usage
+    exit 1
+fi
+
+
 # In the beginning...
 echo "---------------------------------------------"
 echo "Checking prerequisites and preparing Autopsy:"
@@ -28,12 +52,19 @@ fi
 
 # Verify Java was installed and configured
 echo -n "Checking for Java..."
-if [ -n "$JAVA_HOME" ];  then
-    if [ -x "$JAVA_HOME/bin/java" ]; then
-	echo "found in $JAVA_HOME"
+if [ -n "$JAVA_PATH"]; then 
+    if [ -x "$JAVA_PATH/bin/java" ]; then
+        # TODO
     else
-	echo "ERROR: Java was not found in $JAVA_HOME."
-	exit 1
+        echo "ERROR: Java was not found in $JAVA_PATH."
+        exit 1
+    fi
+elif [ -n "$JAVA_HOME" ];  then
+    if [ -x "$JAVA_HOME/bin/java" ]; then
+	    echo "found in $JAVA_HOME"
+    else
+        echo "ERROR: Java was not found in $JAVA_HOME."
+        exit 1
     fi
 else
     echo "ERROR: JAVA_HOME environment variable must be defined."
