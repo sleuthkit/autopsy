@@ -45,7 +45,7 @@ fi
 
 # Verify Java was installed and configured
 echo -n "Checking for Java..."
-if [ -n "$JAVA_PATH"]; then 
+if [ -n "$JAVA_PATH" ]; then 
     if [ -x "$JAVA_PATH/bin/java" ]; then
         sed -Ei '/^#?\s*jdkhome=/d' etc/autopsy.conf
         echo "jdkhome=$JAVA_PATH" >> etc/autopsy.conf

@@ -10,13 +10,6 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "Installing all apt dependencies..."
-# other possible dependencies taken from https://github.com/sleuthkit/autopsy/pull/4743/files
-# sudo apt -y install ca-certificates g++ gcc gpg java-common libafflib-dev libboost-dev libgl1-mesa-dri libgl1-mesa-glx libsolr-java libsqlite3-dev libswt-gtk-4-java libtika-java openjfx postgresql software-properties-common sqlite3 wget zip zlib1-dev
-
-# other possible dependencies taken from https://github.com/sleuthkit/autopsy/pull/5111/files
-# sudo apt -y install autopoint libsqlite3-dev libcppunit-dev
-
-# TODO multi user dependencies?
 sudo apt update &&
     sudo apt -y build-dep imagemagick libmagickcore-dev &&
     sudo apt -y install build-essential autoconf libtool git-core automake git zip wget ant \
@@ -31,46 +24,6 @@ if [[ $? -ne 0 ]]; then
     echo "Failed to install necessary dependencies" >>/dev/stderr
     exit 1
 fi
-
-# echo "Cloning source for libde265 and libheif..."
-# pushd /usr/src/ && \
-# sudo git clone https://github.com/strukturag/libde265.git && \
-# sudo git clone https://github.com/strukturag/libheif.git && \
-# popd
-# if [[ $? -ne 0 ]]
-# then
-#     popd
-#     echo "Failed to retrieve libde265 and libheif repos" >> /dev/stderr
-#     exit 1
-# fi
-
-# echo "Installing libde265..."
-# pushd /usr/src/libde265/ && \
-# sudo ./autogen.sh && \
-# sudo ./configure && \
-# sudo make && \
-# sudo make install && \
-# popd
-# if [[ $? -ne 0 ]]
-# then
-#     popd
-#     echo "Failed to install libde265" >> /dev/stderr
-#     exit 1
-# fi
-
-# echo "Installing libheif..."
-# pushd /usr/src/libheif/ && \
-# sudo ./autogen.sh && \
-# sudo ./configure && \
-# sudo make && \
-# sudo make install && \
-# popd
-# if [[ $? -ne 0 ]]
-# then
-#     popd
-#     echo "Failed to install libheif" >> /dev/stderr
-#     exit 1
-# fi
 
 echo "Installing ImageMagick..."
 pushd /usr/src/ &&
@@ -106,16 +59,6 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-# https://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables
-# echo "Setting JAVA_HOME..."
-# export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-full-amd64 && \
-# echo "Java home is now: $JAVA_HOME" && \
-# echo 'export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-full-amd64' | tee ~/.profile ~/.bashrc
-# if [[ $? -ne 0 ]]
-# then
-#     echo "Failed to set up JAVA_HOME in bash_rc" >> /dev/stderr
-#     exit 1
-# fi
-
-# echo "Java version is:"
-# java -version
+echo "Autopsy prerequisites installed."
+echo "Java path at /usr/lib/jvm/bellsoft-java8-full-amd64: "
+ls /usr/lib/jvm/bellsoft-java8-full-amd64

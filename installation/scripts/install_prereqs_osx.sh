@@ -18,19 +18,5 @@ then
     exit 1
 fi
 
-OPEN_JDK_LN=/usr/local/opt/openjdk && \
-rm $ && \
-ln -s $JAVA_HOME $OPEN_JDK_LN
-if [[ $? -ne 0 ]] 
-then
-    echo "Unable to properly set up $OPEN_JDK_LN." >> /dev/stderr
-    exit 1
-fi
-
-# Test your link file creation to ensure it is pointing at the correct java developement kit:
-echo "/usr/local/opt/openjdk now is:"
-ls -l /usr/local/opt/openjdk 
-
-# check version
-echo "Java Version is:"
-java -version
+java_path=$(/usr/libexec/java_home -v 1.8)
+echo "Java 1.8 path: $java_path"

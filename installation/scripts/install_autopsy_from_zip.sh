@@ -76,4 +76,5 @@ if [[ $? -ne 0 ]]; then
     exit 1
 else
     echo "Autopsy setup done."
+    echo "Autopsy can be launched at $AUTOPSY_EXTRACTED_PATH/bin/autopsy"
 fi

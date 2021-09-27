@@ -53,7 +53,6 @@ fi
 
 echo "Installing Sleuthkit..."
 pushd $SLEUTHKIT_SRC_DIR &&
-    # export CPPFLAGS="-I/usr/local/opt/libpq/include" && \
     ./bootstrap &&
     ./configure &&
     make &&
