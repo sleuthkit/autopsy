@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.DataSource;
  */
 @Messages({
     "ExportRecentFiles_docsTable_tabName=Recently Opened Documents",
-    "ExportRecentFiles_downloadsTable_tabName=Recently Downloads",
+    "ExportRecentFiles_downloadsTable_tabName=Recent Downloads",
     "ExportRecentFiles_attachmentsTable_tabName=Recent Attachments",
     "ExportRecentFiles_col_head_date=Date",
     "ExportRecentFiles_col_header_domain=Domain",
