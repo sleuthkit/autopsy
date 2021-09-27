@@ -10,8 +10,8 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "Installing all apt dependencies..."
-sudo apt update &&
-    sudo apt -y build-dep imagemagick libmagickcore-dev &&
+sudo apt update && \
+    sudo apt -y build-dep imagemagick libmagickcore-dev && \
     sudo apt -y install build-essential autoconf libtool git-core automake git zip wget ant \
         libde265-dev libheif-dev \
         libpq-dev \

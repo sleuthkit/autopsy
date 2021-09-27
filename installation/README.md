@@ -18,23 +18,9 @@
   ```
   brew install --cask liberica-jdk8-full
   ```
-- You will need to set this Java to `JAVA_HOME` with something like:
+- You will need the java path for properly setting up autopsy.  You can get the path to java by calling:
   ```
-  export JAVA_HOME=$(/usr/libexec/java_home -v 1.8) && \
-  echo 'export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)' | tee ~/.bash_profile
-  ```
-- and properly link it to the OpenJDK location: 
-  ```
-  OPEN_JDK_LN=/usr/local/opt/openjdk && \
-  rm $ && \
-  ln -s $JAVA_HOME $OPEN_JDK_LN
-  ```
-- Finally, you can verify this version of Java with:
-  ```
-  echo "/usr/local/opt/openjdk now is:"
-  ls -l /usr/local/opt/openjdk 
-  echo "Java Version is:"
-  java -version
+  /usr/libexec/java_home -v 1.8
   ```
   
 ## On Linux (Ubuntu / Debian-based)
@@ -46,14 +32,15 @@
   ```
 - Use `apt` to install dependencies:
   ```
-  sudo apt -y install \
-  libpq-dev \
-  ant build-essential autoconf libtool git-core automake git zip wget \
-  libheif-dev libde265-dev libmagickcore-dev imagemagick \
-  testdisk libafflib-dev libewf-dev libvhdi-dev libvmdk-dev \
-  libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
-  gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer1.0-x \
-  gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
+  sudo apt update && \
+    sudo apt -y build-dep imagemagick libmagickcore-dev && \
+    sudo apt -y install build-essential autoconf libtool git-core automake git zip wget ant \
+      libde265-dev libheif-dev \
+      libpq-dev \
+      testdisk libafflib-dev libewf-dev libvhdi-dev libvmdk-dev \
+      libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+      gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer1.0-x \
+      gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
   ```
 - You will also need to install Java 8 and JavaFX to run autopsy.  We recommend Liberica OpenJDK which can be installed as follows:
   ```
@@ -64,16 +51,7 @@
   sudo apt -y install bellsoft-java8-full && \
   popd
   ```
-- Then, you will need to set this Java to `JAVA_HOME` with something like:e
-  ```
-  export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-full-amd64 && \
-  echo 'export JAVA_HOME=/usr/lib/jvm/bellsoft-java8-full-amd64' | tee ~/.profile
-  ```
-- Finally, you can verify this version of Java with:
-  ```
-  echo "Java Version is:"
-  java -version
-  ```
+- Take note of the location of the java 1.8 install.  This will be necessary to properly setup Autopsy.  If using the recommended method, the path should be `/usr/lib/jvm/bellsoft-java8-full-amd64`
 
 # Install Sleuthkit
 
@@ -136,10 +114,7 @@
 
 
 # TODO
-- align scripts with README
 - open cv issues on linux?
-- stalling when not running autopsy as sudo?
 - troubleshooting from Running_Linux_OSX.txt
 - setup development environment guide
-- do we need all these dependencies and are these all of the dependencies we need?
 - other installation steps
