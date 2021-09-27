@@ -145,3 +145,4 @@ SearchFiltering.ScoreFilter.desc=Score(s) of : {0}
 # {0} - filters
 SearchFiltering.SizeFilter.desc=Size(s): {0}
 SearchFiltering.SizeFilter.or=, 
+SummaryHelper.documentSummary.unable.to.read=Unable to extract text from file.
