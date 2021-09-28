@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -45,6 +46,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -79,8 +81,24 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
             // for the purposes of ignoring the currently selected item
             AbstractFile file = node.getLookup().lookup(AbstractFile.class);
             try {
+                Content dataSource = null;
                 if (file != null) {
-                    Content dataSource = file.getDataSource();
+                    dataSource = file.getDataSource();
+                } else {
+                    Content content = node.getLookup().lookup(Content.class);
+                    if (content instanceof OsAccount) {
+                        List<OsAccountInstance> osAccountInstances = ((OsAccount) content).getOsAccountInstances();
+                        if (osAccountInstances.size() == 1) {
+                            //if there is only one instance for this node we know which data source it came from 
+                            //if there is more than one instance it is problematic to figure out which data source it came from, so displaying all instances seems to make sense
+                            dataSource = osAccountInstances.get(0).getDataSource();
+                        }
+                    } else if (content != null) {
+                        //attempt to get the data source from the nodes content itself in case a non-OsAccount lacks an AbstractFile lookup
+                        dataSource = content.getDataSource();
+                    }
+                }
+                if (dataSource != null) {
                     deviceId = currentCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
                     dataSourceName = dataSource.getName();
                 }

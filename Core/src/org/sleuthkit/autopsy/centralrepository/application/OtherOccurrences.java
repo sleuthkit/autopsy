@@ -47,12 +47,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNor
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountInstance;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Contains most of the methods for gathering data from the DB and CR for the
@@ -147,49 +144,6 @@ public final class OtherOccurrences {
 
         return new HashMap<>(
                 0);
-    }
-
-    /**
-     * Adds the file to the nodeDataMap map if it does not already exist
-     *
-     * @param autopsyCase
-     * @param nodeDataMap
-     * @param newFile
-     *
-     * @throws TskCoreException
-     * @throws CentralRepoException
-     */
-    public static void addOrUpdateNodeData(final Case autopsyCase, Map<UniquePathKey, NodeData> nodeDataMap, AbstractFile newFile) throws TskCoreException, CentralRepoException {
-
-        NodeData newNode = new NodeData(newFile, autopsyCase);
-
-        // If the caseDB object has a notable tag associated with it, update
-        // the known status to BAD
-        if (newNode.getKnown() != TskData.FileKnown.BAD) {
-            List<ContentTag> fileMatchTags = autopsyCase.getServices().getTagsManager().getContentTagsByContent(newFile);
-            for (ContentTag tag : fileMatchTags) {
-                TskData.FileKnown tagKnownStatus = tag.getName().getKnownStatus();
-                if (tagKnownStatus.equals(TskData.FileKnown.BAD)) {
-                    newNode.updateKnown(TskData.FileKnown.BAD);
-                    break;
-                }
-            }
-        }
-
-        // Make a key to see if the file is already in the map
-        UniquePathKey uniquePathKey = new UniquePathKey(newNode);
-
-        // If this node is already in the list, the only thing we need to do is
-        // update the known status to BAD if the caseDB version had known status BAD.
-        // Otherwise this is a new node so add the new node to the map.
-        if (nodeDataMap.containsKey(uniquePathKey)) {
-            if (newNode.getKnown() == TskData.FileKnown.BAD) {
-                NodeData prevInstance = nodeDataMap.get(uniquePathKey);
-                prevInstance.updateKnown(newNode.getKnown());
-            }
-        } else {
-            nodeDataMap.put(uniquePathKey, newNode);
-        }
     }
 
     /**

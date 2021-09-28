@@ -34,7 +34,7 @@ public final class UniquePathKey {
     private static final Logger logger = Logger.getLogger(UniquePathKey.class.getName());
     private final String dataSourceID;
     private final String filePath;
-    private final String type;
+    private final int typeId;
     private final String caseUUID;
 
     public UniquePathKey(NodeData nodeData) {
@@ -45,7 +45,7 @@ public final class UniquePathKey {
         } else {
             filePath = null;
         }
-        type = nodeData.getType();
+        typeId = nodeData.getType().getId();
         String tempCaseUUID;
         try {
             tempCaseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
@@ -67,16 +67,16 @@ public final class UniquePathKey {
         if (other instanceof UniquePathKey) {
             UniquePathKey otherKey = (UniquePathKey) (other);
             return (Objects.equals(otherKey.getDataSourceID(), this.getDataSourceID())
-                    && Objects.equals(otherKey.getFilePath(), this.getFilePath())
-                    && Objects.equals(otherKey.getType(), this.getType())
-                    && Objects.equals(otherKey.getCaseUUID(), this.getCaseUUID()));
+                    && otherKey.getTypeId() == this.getTypeId()
+                    && Objects.equals(otherKey.getCaseUUID(), this.getCaseUUID())
+                    && Objects.equals(otherKey.getFilePath(), this.getFilePath()));
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDataSourceID(), getFilePath(), getType(), getCaseUUID());
+        return Objects.hash(getDataSourceID(), getFilePath(), getTypeId(), getCaseUUID());
     }
 
     /**
@@ -84,8 +84,8 @@ public final class UniquePathKey {
      *
      * @return the type
      */
-    String getType() {
-        return type;
+    int getTypeId() {
+        return typeId;
     }
 
     /**

@@ -150,7 +150,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
         //for each other occurrence
         for (NodeData occurrence : nodeDataList) {
             if (occurrence instanceof NodeData) {
-                String type = occurrence.getType();
+                String type = occurrence.getType().getDisplayName();
                 if (!type.isEmpty()) {
                     javax.swing.JLabel typeLabel = new javax.swing.JLabel();
                     org.openide.awt.Mnemonics.setLocalizedText(typeLabel, Bundle.OccurrencePanel_commonPropertyTypeLabel_text());
