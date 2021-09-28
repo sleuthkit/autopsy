@@ -42,6 +42,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Node;
@@ -203,27 +204,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     contentCache.invalidateAll();
                 }
             } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
-                SCOData scoData = (SCOData) evt.getNewValue();
-                if (scoData.getScoreAndDescription() != null) {
-                    updateSheet(new NodeProperty<>(
-                            Bundle.BlackboardArtifactNode_createSheet_score_name(),
-                            Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
-                            scoData.getScoreAndDescription().getRight(),
-                            scoData.getScoreAndDescription().getLeft()));
-                }
-                if (scoData.getComment() != null) {
-                    updateSheet(new NodeProperty<>(
-                            Bundle.BlackboardArtifactNode_createSheet_comment_name(),
-                            Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
-                            NO_DESCR, scoData.getComment()));
-                }
-                if (scoData.getCountAndDescription() != null) {
-                    updateSheet(new NodeProperty<>(
-                            Bundle.BlackboardArtifactNode_createSheet_count_name(),
-                            Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
-                            scoData.getCountAndDescription().getRight(),
-                            scoData.getCountAndDescription().getLeft()));
-                }
+                updateSCOColumns((SCOData) evt.getNewValue());
             } else if (eventType.equals(FileNameTransTask.getPropertyName())) {
                 /*
                  * Replace the value of the Source File property with the
@@ -910,14 +891,25 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                NO_DESCR,
                getDisplayName()));
 
-        boolean scoHasBeenAdded = false;
+        GetSCOTask scoTask = null;
         if (artifact instanceof AnalysisResult
                 && !(artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                 || artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
-            updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
-            scoHasBeenAdded = true;
-        } 
-        
+            scoTask = updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
+        } else {
+            /*
+             * Add the name of the source content of the artifact represented by
+             * this node to the sheet. The value of this property is the same as
+             * the display name of the node and this a "special" property that
+             * displays the node's icon as well as the display name.
+             */
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
+                    NO_DESCR,
+                    getDisplayName()));
+        }
+
         if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
             /*
              * If machine translation is configured, add the original name of
@@ -937,8 +929,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
 
-        if (!scoHasBeenAdded) {
-            addSCOColumns(sheetSet);
+        if (scoTask == null) {
+            scoTask = addSCOColumns(sheetSet);
         }
 
         /*
@@ -1156,6 +1148,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                             NO_DESCR,
                             path));
         }
+        
+        backgroundTasksPool.submit(scoTask);
 
         return sheet;
     }
@@ -1420,8 +1414,14 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param result   The AnalysisResult the sheet is being created.
      * @param sheetSet The sheetSet to add the values to.
      */
-    private void updateSheetForAnalysisResult(AnalysisResult result, Sheet.Set sheetSet) {        
-        addSCOColumns(sheetSet);
+    private GetSCOTask updateSheetForAnalysisResult(AnalysisResult result, Sheet.Set sheetSet) {
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
+                Bundle.BlackboardArtifactNode_analysisSheet_soureName_name(),
+                NO_DESCR,
+                getDisplayName()));
+
+        GetSCOTask task = addSCOColumns(sheetSet);
 
         sheetSet.put(new NodeProperty<>(
                 Bundle.BlackboardArtifactNode_analysisSheet_sourceType_name(),
@@ -1452,9 +1452,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 Bundle.BlackboardArtifactNode_analysisSheet_justifaction_name(),
                 NO_DESCR,
                 result.getJustification()));
+        
+        return task;
     }
 
-    private void addSCOColumns(Sheet.Set sheetSet) {
+    private GetSCOTask addSCOColumns(Sheet.Set sheetSet) {
         if (!UserPreferences.getHideSCOColumns()) {
             /*
              * Add S(core), C(omments), and O(ther occurences) columns to the
@@ -1480,8 +1482,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         VALUE_LOADING,
                         ""));
             }
-            backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+            return new GetSCOTask(new WeakReference<>(this), weakListener);
         }
+        return null;
     }
 
     /**
@@ -1519,31 +1522,44 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         return "";
     }
-
-    /**
-     * Returns a short description for the given content object.
-     *
-     * @param content The content object.
-     *
-     * @return A short description/label.
-     */
-    private String getContentShortDescription(Content content) {
-        if (content != null) {
-            if (content instanceof BlackboardArtifact) {
-                try {
-                    return ((BlackboardArtifact) content).getShortDescription();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to get short description for artifact id=" + content.getId(), ex);
-                }
-            }
-
-            return content.getName();
-        }
-        return "";
-    }
     
     /**
-     * Sets the displayName and short description for the node.
+     * Update the SCO columns with the data retrieved in the background
+     * thread. 
+     * 
+     * @param scoData The data for the SCO columns.
+     */
+    private void updateSCOColumns(final SCOData scoData) {
+        // Make sure this happens in the EDT
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (scoData.getScoreAndDescription() != null) {
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                            scoData.getScoreAndDescription().getRight(),
+                            scoData.getScoreAndDescription().getLeft()));
+                }
+                if (scoData.getComment() != null) {
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                            NO_DESCR, scoData.getComment()));
+                }
+                if (scoData.getCountAndDescription() != null) {
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                            scoData.getCountAndDescription().getRight(),
+                            scoData.getCountAndDescription().getLeft()));
+                }
+            }
+        });
+    }
+
+    /**
+     * Sets the displayName of the node based on the source content.
      */
     private void setDisplayNameBySourceContent() {
         if(srcContent instanceof BlackboardArtifact) {
