@@ -30,6 +30,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.AbstractTableModel;
@@ -125,12 +126,15 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
             }
         }
         this.ingestJobTableModel = new IngestJobTableModel();
-        this.ingestJobTable.setModel(ingestJobTableModel);
-        //if there were ingest jobs select the first one by default
-        if (!ingestJobsForSelectedDataSource.isEmpty()) {
-            ingestJobTable.setRowSelectionInterval(0, 0);
-        }
-        this.repaint();
+
+        SwingUtilities.invokeLater(() -> {
+            this.ingestJobTable.setModel(ingestJobTableModel);
+            //if there were ingest jobs select the first one by default
+            if (!ingestJobsForSelectedDataSource.isEmpty()) {
+                ingestJobTable.setRowSelectionInterval(0, 0);
+            }
+            this.repaint();
+        });
     }
 
     /**
@@ -168,7 +172,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     logger.log(Level.WARNING, "Error getting results from Ingest Job Info Panel's refresh worker", ex);
-                } catch (CancellationException ignored){
+                } catch (CancellationException ignored) {
                     logger.log(Level.INFO, "The refreshing of the IngestJobInfoPanel was cancelled");
                 }
             }
