@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -252,7 +253,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
                                 hostsString));
                     }
 
-                    updateSheet(propertiesToUpdate.toArray(new NodeProperty<?>[propertiesToUpdate.size()]));
+                    SwingUtilities.invokeLater(() -> 
+                            updateSheet(propertiesToUpdate.toArray(new NodeProperty<?>[propertiesToUpdate.size()])));
                 }
             }
         };
