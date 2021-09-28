@@ -2283,12 +2283,6 @@ class ExtractRegistry extends Extract {
      * @throws TskCoreException 
      */
     private void addAccountInstance(OsAccountManager accountMgr, OsAccount osAccount, DataSource dataSource) throws TskCoreException {
-        List<OsAccountInstance> acctInstances = accountMgr.getOsAccountInstances(Collections.singletonList(osAccount.getId()));
-        for(OsAccountInstance instance: acctInstances) {
-            if(instance.getDataSource().getId() == dataSource.getId()) {
-                return;
-            }
-        }
         accountMgr.newOsAccountInstance(osAccount, dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
     }
 }
