@@ -751,7 +751,7 @@ class ExtractRegistry extends Extract {
                                 try{
                                     sid = userMap.getKey();
                                     String userName = userMap.getValue();
-                                    createOrUpdateOsAccount(regFile, sid, userName, null);
+                                    createOrUpdateOsAccount(regFile, sid, userName, null, null);
                                 } catch(TskCoreException | TskDataException | NotUserSIDException ex) {
                                     logger.log(Level.WARNING, String.format("Failed to update Domain for existing OsAccount: %s, sid: %s", regFile.getId(), sid), ex);
                                 }
@@ -863,9 +863,13 @@ class ExtractRegistry extends Extract {
                                         String homeDir = value;
                                         String sid = artnode.getAttribute("sid"); //NON-NLS
                                         String username = artnode.getAttribute("username"); //NON-NLS
-
+                                        String domName = domainName;
+                                        Map<String, String> userMap = getUserNameMap();
+                                        if(userMap.containsKey(sid)) {
+                                            domName = null;
+                                        }
                                         try{
-                                            createOrUpdateOsAccount(regFile, sid, username, homeDir);
+                                            createOrUpdateOsAccount(regFile, sid, username, homeDir, domName);
                                         } catch(TskCoreException | TskDataException | NotUserSIDException ex) {
                                             logger.log(Level.SEVERE, String.format("Failed to create OsAccount for file: %s, sid: %s", regFile.getId(), sid), ex);
                                         }
@@ -1989,7 +1993,7 @@ class ExtractRegistry extends Extract {
      * @throws TskDataException
      * @throws OsAccountManager.NotUserSIDException
      */
-    private void createOrUpdateOsAccount(AbstractFile file, String sid, String userName, String homeDir) throws TskCoreException, TskDataException, NotUserSIDException {
+    private void createOrUpdateOsAccount(AbstractFile file, String sid, String userName, String homeDir, String domainName1) throws TskCoreException, TskDataException, NotUserSIDException {
         OsAccountManager accountMgr = tskCase.getOsAccountManager();
         HostManager hostMrg = tskCase.getHostManager();
         Host host = hostMrg.getHostByDataSource((DataSource)dataSource);
@@ -1997,13 +2001,16 @@ class ExtractRegistry extends Extract {
         Optional<OsAccount> optional = accountMgr.getWindowsOsAccount(sid, null, null, host);
         OsAccount osAccount;
         if (!optional.isPresent()) {
-            osAccount = accountMgr.newWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, domainName, host, domainName != null && !domainName.isEmpty()? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
+            if(sid.endsWith("20") || sid.endsWith("19")) {                
+                domainName1 =  null;
+            }
+            osAccount = accountMgr.newWindowsOsAccount(sid, userName != null && userName.isEmpty() ? null : userName, domainName1, host, domainName1 != null && !domainName1.isEmpty()? OsAccountRealm.RealmScope.DOMAIN : OsAccountRealm.RealmScope.UNKNOWN);
             accountMgr.newOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
         } else {
             osAccount = optional.get();
             addAccountInstance(accountMgr, osAccount, (DataSource)dataSource);
             if (userName != null && !userName.isEmpty()) {                
-                OsAccountUpdateResult updateResult= accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, userName, domainName.isEmpty() ? null : domainName, host);
+                OsAccountUpdateResult updateResult= accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, userName, (domainName1 == null || domainName1.isEmpty()) ? null : domainName1, host);
                 osAccount = updateResult.getUpdatedAccount().orElse(osAccount);     
             }
         }
@@ -2195,7 +2202,7 @@ class ExtractRegistry extends Extract {
         accountMgr.addExtendedOsAccountAttributes(osAccount, attributes);
          
         // update the loginname
-        accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, loginName, domainName.isEmpty() ? null : domainName, host);
+        accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, loginName, null, host);
         
         // update other standard attributes  -  fullname, creationdate
         accountMgr.updateStandardOsAccountAttributes(osAccount, fullName, null, null, creationTime);
