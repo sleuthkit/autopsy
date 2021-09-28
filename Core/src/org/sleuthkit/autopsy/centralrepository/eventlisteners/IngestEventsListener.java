@@ -62,6 +62,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskData;
 
@@ -547,7 +548,10 @@ public class IngestEventsListener {
 
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
                 // makeCorrAttrToSave will filter out artifacts which should not be sources of CR data.
-                List<CorrelationAttributeInstance> convertedArtifacts = CorrelationAttributeUtil.makeCorrAttrsToSave(bbArtifact);
+                List<CorrelationAttributeInstance> convertedArtifacts = new ArrayList<>();
+                if (bbArtifact instanceof DataArtifact){
+                    convertedArtifacts.addAll(CorrelationAttributeUtil.makeCorrAttrsToSave((DataArtifact)bbArtifact));
+                }                 
                 for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                     try {
                         // Only do something with this artifact if it's unique within the job

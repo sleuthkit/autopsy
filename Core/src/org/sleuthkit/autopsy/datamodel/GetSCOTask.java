@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
@@ -32,6 +33,10 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Background task to get Score, Comment and Occurrences values for an Abstract
@@ -60,15 +65,25 @@ class GetSCOTask implements Runnable {
         }
         // get the SCO  column values
         List<Tag> tags = contentNode.getAllTagsFromDatabase();
-        Pair<Score, String> scoreAndDescription = null;  
-        DataResultViewerTable.HasCommentStatus comment = null;
+        Pair<Score, String> scoreAndDescription;  
+        DataResultViewerTable.HasCommentStatus comment;
         Pair<Long, String> countAndDescription = null;
 
         scoreAndDescription = contentNode.getScorePropertyAndDescription(tags);
         //getting the correlation attribute and setting the comment column is done before the eamdb isEnabled check
         //because the Comment column will reflect the presence of comments in the CR when the CR is enabled, but reflect tag comments regardless
         String description = Bundle.GetSCOTask_occurrences_defaultDescription();
-        List<CorrelationAttributeInstance> listOfPossibleAttributes = CorrelationAttributeUtil.makeCorrAttrsForSearch(contentNode.getContent());
+        List<CorrelationAttributeInstance> listOfPossibleAttributes = new ArrayList<>();
+        Content contentFromNode = contentNode.getContent();
+        if (contentFromNode instanceof AbstractFile) {
+            listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AbstractFile) contentFromNode));
+        } else if (contentFromNode instanceof AnalysisResult) {
+            listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) contentFromNode));
+        } else if (contentFromNode instanceof DataArtifact) {
+            listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) contentFromNode));
+        } else {
+            //JIRA-TODO : add code for Jira-7938 OsAccounts
+        }
         comment = contentNode.getCommentProperty(tags, listOfPossibleAttributes);
         CorrelationAttributeInstance corInstance = null;
         if (CentralRepository.isEnabled()) {
