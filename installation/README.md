@@ -104,6 +104,8 @@
   popd
   ```
 - Extract the zip file to a location where you would like to have Autopsy installed.
+- Set up java path.  There are two ways to provide the path to java: `JAVA_HOME` can be set as an environmental variable or the `autopsy.conf` file can define the home for java.  
+  - To update the `autopsy.conf` file, navigate to where autopsy has been extracted and then open `etc/autopsy.conf`.  Within that file, replace the commented line or add a new line specifying the java home like: `jdkhome=<JAVA_PATH>`.  Another option is to provide an argument to `unix_setup.sh` like the following `unix_setup.sh -j <JAVA_PATH>` when performing the next step.
 - With the extracted folder as the working directory, you can run the following commands to perform setup:
   ```
   chown -R $(whoami) . && \
