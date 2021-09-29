@@ -28,9 +28,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.Action;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -68,7 +70,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
     private static final Logger logger = Logger.getLogger(OsAccounts.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/os-account.png";
-    private static final String REALM_DATA_AVAILABLE_EVENT = "REALM_DATA_AVAILABLE_EVENT";
+    private static final String OS_ACCOUNT_DATA_AVAILABLE_EVENT = "OS_ACCOUNT_DATA_AVAILABLE_EVENT";
+
     private static final String LIST_NAME = Bundle.OsAccount_listNode_name();
 
     private SleuthkitCase skCase;
@@ -207,6 +210,12 @@ public final class OsAccounts implements AutopsyVisitableItem {
             "OsAccounts_accountRealmNameProperty_name=RealmName",
             "OsAccounts_accountRealmNameProperty_displayName=Realm Name",
             "OsAccounts_accountRealmNameProperty_desc=OS Account Realm Name",
+            "OsAccounts_accountHostNameProperty_name=HostName",
+            "OsAccounts_accountHostNameProperty_displayName=Host",
+            "OsAccounts_accountHostNameProperty_desc=OS Account Host Name",
+            "OsAccounts_accountScopeNameProperty_name=ScopeName",
+            "OsAccounts_accountScopeNameProperty_displayName=Scope",
+            "OsAccounts_accountScopeNameProperty_desc=OS Account Scope Name",
             "OsAccounts_createdTimeProperty_name=creationTime",
             "OsAccounts_createdTimeProperty_displayName=Creation Time",
             "OsAccounts_createdTimeProperty_desc=OS Account Creation Time",
@@ -232,19 +241,55 @@ public final class OsAccounts implements AutopsyVisitableItem {
                             break;
                         }
                     }
-                } else if (evt.getPropertyName().equals(REALM_DATA_AVAILABLE_EVENT)) {
-                    OsAccountRealm realm = (OsAccountRealm) evt.getNewValue();
+                } else if (evt.getPropertyName().equals(OS_ACCOUNT_DATA_AVAILABLE_EVENT)
+                        && evt.getNewValue() instanceof AsynchOsAcctData
+                        && ((AsynchOsAcctData) evt.getNewValue()).getOsAccountId() == account.getId()) {
 
-                    // Currently only 0 or 1 names are supported, this will need
-                    // to be modified if that changes.
-                    List<String> realmNames = realm.getRealmNames();
+                    List<NodeProperty<?>> propertiesToUpdate = new ArrayList<>();
+
+                    AsynchOsAcctData osAcctData = (AsynchOsAcctData) evt.getNewValue();
+
+                    List<String> realmNames = osAcctData.getOsAcctRealm().getRealmNames();
                     if (!realmNames.isEmpty()) {
-                        updateSheet(new NodeProperty<>(
+                        String realmNamesStr = realmNames.stream()
+                                .map(String::trim)
+                                .distinct()
+                                .sorted((a, b) -> a.compareToIgnoreCase(b))
+                                .collect(Collectors.joining(", "));
+
+                        propertiesToUpdate.add(new NodeProperty<>(
                                 Bundle.OsAccounts_accountRealmNameProperty_name(),
                                 Bundle.OsAccounts_accountRealmNameProperty_displayName(),
                                 Bundle.OsAccounts_accountRealmNameProperty_desc(),
-                                realmNames.get(0)));
+                                realmNamesStr));
                     }
+
+                    String scopeName = osAcctData.getOsAcctRealm().getScope().getName();
+                    if (StringUtils.isNotBlank(scopeName)) {
+                        propertiesToUpdate.add(new NodeProperty<>(
+                                Bundle.OsAccounts_accountScopeNameProperty_name(),
+                                Bundle.OsAccounts_accountScopeNameProperty_displayName(),
+                                Bundle.OsAccounts_accountScopeNameProperty_desc(),
+                                scopeName));
+                    }
+
+                    List<Host> hosts = osAcctData.getHosts();
+                    if (!hosts.isEmpty()) {
+                        String hostsString = hosts.stream()
+                                .map(h -> h.getName().trim())
+                                .distinct()
+                                .sorted((a, b) -> a.compareToIgnoreCase(b))
+                                .collect(Collectors.joining(", "));
+
+                        propertiesToUpdate.add(new NodeProperty<>(
+                                Bundle.OsAccounts_accountHostNameProperty_name(),
+                                Bundle.OsAccounts_accountHostNameProperty_displayName(),
+                                Bundle.OsAccounts_accountHostNameProperty_desc(),
+                                hostsString));
+                    }
+
+                    SwingUtilities.invokeLater(()
+                            -> updateSheet(propertiesToUpdate.toArray(new NodeProperty<?>[propertiesToUpdate.size()])));
                 } else if (evt.getPropertyName().equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
                     SCOData scoData = (SCOData) evt.getNewValue();
                     if (scoData.getScoreAndDescription() != null) {
@@ -340,13 +385,25 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     Bundle.OsAccounts_loginNameProperty_displayName(),
                     Bundle.OsAccounts_loginNameProperty_desc(),
                     optional.isPresent() ? optional.get() : ""));
+
             // Fill with empty string, fetch on background task.
-            String realmName = "";
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_accountHostNameProperty_name(),
+                    Bundle.OsAccounts_accountHostNameProperty_displayName(),
+                    Bundle.OsAccounts_accountHostNameProperty_desc(),
+                    ""));
+
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_accountScopeNameProperty_name(),
+                    Bundle.OsAccounts_accountScopeNameProperty_displayName(),
+                    Bundle.OsAccounts_accountScopeNameProperty_desc(),
+                    ""));
+
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_accountRealmNameProperty_name(),
                     Bundle.OsAccounts_accountRealmNameProperty_displayName(),
                     Bundle.OsAccounts_accountRealmNameProperty_desc(),
-                    realmName));
+                    ""));
 
             Optional<Long> creationTimeValue = account.getCreationTime();
             String timeDisplayStr
@@ -439,14 +496,20 @@ public final class OsAccounts implements AutopsyVisitableItem {
                 }
 
                 try {
-                    long realmId = node.getOsAccount().getRealmId();
-                    OsAccountRealm realm = Case.getCurrentCase().getSleuthkitCase().getOsAccountRealmManager().getRealmByRealmId(realmId);
+                    SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+                    OsAccount osAcct = node.getOsAccount();
+                    long realmId = osAcct.getRealmId();
+                    OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmByRealmId(realmId);
+
+                    List<Host> hosts = skCase.getOsAccountManager().getHosts(osAcct);
+
+                    AsynchOsAcctData evtData = new AsynchOsAcctData(osAcct.getId(), realm, hosts);
 
                     if (listener != null && realm != null) {
                         listener.propertyChange(new PropertyChangeEvent(
                                 AutopsyEvent.SourceType.LOCAL.toString(),
-                                REALM_DATA_AVAILABLE_EVENT,
-                                null, realm));
+                                OS_ACCOUNT_DATA_AVAILABLE_EVENT,
+                                null, evtData));
                     }
 
                 } catch (TskCoreException ex) {
@@ -460,6 +523,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
             "# {0} - occurrenceCount",
             "OsAccounts.createSheet.count.description=There were {0} datasource(s) found with occurrences of the OS Account correlation value"})
         @Override
+
         protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attributeInstance, String defaultDescription) {
             Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
             String description = defaultDescription;
@@ -520,6 +584,52 @@ public final class OsAccounts implements AutopsyVisitableItem {
             }
 
             return status;
+        }
+
+        /**
+         * Data concerning an OS Account loaded asynchronously (and not at sheet
+         * creation).
+         */
+        private static class AsynchOsAcctData {
+
+            private final long osAccountId;
+            private final OsAccountRealm osAcctRealm;
+            private final List<Host> hosts;
+
+            /**
+             * Main constructor.
+             *
+             * @param osAccountId The id of the os account.
+             * @param osAcctRealm The realm of the os account.
+             * @param hosts       The hosts that the os account belongs to.
+             */
+            AsynchOsAcctData(long osAccountId, OsAccountRealm osAcctRealm, List<Host> hosts) {
+                this.osAccountId = osAccountId;
+                this.osAcctRealm = osAcctRealm;
+                this.hosts = hosts;
+            }
+
+            /**
+             * @return The id of the os account.
+             */
+            long getOsAccountId() {
+                return osAccountId;
+            }
+
+            /**
+             * @return The realm of the os account.
+             */
+            OsAccountRealm getOsAcctRealm() {
+                return osAcctRealm;
+            }
+
+            /**
+             * @return The hosts that the os account belongs to.
+             */
+            List<Host> getHosts() {
+                return hosts;
+            }
+
         }
     }
 }

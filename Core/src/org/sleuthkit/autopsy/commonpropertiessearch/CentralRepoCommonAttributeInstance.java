@@ -104,6 +104,11 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                     }
 
                     if (this.abstractFile == null) {
+                        
+                        if (currentFullPath == null || currentFullPath.isEmpty()) {
+                            return null;
+                        }
+                        
                         // We failed to find the file using the file id so now we
                         // will try using the file name, parent path and data source id.
                         File fileFromPath = new File(currentFullPath);

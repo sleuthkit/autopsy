@@ -61,6 +61,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -1105,6 +1106,7 @@ class ExtractRegistry extends Extract {
                 String sid = optional.get();
                 Map<String, String> userInfo = userInfoMap.remove(sid); 
                 if(userInfo != null) {
+                    addAccountInstance(accountMgr, osAccount, (DataSource)dataSource);
                     updateOsAccount(osAccount, userInfo, groupMap.get(sid), regAbstractFile);
                 }
             }
@@ -1999,9 +2001,10 @@ class ExtractRegistry extends Extract {
             accountMgr.newOsAccountInstance(osAccount, (DataSource)dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
         } else {
             osAccount = optional.get();
-            if (userName != null && !userName.isEmpty()) {
+            addAccountInstance(accountMgr, osAccount, (DataSource)dataSource);
+            if (userName != null && !userName.isEmpty()) {                
                 OsAccountUpdateResult updateResult= accountMgr.updateCoreWindowsOsAccountAttributes(osAccount, null, userName, domainName.isEmpty() ? null : domainName, host);
-                osAccount = updateResult.getUpdatedAccount().orElse(osAccount);
+                osAccount = updateResult.getUpdatedAccount().orElse(osAccount);     
             }
         }
 
@@ -2268,5 +2271,18 @@ class ExtractRegistry extends Extract {
      */
     private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.ATTRIBUTE_TYPE type, Integer value, OsAccount osAccount, Host host, AbstractFile file) {
         return osAccount.new OsAccountAttribute(new BlackboardAttribute.Type(type), value, osAccount, host, file);
+    }
+    
+    /**
+     * Adds an account instance for the given data source if one does not already
+     * exist.
+     * 
+     * @param accountMgr
+     * @param osAccount
+     * @param dataSource
+     * @throws TskCoreException 
+     */
+    private void addAccountInstance(OsAccountManager accountMgr, OsAccount osAccount, DataSource dataSource) throws TskCoreException {
+        accountMgr.newOsAccountInstance(osAccount, dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
     }
 }

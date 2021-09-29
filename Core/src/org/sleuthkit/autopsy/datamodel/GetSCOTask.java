@@ -24,6 +24,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -31,6 +32,8 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Content;
@@ -44,6 +47,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * content node.
  *
  */
+
+
 class GetSCOTask implements Runnable {
 
     private final WeakReference<AbstractContentNode<?>> weakNodeRef;
@@ -65,8 +70,10 @@ class GetSCOTask implements Runnable {
             return;
         }
         // get the SCO  column values
-        SCOData scoData = new SCOData();
-        scoData.setScoreAndDescription(contentNode.getScorePropertyAndDescription());
+        Pair<Score, String> scoreAndDescription;
+        DataResultViewerTable.HasCommentStatus comment;
+        Pair<Long, String> countAndDescription = null;
+        scoreAndDescription = contentNode.getScorePropertyAndDescription();
         //getting the correlation attribute and setting the comment column is done before the eamdb isEnabled check
         //because the Comment column will reflect the presence of comments in the CR when the CR is enabled, but reflect tag comments regardless
         String description = Bundle.GetSCOTask_occurrences_defaultDescription();
@@ -88,8 +95,8 @@ class GetSCOTask implements Runnable {
                 logger.log(Level.WARNING, "Unable to get OsAccountInstances for OsAccount with ID: " + contentFromNode.getId(), ex);
             }
         }
+        comment = contentNode.getCommentProperty(contentNode.getAllTagsFromDatabase(), listOfPossibleAttributes);
 
-        scoData.setComment(contentNode.getCommentProperty(contentNode.getAllTagsFromDatabase(), listOfPossibleAttributes));
         CorrelationAttributeInstance corInstance = null;
         if (CentralRepository.isEnabled()) {
             if (listOfPossibleAttributes.size() > 1) {
@@ -99,15 +106,17 @@ class GetSCOTask implements Runnable {
                 //there should only be one item in the list
                 corInstance = listOfPossibleAttributes.get(0);
             }
-            scoData.setCountAndDescription(contentNode.getCountPropertyAndDescription(corInstance, description));
+            countAndDescription = contentNode.getCountPropertyAndDescription(corInstance, description);
+        }
+        if (Thread.currentThread().isInterrupted()) {
+            return;
         }
         // signal SCO data is available.
-        if (listener
-                != null) {
+        if (listener != null) {
             listener.propertyChange(new PropertyChangeEvent(
                     AutopsyEvent.SourceType.LOCAL.toString(),
                     AbstractAbstractFileNode.NodeSpecificEvents.SCO_AVAILABLE.toString(),
-                    null, scoData));
+                    null, new SCOData(scoreAndDescription, comment, countAndDescription)));
         }
     }
 }
