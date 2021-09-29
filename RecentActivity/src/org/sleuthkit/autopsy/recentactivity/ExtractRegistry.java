@@ -751,6 +751,7 @@ class ExtractRegistry extends Extract {
                                 try{
                                     sid = userMap.getKey();
                                     String userName = userMap.getValue();
+                                    // Accounts in the SAM are all local accounts
                                     createOrUpdateOsAccount(regFile, sid, userName, null, null, OsAccountRealm.RealmScope.LOCAL);
                                 } catch(TskCoreException | TskDataException | NotUserSIDException ex) {
                                     logger.log(Level.WARNING, String.format("Failed to update Domain for existing OsAccount: %s, sid: %s", regFile.getId(), sid), ex);
@@ -864,6 +865,9 @@ class ExtractRegistry extends Extract {
                                         String sid = artnode.getAttribute("sid"); //NON-NLS
                                         String username = artnode.getAttribute("username"); //NON-NLS
                                         String domName = domainName;
+                                        
+                                        // accounts in profileList can be either domain or local
+                                        // Assume domain unless the SID was seen before in the SAM (which is only local). 
                                         OsAccountRealm.RealmScope scope = OsAccountRealm.RealmScope.DOMAIN;
                                         if(knownMachineSID(sid)) {
                                             domName = null;
@@ -1713,7 +1717,8 @@ class ExtractRegistry extends Extract {
     }
 
     /**
-     * Create a map of userids to usernames from the OS Accounts.
+     * Create a map of userids to usernames for all OS Accounts associated with the current 
+     * host in OsAccountManager.
      *
      * @param dataSource
      *
@@ -1726,6 +1731,7 @@ class ExtractRegistry extends Extract {
 
         for(OsAccount account: tskCase.getOsAccountManager().getOsAccounts(((DataSource)dataSource).getHost())) {
             Optional<String> userName = account.getLoginName();
+            // @@@ BC: Seems like this should be calling account.getAddr() to get the SID. 
             map.put(account.getName(), userName.isPresent() ? userName.get() : "");
         }
 
@@ -1741,6 +1747,8 @@ class ExtractRegistry extends Extract {
      * @return The Machine SID
      */
     private String getMachineSID(String osAccountSID) {
+        // @@@ We should add checks about mininum number of dashes. 
+        // and we should really call this stripRelativeIdentifierFromSID().
         int index = osAccountSID.lastIndexOf("-");
         return osAccountSID.substring(0, index);
     }
@@ -1748,12 +1756,13 @@ class ExtractRegistry extends Extract {
     private final List<String> machineSIDs = new ArrayList<>();
     /**
      * Returns true if the machine part of the SID was seen prior
-     * to ExtractRegistry running.
+     * to ExtractRegistry running. 
      * 
      * @param osAccountSID
      * 
      * @return 
      */
+    // @@@ BC: This is probably more accurately called 'knownDomainIdSID' 
     private boolean knownMachineSID(String osAccountSID) {
         if (machineSIDs.isEmpty()) {
             Map<String, String> userMap = getUserNameMap();
@@ -1771,7 +1780,7 @@ class ExtractRegistry extends Extract {
     /**
      * Returns a mapping of user sids to user names.
      * 
-     * @return username man or empty list if none where found.
+     * @return SID to username map. Will be empty if none where found.
      */
     private Map<String, String> getUserNameMap() {
         if(userNameMap == null) {
