@@ -50,7 +50,6 @@ import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Implements the OS Accounts subnode of Results in the Autopsy tree.
@@ -168,10 +167,9 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     if (filteringDSObjId == 0) {
                         list.addAll(skCase.getOsAccountManager().getOsAccounts());
                     } else {
-
                         list.addAll(skCase.getOsAccountManager().getOsAccountsByDataSourceObjId(filteringDSObjId));
                     }
-                } catch (TskCoreException /*| TskDataException*/ ex) {
+                } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Unable to retrieve list of OsAccounts for case", ex);
                     return false;
                 }
