@@ -218,6 +218,7 @@ public final class CaseEventListener implements PropertyChangeListener {
     /**
      * Sets the known status of a blackboard artifact in the central repository.
      *
+     * @param dbManager   The central repo database.
      * @param bbArtifact  The blackboard artifact to set known status.
      * @param knownStatus The new known status.
      */
