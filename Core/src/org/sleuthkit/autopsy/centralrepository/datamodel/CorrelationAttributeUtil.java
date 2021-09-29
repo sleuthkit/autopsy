@@ -140,6 +140,8 @@ public class CorrelationAttributeUtil {
         try {
             int artifactTypeID = analysisResult.getArtifactTypeID();
             if (artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+                //because this attribute retrieval is only occuring when the analysis result is an interesting artifact hit 
+                //and only one attribute is being retrieved the analysis results own get attribute method can be used efficently
                 BlackboardAttribute assocArtifactAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT);
                 if (assocArtifactAttr != null) {
                     BlackboardArtifact sourceArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(assocArtifactAttr.getValueLong());
@@ -157,6 +159,8 @@ public class CorrelationAttributeUtil {
                 }
             } else {
                 if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                    //because this attribute retrieval is only occuring when the analysis result is an keyword hit
+                    //and only one attribute is being retrieved the analysis results own get attribute method can be used efficently
                     BlackboardAttribute setNameAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
                     if (setNameAttr != null && CorrelationAttributeUtil.getEmailAddressAttrDisplayName().equals(setNameAttr.getValueString())) {
                         correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(analysisResult, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID, analysisResult.getAttributes()));
@@ -264,7 +268,7 @@ public class CorrelationAttributeUtil {
                         attributes, sourceContent, dataSource));
 
             } else if (artifactTypeID == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-                makeCorrAttrFromAcctArtifact(correlationAttrs, artifact);
+                makeCorrAttrFromAcctArtifact(correlationAttrs, artifact, attributes);
 
             } else if (artifactTypeID == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
                 BlackboardAttribute setNameAttr = getAttribute(attributes, new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH));
@@ -380,10 +384,10 @@ public class CorrelationAttributeUtil {
      *
      * @return The correlation attribute instance.
      */
-    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) throws InvalidAccountIDException, TskCoreException, CentralRepoException {
+    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact, List<BlackboardAttribute> attributes) throws InvalidAccountIDException, TskCoreException, CentralRepoException {
 
         // Get the account type from the artifact
-        BlackboardAttribute accountTypeAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
+        BlackboardAttribute accountTypeAttribute = getAttribute(attributes, new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
         String accountTypeStr = accountTypeAttribute.getValueString();
 
         // @@TODO Vik-6136: CR currently does not know of custom account types.  
@@ -404,7 +408,7 @@ public class CorrelationAttributeUtil {
             CorrelationAttributeInstance.Type corrType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
 
             // Get the account identifier
-            BlackboardAttribute accountIdAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID));
+            BlackboardAttribute accountIdAttribute = getAttribute(attributes, new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID));
             String accountIdStr = accountIdAttribute.getValueString();
 
             // add/get the account and get its accountId.
@@ -543,7 +547,7 @@ public class CorrelationAttributeUtil {
 
             CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
             if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()
-                    || ! (srcContent instanceof AbstractFile)) {
+                    || !(srcContent instanceof AbstractFile)) {
                 return new CorrelationAttributeInstance(
                         correlationType,
                         value,
