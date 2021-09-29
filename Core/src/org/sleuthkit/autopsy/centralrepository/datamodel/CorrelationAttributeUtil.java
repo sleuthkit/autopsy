@@ -141,7 +141,7 @@ public class CorrelationAttributeUtil {
             int artifactTypeID = analysisResult.getArtifactTypeID();
             if (artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
                 //because this attribute retrieval is only occuring when the analysis result is an interesting artifact hit 
-                //and only one attribute is being retrieved the analysis results own get attribute method can be used efficently
+                //and only one attribute is being retrieved the analysis result's own get attribute method can be used efficently
                 BlackboardAttribute assocArtifactAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT);
                 if (assocArtifactAttr != null) {
                     BlackboardArtifact sourceArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(assocArtifactAttr.getValueLong());
@@ -160,7 +160,7 @@ public class CorrelationAttributeUtil {
             } else {
                 if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                     //because this attribute retrieval is only occuring when the analysis result is an keyword hit
-                    //and only one attribute is being retrieved the analysis results own get attribute method can be used efficently
+                    //and only one attribute is being retrieved the analysis result's own get attribute method can be used efficently
                     BlackboardAttribute setNameAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
                     if (setNameAttr != null && CorrelationAttributeUtil.getEmailAddressAttrDisplayName().equals(setNameAttr.getValueString())) {
                         correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(analysisResult, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID, analysisResult.getAttributes()));
