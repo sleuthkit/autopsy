@@ -97,7 +97,6 @@ public final class OtherOccurrences {
      * find all artifact instances correlated to the given central repository
      * artifact.
      *
-     * @param file           The current file.
      * @param deviceId       The device ID for the current data source.
      * @param dataSourceName The name of the current data source.
      * @param corAttr        CorrelationAttribute to query for
@@ -245,7 +244,6 @@ public final class OtherOccurrences {
      * Create a cvs file of occurrences for the given parameters.
      *
      * @param destFile           Output file for the csv data.
-     * @param abstractFile       Source file.
      * @param correlationAttList List of correclationAttributeInstances, should
      *                           not be null.
      * @param dataSourceName     Name of the data source.

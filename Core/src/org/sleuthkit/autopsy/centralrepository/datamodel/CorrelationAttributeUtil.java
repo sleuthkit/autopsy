@@ -94,13 +94,13 @@ public class CorrelationAttributeUtil {
 
     /**
      * Makes zero to many correlation attribute instances from the attributes of
-     * content objects that have correlatable data. The intention of this method
+     * abstract file objects that have correlatable data. The intention of this method
      * is to use the results to save to the CR, not to correlate with them. If
      * you want to correlate, please use makeCorrAttrsForSearch. An artifact
      * that can have correlatable data != An artifact that should be the source
      * of data in the CR, so results may be un-necessarily incomplete.
      *
-     * @param content A Content object.
+     * @param file A AbstractFile object.
      *
      * @return A list, possibly empty, of correlation attribute instances for
      *         the content.
@@ -324,7 +324,6 @@ public class CorrelationAttributeUtil {
      * Makes a correlation attribute instance from a phone number attribute of
      * an artifact.
      *
-     * @param corrAttrInstances Correlation attributes will be added to this.
      * @param artifact          An artifact with a phone number attribute.
      * @param attributes        List of attributes.
      *
@@ -423,7 +422,6 @@ public class CorrelationAttributeUtil {
      * Makes a correlation attribute instance from a specified attribute of an
      * artifact. The correlation attribute instance is added to an input list.
      *
-     * @param corrAttrInstances A list of correlation attribute instances.
      * @param artifact          An artifact.
      * @param artAttrType       The type of the attribute of the artifact that
      *                          is to be made into a correlation attribute
@@ -459,7 +457,6 @@ public class CorrelationAttributeUtil {
      * Makes a correlation attribute instance from a specified attribute of an
      * artifact. The correlation attribute instance is added to an input list.
      *
-     * @param corrAttrInstances A list of correlation attribute instances.
      * @param artifact          An artifact.
      * @param artAttrType       The type of the attribute of the artifact that
      *                          is to be made into a correlation attribute
