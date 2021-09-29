@@ -134,7 +134,7 @@ class ContentTagNode extends TagNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
-        actions.addAll(Arrays.asList(super.getActions(context)));
+        
 
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (file != null) {
@@ -142,7 +142,8 @@ class ContentTagNode extends TagNode {
         }
 
         actions.addAll(DataModelActionsFactory.getActions(tag, false));
-
+        actions.add(null);
+        actions.addAll(Arrays.asList(super.getActions(context))); 
         return actions.toArray(new Action[actions.size()]);
     }
 

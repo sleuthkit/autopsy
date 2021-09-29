@@ -25,6 +25,7 @@ import java.util.List;
 import javax.swing.Action;
 
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
@@ -412,9 +413,10 @@ public class DataModelActionsFactory {
         return actionsList;
     }
 
+    @Messages({"DataModelActionsFactory_viewSourceArtifact_text=View Source Result"})
     public static List<Action> getActions(BlackboardArtifactTag artifactTag, boolean isArtifactSource) {
         List<Action> actionsList = new ArrayList<>();
-        actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), artifactTag.getContent()));
+        actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), artifactTag.getContent()));        
         final BlackboardArtifactTagNode tagNode = new BlackboardArtifactTagNode(artifactTag);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, tagNode));

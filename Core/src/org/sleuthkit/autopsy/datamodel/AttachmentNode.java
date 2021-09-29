@@ -96,11 +96,11 @@ public final class AttachmentNode extends DisplayableItemNode {
     public Action[] getActions(boolean context) {
     
         List<Action> actionsList = new ArrayList<>();
-        actionsList.addAll(Arrays.asList(super.getActions(true)));
         
         // If there is an attachment file
         if (this.attachmentFile != null) {
             actionsList.add(new ViewContextAction(Bundle.AttachmentNode_getActions_viewFileInDir_text(), this.attachmentFile));
+            actionsList.add(ViewFileInTimelineAction.createViewFileAction(this.attachmentFile));
             actionsList.add(null); // Creates an item separator
         
             actionsList.add(new NewWindowViewAction(Bundle.AttachmentNode_getActions_viewInNewWin_text(), this));
@@ -112,7 +112,6 @@ public final class AttachmentNode extends DisplayableItemNode {
             } else {
                 actionsList.add(ExternalViewerShortcutAction.getInstance());
             }
-            actionsList.add(ViewFileInTimelineAction.createViewFileAction(this.attachmentFile));
             actionsList.add(null); // Creates an item separator
 
             actionsList.add(ExtractAction.getInstance());
@@ -124,6 +123,9 @@ public final class AttachmentNode extends DisplayableItemNode {
                 actionsList.add(DeleteFileContentTagAction.getInstance());
             }
             actionsList.addAll(ContextMenuExtensionPoint.getActions());
+            
+            actionsList.add(null);
+            actionsList.addAll(Arrays.asList(super.getActions(true)));
             
         }
         return actionsList.toArray(new Action[0]);

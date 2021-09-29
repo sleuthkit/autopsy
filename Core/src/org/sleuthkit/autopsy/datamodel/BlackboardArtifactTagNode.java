@@ -108,7 +108,6 @@ public class BlackboardArtifactTagNode extends TagNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
-        actions.addAll(Arrays.asList(super.getActions(context)));
         BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
         //if this artifact has a time stamp add the action to view it in the timeline
         try {
@@ -118,7 +117,9 @@ public class BlackboardArtifactTagNode extends TagNode {
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
         }
-
+        
+        actions.add(new ViewTaggedArtifactAction(Bundle.BlackboardArtifactTagNode_viewSourceArtifact_text(), artifact));
+        actions.add(null);
         // if the artifact links to another file, add an action to go to that file
         try {
             AbstractFile c = findLinked(artifact);
@@ -133,9 +134,9 @@ public class BlackboardArtifactTagNode extends TagNode {
         if (null != file) {
             actions.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
         }
-        actions.add(new ViewTaggedArtifactAction(BlackboardArtifactTagNode_viewSourceArtifact_text(), artifact));
         actions.addAll(DataModelActionsFactory.getActions(tag, true));
-
+        actions.add(null);
+        actions.addAll(Arrays.asList(super.getActions(context)));
         return actions.toArray(new Action[0]);
     }
 
