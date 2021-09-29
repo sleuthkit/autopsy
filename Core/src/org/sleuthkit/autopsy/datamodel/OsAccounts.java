@@ -170,6 +170,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     } else {
                         Host host = skCase.getHostManager().getHostByDataSource(skCase.getDataSource(filteringDSObjId));
                         list.addAll(skCase.getOsAccountManager().getOsAccounts(host));
+//                        list.addAll(skCase.getOsAccountManager().getOsAccountsByDataSourceId(filteringDSObjId));
                     }
                 } catch (TskCoreException | TskDataException ex) {
                     logger.log(Level.SEVERE, "Unable to retrieve list of OsAccounts for case", ex);
@@ -215,7 +216,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                         String realmNamesStr = realmNames.stream()
                                 .map(String::trim)
                                 .distinct()
-                                .sorted((a,b) -> a.compareToIgnoreCase(b))
+                                .sorted((a, b) -> a.compareToIgnoreCase(b))
                                 .collect(Collectors.joining(", "));
 
                         updateSheet(new NodeProperty<>(
@@ -230,7 +231,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                         String hostsString = hosts.stream()
                                 .map(h -> h.getName().trim())
                                 .distinct()
-                                .sorted((a,b) -> a.compareToIgnoreCase(b))
+                                .sorted((a, b) -> a.compareToIgnoreCase(b))
                                 .collect(Collectors.joining(", "));
 
                         updateSheet(new NodeProperty<>(
@@ -442,9 +443,10 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
             /**
              * Main constructor.
+             *
              * @param osAccountId The id of the os account.
              * @param osAcctRealm The realm of the os account.
-             * @param hosts The hosts that the os account belongs to.
+             * @param hosts       The hosts that the os account belongs to.
              */
             AsynchOsAcctData(long osAccountId, OsAccountRealm osAcctRealm, List<Host> hosts) {
                 this.osAccountId = osAccountId;
