@@ -31,6 +31,8 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -206,6 +208,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
                         && evt.getNewValue() instanceof AsynchOsAcctData
                         && ((AsynchOsAcctData) evt.getNewValue()).getOsAccountId() == account.getId()) {
 
+                    List<NodeProperty<?>> propertiesToUpdate = new ArrayList<>();
+
                     AsynchOsAcctData osAcctData = (AsynchOsAcctData) evt.getNewValue();
 
                     List<String> realmNames = osAcctData.getOsAcctRealm().getRealmNames();
@@ -216,11 +220,20 @@ public final class OsAccounts implements AutopsyVisitableItem {
                                 .sorted((a, b) -> a.compareToIgnoreCase(b))
                                 .collect(Collectors.joining(", "));
 
-                        updateSheet(new NodeProperty<>(
+                        propertiesToUpdate.add(new NodeProperty<>(
                                 Bundle.OsAccounts_accountRealmNameProperty_name(),
                                 Bundle.OsAccounts_accountRealmNameProperty_displayName(),
                                 Bundle.OsAccounts_accountRealmNameProperty_desc(),
                                 realmNamesStr));
+                    }
+
+                    String scopeName = osAcctData.getOsAcctRealm().getScope().getName();
+                    if (StringUtils.isNotBlank(scopeName)) {
+                        propertiesToUpdate.add(new NodeProperty<>(
+                                Bundle.OsAccounts_accountScopeNameProperty_name(),
+                                Bundle.OsAccounts_accountScopeNameProperty_displayName(),
+                                Bundle.OsAccounts_accountScopeNameProperty_desc(),
+                                scopeName));
                     }
 
                     List<Host> hosts = osAcctData.getHosts();
@@ -231,13 +244,15 @@ public final class OsAccounts implements AutopsyVisitableItem {
                                 .sorted((a, b) -> a.compareToIgnoreCase(b))
                                 .collect(Collectors.joining(", "));
 
-                        updateSheet(new NodeProperty<>(
+                        propertiesToUpdate.add(new NodeProperty<>(
                                 Bundle.OsAccounts_accountHostNameProperty_name(),
                                 Bundle.OsAccounts_accountHostNameProperty_displayName(),
                                 Bundle.OsAccounts_accountHostNameProperty_desc(),
                                 hostsString));
                     }
 
+                    SwingUtilities.invokeLater(() -> 
+                            updateSheet(propertiesToUpdate.toArray(new NodeProperty<?>[propertiesToUpdate.size()])));
                 }
             }
         };
@@ -294,6 +309,9 @@ public final class OsAccounts implements AutopsyVisitableItem {
             "OsAccounts_accountHostNameProperty_name=HostName",
             "OsAccounts_accountHostNameProperty_displayName=Host",
             "OsAccounts_accountHostNameProperty_desc=OS Account Host Name",
+            "OsAccounts_accountScopeNameProperty_name=ScopeName",
+            "OsAccounts_accountScopeNameProperty_displayName=Scope",
+            "OsAccounts_accountScopeNameProperty_desc=OS Account Scope Name",
             "OsAccounts_createdTimeProperty_name=creationTime",
             "OsAccounts_createdTimeProperty_displayName=Creation Time",
             "OsAccounts_createdTimeProperty_desc=OS Account Creation Time",
@@ -330,20 +348,25 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     Bundle.OsAccounts_loginNameProperty_displayName(),
                     Bundle.OsAccounts_loginNameProperty_desc(),
                     optional.isPresent() ? optional.get() : ""));
-            // Fill with empty string, fetch on background task.
-            String realmName = "";
-            propertiesSet.put(new NodeProperty<>(
-                    Bundle.OsAccounts_accountRealmNameProperty_name(),
-                    Bundle.OsAccounts_accountRealmNameProperty_displayName(),
-                    Bundle.OsAccounts_accountRealmNameProperty_desc(),
-                    realmName));
 
-            String hostName = "";
+            // Fill with empty string, fetch on background task.
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_accountHostNameProperty_name(),
                     Bundle.OsAccounts_accountHostNameProperty_displayName(),
                     Bundle.OsAccounts_accountHostNameProperty_desc(),
-                    hostName));
+                    ""));
+
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_accountScopeNameProperty_name(),
+                    Bundle.OsAccounts_accountScopeNameProperty_displayName(),
+                    Bundle.OsAccounts_accountScopeNameProperty_desc(),
+                    ""));
+
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_accountRealmNameProperty_name(),
+                    Bundle.OsAccounts_accountRealmNameProperty_displayName(),
+                    Bundle.OsAccounts_accountRealmNameProperty_desc(),
+                    ""));
 
             Optional<Long> creationTimeValue = account.getCreationTime();
             String timeDisplayStr
