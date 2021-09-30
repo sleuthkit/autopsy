@@ -214,7 +214,7 @@ public class CorrelationAttributeUtil {
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Failed to get information regarding correlation attributes in regards to either the provided AnalysisResult, it's associated artifact, or it's parent.", ex);
             } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Attempted to retrieve correlation attributes for search with no currently open case.", ex);
+                logger.log(Level.WARNING, "Attempted to retrieve correlation attributes for search with no currently open case.", ex);
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Failed to get correlation type from central repository.", ex);
             }
@@ -317,10 +317,10 @@ public class CorrelationAttributeUtil {
                     correlationAttrs.addAll(makeCorrAttrsFromCommunicationArtifact(artifact, attributes));
                 }
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.WARNING, String.format("Error normalizing correlation attribute (%s)", artifact), ex); // NON-NLS
+                logger.log(Level.SEVERE, String.format("Error normalizing correlation attribute (%s)", artifact), ex); // NON-NLS
                 return correlationAttrs;
             } catch (InvalidAccountIDException ex) {
-                logger.log(Level.WARNING, String.format("Invalid account identifier (artifactID: %d)", artifact.getId())); // NON-NLS
+                logger.log(Level.SEVERE, String.format("Invalid account identifier (artifactID: %d)", artifact.getId())); // NON-NLS
                 return correlationAttrs;
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
@@ -329,7 +329,7 @@ public class CorrelationAttributeUtil {
                 logger.log(Level.SEVERE, String.format("Error getting querying case database (%s)", artifact), ex); // NON-NLS
                 return correlationAttrs;
             } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
+                logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
                 return correlationAttrs;
             }
         }
@@ -603,10 +603,10 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
             return null;
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", artifact), ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", artifact), ex); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
+            logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
             return null;
         }
     }
@@ -656,7 +656,7 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
+            logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
             return null;
         }
 
@@ -667,7 +667,7 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
             return null;
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
             return null;
         }
 
@@ -685,7 +685,7 @@ public class CorrelationAttributeUtil {
                 logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
                 return null;
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+                logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
                 return null;
             }
         }
@@ -743,9 +743,9 @@ public class CorrelationAttributeUtil {
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
+            logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
         }
         return fileTypeList;
     }
@@ -816,7 +816,7 @@ public class CorrelationAttributeUtil {
                     } catch (CentralRepoException ex) {
                         logger.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
                     } catch (NoCurrentCaseException ex) {
-                        logger.log(Level.SEVERE, "Exception while getting open case.", ex);  //NON-NLS
+                        logger.log(Level.WARNING, "Exception while getting open case.", ex);  //NON-NLS
                     } catch (CorrelationAttributeNormalizationException ex) {
                         logger.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
                     }

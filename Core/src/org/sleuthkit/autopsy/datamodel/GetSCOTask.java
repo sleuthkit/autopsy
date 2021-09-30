@@ -121,14 +121,14 @@ class GetSCOTask implements Runnable {
                             }
                         }
                     } catch (CentralRepoException ex) {
-                        logger.log(Level.WARNING, "Error checking CR for data sources which exist in it", ex);
+                        logger.log(Level.SEVERE, "Error checking CR for data sources which exist in it", ex);
                     } catch (NoCurrentCaseException ex) {
                         logger.log(Level.WARNING, "The current case was closed while attempting to find a data source in the central repository", ex);
                     }
                 }
                 listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(osAccountInstance));
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get the DataSource or OsAccountInstances from an OsAccount with ID: " + contentFromNode.getId(), ex);
+                logger.log(Level.SEVERE, "Unable to get the DataSource or OsAccountInstances from an OsAccount with ID: " + contentFromNode.getId(), ex);
             }
         }
         DataResultViewerTable.HasCommentStatus commentStatus = contentNode.getCommentProperty(contentNode.getAllTagsFromDatabase(), listOfPossibleAttributes);
