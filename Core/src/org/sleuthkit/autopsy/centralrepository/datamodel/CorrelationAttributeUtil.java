@@ -156,7 +156,7 @@ public class CorrelationAttributeUtil {
                             correlationAttrs.addAll((CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) sourceArtifact)));
                         } else {
                             String sourceName = sourceArtifact != null ? "SourceArtifact display name: " + sourceArtifact.getDisplayName() : "SourceArtifact was null";
-                            logger.log(Level.WARNING, "Source artifact found through TSK_ASSOCIATED_ARTIFACT attribute was not a DataArtifact or "
+                            logger.log(Level.SEVERE, "Source artifact found through TSK_ASSOCIATED_ARTIFACT attribute was not a DataArtifact or "
                                     + "an Analysis Result. AssociateArtifactAttr Value: {0} {1}",
                                     new Object[]{assocArtifactAttr.getValueString(), sourceName});
                         }
@@ -192,15 +192,27 @@ public class CorrelationAttributeUtil {
                     } else if (parent instanceof OsAccount) {
                         for (OsAccountInstance osAccountInst : ((OsAccount) parent).getOsAccountInstances()) {
                             if (osAccountInst.getDataSource().equals(analysisResult.getDataSource())) {
+                                /**
+                                 * We only need to add correlation attributes
+                                 * for a single OsAccountInstance. because we
+                                 * are generally searching based on type and
+                                 * value.
+                                 *
+                                 * However data source can also be used, so we
+                                 * would like to choose an OsAccountInstance
+                                 * which is associated with the same data source
+                                 * as the provided AnalysisResult for those use
+                                 * cases. For example to get the count of cases
+                                 * with other instances.
+                                 */
                                 correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(osAccountInst));
                                 break;
                             }
                         }
                     }
                 }
-
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get information regarding correlation attributes from AnalysisResult", ex);
+                logger.log(Level.SEVERE, "Failed to get information regarding correlation attributes in regards to either the provided AnalysisResult, it's associated artifact, or it's parent.", ex);
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Attempted to retrieve correlation attributes for search with no currently open case.", ex);
             } catch (CentralRepoException ex) {
