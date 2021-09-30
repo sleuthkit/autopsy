@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
@@ -37,7 +36,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Instances of this class wrap BlackboardArtifactTag objects. In the Autopsy
