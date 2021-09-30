@@ -163,7 +163,7 @@ public class CorrelationAttributeUtil {
                     }
                 } else {
                     if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                        //because this attribute retrieval is only occuring when the analysis result is an keyword hit
+                        //because this attribute retrieval is only occuring when the analysis result is a keyword hit
                         //and only one attribute is being retrieved the analysis result's own get attribute method can be used efficently
                         BlackboardAttribute setNameAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
                         if (setNameAttr != null && CorrelationAttributeUtil.getEmailAddressAttrDisplayName().equals(setNameAttr.getValueString())) {
