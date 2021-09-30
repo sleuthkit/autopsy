@@ -115,7 +115,6 @@ public class KeyValueNode extends AbstractNode {
     @Override
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
-        actionsList.addAll(Arrays.asList(super.getActions(popup)));
         // If this artifact has associated content, add the actions.
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
@@ -123,6 +122,7 @@ public class KeyValueNode extends AbstractNode {
             actionsList.add(new ViewContextAction(Bundle.KeyValueNode_menuItemText_viewFileInDir(), file));
         }
         actionsList.add(null); // creates a menu separator
+        actionsList.addAll(Arrays.asList(super.getActions(popup)));
 
         return actionsList.toArray(new Action[actionsList.size()]);
     }

@@ -138,7 +138,6 @@ public class EventNode extends DisplayableItemNode {
         + " The 'View File in Timeline' action will not be available."})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-        Collections.addAll(actionsList, super.getActions(context));
 
         /*
          * If this event is derived from an artifact, add actions to view the
@@ -174,6 +173,9 @@ public class EventNode extends DisplayableItemNode {
             }
             actionsList.addAll(ContextMenuExtensionPoint.getActions());
         }
+        actionsList.add(null);
+        Collections.addAll(actionsList, super.getActions(context));
+        
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 
