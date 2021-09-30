@@ -1826,6 +1826,10 @@ class TableReportGenerator {
             return false;
         }
         
+        if (content.getDataSource() == null) {
+            return false;
+        }
+        
         long dataSourceId = content.getDataSource().getId();
         return !this.settings.getSelectedDataSources().contains(dataSourceId);
     }
