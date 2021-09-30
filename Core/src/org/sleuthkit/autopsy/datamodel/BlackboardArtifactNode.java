@@ -891,23 +891,13 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                NO_DESCR,
                getDisplayName()));
 
-        GetSCOTask scoTask = null;
+        GetSCOTask scoTask;
         if (artifact instanceof AnalysisResult
                 && !(artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                 || artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
             scoTask = updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
         } else {
-            /*
-             * Add the name of the source content of the artifact represented by
-             * this node to the sheet. The value of this property is the same as
-             * the display name of the node and this a "special" property that
-             * displays the node's icon as well as the display name.
-             */
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
-                    Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
-                    NO_DESCR,
-                    getDisplayName()));
+            scoTask = addSCOColumns(sheetSet);
         }
 
         if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
@@ -927,10 +917,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                  */
                 new FileNameTransTask(srcContent.getName(), this, listener).submit();
             }
-        }
-
-        if (scoTask == null) {
-            scoTask = addSCOColumns(sheetSet);
         }
 
         /*
@@ -1148,8 +1134,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                             NO_DESCR,
                             path));
         }
-        
-        backgroundTasksPool.submit(scoTask);
+
+        if (scoTask != null) {
+            backgroundTasksPool.submit(scoTask);
+        }
 
         return sheet;
     }
