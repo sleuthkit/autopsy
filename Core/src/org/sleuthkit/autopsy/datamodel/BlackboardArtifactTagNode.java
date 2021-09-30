@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
@@ -36,6 +37,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Instances of this class wrap BlackboardArtifactTag objects. In the Autopsy
@@ -52,8 +54,14 @@ public class BlackboardArtifactTagNode extends TagNode {
 
     public BlackboardArtifactTagNode(BlackboardArtifactTag tag) {
         super(Lookups.fixed(tag, tag.getArtifact(), tag.getContent()), tag.getContent());
-        super.setName(tag.getContent().getName());
-        super.setDisplayName(tag.getContent().getName());
+        String name = tag.getContent().getName();  // As a backup.
+        try {
+            name = tag.getArtifact().getShortDescription(); 
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Failed to get short description for artifact id=" + tag.getArtifact().getId(), ex);
+        }
+        setName(name);
+        setDisplayName(name);
         this.setIconBaseWithExtension(ICON_PATH);
         this.tag = tag;
     }
@@ -72,7 +80,7 @@ public class BlackboardArtifactTagNode extends TagNode {
                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.srcFile.text"),
                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.srcFile.text"),
                 "",
-                tag.getContent().getName()));
+                getDisplayName()));
         addOriginalNameProp(properties);
         String contentPath;
         try {
