@@ -52,15 +52,15 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * FilterNode containing properties and actions for keyword search.
- * 
+ *
  * Wraps the generic KeyValue node and customizes the property sheet and lookup
  */
 class AdHocSearchFilterNode extends FilterNode {
 
     /**
      * Instantiate a KeywordSearchFilterNode.
-     * 
-     * @param original         The original source node.
+     *
+     * @param original The original source node.
      */
     AdHocSearchFilterNode(Node original) {
         super(original, null, new ProxyLookup(original.getLookup()));
@@ -160,10 +160,20 @@ class AdHocSearchFilterNode extends FilterNode {
 
         private List<Action> getFileActions() {
             List<Action> actionsList = new ArrayList<>();
+            
+            boolean hasAbstractFile = getOriginal().getLookup().lookup(AbstractFile.class) != null;
+            
             actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), AdHocSearchFilterNode.this));
-            actionsList.add(new ExternalViewerAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.openExternViewActLbl"), getOriginal()));
+
+            if (hasAbstractFile) {
+                actionsList.add(new ExternalViewerAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.openExternViewActLbl"), getOriginal()));
+            }
+            
             actionsList.add(null);
-            actionsList.add(ExtractAction.getInstance());
+            if (hasAbstractFile) {
+                actionsList.add(ExtractAction.getInstance());
+            }
+            
             actionsList.add(ExportCSVAction.getInstance());
             actionsList.add(null); // creates a menu separator
             actionsList.add(AddContentTagAction.getInstance());
