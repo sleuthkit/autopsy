@@ -354,7 +354,7 @@ public class CorrelationAttributeUtil {
         /*
          * Normalize the phone number.
          */
-        List<CorrelationAttributeInstance> corrAttrInstances = Collections.emptyList();
+        List<CorrelationAttributeInstance> corrAttrInstances = new ArrayList<>();
         if (value != null
                 && CorrelationAttributeNormalizer.isValidPhoneNumber(value)) {
             value = CorrelationAttributeNormalizer.normalizePhone(value);
