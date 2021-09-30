@@ -380,6 +380,7 @@ public class CorrelationAttributeUtil {
      *
      * @param corrAttrInstances A list of correlation attribute instances.
      * @param acctArtifact      An account artifact.
+     * @param attributes        List of attributes.
      *
      * @return The correlation attribute instance.
      */
