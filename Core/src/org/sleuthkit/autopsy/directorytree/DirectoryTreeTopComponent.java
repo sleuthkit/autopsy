@@ -1229,6 +1229,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @param node      The node.
      * @param osAccount The os account.
+     * @param hosts     List of hosts.
      *
      * @return The parent list node of the os account if found or empty if not.
      */

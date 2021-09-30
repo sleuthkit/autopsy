@@ -140,8 +140,12 @@ public class OsAccountDataPanel extends JPanel {
                 String key = rowData.getKey();
                 String value = rowData.getValue();
 
-                addPropertyName(key, rowCnt);
-                addPropertyValue(value, rowCnt++);
+                if(value != null) {
+                    addPropertyName(key, rowCnt);
+                    addPropertyValue(value, rowCnt++);
+                } else {
+                    addLabel(key, rowCnt++);
+                }
             }
         }
 
@@ -240,24 +244,28 @@ public class OsAccountDataPanel extends JPanel {
     })
     private SectionData buildHostData(Host host, List<OsAccountAttribute> attributeList) {
         SectionData data = new SectionData(Bundle.OsAccountDataPanel_host_section_title(host.getName()));
-        for (OsAccountAttribute attribute : attributeList) {
-            String displayName = attribute.getAttributeType().getDisplayName();
-            String value = attribute.getDisplayString();
-            
-            if(attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT.getTypeID()) {
-                displayName = Bundle.OsAccountDataPanel_host_count_title();
-            } else if(attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IS_ADMIN.getTypeID()) {
-                displayName = Bundle.OsAccountDataPanel_administrator_title();
-                if(attribute.getValueInt() == 0) {
-                    value = "False";
-                } else {
-                    value = "True";
+        if(attributeList != null) {
+            for (OsAccountAttribute attribute : attributeList) {
+                String displayName = attribute.getAttributeType().getDisplayName();
+                String value = attribute.getDisplayString();
+
+                if(attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT.getTypeID()) {
+                    displayName = Bundle.OsAccountDataPanel_host_count_title();
+                } else if(attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IS_ADMIN.getTypeID()) {
+                    displayName = Bundle.OsAccountDataPanel_administrator_title();
+                    if(attribute.getValueInt() == 0) {
+                        value = "False";
+                    } else {
+                        value = "True";
+                    }
+                } else if(attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
+                    displayName = Bundle.OsAccountDataPanel_data_accessed_title();
                 }
-            } else if(attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
-                displayName = Bundle.OsAccountDataPanel_data_accessed_title();
+
+                data.addData(displayName, value);
             }
-            
-            data.addData(displayName, value);
+        } else {
+            data.addData("No details available", null);
         }
 
         return data;
@@ -285,6 +293,18 @@ public class OsAccountDataPanel extends JPanel {
     private void addPropertyName(String key, int row) {
         JLabel label = new JLabel(key + ":");
         add(label, getPropertyNameContraints(row));
+    }
+    
+    /**
+     * Adds a simple label to the given row.
+     *
+     * @param text The text to show.
+     * @param row  The row in the layout.
+     */
+    private void addLabel(String text, int row) {
+        JLabel label = new JLabel(text);
+        add(label, getPropertyNameContraints(row));
+        addPropertyValue("", row);
     }
 
     /**
@@ -398,54 +418,51 @@ public class OsAccountDataPanel extends JPanel {
             }
             
             OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmByRealmId(account.getRealmId());
-            
+    
             List<Host> hosts = osAccountManager.getHosts(account);
             List<OsAccountAttribute> attributeList = account.getExtendedOsAccountAttributes();
 
+            // Organize the attributes by hostId
+            Map<Long, List<OsAccountAttribute>> idMap = new HashMap<>();
             if (attributeList != null) {
-                if (hosts != null) {
-                    // Organize the attributes by hostId
-                    Map<Long, List<OsAccountAttribute>> idMap = new HashMap<>();
-                    for (OsAccountAttribute attribute : attributeList) {
-                        List<OsAccountAttribute> atList = null;
-                        Optional<Long> optionalId = attribute.getHostId();
-                        Long key = null;
-                        if (optionalId.isPresent()) {
-                            key = optionalId.get();
-                        }
-
-                        atList = idMap.get(key);
-
-                        if (atList == null) {
-                            atList = new ArrayList<>();
-                            idMap.put(key, atList);
-                        }
-
-                        atList.add(attribute);
+                for (OsAccountAttribute attribute : attributeList) {
+                    List<OsAccountAttribute> atList = null;
+                    Optional<Long> optionalId = attribute.getHostId();
+                    Long key = null;
+                    if (optionalId.isPresent()) {
+                        key = optionalId.get();
                     }
 
-                    // Add attribute lists to the hostMap 
-                    for (Host host : hosts) {
-                        List<OsAccountAttribute> atList = idMap.get(host.getHostId());
-                        if (atList != null) {
-                            hostMap.put(host, atList);
-                        }
+                    atList = idMap.get(key);
 
-                    }
-                    List<OsAccountAttribute> atList = idMap.get(null);
-                    if (atList != null) {
-                        hostMap.put(null, atList);
+                    if (atList == null) {
+                        atList = new ArrayList<>();
+                        idMap.put(key, atList);
                     }
 
-                    // Store both the host and the dataSource so that we get
-                    // all of the calls to the db done in the thread.
-                    for (OsAccountInstance instance : account.getOsAccountInstances()) {
-                        instanceMap.put(instance.getDataSource().getHost(), instance.getDataSource());
-                    }
-
-                } else {
-                    hostMap.put(null, attributeList);
+                    atList.add(attribute);
                 }
+            }
+
+            // Add attribute lists to the hostMap 
+            if (hosts != null) {
+                for (Host host : hosts) {
+                    List<OsAccountAttribute> atList = idMap.get(host.getHostId());
+                    hostMap.put(host, atList);
+                }
+            } else {
+                hostMap.put(null, attributeList);
+            }
+
+            List<OsAccountAttribute> atList = idMap.get(null);
+            if (atList != null) {
+                hostMap.put(null, atList);
+            }
+
+            // Store both the host and the dataSource so that we get
+            // all of the calls to the db done in the thread.
+            for (OsAccountInstance instance : account.getOsAccountInstances()) {
+                instanceMap.put(instance.getDataSource().getHost(), instance.getDataSource());
             }
 
             return new WorkerResults(hostMap, instanceMap, realm);

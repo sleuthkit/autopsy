@@ -119,7 +119,11 @@ public class EXIFProcessor implements PictureProcessor {
 
                 final Rational altitude = gpsDir.getRational(GpsDirectory.TAG_ALTITUDE);
                 if (altitude != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE, MODULE_NAME, altitude.doubleValue()));
+                    double alt = altitude.doubleValue();
+                    if (Double.isInfinite(alt)) {
+                        alt = 0.0;
+                    }
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE, MODULE_NAME, alt));
                 }
             }
 

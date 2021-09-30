@@ -22,10 +22,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
@@ -55,7 +53,7 @@ public class ContainerSummary {
     public ContainerSummary(SleuthkitCaseProvider provider) {
         this.provider = provider;
     }
-    
+
     /**
      * Gets the size of unallocated files in a particular datasource.
      *
@@ -151,9 +149,9 @@ public class ContainerSummary {
      * Generates a string which is a concatenation of the value received from
      * the result set.
      *
-     * @param query              The query.
-     * @param valueParam         The parameter for the value in the result set.
-     * @param separator          The string separator used in concatenation.
+     * @param query      The query.
+     * @param valueParam The parameter for the value in the result set.
+     * @param separator  The string separator used in concatenation.
      *
      * @return The concatenated string or null if the query could not be
      *         executed.
@@ -212,13 +210,13 @@ public class ContainerSummary {
         String separator = ", ";
         return getConcattedStringsResult(query, valueParam, separator);
     }
-	
+
     /**
      * Data model data for data source images.
      */
     public static class ImageDetails {
 
-        private final long unallocatedSize;
+        private final Long unallocatedSize;
         private final long size;
         private final long sectorSize;
 
@@ -233,7 +231,8 @@ public class ContainerSummary {
         /**
          * Main constructor.
          *
-         * @param unallocatedSize Size in bytes of unallocated space.
+         * @param unallocatedSize Size in bytes of unallocated space or null if
+         *                        no unallocated space could be determined.
          * @param size            Total size in bytes.
          * @param sectorSize      Sector size in bytes.
          * @param timeZone        The time zone.
@@ -243,7 +242,7 @@ public class ContainerSummary {
          * @param sha1Hash        The sha1 hash or null.
          * @param sha256Hash      The sha256 hash or null.
          */
-        ImageDetails(long unallocatedSize, long size, long sectorSize,
+        ImageDetails(Long unallocatedSize, long size, long sectorSize,
                 String timeZone, String imageType, List<String> paths, String md5Hash,
                 String sha1Hash, String sha256Hash) {
             this.unallocatedSize = unallocatedSize;
@@ -258,9 +257,10 @@ public class ContainerSummary {
         }
 
         /**
-         * @return Size in bytes of unallocated space.
+         * @return Size in bytes of unallocated space or null if no unallocated
+         *         space could be determined.
          */
-        public long getUnallocatedSize() {
+        public Long getUnallocatedSize() {
             return unallocatedSize;
         }
 
@@ -426,8 +426,8 @@ public class ContainerSummary {
 
         Long unallocSize = getSizeOfUnallocatedFiles(image);
         String imageType = image.getType().getName();
-        Long size = image.getSize();
-        Long sectorSize = image.getSsize();
+        long size = image.getSize();
+        long sectorSize = image.getSsize();
         String timeZone = image.getTimeZone();
         List<String> paths = image.getPaths() == null ? Collections.emptyList() : Arrays.asList(image.getPaths());
         String md5 = image.getMd5();

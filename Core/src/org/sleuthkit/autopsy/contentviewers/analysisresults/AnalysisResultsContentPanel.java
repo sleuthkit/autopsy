@@ -32,7 +32,6 @@ import org.sleuthkit.autopsy.contentviewers.analysisresults.AnalysisResultsViewM
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
 
 /**
@@ -86,7 +85,7 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         Document document = Jsoup.parse(EMPTY_HTML);
         Element body = document.getElementsByTag("body").first();
 
-        Optional<Element> panelHeader = appendPanelHeader(body, nodeResults.getContent(), nodeResults.getAggregateScore());
+        Optional<Element> panelHeader = appendPanelHeader(body, nodeResults.getItemName(), nodeResults.getAggregateScore());
 
         // for each analysis result item, display the data.
         List<ResultDisplayAttributes> displayAttributes = nodeResults.getAnalysisResults();
@@ -126,30 +125,27 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         "AnalysisResultsContentPanel_aggregateScore_displayKey=Aggregate Score",
         "AnalysisResultsContentPanel_content_displayKey=Item"
     })
-    private Optional<Element> appendPanelHeader(Element parent, Optional<Content> content, Optional<Score> score) {
-        if (!content.isPresent() || !score.isPresent()) {
+    private Optional<Element> appendPanelHeader(Element parent, Optional<String> itemName, Optional<Score> score) {
+        // if no item name or score, don't display
+        if (!itemName.isPresent() || !score.isPresent()) {
             return Optional.empty();
         }
 
         Element container = parent.appendElement("div");
 
         // if there is content append the name
-        content.ifPresent((c) -> {
-            container.appendElement("p")
-                    .attr("class", ContentViewerHtmlStyles.getTextClassName())
-                    .text(MessageFormat.format("{0}: {1}",
-                            Bundle.AnalysisResultsContentPanel_content_displayKey(),
-                            c.getName()));
-        });
+        container.appendElement("p")
+                .attr("class", ContentViewerHtmlStyles.getTextClassName())
+                .text(MessageFormat.format("{0}: {1}",
+                        Bundle.AnalysisResultsContentPanel_content_displayKey(),
+                        itemName.get()));
 
         // if there is an aggregate score, append the value
-        score.ifPresent((s) -> {
-            container.appendElement("p")
-                    .attr("class", ContentViewerHtmlStyles.getTextClassName())
-                    .text(MessageFormat.format("{0}: {1}",
-                            Bundle.AnalysisResultsContentPanel_aggregateScore_displayKey(),
-                            s.getSignificance().getDisplayName()));
-        });
+        container.appendElement("p")
+                .attr("class", ContentViewerHtmlStyles.getTextClassName())
+                .text(MessageFormat.format("{0}: {1}",
+                        Bundle.AnalysisResultsContentPanel_aggregateScore_displayKey(),
+                        score.get().getSignificance().getDisplayName()));
 
         return Optional.ofNullable(container);
     }
@@ -187,7 +183,7 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
         Element table = sectionDiv.appendElement("table")
                 .attr("valign", "top")
                 .attr("align", "left");
-        
+
         table.attr("class", ContentViewerHtmlStyles.getIndentedClassName());
 
         Element tableBody = table.appendElement("tbody");

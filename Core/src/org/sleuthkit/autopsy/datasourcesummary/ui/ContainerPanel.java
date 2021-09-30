@@ -174,7 +174,13 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
      * @param viewModel The image view model data.
      */
     private void setFieldsForImage(ImageDetails viewModel) {
-        unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(viewModel.getUnallocatedSize()));
+        Long unallocatedSize = viewModel.getUnallocatedSize();
+        if (unallocatedSize == null) {
+            unallocatedSizeValue.setText(Bundle.ContainerPanel_setFieldsForNonImageDataSource_na());
+        } else {
+            unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedSize));
+        }
+
         imageTypeValue.setText(viewModel.getImageType());
         sizeValue.setText(SizeRepresentationUtil.getSizeString(viewModel.getSize()));
         sectorSizeValue.setText(SizeRepresentationUtil.getSizeString(viewModel.getSectorSize()));
