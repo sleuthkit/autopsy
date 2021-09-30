@@ -33,6 +33,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.AnalysisResultItem;
 import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -93,7 +94,7 @@ public class AnalysisResultsViewModel {
         private final List<ResultDisplayAttributes> analysisResults;
         private final Optional<AnalysisResult> selectedResult;
         private final Optional<Score> aggregateScore;
-        private final Optional<Content> content;
+        private final Optional<String> itemName;
 
         /**
          * Constructor.
@@ -103,12 +104,15 @@ public class AnalysisResultsViewModel {
          *                        selected.
          * @param aggregateScore  The aggregate score or empty if no score.
          * @param content         The content associated with these results.
+         * @param itemName        The name of the selected item to display to
+         *                        the user.
          */
-        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult, Optional<Score> aggregateScore, Optional<Content> content) {
+        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult,
+                Optional<Score> aggregateScore, Optional<String> itemName) {
             this.analysisResults = analysisResults;
             this.selectedResult = selectedResult;
             this.aggregateScore = aggregateScore;
-            this.content = content;
+            this.itemName = itemName;
         }
 
         /**
@@ -139,14 +143,12 @@ public class AnalysisResultsViewModel {
         }
 
         /**
-         * Returns the content associated with these results or empty if not
-         * present.
+         * Returns the name of the selected item to display to the user.
          *
-         * @return The content associated with these results or empty if not
-         *         present.
+         * @return The name of the selected item to display to the user.
          */
-        Optional<Content> getContent() {
-            return content;
+        Optional<String> getItemName() {
+            return itemName;
         }
     }
 
@@ -225,6 +227,25 @@ public class AnalysisResultsViewModel {
     }
 
     /**
+     * Returns the item's name to display in the header for the panel.
+     *
+     * @param selectedContent The selected content.
+     *
+     * @return The name to use for the content.
+     *
+     * @throws TskCoreException
+     */
+    private String getName(Content selectedContent) throws TskCoreException {
+        if (selectedContent == null) {
+            return null;
+        } else if (selectedContent instanceof BlackboardArtifact) {
+            return ((BlackboardArtifact) selectedContent).getShortDescription();
+        } else {
+            return selectedContent.getName();
+        }
+    }
+
+    /**
      * Returns the view model data representing the analysis results to be
      * displayed for the node.
      *
@@ -237,13 +258,14 @@ public class AnalysisResultsViewModel {
             return new NodeResults(Collections.emptyList(), Optional.empty(), Optional.empty(), Optional.empty());
         }
 
-        Content analyzedContent = null;
+        String contentName = null;
         AnalysisResult selectedAnalysisResult = null;
         Score aggregateScore = null;
         List<AnalysisResult> analysisResults = Collections.emptyList();
         long selectedObjectId = 0;
         try {
             AnalysisResultItem analysisResultItem = node.getLookup().lookup(AnalysisResultItem.class);
+            Content analyzedContent;
             if (Objects.nonNull(analysisResultItem)) {
                 /*
                  * The content represented by the Node is an analysis result.
@@ -266,6 +288,8 @@ public class AnalysisResultsViewModel {
             }
             aggregateScore = analyzedContent.getAggregateScore();
             analysisResults = analyzedContent.getAllAnalysisResults();
+            contentName = getName(analyzedContent);
+
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error getting analysis result data for selected Content (object ID=%d)", selectedObjectId), ex);
         }
@@ -274,7 +298,10 @@ public class AnalysisResultsViewModel {
          * Use the data collected above to construct the view model.
          */
         List<ResultDisplayAttributes> displayAttributes = getOrderedDisplayAttributes(analysisResults);
-        return new NodeResults(displayAttributes, Optional.ofNullable(selectedAnalysisResult), Optional.ofNullable(aggregateScore), Optional.ofNullable(analyzedContent));
+        return new NodeResults(displayAttributes,
+                Optional.ofNullable(selectedAnalysisResult),
+                Optional.ofNullable(aggregateScore),
+                Optional.ofNullable(contentName));
     }
-    
+
 }
