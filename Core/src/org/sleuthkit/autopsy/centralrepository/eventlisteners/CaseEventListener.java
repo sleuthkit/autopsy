@@ -709,14 +709,22 @@ public final class CaseEventListener implements PropertyChangeListener {
 
                         // Look up and create artifacts for previously seen accounts if requested
                         if (IngestEventsListener.isFlagSeenDevices()) {
+                            
                             CorrelationAttributeInstance.Type osAcctType = CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID);
-                            List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(osAcctType, correlationAttributeInstances.get(0).getCorrelationValue());
+                            CorrelationAttributeInstance instanceWithTypeValue = null;
+                            for (CorrelationAttributeInstance instance : correlationAttributeInstances){
+                                if (instance.getCorrelationType().getId() == CorrelationAttributeInstance.OSACCOUNT_TYPE_ID) {
+                                    instanceWithTypeValue = instance;
+                                }
+                            }
+                            List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(instanceWithTypeValue.getCorrelationType(), instanceWithTypeValue.getCorrelationValue());
                             for (CorrelationAttributeInstance instance : previousOccurences) {
-                                if (!instance.getCorrelationCase().getCaseUUID().equals(correlationAttributeInstances.get(0).getCorrelationCase().getCaseUUID())) {
+                                //we can get the first instance here since the case for all attributes will be the same
+                                if (!instance.getCorrelationCase().getCaseUUID().equals(instanceWithTypeValue.getCorrelationCase().getCaseUUID())) {
                                     SleuthkitCase tskCase = osAccount.getSleuthkitCase();
                                     Blackboard blackboard = tskCase.getBlackboard();
 
-                                    List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(osAcctType, correlationAttributeInstances.get(0).getCorrelationValue());
+                                    List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(osAcctType, instanceWithTypeValue.getCorrelationValue());
 
                                     // calculate score
                                     Score score;
@@ -741,7 +749,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                                                     osAcctType.getDisplayName()),
                                             new BlackboardAttribute(
                                                     TSK_CORRELATION_VALUE, MODULE_NAME,
-                                                    correlationAttributeInstances.get(0).getCorrelationValue()),
+                                                    instanceWithTypeValue.getCorrelationValue()),
                                             new BlackboardAttribute(
                                                     TSK_OTHER_CASES, MODULE_NAME,
                                                     prevCases));

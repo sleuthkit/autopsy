@@ -26,11 +26,16 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.datamodel.Score;
@@ -47,8 +52,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * content node.
  *
  */
-
-
 class GetSCOTask implements Runnable {
 
     private final WeakReference<AbstractContentNode<?>> weakNodeRef;
@@ -71,14 +74,14 @@ class GetSCOTask implements Runnable {
         }
         // get the SCO  column values
         Pair<Score, String> scoreAndDescription;
-        DataResultViewerTable.HasCommentStatus comment;
+        ;
         Pair<Long, String> countAndDescription = null;
         scoreAndDescription = contentNode.getScorePropertyAndDescription();
-        //getting the correlation attribute and setting the comment column is done before the eamdb isEnabled check
-        //because the Comment column will reflect the presence of comments in the CR when the CR is enabled, but reflect tag comments regardless
+
         String description = Bundle.GetSCOTask_occurrences_defaultDescription();
         List<CorrelationAttributeInstance> listOfPossibleAttributes = new ArrayList<>();
         Content contentFromNode = contentNode.getContent();
+        //the lists returned will be empty if the CR is not enabled
         if (contentFromNode instanceof AbstractFile) {
             listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AbstractFile) contentFromNode));
         } else if (contentFromNode instanceof AnalysisResult) {
@@ -86,17 +89,49 @@ class GetSCOTask implements Runnable {
         } else if (contentFromNode instanceof DataArtifact) {
             listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) contentFromNode));
         } else if (contentFromNode instanceof OsAccount) {
-
             try {
                 List<OsAccountInstance> osAccountInstances = ((OsAccount) contentFromNode).getOsAccountInstances();
+
                 OsAccountInstance osAccountInstance = osAccountInstances.isEmpty() ? null : osAccountInstances.get(0);
+                /*
+                 * Because we are going to count cases the exact instance we get
+                 * is not important.
+                 *
+                 * However since we are using the data source from this OS
+                 * account instance to construct the correlation attribute
+                 * instances we use to count cases, the presence of the data
+                 * source in the CR will influence the count.
+                 *
+                 * So for consistancy we should always get an OS account
+                 * instance with a data source in the CR if one is available,
+                 * which necessitates the following code block currently.
+                 */
+                if (CentralRepository.isEnabled() && !osAccountInstances.isEmpty()) {
+                    try {
+                        CentralRepository centralRepo = CentralRepository.getInstance();
+                        //Correlation Cases are cached when we get them so this shouldn't involve a round trip for every node.
+                        CorrelationCase crCase = centralRepo.getCase(Case.getCurrentCaseThrows());
+                        for (OsAccountInstance caseOsAccountInstance : osAccountInstances) {
+                            //correlation data sources are also cached so once should not involve round trips every time.
+                            CorrelationDataSource correlationDataSource = centralRepo.getDataSource(crCase, caseOsAccountInstance.getDataSource().getId());
+                            if (correlationDataSource != null) {
+                                //we have found a data source which exists in the CR we will use it instead of the arbitrary first instance
+                                osAccountInstance = caseOsAccountInstance;
+                                break;
+                            }
+                        }
+                    } catch (CentralRepoException ex) {
+                        logger.log(Level.WARNING, "Error checking CR for data sources which exist in it", ex);
+                    } catch (NoCurrentCaseException ex) {
+                        logger.log(Level.WARNING, "The current case was closed while attempting to find a data source in the central repository", ex);
+                    }
+                }
                 listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(osAccountInstance));
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get OsAccountInstances for OsAccount with ID: " + contentFromNode.getId(), ex);
+                logger.log(Level.WARNING, "Unable to get the DataSource or OsAccountInstances from an OsAccount with ID: " + contentFromNode.getId(), ex);
             }
         }
-        comment = contentNode.getCommentProperty(contentNode.getAllTagsFromDatabase(), listOfPossibleAttributes);
-
+        DataResultViewerTable.HasCommentStatus commentStatus = contentNode.getCommentProperty(contentNode.getAllTagsFromDatabase(), listOfPossibleAttributes);
         CorrelationAttributeInstance corInstance = null;
         if (CentralRepository.isEnabled()) {
             if (listOfPossibleAttributes.size() > 1) {
@@ -116,7 +151,7 @@ class GetSCOTask implements Runnable {
             listener.propertyChange(new PropertyChangeEvent(
                     AutopsyEvent.SourceType.LOCAL.toString(),
                     AbstractAbstractFileNode.NodeSpecificEvents.SCO_AVAILABLE.toString(),
-                    null, new SCOData(scoreAndDescription, comment, countAndDescription)));
+                    null, new SCOData(scoreAndDescription, commentStatus, countAndDescription)));
         }
     }
 }

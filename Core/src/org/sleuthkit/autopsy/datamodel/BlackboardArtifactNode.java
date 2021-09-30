@@ -85,6 +85,7 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
@@ -878,18 +879,18 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-        
+
         /*
-        * Add the name of the source content of the artifact represented by
-        * this node to the sheet. The value of this property is the same as
-        * the display name of the node and this a "special" property that
-        * displays the node's icon as well as the display name.
-        */
-       sheetSet.put(new NodeProperty<>(
-               Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
-               Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
-               NO_DESCR,
-               getDisplayName()));
+         * Add the name of the source content of the artifact represented by
+         * this node to the sheet. The value of this property is the same as the
+         * display name of the node and this a "special" property that displays
+         * the node's icon as well as the display name.
+         */
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
+                Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
+                NO_DESCR,
+                getDisplayName()));
 
         GetSCOTask scoTask = null;
         if (artifact instanceof AnalysisResult
@@ -1148,7 +1149,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                             NO_DESCR,
                             path));
         }
-        
+
         backgroundTasksPool.submit(scoTask);
 
         return sheet;
@@ -1190,7 +1191,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     @Override
     protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
-
         /*
          * Has a tag with a comment been applied to the artifact or its source
          * content?
@@ -1202,24 +1202,21 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 break;
             }
         }
-
         /*
-         * Does the given correlation attribute instance have a comment in the
-         * central repository?
+         * Is there a comment in the CR for anything that matches the value and
+         * type of the specified attributes.
          */
-        if (attributes != null && !attributes.isEmpty()) {
-            for (CorrelationAttributeInstance attribute : attributes) {
-                if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
-                    if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
-                        status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
-                    } else {
-                        status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
-                    }
-                    break;
+        try {
+            if (CorrelationAttributeUtil.commentExistsOnAttributes(attributes)) {
+                if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                    status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                } else {
+                    status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
                 }
             }
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, "Attempted to Query CR for presence of comments in a Blackboard Artifact node and was unable to perform query, comment column will only reflect caseDB", ex);
         }
-
         return status;
     }
 
@@ -1246,7 +1243,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * Refreshes this node's property sheet.
      */
     private void updateSheet() {
-        this.setSheet(createSheet());
+        SwingUtilities.invokeLater(() -> {
+            this.setSheet(createSheet());
+        });
     }
 
     /**
@@ -1452,7 +1451,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 Bundle.BlackboardArtifactNode_analysisSheet_justifaction_name(),
                 NO_DESCR,
                 result.getJustification()));
-        
+
         return task;
     }
 
@@ -1522,11 +1521,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         return "";
     }
-    
+
     /**
-     * Update the SCO columns with the data retrieved in the background
-     * thread. 
-     * 
+     * Update the SCO columns with the data retrieved in the background thread.
+     *
      * @param scoData The data for the SCO columns.
      */
     private void updateSCOColumns(final SCOData scoData) {
@@ -1562,21 +1560,21 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * Sets the displayName of the node based on the source content.
      */
     private void setDisplayNameBySourceContent() {
-        if(srcContent instanceof BlackboardArtifact) {
+        if (srcContent instanceof BlackboardArtifact) {
             try {
-                setDisplayName(((BlackboardArtifact)srcContent).getShortDescription());
+                setDisplayName(((BlackboardArtifact) srcContent).getShortDescription());
             } catch (TskCoreException ex) {
                 // Log the error, but set the display name to
                 // Content.getName so there is something visible to the user.
                 logger.log(Level.WARNING, "Failed to get short description for artifact id = " + srcContent.getId(), ex);
                 setDisplayName(srcContent.getName());
             }
-        } else if(srcContent instanceof OsAccount) {
-            setDisplayName(((OsAccount)srcContent).getAddr().orElse(srcContent.getName()));
+        } else if (srcContent instanceof OsAccount) {
+            setDisplayName(((OsAccount) srcContent).getAddr().orElse(srcContent.getName()));
         } else {
             setDisplayName(srcContent.getName());
         }
-        
+
         setShortDescription(getDisplayName());
     }
 

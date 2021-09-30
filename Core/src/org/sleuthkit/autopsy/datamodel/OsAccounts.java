@@ -37,7 +37,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
@@ -47,6 +46,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -287,9 +287,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
                                 Bundle.OsAccounts_accountHostNameProperty_desc(),
                                 hostsString));
                     }
-
-                    SwingUtilities.invokeLater(()
-                            -> updateSheet(propertiesToUpdate.toArray(new NodeProperty<?>[propertiesToUpdate.size()])));
+                    updateSheet(propertiesToUpdate.toArray(new NodeProperty<?>[propertiesToUpdate.size()]));
                 } else if (evt.getPropertyName().equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
                     SCOData scoData = (SCOData) evt.getNewValue();
                     if (scoData.getScoreAndDescription() != null) {
@@ -362,7 +360,9 @@ public final class OsAccounts implements AutopsyVisitableItem {
          * Refreshes this node's property sheet.
          */
         void updateSheet() {
-            this.setSheet(createSheet());
+            SwingUtilities.invokeLater(() -> {
+                this.setSheet(createSheet());
+            });
         }
 
         @Override
@@ -511,9 +511,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
                                 OS_ACCOUNT_DATA_AVAILABLE_EVENT,
                                 null, evtData));
                     }
-
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
+                    logger.log(Level.WARNING, "Error occurred getting realm information for Os Account Node from case db, for account: " + node.getOsAccount().getName(), ex);
                 }
             }
         }
@@ -536,9 +535,9 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     description = Bundle.OsAccounts_createSheet_count_hashLookupNotRun_description();
                 }
             } catch (CentralRepoException ex) {
-                logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+                logger.log(Level.SEVERE, "Error getting count of datasources with correlation attribute", ex);
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+                logger.log(Level.SEVERE, "Unable to normalize data to get count of datasources with correlation attribute", ex);
             }
             return Pair.of(count, description);
         }
@@ -553,7 +552,6 @@ public final class OsAccounts implements AutopsyVisitableItem {
          */
         @Override
         protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
-
             /*
              * Has a tag with a comment been applied to the OsAccount or its
              * source content?
@@ -565,24 +563,21 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     break;
                 }
             }
-
             /*
-             * Does the given correlation attribute instance have a comment in
-             * the central repository?
+             * Is there a comment in the CR for anything that matches the value
+             * and type of the specified attributes.
              */
-            if (attributes != null && !attributes.isEmpty()) {
-                for (CorrelationAttributeInstance attribute : attributes) {
-                    if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
-                        if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
-                            status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
-                        } else {
-                            status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
-                        }
-                        break;
+            try {
+                if (CorrelationAttributeUtil.commentExistsOnAttributes(attributes)) {
+                    if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                        status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                    } else {
+                        status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
                     }
                 }
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, "Attempted to Query CR for presence of comments in an OS Account node and was unable to perform query, comment column will only reflect caseDB", ex);
             }
-
             return status;
         }
 
