@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2020 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
@@ -32,10 +33,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Instances of this class wrap BlackboardArtifactTag objects. In the Autopsy
@@ -51,10 +55,10 @@ public class BlackboardArtifactTagNode extends TagNode {
     private final BlackboardArtifactTag tag;
 
     public BlackboardArtifactTagNode(BlackboardArtifactTag tag) {
-        super(Lookups.fixed(tag, tag.getArtifact(), tag.getContent()), tag.getContent());
+        super(createLookup(tag), tag.getContent());
         String name = tag.getContent().getName();  // As a backup.
         try {
-            name = tag.getArtifact().getShortDescription(); 
+            name = tag.getArtifact().getShortDescription();
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get short description for artifact id=" + tag.getArtifact().getId(), ex);
         }
@@ -62,6 +66,33 @@ public class BlackboardArtifactTagNode extends TagNode {
         setDisplayName(name);
         this.setIconBaseWithExtension(ICON_PATH);
         this.tag = tag;
+    }
+
+    /**
+     * Create the Lookup for this node.
+     *
+     * @param tag The artifact tag that this node represents.
+     *
+     * @return The Lookup object.
+     */
+    private static Lookup createLookup(BlackboardArtifactTag tag) {
+        /*
+         * Make an Autopsy Data Model wrapper for the artifact.
+         *
+         * NOTE: The creation of an Autopsy Data Model independent of the
+         * NetBeans nodes is a work in progress. At the time this comment is
+         * being written, this object is only being used to indicate the item
+         * represented by this BlackboardArtifactTagNode.
+         */
+        Content sourceContent = tag.getContent();
+        BlackboardArtifact artifact = tag.getArtifact();
+        BlackboardArtifactItem<?> artifactItem;
+        if (artifact instanceof AnalysisResult) {
+            artifactItem = new AnalysisResultItem((AnalysisResult) artifact, sourceContent);
+        } else {
+            artifactItem = new DataArtifactItem((DataArtifact) artifact, sourceContent);
+        }        
+        return Lookups.fixed(tag, artifactItem, artifact, sourceContent);
     }
 
     @Messages({"BlackboardArtifactTagNode.createSheet.userName.text=User Name"})
