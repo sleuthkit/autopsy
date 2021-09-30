@@ -52,8 +52,14 @@ public class BlackboardArtifactTagNode extends TagNode {
 
     public BlackboardArtifactTagNode(BlackboardArtifactTag tag) {
         super(Lookups.fixed(tag, tag.getArtifact(), tag.getContent()), tag.getContent());
-        super.setName(tag.getContent().getName());
-        super.setDisplayName(tag.getContent().getName());
+        String name = tag.getContent().getName();  // As a backup.
+        try {
+            name = tag.getArtifact().getShortDescription(); 
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Failed to get short description for artifact id=" + tag.getArtifact().getId(), ex);
+        }
+        setName(name);
+        setDisplayName(name);
         this.setIconBaseWithExtension(ICON_PATH);
         this.tag = tag;
     }
@@ -72,7 +78,7 @@ public class BlackboardArtifactTagNode extends TagNode {
                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.srcFile.text"),
                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.srcFile.text"),
                 "",
-                tag.getContent().getName()));
+                getDisplayName()));
         addOriginalNameProp(properties);
         String contentPath;
         try {
