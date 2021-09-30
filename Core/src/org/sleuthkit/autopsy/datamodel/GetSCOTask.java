@@ -74,7 +74,6 @@ class GetSCOTask implements Runnable {
         }
         // get the SCO  column values
         Pair<Score, String> scoreAndDescription;
-        ;
         Pair<Long, String> countAndDescription = null;
         scoreAndDescription = contentNode.getScorePropertyAndDescription();
 
@@ -92,40 +91,53 @@ class GetSCOTask implements Runnable {
             try {
                 List<OsAccountInstance> osAccountInstances = ((OsAccount) contentFromNode).getOsAccountInstances();
 
+                /*
+                 * In the most common use cases it will not matter which
+                 * OsAccountInstance is selected, so choosing the first one is
+                 * the most efficient solution.
+                 */
                 OsAccountInstance osAccountInstance = osAccountInstances.isEmpty() ? null : osAccountInstances.get(0);
                 /*
-                 * Because we are going to count cases the exact instance we get
-                 * is not important.
+                 * If we have a Case whith both data sources in the CR and data
+                 * sources not in the CR, some of the OsAccountInstances for
+                 * this OsAccount have not been processed into the CR. In this
+                 * situation the counts may not always be accurate or
+                 * consistent.
                  *
-                 * However since we are using the data source from this OS
-                 * account instance to construct the correlation attribute
-                 * instances we use to count cases, the presence of the data
-                 * source in the CR will influence the count.
+                 * In order to ensure conistency in all use cases we would need
+                 * to ensure we always had an OsAccountInstance whose data
+                 * source was in the CR when such an OsAccountInstance was
+                 * available.
                  *
-                 * So for consistancy we should always get an OS account
-                 * instance with a data source in the CR if one is available,
-                 * which necessitates the following code block currently.
+                 * The following block of code has been commented out because it
+                 * reduces efficiency in what are believed to be the most common
+                 * use cases. It would serve the purpose of providing
+                 * consistency in edge cases where users are putting some but
+                 * not all the data concerning OS Accounts, which is present in
+                 * a single Case, into the CR. See TODO-JIRA-8031 for a similar
+                 * issue in the OO viewer.
                  */
-                if (CentralRepository.isEnabled() && !osAccountInstances.isEmpty()) {
-                    try {
-                        CentralRepository centralRepo = CentralRepository.getInstance();
-                        //Correlation Cases are cached when we get them so this shouldn't involve a round trip for every node.
-                        CorrelationCase crCase = centralRepo.getCase(Case.getCurrentCaseThrows());
-                        for (OsAccountInstance caseOsAccountInstance : osAccountInstances) {
-                            //correlation data sources are also cached so once should not involve round trips every time.
-                            CorrelationDataSource correlationDataSource = centralRepo.getDataSource(crCase, caseOsAccountInstance.getDataSource().getId());
-                            if (correlationDataSource != null) {
-                                //we have found a data source which exists in the CR we will use it instead of the arbitrary first instance
-                                osAccountInstance = caseOsAccountInstance;
-                                break;
-                            }
-                        }
-                    } catch (CentralRepoException ex) {
-                        logger.log(Level.SEVERE, "Error checking CR for data sources which exist in it", ex);
-                    } catch (NoCurrentCaseException ex) {
-                        logger.log(Level.WARNING, "The current case was closed while attempting to find a data source in the central repository", ex);
-                    }
-                }
+
+//                if (CentralRepository.isEnabled() && !osAccountInstances.isEmpty()) {
+//                    try {
+//                        CentralRepository centralRepo = CentralRepository.getInstance();
+//                        //Correlation Cases are cached when we get them so this shouldn't involve a round trip for every node.
+//                        CorrelationCase crCase = centralRepo.getCase(Case.getCurrentCaseThrows());
+//                        for (OsAccountInstance caseOsAccountInstance : osAccountInstances) {
+//                            //correlation data sources are also cached so once should not involve round trips every time.
+//                            CorrelationDataSource correlationDataSource = centralRepo.getDataSource(crCase, caseOsAccountInstance.getDataSource().getId());
+//                            if (correlationDataSource != null) {
+//                                //we have found a data source which exists in the CR we will use it instead of the arbitrary first instance
+//                                osAccountInstance = caseOsAccountInstance;
+//                                break;
+//                            }
+//                        }
+//                    } catch (CentralRepoException ex) {
+//                        logger.log(Level.SEVERE, "Error checking CR for data sources which exist in it", ex);
+//                    } catch (NoCurrentCaseException ex) {
+//                        logger.log(Level.WARNING, "The current case was closed while attempting to find a data source in the central repository", ex);
+//                    }
+//                }
                 listOfPossibleAttributes.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(osAccountInstance));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Unable to get the DataSource or OsAccountInstances from an OsAccount with ID: " + contentFromNode.getId(), ex);

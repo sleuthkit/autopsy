@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -824,76 +822,6 @@ public class CorrelationAttributeUtil {
             }
         }
         return correlationAttrs;
-    }
-
-    /**
-     * Check if any of the specified attribute values in the CR have a
-     * non-empty, non null comment.
-     *
-     * @param attributes The list of attributes to check the type value matches
-     *                   of for the presence of a comment.
-     *
-     * @return True if any the type value matches in the CR have a comment in
-     *         their respective comment column, false if there are no comments
-     *         or the CR is disabled.
-     *
-     * @throws CentralRepoException Thrown when there is an issue either getting
-     *                              the CentralRepository instance or executing
-     *                              a query.
-     */
-    public static boolean commentExistsOnAttributes(List<CorrelationAttributeInstance> attributes) throws CentralRepoException {
-        boolean commentExists = false;
-        if (CentralRepository.isEnabled() && !attributes.isEmpty()) {
-            CentralRepository crInstance = CentralRepository.getInstance();
-            //Query to check for the presence of a comment on any matching value in the specified table.
-            String sqlSelect = "SELECT EXISTS "
-                    + "(SELECT 1 "
-                    + "FROM ";
-            String sqlWhere = " WHERE value=? "
-                    + "AND comment<>''"
-                    + "LIMIT 1)";
-            List<Object> params;
-            CommentExistsCallback commentCallback = new CommentExistsCallback();
-            for (CorrelationAttributeInstance instance : attributes) {
-                params = new ArrayList<>();
-                params.add(instance.getCorrelationValue());
-                String sql = sqlSelect + CentralRepoDbUtil.correlationTypeToInstanceTableName(instance.getCorrelationType()) + sqlWhere;
-                crInstance.executeQuery(sql, params, commentCallback);
-                if (commentCallback.doesCommentExist()) {
-                    //we are checking a binary condition so as soon as any query returns true we can stop
-                    commentExists = true;
-                    break;
-                }
-            }
-        }
-        return commentExists;
-    }
-
-    /**
-     * Private implementation of the CentralRepositoryDbQueryCallback to parse
-     * the results of the query which checks if a type value pair has a comment.
-     */
-    private static class CommentExistsCallback implements CentralRepositoryDbQueryCallback {
-
-        private boolean commentExists = false;
-
-        @Override
-        public void process(ResultSet rs) throws CentralRepoException, SQLException {
-            //there should only be 1 result here with 1 column
-            if (rs.next()) {
-                commentExists = rs.getBoolean(1);
-            }
-        }
-
-        /**
-         * Identifies if a comment existed.
-         *
-         * @return True if a comment existed, false otherwise.
-         */
-        boolean doesCommentExist() {
-            return commentExists;
-        }
-
     }
 
     /**

@@ -694,7 +694,7 @@ public final class CaseEventListener implements PropertyChangeListener {
             for (OsAccountInstance osAccountInstance : addedOsAccountNew) {
                 try {
                     OsAccount osAccount = osAccountInstance.getOsAccount();
-                    List<CorrelationAttributeInstance> correlationAttributeInstances = CorrelationAttributeUtil.makeCorrAttrsForSearch(osAccountInstance);
+                    List<CorrelationAttributeInstance> correlationAttributeInstances = CorrelationAttributeUtil.makeCorrAttrsToSave(osAccountInstance);
                     if (correlationAttributeInstances.isEmpty()) {
                         return;
                     }
@@ -715,6 +715,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                             for (CorrelationAttributeInstance instance : correlationAttributeInstances) {
                                 if (instance.getCorrelationType().getId() == CorrelationAttributeInstance.OSACCOUNT_TYPE_ID) {
                                     instanceWithTypeValue = instance;
+                                    break;
                                 }
                             }
 

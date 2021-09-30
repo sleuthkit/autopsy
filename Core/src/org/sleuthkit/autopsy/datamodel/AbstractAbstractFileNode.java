@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
@@ -458,7 +459,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
          * type of the specified attributes.
          */
         try {
-            if (CorrelationAttributeUtil.commentExistsOnAttributes(attributes)) {
+            if (CentralRepoDbUtil.commentExistsOnAttributes(attributes)) {
                 if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
                     status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
                 } else {

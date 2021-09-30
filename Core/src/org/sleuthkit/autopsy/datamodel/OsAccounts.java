@@ -42,11 +42,11 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -566,7 +566,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
              * and type of the specified attributes.
              */
             try {
-                if (CorrelationAttributeUtil.commentExistsOnAttributes(attributes)) {
+                if (CentralRepoDbUtil.commentExistsOnAttributes(attributes)) {
                     if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
                         status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
                     } else {

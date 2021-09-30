@@ -64,6 +64,7 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
@@ -85,7 +86,6 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
@@ -1195,7 +1195,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * type of the specified attributes.
          */
         try {
-            if (CorrelationAttributeUtil.commentExistsOnAttributes(attributes)) {
+            if (CentralRepoDbUtil.commentExistsOnAttributes(attributes)) {
                 if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
                     status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
                 } else {
