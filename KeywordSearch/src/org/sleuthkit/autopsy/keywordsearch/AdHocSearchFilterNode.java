@@ -105,10 +105,10 @@ class AdHocSearchFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
 
         List<Action> actions = new ArrayList<>();
-        actions.addAll(Arrays.asList(super.getActions(popup)));
         Content content = this.getOriginal().getLookup().lookup(Content.class);
         actions.addAll(content.accept(new GetPopupActionsContentVisitor()));
-
+        actions.add(null);
+        actions.addAll(Arrays.asList(super.getActions(popup)));
         return actions.toArray(new Action[actions.size()]);
     }
 

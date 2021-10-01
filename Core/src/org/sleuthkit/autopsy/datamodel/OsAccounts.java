@@ -451,9 +451,9 @@ public final class OsAccounts implements AutopsyVisitableItem {
         @Override
         public Action[] getActions(boolean popup) {
             List<Action> actionsList = new ArrayList<>();
-            actionsList.addAll(Arrays.asList(super.getActions(popup)));
             actionsList.addAll(DataModelActionsFactory.getActions(account));
-
+            actionsList.add(null);
+            actionsList.addAll(Arrays.asList(super.getActions(popup)));
             return actionsList.toArray(new Action[actionsList.size()]);
         }
 

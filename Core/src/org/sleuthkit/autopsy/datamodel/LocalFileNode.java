@@ -66,7 +66,6 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-        actionsList.addAll(Arrays.asList(super.getActions(true)));
 
         actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "LocalFileNode.viewFileInDir.text"), this.content));
         actionsList.add(null); // creates a menu separator
@@ -101,6 +100,10 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                 logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
             }
         }
+        
+        actionsList.add(null);
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
+        
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 

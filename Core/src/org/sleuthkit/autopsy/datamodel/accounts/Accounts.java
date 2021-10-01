@@ -1466,8 +1466,7 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public Action[] getActions(boolean context) {
             Action[] actions = super.getActions(context);
-            ArrayList<Action> arrayList = new ArrayList<>();
-            arrayList.addAll(Arrays.asList(actions));
+            ArrayList<Action> arrayList = new ArrayList<>();           
             try {
                 arrayList.addAll(DataModelActionsFactory.getActions(Accounts.this.skCase.getContentById(fileKey.getObjID()), false));
             } catch (TskCoreException ex) {
@@ -1476,7 +1475,8 @@ final public class Accounts implements AutopsyVisitableItem {
 
             arrayList.add(approveActionInstance);
             arrayList.add(rejectActionInstance);
-
+            arrayList.add(null);
+            arrayList.addAll(Arrays.asList(actions));
             return arrayList.toArray(new Action[arrayList.size()]);
         }
     }

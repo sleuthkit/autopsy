@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -159,14 +160,12 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     @Override
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
-
-        for (Action a : super.getActions(true)) {
-            actionsList.add(a);
-        }
         actionsList.add(new FileSystemDetailsAction(content));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "VolumeNode.getActions.viewInNewWin.text"), this));
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
+        actionsList.add(null);
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
 
         return actionsList.toArray(new Action[actionsList.size()]);
     }
