@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
@@ -178,8 +179,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } else if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
             ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
             if (event.getAddedTag().getContent().equals(content)) {
-                List<Tag> tags = this.getAllTagsFromDatabase();
-                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
+
+                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription();
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
                 List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
@@ -188,14 +189,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     listWithJustFileAttr.add(corrInstance);
                 }
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(getAllTagsFromDatabase(), listWithJustFileAttr))
                 );
             }
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
             ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
             if (event.getDeletedTagInfo().getContentID() == content.getId()) {
                 List<Tag> tags = getAllTagsFromDatabase();
-                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
+                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription();
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
                 List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
@@ -204,19 +205,18 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     listWithJustFileAttr.add(corrInstance);
                 }
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(getAllTagsFromDatabase(), listWithJustFileAttr))
                 );
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
             CommentChangedEvent event = (CommentChangedEvent) evt;
             if (event.getContentID() == content.getId()) {
-                List<Tag> tags = getAllTagsFromDatabase();
                 List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
                 CorrelationAttributeInstance corrInstance = CorrelationAttributeUtil.getCorrAttrForFile(content);
                 if (corrInstance != null) {
                     listWithJustFileAttr.add(corrInstance);
                 }
-                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, listWithJustFileAttr)));
+                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(getAllTagsFromDatabase(), listWithJustFileAttr)));
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             this.setDisplayName(evt.getNewValue().toString());
@@ -435,9 +435,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
         } catch (CentralRepoException ex) {
-            logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+            logger.log(Level.SEVERE, "Error getting count of datasources with correlation attribute", ex);
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+            logger.log(Level.SEVERE, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
         return Pair.of(count, description);
     }
@@ -446,9 +446,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
     @Override
     protected HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
-
         DataResultViewerTable.HasCommentStatus status = !tags.isEmpty() ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-
         for (Tag tag : tags) {
             if (!StringUtils.isBlank(tag.getComment())) {
                 //if the tag is null or empty or contains just white space it will indicate there is not a comment
@@ -456,17 +454,20 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 break;
             }
         }
-        if (attributes != null && !attributes.isEmpty()) {
-            for (CorrelationAttributeInstance attribute : attributes) {
-                if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
-                    if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
-                        status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
-                    } else {
-                        status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
-                    }
-                    break;
+        /*
+         * Is there a comment in the CR for anything that matches the value and
+         * type of the specified attributes.
+         */
+        try {
+            if (CentralRepoDbUtil.commentExistsOnAttributes(attributes)) {
+                if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                    status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                } else {
+                    status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
                 }
             }
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, "Attempted to Query CR for presence of comments in a file node and was unable to perform query, comment column will only reflect caseDB", ex);
         }
         return status;
     }

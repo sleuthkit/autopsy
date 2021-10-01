@@ -48,6 +48,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -416,7 +417,7 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Subscribe
@@ -553,9 +554,9 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -731,9 +732,8 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Subscribe
         @Override
@@ -746,7 +746,7 @@ final public class Accounts implements AutopsyVisitableItem {
         void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -889,7 +889,7 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
@@ -1105,7 +1105,7 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
@@ -1117,7 +1117,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void finalize() throws Throwable{
+        protected void finalize() throws Throwable {
             super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
@@ -1669,7 +1669,9 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         private void updateSheet() {
-            this.setSheet(createSheet());
+            SwingUtilities.invokeLater(() -> {
+                this.setSheet(createSheet());
+            });
         }
 
     }
@@ -1846,7 +1848,9 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         private void updateSheet() {
-            this.setSheet(createSheet());
+            SwingUtilities.invokeLater(() -> {
+                this.setSheet(createSheet());
+            });
         }
 
     }
