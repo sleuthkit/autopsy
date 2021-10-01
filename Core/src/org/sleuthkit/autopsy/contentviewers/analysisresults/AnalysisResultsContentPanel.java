@@ -114,10 +114,10 @@ public class AnalysisResultsContentPanel extends javax.swing.JPanel {
     /**
      * Appends the header to the panel.
      *
-     * @param parent  The parent html element.
-     * @param content The content whose name will be added if present.
-     * @param score   The aggregate score whose significance will be added if
-     *                present.
+     * @param parent   The parent html element.
+     * @param itemName The item whose name will be added if present.
+     * @param score    The aggregate score whose significance will be added if
+     *                 present.
      *
      * @return The html element.
      */

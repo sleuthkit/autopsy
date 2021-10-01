@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,19 +30,29 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
+import org.apache.commons.lang3.tuple.Pair;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
+import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.VALUE_LOADING;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Host;
@@ -60,8 +69,8 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
     private static final Logger logger = Logger.getLogger(OsAccounts.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/os-account.png";
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     private static final String OS_ACCOUNT_DATA_AVAILABLE_EVENT = "OS_ACCOUNT_DATA_AVAILABLE_EVENT";
+
     private static final String LIST_NAME = Bundle.OsAccount_listNode_name();
 
     private SleuthkitCase skCase;
@@ -192,6 +201,32 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
         private OsAccount account;
 
+        @Messages({
+            "OsAccounts_accountNameProperty_name=Name",
+            "OsAccounts_accountNameProperty_displayName=Name",
+            "OsAccounts_accountNameProperty_desc=Os Account name",
+            "OsAccounts_accountRealmNameProperty_name=RealmName",
+            "OsAccounts_accountRealmNameProperty_displayName=Realm Name",
+            "OsAccounts_accountRealmNameProperty_desc=OS Account Realm Name",
+            "OsAccounts_accountHostNameProperty_name=HostName",
+            "OsAccounts_accountHostNameProperty_displayName=Host",
+            "OsAccounts_accountHostNameProperty_desc=OS Account Host Name",
+            "OsAccounts_accountScopeNameProperty_name=ScopeName",
+            "OsAccounts_accountScopeNameProperty_displayName=Scope",
+            "OsAccounts_accountScopeNameProperty_desc=OS Account Scope Name",
+            "OsAccounts_createdTimeProperty_name=creationTime",
+            "OsAccounts_createdTimeProperty_displayName=Creation Time",
+            "OsAccounts_createdTimeProperty_desc=OS Account Creation Time",
+            "OsAccounts_loginNameProperty_name=loginName",
+            "OsAccounts_loginNameProperty_displayName=Login Name",
+            "OsAccounts_loginNameProperty_desc=OS Account login name",
+            "OsAccounts.createSheet.score.name=S",
+            "OsAccounts.createSheet.score.displayName=S",
+            "OsAccounts.createSheet.count.name=O",
+            "OsAccounts.createSheet.count.displayName=O",
+            "OsAccounts.createSheet.comment.name=C",
+            "OsAccounts.createSheet.comment.displayName=C"
+        })
         private final PropertyChangeListener listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -250,9 +285,29 @@ public final class OsAccounts implements AutopsyVisitableItem {
                                 Bundle.OsAccounts_accountHostNameProperty_desc(),
                                 hostsString));
                     }
-
-                    SwingUtilities.invokeLater(() -> 
-                            updateSheet(propertiesToUpdate.toArray(new NodeProperty<?>[propertiesToUpdate.size()])));
+                    updateSheet(propertiesToUpdate.toArray(new NodeProperty<?>[propertiesToUpdate.size()]));
+                } else if (evt.getPropertyName().equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
+                    SCOData scoData = (SCOData) evt.getNewValue();
+                    if (scoData.getScoreAndDescription() != null) {
+                        updateSheet(new NodeProperty<>(
+                                Bundle.OsAccounts_createSheet_score_name(),
+                                Bundle.OsAccounts_createSheet_score_displayName(),
+                                scoData.getScoreAndDescription().getRight(),
+                                scoData.getScoreAndDescription().getLeft()));
+                    }
+                    if (scoData.getComment() != null) {
+                        updateSheet(new NodeProperty<>(
+                                Bundle.OsAccounts_createSheet_comment_name(),
+                                Bundle.OsAccounts_createSheet_comment_displayName(),
+                                NO_DESCR, scoData.getComment()));
+                    }
+                    if (scoData.getCountAndDescription() != null) {
+                        updateSheet(new NodeProperty<>(
+                                Bundle.OsAccounts_createSheet_count_name(),
+                                Bundle.OsAccounts_createSheet_count_displayName(),
+                                scoData.getCountAndDescription().getRight(),
+                                scoData.getCountAndDescription().getLeft()));
+                    }
                 }
             }
         };
@@ -299,32 +354,13 @@ public final class OsAccounts implements AutopsyVisitableItem {
             return account;
         }
 
-        @Messages({
-            "OsAccounts_accountNameProperty_name=Name",
-            "OsAccounts_accountNameProperty_displayName=Name",
-            "OsAccounts_accountNameProperty_desc=Os Account name",
-            "OsAccounts_accountRealmNameProperty_name=RealmName",
-            "OsAccounts_accountRealmNameProperty_displayName=Realm Name",
-            "OsAccounts_accountRealmNameProperty_desc=OS Account Realm Name",
-            "OsAccounts_accountHostNameProperty_name=HostName",
-            "OsAccounts_accountHostNameProperty_displayName=Host",
-            "OsAccounts_accountHostNameProperty_desc=OS Account Host Name",
-            "OsAccounts_accountScopeNameProperty_name=ScopeName",
-            "OsAccounts_accountScopeNameProperty_displayName=Scope",
-            "OsAccounts_accountScopeNameProperty_desc=OS Account Scope Name",
-            "OsAccounts_createdTimeProperty_name=creationTime",
-            "OsAccounts_createdTimeProperty_displayName=Creation Time",
-            "OsAccounts_createdTimeProperty_desc=OS Account Creation Time",
-            "OsAccounts_loginNameProperty_name=loginName",
-            "OsAccounts_loginNameProperty_displayName=Login Name",
-            "OsAccounts_loginNameProperty_desc=Os Account login name"
-        })
-
         /**
          * Refreshes this node's property sheet.
          */
         void updateSheet() {
-            this.setSheet(createSheet());
+            SwingUtilities.invokeLater(() -> {
+                this.setSheet(createSheet());
+            });
         }
 
         @Override
@@ -335,13 +371,12 @@ public final class OsAccounts implements AutopsyVisitableItem {
                 propertiesSet = Sheet.createPropertiesSet();
                 sheet.put(propertiesSet);
             }
-
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_accountNameProperty_name(),
                     Bundle.OsAccounts_accountNameProperty_displayName(),
                     Bundle.OsAccounts_accountNameProperty_desc(),
                     account.getName() != null ? account.getName() : ""));
-
+            addSCOColumns(propertiesSet);
             Optional<String> optional = account.getLoginName();
             propertiesSet.put(new NodeProperty<>(
                     Bundle.OsAccounts_loginNameProperty_name(),
@@ -379,8 +414,38 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     timeDisplayStr));
 
             backgroundTasksPool.submit(new GetOsAccountRealmTask(new WeakReference<>(this), weakListener));
-
             return sheet;
+        }
+
+        private void addSCOColumns(Sheet.Set sheetSet) {
+            if (!UserPreferences.getHideSCOColumns()) {
+                /*
+                 * Add S(core), C(omments), and O(ther occurences) columns to
+                 * the sheet and start a background task to compute the value of
+                 * these properties for the artifact represented by this node.
+                 * The task will fire a PropertyChangeEvent when the computation
+                 * is completed and this node's PropertyChangeListener will
+                 * update the sheet.
+                 */
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.OsAccounts_createSheet_score_name(),
+                        Bundle.OsAccounts_createSheet_score_displayName(),
+                        VALUE_LOADING,
+                        ""));
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.OsAccounts_createSheet_comment_name(),
+                        Bundle.OsAccounts_createSheet_comment_displayName(),
+                        VALUE_LOADING,
+                        ""));
+                if (CentralRepository.isEnabled()) {
+                    sheetSet.put(new NodeProperty<>(
+                            Bundle.OsAccounts_createSheet_count_name(),
+                            Bundle.OsAccounts_createSheet_count_displayName(),
+                            VALUE_LOADING,
+                            ""));
+                }
+                backgroundTasksPool.submit(new GetSCOTask(new WeakReference<>(this), weakListener));
+            }
         }
 
         @Override
@@ -394,7 +459,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
 
         @Override
         protected List<Tag> getAllTagsFromDatabase() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return new ArrayList<>();
         }
 
         @Override
@@ -444,11 +509,74 @@ public final class OsAccounts implements AutopsyVisitableItem {
                                 OS_ACCOUNT_DATA_AVAILABLE_EVENT,
                                 null, evtData));
                     }
-
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
+                    logger.log(Level.WARNING, "Error occurred getting realm information for Os Account Node from case db, for account: " + node.getOsAccount().getName(), ex);
                 }
             }
+        }
+
+        @NbBundle.Messages({
+            "OsAccounts.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated",
+            "# {0} - occurrenceCount",
+            "OsAccounts.createSheet.count.description=There were {0} datasource(s) found with occurrences of the OS Account correlation value"})
+        @Override
+
+        protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attributeInstance, String defaultDescription) {
+            Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
+            String description = defaultDescription;
+            try {
+                //don't perform the query if there is no correlation value
+                if (attributeInstance != null && StringUtils.isNotBlank(attributeInstance.getCorrelationValue())) {
+                    count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attributeInstance);
+                    description = Bundle.OsAccounts_createSheet_count_description(count);
+                } else if (attributeInstance != null) {
+                    description = Bundle.OsAccounts_createSheet_count_hashLookupNotRun_description();
+                }
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, "Error getting count of datasources with correlation attribute", ex);
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.SEVERE, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+            }
+            return Pair.of(count, description);
+        }
+
+        /**
+         * Returns comment property for the node.
+         *
+         * @param tags       The list of tags.
+         * @param attributes The list of correlation attribute instances.
+         *
+         * @return Comment property for the underlying content of the node.
+         */
+        @Override
+        protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
+            /*
+             * Has a tag with a comment been applied to the OsAccount or its
+             * source content?
+             */
+            DataResultViewerTable.HasCommentStatus status = tags.size() > 0 ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
+            for (Tag tag : tags) {
+                if (!StringUtils.isBlank(tag.getComment())) {
+                    status = DataResultViewerTable.HasCommentStatus.TAG_COMMENT;
+                    break;
+                }
+            }
+            /*
+             * Is there a comment in the CR for anything that matches the value
+             * and type of the specified attributes.
+             */
+            try {
+                if (CentralRepoDbUtil.commentExistsOnAttributes(attributes)) {
+                    if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                        status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                    } else {
+                        status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
+                    }
+                }
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, "Attempted to Query CR for presence of comments in an OS Account node and was unable to perform query, comment column will only reflect caseDB", ex);
+            }
+            return status;
         }
 
         /**
@@ -494,6 +622,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
             List<Host> getHosts() {
                 return hosts;
             }
+
         }
     }
 }
