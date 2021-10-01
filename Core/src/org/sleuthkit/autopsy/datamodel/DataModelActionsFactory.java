@@ -412,8 +412,7 @@ public class DataModelActionsFactory {
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
-
-    @Messages({"DataModelActionsFactory_viewSourceArtifact_text=View Source Result"})
+    
     public static List<Action> getActions(BlackboardArtifactTag artifactTag, boolean isArtifactSource) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), artifactTag.getContent()));        
