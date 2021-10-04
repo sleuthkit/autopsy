@@ -1,0 +1,1082 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2012-2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.datamodel;
+
+import org.sleuthkit.autopsy.actions.ViewArtifactAction;
+import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
+import com.google.common.annotations.Beta;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.swing.Action;
+import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.openide.nodes.Node;
+import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
+import org.openide.util.WeakListeners;
+import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
+import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
+import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
+import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
+import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.HostAddress;
+import org.sleuthkit.datamodel.Pool;
+import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalDirectory;
+import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Report;
+import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.SlackFile;
+import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
+import org.sleuthkit.datamodel.Image;
+
+/**
+ * An AbstractNode implementation that can be used to represent an data artifact
+ * or analysis result of any type.
+ */
+public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> {
+
+    private static final Logger logger = Logger.getLogger(DataArtifactNodev2.class.getName());
+
+    /**
+     * Constructs an AbstractNode implementation that can be used to represent a
+     * data artifact or analysis result of any type. The Lookup of the Node will
+     * contain the data artifact or analysis result and its parent content as
+     * its source content.
+     *
+     * @param artifact The data artifact or analysis result.
+     * @param iconPath The path to the icon for the data artifact or analysis
+     *                 result type.
+     */
+    public DataArtifactNodev2(BlackboardArtifact artifact, String iconPath) {
+        super(artifact, createLookup(artifact, false));
+
+        ...
+    }
+
+
+    /**
+     * Constructs an AbstractNode implementation that can be used to represent a
+     * data artifact or analysis result of any type. The Lookup of the Node will
+     * contain the data artifact or analysis result and its parent content as
+     * its source content.
+     *
+     * @param artifact The data artifact or analysis result.
+     */
+    public DataArtifactNodev2(BlackboardArtifact artifact) {
+        this(artifact, IconsUtil.getIconFilePath(artifact.getArtifactTypeID()));
+    }
+
+    
+    
+    /**
+     * Returns a list of non null actions from the given possibly null options.
+     *
+     * @param items The items to purge of null items.
+     *
+     * @return The list of non-null actions.
+     */
+    private List<Action> getNonNull(Action... items) {
+        return Stream.of(items)
+                .filter(i -> i != null)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        // groupings of actions where each group will be separated by a divider
+        List<List<Action>> actionsLists = new ArrayList<>();
+
+        // view artifact in timeline
+        actionsLists.add(getNonNull(
+                getTimelineArtifactAction(this.artifact)
+        ));
+
+        // view associated file (TSK_PATH_ID attr) in directory and timeline
+        actionsLists.add(getAssociatedFileActions(this.artifact, this.artifactType));
+
+        // view source content in directory and timeline
+        actionsLists.add(getNonNull(
+                getViewSrcContentAction(this.artifact, this.srcContent),
+                getTimelineSrcContentAction(this.srcContent)
+        ));
+
+        // extract with password from encrypted file
+        actionsLists.add(getNonNull(
+                getExtractWithPasswordAction(this.srcContent)
+        ));
+
+        // menu options for artifact with report parent
+        if (this.srcContent instanceof Report) {
+            actionsLists.add(DataModelActionsFactory.getActions(this.srcContent, false));
+        }
+
+        Node parentFileNode = getParentFileNode(srcContent);
+        int selectedFileCount = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size();
+        int selectedArtifactCount = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactItem.class).size();
+
+        // view source content if source content is some sort of file
+        actionsLists.add(getSrcContentViewerActions(parentFileNode, selectedFileCount));
+
+        // extract / export if source content is some sort of file
+        if (parentFileNode != null) {
+            actionsLists.add(Arrays.asList(ExtractAction.getInstance(), ExportCSVAction.getInstance()));
+        }
+
+        // file and result tagging
+        actionsLists.add(getTagActions(parentFileNode != null, this.artifact, selectedFileCount, selectedArtifactCount));
+
+        // menu extension items (i.e. add to central repository)
+        actionsLists.add(ContextMenuExtensionPoint.getActions());
+
+        // netbeans default items (i.e. properties)
+        actionsLists.add(Arrays.asList(super.getActions(context)));
+
+        return actionsLists.stream()
+                // remove any empty lists
+                .filter((lst) -> lst != null && !lst.isEmpty())
+                // add in null between each list group
+                .flatMap(lst -> Stream.concat(Stream.of((Action) null), lst.stream()))
+                // skip the first null
+                .skip(1)
+                .toArray(sz -> new Action[sz]);
+    }
+
+    /**
+     * Returns the name of the artifact based on the artifact type to be used
+     * with the associated file string in a right click menu.
+     *
+     * @param artifactType The artifact type.
+     *
+     * @return The artifact type name.
+     */
+    @Messages({
+        "BlackboardArtifactNode_getAssociatedTypeStr_webCache=Cached File",
+        "BlackboardArtifactNode_getAssociatedTypeStr_webDownload=Downloaded File",
+        "BlackboardArtifactNode_getAssociatedTypeStr_associated=Associated File",})
+    private String getAssociatedTypeStr(BlackboardArtifact.Type artifactType) {
+        if (BlackboardArtifact.Type.TSK_WEB_CACHE.equals(artifactType)) {
+            return Bundle.BlackboardArtifactNode_getAssociatedTypeStr_webCache();
+        } else if (BlackboardArtifact.Type.TSK_WEB_DOWNLOAD.equals(artifactType)) {
+            return Bundle.BlackboardArtifactNode_getAssociatedTypeStr_webDownload();
+        } else {
+            return Bundle.BlackboardArtifactNode_getAssociatedTypeStr_associated();
+        }
+    }
+
+    /**
+     * Returns the name to represent the type of the content (file, data
+     * artifact, os account, item).
+     *
+     * @param content The content.
+     *
+     * @return The name of the type of content.
+     */
+    @Messages({
+        "BlackboardArtifactNode_getViewSrcContentAction_type_File=File",
+        "BlackboardArtifactNode_getViewSrcContentAction_type_DataArtifact=Data Artifact",
+        "BlackboardArtifactNode_getViewSrcContentAction_type_OSAccount=OS Account",
+        "BlackboardArtifactNode_getViewSrcContentAction_type_unknown=Item"
+    })
+    private String getContentTypeStr(Content content) {
+        if (content instanceof AbstractFile) {
+            return Bundle.BlackboardArtifactNode_getViewSrcContentAction_type_File();
+        } else if (content instanceof DataArtifact) {
+            return Bundle.BlackboardArtifactNode_getViewSrcContentAction_type_DataArtifact();
+        } else if (content instanceof OsAccount) {
+            return Bundle.BlackboardArtifactNode_getViewSrcContentAction_type_OSAccount();
+        } else {
+            return Bundle.BlackboardArtifactNode_getViewSrcContentAction_type_unknown();
+        }
+    }
+
+    /**
+     * Returns actions for navigating to an associated file in the directory or
+     * in the timeline.
+     *
+     * @param artifact     The artifact whose associated file will be
+     *                     identified.
+     * @param artifactType The type of artifact.
+     *
+     * @return The actions or an empty list.
+     */
+    @Messages({
+        "# {0} - type",
+        "BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory",
+        "# {0} - type",
+        "BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline..."
+    })
+    private List<Action> getAssociatedFileActions(BlackboardArtifact artifact, BlackboardArtifact.Type artifactType) {
+        try {
+            AbstractFile associatedFile = findLinked(artifact);
+            if (associatedFile != null) {
+                return Arrays.asList(
+                        new ViewContextAction(
+                                Bundle.BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileAction(
+                                        getAssociatedTypeStr(artifactType)),
+                                associatedFile),
+                        new ViewFileInTimelineAction(associatedFile,
+                                Bundle.BlackboardArtifactNode_getAssociatedFileActions_viewAssociatedFileInTimelineAction(
+                                        getAssociatedTypeStr(artifactType)))
+                );
+            }
+
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, MessageFormat.format("Error getting linked file of artifact (artifact objID={0})", artifact.getId()), ex); //NON-NLS
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * Creates an action to navigate to src content in tree hierarchy.
+     *
+     * @param artifact The artifact.
+     * @param content  The content.
+     *
+     * @return The action or null if no action derived.
+     */
+    @Messages({
+        "# {0} - contentType",
+        "BlackboardArtifactNode_getSrcContentAction_actionDisplayName=View Source {0} in Directory"
+    })
+    private Action getViewSrcContentAction(BlackboardArtifact artifact, Content content) {
+        if (content instanceof DataArtifact) {
+            return new ViewArtifactAction(
+                    (BlackboardArtifact) content,
+                    Bundle.BlackboardArtifactNode_getSrcContentAction_actionDisplayName(
+                            getContentTypeStr(content)));
+        } else if (content instanceof OsAccount) {
+            return new ViewOsAccountAction(
+                    (OsAccount) content,
+                    Bundle.BlackboardArtifactNode_getSrcContentAction_actionDisplayName(
+                            getContentTypeStr(content)));
+        } else if (content instanceof AbstractFile || artifact instanceof DataArtifact) {
+            return new ViewContextAction(
+                    Bundle.BlackboardArtifactNode_getSrcContentAction_actionDisplayName(
+                            getContentTypeStr(content)),
+                    content);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns a Node representing the file content if the content is indeed
+     * some sort of file. Otherwise, return null.
+     *
+     * @param content The content.
+     *
+     * @return The file node or null if not a file.
+     */
+    private Node getParentFileNode(Content content) {
+        if (content instanceof File) {
+            return new FileNode((AbstractFile) content);
+        } else if (content instanceof Directory) {
+            return new DirectoryNode((Directory) content);
+        } else if (content instanceof VirtualDirectory) {
+            return new VirtualDirectoryNode((VirtualDirectory) content);
+        } else if (content instanceof LocalDirectory) {
+            return new LocalDirectoryNode((LocalDirectory) content);
+        } else if (content instanceof LayoutFile) {
+            return new LayoutFileNode((LayoutFile) content);
+        } else if (content instanceof LocalFile || content instanceof DerivedFile) {
+            return new LocalFileNode((AbstractFile) content);
+        } else if (content instanceof SlackFile) {
+            return new SlackFileNode((AbstractFile) content);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns actions for extracting content from file or null if not possible.
+     *
+     * @param srcContent The source content.
+     *
+     * @return The action or null if not appropriate source content.
+     */
+    private Action getExtractWithPasswordAction(Content srcContent) {
+        if ((srcContent instanceof AbstractFile)
+                && FileTypeExtensions.getArchiveExtensions()
+                        .contains("." + ((AbstractFile) srcContent).getNameExtension().toLowerCase())) {
+            try {
+                if (srcContent.getArtifacts(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED.getTypeID()).size() > 0) {
+                    return new ExtractArchiveWithPasswordAction((AbstractFile) srcContent);
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns tag actions.
+     *
+     * @param hasSrcFile            Whether or not the artifact has a source
+     *                              file.
+     * @param artifact              This artifact.
+     * @param selectedFileCount     The count of selected files.
+     * @param selectedArtifactCount The count of selected artifacts.
+     *
+     * @return The tag actions.
+     */
+    private List<Action> getTagActions(boolean hasSrcFile, BlackboardArtifact artifact, int selectedFileCount, int selectedArtifactCount) {
+        List<Action> actionsList = new ArrayList<>();
+
+        // don't show AddContentTagAction for data artifacts.
+        if (hasSrcFile && !(artifact instanceof DataArtifact)) {
+            actionsList.add(AddContentTagAction.getInstance());
+        }
+
+        actionsList.add(AddBlackboardArtifactTagAction.getInstance());
+
+        // don't show DeleteFileContentTagAction for data artifacts.
+        if (hasSrcFile && (!(artifact instanceof DataArtifact)) && (selectedFileCount == 1)) {
+            actionsList.add(DeleteFileContentTagAction.getInstance());
+        }
+
+        if (selectedArtifactCount == 1) {
+            actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
+        }
+
+        return actionsList;
+    }
+
+    /**
+     * Returns actions to view src content in a different viewer or window.
+     *
+     * @param srcFileNode       The source file node or null if no source file.
+     * @param selectedFileCount The number of selected files.
+     *
+     * @return The list of actions or an empty list.
+     */
+    @Messages({
+        "BlackboardArtifactNode_getSrcContentViewerActions_viewInNewWin=View Item in New Window",
+        "BlackboardArtifactNode_getSrcContentViewerActions_openInExtViewer=Open in External Viewer  Ctrl+E"
+    })
+    private List<Action> getSrcContentViewerActions(Node srcFileNode, int selectedFileCount) {
+        List<Action> actionsList = new ArrayList<>();
+        if (srcFileNode != null) {
+            actionsList.add(new NewWindowViewAction(Bundle.BlackboardArtifactNode_getSrcContentViewerActions_viewInNewWin(), srcFileNode));
+            if (selectedFileCount == 1) {
+                actionsList.add(new ExternalViewerAction(Bundle.BlackboardArtifactNode_getSrcContentViewerActions_openInExtViewer(), srcFileNode));
+            } else {
+                actionsList.add(ExternalViewerShortcutAction.getInstance());
+            }
+        }
+        return actionsList;
+    }
+
+    /**
+     * If the source content of the artifact represented by this node is a file,
+     * returns an action to view the file in the data source tree.
+     *
+     * @param srcContent The src content to navigate to in the timeline action.
+     *
+     * @return The src content navigation action or null.
+     */
+    @NbBundle.Messages({
+        "# {0} - contentType",
+        "BlackboardArtifactNode_getTimelineSrcContentAction_actionDisplayName=View Source {0} in Timeline... "
+    })
+    private Action getTimelineSrcContentAction(Content srcContent) {
+        if (srcContent instanceof AbstractFile) {
+            return new ViewFileInTimelineAction((AbstractFile) srcContent,
+                    Bundle.BlackboardArtifactNode_getTimelineSrcContentAction_actionDisplayName(
+                            getContentTypeStr(srcContent)));
+        } else if (srcContent instanceof DataArtifact) {
+            try {
+                if (ViewArtifactInTimelineAction.hasSupportedTimeStamp((BlackboardArtifact) srcContent)) {
+                    return new ViewArtifactInTimelineAction((BlackboardArtifact) srcContent,
+                            Bundle.BlackboardArtifactNode_getTimelineSrcContentAction_actionDisplayName(
+                                    getContentTypeStr(srcContent)));
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting source data artifact timestamp (artifact objID={0})", srcContent.getId()), ex); //NON-NLS
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * If the artifact represented by this node has a timestamp, an action to
+     * view it in the timeline.
+     *
+     * @param art The artifact for timeline navigation action.
+     *
+     * @return The action or null if no action should exist.
+     */
+    @Messages({
+        "BlackboardArtifactNode_getTimelineArtifactAction_displayName=View Selected Item in Timeline... "
+    })
+    private Action getTimelineArtifactAction(BlackboardArtifact art) {
+        try {
+            // don't show ViewArtifactInTimelineAction for AnalysisResults.
+            if (!(art instanceof AnalysisResult) && ViewArtifactInTimelineAction.hasSupportedTimeStamp(art)) {
+                return new ViewArtifactInTimelineAction(art, Bundle.BlackboardArtifactNode_getTimelineArtifactAction_displayName());
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, MessageFormat.format("Error getting artifact timestamp (artifact objID={0})", art.getId()), ex); //NON-NLS
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets the name of the source content of the artifact represented by this
+     * node.
+     *
+     * @return The source content name.
+     */
+    public String getSourceName() {
+        return srcContent.getName();
+    }
+
+    @NbBundle.Messages({
+        "BlackboardArtifactNode.createSheet.srcFile.name=Source Name",
+        "BlackboardArtifactNode.createSheet.srcFile.displayName=Source Name",
+        "BlackboardArtifactNode.createSheet.srcFile.origName=Original Name",
+        "BlackboardArtifactNode.createSheet.srcFile.origDisplayName=Original Name",
+        "BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type",
+        "BlackboardArtifactNode.createSheet.artifactType.name=Result Type",
+        "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Result Details",
+        "BlackboardArtifactNode.createSheet.artifactDetails.name=Result Details",
+        "BlackboardArtifactNode.createSheet.artifactMD5.displayName=MD5 Hash",
+        "BlackboardArtifactNode.createSheet.artifactMD5.name=MD5 Hash",
+        "BlackboardArtifactNode.createSheet.fileSize.name=Size",
+        "BlackboardArtifactNode.createSheet.fileSize.displayName=Size",
+        "BlackboardArtifactNode.createSheet.path.displayName=Path",
+        "BlackboardArtifactNode.createSheet.path.name=Path"
+    })
+    @Override
+    protected Sheet createSheet() {
+        /*
+         * Create an empty property sheet.
+         */
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
+        }
+
+        /*
+         * Add the name of the source content of the artifact represented by
+         * this node to the sheet. The value of this property is the same as the
+         * display name of the node and this a "special" property that displays
+         * the node's icon as well as the display name.
+         */
+        sheetSet.put(new NodeProperty<>(
+                Bundle.BlackboardArtifactNode_createSheet_srcFile_name(),
+                Bundle.BlackboardArtifactNode_createSheet_srcFile_displayName(),
+                NO_DESCR,
+                getDisplayName()));
+
+        GetSCOTask scoTask;
+        if (artifact instanceof AnalysisResult
+                && !(artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+                || artifactType.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
+            scoTask = updateSheetForAnalysisResult((AnalysisResult) artifact, sheetSet);
+        } else {
+            scoTask = addSCOColumns(sheetSet);
+        }
+
+        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
+            /*
+             * If machine translation is configured, add the original name of
+             * the of the source content of the artifact represented by this
+             * node to the sheet.
+             */
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(),
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_origDisplayName(),
+                    NO_DESCR,
+                    translatedSourceName != null ? srcContent.getName() : ""));
+            if (translatedSourceName == null) {
+                /*
+                 * NOTE: The task makes its own weak reference to the listener.
+                 */
+                new FileNameTransTask(srcContent.getName(), this, listener).submit();
+            }
+        }
+
+        /*
+         * If the artifact represented by this node is an interesting artifact
+         * hit, add the type and description of the interesting artifact to the
+         * sheet.
+         */
+        if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+            try {
+                BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                if (attribute != null) {
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    sheetSet.put(new NodeProperty<>(
+                            NbBundle.getMessage(DataArtifactNodev2.class,
+                                    "BlackboardArtifactNode.createSheet.artifactType.name"),
+                            NbBundle.getMessage(DataArtifactNodev2.class,
+                                    "BlackboardArtifactNode.createSheet.artifactType.displayName"),
+                            NO_DESCR,
+                            associatedArtifact.getDisplayName()));
+                    sheetSet.put(new NodeProperty<>(
+                            NbBundle.getMessage(DataArtifactNodev2.class,
+                                    "BlackboardArtifactNode.createSheet.artifactDetails.name"),
+                            NbBundle.getMessage(DataArtifactNodev2.class,
+                                    "BlackboardArtifactNode.createSheet.artifactDetails.displayName"),
+                            NO_DESCR,
+                            associatedArtifact.getShortDescription()));
+                }
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting associated artifact of TSK_INTERESTING_ARTIFACT_HIT artifact (objID={0}))", artifact.getId()), ex); //NON-NLS
+            }
+        }
+
+        /*
+         * Add the attributes of the artifact represented by this node to the
+         * sheet.
+         */
+        Map<String, Object> map = new LinkedHashMap<>();
+        fillPropertyMap(map, artifact);
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            sheetSet.put(new NodeProperty<>(entry.getKey(),
+                    entry.getKey(),
+                    NO_DESCR,
+                    entry.getValue()));
+        }
+
+        /*
+         * Add any "custom properties" for the node to the sheet.
+         */
+        if (customProperties != null) {
+            for (NodeProperty<? extends Object> np : customProperties) {
+                sheetSet.put(np);
+            }
+        }
+
+        /*
+         * If the artifact represented by this node is a file extension mismatch
+         * artifact, add the extension and type of the artifact's source file to
+         * the sheet.
+         */
+        final int artifactTypeId = artifact.getArtifactTypeID();
+        if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
+            String ext = ""; //NON-NLS
+            String actualMimeType = ""; //NON-NLS
+            if (srcContent instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) srcContent;
+                ext = file.getNameExtension();
+                actualMimeType = file.getMIMEType();
+                if (actualMimeType == null) {
+                    actualMimeType = ""; //NON-NLS
+
+                }
+            }
+            sheetSet.put(new NodeProperty<>(
+                    NbBundle.getMessage(DataArtifactNodev2.class,
+                            "BlackboardArtifactNode.createSheet.ext.name"),
+                    NbBundle.getMessage(DataArtifactNodev2.class,
+                            "BlackboardArtifactNode.createSheet.ext.displayName"),
+                    NO_DESCR,
+                    ext));
+            sheetSet.put(new NodeProperty<>(
+                    NbBundle.getMessage(DataArtifactNodev2.class,
+                            "BlackboardArtifactNode.createSheet.mimeType.name"),
+                    NbBundle.getMessage(DataArtifactNodev2.class,
+                            "BlackboardArtifactNode.createSheet.mimeType.displayName"),
+                    NO_DESCR,
+                    actualMimeType));
+        }
+
+        /*
+         * If the type of the artifact represented by this node dictates the
+         * addition of the source content's unique path, add it to the sheet.
+         */
+        if (artifactType != null && artifactType.getCategory() == Category.ANALYSIS_RESULT) {
+            String sourcePath = ""; //NON-NLS
+            try {
+                sourcePath = srcContent.getUniquePath();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting unique path of source content (artifact objID={0})", artifact.getId()), ex); //NON-NLS
+
+            }
+
+            if (sourcePath.isEmpty() == false) {
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "BlackboardArtifactNode.createSheet.filePath.name"),
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "BlackboardArtifactNode.createSheet.filePath.displayName"),
+                        NO_DESCR,
+                        sourcePath));
+            }
+
+            /*
+             * If the type of the artifact represented by this node dictates the
+             * addition of the source content's file metadata, add it to the
+             * sheet. Otherwise, add the data source to the sheet.
+             */
+            if (Arrays.asList(SHOW_FILE_METADATA).contains(artifactTypeId)) {
+                AbstractFile file = srcContent instanceof AbstractFile ? (AbstractFile) srcContent : null;
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileModifiedTime.name"),
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileModifiedTime.displayName"),
+                        "",
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getMtime())));
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileChangedTime.name"),
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileChangedTime.displayName"),
+                        "",
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getCtime())));
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileAccessedTime.name"),
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileAccessedTime.displayName"),
+                        "",
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getAtime())));
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileCreatedTime.name"),
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileCreatedTime.displayName"),
+                        "",
+                        file == null ? "" : TimeZoneUtils.getFormattedTime(file.getCrtime())));
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileSize.name"),
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "ContentTagNode.createSheet.fileSize.displayName"),
+                        "",
+                        file == null ? "" : file.getSize()));
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.BlackboardArtifactNode_createSheet_artifactMD5_name(),
+                        Bundle.BlackboardArtifactNode_createSheet_artifactMD5_displayName(),
+                        "",
+                        file == null ? "" : StringUtils.defaultString(file.getMd5Hash())));
+            }
+        } else {
+            String dataSourceStr = "";
+            try {
+                Content dataSource = srcContent.getDataSource();
+                if (dataSource != null) {
+                    dataSourceStr = dataSource.getName();
+                } else {
+                    dataSourceStr = getRootAncestorName();
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting source data source name (artifact objID={0})", artifact.getId()), ex); //NON-NLS
+
+            }
+
+            if (dataSourceStr.isEmpty() == false) {
+                sheetSet.put(new NodeProperty<>(
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "BlackboardArtifactNode.createSheet.dataSrc.name"),
+                        NbBundle.getMessage(DataArtifactNodev2.class,
+                                "BlackboardArtifactNode.createSheet.dataSrc.displayName"),
+                        NO_DESCR,
+                        dataSourceStr));
+            }
+        }
+
+        /*
+         * If the artifact represented by this node is an EXIF artifact, add the
+         * source file size and path to the sheet.
+         */
+        if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+            long size = 0;
+            String path = ""; //NON-NLS
+            if (srcContent instanceof AbstractFile) {
+                AbstractFile af = (AbstractFile) srcContent;
+                size = af.getSize();
+                try {
+                    path = af.getUniquePath();
+                } catch (TskCoreException ex) {
+                    path = af.getParentPath();
+
+                }
+            }
+            sheetSet.put(new NodeProperty<>(
+                    NbBundle.getMessage(DataArtifactNodev2.class,
+                            "BlackboardArtifactNode.createSheet.fileSize.name"),
+                    NbBundle.getMessage(DataArtifactNodev2.class,
+                            "BlackboardArtifactNode.createSheet.fileSize.displayName"),
+                    NO_DESCR,
+                    size));
+            sheetSet
+                    .put(new NodeProperty<>(
+                            NbBundle.getMessage(DataArtifactNodev2.class,
+                                    "BlackboardArtifactNode.createSheet.path.name"),
+                            NbBundle.getMessage(DataArtifactNodev2.class,
+                                    "BlackboardArtifactNode.createSheet.path.displayName"),
+                            NO_DESCR,
+                            path));
+        }
+
+        if (scoTask != null) {
+            backgroundTasksPool.submit(scoTask);
+        }
+
+        return sheet;
+    }
+
+
+    /**
+     * Adds a "custom" property to the property sheet of this node, independent
+     * of the artifact this node represents or its source content.
+     *
+     * @param property The custom property.
+     */
+    public void addNodeProperty(NodeProperty<?> property) {
+        if (customProperties == null) {
+            customProperties = new ArrayList<>();
+        }
+        customProperties.add(property);
+    }
+
+    /**
+     * Converts the attributes of the artifact this node represents to a map of
+     * name-value pairs, where the names are attribute type display names.
+     *
+     * @param map      The map to be populated with the artifact attribute
+     *                 name-value pairs.
+     * @param artifact The artifact.
+     */
+    @SuppressWarnings("deprecation")
+    private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
+        try {
+            for (BlackboardAttribute attribute : artifact.getAttributes()) {
+                final int attributeTypeID = attribute.getAttributeType().getTypeID();
+                if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()
+                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
+                        || attribute.getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON) {
+                    /*
+                     * Do nothing.
+                     */
+                } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                    addEmailMsgProperty(map, attribute);
+                } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                    map.put(attribute.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(attribute.getValueLong()));
+                } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
+                        && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
+                    /*
+                     * The truncation of text attributes appears to have been
+                     * motivated by the statement that "RegRipper output would
+                     * often cause the UI to get a black line accross it and
+                     * hang if you hovered over large output or selected it.
+                     * This reduces the amount of data in the table. Could
+                     * consider doing this for all fields in the UI."
+                     */
+                    String value = attribute.getDisplayString();
+                    if (value.length() > 512) {
+                        value = value.substring(0, 512);
+                    }
+                    map.put(attribute.getAttributeType().getDisplayName(), value);
+                } else {
+                    switch (attribute.getAttributeType().getValueType()) {
+                        case INTEGER:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueInt());
+                            break;
+                        case DOUBLE:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueDouble());
+                            break;
+                        case LONG:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueLong());
+                            break;
+                        default:
+                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+
+                    }
+
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, MessageFormat.format("Error getting artifact attributes (artifact objID={0})", artifact.getId()), ex); //NON-NLS
+        }
+    }
+
+    /**
+     * Adds an email message attribute of the artifact this node represents to a
+     * map of name-value pairs, where the names are attribute type display
+     * names.
+     *
+     * @param map       The map to be populated with the artifact attribute
+     *                  name-value pair.
+     * @param attribute The attribute to use to make the map entry.
+     */
+    private void addEmailMsgProperty(Map<String, Object> map, BlackboardAttribute attribute) {
+        final int attributeTypeID = attribute.getAttributeType().getTypeID();
+        if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()) {
+            /*
+             * Do nothing.
+             */
+        } else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()) {
+            String value = attribute.getDisplayString();
+            if (value.length() > 160) {
+                value = value.substring(0, 160) + "...";
+            }
+            map.put(attribute.getAttributeType().getDisplayName(), value);
+        } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+            map.put(attribute.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(attribute.getValueLong()));
+        } else {
+            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+        }
+    }
+
+    @Override
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return true;
+    }
+
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
+
+    @Override
+    public <T> T accept(ContentNodeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
+    @Messages({
+        "BlackboardArtifactNode_analysisSheet_sourceType_name=Source Type",
+        "BlackboardArtifactNode_analysisSheet_soureName_name=Source Name",
+        "BlackboardArtifactNode_analysisSheet_score_name=Score",
+        "BlackboardArtifactNode_analysisSheet_conclusion_name=Conclusion",
+        "BlackboardArtifactNode_analysisSheet_configuration_name=Configuration",
+        "BlackboardArtifactNode_analysisSheet_justifaction_name=Justification"
+    })
+
+
+    private GetSCOTask addSCOColumns(Sheet.Set sheetSet) {
+        if (!UserPreferences.getHideSCOColumns()) {
+            /*
+             * Add S(core), C(omments), and O(ther occurences) columns to the
+             * sheet and start a background task to compute the value of these
+             * properties for the artifact represented by this node. The task
+             * will fire a PropertyChangeEvent when the computation is completed
+             * and this node's PropertyChangeListener will update the sheet.
+             */
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                    VALUE_LOADING,
+                    ""));
+            sheetSet.put(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                    Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                    VALUE_LOADING,
+                    ""));
+            if (CentralRepository.isEnabled()) {
+                sheetSet.put(new NodeProperty<>(
+                        Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                        Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                        VALUE_LOADING,
+                        ""));
+            }
+            return new GetSCOTask(new WeakReference<>(this), weakListener);
+        }
+        return null;
+    }
+
+    /**
+     * Returns a displayable type string for the given content object.
+     *
+     * If the content object is a artifact of a custom type then this method may
+     * cause a DB call BlackboardArtifact.getType
+     *
+     * @param source The object to determine the type of.
+     *
+     * @return A string representing the content type.
+     */
+    private String getSourceObjType(Content source) {
+        if (source instanceof BlackboardArtifact) {
+            BlackboardArtifact srcArtifact = (BlackboardArtifact) source;
+            try {
+                return srcArtifact.getType().getDisplayName();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to get custom artifact type id=" + source.getId(), ex);
+            }
+        } else if (srcContent instanceof Volume) {
+            return TskData.ObjectType.VOL.toString();
+        } else if (srcContent instanceof AbstractFile) {
+            return TskData.ObjectType.ABSTRACTFILE.toString();
+        } else if (srcContent instanceof Image) {
+            return TskData.ObjectType.IMG.toString();
+        } else if (srcContent instanceof VolumeSystem) {
+            return TskData.ObjectType.VS.toString();
+        } else if (srcContent instanceof OsAccount) {
+            return TskData.ObjectType.OS_ACCOUNT.toString();
+        } else if (srcContent instanceof HostAddress) {
+            return TskData.ObjectType.HOST_ADDRESS.toString();
+        } else if (srcContent instanceof Pool) {
+            return TskData.ObjectType.POOL.toString();
+        }
+        return "";
+    }
+
+    /**
+     * Update the SCO columns with the data retrieved in the background thread.
+     *
+     * @param scoData The data for the SCO columns.
+     */
+    private void updateSCOColumns(final SCOData scoData) {
+        // Make sure this happens in the EDT
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (scoData.getScoreAndDescription() != null) {
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_score_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_score_displayName(),
+                            scoData.getScoreAndDescription().getRight(),
+                            scoData.getScoreAndDescription().getLeft()));
+                }
+                if (scoData.getComment() != null) {
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_comment_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_comment_displayName(),
+                            NO_DESCR, scoData.getComment()));
+                }
+                if (scoData.getCountAndDescription() != null) {
+                    updateSheet(new NodeProperty<>(
+                            Bundle.BlackboardArtifactNode_createSheet_count_name(),
+                            Bundle.BlackboardArtifactNode_createSheet_count_displayName(),
+                            scoData.getCountAndDescription().getRight(),
+                            scoData.getCountAndDescription().getLeft()));
+                }
+            }
+        });
+    }
+
+    /**
+     * Sets the displayName of the node based on the source content.
+     */
+    private void setDisplayNameBySourceContent() {
+        if (srcContent instanceof BlackboardArtifact) {
+            try {
+                setDisplayName(((BlackboardArtifact) srcContent).getShortDescription());
+            } catch (TskCoreException ex) {
+                // Log the error, but set the display name to
+                // Content.getName so there is something visible to the user.
+                logger.log(Level.WARNING, "Failed to get short description for artifact id = " + srcContent.getId(), ex);
+                setDisplayName(srcContent.getName());
+            }
+        } else if (srcContent instanceof OsAccount) {
+            setDisplayName(((OsAccount) srcContent).getAddr().orElse(srcContent.getName()));
+        } else {
+            setDisplayName(srcContent.getName());
+        }
+
+        setShortDescription(getDisplayName());
+    }
+
+}
