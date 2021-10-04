@@ -88,8 +88,8 @@ public class ThreePanelDAO {
                     : null;
 
             Content srcContent = artifact.getParent();
-            String srcContentTypeName = getSourceObjType(srcContent);
-            rows.add(new DataArtifactRow(id, attributeValues, srcContent, srcContentTypeName, linkedFile));
+            String dataSourceName = getDataSourceName(srcContent);
+            rows.add(new DataArtifactRow(id, attributeValues, artifact, srcContent, linkedFile, dataSourceName));
         }
 
         List<BlackboardAttribute.Type> attributeTypeSortedList = attributeTypes.stream()
@@ -97,6 +97,33 @@ public class ThreePanelDAO {
                 .collect(Collectors.toList());
 
         return new DataArtifactTableDTO(artType, attributeTypeSortedList, rows);
+    }
+
+    private String getDataSourceName(Content srcContent) throws TskCoreException {
+        Content dataSource = srcContent.getDataSource();
+        if (dataSource != null) {
+            return dataSource.getName();
+        } else {
+            return getRootAncestorName(srcContent);
+        }
+    }
+
+    /**
+     * Gets the name of the root ancestor of the source content for the artifact
+     * represented by this node.
+     *
+     * @param srcContent The source content.
+     *
+     * @return The root ancestor name or the empty string if an error occurs.
+     */
+    private String getRootAncestorName(Content srcContent) throws TskCoreException {
+        String parentName = srcContent.getName();
+        Content parent = srcContent;
+
+        while ((parent = parent.getParent()) != null) {
+            parentName = parent.getName();
+        }
+        return parentName;
     }
 
     /**
@@ -226,17 +253,18 @@ public class ThreePanelDAO {
 
         private final Map<String, Object> attributeValues;
 
+        private final DataArtifact dataArtifact;
         private final Content srcContent;
-        private final String srcContentTypeName;
         private final Content linkedFile;
         private String dataSourceName;
 
-        public DataArtifactRow(long id, Map<String, Object> attributeValues, Content srcContent, String srcContentTypeName, Content linkedFile) {
+        public DataArtifactRow(long id, Map<String, Object> attributeValues, DataArtifact dataArtifact, Content srcContent, Content linkedFile, String dataSourceName) {
             this.id = id;
             this.attributeValues = attributeValues;
+            this.dataArtifact = dataArtifact;
             this.srcContent = srcContent;
-            this.srcContentTypeName = srcContentTypeName;
             this.linkedFile = linkedFile;
+            this.dataSourceName = dataSourceName;
         }
 
         public long getId() {
@@ -247,12 +275,12 @@ public class ThreePanelDAO {
             return attributeValues;
         }
 
-        public Content getSrcContent() {
-            return srcContent;
+        public DataArtifact getDataArtifact() {
+            return dataArtifact;
         }
 
-        public String getSrcContentTypeName() {
-            return srcContentTypeName;
+        public Content getSrcContent() {
+            return srcContent;
         }
 
         public Content getLinkedFile() {
