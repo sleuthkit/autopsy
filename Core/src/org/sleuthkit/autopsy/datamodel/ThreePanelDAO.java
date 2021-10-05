@@ -163,7 +163,7 @@ public class ThreePanelDAO {
             case BYTE:
                 return attr.getValueBytes();
             case DATETIME:
-                new Date(attr.getValueLong() * 1000);
+                return new Date(attr.getValueLong() * 1000);
             case DOUBLE:
                 return attr.getValueDouble();
             case INTEGER:

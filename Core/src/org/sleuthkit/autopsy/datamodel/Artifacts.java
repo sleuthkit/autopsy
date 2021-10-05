@@ -140,8 +140,8 @@ public class Artifacts {
          *                If no filtering should occur, this number should be
          *                less than or equal to 0.
          */
-        TypeNodeKey(BlackboardArtifact.Type type, long dsObjId) {
-            this(new TypeNode(type, dsObjId), type);
+        TypeNodeKey(BlackboardArtifact.Type type, long dsObjId, boolean isDataArtifactv2) {
+            this(new TypeNode(type, dsObjId, isDataArtifactv2), type);
         }
 
         /**
@@ -261,7 +261,7 @@ public class Artifacts {
                 return new TypeNodeKey(hashsetHits, TSK_HASHSET_HIT);
 
             } else {
-                return new TypeNodeKey(type, dsObjId);
+                return new TypeNodeKey(type, dsObjId, type.getCategory() == Category.DATA_ARTIFACT);
             }
         }
 
@@ -521,6 +521,12 @@ public class Artifacts {
 
         private final BlackboardArtifact.Type type;
 
+        private static Children getChildren(BlackboardArtifact.Type type, long filteringDSObjId, boolean isDataArtifact) {
+            return isDataArtifact
+                    ? Children.create(new DataArtifactFactoryv2(type, filteringDSObjId >= 0 ? filteringDSObjId : null), true)
+                    : Children.create(new ArtifactFactory(type, filteringDSObjId), true);
+        }
+
         /**
          * Main constructor.
          *
@@ -529,8 +535,8 @@ public class Artifacts {
          *                         filtering. If id is less than or equal to 0,
          *                         no filtering will occur.
          */
-        TypeNode(BlackboardArtifact.Type type, long filteringDSObjId) {
-            super(Children.create(new ArtifactFactory(type, filteringDSObjId), true),
+        TypeNode(BlackboardArtifact.Type type, long filteringDSObjId, boolean isDataArtifact) {
+            super(getChildren(type, filteringDSObjId, isDataArtifact),
                     Lookups.singleton(type.getDisplayName()),
                     type.getDisplayName(),
                     filteringDSObjId,
