@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.python.google.common.collect.Sets;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.ShowUnwrappedInTree;
 import org.sleuthkit.datamodel.Blackboard;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
@@ -537,7 +538,9 @@ public class Artifacts {
          */
         TypeNode(BlackboardArtifact.Type type, long filteringDSObjId, boolean isDataArtifact) {
             super(getChildren(type, filteringDSObjId, isDataArtifact),
-                    Lookups.singleton(type.getDisplayName()),
+                    isDataArtifact
+                            ? Lookups.fixed(type.getDisplayName(), new ShowUnwrappedInTree())
+                            : Lookups.singleton(type.getDisplayName()),
                     type.getDisplayName(),
                     filteringDSObjId,
                     type);
