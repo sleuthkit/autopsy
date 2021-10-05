@@ -67,7 +67,7 @@ public class OsAccountDataPanel extends JPanel {
 
     private static final int KEY_COLUMN = 0;
     private static final int VALUE_COLUMN = 1;
-    
+
     private final static Insets FIRST_HEADER_INSETS = new Insets(0, 0, 0, 0);
     private final static Insets HEADER_INSETS = new Insets(ContentViewerDefaults.getSectionSpacing(), 0, ContentViewerDefaults.getLineSpacing(), 0);
     private final static Insets VALUE_COLUMN_INSETS = new Insets(0, ContentViewerDefaults.getColumnSpacing(), ContentViewerDefaults.getLineSpacing(), 0);
@@ -112,7 +112,7 @@ public class OsAccountDataPanel extends JPanel {
             dataFetcher.execute();
         }
     }
-    
+
     void setOsAccount(OsAccount account) {
         removeAll();
         revalidate();
@@ -138,7 +138,7 @@ public class OsAccountDataPanel extends JPanel {
      */
     private void addDataComponents(List<Section> panelData) {
         int rowCnt = 0;
-        
+
         for (Section section : panelData) {
             addTitle(section.getTitle(), rowCnt++);
             for (SectionData data : section) {
@@ -192,7 +192,7 @@ public class OsAccountDataPanel extends JPanel {
      */
     private Section buildBasicProperties(OsAccount account) {
         Section section = new Section(Bundle.OsAccountDataPanel_basic_title());
-        
+
         SectionData data = new SectionData();
 
         Optional<String> optional = account.getLoginName();
@@ -206,11 +206,10 @@ public class OsAccountDataPanel extends JPanel {
         data.addData(Bundle.OsAccountDataPanel_basic_address(),
                 account.getName() == null || account.getName().isEmpty() ? "" : account.getName());
 
-        
-        data.addData(Bundle.OsAccountDataPanel_basic_type(), 
-            account.getOsAccountType().isPresent() ? account.getOsAccountType().get().getName() : "");
+        data.addData(Bundle.OsAccountDataPanel_basic_type(),
+                account.getOsAccountType().isPresent() ? account.getOsAccountType().get().getName() : "");
 
-        Optional<Long> crTime = account.getCreationTime();        
+        Optional<Long> crTime = account.getCreationTime();
         data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), crTime.isPresent() ? TimeZoneUtils.getFormattedTime(crTime.get()) : "");
 
         section.addSectionData(data);
@@ -236,10 +235,10 @@ public class OsAccountDataPanel extends JPanel {
         Section section = new Section(Bundle.OsAccountDataPanel_realm_title());
         SectionData data = new SectionData();
 
-        String realmName = realm.getRealmNames().isEmpty() ?  Bundle.OsAccountDataPanel_realm_unknown() :  realm.getRealmNames().get(0);
+        String realmName = realm.getRealmNames().isEmpty() ? Bundle.OsAccountDataPanel_realm_unknown() : realm.getRealmNames().get(0);
         data.addData(Bundle.OsAccountDataPanel_realm_name(), realmName);
 
-         Optional<String> optional = realm.getRealmAddr();
+        Optional<String> optional = realm.getRealmAddr();
         data.addData(Bundle.OsAccountDataPanel_realm_address(),
                 optional.isPresent() ? optional.get() : "");
 
@@ -262,16 +261,16 @@ public class OsAccountDataPanel extends JPanel {
     })
     private Section buildHostData(Host host, Map<DataSource, List<OsAccountAttribute>> attributeDataSourceMap) {
         String sectionTitle = "Global Host Details";
-        
-        if(host != null) {
+
+        if (host != null) {
             sectionTitle = Bundle.OsAccountDataPanel_host_section_title(host.getName());
-        } 
-        
+        }
+
         Section section = new Section(sectionTitle);
 
         for (DataSource dataSource : attributeDataSourceMap.keySet()) {
             List<OsAccountAttribute> attributeList = attributeDataSourceMap.get(dataSource);
-            SectionData data = new SectionData((attributeDataSourceMap.size() > 1  && dataSource != null) ? dataSource.getName() : null);
+            SectionData data = new SectionData((attributeDataSourceMap.size() > 1 && dataSource != null) ? dataSource.getName() : null);
             if (attributeList != null) {
                 for (OsAccountAttribute attribute : attributeList) {
                     String displayName = attribute.getAttributeType().getDisplayName();
@@ -295,7 +294,7 @@ public class OsAccountDataPanel extends JPanel {
             } else {
                 data.addData("No details available", null);
             }
-            
+
             section.addSectionData(data);
         }
 
@@ -314,7 +313,7 @@ public class OsAccountDataPanel extends JPanel {
         label.setFont(ContentViewerDefaults.getHeaderFont());
         add(label, getTitleContraints(row));
     }
-    
+
     private void addSubTitle(String title, int row) {
         JLabel label = new JLabel(title);
         // Make the title bold.
@@ -332,7 +331,7 @@ public class OsAccountDataPanel extends JPanel {
         JLabel label = new JLabel(key + ":");
         add(label, getPropertyNameContraints(row));
     }
-    
+
     /**
      * Adds a simple label to the given row.
      *
@@ -374,12 +373,12 @@ public class OsAccountDataPanel extends JPanel {
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.weightx = 1;
         constraints.insets = (row == 0)
-                ? FIRST_HEADER_INSETS 
+                ? FIRST_HEADER_INSETS
                 : HEADER_INSETS;
 
         return constraints;
     }
-    
+
     private GridBagConstraints getSubtitleContraints(int row) {
         GridBagConstraints constraints = new GridBagConstraints();
 
@@ -453,7 +452,7 @@ public class OsAccountDataPanel extends JPanel {
             this.accountId = accountId;
             this.account = null;
         }
-        
+
         PanelDataFetcher(OsAccount account) {
             this.account = account;
             this.accountId = null;
@@ -465,13 +464,13 @@ public class OsAccountDataPanel extends JPanel {
             Map<Host, DataSource> instanceMap = new HashMap<>();
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             OsAccountManager osAccountManager = skCase.getOsAccountManager();
-            
-            if(account == null) {
+
+            if (account == null) {
                 account = osAccountManager.getOsAccountByObjectId(accountId);
             }
-            
+
             OsAccountRealm realm = skCase.getOsAccountRealmManager().getRealmByRealmId(account.getRealmId());
-    
+
             List<Host> hosts = osAccountManager.getHosts(account);
             List<OsAccountAttribute> attributeList = account.getExtendedOsAccountAttributes();
 
@@ -481,23 +480,23 @@ public class OsAccountDataPanel extends JPanel {
                 for (OsAccountAttribute attribute : attributeList) {
 
                     Long key = attribute.getHostId().orElse(null);
-                    Long sourceID = attribute.getSourceObjectId().orElse(null);                    
+                    Long sourceID = attribute.getSourceObjectId().orElse(null);
                     DataSource dataSource = null;
 
-                    if(sourceID != null) {
+                    if (sourceID != null) {
                         Content sourceContent = skCase.getContentById(sourceID);
-                        if(sourceContent != null) {
-                            dataSource = (DataSource)sourceContent.getDataSource();
+                        if (sourceContent != null) {
+                            dataSource = (DataSource) sourceContent.getDataSource();
                         }
                     }
-                   
+
                     Map<DataSource, List<OsAccountAttribute>> atMap = idMap2.get(key);
-                    if(atMap == null) {
+                    if (atMap == null) {
                         atMap = new HashMap<>();
                         idMap2.put(key, atMap);
                     }
-                  
-                    List<OsAccountAttribute> mapList =  atMap.get(dataSource);
+
+                    List<OsAccountAttribute> mapList = atMap.get(dataSource);
                     if (mapList == null) {
                         mapList = new ArrayList<>();
                         atMap.put(dataSource, mapList);
@@ -511,8 +510,8 @@ public class OsAccountDataPanel extends JPanel {
                 for (Host host : hosts) {
                     hostMap.put(host, idMap2.get(host.getHostId()));
                 }
-            } 
-            
+            }
+
             hostMap.put(null, idMap2.get(null));
             Map<DataSource, List<OsAccountAttribute>> atMap = idMap2.get(null);
             if (atMap != null) {
@@ -571,7 +570,6 @@ public class OsAccountDataPanel extends JPanel {
 //
 //                    data.add(instanceSection);
 //                }
-                
                 addDataComponents(data);
 
                 revalidate();
@@ -623,7 +621,7 @@ public class OsAccountDataPanel extends JPanel {
         Map<Host, DataSource> getDataSourceMap() {
             return instanceMap;
         }
-        
+
         OsAccountRealm getRealm() {
             return realm;
         }

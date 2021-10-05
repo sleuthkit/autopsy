@@ -26,19 +26,29 @@ import java.util.List;
  * Data model for OsAccount panels, but could be reused in other places. The
  * model represents a titled section of key\value pairs.
  */
-class Section implements Iterable<Section.SectionData>{
-    
+final class Section implements Iterable<Section.SectionData> {
+
     private final String title;
     private final List<SectionData> sectionData = new ArrayList<>();
-    
+
     Section(String title) {
         this.title = title;
     }
-    
+
+    /**
+     * Add data to this section.
+     * 
+     * @param data Section data to add.
+     */
     void addSectionData(SectionData data) {
         sectionData.add(data);
     }
-    
+
+    /**
+     * Returns the section title.
+     * 
+     * @return The section title.
+     */
     String getTitle() {
         return title;
     }
@@ -56,7 +66,7 @@ class Section implements Iterable<Section.SectionData>{
         SectionData() {
             this(null);
         }
-        
+
         /**
          * Construct a new SectionData object.
          *
