@@ -51,7 +51,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.python.google.common.collect.Sets;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.ShowUnwrappedInTree;
 import org.sleuthkit.datamodel.Blackboard;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
@@ -141,8 +140,8 @@ public class Artifacts {
          *                If no filtering should occur, this number should be
          *                less than or equal to 0.
          */
-        TypeNodeKey(BlackboardArtifact.Type type, long dsObjId, boolean isDataArtifactv2) {
-            this(new TypeNode(type, dsObjId, isDataArtifactv2), type);
+        TypeNodeKey(BlackboardArtifact.Type type, long dsObjId) {
+            this(new TypeNode(type, dsObjId), type);
         }
 
         /**
@@ -262,7 +261,7 @@ public class Artifacts {
                 return new TypeNodeKey(hashsetHits, TSK_HASHSET_HIT);
 
             } else {
-                return new TypeNodeKey(type, dsObjId, type.getCategory() == Category.DATA_ARTIFACT);
+                return new TypeNodeKey(type, dsObjId);
             }
         }
 
@@ -522,12 +521,6 @@ public class Artifacts {
 
         private final BlackboardArtifact.Type type;
 
-        private static Children getChildren(BlackboardArtifact.Type type, long filteringDSObjId, boolean isDataArtifact) {
-            return isDataArtifact
-                    ? Children.create(new DataArtifactFactoryv2(type, filteringDSObjId > 0 ? filteringDSObjId : null), true)
-                    : Children.create(new ArtifactFactory(type, filteringDSObjId), true);
-        }
-
         /**
          * Main constructor.
          *
@@ -536,11 +529,16 @@ public class Artifacts {
          *                         filtering. If id is less than or equal to 0,
          *                         no filtering will occur.
          */
-        TypeNode(BlackboardArtifact.Type type, long filteringDSObjId, boolean isDataArtifact) {
-            super(getChildren(type, filteringDSObjId, isDataArtifact),
-                    isDataArtifact
-                            ? Lookups.fixed(type.getDisplayName(), new ShowUnwrappedInTree())
-                            : Lookups.singleton(type.getDisplayName()),
+        TypeNode(BlackboardArtifact.Type type, long filteringDSObjId) {
+            super(
+                    type.getCategory() == Category.DATA_ARTIFACT
+                    ? new Children.Array()
+                    : Children.create(new ArtifactFactory(type, filteringDSObjId), true),
+                    
+                    type.getCategory() == Category.DATA_ARTIFACT
+                    ? Lookups.fixed(type.getDisplayName(), new DataArtifactKeyv2(type, filteringDSObjId > 0 ? filteringDSObjId : null))
+                    : Lookups.singleton(type.getDisplayName()),
+                    
                     type.getDisplayName(),
                     filteringDSObjId,
                     type);

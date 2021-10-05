@@ -38,7 +38,9 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DataArtifactTypeNodev2;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -358,6 +360,10 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     @Override
     public void setNode(Node selectedNode) {
         dataResultPanel.setNode(selectedNode);
+    }
+    
+    public void displayDataArtifact(BlackboardArtifact.Type artifactType, Long dataSourceId) {
+        setNode(new TableFilterNode(new DataArtifactTypeNodev2(artifactType, dataSourceId), true));
     }
 
     @Override

@@ -471,7 +471,7 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
                             getContentTypeStr(srcContent)));
         }
 
-        // GVDTODO does not appear necessary
+        // GVDTODO does not appear necessary at this time
 //        else if (srcContent instanceof DataArtifact) {
 //            try {
 //                if (hasSupportedTimeStamp((BlackboardArtifact) srcContent)) {

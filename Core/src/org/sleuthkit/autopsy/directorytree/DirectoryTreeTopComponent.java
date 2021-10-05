@@ -80,9 +80,9 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
-import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
+import org.sleuthkit.autopsy.datamodel.DataArtifactKeyv2;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
 import org.sleuthkit.autopsy.datamodel.OsAccounts;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
@@ -840,11 +840,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         }
     }
-    
-    
-    public static class ShowUnwrappedInTree {
-        
-    }
 
     /**
      * Event handler to run when selection changed
@@ -872,22 +867,21 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                 if (treeNode != null) {
                     Node originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
-                    if (originNode.getLookup().lookup(ShowUnwrappedInTree.class) != null) {
-                        dataResult.setNode(new TableFilterNode(originNode, true));
+                    //set node, wrap in filter node first to filter out children
+                    Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
+                    // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
+                    DataArtifactKeyv2 dataArtifactKey = originNode.getLookup().lookup(DataArtifactKeyv2.class);
+                    if (dataArtifactKey != null) {
+                        dataResult.displayDataArtifact(dataArtifactKey.getArtifactType(), dataArtifactKey.getDataSourceId());
+                    } else if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
+                        //Special case for when File Type Identification has not yet been run and
+                        //there are no mime types to populate Files by Mime Type Tree
+                        EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTreeTopComponent_emptyMimeNode_text());
+                        dataResult.setNode(new TableFilterNode(emptyNode, true, "This Node Is Empty")); //NON-NLS
+                    } else if (originNode instanceof DisplayableItemNode) {
+                        dataResult.setNode(new TableFilterNode(drfn, true, ((DisplayableItemNode) originNode).getItemType()));
                     } else {
-                        //set node, wrap in filter node first to filter out children
-                        Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                        // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
-                        if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
-                            //Special case for when File Type Identification has not yet been run and
-                            //there are no mime types to populate Files by Mime Type Tree
-                            EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTreeTopComponent_emptyMimeNode_text());
-                            dataResult.setNode(new TableFilterNode(emptyNode, true, "This Node Is Empty")); //NON-NLS
-                        } else if (originNode instanceof DisplayableItemNode) {
-                            dataResult.setNode(new TableFilterNode(drfn, true, ((DisplayableItemNode) originNode).getItemType()));
-                        } else {
-                            dataResult.setNode(new TableFilterNode(drfn, true));
-                        }
+                        dataResult.setNode(new TableFilterNode(drfn, true));
                     }
                     String displayName = "";
                     Content content = originNode.getLookup().lookup(Content.class);
