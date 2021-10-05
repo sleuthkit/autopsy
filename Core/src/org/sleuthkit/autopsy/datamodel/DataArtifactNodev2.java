@@ -19,11 +19,8 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.collect.ImmutableSet;
-import java.beans.PropertyChangeListener;
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
-import java.lang.ref.WeakReference;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,13 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.Action;
-import javax.swing.SwingUtilities;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
@@ -51,13 +46,8 @@ import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -66,19 +56,14 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactRow;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableDTO;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
-import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
@@ -97,13 +82,9 @@ import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
-import org.sleuthkit.datamodel.Tag;
 
-/**
- * An AbstractNode implementation that can be used to represent an data artifact
- * or analysis result of any type.
- */
-public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> {
+
+public class DataArtifactNodev2 extends AbstractNode {
 
     private static final Logger logger = Logger.getLogger(DataArtifactNodev2.class.getName());
 
@@ -122,40 +103,12 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
     private final boolean hasSupportedTimeStamp;
     private String translatedSourceName = null;
 
-    private final PropertyChangeListener fileNameTranslationListener = (evt) -> {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(FileNameTransTask.getPropertyName())) {
-            /*
-                 * Replace the value of the Source File property with the
-                 * translated name via setDisplayName (see note in createSheet),
-                 * and put the untranslated name in the Original Name property
-                 * and in the tooltip.
-             */
-            String originalName = evt.getOldValue().toString();
-            translatedSourceName = evt.getNewValue().toString();
-            setDisplayName(translatedSourceName);
-            setShortDescription(originalName);
-            updateSheet(new NodeProperty<>(
-                    Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(),
-                    Bundle.BlackboardArtifactNode_createSheet_srcFile_origDisplayName(),
-                    NO_DESCR,
-                    originalName));
-        }
-    };
-
-    private final PropertyChangeListener scoListener = (evt) -> {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
-            updateSCOColumns((SCOData) evt.getNewValue());
-        }
-    };
-
     public DataArtifactNodev2(DataArtifactTableDTO tableData, DataArtifactRow artifactRow) {
         this(tableData, artifactRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()));
     }
 
     public DataArtifactNodev2(DataArtifactTableDTO tableData, DataArtifactRow artifactRow, String iconPath) {
-        super(artifactRow.getDataArtifact(), createLookup(artifactRow));
+        super(Children.LEAF, createLookup(artifactRow));
 
         setDisplayName(artifactRow.getSrcContent().getName());
         setShortDescription(getDisplayName());
@@ -204,7 +157,10 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
         ));
 
         // view associated file (TSK_PATH_ID attr) in directory and timeline
-        actionsLists.add(getAssociatedFileActions(artifact, this.artifactType));
+        AbstractFile associatedFile = this.artifactRow.getLinkedFile() instanceof AbstractFile
+                ? (AbstractFile) this.artifactRow.getLinkedFile()
+                : null;
+        actionsLists.add(getAssociatedFileActions(associatedFile, this.artifactType));
 
         // view source content in directory and timeline
         actionsLists.add(getNonNull(
@@ -296,41 +252,27 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
         }
     }
 
-    /**
-     * Returns actions for navigating to an associated file in the directory or
-     * in the timeline.
-     *
-     * @param artifact     The artifact whose associated file will be
-     *                     identified.
-     * @param artifactType The type of artifact.
-     *
-     * @return The actions or an empty list.
-     */
     @Messages({
         "# {0} - type",
         "DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory",
         "# {0} - type",
         "DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline..."
     })
-    private List<Action> getAssociatedFileActions(BlackboardArtifact artifact, BlackboardArtifact.Type artifactType) {
-        try {
-            AbstractFile associatedFile = findLinked(artifact);
-            if (associatedFile != null) {
-                return Arrays.asList(
-                        new ViewContextAction(
-                                Bundle.DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileAction(
-                                        getAssociatedTypeStr(artifactType)),
-                                associatedFile),
-                        new ViewFileInTimelineAction(associatedFile,
-                                Bundle.DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileInTimelineAction(
-                                        getAssociatedTypeStr(artifactType)))
-                );
-            }
-
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error getting linked file of artifact (artifact objID={0})", artifact.getId()), ex); //NON-NLS
+    private List<Action> getAssociatedFileActions(AbstractFile associatedFile, BlackboardArtifact.Type artifactType) {
+        if (associatedFile != null) {
+            return Arrays.asList(
+                    new ViewContextAction(
+                            Bundle.DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileAction(
+                                    getAssociatedTypeStr(artifactType)),
+                            associatedFile),
+                    new ViewFileInTimelineAction(associatedFile,
+                            Bundle.DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileInTimelineAction(
+                                    getAssociatedTypeStr(artifactType)))
+            );
+        } else {
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+
     }
 
     /**
@@ -563,12 +505,6 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
                     Bundle.DataArtifactNodev2_createSheet_srcFile_origDisplayName(),
                     NO_DESCR,
                     translatedSourceName != null ? srcContent.getName() : ""));
-            if (translatedSourceName == null) {
-                /*
-                 * NOTE: The task makes its own weak reference to the listener.
-                 */
-                new FileNameTransTask(srcContent.getName(), this, fileNameTranslationListener).submit();
-            }
         }
 
         /*
@@ -592,10 +528,6 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
                     Bundle.DataArtifactNodev2_createSheet_dataSrc_displayName(),
                     NO_DESCR,
                     dataSourceStr));
-        }
-
-        if (scoTask != null) {
-            backgroundTasksPool.submit(scoTask);
         }
 
         return sheet;
@@ -703,16 +635,6 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
         }
     }
 
-    @Override
-    public boolean isLeafTypeNode() {
-        return true;
-    }
-
-    @Override
-    public String getItemType() {
-        return getClass().getName();
-    }
-
     @Messages({
         "DataArtifactNodev2.createSheet.comment.displayName=C",
         "DataArtifactNodev2.createSheet.comment.name=C",
@@ -738,152 +660,22 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
             sheetSet.put(new NodeProperty<>(
                     Bundle.DataArtifactNodev2_createSheet_score_name(),
                     Bundle.DataArtifactNodev2_createSheet_score_displayName(),
-                    VALUE_LOADING,
+                    "" /* VALUE_LOADING */,
                     ""));
             sheetSet.put(new NodeProperty<>(
                     Bundle.DataArtifactNodev2_createSheet_comment_name(),
                     Bundle.DataArtifactNodev2_createSheet_comment_displayName(),
-                    VALUE_LOADING,
+                    "" /* VALUE_LOADING */,
                     ""));
             if (CentralRepository.isEnabled()) {
                 sheetSet.put(new NodeProperty<>(
                         Bundle.DataArtifactNodev2_createSheet_count_name(),
                         Bundle.DataArtifactNodev2_createSheet_count_displayName(),
-                        VALUE_LOADING,
+                        "" /* VALUE_LOADING */,
                         ""));
             }
-            return new GetSCOTask(new WeakReference<>(this), scoListener);
+            //return new GetSCOTask(new WeakReference<>(this), scoListener);
         }
         return null;
-    }
-
-    /**
-     * Update the SCO columns with the data retrieved in the background thread.
-     *
-     * @param scoData The data for the SCO columns.
-     */
-    private void updateSCOColumns(final SCOData scoData) {
-        // Make sure this happens in the EDT
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (scoData.getScoreAndDescription() != null) {
-                    updateSheet(new NodeProperty<>(
-                            Bundle.DataArtifactNodev2_createSheet_score_name(),
-                            Bundle.DataArtifactNodev2_createSheet_score_displayName(),
-                            scoData.getScoreAndDescription().getRight(),
-                            scoData.getScoreAndDescription().getLeft()));
-                }
-                if (scoData.getComment() != null) {
-                    updateSheet(new NodeProperty<>(
-                            Bundle.DataArtifactNodev2_createSheet_comment_name(),
-                            Bundle.DataArtifactNodev2_createSheet_comment_displayName(),
-                            NO_DESCR, scoData.getComment()));
-                }
-                if (scoData.getCountAndDescription() != null) {
-                    updateSheet(new NodeProperty<>(
-                            Bundle.DataArtifactNodev2_createSheet_count_name(),
-                            Bundle.DataArtifactNodev2_createSheet_count_displayName(),
-                            scoData.getCountAndDescription().getRight(),
-                            scoData.getCountAndDescription().getLeft()));
-                }
-            }
-        });
-    }
-
-    /**
-     * Gets all of the tags applied to the artifact represented by this node and
-     * its source content.
-     *
-     * @return The tags.
-     */
-    @Override
-    protected final List<Tag> getAllTagsFromDatabase() {
-        List<Tag> tags = new ArrayList<>();
-        try {
-            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(this.artifactRow.getDataArtifact()));
-            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(this.artifactRow.getSrcContent()));
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error getting tags for artifact and its source content (artifact objID={0})", this.artifactRow.getDataArtifact().getId()), ex);
-        }
-        return tags;
-    }
-
-    /**
-     * Computes the value of the comment property ("C" in S, C, O) for the
-     * artifact represented by this node.
-     *
-     * An icon is displayed in the property sheet if a commented tag has been
-     * applied to the artifact or its source content, or if there is a
-     * corresponding commented correlation attribute instance in the central
-     * repository.
-     *
-     * @param tags       The tags applied to the artifact and its source
-     *                   content.
-     * @param attributes A correlation attribute instance for the central
-     *                   repository lookup.
-     *
-     * @return The value of the comment property.
-     */
-    @Override
-    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
-        /*
-         * Has a tag with a comment been applied to the artifact or its source
-         * content?
-         */
-        DataResultViewerTable.HasCommentStatus status = tags.size() > 0 ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-        for (Tag tag : tags) {
-            if (!StringUtils.isBlank(tag.getComment())) {
-                status = DataResultViewerTable.HasCommentStatus.TAG_COMMENT;
-                break;
-            }
-        }
-        /*
-         * Is there a comment in the CR for anything that matches the value and
-         * type of the specified attributes.
-         */
-        try {
-            if (CentralRepoDbUtil.commentExistsOnAttributes(attributes)) {
-                if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
-                    status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
-                } else {
-                    status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
-                }
-            }
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Attempted to Query CR for presence of comments in a Blackboard Artifact node and was unable to perform query, comment column will only reflect caseDB", ex);
-        }
-        return status;
-    }
-
-    @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
-        Long count = -1L;
-        String description = defaultDescription;
-        try {
-            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
-                count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attribute);
-                description = Bundle.DataArtifactNodev2_createSheet_count_description(count, attribute.getCorrelationType().getDisplayName());
-            } else if (attribute != null) {
-                description = Bundle.DataArtifactNodev2_createSheet_count_noCorrelationValues_description();
-            }
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error querying central repository for other occurences count (artifact objID={0}, corrAttrType={1}, corrAttrValue={2})",
-                    this.artifactRow.getDataArtifact().getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
-        } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error normalizing correlation attribute for central repository query (artifact objID={0}, corrAttrType={2}, corrAttrValue={3})",
-                    this.artifactRow.getDataArtifact().getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
-        }
-        return Pair.of(count, description);
-    }
-
-    @Override
-    public <T> T accept(ContentNodeVisitor<T> visitor) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
