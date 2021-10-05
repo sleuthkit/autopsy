@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.DataSource;
  * Class to export additional details associated with a specific DataSource
  */
 class ExportContainerInfo {
-    
+
     private final ContainerSummary containerSummary;
 
     /**
@@ -55,8 +55,9 @@ class ExportContainerInfo {
      * separate cells in an excel export.
      *
      * @param acquisitionDetails The acquisition details.
+     *
      * @return The list of key value pairs that can be incorporated into the
-     * excel export.
+     *         excel export.
      */
     private static List<? extends ExcelItemExportable> getAcquisitionDetails(String acquisitionDetails) {
         if (StringUtils.isBlank(acquisitionDetails)) {
@@ -105,26 +106,38 @@ class ExportContainerInfo {
         DefaultCellModel<?> md5 = hasImage ? new DefaultCellModel<>(imageDetails.getMd5Hash()) : NACell;
         DefaultCellModel<?> sha1 = hasImage ? new DefaultCellModel<>(imageDetails.getSha1Hash()) : NACell;
         DefaultCellModel<?> sha256 = hasImage ? new DefaultCellModel<>(imageDetails.getSha256Hash()) : NACell;
-        DefaultCellModel<?> unallocatedSize = hasImage ? SizeRepresentationUtil.getBytesCell(imageDetails.getUnallocatedSize()) : NACell;
+
+        DefaultCellModel<?> unallocatedSize;
+        if (hasImage) {
+            Long unallocatedSizeVal = imageDetails.getUnallocatedSize();
+            if (unallocatedSizeVal != null) {
+                unallocatedSize = SizeRepresentationUtil.getBytesCell(unallocatedSizeVal);
+            } else {
+                unallocatedSize = NACell;
+            }
+        } else {
+            unallocatedSize = NACell;
+        }
+
         List<String> paths = containerDetails.getImageDetails() == null ? Collections.singletonList(NA) : containerDetails.getImageDetails().getPaths();
         List<SingleCellExportable> cellPaths = paths.stream()
                 .map(SingleCellExportable::new)
                 .collect(Collectors.toList());
 
         return Arrays.asList(new ExcelSpecialFormatExport(Bundle.ExportContainerInfo_tabName(), Arrays.asList(new KeyValueItemExportable(Bundle.ExportContainerInfo_export_displayName(), new DefaultCellModel<>(containerDetails.getDisplayName())),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_originalName(), new DefaultCellModel<>(containerDetails.getOriginalName())),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_deviceId(), new DefaultCellModel<>(containerDetails.getDeviceId())),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_timeZone(), timeZone),
-                        new TitledExportable(Bundle.ExportContainerInfo_export_acquisitionDetails(), getAcquisitionDetails(containerDetails.getAcquisitionDetails())),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_imageType(), imageType),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_size(), size),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_sectorSize(), sectorSize),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_md5(), md5),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_sha1(), sha1),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_sha256(), sha256),
-                        new KeyValueItemExportable(Bundle.ExportContainerInfo_export_unallocatedSize(), unallocatedSize),
-                        new TitledExportable(Bundle.ExportContainerInfo_export_filePaths(), cellPaths)
-                )));
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_originalName(), new DefaultCellModel<>(containerDetails.getOriginalName())),
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_deviceId(), new DefaultCellModel<>(containerDetails.getDeviceId())),
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_timeZone(), timeZone),
+                new TitledExportable(Bundle.ExportContainerInfo_export_acquisitionDetails(), getAcquisitionDetails(containerDetails.getAcquisitionDetails())),
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_imageType(), imageType),
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_size(), size),
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_sectorSize(), sectorSize),
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_md5(), md5),
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_sha1(), sha1),
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_sha256(), sha256),
+                new KeyValueItemExportable(Bundle.ExportContainerInfo_export_unallocatedSize(), unallocatedSize),
+                new TitledExportable(Bundle.ExportContainerInfo_export_filePaths(), cellPaths)
+        )));
 
     }
 }

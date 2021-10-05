@@ -104,7 +104,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         "LayoutFileNode.getActions.viewFileInDir.text=View File in Directory"})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-        actionsList.addAll(Arrays.asList(super.getActions(true)));
         actionsList.add(new ViewContextAction(Bundle.LayoutFileNode_getActions_viewFileInDir_text(), this));
         actionsList.add(null); // Creates an item separator
         
@@ -139,6 +138,8 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
                 logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
             }
         }
+        actionsList.add(null);
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 

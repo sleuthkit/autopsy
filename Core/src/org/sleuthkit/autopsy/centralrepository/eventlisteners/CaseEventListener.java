@@ -218,6 +218,7 @@ public final class CaseEventListener implements PropertyChangeListener {
     /**
      * Sets the known status of a blackboard artifact in the central repository.
      *
+     * @param dbManager   The central repo database.
      * @param bbArtifact  The blackboard artifact to set known status.
      * @param knownStatus The new known status.
      */
@@ -693,7 +694,7 @@ public final class CaseEventListener implements PropertyChangeListener {
             for (OsAccountInstance osAccountInstance : addedOsAccountNew) {
                 try {
                     OsAccount osAccount = osAccountInstance.getOsAccount();
-                    List<CorrelationAttributeInstance> correlationAttributeInstances = CorrelationAttributeUtil.makeCorrAttrsForSearch(osAccountInstance);
+                    List<CorrelationAttributeInstance> correlationAttributeInstances = CorrelationAttributeUtil.makeCorrAttrsToSave(osAccountInstance);
                     if (correlationAttributeInstances.isEmpty()) {
                         return;
                     }
@@ -709,51 +710,63 @@ public final class CaseEventListener implements PropertyChangeListener {
 
                         // Look up and create artifacts for previously seen accounts if requested
                         if (IngestEventsListener.isFlagSeenDevices()) {
-                            CorrelationAttributeInstance.Type osAcctType = CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID);
-                            List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(osAcctType, correlationAttributeInstances.get(0).getCorrelationValue());
-                            for (CorrelationAttributeInstance instance : previousOccurences) {
-                                if (!instance.getCorrelationCase().getCaseUUID().equals(correlationAttributeInstances.get(0).getCorrelationCase().getCaseUUID())) {
-                                    SleuthkitCase tskCase = osAccount.getSleuthkitCase();
-                                    Blackboard blackboard = tskCase.getBlackboard();
 
-                                    List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(osAcctType, correlationAttributeInstances.get(0).getCorrelationValue());
+                            CorrelationAttributeInstance instanceWithTypeValue = null;
+                            for (CorrelationAttributeInstance instance : correlationAttributeInstances) {
+                                if (instance.getCorrelationType().getId() == CorrelationAttributeInstance.OSACCOUNT_TYPE_ID) {
+                                    instanceWithTypeValue = instance;
+                                    break;
+                                }
+                            }
 
-                                    // calculate score
-                                    Score score;
-                                    int numCases = caseDisplayNames.size();
-                                    if (numCases <= IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE) {
-                                        score = Score.SCORE_LIKELY_NOTABLE;
-                                    } else if (numCases > IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE && numCases <= IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_PREV_SEEN_ARTIFACT_CREATION) {
-                                        score = Score.SCORE_NONE;
-                                    } else {
-                                        // don't make an Analysis Result, the artifact is too common.
-                                        continue;
-                                    }
+                            if (instanceWithTypeValue != null) {
+                                List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(instanceWithTypeValue.getCorrelationType(), instanceWithTypeValue.getCorrelationValue());
 
-                                    String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
-                                    String justification = "Previously seen in cases " + prevCases;
-                                    Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
-                                            new BlackboardAttribute(
-                                                    TSK_SET_NAME, MODULE_NAME,
-                                                    Bundle.CaseEventsListener_prevExists_text()),
-                                            new BlackboardAttribute(
-                                                    TSK_CORRELATION_TYPE, MODULE_NAME,
-                                                    osAcctType.getDisplayName()),
-                                            new BlackboardAttribute(
-                                                    TSK_CORRELATION_VALUE, MODULE_NAME,
-                                                    correlationAttributeInstances.get(0).getCorrelationValue()),
-                                            new BlackboardAttribute(
-                                                    TSK_OTHER_CASES, MODULE_NAME,
-                                                    prevCases));
-                                    BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
-                                            BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, score,
-                                            null, Bundle.CaseEventsListener_prevExists_text(), justification, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
-                                    try {
-                                        // index the artifact for keyword search
-                                        blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
-                                        break;
-                                    } catch (Blackboard.BlackboardException ex) {
-                                        LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
+                                for (CorrelationAttributeInstance instance : previousOccurences) {
+                                    //we can get the first instance here since the case for all attributes will be the same
+                                    if (!instance.getCorrelationCase().getCaseUUID().equals(instanceWithTypeValue.getCorrelationCase().getCaseUUID())) {
+                                        SleuthkitCase tskCase = osAccount.getSleuthkitCase();
+                                        Blackboard blackboard = tskCase.getBlackboard();
+
+                                        List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(instanceWithTypeValue.getCorrelationType(), instanceWithTypeValue.getCorrelationValue());
+
+                                        // calculate score
+                                        Score score;
+                                        int numCases = caseDisplayNames.size();
+                                        if (numCases <= IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE) {
+                                            score = Score.SCORE_LIKELY_NOTABLE;
+                                        } else if (numCases > IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE && numCases <= IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_PREV_SEEN_ARTIFACT_CREATION) {
+                                            score = Score.SCORE_NONE;
+                                        } else {
+                                            // don't make an Analysis Result, the artifact is too common.
+                                            continue;
+                                        }
+
+                                        String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
+                                        String justification = "Previously seen in cases " + prevCases;
+                                        Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
+                                                new BlackboardAttribute(
+                                                        TSK_SET_NAME, MODULE_NAME,
+                                                        Bundle.CaseEventsListener_prevExists_text()),
+                                                new BlackboardAttribute(
+                                                        TSK_CORRELATION_TYPE, MODULE_NAME,
+                                                        instance.getCorrelationType().getDisplayName()),
+                                                new BlackboardAttribute(
+                                                        TSK_CORRELATION_VALUE, MODULE_NAME,
+                                                        instanceWithTypeValue.getCorrelationValue()),
+                                                new BlackboardAttribute(
+                                                        TSK_OTHER_CASES, MODULE_NAME,
+                                                        prevCases));
+                                        BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
+                                                BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, score,
+                                                null, Bundle.CaseEventsListener_prevExists_text(), justification, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
+                                        try {
+                                            // index the artifact for keyword search
+                                            blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
+                                            break;
+                                        } catch (Blackboard.BlackboardException ex) {
+                                            LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
+                                        }
                                     }
                                 }
                             }

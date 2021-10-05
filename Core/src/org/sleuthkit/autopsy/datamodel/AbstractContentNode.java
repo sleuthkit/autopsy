@@ -25,10 +25,10 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-
 import org.openide.util.lookup.Lookups;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -299,22 +299,27 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      *                 sheet.
      */
     protected synchronized void updateSheet(NodeProperty<?>... newProps) {
-        //Refresh ONLY those properties in the sheet currently. Subclasses may have 
-        //only added a subset of our properties or their own props.s
-        Sheet visibleSheet = this.getSheet();
-        Sheet.Set visibleSheetSet = visibleSheet.get(Sheet.PROPERTIES);
-        Property<?>[] visibleProps = visibleSheetSet.getProperties();
-        for (NodeProperty<?> newProp : newProps) {
-            for (int i = 0; i < visibleProps.length; i++) {
-                if (visibleProps[i].getName().equals(newProp.getName())) {
-                    visibleProps[i] = newProp;
+        SwingUtilities.invokeLater(() -> {
+            /*
+             * Refresh ONLY those properties in the sheet currently. Subclasses
+             * may have only added a subset of our properties or their own
+             * properties.
+             */
+            Sheet visibleSheet = this.getSheet();
+            Sheet.Set visibleSheetSet = visibleSheet.get(Sheet.PROPERTIES);
+            Property<?>[] visibleProps = visibleSheetSet.getProperties();
+            for (NodeProperty<?> newProp : newProps) {
+                for (int i = 0; i < visibleProps.length; i++) {
+                    if (visibleProps[i].getName().equals(newProp.getName())) {
+                        visibleProps[i] = newProp;
+                    }
                 }
             }
-        }
-        visibleSheetSet.put(visibleProps);
-        visibleSheet.put(visibleSheetSet);
-        //setSheet() will notify Netbeans to update this node in the UI.
-        this.setSheet(visibleSheet);
+            visibleSheetSet.put(visibleProps);
+            visibleSheet.put(visibleSheetSet);
+            //setSheet() will notify Netbeans to update this node in the UI.
+            this.setSheet(visibleSheet);
+        });
     }
 
     /**

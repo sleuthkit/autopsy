@@ -94,13 +94,14 @@ public class CorrelationAttributeUtil {
 
     /**
      * Makes zero to many correlation attribute instances from the attributes of
-     * content objects that have correlatable data. The intention of this method
-     * is to use the results to save to the CR, not to correlate with them. If
-     * you want to correlate, please use makeCorrAttrsForSearch. An artifact
-     * that can have correlatable data != An artifact that should be the source
-     * of data in the CR, so results may be un-necessarily incomplete.
+     * abstract file objects that have correlatable data. The intention of this
+     * method is to use the results to save to the CR, not to correlate with
+     * them. If you want to correlate, please use makeCorrAttrsForSearch. An
+     * artifact that can have correlatable data != An artifact that should be
+     * the source of data in the CR, so results may be un-necessarily
+     * incomplete.
      *
-     * @param content A Content object.
+     * @param file A AbstractFile object.
      *
      * @return A list, possibly empty, of correlation attribute instances for
      *         the content.
@@ -137,54 +138,84 @@ public class CorrelationAttributeUtil {
      */
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(AnalysisResult analysisResult) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
-        try {
-            int artifactTypeID = analysisResult.getArtifactTypeID();
-            if (artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-                BlackboardAttribute assocArtifactAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT);
-                if (assocArtifactAttr != null) {
-                    BlackboardArtifact sourceArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(assocArtifactAttr.getValueLong());
-                    if (sourceArtifact instanceof DataArtifact) {
-                        correlationAttrs.addAll((CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) sourceArtifact)));
-                    } else if (sourceArtifact instanceof AnalysisResult) {
-                        correlationAttrs.addAll((CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) sourceArtifact)));
-                    } else {
-                        String sourceName = sourceArtifact != null ? "SourceArtifact display name: " + sourceArtifact.getDisplayName() : "SourceArtifact was null";
-                        logger.log(Level.WARNING, "Source artifact found through TSK_ASSOCIATED_ARTIFACT attribute was not a DataArtifact or "
-                                + "an Analysis Result. AssociateArtifactAttr Value: {0} {1}",
-                                new Object[]{assocArtifactAttr.getValueString(), sourceName});
+
+        if (CentralRepository.isEnabled()) {
+            try {
+                int artifactTypeID = analysisResult.getArtifactTypeID();
+                if (artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+                    //because this attribute retrieval is only occuring when the analysis result is an interesting artifact hit 
+                    //and only one attribute is being retrieved the analysis result's own get attribute method can be used efficently
+                    BlackboardAttribute assocArtifactAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT);
+                    if (assocArtifactAttr != null) {
+                        BlackboardArtifact sourceArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(assocArtifactAttr.getValueLong());
+                        if (sourceArtifact instanceof DataArtifact) {
+                            correlationAttrs.addAll((CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) sourceArtifact)));
+                        } else if (sourceArtifact instanceof AnalysisResult) {
+                            correlationAttrs.addAll((CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) sourceArtifact)));
+                        } else {
+                            String sourceName = sourceArtifact != null ? "SourceArtifact display name: " + sourceArtifact.getDisplayName() : "SourceArtifact was null";
+                            logger.log(Level.SEVERE, "Source artifact found through TSK_ASSOCIATED_ARTIFACT attribute was not a DataArtifact or "
+                                    + "an Analysis Result. AssociateArtifactAttr Value: {0} {1}",
+                                    new Object[]{assocArtifactAttr.getValueString(), sourceName});
+                        }
+                    }
+                } else {
+                    if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                        //because this attribute retrieval is only occuring when the analysis result is a keyword hit
+                        //and only one attribute is being retrieved the analysis result's own get attribute method can be used efficently
+                        BlackboardAttribute setNameAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
+                        if (setNameAttr != null && CorrelationAttributeUtil.getEmailAddressAttrDisplayName().equals(setNameAttr.getValueString())) {
+                            /*
+                             * We no longer save email instances from keyword
+                             * search hits in the central repository, but we
+                             * still want to be able to search for email address
+                             * instances in the CR when we are presenting email
+                             * address keyword hits. Also note that we may want
+                             * to correlate on the source Content (parent) of
+                             * the keyword hit as well, so we do not return at
+                             * this point.
+                             */
+                            correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(analysisResult, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID, analysisResult.getAttributes()));
+                        }
+
                     }
 
-                }
-            } else {
-                if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                    BlackboardAttribute setNameAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
-                    if (setNameAttr != null && CorrelationAttributeUtil.getEmailAddressAttrDisplayName().equals(setNameAttr.getValueString())) {
-                        correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(analysisResult, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID, analysisResult.getAttributes()));
-                    }
-                }
-                Content parent = analysisResult.getParent();
-                if (parent instanceof AbstractFile) {
-                    correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AbstractFile) parent));
-                } else if (parent instanceof AnalysisResult) {
-                    correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) parent));
-                } else if (parent instanceof DataArtifact) {
-                    correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) parent));
-                } else if (parent instanceof OsAccount) {
-                    for (OsAccountInstance osAccountInst : ((OsAccount) parent).getOsAccountInstances()) {
-                        if (osAccountInst.getDataSource().equals(analysisResult.getDataSource())) {
-                            correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(osAccountInst));
-                            break;
+                    Content parent = analysisResult.getParent();
+                    if (parent instanceof AbstractFile) {
+                        correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AbstractFile) parent));
+                    } else if (parent instanceof AnalysisResult) {
+                        correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) parent));
+                    } else if (parent instanceof DataArtifact) {
+                        correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) parent));
+                    } else if (parent instanceof OsAccount) {
+                        for (OsAccountInstance osAccountInst : ((OsAccount) parent).getOsAccountInstances()) {
+                            if (osAccountInst.getDataSource().equals(analysisResult.getDataSource())) {
+                                /**
+                                 * We only need to add correlation attributes
+                                 * for a single OsAccountInstance. because we
+                                 * are generally searching based on type and
+                                 * value.
+                                 *
+                                 * However data source can also be used, so we
+                                 * would like to choose an OsAccountInstance
+                                 * which is associated with the same data source
+                                 * as the provided AnalysisResult for those use
+                                 * cases. For example to get the count of cases
+                                 * with other instances.
+                                 */
+                                correlationAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(osAccountInst));
+                                break;
+                            }
                         }
                     }
                 }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to get information regarding correlation attributes in regards to either the provided AnalysisResult, it's associated artifact, or it's parent.", ex);
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Attempted to retrieve correlation attributes for search with no currently open case.", ex);
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, "Failed to get correlation type from central repository.", ex);
             }
-
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get information regarding correlation attributes from AnalysisResult", ex);
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Attempted to retrieve correlation attributes for search with no currently open case.", ex);
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Failed to get correlation type from central repository.", ex);
         }
         return correlationAttrs;
     }
@@ -209,94 +240,96 @@ public class CorrelationAttributeUtil {
      */
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(DataArtifact artifact) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
-        try {
 
-            List<BlackboardAttribute> attributes = artifact.getAttributes();
+        if (CentralRepository.isEnabled()) {
+            try {
+                List<BlackboardAttribute> attributes = artifact.getAttributes();
 
-            int artifactTypeID = artifact.getArtifactTypeID();
-            if (DOMAIN_ARTIFACT_TYPE_IDS.contains(artifactTypeID)) {
-                BlackboardAttribute domainAttr = getAttribute(attributes, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DOMAIN));
-                if ((domainAttr != null)
-                        && !domainsToSkip.contains(domainAttr.getValueString())) {
-                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID, attributes));
+                int artifactTypeID = artifact.getArtifactTypeID();
+                if (DOMAIN_ARTIFACT_TYPE_IDS.contains(artifactTypeID)) {
+                    BlackboardAttribute domainAttr = getAttribute(attributes, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DOMAIN));
+                    if ((domainAttr != null)
+                            && !domainsToSkip.contains(domainAttr.getValueString())) {
+                        correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID, attributes));
+                    }
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
+                    // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content dataSource = sourceContent.getDataSource();
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID,
+                            attributes, sourceContent, dataSource));
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID,
+                            attributes, sourceContent, dataSource));
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID, CorrelationAttributeInstance.SSID_TYPE_ID, attributes));
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID()
+                        || artifactTypeID == ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()
+                        || artifactTypeID == ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID()) {
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID, attributes));
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {
+                    // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content dataSource = sourceContent.getDataSource();
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMEI, CorrelationAttributeInstance.IMEI_TYPE_ID,
+                            attributes, sourceContent, dataSource));
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID,
+                            attributes, sourceContent, dataSource));
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID,
+                            attributes, sourceContent, dataSource));
+
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {
+                    // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content dataSource = sourceContent.getDataSource();
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID,
+                            attributes, sourceContent, dataSource));
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID,
+                            attributes, sourceContent, dataSource));
+
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()) {
+                    // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
+                    Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
+                    Content dataSource = sourceContent.getDataSource();
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, CorrelationAttributeInstance.PHONE_TYPE_ID,
+                            attributes, sourceContent, dataSource));
+                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, CorrelationAttributeInstance.EMAIL_TYPE_ID,
+                            attributes, sourceContent, dataSource));
+
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                    makeCorrAttrFromAcctArtifact(correlationAttrs, artifact, attributes);
+
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
+                    BlackboardAttribute setNameAttr = getAttribute(attributes, new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH));
+                    String pathAttrString = null;
+                    if (setNameAttr != null) {
+                        pathAttrString = setNameAttr.getValueString();
+                    }
+                    if (pathAttrString != null && !pathAttrString.isEmpty()) {
+                        correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID, attributes));
+                    } else {
+                        correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID, attributes));
+                    }
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
+                        || artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
+                        || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+                    correlationAttrs.addAll(makeCorrAttrsFromCommunicationArtifact(artifact, attributes));
                 }
-            } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
-                // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
-                Content dataSource = sourceContent.getDataSource();
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID,
-                        attributes, sourceContent, dataSource));
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID,
-                        attributes, sourceContent, dataSource));
-            } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID, CorrelationAttributeInstance.SSID_TYPE_ID, attributes));
-            } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID()
-                    || artifactTypeID == ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()
-                    || artifactTypeID == ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID()) {
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID, attributes));
-            } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {
-                // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
-                Content dataSource = sourceContent.getDataSource();
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMEI, CorrelationAttributeInstance.IMEI_TYPE_ID,
-                        attributes, sourceContent, dataSource));
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID,
-                        attributes, sourceContent, dataSource));
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID,
-                        attributes, sourceContent, dataSource));
-
-            } else if (artifactTypeID == ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {
-                // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
-                Content dataSource = sourceContent.getDataSource();
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID,
-                        attributes, sourceContent, dataSource));
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID,
-                        attributes, sourceContent, dataSource));
-
-            } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()) {
-                // prefetch all the information as we will be calling makeCorrAttrFromArtifactAttr() multiple times
-                Content sourceContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(artifact.getObjectID());
-                Content dataSource = sourceContent.getDataSource();
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, CorrelationAttributeInstance.PHONE_TYPE_ID,
-                        attributes, sourceContent, dataSource));
-                correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, CorrelationAttributeInstance.EMAIL_TYPE_ID,
-                        attributes, sourceContent, dataSource));
-
-            } else if (artifactTypeID == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-                makeCorrAttrFromAcctArtifact(correlationAttrs, artifact);
-
-            } else if (artifactTypeID == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
-                BlackboardAttribute setNameAttr = getAttribute(attributes, new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH));
-                String pathAttrString = null;
-                if (setNameAttr != null) {
-                    pathAttrString = setNameAttr.getValueString();
-                }
-                if (pathAttrString != null && !pathAttrString.isEmpty()) {
-                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID, attributes));
-                } else {
-                    correlationAttrs.addAll(makeCorrAttrFromArtifactAttr(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID, attributes));
-                }
-            } else if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
-                    || artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
-                    || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
-                correlationAttrs.addAll(makeCorrAttrsFromCommunicationArtifact(artifact, attributes));
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.SEVERE, String.format("Error normalizing correlation attribute (%s)", artifact), ex); // NON-NLS
+                return correlationAttrs;
+            } catch (InvalidAccountIDException ex) {
+                logger.log(Level.SEVERE, String.format("Invalid account identifier (artifactID: %d)", artifact.getId())); // NON-NLS
+                return correlationAttrs;
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
+                return correlationAttrs;
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error getting querying case database (%s)", artifact), ex); // NON-NLS
+                return correlationAttrs;
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
+                return correlationAttrs;
             }
-        } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.WARNING, String.format("Error normalizing correlation attribute (%s)", artifact), ex); // NON-NLS
-            return correlationAttrs;
-        } catch (InvalidAccountIDException ex) {
-            logger.log(Level.WARNING, String.format("Invalid account identifier (artifactID: %d)", artifact.getId())); // NON-NLS
-            return correlationAttrs;
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
-            return correlationAttrs;
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error getting querying case database (%s)", artifact), ex); // NON-NLS
-            return correlationAttrs;
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
-            return correlationAttrs;
         }
         return correlationAttrs;
     }
@@ -324,9 +357,8 @@ public class CorrelationAttributeUtil {
      * Makes a correlation attribute instance from a phone number attribute of
      * an artifact.
      *
-     * @param corrAttrInstances Correlation attributes will be added to this.
-     * @param artifact          An artifact with a phone number attribute.
-     * @param attributes        List of attributes.
+     * @param artifact   An artifact with a phone number attribute.
+     * @param attributes List of attributes.
      *
      * @throws TskCoreException                           If there is an error
      *                                                    querying the case
@@ -355,7 +387,7 @@ public class CorrelationAttributeUtil {
         /*
          * Normalize the phone number.
          */
-        List<CorrelationAttributeInstance> corrAttrInstances = Collections.emptyList();
+        List<CorrelationAttributeInstance> corrAttrInstances = new ArrayList<>();
         if (value != null
                 && CorrelationAttributeNormalizer.isValidPhoneNumber(value)) {
             value = CorrelationAttributeNormalizer.normalizePhone(value);
@@ -377,13 +409,14 @@ public class CorrelationAttributeUtil {
      *
      * @param corrAttrInstances A list of correlation attribute instances.
      * @param acctArtifact      An account artifact.
+     * @param attributes        List of attributes.
      *
      * @return The correlation attribute instance.
      */
-    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact) throws InvalidAccountIDException, TskCoreException, CentralRepoException {
+    private static void makeCorrAttrFromAcctArtifact(List<CorrelationAttributeInstance> corrAttrInstances, BlackboardArtifact acctArtifact, List<BlackboardAttribute> attributes) throws InvalidAccountIDException, TskCoreException, CentralRepoException {
 
         // Get the account type from the artifact
-        BlackboardAttribute accountTypeAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
+        BlackboardAttribute accountTypeAttribute = getAttribute(attributes, new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
         String accountTypeStr = accountTypeAttribute.getValueString();
 
         // @@TODO Vik-6136: CR currently does not know of custom account types.  
@@ -404,7 +437,7 @@ public class CorrelationAttributeUtil {
             CorrelationAttributeInstance.Type corrType = CentralRepository.getInstance().getCorrelationTypeById(corrTypeId);
 
             // Get the account identifier
-            BlackboardAttribute accountIdAttribute = acctArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID));
+            BlackboardAttribute accountIdAttribute = getAttribute(attributes, new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ID));
             String accountIdStr = accountIdAttribute.getValueString();
 
             // add/get the account and get its accountId.
@@ -423,16 +456,14 @@ public class CorrelationAttributeUtil {
      * Makes a correlation attribute instance from a specified attribute of an
      * artifact. The correlation attribute instance is added to an input list.
      *
-     * @param corrAttrInstances A list of correlation attribute instances.
-     * @param artifact          An artifact.
-     * @param artAttrType       The type of the attribute of the artifact that
-     *                          is to be made into a correlation attribute
-     *                          instance.
-     * @param typeId            The type ID for the desired correlation
-     *                          attribute instance.
-     * @param attributes        List of attributes.
-     * @param sourceContent     The source content object.
-     * @param dataSource        The data source content object.
+     * @param artifact      An artifact.
+     * @param artAttrType   The type of the attribute of the artifact that is to
+     *                      be made into a correlation attribute instance.
+     * @param typeId        The type ID for the desired correlation attribute
+     *                      instance.
+     * @param attributes    List of attributes.
+     * @param sourceContent The source content object.
+     * @param dataSource    The data source content object.
      *
      * @throws CentralRepoException If there is an error querying the central
      *                              repository.
@@ -459,14 +490,12 @@ public class CorrelationAttributeUtil {
      * Makes a correlation attribute instance from a specified attribute of an
      * artifact. The correlation attribute instance is added to an input list.
      *
-     * @param corrAttrInstances A list of correlation attribute instances.
-     * @param artifact          An artifact.
-     * @param artAttrType       The type of the attribute of the artifact that
-     *                          is to be made into a correlation attribute
-     *                          instance.
-     * @param typeId            The type ID for the desired correlation
-     *                          attribute instance.
-     * @param attributes        List of attributes.
+     * @param artifact    An artifact.
+     * @param artAttrType The type of the attribute of the artifact that is to
+     *                    be made into a correlation attribute instance.
+     * @param typeId      The type ID for the desired correlation attribute
+     *                    instance.
+     * @param attributes  List of attributes.
      *
      * @throws CentralRepoException If there is an error querying the central
      *                              repository.
@@ -542,7 +571,8 @@ public class CorrelationAttributeUtil {
             }
 
             CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
-            if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
+            if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()
+                    || !(srcContent instanceof AbstractFile)) {
                 return new CorrelationAttributeInstance(
                         correlationType,
                         value,
@@ -553,11 +583,6 @@ public class CorrelationAttributeUtil {
                         TskData.FileKnown.UNKNOWN,
                         srcContent.getId());
             } else {
-                if (!(srcContent instanceof AbstractFile)) {
-                    logger.log(Level.SEVERE, "Error creating artifact instance of type {0}. Source content of artifact with ID: {1} is not an AbstractFile",
-                            new Object[]{correlationType.getDisplayName(), artifact.getId()});
-                    return null;
-                }
                 AbstractFile bbSourceFile = (AbstractFile) srcContent;
 
                 return new CorrelationAttributeInstance(
@@ -577,10 +602,10 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
             return null;
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", artifact), ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", artifact), ex); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
+            logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
             return null;
         }
     }
@@ -630,7 +655,7 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
+            logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
             return null;
         }
 
@@ -641,7 +666,7 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
             return null;
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
             return null;
         }
 
@@ -659,7 +684,7 @@ public class CorrelationAttributeUtil {
                 logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
                 return null;
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+                logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
                 return null;
             }
         }
@@ -689,7 +714,7 @@ public class CorrelationAttributeUtil {
      */
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(AbstractFile file) {
         List<CorrelationAttributeInstance> fileTypeList = new ArrayList<>(); // will be an empty or single element list as was decided in 7852
-        if (!isSupportedAbstractFileType(file)) {
+        if (!isSupportedAbstractFileType(file) || !CentralRepository.isEnabled()) {
             return fileTypeList;
         }
 
@@ -717,9 +742,9 @@ public class CorrelationAttributeUtil {
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Error getting current case", ex); // NON-NLS
+            logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
         }
         return fileTypeList;
     }
@@ -758,40 +783,42 @@ public class CorrelationAttributeUtil {
 
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(OsAccountInstance osAccountInst) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
-        OsAccount account = null;
-        DataSource dataSource = null;
-        if (osAccountInst != null) {
-            try {
-                account = osAccountInst.getOsAccount();
-                dataSource = osAccountInst.getDataSource();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting information from OsAccountInstance.", ex);
-            }
-        }
-        if (account != null && dataSource != null) {
-            Optional<String> accountAddr = account.getAddr();
-            // Check address if it is null or one of the ones below we want to ignore it since they will always be one a windows system
-            // and they are not unique
-            if (accountAddr.isPresent() && !accountAddr.get().equals("S-1-5-18") && !accountAddr.get().equals("S-1-5-19") && !accountAddr.get().equals("S-1-5-20")) {
+        if (CentralRepository.isEnabled()) {
+            OsAccount account = null;
+            DataSource dataSource = null;
+            if (osAccountInst != null) {
                 try {
+                    account = osAccountInst.getOsAccount();
+                    dataSource = osAccountInst.getDataSource();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting information from OsAccountInstance.", ex);
+                }
+            }
+            if (account != null && dataSource != null) {
+                Optional<String> accountAddr = account.getAddr();
+                // Check address if it is null or one of the ones below we want to ignore it since they will always be one a windows system
+                // and they are not unique
+                if (accountAddr.isPresent() && !accountAddr.get().equals("S-1-5-18") && !accountAddr.get().equals("S-1-5-19") && !accountAddr.get().equals("S-1-5-20")) {
+                    try {
 
-                    CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
-                    CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
-                            CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
-                            accountAddr.get(),
-                            correlationCase,
-                            CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource),
-                            "",
-                            "",
-                            TskData.FileKnown.KNOWN,
-                            account.getId());
-                    correlationAttrs.add(correlationAttributeInstance);
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
-                } catch (NoCurrentCaseException ex) {
-                    logger.log(Level.SEVERE, "Exception while getting open case.", ex);  //NON-NLS
-                } catch (CorrelationAttributeNormalizationException ex) {
-                    logger.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
+                        CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
+                        CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
+                                CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
+                                accountAddr.get(),
+                                correlationCase,
+                                CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource),
+                                "",
+                                "",
+                                TskData.FileKnown.KNOWN,
+                                account.getId());
+                        correlationAttrs.add(correlationAttributeInstance);
+                    } catch (CentralRepoException ex) {
+                        logger.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
+                    } catch (NoCurrentCaseException ex) {
+                        logger.log(Level.WARNING, "Exception while getting open case.", ex);  //NON-NLS
+                    } catch (CorrelationAttributeNormalizationException ex) {
+                        logger.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
+                    }
                 }
             }
         }
