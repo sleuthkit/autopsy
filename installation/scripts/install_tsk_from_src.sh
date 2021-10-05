@@ -1,19 +1,25 @@
 #!/bin/bash
 # Clones sleuthkit repo from github (if necessary) and installs
 # this script does require sudo privileges
-# called like: build_tsk.sh -r <repo path to be created or existing> -b <tsk branch to checkout>
+# called like: build_tsk.sh -r <repo path to be created or existing> -b <tsk branch to checkout> -r <non-standard remote repo (optional)>
 
 usage() {
-    echo "Usage: install_tsk_from_src [-r repo_path] [-b tsk_branch]" 1>&2
+    echo "Usage: install_tsk_from_src [-p repo_path] [-b tsk_branch] [-r sleuthkit_repo]" 1>&2
 }
+
+# default repo path
+REPO="https://github.com/sleuthkit/sleuthkit.git"
 
 while getopts "r:b:" o; do
     case "${o}" in
-    r)
+    p)
         SLEUTHKIT_SRC_DIR=${OPTARG}
         ;;
     b)
         TSK_BRANCH=${OPTARG}
+        ;;
+    r)
+        REPO=${OPTARG}
         ;;
     *)
         usage
@@ -32,7 +38,7 @@ if [[ ! -d $SLEUTHKIT_SRC_DIR ]]; then
     echo "Cloning Sleuthkit to $TSK_REPO_PATH..."
     mkdir -p $TSK_REPO_PATH &&
         pushd $TSK_REPO_PATH &&
-        git clone https://github.com/sleuthkit/sleuthkit.git &&
+        git clone $REPO &&
         popd
     if [[ ! -d $SLEUTHKIT_SRC_DIR ]]; then
         echo "Unable to successfully clone Sleuthkit" >>/dev/stderr
