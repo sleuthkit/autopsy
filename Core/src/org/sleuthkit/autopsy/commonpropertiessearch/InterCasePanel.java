@@ -128,7 +128,7 @@ public final class InterCasePanel extends javax.swing.JPanel {
                 }
             });
             for (CorrelationAttributeInstance.Type type : types) {
-                if (! type.getDbTableName().contains("os_account") && ! type.getDbTableName().contains("installed_program")) {
+                if (! type.getDbTableName().contains("os_account")) {
                     correlationTypeFilters.put(type.getDisplayName(), type);
                     this.correlationTypeComboBox.addItem(type.getDisplayName());
                 }
