@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.beans.PropertyChangeEvent;
+import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeListener;
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
@@ -27,9 +27,12 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,11 +53,6 @@ import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
-import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -87,6 +85,7 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
@@ -118,33 +117,36 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
     }
 
     private final BlackboardArtifact.Type artifactType;
-    private final List<BlackboardAttribute.Type> attributeTypes;
+    private final Map<Integer, BlackboardAttribute.Type> attributeTypes;
     private final DataArtifactRow artifactRow;
     private final boolean hasSupportedTimeStamp;
     private String translatedSourceName = null;
 
-    private final PropertyChangeListener fileNameTranslationListener = new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            String eventType = evt.getPropertyName();
-
-            if (eventType.equals(FileNameTransTask.getPropertyName())) {
-                /*
+    private final PropertyChangeListener fileNameTranslationListener = (evt) -> {
+        String eventType = evt.getPropertyName();
+        if (eventType.equals(FileNameTransTask.getPropertyName())) {
+            /*
                  * Replace the value of the Source File property with the
                  * translated name via setDisplayName (see note in createSheet),
                  * and put the untranslated name in the Original Name property
                  * and in the tooltip.
-                 */
-                String originalName = evt.getOldValue().toString();
-                translatedSourceName = evt.getNewValue().toString();
-                setDisplayName(translatedSourceName);
-                setShortDescription(originalName);
-                updateSheet(new NodeProperty<>(
-                        Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(),
-                        Bundle.BlackboardArtifactNode_createSheet_srcFile_origDisplayName(),
-                        NO_DESCR,
-                        originalName));
-            }
+             */
+            String originalName = evt.getOldValue().toString();
+            translatedSourceName = evt.getNewValue().toString();
+            setDisplayName(translatedSourceName);
+            setShortDescription(originalName);
+            updateSheet(new NodeProperty<>(
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_origName(),
+                    Bundle.BlackboardArtifactNode_createSheet_srcFile_origDisplayName(),
+                    NO_DESCR,
+                    originalName));
+        }
+    };
+
+    private final PropertyChangeListener scoListener = (evt) -> {
+        String eventType = evt.getPropertyName();
+        if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString()) && !UserPreferences.getHideSCOColumns()) {
+            updateSCOColumns((SCOData) evt.getNewValue());
         }
     };
 
@@ -162,15 +164,16 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
 
         this.artifactRow = artifactRow;
         this.artifactType = tableData.getArtifactType();
-        this.attributeTypes = tableData.getAttributeTypes();
-        this.hasSupportedTimeStamp = supportedTimeStamp(this.attributeTypes, this.artifactRow.getAttributeValues());
+        this.attributeTypes = tableData.getAttributeTypes().stream()
+                .collect(Collectors.toMap(attr -> attr.getTypeID(), attr -> attr));
+        this.hasSupportedTimeStamp = supportedTimeStamp(tableData.getAttributeTypes(), this.artifactRow.getAttributeValues());
     }
 
-    private boolean supportedTimeStamp(List<BlackboardAttribute.Type> attributeTypes, Map<String, Object> attributeValues) {
+    private boolean supportedTimeStamp(List<BlackboardAttribute.Type> attributeTypes, Map<Integer, Object> attributeValues) {
         return attributeTypes.stream()
                 .anyMatch(tp -> {
                     return BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME.equals(tp.getValueType())
-                            && attributeValues.containsKey(tp.getTypeName());
+                            && attributeValues.containsKey(tp.getTypeID());
                 });
     }
 
@@ -468,6 +471,7 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
                             getContentTypeStr(srcContent)));
         }
 
+        // GVDTODO does not appear necessary
 //        else if (srcContent instanceof DataArtifact) {
 //            try {
 //                if (hasSupportedTimeStamp((BlackboardArtifact) srcContent)) {
@@ -569,9 +573,9 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
          * Add the attributes of the artifact represented by this node to the
          * sheet.
          */
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, artifact);
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
+        for (Map.Entry<String, Object> entry
+                : getPropertyMap(this.artifactType.getTypeID(), this.attributeTypes, this.artifactRow.getAttributeValues()).entrySet()) {
+
             sheetSet.put(new NodeProperty<>(entry.getKey(),
                     entry.getKey(),
                     NO_DESCR,
@@ -603,76 +607,76 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
      *
      * @param property The custom property.
      */
-    public void addNodeProperty(NodeProperty<?> property) {
-        if (customProperties == null) {
-            customProperties = new ArrayList<>();
-        }
-        customProperties.add(property);
-    }
-
-    /**
-     * Converts the attributes of the artifact this node represents to a map of
-     * name-value pairs, where the names are attribute type display names.
-     *
-     * @param map      The map to be populated with the artifact attribute
-     *                 name-value pairs.
-     * @param artifact The artifact.
-     */
+//    public void addNodeProperty(NodeProperty<?> property) {
+//        if (customProperties == null) {
+//            customProperties = new ArrayList<>();
+//        }
+//        customProperties.add(property);
+//    }
     @SuppressWarnings("deprecation")
-    private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
-        try {
-            for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                final int attributeTypeID = attribute.getAttributeType().getTypeID();
-                if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
-                        || attribute.getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON) {
-                    /*
+    private static final Set<Integer> HIDDEN_ATTR_TYPES = ImmutableSet.of(
+            ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID(),
+            BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
+            BlackboardAttribute.Type.TSK_SET_NAME.getTypeID(),
+            BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
+    );
+
+    @SuppressWarnings("deprecation")
+    private static final Set<Integer> TRUNCATED_ATTR_TYPES = ImmutableSet.of(
+            ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID(),
+            BlackboardAttribute.Type.TSK_TEXT.getTypeID()
+    );
+
+    private Map<String, Object> getPropertyMap(int artifactTypeId, Map<Integer, BlackboardAttribute.Type> attrTypes, Map<Integer, Object> attributes) {
+        Map<String, Object> toRet = new HashMap<>();
+        for (Entry<Integer, Object> entry : attributes.entrySet()) {
+            Integer typeId = entry.getKey();
+            BlackboardAttribute.Type attrType = attrTypes.get(typeId);
+            TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType = attrType != null ? attrType.getValueType() : null;
+            String attrTypeStr = attrType != null ? attrType.getDisplayName() : typeId.toString();
+            Object value = entry.getValue();
+
+            if (HIDDEN_ATTR_TYPES.contains(typeId) || valueType == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON) {
+                /*
                      * Do nothing.
-                     */
-                } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
-                    addEmailMsgProperty(map, attribute);
-                } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-                    map.put(attribute.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(attribute.getValueLong()));
-                } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
-                        && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
-                    /*
+                 */
+                continue;
+            } else if (artifactTypeId == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
+                Object msgVal = getEmailMsgProperty(typeId, value);
+                if (msgVal != null) {
+                    toRet.put(attrTypeStr, msgVal);
+                }
+            } else if (value instanceof Date) {
+                toRet.put(attrTypeStr, TimeZoneUtils.getFormattedTime(((Date) value).getTime() / 1000));
+            } else if (TRUNCATED_ATTR_TYPES.contains(typeId) && value instanceof String) {
+                /*
                      * The truncation of text attributes appears to have been
                      * motivated by the statement that "RegRipper output would
                      * often cause the UI to get a black line accross it and
                      * hang if you hovered over large output or selected it.
                      * This reduces the amount of data in the table. Could
                      * consider doing this for all fields in the UI."
-                     */
-                    String value = attribute.getDisplayString();
-                    if (value.length() > 512) {
-                        value = value.substring(0, 512);
-                    }
-                    map.put(attribute.getAttributeType().getDisplayName(), value);
-                } else {
-                    switch (attribute.getAttributeType().getValueType()) {
-                        case INTEGER:
-                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueInt());
-                            break;
-                        case DOUBLE:
-                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueDouble());
-                            break;
-                        case LONG:
-                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getValueLong());
-                            break;
-                        default:
-                            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
-
-                    }
-
+                 */
+                String valueString = ((String) value);
+                if (valueString.length() > 512) {
+                    valueString = valueString.substring(0, 512);
                 }
+                toRet.put(attrTypeStr, valueString);
+            } else {
+                toRet.put(attrTypeStr, value);
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error getting artifact attributes (artifact objID={0})", artifact.getId()), ex); //NON-NLS
         }
+        return toRet;
     }
+
+    private static final Set<Integer> HIDDEN_EMAIL_ATTR_TYPES = ImmutableSet.of(
+            BlackboardAttribute.Type.TSK_DATETIME_SENT.getTypeID(),
+            BlackboardAttribute.Type.TSK_EMAIL_CONTENT_HTML.getTypeID(),
+            BlackboardAttribute.Type.TSK_EMAIL_CONTENT_RTF.getTypeID(),
+            BlackboardAttribute.Type.TSK_EMAIL_BCC.getTypeID(),
+            BlackboardAttribute.Type.TSK_EMAIL_CC.getTypeID(),
+            BlackboardAttribute.Type.TSK_HEADERS.getTypeID()
+    );
 
     /**
      * Adds an email message attribute of the artifact this node represents to a
@@ -683,27 +687,19 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
      *                  name-value pair.
      * @param attribute The attribute to use to make the map entry.
      */
-    private void addEmailMsgProperty(Map<String, Object> map, BlackboardAttribute attribute) {
-        final int attributeTypeID = attribute.getAttributeType().getTypeID();
-        if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID()
-                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID()
-                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()
-                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()
-                || attributeTypeID == ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()) {
-            /*
-             * Do nothing.
-             */
-        } else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()) {
-            String value = attribute.getDisplayString();
-            if (value.length() > 160) {
-                value = value.substring(0, 160) + "...";
+    private Object getEmailMsgProperty(int attrTypeId, Object value) {
+        if (HIDDEN_EMAIL_ATTR_TYPES.contains(attrTypeId)) {
+            return null;
+        } else if (attrTypeId == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID() && value instanceof String) {
+            String valueStr = (String) value;
+            if (valueStr.length() > 160) {
+                valueStr = valueStr.substring(0, 160) + "...";
             }
-            map.put(attribute.getAttributeType().getDisplayName(), value);
-        } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-            map.put(attribute.getAttributeType().getDisplayName(), TimeZoneUtils.getFormattedTime(attribute.getValueLong()));
+            return valueStr;
+        } else if (value instanceof Date) {
+            return TimeZoneUtils.getFormattedTime(((Date) value).getTime() / 1000);
         } else {
-            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+            return value;
         }
     }
 
@@ -717,6 +713,19 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
         return getClass().getName();
     }
 
+    @Messages({
+        "DataArtifactNodev2.createSheet.comment.displayName=C",
+        "DataArtifactNodev2.createSheet.comment.name=C",
+        "# {0} - occurrenceCount",
+        "# {1} - attributeType",
+        "DataArtifactNodev2.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}",
+        "DataArtifactNodev2.createSheet.count.displayName=O",
+        "DataArtifactNodev2.createSheet.count.name=O",
+        "DataArtifactNodev2.createSheet.count.noCorrelationAttributes.description=No correlation properties found",
+        "DataArtifactNodev2.createSheet.count.noCorrelationValues.description=Unable to find other occurrences because no value exists for the available correlation property",
+        "DataArtifactNodev2.createSheet.score.displayName=S",
+        "DataArtifactNodev2.createSheet.score.name=S"
+    })
     private GetSCOTask addSCOColumns(Sheet.Set sheetSet) {
         if (!UserPreferences.getHideSCOColumns()) {
             /*
@@ -743,7 +752,7 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
                         VALUE_LOADING,
                         ""));
             }
-            return new GetSCOTask(new WeakReference<>(this), weakListener);
+            return new GetSCOTask(new WeakReference<>(this), scoListener);
         }
         return null;
     }
@@ -792,10 +801,10 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
     protected final List<Tag> getAllTagsFromDatabase() {
         List<Tag> tags = new ArrayList<>();
         try {
-            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
-            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(srcContent));
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(this.artifactRow.getDataArtifact()));
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(this.artifactRow.getSrcContent()));
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error getting tags for artifact and its source content (artifact objID={0})", artifact.getId()), ex);
+            logger.log(Level.SEVERE, MessageFormat.format("Error getting tags for artifact and its source content (artifact objID={0})", this.artifactRow.getDataArtifact().getId()), ex);
         }
         return tags;
     }
@@ -859,9 +868,11 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
                 description = Bundle.DataArtifactNodev2_createSheet_count_noCorrelationValues_description();
             }
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error querying central repository for other occurences count (artifact objID={0}, corrAttrType={1}, corrAttrValue={2})", artifact.getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
+            logger.log(Level.SEVERE, MessageFormat.format("Error querying central repository for other occurences count (artifact objID={0}, corrAttrType={1}, corrAttrValue={2})",
+                    this.artifactRow.getDataArtifact().getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, MessageFormat.format("Error normalizing correlation attribute for central repository query (artifact objID={0}, corrAttrType={2}, corrAttrValue={3})", artifact.getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
+            logger.log(Level.SEVERE, MessageFormat.format("Error normalizing correlation attribute for central repository query (artifact objID={0}, corrAttrType={2}, corrAttrValue={3})",
+                    this.artifactRow.getDataArtifact().getId(), attribute.getCorrelationType(), attribute.getCorrelationValue()), ex);
         }
         return Pair.of(count, description);
     }

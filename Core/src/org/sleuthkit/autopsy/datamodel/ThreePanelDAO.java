@@ -76,10 +76,10 @@ public class ThreePanelDAO {
 
         for (DataArtifact artifact : arts) {
             long id = artifact.getId();
-            Map<String, Object> attributeValues = new HashMap<>();
+            Map<Integer, Object> attributeValues = new HashMap<>();
             for (BlackboardAttribute attr : artifact.getAttributes()) {
                 attributeTypes.add(attr.getAttributeType());
-                attributeValues.put(attr.getAttributeType().getTypeName(), getAttrValue(attr));
+                attributeValues.put(attr.getAttributeType().getTypeID(), getAttrValue(attr));
             }
 
             Object linkedId = attributeValues.get(BlackboardAttribute.Type.TSK_PATH_ID.getTypeName());
@@ -251,14 +251,14 @@ public class ThreePanelDAO {
 
         private final long id;
 
-        private final Map<String, Object> attributeValues;
+        private final Map<Integer, Object> attributeValues;
 
         private final DataArtifact dataArtifact;
         private final Content srcContent;
         private final Content linkedFile;
         private String dataSourceName;
 
-        public DataArtifactRow(long id, Map<String, Object> attributeValues, DataArtifact dataArtifact, Content srcContent, Content linkedFile, String dataSourceName) {
+        public DataArtifactRow(long id, Map<Integer, Object> attributeValues, DataArtifact dataArtifact, Content srcContent, Content linkedFile, String dataSourceName) {
             this.id = id;
             this.attributeValues = attributeValues;
             this.dataArtifact = dataArtifact;
@@ -271,7 +271,7 @@ public class ThreePanelDAO {
             return id;
         }
 
-        public Map<String, Object> getAttributeValues() {
+        public Map<Integer, Object> getAttributeValues() {
             return attributeValues;
         }
 
