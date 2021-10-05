@@ -26,43 +26,70 @@ import java.util.List;
  * Data model for OsAccount panels, but could be reused in other places. The
  * model represents a titled section of key\value pairs.
  */
-final class SectionData implements Iterable<SectionData.RowData<String, String>> {
-
+class Section implements Iterable<Section.SectionData>{
+    
     private final String title;
-    private final List<RowData<String, String>> data;
-
-    /**
-     * Construct a new SectionData object.
-     *
-     * @param title
-     */
-    SectionData(String title) {
+    private final List<SectionData> sectionData = new ArrayList<>();
+    
+    Section(String title) {
         this.title = title;
-        this.data = new ArrayList<>();
     }
-
-    /**
-     * Returns the title for this section.
-     *
-     * @return The section title.
-     */
+    
+    void addSectionData(SectionData data) {
+        sectionData.add(data);
+    }
+    
     String getTitle() {
         return title;
     }
 
-    /**
-     * Add a new property name/property value pair.
-     *
-     * @param properytName   The property display name.
-     * @param propertyValue  The property value.
-     */
-    void addData(String properytName, String propertyValue) {
-        data.add(new RowData<>(properytName, propertyValue));
+    @Override
+    public Iterator<SectionData> iterator() {
+        return sectionData.iterator();
     }
 
-    @Override
-    public Iterator<RowData<String, String>> iterator() {
-        return data.iterator();
+    final static class SectionData implements Iterable<Section.RowData<String, String>> {
+
+        private final String title;
+        private final List<RowData<String, String>> data;
+
+        SectionData() {
+            this(null);
+        }
+        
+        /**
+         * Construct a new SectionData object.
+         *
+         * @param title
+         */
+        SectionData(String title) {
+            this.title = title;
+            this.data = new ArrayList<>();
+        }
+
+        /**
+         * Returns the title for this section.
+         *
+         * @return The section title.
+         */
+        String getTitle() {
+            return title;
+        }
+
+        /**
+         * Add a new property name/property value pair.
+         *
+         * @param properytName  The property display name.
+         * @param propertyValue The property value.
+         */
+        void addData(String properytName, String propertyValue) {
+            data.add(new RowData<>(properytName, propertyValue));
+        }
+
+        @Override
+        public Iterator<RowData<String, String>> iterator() {
+            return data.iterator();
+        }
     }
 
     /**
