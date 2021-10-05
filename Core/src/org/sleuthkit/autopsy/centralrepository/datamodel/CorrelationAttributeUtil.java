@@ -578,7 +578,7 @@ public class CorrelationAttributeUtil {
                         value,
                         correlationCase,
                         CorrelationDataSource.fromTSKDataSource(correlationCase, dataSrc),
-                        "",
+                        srcContent.getName(),
                         "",
                         TskData.FileKnown.UNKNOWN,
                         srcContent.getId());
@@ -807,7 +807,7 @@ public class CorrelationAttributeUtil {
                                 accountAddr.get(),
                                 correlationCase,
                                 CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource),
-                                "",
+                                dataSource.getName(),
                                 "",
                                 TskData.FileKnown.KNOWN,
                                 account.getId());

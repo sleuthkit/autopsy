@@ -117,6 +117,9 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
                         // Create the parent path. Make sure not to add a separator if there is already one there.
                         String parentPath = fileFromPath.getParent();
+                        if (parentPath == null) {
+                            return null;
+                        }
                         if (!parentPath.endsWith(File.separator)) {
                             parentPath += File.separator;
                         }
