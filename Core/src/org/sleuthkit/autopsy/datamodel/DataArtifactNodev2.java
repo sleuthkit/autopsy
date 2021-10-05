@@ -520,7 +520,9 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
         "DataArtifactNodev2.createSheet.fileSize.name=Size",
         "DataArtifactNodev2.createSheet.fileSize.displayName=Size",
         "DataArtifactNodev2.createSheet.path.displayName=Path",
-        "DataArtifactNodev2.createSheet.path.name=Path"
+        "DataArtifactNodev2.createSheet.path.name=Path",
+        "DataArtifactNodev2.createSheet.dataSrc.name=Data Source",
+        "DataArtifactNodev2.createSheet.dataSrc.displayName=Data Source"
     })
     @Override
     protected Sheet createSheet() {
@@ -586,10 +588,8 @@ public class DataArtifactNodev2 extends AbstractContentNode<BlackboardArtifact> 
 
         if (dataSourceStr.isEmpty() == false) {
             sheetSet.put(new NodeProperty<>(
-                    NbBundle.getMessage(DataArtifactNodev2.class,
-                            "DataArtifactNodev2.createSheet.dataSrc.name"),
-                    NbBundle.getMessage(DataArtifactNodev2.class,
-                            "DataArtifactNodev2.createSheet.dataSrc.displayName"),
+                    Bundle.DataArtifactNodev2_createSheet_dataSrc_name(),
+                    Bundle.DataArtifactNodev2_createSheet_dataSrc_displayName(),
                     NO_DESCR,
                     dataSourceStr));
         }

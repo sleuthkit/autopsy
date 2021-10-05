@@ -523,7 +523,7 @@ public class Artifacts {
 
         private static Children getChildren(BlackboardArtifact.Type type, long filteringDSObjId, boolean isDataArtifact) {
             return isDataArtifact
-                    ? Children.create(new DataArtifactFactoryv2(type, filteringDSObjId >= 0 ? filteringDSObjId : null), true)
+                    ? Children.create(new DataArtifactFactoryv2(type, filteringDSObjId > 0 ? filteringDSObjId : null), true)
                     : Children.create(new ArtifactFactory(type, filteringDSObjId), true);
         }
 

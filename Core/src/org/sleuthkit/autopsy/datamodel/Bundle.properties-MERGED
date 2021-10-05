@@ -114,6 +114,51 @@ ContentTagNode.createSheet.artifactMD5.displayName=MD5 Hash
 ContentTagNode.createSheet.artifactMD5.name=MD5 Hash
 ContentTagNode.createSheet.origFileName=Original Name
 ContentTagNode.createSheet.userName.text=User Name
+DataArtifactNodev2.createSheet.artifactDetails.displayName=Result Details
+DataArtifactNodev2.createSheet.artifactDetails.name=Result Details
+DataArtifactNodev2.createSheet.artifactMD5.displayName=MD5 Hash
+DataArtifactNodev2.createSheet.artifactMD5.name=MD5 Hash
+DataArtifactNodev2.createSheet.artifactType.displayName=Result Type
+DataArtifactNodev2.createSheet.artifactType.name=Result Type
+DataArtifactNodev2.createSheet.comment.displayName=C
+DataArtifactNodev2.createSheet.comment.name=C
+# {0} - occurrenceCount
+# {1} - attributeType
+DataArtifactNodev2.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}
+DataArtifactNodev2.createSheet.count.displayName=O
+DataArtifactNodev2.createSheet.count.name=O
+DataArtifactNodev2.createSheet.count.noCorrelationAttributes.description=No correlation properties found
+DataArtifactNodev2.createSheet.count.noCorrelationValues.description=Unable to find other occurrences because no value exists for the available correlation property
+DataArtifactNodev2.createSheet.dataSrc.displayName=Data Source
+DataArtifactNodev2.createSheet.dataSrc.name=Data Source
+DataArtifactNodev2.createSheet.fileSize.displayName=Size
+DataArtifactNodev2.createSheet.fileSize.name=Size
+DataArtifactNodev2.createSheet.path.displayName=Path
+DataArtifactNodev2.createSheet.path.name=Path
+DataArtifactNodev2.createSheet.score.displayName=S
+DataArtifactNodev2.createSheet.score.name=S
+DataArtifactNodev2.createSheet.srcFile.displayName=Source Name
+DataArtifactNodev2.createSheet.srcFile.name=Source Name
+DataArtifactNodev2.createSheet.srcFile.origDisplayName=Original Name
+DataArtifactNodev2.createSheet.srcFile.origName=Original Name
+# {0} - type
+DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory
+# {0} - type
+DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline...
+DataArtifactNodev2_getAssociatedTypeStr_associated=Associated File
+DataArtifactNodev2_getAssociatedTypeStr_webCache=Cached File
+DataArtifactNodev2_getAssociatedTypeStr_webDownload=Downloaded File
+# {0} - contentType
+DataArtifactNodev2_getSrcContentAction_actionDisplayName=View Source {0} in Directory
+DataArtifactNodev2_getSrcContentViewerActions_openInExtViewer=Open in External Viewer  Ctrl+E
+DataArtifactNodev2_getSrcContentViewerActions_viewInNewWin=View Item in New Window
+DataArtifactNodev2_getTimelineArtifactAction_displayName=View Selected Item in Timeline... 
+# {0} - contentType
+DataArtifactNodev2_getTimelineSrcContentAction_actionDisplayName=View Source {0} in Timeline... 
+DataArtifactNodev2_getViewSrcContentAction_type_DataArtifact=Data Artifact
+DataArtifactNodev2_getViewSrcContentAction_type_File=File
+DataArtifactNodev2_getViewSrcContentAction_type_OSAccount=OS Account
+DataArtifactNodev2_getViewSrcContentAction_type_unknown=Item
 DataArtifacts_name=Data Artifacts
 DataSourcesHostsNode_name=Data Sources
 DeletedContent.allDelFilter.text=All
@@ -313,10 +358,10 @@ ImageNode.getActions.viewInNewWin.text=View in New Window
 ImageNode.createSheet.name.name=Name
 ImageNode.createSheet.name.displayName=Name
 ImageNode.createSheet.name.desc=no description
-Installer.exception.tskVerStringNull.msg=Sleuth Kit JNI test call returned without error, but version string was null!
-Installer.exception.taskVerStringBang.msg=Sleuth Kit JNI test call returned without error, but version string was ""!
-Installer.tskLibErr.msg=Problem with Sleuth Kit JNI. Test call failed!\n\nDetails: {0}
-Installer.tskLibErr.err=Fatal Error!
+Installer.exception.tskVerStringNull.msg=Sleuth Kit JNI test call returned without error, but version string was null\!
+Installer.exception.taskVerStringBang.msg=Sleuth Kit JNI test call returned without error, but version string was ""\!
+Installer.tskLibErr.msg=Problem with Sleuth Kit JNI. Test call failed\!\n\nDetails: {0}
+Installer.tskLibErr.err=Fatal Error\!
 InterestingHits.interestingItems.text=INTERESTING ITEMS
 InterestingHits.displayName.text=Interesting Items
 InterestingHits.createSheet.name.name=Name
