@@ -10,7 +10,7 @@ usage() {
 # default repo path
 REPO="https://github.com/sleuthkit/sleuthkit.git"
 
-while getopts "r:b:" o; do
+while getopts "p:r:b:" o; do
     case "${o}" in
     p)
         SLEUTHKIT_SRC_DIR=${OPTARG}
