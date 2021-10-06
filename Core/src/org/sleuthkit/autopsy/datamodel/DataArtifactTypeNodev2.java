@@ -9,23 +9,26 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  *
  * @author gregd
  */
 public class DataArtifactTypeNodev2 extends AbstractNode {
-
-    private final BlackboardArtifact.Type artifactType;
-
-    public DataArtifactTypeNodev2(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        super(Children.create(new DataArtifactFactoryv2(artifactType, dataSourceId), true));
-        setName(artifactType.getTypeName());
-        setDisplayName(artifactType.getDisplayName());
-        this.artifactType = artifactType;
-        String iconPath = IconsUtil.getIconFilePath(artifactType.getTypeID());
+    private final SearchResultChildFactory<?,?> factory;
+    
+    public DataArtifactTypeNodev2(DataArtifactTableSearchResultsDTO initialResults) {
+        this(initialResults, new DataArtifactFactoryv2(initialResults));
+    }
+        
+    private DataArtifactTypeNodev2(DataArtifactTableSearchResultsDTO initialResults, DataArtifactFactoryv2 factory) {
+        super(Children.create(factory, true));
+        this.factory = factory;
+        setName(initialResults.getArtifactType().getTypeName());
+        setDisplayName(initialResults.getArtifactType().getDisplayName());
+        String iconPath = IconsUtil.getIconFilePath(initialResults.getArtifactType().getTypeID());
         setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
     }
 
@@ -41,12 +44,13 @@ public class DataArtifactTypeNodev2 extends AbstractNode {
         sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.name"),
                 NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.displayName"),
                 NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.desc"),
-                this.artifactType.getDisplayName()));
+                getDisplayName()));
 
-//            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.name"),
-//                    NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.displayName"),
-//                    NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.desc"),
-//                    getChildCount()));
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.name"),
+                    NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.displayName"),
+                    NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.desc"),
+                    this.factory.getResultCount()));
+            
         return sheet;
     }
 }

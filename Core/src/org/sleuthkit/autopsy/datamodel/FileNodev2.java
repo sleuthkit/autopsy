@@ -197,28 +197,28 @@ public class FileNodev2 extends AbstractNode {
      */
     @Override
     @NbBundle.Messages({
-        "FileNode.getActions.viewFileInDir.text=View File in Directory",
-        "FileNode.getActions.viewInNewWin.text=View Item in New Window",
-        "FileNode.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E",
-        "FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
+        "FileNodev2.getActions.viewFileInDir.text=View File in Directory",
+        "FileNodev2.getActions.viewInNewWin.text=View Item in New Window",
+        "FileNodev2.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E",
+        "FileNodev2.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
 
         // GVDTODO: action requires node
 //        if (!this.directoryBrowseMode) {
-//            actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));
+//            actionsList.add(new ViewContextAction(Bundle.FileNodev2_getActions_viewFileInDir_text(), this));
 //        }
 
 
         actionsList.add(ViewFileInTimelineAction.createViewFileAction(this.fileData.getAbstractFile()));
         actionsList.add(null); // Creates an item separator
 
-        actionsList.add(new NewWindowViewAction(Bundle.FileNode_getActions_viewInNewWin_text(), this));
+        actionsList.add(new NewWindowViewAction(Bundle.FileNodev2_getActions_viewInNewWin_text(), this));
         final Collection<AbstractFile> selectedFilesList
                 = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
         if (selectedFilesList.size() == 1) {
             actionsList.add(new ExternalViewerAction(
-                    Bundle.FileNode_getActions_openInExtViewer_text(), this));
+                    Bundle.FileNodev2_getActions_openInExtViewer_text(), this));
         } else {
             actionsList.add(ExternalViewerShortcutAction.getInstance());
         }

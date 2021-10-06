@@ -61,8 +61,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactRow;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableDTO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -88,7 +88,7 @@ public class DataArtifactNodev2 extends AbstractNode {
 
     private static final Logger logger = Logger.getLogger(DataArtifactNodev2.class.getName());
 
-    private static Lookup createLookup(DataArtifactRow row) {
+    private static Lookup createLookup(DataArtifactTableDTO row) {
         DataArtifactItem artifactItem = new DataArtifactItem(row.getDataArtifact(), row.getSrcContent());
         if (row.getSrcContent() == null) {
             return Lookups.fixed(row.getDataArtifact(), artifactItem);
@@ -99,15 +99,15 @@ public class DataArtifactNodev2 extends AbstractNode {
 
     private final BlackboardArtifact.Type artifactType;
     private final Map<Integer, BlackboardAttribute.Type> attributeTypes;
-    private final DataArtifactRow artifactRow;
+    private final DataArtifactTableDTO artifactRow;
     private final boolean hasSupportedTimeStamp;
     private String translatedSourceName = null;
 
-    public DataArtifactNodev2(DataArtifactTableDTO tableData, DataArtifactRow artifactRow) {
+    public DataArtifactNodev2(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow) {
         this(tableData, artifactRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()));
     }
 
-    public DataArtifactNodev2(DataArtifactTableDTO tableData, DataArtifactRow artifactRow, String iconPath) {
+    public DataArtifactNodev2(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow, String iconPath) {
         super(Children.LEAF, createLookup(artifactRow));
 
         setDisplayName(artifactRow.getSrcContent().getName());

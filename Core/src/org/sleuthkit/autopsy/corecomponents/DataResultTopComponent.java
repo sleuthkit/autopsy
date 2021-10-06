@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
@@ -39,6 +41,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DataArtifactTypeNodev2;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableDTO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -361,9 +366,21 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void setNode(Node selectedNode) {
         dataResultPanel.setNode(selectedNode);
     }
-    
+
+    private final ThreePanelDAO threePanelDAO = ThreePanelDAO.getInstance();
+
     public void displayDataArtifact(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        setNode(new TableFilterNode(new DataArtifactTypeNodev2(artifactType, dataSourceId), true));
+        try {
+            DataArtifactTableSearchResultsDTO table = threePanelDAO.getDataArtifactsForTable(artifactType, dataSourceId);
+            dataResultPanel.setNode(new DataArtifactTypeNodev2(table));
+            dataResultPanel.setNumberOfChildNodes(table.getTotalResultsCount());
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for artifact type: {0} and data source id: {1}.",
+                    artifactType.getTypeName(),
+                    dataSourceId == null ? "<null>" : dataSourceId),
+                    ex);
+        }
     }
 
     @Override

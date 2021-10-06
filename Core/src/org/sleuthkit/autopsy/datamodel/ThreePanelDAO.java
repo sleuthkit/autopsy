@@ -53,14 +53,14 @@ public class ThreePanelDAO {
         return instance;
     }
 
-    private final Cache<DataArtifactCacheKey, DataArtifactTableDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<DataArtifactCacheKey, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<Long, List<FilesContentTableDTO>> filesCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    private DataArtifactTableDTO fetchDataArtifactsForTable(DataArtifactCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(DataArtifactCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
 
@@ -74,7 +74,7 @@ public class ThreePanelDAO {
 
         // determine all different attribute types present as well as row data for each artifact
         Set<BlackboardAttribute.Type> attributeTypes = new HashSet<>();
-        List<DataArtifactRow> rows = new ArrayList<>();
+        List<DataArtifactTableDTO> rows = new ArrayList<>();
 
         for (DataArtifact artifact : arts) {
             long id = artifact.getId();
@@ -91,14 +91,14 @@ public class ThreePanelDAO {
 
             Content srcContent = artifact.getParent();
             String dataSourceName = getDataSourceName(srcContent);
-            rows.add(new DataArtifactRow(id, attributeValues, artifact, srcContent, linkedFile, dataSourceName));
+            rows.add(new DataArtifactTableDTO(id, attributeValues, artifact, srcContent, linkedFile, dataSourceName));
         }
 
         List<BlackboardAttribute.Type> attributeTypeSortedList = attributeTypes.stream()
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
 
-        return new DataArtifactTableDTO(artType, attributeTypeSortedList, rows);
+        return new DataArtifactTableSearchResultsDTO(artType, attributeTypeSortedList, rows);
     }
 
     private String getDataSourceName(Content srcContent) throws TskCoreException {
@@ -181,7 +181,7 @@ public class ThreePanelDAO {
         }
     }
 
-    public DataArtifactTableDTO getDataArtifactsForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException, IllegalArgumentException {
+    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException, IllegalArgumentException {
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Artifact type must be non-null and data artifact.  "
@@ -305,7 +305,7 @@ public class ThreePanelDAO {
 
     }
 
-    public static class DataArtifactRow {
+    public static class DataArtifactTableDTO {
 
         private final long id;
 
@@ -316,7 +316,7 @@ public class ThreePanelDAO {
         private final Content linkedFile;
         private String dataSourceName;
 
-        public DataArtifactRow(long id, Map<Integer, Object> attributeValues, DataArtifact dataArtifact, Content srcContent, Content linkedFile, String dataSourceName) {
+        public DataArtifactTableDTO(long id, Map<Integer, Object> attributeValues, DataArtifact dataArtifact, Content srcContent, Content linkedFile, String dataSourceName) {
             this.id = id;
             this.attributeValues = attributeValues;
             this.dataArtifact = dataArtifact;
@@ -348,18 +348,57 @@ public class ThreePanelDAO {
         public String getDataSourceName() {
             return dataSourceName;
         }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 67 * hash + (int) (this.id ^ (this.id >>> 32));
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final DataArtifactTableDTO other = (DataArtifactTableDTO) obj;
+            if (this.id != other.id) {
+                return false;
+            }
+            return true;
+        }
+        
+        
+    }
+    
+    public interface SearchResultsDTO<T> {
+        int getTotalResultsCount();
+        List<T> getItems();
     }
 
-    public static class DataArtifactTableDTO {
+    public static class DataArtifactTableSearchResultsDTO implements SearchResultsDTO<DataArtifactTableDTO> {
 
         private final BlackboardArtifact.Type artifactType;
         private final List<BlackboardAttribute.Type> attributeTypes;
-        private final List<DataArtifactRow> rows;
+        private final List<DataArtifactTableDTO> items;
+        private final int totalResultsCount;
 
-        public DataArtifactTableDTO(BlackboardArtifact.Type artifactType, List<BlackboardAttribute.Type> attributeKeys, List<DataArtifactRow> rows) {
+        public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<BlackboardAttribute.Type> attributeKeys, List<DataArtifactTableDTO> items) {
+            this(artifactType, attributeKeys, items, items.size());
+        }
+
+        
+        public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<BlackboardAttribute.Type> attributeKeys, List<DataArtifactTableDTO> items, int totalResultsCount) {
             this.artifactType = artifactType;
             this.attributeTypes = attributeKeys;
-            this.rows = rows;
+            this.items = items;
+            this.totalResultsCount = totalResultsCount;
         }
 
         public BlackboardArtifact.Type getArtifactType() {
@@ -370,9 +409,17 @@ public class ThreePanelDAO {
             return attributeTypes;
         }
 
-        public List<DataArtifactRow> getRows() {
-            return rows;
+        @Override
+        public List<DataArtifactTableDTO> getItems() {
+            return items;
         }
+
+        @Override
+        public int getTotalResultsCount() {
+            return totalResultsCount;
+        }
+        
+        
     }
 
     public enum FilesType {
