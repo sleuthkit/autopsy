@@ -80,10 +80,49 @@ public final class JFileChooserFactory {
         } else {
             futureFileChooser = new FutureTask<>(new ChooserCallable(cls));
         }
+        
+        // Append the caller class name to the thread name to add information to thread dumps.
+        String threadName = "JFileChooser-background-thread";
+        String callerName = getCallerClassName();
+        if (callerName != null) {
+            threadName += "-" + callerName;
+        }
 
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("JFileChooser-background-thread").build());
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(threadName).build());
         executor.execute(futureFileChooser);
     }
+    
+    /**
+     * Get the name of the class that called this one.
+     * From https://stackoverflow.com/questions/11306811/how-to-get-the-caller-class-in-java
+     * 
+     * @return The name of the class that requested the JFileChooser or null if not found.
+     */
+    private static String getCallerClassName() { 
+        try {
+          throw new Exception("test");  
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+        for (int i=1; i<stElements.length; i++) {
+            StackTraceElement ste = stElements[i];
+            
+            // Look for the first class that is not this one.
+            if (!ste.getClassName().equals(JFileChooserFactory.class.getName())&& ste.getClassName().indexOf("java.lang.Thread")!=0) {
+                String resultClassName = ste.getClassName();
+                if (resultClassName.contains(".")) {
+                    // For brevity, omit the package name
+                    int index = resultClassName.lastIndexOf(".") + 1;
+                    if (index < resultClassName.length()) {
+                        resultClassName = resultClassName.substring(index);
+                    }
+                }
+                return resultClassName;
+            }
+        }
+        return null;
+     }
 
     /**
      * Return and instance of JFileChooser to the caller.
