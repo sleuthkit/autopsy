@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -52,13 +53,14 @@ public class ThreePanelDAO {
         return instance;
     }
 
-    private final Cache<TableCacheKey, DataArtifactTableDTO> tableCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<DataArtifactCacheKey, DataArtifactTableDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<Long, List<FilesContentTableDTO>> filesCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    private DataArtifactTableDTO fetchDataArtifactsForTable(TableCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private DataArtifactTableDTO fetchDataArtifactsForTable(DataArtifactCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
 
@@ -179,31 +181,87 @@ public class ThreePanelDAO {
         }
     }
 
-    public DataArtifactTableDTO getDataArtifactsForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException {
+    public DataArtifactTableDTO getDataArtifactsForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException, IllegalArgumentException {
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Artifact type must be non-null and data artifact.  "
                     + "Received {0}", artType));
         }
 
-        TableCacheKey cacheKey = new TableCacheKey(artType, dataSourceId);
-        return tableCache.get(cacheKey, () -> fetchDataArtifactsForTable(cacheKey));
+        DataArtifactCacheKey cacheKey = new DataArtifactCacheKey(artType, dataSourceId);
+        return dataArtifactCache.get(cacheKey, () -> fetchDataArtifactsForTable(cacheKey));
     }
 
-    public void dropTableCache() {
-        tableCache.invalidateAll();
+    public void dropDataArtifactCache() {
+        dataArtifactCache.invalidateAll();
     }
 
-    public void dropTableCache(BlackboardArtifact.Type artType) {
-        tableCache.invalidate(artType);
+    public void dropDataArtifactCache(BlackboardArtifact.Type artType) {
+        dataArtifactCache.invalidate(artType);
     }
 
-    private static class TableCacheKey {
+    // GVDTODO: incomplete code
+//    private List<FilesContentTableDTO> fetchChildFiles(long parentId) throws NoCurrentCaseException, TskCoreException {
+//        Content parentContent = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(parentId);
+//        List<Content> childContent = parentContent.getChildren();
+//        List<FilesContentTableDTO> toRet = childContent.stream().map(c -> new FilesContentTableDTO(c, c.getName(),))
+//    }
+//
+//    static FileCategory getFileCategory(AbstractFile file) {
+//        String ext = file.getNameExtension();
+//        if (StringUtils.isBlank(ext)) {
+//            return FileCategory.UNKNOWN;
+//        } else {
+//            ext = "." + ext;
+//        }
+//        if (FileTypeExtensions.getImageExtensions().contains(ext)) {
+//            return FileCategory.IMAGE;
+//        } else if (FileTypeExtensions.getVideoExtensions().contains(ext)) {
+//            return FileCategory.VIDEO;
+//        } else if (FileTypeExtensions.getAudioExtensions().contains(ext)) {
+//            return FileCategory.AUDIO;
+//        } else if (FileTypeExtensions.getDocumentExtensions().contains(ext)) {
+//            return FileCategory.DOCUMENT;
+//        } else if (FileTypeExtensions.getExecutableExtensions().contains(ext)) {
+//            return FileCategory.EXECUTABLE;
+//        } else if (FileTypeExtensions.getTextExtensions().contains(ext)) {
+//            return FileCategory.TEXT;
+//        } else if (FileTypeExtensions.getWebExtensions().contains(ext)) {
+//            return FileCategory.WEB;
+//        } else if (FileTypeExtensions.getPDFExtensions().contains(ext)) {
+//            return FileCategory.PDF;
+//        } else if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
+//            return FileCategory.ARCHIVE;
+//        } else {
+//            return FileCategory.NONE;
+//        }
+//    }
+//
+//    enum FileCategory {
+//        NONE, UNKNOWN, IMAGE, VIDEO, AUDIO, DOCUMENT, EXECUTABLE, TEXT, WEB, PDF, ARCHIVE
+//    }
+//
+//    public List<FilesContentTableDTO> getChildFilesForTable(long parentId) throws ExecutionException, IllegalArgumentException {
+//        if (parentId <= 0) {
+//            throw new IllegalArgumentException("parent id must be > 0.");
+//        }
+//        return filesCache.get(parentId, () -> fetchChildFiles(parentId));
+//    }
+
+    public void dropFilesCache() {
+        filesCache.invalidateAll();
+    }
+
+    public void dropFilesCache(long parentId) {
+        filesCache.invalidate(parentId);
+    }
+
+    private static class DataArtifactCacheKey {
 
         private final BlackboardArtifact.Type artifactType;
         private final Long dataSourceId;
 
-        public TableCacheKey(BlackboardArtifact.Type artifactType, Long dataSourceId) {
+        public DataArtifactCacheKey(BlackboardArtifact.Type artifactType, Long dataSourceId) {
             this.artifactType = artifactType;
             this.dataSourceId = dataSourceId;
         }
@@ -235,7 +293,7 @@ public class ThreePanelDAO {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            final TableCacheKey other = (TableCacheKey) obj;
+            final DataArtifactCacheKey other = (DataArtifactCacheKey) obj;
             if (!Objects.equals(this.artifactType, other.artifactType)) {
                 return false;
             }
@@ -315,5 +373,42 @@ public class ThreePanelDAO {
         public List<DataArtifactRow> getRows() {
             return rows;
         }
+    }
+
+    public enum FilesType {
+        DIR,
+        FILE
+    }
+
+    public static class FilesContentTableDTO {
+
+        private final Content content;
+        private final String displayName;
+        private final String extension;
+        private final long id;
+
+        public FilesContentTableDTO(Content content, String displayName, String extension, long id) {
+            this.content = content;
+            this.displayName = displayName;
+            this.extension = extension;
+            this.id = id;
+        }
+
+        public Content getContent() {
+            return content;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public String getExtension() {
+            return extension;
+        }
+
+        public long getId() {
+            return id;
+        }
+
     }
 }
