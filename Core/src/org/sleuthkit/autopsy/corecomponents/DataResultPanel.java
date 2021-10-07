@@ -44,6 +44,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.SearchResultTableNode;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
 
 /**
  * A result view panel is a JPanel with a JTabbedPane child component that
@@ -86,6 +88,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent contentView;
     private ExplorerManager explorerManager;
     private Node currentRootNode;
+    private SearchResultsDTO<?> searchResults;
     private boolean listeningToTabbedPane;
 
     /**
@@ -342,6 +345,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         this.setVisible(true);
     }
+    
+
 
     /**
      * Sets the current root node for this result view panel. The child nodes of
@@ -355,6 +360,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     @Override
     public void setNode(Node rootNode) {
+        setNode(rootNode, null);
+    }
+    
+    void setNode(Node rootNode, SearchResultsDTO<?> searchResults) {
+        this.searchResults = searchResults;
+        
         if (this.currentRootNode != null) {
             this.currentRootNode.removeNodeListener(rootNodeListener);
         }
@@ -388,8 +399,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         setupTabs(this.currentRootNode);
 
         if (this.currentRootNode != null) {
-            long childrenCount = (this.currentRootNode instanceof SearchResultTableNode)
-                    ? ((SearchResultTableNode<?, ?>) this.currentRootNode).getResultCount()
+            long childrenCount = (this.searchResults != null)
+                    ? this.searchResults.getTotalResultsCount()
                     : this.currentRootNode.getChildren().getNodesCount();
             this.numberOfChildNodesLabel.setText(Long.toString(childrenCount));
         }
@@ -641,8 +652,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          *
          */
         private void updateMatches() {
-            if (currentRootNode instanceof SearchResultTableNode) {
-                long resultCount = ((SearchResultTableNode<?,?>) currentRootNode).getResultCount();
+            if (searchResults != null) {
+                long resultCount = searchResults.getTotalResultsCount();
                 if (resultCount > Integer.MAX_VALUE) {
                     resultCount = Integer.MAX_VALUE;
                 }

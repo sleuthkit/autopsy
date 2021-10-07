@@ -386,7 +386,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     }
     
     public <T extends SearchResultsDTO<S>, S extends RowResultDTO> void displaySearchResults(T searchResults, NodeCreator<T, S> nodeCreator) {
-            dataResultPanel.setNode(new SearchResultTableNode<>(nodeCreator, searchResults));
+            dataResultPanel.setNode(new SearchResultTableNode<>(nodeCreator, searchResults), searchResults);
             dataResultPanel.setNumberOfChildNodes(
                     searchResults.getTotalResultsCount() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) searchResults.getTotalResultsCount());
     }

@@ -23,16 +23,14 @@ import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
 public class SearchResultTableNode<T extends SearchResultsDTO<S>, S extends RowResultDTO> extends AbstractNode {
 
     private final SearchResultChildFactory<T, S> factory;
-    private final List<ColumnKey> columnKeys;
 
     public SearchResultTableNode(NodeCreator<T, S> nodeCreator, T initialResults) {
-        this(initialResults, new SearchResultChildFactory<>(nodeCreator, initialResults), initialResults.getColumns());
+        this(initialResults, new SearchResultChildFactory<>(nodeCreator, initialResults));
     }
 
-    private SearchResultTableNode(SearchResultsDTO<S> initialResults, SearchResultChildFactory<T, S> factory, List<ColumnKey> columnKeys) {
+    private SearchResultTableNode(SearchResultsDTO<S> initialResults, SearchResultChildFactory<T, S> factory) {
         super(Children.create(factory, true));
         this.factory = factory;
-        this.columnKeys = columnKeys;
         
         setName(initialResults.getTypeId());
         setDisplayName(initialResults.getDisplayName());
@@ -61,13 +59,5 @@ public class SearchResultTableNode<T extends SearchResultsDTO<S>, S extends RowR
                 this.factory.getResultCount()));
 
         return sheet;
-    }
-
-    public List<ColumnKey> getColumnKeys() {
-        return Collections.unmodifiableList(columnKeys);
-    }
-
-    public long getResultCount() {
-        return this.factory.getResultCount();
     }
 }

@@ -88,6 +88,8 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.SearchResultTableNode;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
 import org.sleuthkit.datamodel.Score.Significance;
 
 /**
@@ -143,6 +145,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final TableListener outlineViewListener;
     private final IconRendererTableListener iconRendererListener;
     private Node rootNode;
+    private SearchResultsDTO<?> searchResults;
 
     /**
      * Multiple nodes may have been visited in the context of this
@@ -388,7 +391,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
              * root context of the child OutlineView, otherwise make an
              * "empty"node the root context.
              */
-            if ((rootNode instanceof SearchResultTableNode && ((SearchResultTableNode<?, ?>) rootNode).getResultCount() > 0) 
+            if ((searchResults != null && searchResults.getTotalResultsCount() > 0) 
                     || (rootNode != null && rootNode.getChildren().getNodesCount() > 0)) {
                 this.getExplorerManager().setRootContext(this.rootNode);
                 outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -752,8 +755,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private synchronized List<Node.Property<?>> loadColumnOrder() {
 
-        if (rootNode instanceof SearchResultTableNode) {
-            return ((SearchResultTableNode<?, ?>) rootNode).getColumnKeys().stream()
+        if (searchResults != null) {
+            return searchResults.getColumns().stream()
                     .map(columnKey -> {
                         return new NodeProperty<>(
                                 columnKey.getFieldName(),
