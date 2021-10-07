@@ -19,7 +19,10 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.util.EnumSet;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Filter by mime type used in filter areas of file search by attribute.
