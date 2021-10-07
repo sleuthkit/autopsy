@@ -21,17 +21,17 @@ public class SearchResultTableNode<T extends SearchResultsDTO<S>, S extends RowR
 
     private final SearchResultChildFactory<T, S> factory;
 
-    public SearchResultTableNode(NodeCreator<T,S> nodeCreator, SearchResultsDTO<S> initialResults) {
-        this(initialResults, new SearchResultChildFactory(nodeCreator, initialResults));
+    public SearchResultTableNode(NodeCreator<T, S> nodeCreator, T initialResults) {
+        this(initialResults, new SearchResultChildFactory<>(nodeCreator, initialResults));
     }
 
     private SearchResultTableNode(SearchResultsDTO<S> initialResults, SearchResultChildFactory<T, S> factory) {
         super(Children.create(factory, true));
         this.factory = factory;
-        
+
         setName(initialResults.getTypeId());
         setDisplayName(initialResults.getDisplayName());
-        
+
 //        String iconPath = IconsUtil.getIconFilePath(initialResults.getArtifactType().getTypeID());
 //        setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
     }

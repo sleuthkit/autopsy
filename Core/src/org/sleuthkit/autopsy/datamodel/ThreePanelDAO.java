@@ -144,7 +144,7 @@ public class ThreePanelDAO {
         for (DataArtifact art : arts) {
             Map<BlackboardAttribute.Type, Object> attrs = art.getAttributes().stream()
                     .filter(attr -> isRenderedAttr(artType, attr.getAttributeType()))
-                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(attr)));
+                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(attr), (attr1, attr2) -> attr1));
 
             artifactAttributes.put(art.getId(), attrs);
         }
@@ -209,7 +209,8 @@ public class ThreePanelDAO {
         if (BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() == artType.getTypeID()) {
             return !HIDDEN_EMAIL_ATTR_TYPES.contains(attrType);
         } else {
-            return !HIDDEN_ATTR_TYPES.contains(attrType);
+            return !HIDDEN_ATTR_TYPES.contains(attrType) && 
+                    !BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.equals(attrType.getValueType());
         }
     }
 
@@ -492,7 +493,7 @@ public class ThreePanelDAO {
         long getId();
     }
 
-    public class BaseRowResultDTO implements RowResultDTO {
+    public static class BaseRowResultDTO implements RowResultDTO {
 
         private final List<Object> cellValues;
         private final long id;
@@ -539,7 +540,7 @@ public class ThreePanelDAO {
 
     }
 
-    public interface SearchResultsDTO<R extends RowResultDTO> {
+    public static interface SearchResultsDTO<R extends RowResultDTO> {
 
         String getTypeId();
 
@@ -552,7 +553,7 @@ public class ThreePanelDAO {
         long getTotalResultsCount();
     }
 
-    public class BaseSearchResultsDTO<R extends RowResultDTO> implements SearchResultsDTO<R> {
+    public static class BaseSearchResultsDTO<R extends RowResultDTO> implements SearchResultsDTO<R> {
 
         private final String typeId;
         private final String displayName;
