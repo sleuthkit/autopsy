@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -86,6 +87,7 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
+import org.sleuthkit.autopsy.datamodel.SearchResultTableNode;
 import org.sleuthkit.datamodel.Score.Significance;
 
 /**
@@ -258,7 +260,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 nodeNameToPagingSupportMap.values().forEach((ps) -> {
                     ps.postPageSizeChangeEvent();
                 });
-                
+
                 setCursor(null);
             }
         });
@@ -445,6 +447,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (firstProp != null) {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
         }
+
 
         /*
          * Load column sorting information from preferences file and apply it to
@@ -747,6 +750,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *         order.
      */
     private synchronized List<Node.Property<?>> loadColumnOrder() {
+
+        if (rootNode instanceof SearchResultTableNode) {
+            return ((SearchResultTableNode<?, ?>) rootNode).getColumnKeys().stream()
+                    .map(columnKey -> {
+                        return new NodeProperty<>(
+                                columnKey.getFieldName(),
+                                columnKey.getDisplayName(),
+                                columnKey.getDescription(),
+                                ""
+                        );
+                    })
+                    .collect(Collectors.toList());
+        }
 
         List<Property<?>> props = ResultViewerPersistence.getAllChildProperties(rootNode, 100);
 

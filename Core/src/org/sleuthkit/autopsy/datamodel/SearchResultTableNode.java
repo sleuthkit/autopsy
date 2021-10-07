@@ -5,11 +5,14 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Collections;
+import java.util.List;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.SearchResultChildFactory.NodeCreator;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.ColumnKey;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.RowResultDTO;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
 
@@ -20,15 +23,17 @@ import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
 public class SearchResultTableNode<T extends SearchResultsDTO<S>, S extends RowResultDTO> extends AbstractNode {
 
     private final SearchResultChildFactory<T, S> factory;
+    private final List<ColumnKey> columnKeys;
 
     public SearchResultTableNode(NodeCreator<T, S> nodeCreator, T initialResults) {
-        this(initialResults, new SearchResultChildFactory<>(nodeCreator, initialResults));
+        this(initialResults, new SearchResultChildFactory<>(nodeCreator, initialResults), initialResults.getColumns());
     }
 
-    private SearchResultTableNode(SearchResultsDTO<S> initialResults, SearchResultChildFactory<T, S> factory) {
+    private SearchResultTableNode(SearchResultsDTO<S> initialResults, SearchResultChildFactory<T, S> factory, List<ColumnKey> columnKeys) {
         super(Children.create(factory, true));
         this.factory = factory;
-
+        this.columnKeys = columnKeys;
+        
         setName(initialResults.getTypeId());
         setDisplayName(initialResults.getDisplayName());
 
@@ -56,5 +61,9 @@ public class SearchResultTableNode<T extends SearchResultsDTO<S>, S extends RowR
                 this.factory.getResultCount()));
 
         return sheet;
+    }
+
+    public List<ColumnKey> getColumnKeys() {
+        return Collections.unmodifiableList(columnKeys);
     }
 }
