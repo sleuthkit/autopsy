@@ -18,7 +18,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -54,7 +53,7 @@ public class ThreePanelDAO {
     }
 
     private final Cache<DataArtifactCacheKey, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<Long, List<FilesContentTableDTO>> filesCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+//    private final Cache<Long, List<FilesContentTableDTO>> filesCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -247,14 +246,13 @@ public class ThreePanelDAO {
 //        }
 //        return filesCache.get(parentId, () -> fetchChildFiles(parentId));
 //    }
-
-    public void dropFilesCache() {
-        filesCache.invalidateAll();
-    }
-
-    public void dropFilesCache(long parentId) {
-        filesCache.invalidate(parentId);
-    }
+//    public void dropFilesCache() {
+//        filesCache.invalidateAll();
+//    }
+//
+//    public void dropFilesCache(long parentId) {
+//        filesCache.invalidate(parentId);
+//    }
 
     private static class DataArtifactCacheKey {
 
@@ -305,32 +303,22 @@ public class ThreePanelDAO {
 
     }
 
-    public static class DataArtifactTableDTO {
+    public static class DataArtifactTableDTO extends BaseRowResultDTO {
 
-        private final long id;
-
-        private final Map<Integer, Object> attributeValues;
-
+        //private final Map<Integer, Object> attributeValues;
+        //private final String dataSourceName;
+        
         private final DataArtifact dataArtifact;
         private final Content srcContent;
         private final Content linkedFile;
-        private String dataSourceName;
+        private final boolean isTimelineSupported;
 
-        public DataArtifactTableDTO(long id, Map<Integer, Object> attributeValues, DataArtifact dataArtifact, Content srcContent, Content linkedFile, String dataSourceName) {
-            this.id = id;
-            this.attributeValues = attributeValues;
+        public DataArtifactTableDTO(DataArtifact dataArtifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) {
+            super(cellValues, id);
             this.dataArtifact = dataArtifact;
             this.srcContent = srcContent;
             this.linkedFile = linkedFile;
-            this.dataSourceName = dataSourceName;
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public Map<Integer, Object> getAttributeValues() {
-            return attributeValues;
+            this.isTimelineSupported = isTimelineSupported;
         }
 
         public DataArtifact getDataArtifact() {
@@ -345,14 +333,70 @@ public class ThreePanelDAO {
             return linkedFile;
         }
 
-        public String getDataSourceName() {
-            return dataSourceName;
+        public boolean isIsTimelineSupported() {
+            return isTimelineSupported;
+        }
+
+        
+        
+    }
+
+    public class ColumnKey {
+
+        private final String fieldName;
+        private final String displayName;
+        private final String description;
+
+        public ColumnKey(String fieldName, String displayName, String description) {
+            this.fieldName = fieldName;
+            this.displayName = displayName;
+            this.description = description;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    public interface RowResultDTO {
+
+        List<Object> getCellValues();
+
+        long getId();
+    }
+
+    public class BaseRowResultDTO implements RowResultDTO {
+
+        private final List<Object> cellValues;
+        private final long id;
+
+        public BaseRowResultDTO(List<Object> cellValues, long id) {
+            this.cellValues = cellValues;
+            this.id = id;
+        }
+
+        @Override
+        public List<Object> getCellValues() {
+            return cellValues;
+        }
+
+        @Override
+        public long getId() {
+            return id;
         }
 
         @Override
         public int hashCode() {
-            int hash = 7;
-            hash = 67 * hash + (int) (this.id ^ (this.id >>> 32));
+            int hash = 3;
+            hash = 23 * hash + (int) (this.id ^ (this.id >>> 32));
             return hash;
         }
 
@@ -367,95 +411,89 @@ public class ThreePanelDAO {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            final DataArtifactTableDTO other = (DataArtifactTableDTO) obj;
+            final BaseRowResultDTO other = (BaseRowResultDTO) obj;
             if (this.id != other.id) {
                 return false;
             }
             return true;
         }
-        
+
         
     }
-    
-    public interface SearchResultsDTO<T> {
-        int getTotalResultsCount();
-        List<T> getItems();
+
+    public interface SearchResultsDTO<R extends RowResultDTO> {
+
+        String getTypeId();
+        
+        String getDisplayName();
+
+        List<ColumnKey> getColumns();
+
+        List<R> getItems();
+
+        long getTotalResultsCount();
     }
 
-    public static class DataArtifactTableSearchResultsDTO implements SearchResultsDTO<DataArtifactTableDTO> {
+    public class BaseSearchResultsDTO<R extends RowResultDTO> implements SearchResultsDTO<R> {
 
-        private final BlackboardArtifact.Type artifactType;
-        private final List<BlackboardAttribute.Type> attributeTypes;
-        private final List<DataArtifactTableDTO> items;
-        private final int totalResultsCount;
+        private final String typeId;
+        private final String displayName;
+        private final List<ColumnKey> columns;
+        private final List<R> items;
+        private final long totalResultsCount;
+        
 
-        public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<BlackboardAttribute.Type> attributeKeys, List<DataArtifactTableDTO> items) {
-            this(artifactType, attributeKeys, items, items.size());
+        public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<R> items) {
+            this(typeId, displayName, columns, items, items == null ? 0 : items.size());
         }
 
-        
-        public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<BlackboardAttribute.Type> attributeKeys, List<DataArtifactTableDTO> items, int totalResultsCount) {
-            this.artifactType = artifactType;
-            this.attributeTypes = attributeKeys;
+        public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<R> items, long totalResultsCount) {
+            this.typeId = typeId;
+            this.displayName = displayName;
+            this.columns = columns;
             this.items = items;
             this.totalResultsCount = totalResultsCount;
+        }
+
+        @Override
+        public String getTypeId() {
+            return typeId;
+        }
+        
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        @Override
+        public List<ColumnKey> getColumns() {
+            return columns;
+        }
+
+        @Override
+        public List<R> getItems() {
+            return items;
+        }
+
+        @Override
+        public long getTotalResultsCount() {
+            return totalResultsCount;
+        }
+
+    }
+
+    public static class DataArtifactTableSearchResultsDTO extends BaseSearchResultsDTO<DataArtifactTableDTO> {
+        private static final String TYPE_ID = "DATA_ARTIFACT";
+        
+        private final BlackboardArtifact.Type artifactType;
+
+        public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType,  List<ColumnKey> columns, List<DataArtifactTableDTO> items) {
+            super(TYPE_ID, artifactType.getDisplayName(), columns, items);
+            this.artifactType = artifactType;
         }
 
         public BlackboardArtifact.Type getArtifactType() {
             return artifactType;
         }
-
-        public List<BlackboardAttribute.Type> getAttributeTypes() {
-            return attributeTypes;
-        }
-
-        @Override
-        public List<DataArtifactTableDTO> getItems() {
-            return items;
-        }
-
-        @Override
-        public int getTotalResultsCount() {
-            return totalResultsCount;
-        }
-        
-        
-    }
-
-    public enum FilesType {
-        DIR,
-        FILE
-    }
-
-    public static class FilesContentTableDTO {
-
-        private final Content content;
-        private final String displayName;
-        private final String extension;
-        private final long id;
-
-        public FilesContentTableDTO(Content content, String displayName, String extension, long id) {
-            this.content = content;
-            this.displayName = displayName;
-            this.extension = extension;
-            this.id = id;
-        }
-
-        public Content getContent() {
-            return content;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public String getExtension() {
-            return extension;
-        }
-
-        public long getId() {
-            return id;
-        }
-
     }
 }

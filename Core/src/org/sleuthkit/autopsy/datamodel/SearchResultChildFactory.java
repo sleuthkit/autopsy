@@ -11,30 +11,29 @@ import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.SearchResultChildFactory.ChildKey;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.RowResultDTO;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
 
 /**
  *
  * @author gregd
  */
-public abstract class SearchResultChildFactory<T extends SearchResultsDTO<S>, S> extends ChildFactory<ChildKey<S, T>> {
+public class SearchResultChildFactory<T extends SearchResultsDTO<S>, S extends RowResultDTO> extends ChildFactory<ChildKey<T, S>> {
 
+    private final NodeCreator<T,S> nodeCreator;
     private T results;
-
-    public SearchResultChildFactory() {
-        this(null);
-    }
     
-    public SearchResultChildFactory(T initialResults) {
+    public SearchResultChildFactory(NodeCreator<T,S> nodeCreator, T initialResults) {
+        this.nodeCreator = nodeCreator;
         this.results = initialResults;
     }
 
     @Override
-    protected boolean createKeys(List<ChildKey<S, T>> toPopulate) {
+    protected boolean createKeys(List<ChildKey<T, S>> toPopulate) {
         T results = this.results;
 
         if (results != null) {
-            List<ChildKey<S, T>> childKeys = results.getItems().stream()
+            List<ChildKey<T, S>> childKeys = results.getItems().stream()
                     .map((item) -> new ChildKey<>(results, item))
                     .collect(Collectors.toList());
 
@@ -45,23 +44,27 @@ public abstract class SearchResultChildFactory<T extends SearchResultsDTO<S>, S>
     }
 
     @Override
-    protected Node createNodeForKey(ChildKey<S, T> key) {
-        return createNodeForKey(key.getSearchResults(), key.getChild());
+    protected Node createNodeForKey(ChildKey<T, S> key) {
+        return this.nodeCreator.create(key.getSearchResults(), key.getChild());
     }
     
-    protected abstract Node createNodeForKey(T searchResults, S itemData);
-
     public void update(T newResults) {
         this.results = newResults;
         this.refresh(false);
     }
     
-    public int getResultCount() {
+    public long getResultCount() {
         return results == null ? 0 : results.getTotalResultsCount();
     }
 
+    
+    
+    
+    public static interface NodeCreator<T extends SearchResultsDTO<S>, S extends RowResultDTO> {
+        Node create(T searchResults, S itemData);
+    }
             
-    static class ChildKey<S, T extends SearchResultsDTO<S>> {
+    static class ChildKey<T, S> {
 
         private final T searchResults;
         private final S child;

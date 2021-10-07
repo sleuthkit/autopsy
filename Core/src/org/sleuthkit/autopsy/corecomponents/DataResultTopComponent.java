@@ -40,10 +40,13 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DataArtifactTypeNodev2;
+import org.sleuthkit.autopsy.datamodel.DataArtifactNodev2;
+import org.sleuthkit.autopsy.datamodel.SearchResultChildFactory.NodeCreator;
+import org.sleuthkit.autopsy.datamodel.SearchResultTableNode;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableDTO;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableSearchResultsDTO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.RowResultDTO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -372,8 +375,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayDataArtifact(BlackboardArtifact.Type artifactType, Long dataSourceId) {
         try {
             DataArtifactTableSearchResultsDTO table = threePanelDAO.getDataArtifactsForTable(artifactType, dataSourceId);
-            dataResultPanel.setNode(new DataArtifactTypeNodev2(table));
-            dataResultPanel.setNumberOfChildNodes(table.getTotalResultsCount());
+            displaySearchResults(table, DataArtifactNodev2::new);
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for artifact type: {0} and data source id: {1}.",
@@ -381,6 +383,12 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
                     dataSourceId == null ? "<null>" : dataSourceId),
                     ex);
         }
+    }
+    
+    public <T extends SearchResultsDTO<S>, S extends RowResultDTO> void displaySearchResults(T searchResults, NodeCreator<T, S> nodeCreator) {
+            dataResultPanel.setNode(new SearchResultTableNode(nodeCreator, searchResults));
+            dataResultPanel.setNumberOfChildNodes(
+                    searchResults.getTotalResultsCount() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) searchResults.getTotalResultsCount());
     }
 
     @Override
