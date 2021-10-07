@@ -18,18 +18,12 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import com.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.Action;
@@ -46,31 +40,23 @@ import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.ColumnKey;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableDTO;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableSearchResultsDTO;
-import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
@@ -82,7 +68,6 @@ import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
-
 
 public class DataArtifactNodev2 extends AbstractNode {
 
@@ -98,10 +83,8 @@ public class DataArtifactNodev2 extends AbstractNode {
     }
 
     private final BlackboardArtifact.Type artifactType;
-    private final Map<Integer, BlackboardAttribute.Type> attributeTypes;
     private final DataArtifactTableDTO artifactRow;
-    private final boolean hasSupportedTimeStamp;
-    private String translatedSourceName = null;
+    private final List<ThreePanelDAO.ColumnKey> columns;
 
     public DataArtifactNodev2(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow) {
         this(tableData, artifactRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()));
@@ -110,24 +93,19 @@ public class DataArtifactNodev2 extends AbstractNode {
     public DataArtifactNodev2(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow, String iconPath) {
         super(Children.LEAF, createLookup(artifactRow));
 
-        setDisplayName(artifactRow.getSrcContent().getName());
-        setShortDescription(getDisplayName());
-        setName(Long.toString(artifactRow.getDataArtifact().getArtifactID()));
+        // use first cell value for display name
+        String displayName = artifactRow.getCellValues().size() > 0
+                ? artifactRow.getCellValues().get(0).toString()
+                : "";
+        
+        setDisplayName(displayName);
+        setShortDescription(displayName);
+        setName(Long.toString(artifactRow.getId()));
         setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
 
+        this.columns = tableData.getColumns();
         this.artifactRow = artifactRow;
         this.artifactType = tableData.getArtifactType();
-        this.attributeTypes = tableData.getAttributeTypes().stream()
-                .collect(Collectors.toMap(attr -> attr.getTypeID(), attr -> attr));
-        this.hasSupportedTimeStamp = supportedTimeStamp(tableData.getAttributeTypes(), this.artifactRow.getAttributeValues());
-    }
-
-    private boolean supportedTimeStamp(List<BlackboardAttribute.Type> attributeTypes, Map<Integer, Object> attributeValues) {
-        return attributeTypes.stream()
-                .anyMatch(tp -> {
-                    return BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME.equals(tp.getValueType())
-                            && attributeValues.containsKey(tp.getTypeID());
-                });
     }
 
     /**
@@ -153,7 +131,7 @@ public class DataArtifactNodev2 extends AbstractNode {
 
         // view artifact in timeline
         actionsLists.add(getNonNull(
-                getTimelineArtifactAction(artifact, this.hasSupportedTimeStamp)
+                getTimelineArtifactAction(artifact, this.artifactRow.isIsTimelineSupported())
         ));
 
         // view associated file (TSK_PATH_ID attr) in directory and timeline
@@ -452,27 +430,9 @@ public class DataArtifactNodev2 extends AbstractNode {
         "DataArtifactNodev2.createSheet.srcFile.name=Source Name",
         "DataArtifactNodev2.createSheet.srcFile.displayName=Source Name",
         "DataArtifactNodev2.createSheet.srcFile.origName=Original Name",
-        "DataArtifactNodev2.createSheet.srcFile.origDisplayName=Original Name",
-        "DataArtifactNodev2.createSheet.artifactType.displayName=Result Type",
-        "DataArtifactNodev2.createSheet.artifactType.name=Result Type",
-        "DataArtifactNodev2.createSheet.artifactDetails.displayName=Result Details",
-        "DataArtifactNodev2.createSheet.artifactDetails.name=Result Details",
-        "DataArtifactNodev2.createSheet.artifactMD5.displayName=MD5 Hash",
-        "DataArtifactNodev2.createSheet.artifactMD5.name=MD5 Hash",
-        "DataArtifactNodev2.createSheet.fileSize.name=Size",
-        "DataArtifactNodev2.createSheet.fileSize.displayName=Size",
-        "DataArtifactNodev2.createSheet.path.displayName=Path",
-        "DataArtifactNodev2.createSheet.path.name=Path",
-        "DataArtifactNodev2.createSheet.dataSrc.name=Data Source",
-        "DataArtifactNodev2.createSheet.dataSrc.displayName=Data Source"
-    })
+        "DataArtifactNodev2.createSheet.srcFile.origDisplayName=Original Name",})
     @Override
     protected Sheet createSheet() {
-        Content srcContent = this.artifactRow.getSrcContent();
-
-        /*
-         * Create an empty property sheet.
-         */
         Sheet sheet = super.createSheet();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
@@ -480,202 +440,20 @@ public class DataArtifactNodev2 extends AbstractNode {
             sheet.put(sheetSet);
         }
 
-        /*
-         * Add the name of the source content of the artifact represented by
-         * this node to the sheet. The value of this property is the same as the
-         * display name of the node and this a "special" property that displays
-         * the node's icon as well as the display name.
-         */
-        sheetSet.put(new NodeProperty<>(
-                Bundle.DataArtifactNodev2_createSheet_srcFile_name(),
-                Bundle.DataArtifactNodev2_createSheet_srcFile_displayName(),
-                NO_DESCR,
-                getDisplayName()));
+        int maxSize = Math.min(this.columns.size(), this.artifactRow.getCellValues().size());
 
-        GetSCOTask scoTask = addSCOColumns(sheetSet);
+        for (int i = 0; i < maxSize; i++) {
+            ColumnKey columnKey = this.columns.get(i);
+            Object cellValue = this.artifactRow.getCellValues().get(i);
 
-        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
-            /*
-             * If machine translation is configured, add the original name of
-             * the of the source content of the artifact represented by this
-             * node to the sheet.
-             */
             sheetSet.put(new NodeProperty<>(
-                    Bundle.DataArtifactNodev2_createSheet_srcFile_origName(),
-                    Bundle.DataArtifactNodev2_createSheet_srcFile_origDisplayName(),
-                    NO_DESCR,
-                    translatedSourceName != null ? srcContent.getName() : ""));
-        }
-
-        /*
-         * Add the attributes of the artifact represented by this node to the
-         * sheet.
-         */
-        for (Map.Entry<String, Object> entry
-                : getPropertyMap(this.artifactType.getTypeID(), this.attributeTypes, this.artifactRow.getAttributeValues()).entrySet()) {
-
-            sheetSet.put(new NodeProperty<>(entry.getKey(),
-                    entry.getKey(),
-                    NO_DESCR,
-                    entry.getValue()));
-        }
-
-        String dataSourceStr = this.artifactRow.getDataSourceName();
-
-        if (dataSourceStr.isEmpty() == false) {
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.DataArtifactNodev2_createSheet_dataSrc_name(),
-                    Bundle.DataArtifactNodev2_createSheet_dataSrc_displayName(),
-                    NO_DESCR,
-                    dataSourceStr));
+                    columnKey.getFieldName(),
+                    columnKey.getDisplayName(),
+                    columnKey.getDescription(),
+                    cellValue
+            ));
         }
 
         return sheet;
-    }
-
-    /**
-     * Adds a "custom" property to the property sheet of this node, independent
-     * of the artifact this node represents or its source content.
-     *
-     * @param property The custom property.
-     */
-//    public void addNodeProperty(NodeProperty<?> property) {
-//        if (customProperties == null) {
-//            customProperties = new ArrayList<>();
-//        }
-//        customProperties.add(property);
-//    }
-    @SuppressWarnings("deprecation")
-    private static final Set<Integer> HIDDEN_ATTR_TYPES = ImmutableSet.of(
-            ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID(),
-            BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
-            BlackboardAttribute.Type.TSK_SET_NAME.getTypeID(),
-            BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
-    );
-
-    @SuppressWarnings("deprecation")
-    private static final Set<Integer> TRUNCATED_ATTR_TYPES = ImmutableSet.of(
-            ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID(),
-            BlackboardAttribute.Type.TSK_TEXT.getTypeID()
-    );
-
-    private Map<String, Object> getPropertyMap(int artifactTypeId, Map<Integer, BlackboardAttribute.Type> attrTypes, Map<Integer, Object> attributes) {
-        Map<String, Object> toRet = new HashMap<>();
-        for (Entry<Integer, Object> entry : attributes.entrySet()) {
-            Integer typeId = entry.getKey();
-            BlackboardAttribute.Type attrType = attrTypes.get(typeId);
-            TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType = attrType != null ? attrType.getValueType() : null;
-            String attrTypeStr = attrType != null ? attrType.getDisplayName() : typeId.toString();
-            Object value = entry.getValue();
-
-            if (HIDDEN_ATTR_TYPES.contains(typeId) || valueType == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON) {
-                /*
-                     * Do nothing.
-                 */
-                continue;
-            } else if (artifactTypeId == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
-                Object msgVal = getEmailMsgProperty(typeId, value);
-                if (msgVal != null) {
-                    toRet.put(attrTypeStr, msgVal);
-                }
-            } else if (value instanceof Date) {
-                toRet.put(attrTypeStr, TimeZoneUtils.getFormattedTime(((Date) value).getTime() / 1000));
-            } else if (TRUNCATED_ATTR_TYPES.contains(typeId) && value instanceof String) {
-                /*
-                     * The truncation of text attributes appears to have been
-                     * motivated by the statement that "RegRipper output would
-                     * often cause the UI to get a black line accross it and
-                     * hang if you hovered over large output or selected it.
-                     * This reduces the amount of data in the table. Could
-                     * consider doing this for all fields in the UI."
-                 */
-                String valueString = ((String) value);
-                if (valueString.length() > 512) {
-                    valueString = valueString.substring(0, 512);
-                }
-                toRet.put(attrTypeStr, valueString);
-            } else {
-                toRet.put(attrTypeStr, value);
-            }
-        }
-        return toRet;
-    }
-
-    private static final Set<Integer> HIDDEN_EMAIL_ATTR_TYPES = ImmutableSet.of(
-            BlackboardAttribute.Type.TSK_DATETIME_SENT.getTypeID(),
-            BlackboardAttribute.Type.TSK_EMAIL_CONTENT_HTML.getTypeID(),
-            BlackboardAttribute.Type.TSK_EMAIL_CONTENT_RTF.getTypeID(),
-            BlackboardAttribute.Type.TSK_EMAIL_BCC.getTypeID(),
-            BlackboardAttribute.Type.TSK_EMAIL_CC.getTypeID(),
-            BlackboardAttribute.Type.TSK_HEADERS.getTypeID()
-    );
-
-    /**
-     * Adds an email message attribute of the artifact this node represents to a
-     * map of name-value pairs, where the names are attribute type display
-     * names.
-     *
-     * @param map       The map to be populated with the artifact attribute
-     *                  name-value pair.
-     * @param attribute The attribute to use to make the map entry.
-     */
-    private Object getEmailMsgProperty(int attrTypeId, Object value) {
-        if (HIDDEN_EMAIL_ATTR_TYPES.contains(attrTypeId)) {
-            return null;
-        } else if (attrTypeId == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID() && value instanceof String) {
-            String valueStr = (String) value;
-            if (valueStr.length() > 160) {
-                valueStr = valueStr.substring(0, 160) + "...";
-            }
-            return valueStr;
-        } else if (value instanceof Date) {
-            return TimeZoneUtils.getFormattedTime(((Date) value).getTime() / 1000);
-        } else {
-            return value;
-        }
-    }
-
-    @Messages({
-        "DataArtifactNodev2.createSheet.comment.displayName=C",
-        "DataArtifactNodev2.createSheet.comment.name=C",
-        "# {0} - occurrenceCount",
-        "# {1} - attributeType",
-        "DataArtifactNodev2.createSheet.count.description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}",
-        "DataArtifactNodev2.createSheet.count.displayName=O",
-        "DataArtifactNodev2.createSheet.count.name=O",
-        "DataArtifactNodev2.createSheet.count.noCorrelationAttributes.description=No correlation properties found",
-        "DataArtifactNodev2.createSheet.count.noCorrelationValues.description=Unable to find other occurrences because no value exists for the available correlation property",
-        "DataArtifactNodev2.createSheet.score.displayName=S",
-        "DataArtifactNodev2.createSheet.score.name=S"
-    })
-    private GetSCOTask addSCOColumns(Sheet.Set sheetSet) {
-        if (!UserPreferences.getHideSCOColumns()) {
-            /*
-             * Add S(core), C(omments), and O(ther occurences) columns to the
-             * sheet and start a background task to compute the value of these
-             * properties for the artifact represented by this node. The task
-             * will fire a PropertyChangeEvent when the computation is completed
-             * and this node's PropertyChangeListener will update the sheet.
-             */
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.DataArtifactNodev2_createSheet_score_name(),
-                    Bundle.DataArtifactNodev2_createSheet_score_displayName(),
-                    "" /* VALUE_LOADING */,
-                    ""));
-            sheetSet.put(new NodeProperty<>(
-                    Bundle.DataArtifactNodev2_createSheet_comment_name(),
-                    Bundle.DataArtifactNodev2_createSheet_comment_displayName(),
-                    "" /* VALUE_LOADING */,
-                    ""));
-            if (CentralRepository.isEnabled()) {
-                sheetSet.put(new NodeProperty<>(
-                        Bundle.DataArtifactNodev2_createSheet_count_name(),
-                        Bundle.DataArtifactNodev2_createSheet_count_displayName(),
-                        "" /* VALUE_LOADING */,
-                        ""));
-            }
-            //return new GetSCOTask(new WeakReference<>(this), scoListener);
-        }
-        return null;
     }
 }
