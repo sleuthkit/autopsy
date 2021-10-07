@@ -388,7 +388,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
              * root context of the child OutlineView, otherwise make an
              * "empty"node the root context.
              */
-            if (rootNode != null && rootNode.getChildren().getNodesCount() > 0) {
+            if ((rootNode instanceof SearchResultTableNode && ((SearchResultTableNode<?, ?>) rootNode).getResultCount() > 0) 
+                    || (rootNode != null && rootNode.getChildren().getNodesCount() > 0)) {
                 this.getExplorerManager().setRootContext(this.rootNode);
                 outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
                 setupTable();
@@ -1527,7 +1528,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     })
     private void exportCSVButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCSVButtonActionPerformed
         Node currentRoot = this.getExplorerManager().getRootContext();
-        if (currentRoot != null && currentRoot.getChildren().getNodesCount() > 0) {
+        // GVDTODO disabled for Search Result node
+        if (currentRoot != null && (!(currentRoot instanceof SearchResultTableNode)) && currentRoot.getChildren().getNodesCount() > 0) {
             org.sleuthkit.autopsy.directorytree.ExportCSVAction.saveNodesToCSV(java.util.Arrays.asList(currentRoot.getChildren().getNodes()), this);
         } else {
             MessageNotifyUtil.Message.info(Bundle.DataResultViewerTable_exportCSVButtonActionPerformed_empty());

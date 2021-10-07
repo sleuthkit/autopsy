@@ -66,4 +66,8 @@ public class SearchResultTableNode<T extends SearchResultsDTO<S>, S extends RowR
     public List<ColumnKey> getColumnKeys() {
         return Collections.unmodifiableList(columnKeys);
     }
+
+    public long getResultCount() {
+        return this.factory.getResultCount();
+    }
 }
