@@ -23,6 +23,7 @@ import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,6 +49,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.ColumnKey;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableDTO;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableSearchResultsDTO;
@@ -446,6 +448,14 @@ public class DataArtifactNodev2 extends AbstractNode {
             ColumnKey columnKey = this.columns.get(i);
             Object cellValue = this.artifactRow.getCellValues().get(i);
 
+            if (cellValue == null) {
+                continue;
+            }
+            
+            if (cellValue instanceof Date) {
+                cellValue = TimeZoneUtils.getFormattedTime(((Date) cellValue).getTime() / 1000);
+            }
+            
             sheetSet.put(new NodeProperty<>(
                     columnKey.getFieldName(),
                     columnKey.getDisplayName(),
