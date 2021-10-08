@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
@@ -214,7 +215,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
         imageTransforms = new ImageTransforms(0, 0, true);
         
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("JFileChooser-background-thread-MediaViewImagePanel").build());
         executor.execute(futureFileChooser);
 
         //Build popupMenu when Tags Menu button is pressed.
