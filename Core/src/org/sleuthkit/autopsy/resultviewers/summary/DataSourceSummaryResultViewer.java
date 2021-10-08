@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
 
 /**
  * A tabular result viewer that displays a summary of the selected Data Source.
@@ -103,6 +104,11 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
     private DataSource getDataSource(Node node) {
         return node == null ? null : node.getLookup().lookup(DataSource.class);
     }
+    
+    @Override
+    public void setNode(Node node, SearchResultsDTO<?> searchResults) {
+        setNode(node);
+    }
 
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -142,5 +148,4 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
     }
 
     private DataSourceSummaryTabbedPane summaryPanel;
-
 }

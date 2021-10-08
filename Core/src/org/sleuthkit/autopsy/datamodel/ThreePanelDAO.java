@@ -33,20 +33,6 @@ public class ThreePanelDAO {
     }
     
     
-    
-//
-//    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException, IllegalArgumentException {
-//        return dataArtifactDAO.getDataArtifactsForTable(artType, dataSourceId);
-//    }
-//
-//    public void dropDataArtifactCache() {
-//        dataArtifactDAO.dropDataArtifactCache();
-//    }
-//
-//    public void dropDataArtifactCache(BlackboardArtifact.Type artType) {
-//        dataArtifactDAO.dropDataArtifactCache(artType);
-//    }
-
     public static class ColumnKey {
 
         private final String fieldName;

@@ -317,10 +317,6 @@ public class ThreePanelDataArtifactDAO {
         dataArtifactCache.invalidateAll();
     }
 
-    public void dropDataArtifactCache(BlackboardArtifact.Type artType) {
-        dataArtifactCache.invalidate(artType);
-    }
-
     public static class DataArtifactTableDTO extends BaseRowResultDTO {
 
         //private final Map<Integer, Object> attributeValues;

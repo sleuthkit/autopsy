@@ -306,6 +306,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     public boolean isSupported(Node candidateRootNode) {
         return true;
     }
+    
+    @Override
+    public void setNode(Node rootNode) {
+        setNode(rootNode, null);
+    }
 
     /**
      * Sets the current root node of this tabular result viewer.
@@ -314,7 +319,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void setNode(Node rootNode) {
+    public void setNode(Node rootNode, SearchResultsDTO<?> searchResults) {
+        this.searchResults = searchResults;
+        
         if (!SwingUtilities.isEventDispatchThread()) {
             LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");
             return;

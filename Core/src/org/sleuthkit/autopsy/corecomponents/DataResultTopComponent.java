@@ -377,7 +377,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
 
     public void displayDataArtifact(DataArtifactKeyv2 dataArtifactKey) {
         try {
-            displaySearchResults(threePanelDAO.getDataArtifactsDAO().getDataArtifactsForTable(dataArtifactKey), DataArtifactNodev2::new);
+            displaySearchResults(threePanelDAO.getDataArtifactsDAO().getDataArtifactsForTable(dataArtifactKey), (table, row) -> new DataArtifactNodev2(table, row));
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for artifact type: {0} and data source id: {1}.",
@@ -386,6 +386,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
                     ex);
         }
     }
+    
 
     public void displayFileExtensions(FileTypeExtensionsKeyv2 fileExtensionsKey) {
         try {

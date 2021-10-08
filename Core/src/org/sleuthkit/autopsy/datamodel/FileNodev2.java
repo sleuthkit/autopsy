@@ -115,7 +115,7 @@ public class FileNodev2 extends AbstractNode {
      * Sets the icon for the node, based on properties of the AbstractFile.
      */
     private void setIcon(FileRowDTO file) {
-        if (TSK_FS_NAME_FLAG_ENUM.UNALLOC.equals(file.getAllocated())) {
+        if (!file.getAllocated()) {
             if (TSK_DB_FILES_TYPE_ENUM.CARVED.equals(file.getFileType())) {
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
             } else {
