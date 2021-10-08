@@ -29,6 +29,7 @@ public class FileTypeExtensionsSearchParam {
     private final Long dataSourceId;
     private final boolean knownShown;
 
+    // TODO: This should ideally take in some kind of ENUM once we redo the tree.
     // this assumes that filters implicitly or explicitly implement hashCode and equals to work
     public FileTypeExtensionsSearchParam(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) {
         this.filter = filter;

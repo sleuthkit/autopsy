@@ -89,20 +89,21 @@ public class ThreePanelViewsDAO {
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_sizeColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_flagsDirColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_flagsMetaColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_modeColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_useridColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_groupidColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_metaAddrColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_attrAddrColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeDirColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeMetaColLbl()),
+//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_modeColLbl()),
+//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_useridColLbl()),
+//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_groupidColLbl()),
+//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_metaAddrColLbl()),
+//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_attrAddrColLbl()),
+//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeDirColLbl()),
+//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeMetaColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_knownColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_md5HashColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_sha256HashColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_objectId()),
+//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_objectId()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_mimeType()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_extensionColLbl()));
 
+    
     private static ThreePanelViewsDAO instance = null;
 
     synchronized static ThreePanelViewsDAO getInstance() {
@@ -215,10 +216,12 @@ public class ThreePanelViewsDAO {
             List<Object> cellValues = Arrays.asList(
                     file.getName(), // GVDTODO handle . and .. from getContentDisplayName()
                     // GVDTODO translation column
+                    null,
                     //GVDTDO replace nulls with SCO
                     null,
                     null,
                     null,
+                    file.getUniquePath(),
                     TimeZoneUtils.getFormattedTime(file.getMtime()),
                     TimeZoneUtils.getFormattedTime(file.getCtime()),
                     TimeZoneUtils.getFormattedTime(file.getAtime()),
@@ -226,10 +229,21 @@ public class ThreePanelViewsDAO {
                     file.getSize(),
                     file.getDirFlagAsString(),
                     file.getMetaFlagsAsString(),
+                    
+//                    mode,
+//                    userid,
+//                    groupid,
+//                    metaAddr,
+//                    attrAddr,
+//                    typeDir,
+//                    typeMeta,
+                    
                     file.getKnown().getName(),
-                    file.getUniquePath(),
                     StringUtils.defaultString(file.getMd5Hash()),
                     StringUtils.defaultString(file.getSha256Hash()),
+                    
+//                    objectId,
+                    
                     StringUtils.defaultString(file.getMIMEType()),
                     file.getNameExtension()
             );
