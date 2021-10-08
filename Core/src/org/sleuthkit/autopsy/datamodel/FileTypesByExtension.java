@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
@@ -37,10 +38,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.DocumentFilter;
-import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.ExecutableFilter;
-import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.RootFilter;
-import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.SearchFilterInterface;
+import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
+import org.sleuthkit.autopsy.mainui.datamodel.FileExtExecutableFilter;
+import org.sleuthkit.autopsy.mainui.datamodel.FileExtRootFilter;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
+import org.sleuthkit.autopsy.mainui.datamodel.FileExtSearchFilter;
 
 /**
  * Filters database results by file extension.
@@ -195,7 +196,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      */
     class FileTypesByExtNode extends DisplayableItemNode {
 
-        private final RootFilter filter;
+        private final FileExtRootFilter filter;
 
         /**
          *
@@ -203,7 +204,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param filter null to display root node of file type tree, pass in
          *               something to provide a sub-node.
          */
-        FileTypesByExtNode(SleuthkitCase skCase, RootFilter filter) {
+        FileTypesByExtNode(SleuthkitCase skCase, FileExtRootFilter filter) {
             this(skCase, filter, null);
         }
 
@@ -214,7 +215,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that was created by a higher-level node that
          *               provides updates on events
          */
-        private FileTypesByExtNode(SleuthkitCase skCase, RootFilter filter, FileTypesByExtObservable o) {
+        private FileTypesByExtNode(SleuthkitCase skCase, FileExtRootFilter filter, FileTypesByExtObservable o) {
 
             super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true),
                     Lookups.singleton(filter == null ? FNAME : filter.getDisplayName()));
@@ -250,7 +251,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 sheetSet = Sheet.createPropertiesSet();
                 sheet.put(sheetSet);
             }
-            if (filter != null && (filter.equals(RootFilter.TSK_DOCUMENT_FILTER) || filter.equals(RootFilter.TSK_EXECUTABLE_FILTER))) {
+            if (filter != null && (filter.equals(FileExtRootFilter.TSK_DOCUMENT_FILTER) || filter.equals(FileExtRootFilter.TSK_EXECUTABLE_FILTER))) {
                 String extensions = "";
                 for (String ext : filter.getFilter()) {
                     extensions += "'" + ext + "', ";
@@ -272,7 +273,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             if (filter == null) {
                 return getClass().getName();
             }
-            if (filter.equals(RootFilter.TSK_DOCUMENT_FILTER) || filter.equals(RootFilter.TSK_EXECUTABLE_FILTER)) {
+            if (filter.equals(FileExtRootFilter.TSK_DOCUMENT_FILTER) || filter.equals(FileExtRootFilter.TSK_EXECUTABLE_FILTER)) {
                 return getClass().getName() + filter.getName();
             }
             return getClass().getName();
@@ -280,10 +281,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
     }
 
-    private class FileTypesByExtNodeChildren extends ChildFactory<SearchFilterInterface> {
+    private class FileTypesByExtNodeChildren extends ChildFactory<FileExtSearchFilter> {
 
         private final SleuthkitCase skCase;
-        private final RootFilter filter;
+        private final FileExtRootFilter filter;
         private final FileTypesByExtObservable notifier;
 
         /**
@@ -293,7 +294,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that provides updates based on events being
          *               fired (or null if one needs to be created)
          */
-        private FileTypesByExtNodeChildren(SleuthkitCase skCase, RootFilter filter, FileTypesByExtObservable o) {
+        private FileTypesByExtNodeChildren(SleuthkitCase skCase, FileExtRootFilter filter, FileTypesByExtObservable o) {
             super();
             this.skCase = skCase;
             this.filter = filter;
@@ -305,26 +306,26 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<SearchFilterInterface> list) {
+        protected boolean createKeys(List<FileExtSearchFilter> list) {
             // root node
             if (filter == null) {
-                list.addAll(Arrays.asList(RootFilter.values()));
+                list.addAll(Arrays.asList(FileExtRootFilter.values()));
             } // document and executable has another level of nodes
-            else if (filter.equals(RootFilter.TSK_DOCUMENT_FILTER)) {
-                list.addAll(Arrays.asList(DocumentFilter.values()));
-            } else if (filter.equals(RootFilter.TSK_EXECUTABLE_FILTER)) {
-                list.addAll(Arrays.asList(ExecutableFilter.values()));
+            else if (filter.equals(FileExtRootFilter.TSK_DOCUMENT_FILTER)) {
+                list.addAll(Arrays.asList(FileExtDocumentFilter.values()));
+            } else if (filter.equals(FileExtRootFilter.TSK_EXECUTABLE_FILTER)) {
+                list.addAll(Arrays.asList(FileExtExecutableFilter.values()));
             }
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(SearchFilterInterface key) {
+        protected Node createNodeForKey(FileExtSearchFilter key) {
             // make new nodes for the sub-nodes
-            if (key.getName().equals(RootFilter.TSK_DOCUMENT_FILTER.getName())) {
-                return new FileTypesByExtNode(skCase, RootFilter.TSK_DOCUMENT_FILTER, notifier);
-            } else if (key.getName().equals(RootFilter.TSK_EXECUTABLE_FILTER.getName())) {
-                return new FileTypesByExtNode(skCase, RootFilter.TSK_EXECUTABLE_FILTER, notifier);
+            if (key.getName().equals(FileExtRootFilter.TSK_DOCUMENT_FILTER.getName())) {
+                return new FileTypesByExtNode(skCase, FileExtRootFilter.TSK_DOCUMENT_FILTER, notifier);
+            } else if (key.getName().equals(FileExtRootFilter.TSK_EXECUTABLE_FILTER.getName())) {
+                return new FileTypesByExtNode(skCase, FileExtRootFilter.TSK_EXECUTABLE_FILTER, notifier);
             } else {
                 return new FileExtensionNode(key, skCase, notifier);
             }
@@ -337,7 +338,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      */
     final class FileExtensionNode extends FileTypes.BGCountUpdatingNode {
 
-        private final SearchFilterInterface filter;
+        private final FileExtSearchFilter filter;
 
         /**
          *
@@ -346,10 +347,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that sends updates when the child factories
          *               should refresh
          */
-        FileExtensionNode(SearchFilterInterface filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
+        FileExtensionNode(FileExtSearchFilter filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
             super(typesRoot, Children.LEAF,
                     Lookups.fixed(filter.getDisplayName(), 
-                            new FileTypeExtensionsKeyv2(
+                            new FileTypeExtensionsSearchParam(
                                     filter, 
                                     filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null, 
                                     !UserPreferences.hideKnownFilesInViewsTree())));
@@ -417,7 +418,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
     }
 
-    private String createQuery(SearchFilterInterface filter) {
+    private String createQuery(FileExtSearchFilter filter) {
         if (filter.getFilter().isEmpty()) {
             // We should never be given a search filter without extensions
             // but if we are it is clearly a programming error so we throw 

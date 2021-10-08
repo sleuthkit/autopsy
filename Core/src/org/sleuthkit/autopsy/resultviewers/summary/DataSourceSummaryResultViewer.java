@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
  * A tabular result viewer that displays a summary of the selected Data Source.
@@ -106,7 +106,7 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
     }
     
     @Override
-    public void setNode(Node node, SearchResultsDTO<?> searchResults) {
+    public void setNode(Node node, SearchResultsDTO searchResults) {
         setNode(node);
     }
 

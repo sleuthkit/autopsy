@@ -1,36 +1,49 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.BaseRowResultDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.BaseSearchResultsDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.ColumnKey;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
+import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
+import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * Provides information to populate the results viewer for data in the views
+ * section.
+ */
 @Messages({"ThreePanelViewsDAO.fileColumns.nameColLbl=Name",
     "ThreePanelViewsDAO.fileColumns.originalName=Original Name",
     "ThreePanelViewsDAO.fileColumns.scoreName=S",
@@ -61,7 +74,7 @@ import org.sleuthkit.datamodel.TskData;
 public class ThreePanelViewsDAO {
 
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
-    
+
     private static final List<ColumnKey> FILE_COLUMNS = Arrays.asList(
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_nameColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_originalName()),
@@ -92,7 +105,7 @@ public class ThreePanelViewsDAO {
 
     private static ThreePanelViewsDAO instance = null;
 
-    public synchronized static ThreePanelViewsDAO getInstance() {
+    synchronized static ThreePanelViewsDAO getInstance() {
         if (instance == null) {
             instance = new ThreePanelViewsDAO();
         }
@@ -137,18 +150,18 @@ public class ThreePanelViewsDAO {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    private final Cache<FileTypeExtensionsKeyv2, SearchResultsDTO<FileRowDTO>> fileTypeByExtensionCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    
-    public SearchResultsDTO<FileRowDTO> getFilesByExtension(FileTypeExtensionsKeyv2 key) throws ExecutionException, IllegalArgumentException {
+    private final Cache<FileTypeExtensionsSearchParam, SearchResultsDTO> fileTypeByExtensionCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+
+    public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParam key) throws ExecutionException, IllegalArgumentException {
         if (key.getFilter() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
-        
+
         return fileTypeByExtensionCache.get(key, () -> fetchFileViewFiles(key.getFilter(), key.getDataSourceId(), key.isKnownShown()));
     }
-    
+
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
 //
 //    }
@@ -163,9 +176,9 @@ public class ThreePanelViewsDAO {
 //        ViewFileCacheKey cacheKey = new ViewFileCacheKey(artType, dataSourceId);
 //        return dataArtifactCache.get(cacheKey, () -> fetchFilesForTable(cacheKey));
 //    }
-    private Map<Integer, Long> fetchFileViewCounts(List<SearchFilterInterface> filters, Long dataSourceId, boolean showKnown) throws NoCurrentCaseException, TskCoreException {
+    private Map<Integer, Long> fetchFileViewCounts(List<FileExtSearchFilter> filters, Long dataSourceId, boolean showKnown) throws NoCurrentCaseException, TskCoreException {
         Map<Integer, Long> counts = new HashMap<>();
-        for (SearchFilterInterface filter : filters) {
+        for (FileExtSearchFilter filter : filters) {
             String whereClause = getFileWhereStatement(filter, dataSourceId, showKnown);
             long count = getCase().countFilesWhere(whereClause);
             counts.put(filter.getId(), count);
@@ -174,7 +187,7 @@ public class ThreePanelViewsDAO {
         return counts;
     }
 
-    private String getFileWhereStatement(SearchFilterInterface filter, Long dataSourceId, boolean showKnown) {
+    private String getFileWhereStatement(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) {
         String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
                 + (showKnown
                         ? " "
@@ -189,11 +202,11 @@ public class ThreePanelViewsDAO {
         return whereClause;
     }
 
-    private SearchResultsDTO<FileRowDTO> fetchFileViewFiles(SearchFilterInterface filter, Long dataSourceId, boolean showKnown) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchFileViewFiles(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) throws NoCurrentCaseException, TskCoreException {
         String whereStatement = getFileWhereStatement(filter, dataSourceId, showKnown);
         List<AbstractFile> files = getCase().findAllFilesWhere(whereStatement);
 
-        List<FileRowDTO> fileRows = new ArrayList<>();
+        List<RowResultDTO> fileRows = new ArrayList<>();
         for (AbstractFile file : files) {
 
             boolean encryptionDetected = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase())
@@ -233,240 +246,7 @@ public class ThreePanelViewsDAO {
                     cellValues));
         }
 
-        return new BaseSearchResultsDTO<>(FILE_VIEW_EXT_TYPE_ID, filter.getDisplayName(), FILE_COLUMNS, fileRows);
+        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, filter.getDisplayName(), FILE_COLUMNS, fileRows);
     }
 
-    // root node filters
-    @NbBundle.Messages({"FileTypeExtensionFilters.tskDatabaseFilter.text=Databases"})
-    public static enum RootFilter implements SearchFilterInterface {
-
-        TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskImgFilter.text"),
-                FileTypeExtensions.getImageExtensions()),
-        TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskVideoFilter.text"),
-                FileTypeExtensions.getVideoExtensions()),
-        TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskAudioFilter.text"),
-                FileTypeExtensions.getAudioExtensions()),
-        TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskArchiveFilter.text"),
-                FileTypeExtensions.getArchiveExtensions()),
-        TSK_DATABASE_FILTER(4, "TSK_DATABASE_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDatabaseFilter.text"),
-                FileTypeExtensions.getDatabaseExtensions()),
-        TSK_DOCUMENT_FILTER(5, "TSK_DOCUMENT_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDocumentFilter.text"),
-                Arrays.asList(".htm", ".html", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf")), //NON-NLS
-        TSK_EXECUTABLE_FILTER(6, "TSK_EXECUTABLE_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskExecFilter.text"),
-                FileTypeExtensions.getExecutableExtensions()); //NON-NLS
-
-        private final int id;
-        private final String name;
-        private final String displayName;
-        private final List<String> filter;
-
-        private RootFilter(int id, String name, String displayName, List<String> filter) {
-            this.id = id;
-            this.name = name;
-            this.displayName = displayName;
-            this.filter = filter;
-        }
-
-        @Override
-        public String getName() {
-            return this.name;
-        }
-
-        @Override
-        public int getId() {
-            return this.id;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return this.displayName;
-        }
-
-        @Override
-        public List<String> getFilter() {
-            return Collections.unmodifiableList(this.filter);
-        }
-    }
-
-// document sub-node filters
-    public static enum DocumentFilter implements SearchFilterInterface {
-
-        AUT_DOC_HTML(0, "AUT_DOC_HTML", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocHtmlFilter.text"),
-                Arrays.asList(".htm", ".html")), //NON-NLS
-        AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocOfficeFilter.text"),
-                Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")), //NON-NLS
-        AUT_DOC_PDF(2, "AUT_DOC_PDF", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autoDocPdfFilter.text"),
-                Arrays.asList(".pdf")), //NON-NLS
-        AUT_DOC_TXT(3, "AUT_DOC_TXT", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocTxtFilter.text"),
-                Arrays.asList(".txt")), //NON-NLS
-        AUT_DOC_RTF(4, "AUT_DOC_RTF", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocRtfFilter.text"),
-                Arrays.asList(".rtf")); //NON-NLS
-
-        private final int id;
-        private final String name;
-        private final String displayName;
-        private final List<String> filter;
-
-        private DocumentFilter(int id, String name, String displayName, List<String> filter) {
-            this.id = id;
-            this.name = name;
-            this.displayName = displayName;
-            this.filter = filter;
-        }
-
-        @Override
-        public String getName() {
-            return this.name;
-        }
-
-        @Override
-        public int getId() {
-            return this.id;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return this.displayName;
-        }
-
-        @Override
-        public List<String> getFilter() {
-            return Collections.unmodifiableList(this.filter);
-        }
-    }
-
-// executable sub-node filters
-    public static enum ExecutableFilter implements SearchFilterInterface {
-
-        ExecutableFilter_EXE(0, "ExecutableFilter_EXE", ".exe", Arrays.asList(".exe")), //NON-NLS
-        ExecutableFilter_DLL(1, "ExecutableFilter_DLL", ".dll", Arrays.asList(".dll")), //NON-NLS
-        ExecutableFilter_BAT(2, "ExecutableFilter_BAT", ".bat", Arrays.asList(".bat")), //NON-NLS
-        ExecutableFilter_CMD(3, "ExecutableFilter_CMD", ".cmd", Arrays.asList(".cmd")), //NON-NLS
-        ExecutableFilter_COM(4, "ExecutableFilter_COM", ".com", Arrays.asList(".com")); //NON-NLS
-
-        private final int id;
-        private final String name;
-        private final String displayName;
-        private final List<String> filter;
-
-        private ExecutableFilter(int id, String name, String displayName, List<String> filter) {
-            this.id = id;
-            this.name = name;
-            this.displayName = displayName;
-            this.filter = filter;
-        }
-
-        @Override
-        public String getName() {
-            return this.name;
-        }
-
-        @Override
-        public int getId() {
-            return this.id;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return this.displayName;
-        }
-
-        @Override
-        public List<String> getFilter() {
-            return Collections.unmodifiableList(this.filter);
-        }
-    }
-
-    public interface SearchFilterInterface {
-
-        public String getName();
-
-        public int getId();
-
-        public String getDisplayName();
-
-        public List<String> getFilter();
-
-    }
-
-    public enum ExtensionMediaType {
-        IMAGE,
-        VIDEO,
-        AUDIO,
-        DOC,
-        EXECUTABLE,
-        TEXT,
-        WEB,
-        PDF,
-        ARCHIVE,
-        UNCATEGORIZED
-    }
-
-    public static class FileRowDTO extends BaseRowResultDTO {
-
-        private final AbstractFile abstractFile;
-        private final String fileName;
-
-        private final String extension;
-        private final ExtensionMediaType extensionMediaType;
-
-        private final boolean allocated;
-        private final TskData.TSK_DB_FILES_TYPE_ENUM fileType;
-        private final boolean encryptionDetected;
-
-        public FileRowDTO(AbstractFile abstractFile, long id, String fileName,
-                String extension, ExtensionMediaType extensionMediaType,
-                boolean allocated,
-                TskData.TSK_DB_FILES_TYPE_ENUM fileType,
-                boolean encryptionDetected, List<Object> cellValues) {
-            super(cellValues, id);
-            this.abstractFile = abstractFile;
-            this.fileName = fileName;
-            this.extension = extension;
-            this.extensionMediaType = extensionMediaType;
-            this.allocated = allocated;
-            this.fileType = fileType;
-            this.encryptionDetected = encryptionDetected;
-        }
-
-        public ExtensionMediaType getExtensionMediaType() {
-            return extensionMediaType;
-        }
-
-        public boolean getAllocated() {
-            return allocated;
-        }
-
-        public TskData.TSK_DB_FILES_TYPE_ENUM getFileType() {
-            return fileType;
-        }
-
-        public AbstractFile getAbstractFile() {
-            return abstractFile;
-        }
-
-        public String getExtension() {
-            return extension;
-        }
-
-        public boolean isEncryptionDetected() {
-            return encryptionDetected;
-        }
-
-        public String getFileName() {
-            return fileName;
-        }
-    }
 }

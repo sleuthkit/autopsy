@@ -1,30 +1,42 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.SearchFilterInterface;
 
 /**
- *
- * @author gregd
+ * Key for accessing data about file type extensions from the DAO.
  */
-public class FileTypeExtensionsKeyv2 {
-    private final SearchFilterInterface filter;
+public class FileTypeExtensionsSearchParam {
+
+    private final FileExtSearchFilter filter;
     private final Long dataSourceId;
     private final boolean knownShown;
 
     // this assumes that filters implicitly or explicitly implement hashCode and equals to work
-    public FileTypeExtensionsKeyv2(SearchFilterInterface filter, Long dataSourceId, boolean showKnown) {
+    public FileTypeExtensionsSearchParam(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) {
         this.filter = filter;
         this.dataSourceId = dataSourceId;
         this.knownShown = showKnown;
     }
 
-    public SearchFilterInterface getFilter() {
+    public FileExtSearchFilter getFilter() {
         return filter;
     }
 
@@ -56,7 +68,7 @@ public class FileTypeExtensionsKeyv2 {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeExtensionsKeyv2 other = (FileTypeExtensionsKeyv2) obj;
+        final FileTypeExtensionsSearchParam other = (FileTypeExtensionsSearchParam) obj;
         if (this.knownShown != other.knownShown) {
             return false;
         }
@@ -68,6 +80,5 @@ public class FileTypeExtensionsKeyv2 {
         }
         return true;
     }
-    
-    
+
 }

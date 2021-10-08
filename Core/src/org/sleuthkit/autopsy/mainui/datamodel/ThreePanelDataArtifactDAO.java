@@ -1,9 +1,22 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -22,9 +35,6 @@ import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.BaseRowResultDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.BaseSearchResultsDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.ColumnKey;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -36,8 +46,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author gregd
+ * DAO for providing data about data artifacts to populate the results viewer.
  */
 @Messages({
     "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.name=Source Name",
@@ -110,7 +119,7 @@ public class ThreePanelDataArtifactDAO {
 
     private static ThreePanelDataArtifactDAO instance = null;
 
-    public synchronized static ThreePanelDataArtifactDAO getInstance() {
+    synchronized static ThreePanelDataArtifactDAO getInstance() {
         if (instance == null) {
             instance = new ThreePanelDataArtifactDAO();
         }
@@ -118,13 +127,13 @@ public class ThreePanelDataArtifactDAO {
         return instance;
     }
 
-    private final Cache<DataArtifactKeyv2, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(DataArtifactKeyv2 cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(DataArtifactSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
 
@@ -165,7 +174,7 @@ public class ThreePanelDataArtifactDAO {
         columnKeys.add(DATASOURCE_COL);
 
         // determine all different attribute types present as well as row data for each artifact
-        List<DataArtifactTableDTO> rows = new ArrayList<>();
+        List<RowResultDTO> rows = new ArrayList<>();
 
         for (DataArtifact artifact : arts) {
             List<Object> cellValues = new ArrayList<>();
@@ -300,7 +309,7 @@ public class ThreePanelDataArtifactDAO {
         }
     }
 
-    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactKeyv2 artifactKey) throws ExecutionException, IllegalArgumentException {
+    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
 
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT
@@ -315,56 +324,5 @@ public class ThreePanelDataArtifactDAO {
 
     public void dropDataArtifactCache() {
         dataArtifactCache.invalidateAll();
-    }
-
-    public static class DataArtifactTableDTO extends BaseRowResultDTO {
-
-        //private final Map<Integer, Object> attributeValues;
-        //private final String dataSourceName;
-        private final DataArtifact dataArtifact;
-        private final Content srcContent;
-        private final Content linkedFile;
-        private final boolean isTimelineSupported;
-
-        public DataArtifactTableDTO(DataArtifact dataArtifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) {
-            super(cellValues, id);
-            this.dataArtifact = dataArtifact;
-            this.srcContent = srcContent;
-            this.linkedFile = linkedFile;
-            this.isTimelineSupported = isTimelineSupported;
-        }
-
-        public DataArtifact getDataArtifact() {
-            return dataArtifact;
-        }
-
-        public Content getSrcContent() {
-            return srcContent;
-        }
-
-        public Content getLinkedFile() {
-            return linkedFile;
-        }
-
-        public boolean isIsTimelineSupported() {
-            return isTimelineSupported;
-        }
-
-    }
-
-    public static class DataArtifactTableSearchResultsDTO extends BaseSearchResultsDTO<DataArtifactTableDTO> {
-
-        private static final String TYPE_ID = "DATA_ARTIFACT";
-
-        private final BlackboardArtifact.Type artifactType;
-
-        public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<ColumnKey> columns, List<DataArtifactTableDTO> items) {
-            super(TYPE_ID, artifactType.getDisplayName(), columns, items);
-            this.artifactType = artifactType;
-        }
-
-        public BlackboardArtifact.Type getArtifactType() {
-            return artifactType;
-        }
     }
 }

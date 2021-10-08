@@ -82,9 +82,9 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
-import org.sleuthkit.autopsy.datamodel.DataArtifactKeyv2;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
-import org.sleuthkit.autopsy.datamodel.FileTypeExtensionsKeyv2;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
 import org.sleuthkit.autopsy.datamodel.OsAccounts;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
@@ -871,8 +871,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     //set node, wrap in filter node first to filter out children
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                     // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
-                    DataArtifactKeyv2 dataArtifactKey = originNode.getLookup().lookup(DataArtifactKeyv2.class);
-                    FileTypeExtensionsKeyv2 fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsKeyv2.class);
+                    DataArtifactSearchParam dataArtifactKey = originNode.getLookup().lookup(DataArtifactSearchParam.class);
+                    FileTypeExtensionsSearchParam fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsSearchParam.class);
                     if (dataArtifactKey != null) {
                         dataResult.displayDataArtifact(dataArtifactKey);
                     } else if (fileExtensionsKey != null) {

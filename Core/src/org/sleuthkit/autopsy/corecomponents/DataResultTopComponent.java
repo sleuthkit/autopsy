@@ -40,16 +40,14 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.DataArtifactKeyv2;
-import org.sleuthkit.autopsy.datamodel.DataArtifactNodev2;
-import org.sleuthkit.autopsy.datamodel.FileNodev2;
-import org.sleuthkit.autopsy.datamodel.FileTypeExtensionsKeyv2;
-import org.sleuthkit.autopsy.datamodel.SearchResultChildFactory.NodeCreator;
-import org.sleuthkit.autopsy.datamodel.SearchResultTableNode;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.RowResultDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDataArtifactDAO.DataArtifactTableSearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
+import org.sleuthkit.autopsy.mainui.nodes.DataArtifactNode;
+import org.sleuthkit.autopsy.mainui.nodes.FileNode;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
+import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
+import org.sleuthkit.autopsy.mainui.datamodel.ThreePanelDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.RowResultDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -375,9 +373,9 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
 
     private final ThreePanelDAO threePanelDAO = ThreePanelDAO.getInstance();
 
-    public void displayDataArtifact(DataArtifactKeyv2 dataArtifactKey) {
+    public void displayDataArtifact(DataArtifactSearchParam dataArtifactKey) {
         try {
-            displaySearchResults(threePanelDAO.getDataArtifactsDAO().getDataArtifactsForTable(dataArtifactKey), (table, row) -> new DataArtifactNodev2(table, row));
+            displaySearchResults(threePanelDAO.getDataArtifactsDAO().getDataArtifactsForTable(dataArtifactKey));
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for artifact type: {0} and data source id: {1}.",
@@ -388,9 +386,9 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     }
     
 
-    public void displayFileExtensions(FileTypeExtensionsKeyv2 fileExtensionsKey) {
+    public void displayFileExtensions(FileTypeExtensionsSearchParam fileExtensionsKey) {
         try {
-            displaySearchResults(threePanelDAO.getViewsDAO().getFilesByExtension(fileExtensionsKey), FileNodev2::new);
+            displaySearchResults(threePanelDAO.getViewsDAO().getFilesByExtension(fileExtensionsKey));
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for files of extension filter: {0} and data source id: {1}.",
@@ -400,8 +398,8 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         }
     }
 
-    public <T extends SearchResultsDTO<S>, S extends RowResultDTO> void displaySearchResults(T searchResults, NodeCreator<T, S> nodeCreator) {
-        dataResultPanel.setNode(new SearchResultTableNode<>(nodeCreator, searchResults), searchResults);
+    private void displaySearchResults(SearchResultsDTO searchResults) {
+        dataResultPanel.setNode(new SearchResultRootNode(searchResults), searchResults);
         dataResultPanel.setNumberOfChildNodes(
                 searchResults.getTotalResultsCount() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) searchResults.getTotalResultsCount());
     }

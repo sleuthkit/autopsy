@@ -43,9 +43,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
-import org.sleuthkit.autopsy.datamodel.SearchResultTableNode;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
+import org.sleuthkit.autopsy.mainui.datamodel.ThreePanelDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
  * A result view panel is a JPanel with a JTabbedPane child component that
@@ -88,7 +88,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent contentView;
     private ExplorerManager explorerManager;
     private Node currentRootNode;
-    private SearchResultsDTO<?> searchResults;
+    private SearchResultsDTO searchResults;
     private boolean listeningToTabbedPane;
 
     /**
@@ -363,7 +363,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         setNode(rootNode, null);
     }
     
-    void setNode(Node rootNode, SearchResultsDTO<?> searchResults) {
+    void setNode(Node rootNode, SearchResultsDTO searchResults) {
         this.searchResults = searchResults;
         
         if (this.currentRootNode != null) {

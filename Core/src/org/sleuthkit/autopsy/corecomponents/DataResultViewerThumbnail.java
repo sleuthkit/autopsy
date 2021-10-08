@@ -56,7 +56,7 @@ import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.guiutils.WrapLayout;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -457,7 +457,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }
 
     @Override
-    public void setNode(Node givenNode, SearchResultsDTO<?> searchResults) {
+    public void setNode(Node givenNode, SearchResultsDTO searchResults) {
         // GVDTODO givenNode cannot be assumed to be a table filter node and search results needs to be captured.
         
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));

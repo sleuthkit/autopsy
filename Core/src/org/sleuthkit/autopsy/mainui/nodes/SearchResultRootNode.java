@@ -1,37 +1,46 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.util.Collections;
-import java.util.List;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.SearchResultChildFactory.NodeCreator;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.ColumnKey;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.RowResultDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
- *
- * @author gregd
+ * A node whose children will be displayed in the results view and determines
+ * children based on a SearchResultDTO.
  */
-public class SearchResultTableNode<T extends SearchResultsDTO<S>, S extends RowResultDTO> extends AbstractNode {
+public class SearchResultRootNode extends AbstractNode {
 
-    private final SearchResultChildFactory<T, S> factory;
+    private final SearchResultChildFactory factory;
 
-    public SearchResultTableNode(NodeCreator<T, S> nodeCreator, T initialResults) {
-        this(initialResults, new SearchResultChildFactory<>(nodeCreator, initialResults));
+    public SearchResultRootNode(SearchResultsDTO initialResults) {
+        this(initialResults, new SearchResultChildFactory(initialResults));
     }
 
-    private SearchResultTableNode(SearchResultsDTO<S> initialResults, SearchResultChildFactory<T, S> factory) {
+    private SearchResultRootNode(SearchResultsDTO initialResults, SearchResultChildFactory factory) {
         super(Children.create(factory, true));
         this.factory = factory;
-        
+
         setName(initialResults.getTypeId());
         setDisplayName(initialResults.getDisplayName());
 

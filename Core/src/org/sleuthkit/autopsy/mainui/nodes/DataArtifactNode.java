@@ -16,14 +16,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.mainui.nodes;
 
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,16 +48,25 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.ColumnKey;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDataArtifactDAO.DataArtifactTableDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDataArtifactDAO.DataArtifactTableSearchResultsDTO;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
+import org.sleuthkit.autopsy.datamodel.DataArtifactItem;
+import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
+import org.sleuthkit.autopsy.datamodel.DirectoryNode;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
+import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
+import org.sleuthkit.autopsy.datamodel.LocalFileNode;
+import org.sleuthkit.autopsy.datamodel.SlackFileNode;
+import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
+import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
@@ -71,9 +79,12 @@ import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
-public class DataArtifactNodev2 extends AbstractNode {
+/**
+ * node to display a data artifact.
+ */
+public class DataArtifactNode extends AbstractNode {
 
-    private static final Logger logger = Logger.getLogger(DataArtifactNodev2.class.getName());
+    private static final Logger logger = Logger.getLogger(DataArtifactNode.class.getName());
 
     private static Lookup createLookup(DataArtifactTableDTO row) {
         DataArtifactItem artifactItem = new DataArtifactItem(row.getDataArtifact(), row.getSrcContent());
@@ -88,18 +99,18 @@ public class DataArtifactNodev2 extends AbstractNode {
     private final DataArtifactTableDTO artifactRow;
     private final List<ColumnKey> columns;
 
-    public DataArtifactNodev2(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow) {
+    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow) {
         this(tableData, artifactRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()));
     }
 
-    public DataArtifactNodev2(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow, String iconPath) {
+    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow, String iconPath) {
         super(Children.LEAF, createLookup(artifactRow));
 
         // use first cell value for display name
         String displayName = artifactRow.getCellValues().size() > 0
                 ? artifactRow.getCellValues().get(0).toString()
                 : "";
-        
+
         setDisplayName(displayName);
         setShortDescription(displayName);
         setName(Long.toString(artifactRow.getId()));
@@ -193,16 +204,16 @@ public class DataArtifactNodev2 extends AbstractNode {
      * @return The artifact type name.
      */
     @Messages({
-        "DataArtifactNodev2_getAssociatedTypeStr_webCache=Cached File",
-        "DataArtifactNodev2_getAssociatedTypeStr_webDownload=Downloaded File",
-        "DataArtifactNodev2_getAssociatedTypeStr_associated=Associated File",})
+        "DataArtifactNode_getAssociatedTypeStr_webCache=Cached File",
+        "DataArtifactNode_getAssociatedTypeStr_webDownload=Downloaded File",
+        "DataArtifactNode_getAssociatedTypeStr_associated=Associated File",})
     private String getAssociatedTypeStr(BlackboardArtifact.Type artifactType) {
         if (BlackboardArtifact.Type.TSK_WEB_CACHE.equals(artifactType)) {
-            return Bundle.DataArtifactNodev2_getAssociatedTypeStr_webCache();
+            return Bundle.DataArtifactNode_getAssociatedTypeStr_webCache();
         } else if (BlackboardArtifact.Type.TSK_WEB_DOWNLOAD.equals(artifactType)) {
-            return Bundle.DataArtifactNodev2_getAssociatedTypeStr_webDownload();
+            return Bundle.DataArtifactNode_getAssociatedTypeStr_webDownload();
         } else {
-            return Bundle.DataArtifactNodev2_getAssociatedTypeStr_associated();
+            return Bundle.DataArtifactNode_getAssociatedTypeStr_associated();
         }
     }
 
@@ -215,38 +226,38 @@ public class DataArtifactNodev2 extends AbstractNode {
      * @return The name of the type of content.
      */
     @Messages({
-        "DataArtifactNodev2_getViewSrcContentAction_type_File=File",
-        "DataArtifactNodev2_getViewSrcContentAction_type_DataArtifact=Data Artifact",
-        "DataArtifactNodev2_getViewSrcContentAction_type_OSAccount=OS Account",
-        "DataArtifactNodev2_getViewSrcContentAction_type_unknown=Item"
+        "DataArtifactNode_getViewSrcContentAction_type_File=File",
+        "DataArtifactNode_getViewSrcContentAction_type_DataArtifact=Data Artifact",
+        "DataArtifactNode_getViewSrcContentAction_type_OSAccount=OS Account",
+        "DataArtifactNode_getViewSrcContentAction_type_unknown=Item"
     })
     private String getContentTypeStr(Content content) {
         if (content instanceof AbstractFile) {
-            return Bundle.DataArtifactNodev2_getViewSrcContentAction_type_File();
+            return Bundle.DataArtifactNode_getViewSrcContentAction_type_File();
         } else if (content instanceof DataArtifact) {
-            return Bundle.DataArtifactNodev2_getViewSrcContentAction_type_DataArtifact();
+            return Bundle.DataArtifactNode_getViewSrcContentAction_type_DataArtifact();
         } else if (content instanceof OsAccount) {
-            return Bundle.DataArtifactNodev2_getViewSrcContentAction_type_OSAccount();
+            return Bundle.DataArtifactNode_getViewSrcContentAction_type_OSAccount();
         } else {
-            return Bundle.DataArtifactNodev2_getViewSrcContentAction_type_unknown();
+            return Bundle.DataArtifactNode_getViewSrcContentAction_type_unknown();
         }
     }
 
     @Messages({
         "# {0} - type",
-        "DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory",
+        "DataArtifactNode_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory",
         "# {0} - type",
-        "DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline..."
+        "DataArtifactNode_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline..."
     })
     private List<Action> getAssociatedFileActions(AbstractFile associatedFile, BlackboardArtifact.Type artifactType) {
         if (associatedFile != null) {
             return Arrays.asList(
                     new ViewContextAction(
-                            Bundle.DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileAction(
+                            Bundle.DataArtifactNode_getAssociatedFileActions_viewAssociatedFileAction(
                                     getAssociatedTypeStr(artifactType)),
                             associatedFile),
                     new ViewFileInTimelineAction(associatedFile,
-                            Bundle.DataArtifactNodev2_getAssociatedFileActions_viewAssociatedFileInTimelineAction(
+                            Bundle.DataArtifactNode_getAssociatedFileActions_viewAssociatedFileInTimelineAction(
                                     getAssociatedTypeStr(artifactType)))
             );
         } else {
@@ -265,22 +276,22 @@ public class DataArtifactNodev2 extends AbstractNode {
      */
     @Messages({
         "# {0} - contentType",
-        "DataArtifactNodev2_getSrcContentAction_actionDisplayName=View Source {0} in Directory"
+        "DataArtifactNode_getSrcContentAction_actionDisplayName=View Source {0} in Directory"
     })
     private Action getViewSrcContentAction(BlackboardArtifact artifact, Content content) {
         if (content instanceof DataArtifact) {
             return new ViewArtifactAction(
                     (BlackboardArtifact) content,
-                    Bundle.DataArtifactNodev2_getSrcContentAction_actionDisplayName(
+                    Bundle.DataArtifactNode_getSrcContentAction_actionDisplayName(
                             getContentTypeStr(content)));
         } else if (content instanceof OsAccount) {
             return new ViewOsAccountAction(
                     (OsAccount) content,
-                    Bundle.DataArtifactNodev2_getSrcContentAction_actionDisplayName(
+                    Bundle.DataArtifactNode_getSrcContentAction_actionDisplayName(
                             getContentTypeStr(content)));
         } else if (content instanceof AbstractFile || artifact instanceof DataArtifact) {
             return new ViewContextAction(
-                    Bundle.DataArtifactNodev2_getSrcContentAction_actionDisplayName(
+                    Bundle.DataArtifactNode_getSrcContentAction_actionDisplayName(
                             getContentTypeStr(content)),
                     content);
         } else {
@@ -358,15 +369,15 @@ public class DataArtifactNodev2 extends AbstractNode {
      * @return The list of actions or an empty list.
      */
     @Messages({
-        "DataArtifactNodev2_getSrcContentViewerActions_viewInNewWin=View Item in New Window",
-        "DataArtifactNodev2_getSrcContentViewerActions_openInExtViewer=Open in External Viewer  Ctrl+E"
+        "DataArtifactNode_getSrcContentViewerActions_viewInNewWin=View Item in New Window",
+        "DataArtifactNode_getSrcContentViewerActions_openInExtViewer=Open in External Viewer  Ctrl+E"
     })
     private List<Action> getSrcContentViewerActions(Node srcFileNode, int selectedFileCount) {
         List<Action> actionsList = new ArrayList<>();
         if (srcFileNode != null) {
-            actionsList.add(new NewWindowViewAction(Bundle.DataArtifactNodev2_getSrcContentViewerActions_viewInNewWin(), srcFileNode));
+            actionsList.add(new NewWindowViewAction(Bundle.DataArtifactNode_getSrcContentViewerActions_viewInNewWin(), srcFileNode));
             if (selectedFileCount == 1) {
-                actionsList.add(new ExternalViewerAction(Bundle.DataArtifactNodev2_getSrcContentViewerActions_openInExtViewer(), srcFileNode));
+                actionsList.add(new ExternalViewerAction(Bundle.DataArtifactNode_getSrcContentViewerActions_openInExtViewer(), srcFileNode));
             } else {
                 actionsList.add(ExternalViewerShortcutAction.getInstance());
             }
@@ -384,12 +395,12 @@ public class DataArtifactNodev2 extends AbstractNode {
      */
     @NbBundle.Messages({
         "# {0} - contentType",
-        "DataArtifactNodev2_getTimelineSrcContentAction_actionDisplayName=View Source {0} in Timeline... "
+        "DataArtifactNode_getTimelineSrcContentAction_actionDisplayName=View Source {0} in Timeline... "
     })
     private Action getTimelineSrcContentAction(Content srcContent) {
         if (srcContent instanceof AbstractFile) {
             return new ViewFileInTimelineAction((AbstractFile) srcContent,
-                    Bundle.DataArtifactNodev2_getTimelineSrcContentAction_actionDisplayName(
+                    Bundle.DataArtifactNode_getTimelineSrcContentAction_actionDisplayName(
                             getContentTypeStr(srcContent)));
         }
 
@@ -398,7 +409,7 @@ public class DataArtifactNodev2 extends AbstractNode {
 //            try {
 //                if (hasSupportedTimeStamp((BlackboardArtifact) srcContent)) {
 //                    return new ViewArtifactInTimelineAction((BlackboardArtifact) srcContent,
-//                            Bundle.DataArtifactNodev2_getTimelineSrcContentAction_actionDisplayName(
+//                            Bundle.DataArtifactNode_getTimelineSrcContentAction_actionDisplayName(
 //                                    getContentTypeStr(srcContent)));
 //                }
 //            } catch (TskCoreException ex) {
@@ -418,11 +429,11 @@ public class DataArtifactNodev2 extends AbstractNode {
      * @return The action or null if no action should exist.
      */
     @Messages({
-        "DataArtifactNodev2_getTimelineArtifactAction_displayName=View Selected Item in Timeline... "
+        "DataArtifactNode_getTimelineArtifactAction_displayName=View Selected Item in Timeline... "
     })
     private Action getTimelineArtifactAction(BlackboardArtifact art, boolean hasSupportedTimeStamp) {
         if (hasSupportedTimeStamp) {
-            return new ViewArtifactInTimelineAction(art, Bundle.DataArtifactNodev2_getTimelineArtifactAction_displayName());
+            return new ViewArtifactInTimelineAction(art, Bundle.DataArtifactNode_getTimelineArtifactAction_displayName());
         } else {
             return null;
         }
@@ -430,6 +441,6 @@ public class DataArtifactNodev2 extends AbstractNode {
 
     @Override
     protected Sheet createSheet() {
-        return ContentNodeUtilv2.setSheet(super.createSheet(), this.columns, this.artifactRow.getCellValues());
+        return ContentNodeUtil.setSheet(super.createSheet(), this.columns, this.artifactRow.getCellValues());
     }
 }

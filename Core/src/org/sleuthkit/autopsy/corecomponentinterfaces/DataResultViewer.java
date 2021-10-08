@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.awt.Component;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
  * An interface for result viewers. A result viewer uses a Swing Component to
@@ -76,7 +76,7 @@ public interface DataResultViewer {
      */
     public void setNode(Node node);
     
-    default public void setNode(Node node, SearchResultsDTO<?> searchResults) {
+    default public void setNode(Node node, SearchResultsDTO searchResults) {
         setNode(node, null);
     }
 

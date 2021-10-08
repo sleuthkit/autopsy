@@ -1,22 +1,34 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- *
- * @author gregd
+ * Key for data artifact in order to retrieve data from DAO.
  */
-public class DataArtifactKeyv2 {
+public class DataArtifactSearchParam {
     private final BlackboardArtifact.Type artifactType;
     private final Long dataSourceId;
 
-    public DataArtifactKeyv2(BlackboardArtifact.Type artifactType, Long dataSourceId) {
+    public DataArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
         this.artifactType = artifactType;
         this.dataSourceId = dataSourceId;
     }
@@ -48,7 +60,7 @@ public class DataArtifactKeyv2 {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final DataArtifactKeyv2 other = (DataArtifactKeyv2) obj;
+        final DataArtifactSearchParam other = (DataArtifactSearchParam) obj;
         if (!Objects.equals(this.artifactType, other.artifactType)) {
             return false;
         }

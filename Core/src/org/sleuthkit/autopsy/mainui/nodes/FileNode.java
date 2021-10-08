@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,25 +32,24 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.ExtensionMediaType;
-import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.FileRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
+import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
-import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
- * A node for representing an AbstractFile. It may have derived file node
- * children.
+ * A node for representing an AbstractFile.
  */
-public class FileNodev2 extends AbstractNode {
+public class FileNode extends AbstractNode {
 
     /**
      * Gets the path to the icon file that should be used to visually represent
@@ -92,20 +91,20 @@ public class FileNodev2 extends AbstractNode {
     
     private final boolean directoryBrowseMode;
     private final FileRowDTO fileData;
-    private final List<ThreePanelDAO.ColumnKey> columns;
+    private final List<ColumnKey> columns;
 
 
-    public FileNodev2(SearchResultsDTO<FileRowDTO> results, FileRowDTO file) {
+    public FileNode(SearchResultsDTO results, FileRowDTO file) {
         this(results, file, true);
     }
 
 
-    public FileNodev2(SearchResultsDTO<FileRowDTO> results, FileRowDTO file, boolean directoryBrowseMode) {
+    public FileNode(SearchResultsDTO results, FileRowDTO file, boolean directoryBrowseMode) {
         // GVDTODO: at some point, this leaf will need to allow for children
-        super(Children.LEAF, ContentNodeUtilv2.getLookup(file.getAbstractFile()));
+        super(Children.LEAF, ContentNodeUtil.getLookup(file.getAbstractFile()));
         setIcon(file);
-        setDisplayName(ContentNodeUtilv2.getContentDisplayName(file.getFileName()));
-        setName(ContentNodeUtilv2.getContentName(file.getId()));
+        setDisplayName(ContentNodeUtil.getContentDisplayName(file.getFileName()));
+        setName(ContentNodeUtil.getContentName(file.getId()));
         this.directoryBrowseMode = directoryBrowseMode;
         this.fileData = file;
         this.columns = results.getColumns();
@@ -186,6 +185,6 @@ public class FileNodev2 extends AbstractNode {
 
     @Override
     protected Sheet createSheet() {
-        return ContentNodeUtilv2.setSheet(super.createSheet(), this.columns, this.fileData.getCellValues());
+        return ContentNodeUtil.setSheet(super.createSheet(), this.columns, this.fileData.getCellValues());
     }
 }

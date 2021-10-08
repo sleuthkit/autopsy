@@ -87,9 +87,9 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
-import org.sleuthkit.autopsy.datamodel.SearchResultTableNode;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
+import org.sleuthkit.autopsy.mainui.datamodel.ThreePanelDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.datamodel.Score.Significance;
 
 /**
@@ -145,7 +145,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final TableListener outlineViewListener;
     private final IconRendererTableListener iconRendererListener;
     private Node rootNode;
-    private SearchResultsDTO<?> searchResults;
+    private SearchResultsDTO searchResults;
 
     /**
      * Multiple nodes may have been visited in the context of this
@@ -319,7 +319,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void setNode(Node rootNode, SearchResultsDTO<?> searchResults) {
+    public void setNode(Node rootNode, SearchResultsDTO searchResults) {
         this.searchResults = searchResults;
         
         if (!SwingUtilities.isEventDispatchThread()) {
@@ -1539,7 +1539,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void exportCSVButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCSVButtonActionPerformed
         Node currentRoot = this.getExplorerManager().getRootContext();
         // GVDTODO disabled for Search Result node
-        if (currentRoot != null && (!(currentRoot instanceof SearchResultTableNode)) && currentRoot.getChildren().getNodesCount() > 0) {
+        if (currentRoot != null && (!(currentRoot instanceof SearchResultRootNode)) && currentRoot.getChildren().getNodesCount() > 0) {
             org.sleuthkit.autopsy.directorytree.ExportCSVAction.saveNodesToCSV(java.util.Arrays.asList(currentRoot.getChildren().getNodes()), this);
         } else {
             MessageNotifyUtil.Message.info(Bundle.DataResultViewerTable_exportCSVButtonActionPerformed_empty());
