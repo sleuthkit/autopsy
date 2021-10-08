@@ -40,7 +40,10 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DataArtifactKeyv2;
 import org.sleuthkit.autopsy.datamodel.DataArtifactNodev2;
+import org.sleuthkit.autopsy.datamodel.FileNodev2;
+import org.sleuthkit.autopsy.datamodel.FileTypeExtensionsKeyv2;
 import org.sleuthkit.autopsy.datamodel.SearchResultChildFactory.NodeCreator;
 import org.sleuthkit.autopsy.datamodel.SearchResultTableNode;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO;
@@ -372,23 +375,34 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
 
     private final ThreePanelDAO threePanelDAO = ThreePanelDAO.getInstance();
 
-    public void displayDataArtifact(BlackboardArtifact.Type artifactType, Long dataSourceId) {
+    public void displayDataArtifact(DataArtifactKeyv2 dataArtifactKey) {
         try {
-            DataArtifactTableSearchResultsDTO table = threePanelDAO.getDataArtifactsForTable(artifactType, dataSourceId);
-            displaySearchResults(table, DataArtifactNodev2::new);
+            displaySearchResults(threePanelDAO.getDataArtifactsDAO().getDataArtifactsForTable(dataArtifactKey), DataArtifactNodev2::new);
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for artifact type: {0} and data source id: {1}.",
-                    artifactType.getTypeName(),
-                    dataSourceId == null ? "<null>" : dataSourceId),
+                    dataArtifactKey.getArtifactType().getTypeName(),
+                    dataArtifactKey.getDataSourceId() == null ? "<null>" : dataArtifactKey.getDataSourceId()),
                     ex);
         }
     }
-    
+
+    public void displayFileExtensions(FileTypeExtensionsKeyv2 fileExtensionsKey) {
+        try {
+            displaySearchResults(threePanelDAO.getViewsDAO().getFilesByExtension(fileExtensionsKey), FileNodev2::new);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for files of extension filter: {0} and data source id: {1}.",
+                    fileExtensionsKey.getFilter().getDisplayName(),
+                    fileExtensionsKey.getDataSourceId() == null ? "<null>" : fileExtensionsKey.getDataSourceId()),
+                    ex);
+        }
+    }
+
     public <T extends SearchResultsDTO<S>, S extends RowResultDTO> void displaySearchResults(T searchResults, NodeCreator<T, S> nodeCreator) {
-            dataResultPanel.setNode(new SearchResultTableNode<>(nodeCreator, searchResults), searchResults);
-            dataResultPanel.setNumberOfChildNodes(
-                    searchResults.getTotalResultsCount() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) searchResults.getTotalResultsCount());
+        dataResultPanel.setNode(new SearchResultTableNode<>(nodeCreator, searchResults), searchResults);
+        dataResultPanel.setNumberOfChildNodes(
+                searchResults.getTotalResultsCount() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) searchResults.getTotalResultsCount());
     }
 
     @Override
@@ -494,5 +508,4 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void resetTabs(Node node) {
         dataResultPanel.setNode(node);
     }
-
 }

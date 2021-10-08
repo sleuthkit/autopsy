@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -100,7 +101,8 @@ public class FileNodev2 extends AbstractNode {
 
 
     public FileNodev2(SearchResultsDTO<FileRowDTO> results, FileRowDTO file, boolean directoryBrowseMode) {
-        super(ContentNodeUtilv2.getChildren(file.getId()), ContentNodeUtilv2.getLookup(file.getAbstractFile()));
+        // GVDTODO: at some point, this leaf will need to allow for children
+        super(Children.LEAF, ContentNodeUtilv2.getLookup(file.getAbstractFile()));
         setIcon(file);
         setDisplayName(ContentNodeUtilv2.getContentDisplayName(file.getFileName()));
         setName(ContentNodeUtilv2.getContentName(file.getId()));

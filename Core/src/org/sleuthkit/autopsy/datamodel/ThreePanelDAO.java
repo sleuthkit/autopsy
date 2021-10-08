@@ -8,13 +8,9 @@ package org.sleuthkit.autopsy.datamodel;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDataArtifactDAO.DataArtifactTableSearchResultsDTO;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 public class ThreePanelDAO {
-
     private static ThreePanelDAO instance = null;
 
     public synchronized static ThreePanelDAO getInstance() {
@@ -26,18 +22,30 @@ public class ThreePanelDAO {
     }
 
     private final ThreePanelDataArtifactDAO dataArtifactDAO = ThreePanelDataArtifactDAO.getInstance();
-
-    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException, IllegalArgumentException {
-        return dataArtifactDAO.getDataArtifactsForTable(artType, dataSourceId);
+    private final ThreePanelViewsDAO viewsDAO = ThreePanelViewsDAO.getInstance();
+    
+    public ThreePanelDataArtifactDAO getDataArtifactsDAO() {
+        return dataArtifactDAO;
     }
-
-    public void dropDataArtifactCache() {
-        dataArtifactDAO.dropDataArtifactCache();
+    
+    public ThreePanelViewsDAO getViewsDAO() {
+        return viewsDAO;
     }
-
-    public void dropDataArtifactCache(BlackboardArtifact.Type artType) {
-        dataArtifactDAO.dropDataArtifactCache(artType);
-    }
+    
+    
+    
+//
+//    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException, IllegalArgumentException {
+//        return dataArtifactDAO.getDataArtifactsForTable(artType, dataSourceId);
+//    }
+//
+//    public void dropDataArtifactCache() {
+//        dataArtifactDAO.dropDataArtifactCache();
+//    }
+//
+//    public void dropDataArtifactCache(BlackboardArtifact.Type artType) {
+//        dataArtifactDAO.dropDataArtifactCache(artType);
+//    }
 
     public static class ColumnKey {
 

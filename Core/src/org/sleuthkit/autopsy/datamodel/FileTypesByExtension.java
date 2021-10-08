@@ -21,28 +21,26 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesKey;
+import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.DocumentFilter;
+import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.ExecutableFilter;
+import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.RootFilter;
+import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.SearchFilterInterface;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -58,7 +56,6 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
     private final static Logger logger = Logger.getLogger(FileTypesByExtension.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
-    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED);
     private final FileTypes typesRoot;
 
     public FileTypesByExtension(FileTypes typesRoot) {
@@ -198,7 +195,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      */
     class FileTypesByExtNode extends DisplayableItemNode {
 
-        private final FileTypesByExtension.RootFilter filter;
+        private final RootFilter filter;
 
         /**
          *
@@ -206,7 +203,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param filter null to display root node of file type tree, pass in
          *               something to provide a sub-node.
          */
-        FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter) {
+        FileTypesByExtNode(SleuthkitCase skCase, RootFilter filter) {
             this(skCase, filter, null);
         }
 
@@ -217,7 +214,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that was created by a higher-level node that
          *               provides updates on events
          */
-        private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, FileTypesByExtObservable o) {
+        private FileTypesByExtNode(SleuthkitCase skCase, RootFilter filter, FileTypesByExtObservable o) {
 
             super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true),
                     Lookups.singleton(filter == null ? FNAME : filter.getDisplayName()));
@@ -253,7 +250,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 sheetSet = Sheet.createPropertiesSet();
                 sheet.put(sheetSet);
             }
-            if (filter != null && (filter.equals(FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER) || filter.equals(FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER))) {
+            if (filter != null && (filter.equals(RootFilter.TSK_DOCUMENT_FILTER) || filter.equals(RootFilter.TSK_EXECUTABLE_FILTER))) {
                 String extensions = "";
                 for (String ext : filter.getFilter()) {
                     extensions += "'" + ext + "', ";
@@ -275,7 +272,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             if (filter == null) {
                 return getClass().getName();
             }
-            if (filter.equals(FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER) || filter.equals(FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER)) {
+            if (filter.equals(RootFilter.TSK_DOCUMENT_FILTER) || filter.equals(RootFilter.TSK_EXECUTABLE_FILTER)) {
                 return getClass().getName() + filter.getName();
             }
             return getClass().getName();
@@ -283,10 +280,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
     }
 
-    private class FileTypesByExtNodeChildren extends ChildFactory<FileTypesByExtension.SearchFilterInterface> {
+    private class FileTypesByExtNodeChildren extends ChildFactory<SearchFilterInterface> {
 
         private final SleuthkitCase skCase;
-        private final FileTypesByExtension.RootFilter filter;
+        private final RootFilter filter;
         private final FileTypesByExtObservable notifier;
 
         /**
@@ -296,7 +293,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that provides updates based on events being
          *               fired (or null if one needs to be created)
          */
-        private FileTypesByExtNodeChildren(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, FileTypesByExtObservable o) {
+        private FileTypesByExtNodeChildren(SleuthkitCase skCase, RootFilter filter, FileTypesByExtObservable o) {
             super();
             this.skCase = skCase;
             this.filter = filter;
@@ -308,26 +305,26 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<FileTypesByExtension.SearchFilterInterface> list) {
+        protected boolean createKeys(List<SearchFilterInterface> list) {
             // root node
             if (filter == null) {
-                list.addAll(Arrays.asList(FileTypesByExtension.RootFilter.values()));
+                list.addAll(Arrays.asList(RootFilter.values()));
             } // document and executable has another level of nodes
-            else if (filter.equals(FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER)) {
-                list.addAll(Arrays.asList(FileTypesByExtension.DocumentFilter.values()));
-            } else if (filter.equals(FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER)) {
-                list.addAll(Arrays.asList(FileTypesByExtension.ExecutableFilter.values()));
+            else if (filter.equals(RootFilter.TSK_DOCUMENT_FILTER)) {
+                list.addAll(Arrays.asList(DocumentFilter.values()));
+            } else if (filter.equals(RootFilter.TSK_EXECUTABLE_FILTER)) {
+                list.addAll(Arrays.asList(ExecutableFilter.values()));
             }
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(FileTypesByExtension.SearchFilterInterface key) {
+        protected Node createNodeForKey(SearchFilterInterface key) {
             // make new nodes for the sub-nodes
-            if (key.getName().equals(FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER.getName())) {
-                return new FileTypesByExtNode(skCase, FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER, notifier);
-            } else if (key.getName().equals(FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER.getName())) {
-                return new FileTypesByExtNode(skCase, FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER, notifier);
+            if (key.getName().equals(RootFilter.TSK_DOCUMENT_FILTER.getName())) {
+                return new FileTypesByExtNode(skCase, RootFilter.TSK_DOCUMENT_FILTER, notifier);
+            } else if (key.getName().equals(RootFilter.TSK_EXECUTABLE_FILTER.getName())) {
+                return new FileTypesByExtNode(skCase, RootFilter.TSK_EXECUTABLE_FILTER, notifier);
             } else {
                 return new FileExtensionNode(key, skCase, notifier);
             }
@@ -340,7 +337,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      */
     final class FileExtensionNode extends FileTypes.BGCountUpdatingNode {
 
-        private final FileTypesByExtension.SearchFilterInterface filter;
+        private final SearchFilterInterface filter;
 
         /**
          *
@@ -349,9 +346,14 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that sends updates when the child factories
          *               should refresh
          */
-        FileExtensionNode(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
-            super(typesRoot, Children.create(new FileExtensionNodeChildren(filter, skCase, o, filter.getDisplayName()), true),
-                    Lookups.singleton(filter.getDisplayName()));
+        FileExtensionNode(SearchFilterInterface filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
+            super(typesRoot, Children.LEAF,
+                    Lookups.fixed(filter.getDisplayName(), 
+                            new FileTypeExtensionsKeyv2(
+                                    filter, 
+                                    filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null, 
+                                    !UserPreferences.hideKnownFilesInViewsTree())));
+            
             this.filter = filter;
             super.setName(filter.getDisplayName());
             updateDisplayName();
@@ -415,7 +417,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
     }
 
-    private String createQuery(FileTypesByExtension.SearchFilterInterface filter) {
+    private String createQuery(SearchFilterInterface filter) {
         if (filter.getFilter().isEmpty()) {
             // We should never be given a search filter without extensions
             // but if we are it is clearly a programming error so we throw 
@@ -434,245 +436,5 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                         .map(String::toLowerCase)
                         .map(s -> "'" + StringUtils.substringAfter(s, ".") + "'")
                         .collect(Collectors.joining(", ")) + "))";
-    }
-
-    /**
-     * Child node factory for a specific file type - does the database query.
-     */
-    private class FileExtensionNodeChildren extends BaseChildFactory<FileTypesKey> implements Observer {
-
-        private final SleuthkitCase skCase;
-        private final FileTypesByExtension.SearchFilterInterface filter;
-        private final Observable notifier;
-
-        /**
-         *
-         * @param filter   Extensions to display
-         * @param skCase
-         * @param o        Observable that will notify when there could be new
-         *                 data to display
-         * @param nodeName
-         */
-        private FileExtensionNodeChildren(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o, String nodeName) {
-            super(nodeName, new ViewsKnownAndSlackFilter<>());
-            this.filter = filter;
-            this.skCase = skCase;
-            notifier = o;
-        }
-
-        @Override
-        protected void onAdd() {
-            if (notifier != null) {
-                notifier.addObserver(this);
-            }
-        }
-
-        @Override
-        protected void onRemove() {
-            if (notifier != null) {
-                notifier.deleteObserver(this);
-            }
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(false);
-        }
-
-        @Override
-        protected Node createNodeForKey(FileTypesKey key) {
-            return key.accept(new FileTypes.FileNodeCreationVisitor());
-        }
-
-        @Override
-        protected List<FileTypesKey> makeKeys() {
-            try {
-                return skCase.findAllFilesWhere(createQuery(filter))
-                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
-            }
-            return Collections.emptyList();
-        }
-    }
-
-    // root node filters
-    @Messages({"FileTypeExtensionFilters.tskDatabaseFilter.text=Databases"})
-    public static enum RootFilter implements AutopsyVisitableItem, SearchFilterInterface {
-
-        TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskImgFilter.text"),
-                FileTypeExtensions.getImageExtensions()),
-        TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskVideoFilter.text"),
-                FileTypeExtensions.getVideoExtensions()),
-        TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskAudioFilter.text"),
-                FileTypeExtensions.getAudioExtensions()),
-        TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskArchiveFilter.text"),
-                FileTypeExtensions.getArchiveExtensions()),
-        TSK_DATABASE_FILTER(4, "TSK_DATABASE_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDatabaseFilter.text"),
-                FileTypeExtensions.getDatabaseExtensions()),
-        TSK_DOCUMENT_FILTER(5, "TSK_DOCUMENT_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDocumentFilter.text"),
-                Arrays.asList(".htm", ".html", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf")), //NON-NLS
-        TSK_EXECUTABLE_FILTER(6, "TSK_EXECUTABLE_FILTER", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskExecFilter.text"),
-                FileTypeExtensions.getExecutableExtensions()); //NON-NLS
-
-        private final int id;
-        private final String name;
-        private final String displayName;
-        private final List<String> filter;
-
-        private RootFilter(int id, String name, String displayName, List<String> filter) {
-            this.id = id;
-            this.name = name;
-            this.displayName = displayName;
-            this.filter = filter;
-        }
-
-        @Override
-        public <T> T accept(AutopsyItemVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-
-        @Override
-        public String getName() {
-            return this.name;
-        }
-
-        @Override
-        public int getId() {
-            return this.id;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return this.displayName;
-        }
-
-        @Override
-        public List<String> getFilter() {
-            return Collections.unmodifiableList(this.filter);
-        }
-    }
-
-    // document sub-node filters
-    public static enum DocumentFilter implements AutopsyVisitableItem, SearchFilterInterface {
-
-        AUT_DOC_HTML(0, "AUT_DOC_HTML", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocHtmlFilter.text"),
-                Arrays.asList(".htm", ".html")), //NON-NLS
-        AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocOfficeFilter.text"),
-                Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")), //NON-NLS
-        AUT_DOC_PDF(2, "AUT_DOC_PDF", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autoDocPdfFilter.text"),
-                Arrays.asList(".pdf")), //NON-NLS
-        AUT_DOC_TXT(3, "AUT_DOC_TXT", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocTxtFilter.text"),
-                Arrays.asList(".txt")), //NON-NLS
-        AUT_DOC_RTF(4, "AUT_DOC_RTF", //NON-NLS
-                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocRtfFilter.text"),
-                Arrays.asList(".rtf")); //NON-NLS
-
-        private final int id;
-        private final String name;
-        private final String displayName;
-        private final List<String> filter;
-
-        private DocumentFilter(int id, String name, String displayName, List<String> filter) {
-            this.id = id;
-            this.name = name;
-            this.displayName = displayName;
-            this.filter = filter;
-        }
-
-        @Override
-        public <T> T accept(AutopsyItemVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-
-        @Override
-        public String getName() {
-            return this.name;
-        }
-
-        @Override
-        public int getId() {
-            return this.id;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return this.displayName;
-        }
-
-        @Override
-        public List<String> getFilter() {
-            return Collections.unmodifiableList(this.filter);
-        }
-    }
-
-    // executable sub-node filters
-    public static enum ExecutableFilter implements AutopsyVisitableItem, SearchFilterInterface {
-
-        ExecutableFilter_EXE(0, "ExecutableFilter_EXE", ".exe", Arrays.asList(".exe")), //NON-NLS
-        ExecutableFilter_DLL(1, "ExecutableFilter_DLL", ".dll", Arrays.asList(".dll")), //NON-NLS
-        ExecutableFilter_BAT(2, "ExecutableFilter_BAT", ".bat", Arrays.asList(".bat")), //NON-NLS
-        ExecutableFilter_CMD(3, "ExecutableFilter_CMD", ".cmd", Arrays.asList(".cmd")), //NON-NLS
-        ExecutableFilter_COM(4, "ExecutableFilter_COM", ".com", Arrays.asList(".com")); //NON-NLS
-
-        private final int id;
-        private final String name;
-        private final String displayName;
-        private final List<String> filter;
-
-        private ExecutableFilter(int id, String name, String displayName, List<String> filter) {
-            this.id = id;
-            this.name = name;
-            this.displayName = displayName;
-            this.filter = filter;
-        }
-
-        @Override
-        public <T> T accept(AutopsyItemVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-
-        @Override
-        public String getName() {
-            return this.name;
-        }
-
-        @Override
-        public int getId() {
-            return this.id;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return this.displayName;
-        }
-
-        @Override
-        public List<String> getFilter() {
-            return Collections.unmodifiableList(this.filter);
-        }
-    }
-
-    interface SearchFilterInterface {
-
-        public String getName();
-
-        public int getId();
-
-        public String getDisplayName();
-
-        public List<String> getFilter();
-
     }
 }

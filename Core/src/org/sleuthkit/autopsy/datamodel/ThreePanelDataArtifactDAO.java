@@ -16,7 +16,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -40,27 +39,23 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author gregd
  */
-    @Messages({
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.name=Source Name",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.displayName=Source Name",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.description=Source Name",
-        
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.score.name=Score",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.score.displayName=S",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.score.description=Score",
-        
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.name=Comment",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.displayName=C",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.description=Comment",
-        
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.occurrences.name=Occurrences",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.occurrences.displayName=O",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.occurrences.description=Occurrences",
-
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.name=Data Source",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.displayName=Data Source",
-        "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.description=Data Source"
-    })
+@Messages({
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.name=Source Name",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.displayName=Source Name",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.description=Source Name",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.score.name=Score",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.score.displayName=S",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.score.description=Score",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.name=Comment",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.displayName=C",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.description=Comment",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.occurrences.name=Occurrences",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.occurrences.displayName=O",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.occurrences.description=Occurrences",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.name=Data Source",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.displayName=Data Source",
+    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.description=Data Source"
+})
 public class ThreePanelDataArtifactDAO {
 
     // GVDTODO there is a different standard for normal attr strings and email attr strings
@@ -82,38 +77,37 @@ public class ThreePanelDataArtifactDAO {
             BlackboardAttribute.Type.TSK_EMAIL_CC.getTypeID(),
             BlackboardAttribute.Type.TSK_HEADERS.getTypeID()
     );
-    
+
     private static final ColumnKey SRC_FILE_COL = new ColumnKey(
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_srcFile_name(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_srcFile_displayName(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_srcFile_description()
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_srcFile_name(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_srcFile_displayName(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_srcFile_description()
     );
 
     private static final ColumnKey S_COL = new ColumnKey(
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_score_name(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_score_displayName(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_score_description()
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_score_name(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_score_displayName(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_score_description()
     );
 
     private static final ColumnKey C_COL = new ColumnKey(
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_comment_name(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_comment_displayName(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_comment_description()
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_comment_name(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_comment_displayName(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_comment_description()
     );
 
     private static final ColumnKey O_COL = new ColumnKey(
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_occurrences_name(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_occurrences_displayName(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_occurrences_description()
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_occurrences_name(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_occurrences_displayName(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_occurrences_description()
     );
 
     private static final ColumnKey DATASOURCE_COL = new ColumnKey(
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_name(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_displayName(), 
-        Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_description()
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_name(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_displayName(),
+            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_description()
     );
-    
-    
+
     private static ThreePanelDataArtifactDAO instance = null;
 
     public synchronized static ThreePanelDataArtifactDAO getInstance() {
@@ -124,13 +118,13 @@ public class ThreePanelDataArtifactDAO {
         return instance;
     }
 
-    private final Cache<DataArtifactCacheKey, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<DataArtifactKeyv2, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(DataArtifactCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(DataArtifactKeyv2 cacheKey) throws NoCurrentCaseException, TskCoreException {
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
 
@@ -211,8 +205,8 @@ public class ThreePanelDataArtifactDAO {
         if (BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() == artType.getTypeID()) {
             return !HIDDEN_EMAIL_ATTR_TYPES.contains(attrType);
         } else {
-            return !HIDDEN_ATTR_TYPES.contains(attrType) && 
-                    !BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.equals(attrType.getValueType());
+            return !HIDDEN_ATTR_TYPES.contains(attrType)
+                    && !BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.equals(attrType.getValueType());
         }
     }
 
@@ -306,15 +300,17 @@ public class ThreePanelDataArtifactDAO {
         }
     }
 
-    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException, IllegalArgumentException {
-        if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT) {
+    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactKeyv2 artifactKey) throws ExecutionException, IllegalArgumentException {
+        BlackboardArtifact.Type artType = artifactKey.getArtifactType();
+
+        if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT
+                || (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0)) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
-                    + "Artifact type must be non-null and data artifact.  "
-                    + "Received {0}", artType));
+                    + "Artifact type must be non-null and data artifact.  Data source id must be null or > 0.  "
+                    + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        DataArtifactCacheKey cacheKey = new DataArtifactCacheKey(artType, dataSourceId);
-        return dataArtifactCache.get(cacheKey, () -> fetchDataArtifactsForTable(cacheKey));
+        return dataArtifactCache.get(artifactKey, () -> fetchDataArtifactsForTable(artifactKey));
     }
 
     public void dropDataArtifactCache() {
@@ -323,55 +319,6 @@ public class ThreePanelDataArtifactDAO {
 
     public void dropDataArtifactCache(BlackboardArtifact.Type artType) {
         dataArtifactCache.invalidate(artType);
-    }
-
-    private static class DataArtifactCacheKey {
-
-        private final BlackboardArtifact.Type artifactType;
-        private final Long dataSourceId;
-
-        public DataArtifactCacheKey(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-            this.artifactType = artifactType;
-            this.dataSourceId = dataSourceId;
-        }
-
-        public BlackboardArtifact.Type getArtifactType() {
-            return artifactType;
-        }
-
-        public Long getDataSourceId() {
-            return dataSourceId;
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 3;
-            hash = 47 * hash + Objects.hashCode(this.artifactType);
-            hash = 47 * hash + Objects.hashCode(this.dataSourceId);
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final DataArtifactCacheKey other = (DataArtifactCacheKey) obj;
-            if (!Objects.equals(this.artifactType, other.artifactType)) {
-                return false;
-            }
-            if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
-                return false;
-            }
-            return true;
-        }
-
     }
 
     public static class DataArtifactTableDTO extends BaseRowResultDTO {
