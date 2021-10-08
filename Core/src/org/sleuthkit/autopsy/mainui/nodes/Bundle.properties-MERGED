@@ -1,0 +1,22 @@
+# {0} - type
+DataArtifactNode_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory
+# {0} - type
+DataArtifactNode_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline...
+DataArtifactNode_getAssociatedTypeStr_associated=Associated File
+DataArtifactNode_getAssociatedTypeStr_webCache=Cached File
+DataArtifactNode_getAssociatedTypeStr_webDownload=Downloaded File
+# {0} - contentType
+DataArtifactNode_getSrcContentAction_actionDisplayName=View Source {0} in Directory
+DataArtifactNode_getSrcContentViewerActions_openInExtViewer=Open in External Viewer  Ctrl+E
+DataArtifactNode_getSrcContentViewerActions_viewInNewWin=View Item in New Window
+DataArtifactNode_getTimelineArtifactAction_displayName=View Selected Item in Timeline... 
+# {0} - contentType
+DataArtifactNode_getTimelineSrcContentAction_actionDisplayName=View Source {0} in Timeline... 
+DataArtifactNode_getViewSrcContentAction_type_DataArtifact=Data Artifact
+DataArtifactNode_getViewSrcContentAction_type_File=File
+DataArtifactNode_getViewSrcContentAction_type_OSAccount=OS Account
+DataArtifactNode_getViewSrcContentAction_type_unknown=Item
+FileNodev2.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E
+FileNodev2.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash
+FileNodev2.getActions.viewFileInDir.text=View File in Directory
+FileNodev2.getActions.viewInNewWin.text=View Item in New Window

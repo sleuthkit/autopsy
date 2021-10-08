@@ -21,19 +21,23 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.FileTypesByExtension;
-
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Document sub-node filters
  */
+@Messages({
+    "FileExtDocumentFilter_html_displayName=HTML",
+    "FileExtDocumentFilter_office_displayName=Office",
+    "FileExtDocumentFilter_pdf_displayName=PDF",
+    "FileExtDocumentFilter_txt_displayName=Plain Text",
+    "FileExtDocumentFilter_rtf_displayName=Rich Text",})
 public enum FileExtDocumentFilter implements FileExtSearchFilter {
-    AUT_DOC_HTML(0, "AUT_DOC_HTML", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocHtmlFilter.text"), Arrays.asList(".htm", ".html")), //NON-NLS
-    AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocOfficeFilter.text"), Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")), //NON-NLS
-    AUT_DOC_PDF(2, "AUT_DOC_PDF", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autoDocPdfFilter.text"), Arrays.asList(".pdf")), //NON-NLS
-    AUT_DOC_TXT(3, "AUT_DOC_TXT", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocTxtFilter.text"), Arrays.asList(".txt")), //NON-NLS
-    AUT_DOC_RTF(4, "AUT_DOC_RTF", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocRtfFilter.text"), Arrays.asList(".rtf"));
+    AUT_DOC_HTML(0, "AUT_DOC_HTML", Bundle.FileExtDocumentFilter_html_displayName(), Arrays.asList(".htm", ".html")), //NON-NLS
+    AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", Bundle.FileExtDocumentFilter_office_displayName(), Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")), //NON-NLS
+    AUT_DOC_PDF(2, "AUT_DOC_PDF", Bundle.FileExtDocumentFilter_pdf_displayName(), Arrays.asList(".pdf")), //NON-NLS
+    AUT_DOC_TXT(3, "AUT_DOC_TXT", Bundle.FileExtDocumentFilter_txt_displayName(), Arrays.asList(".txt")), //NON-NLS
+    AUT_DOC_RTF(4, "AUT_DOC_RTF", Bundle.FileExtDocumentFilter_rtf_displayName(), Arrays.asList(".rtf"));
     //NON-NLS
     final int id;
     final String name;
@@ -66,5 +70,5 @@ public enum FileExtDocumentFilter implements FileExtSearchFilter {
     public List<String> getFilter() {
         return Collections.unmodifiableList(this.filter);
     }
-    
+
 }

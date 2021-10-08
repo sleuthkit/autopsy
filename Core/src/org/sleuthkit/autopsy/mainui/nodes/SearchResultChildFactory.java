@@ -66,8 +66,10 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
         try {
             if (DataArtifactTableDTO.getTypeIdForClass().equals(typeId)) {
                 return new DataArtifactNode((DataArtifactTableSearchResultsDTO) key.getSearchResults(), (DataArtifactTableDTO) key.getRow());
-            } else if (DataArtifactTableDTO.getTypeIdForClass().equals(typeId)) {
+            } else if (FileRowDTO.getTypeIdForClass().equals(typeId)) {
                 return new FileNode(key.getSearchResults(), (FileRowDTO) key.getRow());
+            } else {
+                logger.log(Level.WARNING, MessageFormat.format("No known node for type id: {0} provided by row result: {1}", typeId, key.getRow()));
             }
         } catch (ClassCastException ex) {
             logger.log(Level.WARNING, MessageFormat.format("Could not cast item with type id: {0} to valid type.", typeId), ex);

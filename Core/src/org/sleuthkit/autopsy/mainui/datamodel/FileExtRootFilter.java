@@ -21,17 +21,30 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
-import org.sleuthkit.autopsy.datamodel.FileTypesByExtension;
 
 /**
  * Root node filters
  */
-@NbBundle.Messages(value = {"FileTypeExtensionFilters.tskDatabaseFilter.text=Databases"})
+@Messages({
+    "FileExtRootFilter_image_displayName=Images",
+    "FileExtRootFilter_executable_displayName=Executable",
+    "FileExtRootFilter_video_displayName=Video",
+    "FileExtRootFilter_audio_displayName=Audio",
+    "FileExtRootFilter_archives_displayName=Archives",
+    "FileExtRootFilter_documents_displayName=Documents",
+    "FileExtRootFilter_databases_displayName=Databases",
+})
 public enum FileExtRootFilter implements FileExtSearchFilter {
-    TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskImgFilter.text"), FileTypeExtensions.getImageExtensions()), TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskVideoFilter.text"), FileTypeExtensions.getVideoExtensions()), TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskAudioFilter.text"), FileTypeExtensions.getAudioExtensions()), TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskArchiveFilter.text"), FileTypeExtensions.getArchiveExtensions()), TSK_DATABASE_FILTER(4, "TSK_DATABASE_FILTER", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDatabaseFilter.text"), FileTypeExtensions.getDatabaseExtensions()), TSK_DOCUMENT_FILTER(5, "TSK_DOCUMENT_FILTER", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDocumentFilter.text"), Arrays.asList(".htm", ".html", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf")), //NON-NLS
-    TSK_EXECUTABLE_FILTER(6, "TSK_EXECUTABLE_FILTER", NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskExecFilter.text"), FileTypeExtensions.getExecutableExtensions());
+    TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", Bundle.FileExtRootFilter_image_displayName(), FileTypeExtensions.getImageExtensions()),
+    TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", Bundle.FileExtRootFilter_video_displayName(),FileTypeExtensions.getVideoExtensions()),
+    TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", Bundle.FileExtRootFilter_audio_displayName(), FileTypeExtensions.getAudioExtensions()),
+    TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", Bundle.FileExtRootFilter_archives_displayName(), FileTypeExtensions.getArchiveExtensions()),
+    TSK_DATABASE_FILTER(4, "TSK_DATABASE_FILTER", Bundle.FileExtRootFilter_databases_displayName(), FileTypeExtensions.getDatabaseExtensions()),
+    TSK_DOCUMENT_FILTER(5, "TSK_DOCUMENT_FILTER", Bundle.FileExtRootFilter_documents_displayName(), 
+            Arrays.asList(".htm", ".html", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf")), //NON-NLS
+    TSK_EXECUTABLE_FILTER(6, "TSK_EXECUTABLE_FILTER", Bundle.FileExtRootFilter_executable_displayName(), FileTypeExtensions.getExecutableExtensions());
     //NON-NLS
     final int id;
     final String name;
@@ -64,5 +77,5 @@ public enum FileExtRootFilter implements FileExtSearchFilter {
     public List<String> getFilter() {
         return Collections.unmodifiableList(this.filter);
     }
-    
+
 }
