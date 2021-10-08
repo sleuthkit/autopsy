@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * DTO Representing an abstract file in the results view.
  */
-public class FileRowDTO extends BaseRowResultDTO {
+public class FileRowDTO extends BaseRowDTO {
     
     public enum ExtensionMediaType {
         IMAGE, VIDEO, AUDIO, DOC, EXECUTABLE, TEXT, WEB, PDF, ARCHIVE, UNCATEGORIZED
@@ -37,15 +37,18 @@ public class FileRowDTO extends BaseRowResultDTO {
         return TYPE_ID;
     }
         
-    final AbstractFile abstractFile;
-    final String fileName;
-    final String extension;
-    final ExtensionMediaType extensionMediaType;
-    final boolean allocated;
-    final TskData.TSK_DB_FILES_TYPE_ENUM fileType;
-    final boolean encryptionDetected;
+    private final AbstractFile abstractFile;
+    private final String fileName;
+    private final String extension;
+    private final ExtensionMediaType extensionMediaType;
+    private final boolean allocated;
+    private final TskData.TSK_DB_FILES_TYPE_ENUM fileType;
+    private final boolean encryptionDetected;
+    private final boolean visibleChildren;
 
-    public FileRowDTO(AbstractFile abstractFile, long id, String fileName, String extension, ExtensionMediaType extensionMediaType, boolean allocated, TskData.TSK_DB_FILES_TYPE_ENUM fileType, boolean encryptionDetected, List<Object> cellValues) {
+    public FileRowDTO(AbstractFile abstractFile, long id, String fileName, String extension, 
+            ExtensionMediaType extensionMediaType, boolean allocated, TskData.TSK_DB_FILES_TYPE_ENUM fileType, 
+            boolean encryptionDetected, boolean visibleChildren, List<Object> cellValues) {
         super(cellValues, TYPE_ID, id);
         this.abstractFile = abstractFile;
         this.fileName = fileName;
@@ -54,6 +57,7 @@ public class FileRowDTO extends BaseRowResultDTO {
         this.allocated = allocated;
         this.fileType = fileType;
         this.encryptionDetected = encryptionDetected;
+        this.visibleChildren = visibleChildren;
     }
 
     public ExtensionMediaType getExtensionMediaType() {
@@ -83,5 +87,8 @@ public class FileRowDTO extends BaseRowResultDTO {
     public String getFileName() {
         return fileName;
     }
-    
+
+    public boolean hasVisibleChildren() {
+        return visibleChildren;
+    }
 }

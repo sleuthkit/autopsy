@@ -19,29 +19,31 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 /**
- * Main entry point for DAO for providing data to populate the data results
- * viewer.
+ * Base implementation of search parameters to provide to a DAO.
  */
-public class ThreePanelDAO {
+public class BaseSearchParam implements SearchParam {
+    private final long startItem;
+    private final Long maxResultsCount;
 
-    private static ThreePanelDAO instance = null;
-
-    public synchronized static ThreePanelDAO getInstance() {
-        if (instance == null) {
-            instance = new ThreePanelDAO();
-        }
-
-        return instance;
+    /**
+     * Constructor that gets all results.
+     */
+    public BaseSearchParam() {
+        this(0, null);
+    }
+    
+    public BaseSearchParam(long startItem, Long maxResultsCount) {
+        this.startItem = startItem;
+        this.maxResultsCount = maxResultsCount;
     }
 
-    private final ThreePanelDataArtifactDAO dataArtifactDAO = ThreePanelDataArtifactDAO.getInstance();
-    private final ThreePanelViewsDAO viewsDAO = ThreePanelViewsDAO.getInstance();
-
-    public ThreePanelDataArtifactDAO getDataArtifactsDAO() {
-        return dataArtifactDAO;
+    @Override
+    public long getStartItem() {
+        return startItem;
     }
 
-    public ThreePanelViewsDAO getViewsDAO() {
-        return viewsDAO;
+    @Override
+    public Long getMaxResultsCount() {
+        return maxResultsCount;
     }
 }

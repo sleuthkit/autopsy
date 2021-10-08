@@ -65,7 +65,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.displayName=Data Source",
     "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.description=Data Source"
 })
-public class ThreePanelDataArtifactDAO {
+public class DataArtifactDAO {
 
     // GVDTODO there is a different standard for normal attr strings and email attr strings
     private static final int STRING_LENGTH_MAX = 160;
@@ -117,11 +117,11 @@ public class ThreePanelDataArtifactDAO {
             Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_description()
     );
 
-    private static ThreePanelDataArtifactDAO instance = null;
+    private static DataArtifactDAO instance = null;
 
-    synchronized static ThreePanelDataArtifactDAO getInstance() {
+    synchronized static DataArtifactDAO getInstance() {
         if (instance == null) {
-            instance = new ThreePanelDataArtifactDAO();
+            instance = new DataArtifactDAO();
         }
 
         return instance;
@@ -174,7 +174,7 @@ public class ThreePanelDataArtifactDAO {
         columnKeys.add(DATASOURCE_COL);
 
         // determine all different attribute types present as well as row data for each artifact
-        List<RowResultDTO> rows = new ArrayList<>();
+        List<RowDTO> rows = new ArrayList<>();
 
         for (DataArtifact artifact : arts) {
             List<Object> cellValues = new ArrayList<>();
@@ -204,7 +204,7 @@ public class ThreePanelDataArtifactDAO {
 
             boolean isTimelineSupported = isTimelineSupported(attrValues.keySet());
 
-            rows.add(new DataArtifactTableDTO(artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id));
+            rows.add(new DataArtifactRowDTO(artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id));
         }
 
         return new DataArtifactTableSearchResultsDTO(artType, columnKeys, rows);

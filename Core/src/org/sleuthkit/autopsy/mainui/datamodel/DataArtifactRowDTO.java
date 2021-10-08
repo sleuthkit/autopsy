@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.DataArtifact;
 /**
  * A result for a data artifact.
  */
-public class DataArtifactTableDTO extends BaseRowResultDTO {
+public class DataArtifactRowDTO extends BaseRowDTO {
 
     private static final String TYPE_ID = "DATA_ARTIFACT";
 
@@ -39,7 +39,7 @@ public class DataArtifactTableDTO extends BaseRowResultDTO {
     final Content linkedFile;
     final boolean isTimelineSupported;
 
-    public DataArtifactTableDTO(DataArtifact dataArtifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) {
+    public DataArtifactRowDTO(DataArtifact dataArtifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) {
         super(cellValues, TYPE_ID, id);
         this.dataArtifact = dataArtifact;
         this.srcContent = srcContent;

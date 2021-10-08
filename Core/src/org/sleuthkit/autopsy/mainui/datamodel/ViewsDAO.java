@@ -71,7 +71,7 @@ import org.sleuthkit.datamodel.TskData;
     "ThreePanelViewsDAO.fileColumns.mimeType=MIME Type",
     "ThreePanelViewsDAO.fileColumns.extensionColLbl=Extension",
     "ThreePanelViewsDAO.fileColumns.noDescription=No Description"})
-public class ThreePanelViewsDAO {
+public class ViewsDAO {
 
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
@@ -89,26 +89,25 @@ public class ThreePanelViewsDAO {
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_sizeColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_flagsDirColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_flagsMetaColLbl()),
-//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_modeColLbl()),
-//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_useridColLbl()),
-//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_groupidColLbl()),
-//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_metaAddrColLbl()),
-//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_attrAddrColLbl()),
-//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeDirColLbl()),
-//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeMetaColLbl()),
+            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_modeColLbl()),
+            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_useridColLbl()),
+            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_groupidColLbl()),
+            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_metaAddrColLbl()),
+            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_attrAddrColLbl()),
+            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeDirColLbl()),
+            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeMetaColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_knownColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_md5HashColLbl()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_sha256HashColLbl()),
-//            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_objectId()),
+            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_objectId()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_mimeType()),
             getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_extensionColLbl()));
 
-    
-    private static ThreePanelViewsDAO instance = null;
+    private static ViewsDAO instance = null;
 
-    synchronized static ThreePanelViewsDAO getInstance() {
+    synchronized static ViewsDAO getInstance() {
         if (instance == null) {
-            instance = new ThreePanelViewsDAO();
+            instance = new ViewsDAO();
         }
 
         return instance;
@@ -207,12 +206,13 @@ public class ThreePanelViewsDAO {
         String whereStatement = getFileWhereStatement(filter, dataSourceId, showKnown);
         List<AbstractFile> files = getCase().findAllFilesWhere(whereStatement);
 
-        List<RowResultDTO> fileRows = new ArrayList<>();
+        List<RowDTO> fileRows = new ArrayList<>();
         for (AbstractFile file : files) {
 
-            boolean encryptionDetected = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase())
-                    && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
-
+            boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
+            boolean encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
+            boolean hasVisibleChildren = isArchive || file.isDir();
+            
             List<Object> cellValues = Arrays.asList(
                     file.getName(), // GVDTODO handle . and .. from getContentDisplayName()
                     // GVDTODO translation column
@@ -229,21 +229,19 @@ public class ThreePanelViewsDAO {
                     file.getSize(),
                     file.getDirFlagAsString(),
                     file.getMetaFlagsAsString(),
-                    
-//                    mode,
-//                    userid,
-//                    groupid,
-//                    metaAddr,
-//                    attrAddr,
-//                    typeDir,
-//                    typeMeta,
-                    
+                    // mode,
+                    // userid,
+                    // groupid,
+                    // metaAddr,
+                    // attrAddr,
+                    // typeDir,
+                    // typeMeta,
+
                     file.getKnown().getName(),
                     StringUtils.defaultString(file.getMd5Hash()),
                     StringUtils.defaultString(file.getSha256Hash()),
-                    
-//                    objectId,
-                    
+                    // objectId,
+
                     StringUtils.defaultString(file.getMIMEType()),
                     file.getNameExtension()
             );
@@ -257,6 +255,7 @@ public class ThreePanelViewsDAO {
                     file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
                     file.getType(),
                     encryptionDetected,
+                    hasVisibleChildren,
                     cellValues));
         }
 

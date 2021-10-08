@@ -65,7 +65,7 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -86,7 +86,7 @@ public class DataArtifactNode extends AbstractNode {
 
     private static final Logger logger = Logger.getLogger(DataArtifactNode.class.getName());
 
-    private static Lookup createLookup(DataArtifactTableDTO row) {
+    private static Lookup createLookup(DataArtifactRowDTO row) {
         DataArtifactItem artifactItem = new DataArtifactItem(row.getDataArtifact(), row.getSrcContent());
         if (row.getSrcContent() == null) {
             return Lookups.fixed(row.getDataArtifact(), artifactItem);
@@ -96,14 +96,14 @@ public class DataArtifactNode extends AbstractNode {
     }
 
     private final BlackboardArtifact.Type artifactType;
-    private final DataArtifactTableDTO artifactRow;
+    private final DataArtifactRowDTO artifactRow;
     private final List<ColumnKey> columns;
 
-    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow) {
+    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow) {
         this(tableData, artifactRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()));
     }
 
-    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow, String iconPath) {
+    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow, String iconPath) {
         super(Children.LEAF, createLookup(artifactRow));
 
         // use first cell value for display name

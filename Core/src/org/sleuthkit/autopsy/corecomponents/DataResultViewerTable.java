@@ -88,7 +88,6 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
-import org.sleuthkit.autopsy.mainui.datamodel.ThreePanelDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.datamodel.Score.Significance;
 

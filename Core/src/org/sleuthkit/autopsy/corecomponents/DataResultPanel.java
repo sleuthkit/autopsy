@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
-import org.sleuthkit.autopsy.mainui.datamodel.ThreePanelDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**

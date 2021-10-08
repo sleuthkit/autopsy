@@ -18,16 +18,30 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.util.List;
-
 /**
- * DTO representing an individual row in search results.
+ * Main entry point for DAO for providing data to populate the data results
+ * viewer.
  */
-public interface RowResultDTO {
+public class MainDAO {
 
-    List<Object> getCellValues();
+    private static MainDAO instance = null;
 
-    long getId();
-    
-    String getTypeId();
+    public synchronized static MainDAO getInstance() {
+        if (instance == null) {
+            instance = new MainDAO();
+        }
+
+        return instance;
+    }
+
+    private final DataArtifactDAO dataArtifactDAO = DataArtifactDAO.getInstance();
+    private final ViewsDAO viewsDAO = ViewsDAO.getInstance();
+
+    public DataArtifactDAO getDataArtifactsDAO() {
+        return dataArtifactDAO;
+    }
+
+    public ViewsDAO getViewsDAO() {
+        return viewsDAO;
+    }
 }

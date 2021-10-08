@@ -18,24 +18,13 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.util.List;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-
 /**
- * Search results for data artifacts.
+ * Describes parameters to provide to the DAO for fetching data.
  */
-public class DataArtifactTableSearchResultsDTO extends BaseSearchResultsDTO {
+public interface SearchParam {
 
-    private static final String TYPE_ID = "DATA_ARTIFACT";
+    long getStartItem();
 
-    private final BlackboardArtifact.Type artifactType;
-
-    public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<ColumnKey> columns, List<RowDTO> items) {
-        super(TYPE_ID, artifactType.getDisplayName(), columns, items);
-        this.artifactType = artifactType;
-    }
-
-    public BlackboardArtifact.Type getArtifactType() {
-        return artifactType;
-    }
+    // null if no max defined
+    Long getMaxResultsCount();
 }

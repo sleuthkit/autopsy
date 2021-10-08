@@ -23,13 +23,13 @@ import java.util.List;
 /**
  * Base implementation for a row result.
  */
-public class BaseRowResultDTO implements RowResultDTO {
+public class BaseRowDTO implements RowDTO {
     
     private final List<Object> cellValues;
     private final long id;
     private final String typeId;
 
-    public BaseRowResultDTO(List<Object> cellValues, String typeId, long id) {
+    public BaseRowDTO(List<Object> cellValues, String typeId, long id) {
         this.cellValues = cellValues;
         this.id = id;
         this.typeId = typeId;
@@ -68,7 +68,7 @@ public class BaseRowResultDTO implements RowResultDTO {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final BaseRowResultDTO other = (BaseRowResultDTO) obj;
+        final BaseRowDTO other = (BaseRowDTO) obj;
         if (this.id != other.id) {
             return false;
         }

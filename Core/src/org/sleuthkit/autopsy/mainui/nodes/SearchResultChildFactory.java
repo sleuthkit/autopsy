@@ -27,12 +27,12 @@ import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultChildFactory.ChildKey;
-import org.sleuthkit.autopsy.mainui.datamodel.RowResultDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 
 /**
  * Factory for populating results in a results viewer with a SearchResultsDTO.
@@ -64,8 +64,8 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
     protected Node createNodeForKey(ChildKey key) {
         String typeId = key.getRow().getTypeId();
         try {
-            if (DataArtifactTableDTO.getTypeIdForClass().equals(typeId)) {
-                return new DataArtifactNode((DataArtifactTableSearchResultsDTO) key.getSearchResults(), (DataArtifactTableDTO) key.getRow());
+            if (DataArtifactRowDTO.getTypeIdForClass().equals(typeId)) {
+                return new DataArtifactNode((DataArtifactTableSearchResultsDTO) key.getSearchResults(), (DataArtifactRowDTO) key.getRow());
             } else if (FileRowDTO.getTypeIdForClass().equals(typeId)) {
                 return new FileNode(key.getSearchResults(), (FileRowDTO) key.getRow());
             } else {
@@ -90,9 +90,9 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
     static class ChildKey {
 
         private final SearchResultsDTO searchResults;
-        private final RowResultDTO row;
+        private final RowDTO row;
 
-        ChildKey(SearchResultsDTO searchResults, RowResultDTO child) {
+        ChildKey(SearchResultsDTO searchResults, RowDTO child) {
             this.searchResults = searchResults;
             this.row = child;
         }
@@ -101,7 +101,7 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
             return searchResults;
         }
 
-        RowResultDTO getRow() {
+        RowDTO getRow() {
             return row;
         }
 

@@ -32,7 +32,7 @@ public interface SearchResultsDTO {
 
     List<ColumnKey> getColumns();
 
-    List<RowResultDTO> getItems();
+    List<RowDTO> getItems();
 
     long getTotalResultsCount();
     

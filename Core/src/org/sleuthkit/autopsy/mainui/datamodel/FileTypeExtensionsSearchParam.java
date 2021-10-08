@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * Key for accessing data about file type extensions from the DAO.
  */
-public class FileTypeExtensionsSearchParam {
+public class FileTypeExtensionsSearchParam extends BaseSearchParam {
 
     private final FileExtSearchFilter filter;
     private final Long dataSourceId;
@@ -35,6 +35,13 @@ public class FileTypeExtensionsSearchParam {
         this.filter = filter;
         this.dataSourceId = dataSourceId;
         this.knownShown = showKnown;
+    }
+
+    public FileTypeExtensionsSearchParam(FileExtSearchFilter filter, Long dataSourceId, boolean knownShown, long startItem, Long maxResultsCount) {
+        super(startItem, maxResultsCount);
+        this.filter = filter;
+        this.dataSourceId = dataSourceId;
+        this.knownShown = knownShown;
     }
 
     public FileExtSearchFilter getFilter() {

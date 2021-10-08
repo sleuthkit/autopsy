@@ -45,11 +45,11 @@ import org.sleuthkit.autopsy.mainui.nodes.DataArtifactNode;
 import org.sleuthkit.autopsy.mainui.nodes.FileNode;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
-import org.sleuthkit.autopsy.mainui.datamodel.ThreePanelDAO;
-import org.sleuthkit.autopsy.mainui.datamodel.RowResultDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -371,7 +371,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         dataResultPanel.setNode(selectedNode);
     }
 
-    private final ThreePanelDAO threePanelDAO = ThreePanelDAO.getInstance();
+    private final MainDAO threePanelDAO = MainDAO.getInstance();
 
     public void displayDataArtifact(DataArtifactSearchParam dataArtifactKey) {
         try {

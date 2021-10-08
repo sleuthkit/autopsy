@@ -28,15 +28,15 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
     private final String typeId;
     private final String displayName;
     private final List<ColumnKey> columns;
-    private final List<RowResultDTO> items;
+    private final List<RowDTO> items;
     private final long totalResultsCount;
     private final long startItem;
 
-    public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowResultDTO> items) {
+    public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowDTO> items) {
         this(typeId, displayName, columns, items, 0, items == null ? 0 : items.size());
     }
 
-    public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowResultDTO> items, long startItem, long totalResultsCount) {
+    public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowDTO> items, long startItem, long totalResultsCount) {
         this.typeId = typeId;
         this.displayName = displayName;
         this.columns = columns;
@@ -61,7 +61,7 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
     }
 
     @Override
-    public List<RowResultDTO> getItems() {
+    public List<RowDTO> getItems() {
         return items;
     }
 
