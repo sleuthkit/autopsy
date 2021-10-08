@@ -44,9 +44,9 @@ import org.sleuthkit.autopsy.datamodel.DataArtifactNodev2;
 import org.sleuthkit.autopsy.datamodel.SearchResultChildFactory.NodeCreator;
 import org.sleuthkit.autopsy.datamodel.SearchResultTableNode;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.RowResultDTO;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDataArtifactDAO.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 

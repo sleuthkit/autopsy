@@ -25,11 +25,15 @@ import java.util.HashSet;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.SearchResultsDTO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.ExtensionMediaType;
+import org.sleuthkit.autopsy.datamodel.ThreePanelViewsDAO.FileRowDTO;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
@@ -46,75 +50,6 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * children.
  */
 public class FileNodev2 extends AbstractNode {
-
-    enum ExtensionMediaType {
-        IMAGE,
-        VIDEO,
-        AUDIO,
-        DOC,
-        EXECUTABLE,
-        TEXT,
-        WEB,
-        PDF,
-        ARCHIVE,
-        UNCATEGORIZED
-    }
-    
-    class FileRowDTO {
-        private final AbstractFile abstractFile;
-        private final long id;
-        private final String fileName;
-        
-        private final String extension;
-        private final ExtensionMediaType extensionMediaType;
-        
-        private final TSK_FS_NAME_FLAG_ENUM allocated;
-        private final TSK_DB_FILES_TYPE_ENUM fileType;
-        private final boolean encryptionDetected;
-
-        public FileRowDTO(AbstractFile abstractFile, long id, String fileName, String extension, ExtensionMediaType extensionMediaType, TSK_FS_NAME_FLAG_ENUM allocated, TSK_DB_FILES_TYPE_ENUM fileType, boolean encryptionDetected) {
-            this.abstractFile = abstractFile;
-            this.id = id;
-            this.fileName = fileName;
-            this.extension = extension;
-            this.extensionMediaType = extensionMediaType;
-            this.allocated = allocated;
-            this.fileType = fileType;
-            this.encryptionDetected = encryptionDetected;
-        }
-        
-        public ExtensionMediaType getExtensionMediaType() {
-            return extensionMediaType;
-        }
-
-        public TSK_FS_NAME_FLAG_ENUM getAllocated() {
-            return allocated;
-        }
-
-        public TSK_DB_FILES_TYPE_ENUM getFileType() {
-            return fileType;
-        }
-
-        public AbstractFile getAbstractFile() {
-            return abstractFile;
-        }
-
-        public String getExtension() {
-            return extension;
-        }
-
-        public boolean isEncryptionDetected() {
-            return encryptionDetected;
-        }
-
-        public String getFileName() {
-            return fileName;
-        }
-
-        public long getId() {
-            return id;
-        }
-    }
 
     /**
      * Gets the path to the icon file that should be used to visually represent
@@ -154,21 +89,24 @@ public class FileNodev2 extends AbstractNode {
         }
     }
     
-    private boolean directoryBrowseMode;
-    private FileRowDTO fileData;
+    private final boolean directoryBrowseMode;
+    private final FileRowDTO fileData;
+    private final List<ThreePanelDAO.ColumnKey> columns;
 
 
-    public FileNodev2(FileRowDTO file) {
-        this(file, true);
+    public FileNodev2(SearchResultsDTO<FileRowDTO> results, FileRowDTO file) {
+        this(results, file, true);
     }
 
 
-    public FileNodev2(FileRowDTO file, boolean directoryBrowseMode) {
+    public FileNodev2(SearchResultsDTO<FileRowDTO> results, FileRowDTO file, boolean directoryBrowseMode) {
         super(ContentNodeUtilv2.getChildren(file.getId()), ContentNodeUtilv2.getLookup(file.getAbstractFile()));
         setIcon(file);
         setDisplayName(ContentNodeUtilv2.getContentDisplayName(file.getFileName()));
         setName(ContentNodeUtilv2.getContentName(file.getId()));
         this.directoryBrowseMode = directoryBrowseMode;
+        this.fileData = file;
+        this.columns = results.getColumns();
     }
 
     /*
@@ -242,5 +180,10 @@ public class FileNodev2 extends AbstractNode {
         actionsList.addAll(Arrays.asList(super.getActions(true)));
 
         return actionsList.toArray(new Action[actionsList.size()]);
+    }
+
+    @Override
+    protected Sheet createSheet() {
+        return ContentNodeUtilv2.setSheet(super.createSheet(), this.columns, this.fileData.getCellValues());
     }
 }

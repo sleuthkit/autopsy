@@ -51,8 +51,8 @@ import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.ColumnKey;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableDTO;
-import org.sleuthkit.autopsy.datamodel.ThreePanelDAO.DataArtifactTableSearchResultsDTO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDataArtifactDAO.DataArtifactTableDTO;
+import org.sleuthkit.autopsy.datamodel.ThreePanelDataArtifactDAO.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
@@ -86,7 +86,7 @@ public class DataArtifactNodev2 extends AbstractNode {
 
     private final BlackboardArtifact.Type artifactType;
     private final DataArtifactTableDTO artifactRow;
-    private final List<ThreePanelDAO.ColumnKey> columns;
+    private final List<ColumnKey> columns;
 
     public DataArtifactNodev2(DataArtifactTableSearchResultsDTO tableData, DataArtifactTableDTO artifactRow) {
         this(tableData, artifactRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()));
@@ -428,42 +428,8 @@ public class DataArtifactNodev2 extends AbstractNode {
         }
     }
 
-    @NbBundle.Messages({
-        "DataArtifactNodev2.createSheet.srcFile.name=Source Name",
-        "DataArtifactNodev2.createSheet.srcFile.displayName=Source Name",
-        "DataArtifactNodev2.createSheet.srcFile.origName=Original Name",
-        "DataArtifactNodev2.createSheet.srcFile.origDisplayName=Original Name",})
     @Override
     protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-        if (sheetSet == null) {
-            sheetSet = Sheet.createPropertiesSet();
-            sheet.put(sheetSet);
-        }
-
-        int maxSize = Math.min(this.columns.size(), this.artifactRow.getCellValues().size());
-
-        for (int i = 0; i < maxSize; i++) {
-            ColumnKey columnKey = this.columns.get(i);
-            Object cellValue = this.artifactRow.getCellValues().get(i);
-
-            if (cellValue == null) {
-                continue;
-            }
-            
-            if (cellValue instanceof Date) {
-                cellValue = TimeZoneUtils.getFormattedTime(((Date) cellValue).getTime() / 1000);
-            }
-            
-            sheetSet.put(new NodeProperty<>(
-                    columnKey.getFieldName(),
-                    columnKey.getDisplayName(),
-                    columnKey.getDescription(),
-                    cellValue
-            ));
-        }
-
-        return sheet;
+        return ContentNodeUtilv2.setSheet(super.createSheet(), this.columns, this.artifactRow.getCellValues());
     }
 }
