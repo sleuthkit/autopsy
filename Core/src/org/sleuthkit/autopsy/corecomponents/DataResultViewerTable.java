@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -86,6 +87,8 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
+import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.datamodel.Score.Significance;
 
 /**
@@ -141,6 +144,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final TableListener outlineViewListener;
     private final IconRendererTableListener iconRendererListener;
     private Node rootNode;
+    private SearchResultsDTO searchResults;
 
     /**
      * Multiple nodes may have been visited in the context of this
@@ -258,7 +262,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 nodeNameToPagingSupportMap.values().forEach((ps) -> {
                     ps.postPageSizeChangeEvent();
                 });
-                
+
                 setCursor(null);
             }
         });
@@ -301,6 +305,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     public boolean isSupported(Node candidateRootNode) {
         return true;
     }
+    
+    @Override
+    public void setNode(Node rootNode) {
+        setNode(rootNode, null);
+    }
 
     /**
      * Sets the current root node of this tabular result viewer.
@@ -309,7 +318,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void setNode(Node rootNode) {
+    public void setNode(Node rootNode, SearchResultsDTO searchResults) {
+        this.searchResults = searchResults;
+        
         if (!SwingUtilities.isEventDispatchThread()) {
             LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");
             return;
@@ -386,7 +397,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
              * root context of the child OutlineView, otherwise make an
              * "empty"node the root context.
              */
-            if (rootNode != null && rootNode.getChildren().getNodesCount() > 0) {
+            if ((searchResults != null && searchResults.getTotalResultsCount() > 0) 
+                    || (rootNode != null && rootNode.getChildren().getNodesCount() > 0)) {
                 this.getExplorerManager().setRootContext(this.rootNode);
                 outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
                 setupTable();
@@ -445,6 +457,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (firstProp != null) {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
         }
+
 
         /*
          * Load column sorting information from preferences file and apply it to
@@ -747,6 +760,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *         order.
      */
     private synchronized List<Node.Property<?>> loadColumnOrder() {
+
+        if (searchResults != null) {
+            return searchResults.getColumns().stream()
+                    .map(columnKey -> {
+                        return new NodeProperty<>(
+                                columnKey.getFieldName(),
+                                columnKey.getDisplayName(),
+                                columnKey.getDescription(),
+                                ""
+                        );
+                    })
+                    .collect(Collectors.toList());
+        }
 
         List<Property<?>> props = ResultViewerPersistence.getAllChildProperties(rootNode, 100);
 
@@ -1511,7 +1537,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     })
     private void exportCSVButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCSVButtonActionPerformed
         Node currentRoot = this.getExplorerManager().getRootContext();
-        if (currentRoot != null && currentRoot.getChildren().getNodesCount() > 0) {
+        // GVDTODO disabled for Search Result node
+        if (currentRoot != null && (!(currentRoot instanceof SearchResultRootNode)) && currentRoot.getChildren().getNodesCount() > 0) {
             org.sleuthkit.autopsy.directorytree.ExportCSVAction.saveNodesToCSV(java.util.Arrays.asList(currentRoot.getChildren().getNodes()), this);
         } else {
             MessageNotifyUtil.Message.info(Bundle.DataResultViewerTable_exportCSVButtonActionPerformed_empty());

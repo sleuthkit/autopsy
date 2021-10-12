@@ -56,6 +56,7 @@ import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.guiutils.WrapLayout;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -450,8 +451,15 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         return (selectedNode != null);
     }
 
-    @Override
+  @Override
     public void setNode(Node givenNode) {
+        setNode(givenNode, null);
+    }
+
+    @Override
+    public void setNode(Node givenNode, SearchResultsDTO searchResults) {
+        // GVDTODO givenNode cannot be assumed to be a table filter node and search results needs to be captured.
+        
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (selectionListener == null) {
             this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener());
@@ -467,7 +475,13 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             // case where the DataResultViewerThumbnail stands along from the 
             // DataResultViewer.  See DataResultViewer setNode for more information.
             if (givenNode != null && givenNode.getChildren().getNodesCount() > 0) {
-                rootNode = (TableFilterNode) givenNode;
+                
+                // GVDTODO this should be handled more elegantly
+                rootNode = (givenNode instanceof TableFilterNode) 
+                        ? (TableFilterNode) givenNode 
+                        : new TableFilterNode(givenNode, true);
+                
+                
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will
                  * produce ThumbnailPageNodes with ThumbnailViewNode children

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
@@ -530,8 +531,14 @@ public class Artifacts {
          *                         no filtering will occur.
          */
         TypeNode(BlackboardArtifact.Type type, long filteringDSObjId) {
-            super(Children.create(new ArtifactFactory(type, filteringDSObjId), true),
-                    Lookups.singleton(type.getDisplayName()),
+            super(type.getCategory() == Category.DATA_ARTIFACT
+                    ? new Children.Array()
+                    : Children.create(new ArtifactFactory(type, filteringDSObjId), true),
+                    
+                    type.getCategory() == Category.DATA_ARTIFACT
+                    ? Lookups.fixed(type.getDisplayName(), new DataArtifactSearchParam(type, filteringDSObjId > 0 ? filteringDSObjId : null))
+                    : Lookups.singleton(type.getDisplayName()),
+                    
                     type.getDisplayName(),
                     filteringDSObjId,
                     type);

@@ -35,12 +35,6 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(FileTypesByExtension sf);
 
-    T visit(FileTypesByExtension.RootFilter fsf);
-
-    T visit(FileTypesByExtension.DocumentFilter df);
-
-    T visit(FileTypesByExtension.ExecutableFilter ef);
-
     T visit(RecentFiles rf);
 
     T visit(RecentFiles.RecentFilesFilter rff);
@@ -93,21 +87,6 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(FileTypesByExtension sf) {
             return defaultVisit(sf);
-        }
-
-        @Override
-        public T visit(FileTypesByExtension.RootFilter fsf) {
-            return defaultVisit(fsf);
-        }
-
-        @Override
-        public T visit(FileTypesByExtension.DocumentFilter df) {
-            return defaultVisit(df);
-        }
-
-        @Override
-        public T visit(FileTypesByExtension.ExecutableFilter ef) {
-            return defaultVisit(ef);
         }
 
         @Override

@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
@@ -38,7 +40,16 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
+import org.sleuthkit.autopsy.mainui.nodes.DataArtifactNode;
+import org.sleuthkit.autopsy.mainui.nodes.FileNode;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
+import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -360,6 +371,39 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         dataResultPanel.setNode(selectedNode);
     }
 
+    private final MainDAO threePanelDAO = MainDAO.getInstance();
+
+    public void displayDataArtifact(DataArtifactSearchParam dataArtifactKey) {
+        try {
+            displaySearchResults(threePanelDAO.getDataArtifactsDAO().getDataArtifactsForTable(dataArtifactKey));
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for artifact type: {0} and data source id: {1}.",
+                    dataArtifactKey.getArtifactType().getTypeName(),
+                    dataArtifactKey.getDataSourceId() == null ? "<null>" : dataArtifactKey.getDataSourceId()),
+                    ex);
+        }
+    }
+    
+
+    public void displayFileExtensions(FileTypeExtensionsSearchParam fileExtensionsKey) {
+        try {
+            displaySearchResults(threePanelDAO.getViewsDAO().getFilesByExtension(fileExtensionsKey));
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for files of extension filter: {0} and data source id: {1}.",
+                    fileExtensionsKey.getFilter().getDisplayName(),
+                    fileExtensionsKey.getDataSourceId() == null ? "<null>" : fileExtensionsKey.getDataSourceId()),
+                    ex);
+        }
+    }
+
+    private void displaySearchResults(SearchResultsDTO searchResults) {
+        dataResultPanel.setNode(new SearchResultRootNode(searchResults), searchResults);
+        dataResultPanel.setNumberOfChildNodes(
+                searchResults.getTotalResultsCount() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) searchResults.getTotalResultsCount());
+    }
+
     @Override
     public void setTitle(String title) {
         setName(title);
@@ -463,5 +507,4 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void resetTabs(Node node) {
         dataResultPanel.setNode(node);
     }
-
 }

@@ -43,6 +43,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
  * A result view panel is a JPanel with a JTabbedPane child component that
@@ -85,6 +88,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent contentView;
     private ExplorerManager explorerManager;
     private Node currentRootNode;
+    private SearchResultsDTO searchResults;
     private boolean listeningToTabbedPane;
 
     /**
@@ -341,6 +345,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         this.setVisible(true);
     }
+    
+
 
     /**
      * Sets the current root node for this result view panel. The child nodes of
@@ -354,6 +360,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     @Override
     public void setNode(Node rootNode) {
+        setNode(rootNode, null);
+    }
+    
+    void setNode(Node rootNode, SearchResultsDTO searchResults) {
+        this.searchResults = searchResults;
+        
         if (this.currentRootNode != null) {
             this.currentRootNode.removeNodeListener(rootNodeListener);
         }
@@ -387,8 +399,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         setupTabs(this.currentRootNode);
 
         if (this.currentRootNode != null) {
-            int childrenCount = this.currentRootNode.getChildren().getNodesCount();
-            this.numberOfChildNodesLabel.setText(Integer.toString(childrenCount));
+            long childrenCount = (this.searchResults != null)
+                    ? this.searchResults.getTotalResultsCount()
+                    : this.currentRootNode.getChildren().getNodesCount();
+            this.numberOfChildNodesLabel.setText(Long.toString(childrenCount));
         }
         this.numberOfChildNodesLabel.setVisible(true);
     }
@@ -477,7 +491,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          */
         if (tabToSelect != NO_TAB_SELECTED) {
             resultViewerTabs.setSelectedIndex(tabToSelect);
-            resultViewers.get(tabToSelect).setNode(selectedNode);
+            resultViewers.get(tabToSelect).setNode(selectedNode, this.searchResults);
         }
     }
 
@@ -638,7 +652,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          *
          */
         private void updateMatches() {
-            if (currentRootNode != null && currentRootNode.getChildren() != null) {
+            if (searchResults != null) {
+                long resultCount = searchResults.getTotalResultsCount();
+                if (resultCount > Integer.MAX_VALUE) {
+                    resultCount = Integer.MAX_VALUE;
+                }
+                
+                setNumMatches((int) resultCount);
+            } else if (currentRootNode != null && currentRootNode.getChildren() != null) {
                 setNumMatches(currentRootNode.getChildren().getNodesCount());
             }
         }
