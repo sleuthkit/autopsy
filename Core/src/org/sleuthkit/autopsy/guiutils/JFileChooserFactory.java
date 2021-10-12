@@ -99,11 +99,6 @@ public final class JFileChooserFactory {
      * @return The name of the class that requested the JFileChooser or null if not found.
      */
     private static String getCallerClassName() { 
-        try {
-          throw new Exception("test");  
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
         StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
         for (int i=1; i<stElements.length; i++) {
             StackTraceElement ste = stElements[i];
