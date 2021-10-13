@@ -119,7 +119,7 @@ public class DataArtifactDAO {
 
     private static DataArtifactDAO instance = null;
 
-    synchronized static DataArtifactDAO getInstance() {
+    public synchronized static DataArtifactDAO getInstance() {
         if (instance == null) {
             instance = new DataArtifactDAO();
         }
