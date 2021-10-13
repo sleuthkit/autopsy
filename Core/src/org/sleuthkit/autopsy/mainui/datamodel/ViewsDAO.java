@@ -28,9 +28,11 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
@@ -151,6 +153,7 @@ public class ViewsDAO {
     }
 
     private final Cache<FileTypeExtensionsSearchParam, SearchResultsDTO> fileTypeByExtensionCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<FileTypeMimeSearchParam, SearchResultsDTO> fileTypeByMimeCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParam key) throws ExecutionException, IllegalArgumentException {
         if (key.getFilter() == null) {
@@ -159,8 +162,19 @@ public class ViewsDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return fileTypeByExtensionCache.get(key, () -> fetchFileViewFiles(key.getFilter(), key.getDataSourceId(), key.isKnownShown()));
+        return fileTypeByExtensionCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), key.isKnownShown()));
     }
+    
+    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParam key) throws ExecutionException, IllegalArgumentException {
+        if (key.getFilter() == null) {
+            throw new IllegalArgumentException("Must have non-null filter");
+        } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
+            throw new IllegalArgumentException("Data source id must be greater than 0 or null");
+        }
+
+        return fileTypeByMimeCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), key.isKnownShown()));
+    }    
+    
 
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
 //
@@ -179,7 +193,7 @@ public class ViewsDAO {
     private Map<Integer, Long> fetchFileViewCounts(List<FileExtSearchFilter> filters, Long dataSourceId, boolean showKnown) throws NoCurrentCaseException, TskCoreException {
         Map<Integer, Long> counts = new HashMap<>();
         for (FileExtSearchFilter filter : filters) {
-            String whereClause = getFileWhereStatement(filter, dataSourceId, showKnown);
+            String whereClause = getFileExtensionWhereStatement(filter, dataSourceId, showKnown);
             long count = getCase().countFilesWhere(whereClause);
             counts.put(filter.getId(), count);
         }
@@ -187,7 +201,7 @@ public class ViewsDAO {
         return counts;
     }
 
-    private String getFileWhereStatement(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) {
+    private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) {
         String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
                 + (showKnown
                         ? " "
@@ -201,9 +215,38 @@ public class ViewsDAO {
                         .collect(Collectors.joining(", ")) + "))";
         return whereClause;
     }
+    
+    private String getFileMimeWhereStatement(String mimeType, Long dataSourceId, boolean showKnown) {
 
-    private SearchResultsDTO fetchFileViewFiles(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) throws NoCurrentCaseException, TskCoreException {
-        String whereStatement = getFileWhereStatement(filter, dataSourceId, showKnown);
+        String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + " AND (type IN ("
+                + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
+                + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
+                + "))"
+                + ((dataSourceId > 0) ? " AND data_source_obj_id = " + dataSourceId : " ")
+                + (showKnown ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
+                + " AND mime_type = '" + mimeType + "'";
+    
+        return whereClause;
+    }    
+    
+    private SearchResultsDTO fetchExtensionSearchResultsDTOs(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getFileExtensionWhereStatement(filter, dataSourceId, showKnown);
+        return fetchFileViewFiles(whereStatement, filter.getDisplayName());
+    }
+
+    @NbBundle.Messages({"FileTypesByMimeType.name.text=By MIME Type"})
+    private SearchResultsDTO fetchMimeSearchResultsDTOs(String mimeType, Long dataSourceId, boolean showKnown) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getFileMimeWhereStatement(mimeType, dataSourceId, showKnown);
+        final String MIME_TYPE_DISPLAY_NAME = Bundle.FileTypesByMimeType_name_text();
+        return fetchFileViewFiles(whereStatement, MIME_TYPE_DISPLAY_NAME);
+    }
+
+    private SearchResultsDTO fetchFileViewFiles(String whereStatement, String displayName) throws NoCurrentCaseException, TskCoreException {
         List<AbstractFile> files = getCase().findAllFilesWhere(whereStatement);
 
         List<RowDTO> fileRows = new ArrayList<>();
@@ -259,7 +302,7 @@ public class ViewsDAO {
                     cellValues));
         }
 
-        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, filter.getDisplayName(), FILE_COLUMNS, fileRows);
+        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows);
     }
 
 }
