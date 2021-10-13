@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Key for data artifact in order to retrieve data from DAO.
  */
-public class DataArtifactSearchParam extends BaseSearchParam {
+public class DataArtifactSearchParam extends BaseSearchParams {
     private final BlackboardArtifact.Type artifactType;
     private final Long dataSourceId;
 

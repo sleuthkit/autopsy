@@ -23,25 +23,20 @@ import java.util.Objects;
 /**
  * Key for accessing data about file MIME type from the DAO.
  */
-public class FileTypeMimeSearchParam extends BaseSearchParam {
+public class FileTypeMimeSearchParams extends BaseSearchParams {
 
     private final String mimeType;
     private final Long dataSourceId;
-    private final boolean knownShown;
 
-    // TODO: This should ideally take in some kind of ENUM once we redo the tree.
-    // this assumes that filters implicitly or explicitly implement hashCode and equals to work
-    public FileTypeMimeSearchParam(String mimeType, Long dataSourceId, boolean showKnown) {
+    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, boolean showKnown) {
         this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
-        this.knownShown = showKnown;
     }
 
-    public FileTypeMimeSearchParam(String mimeType, Long dataSourceId, boolean knownShown, long startItem, Long maxResultsCount) {
+    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, boolean knownShown, long startItem, Long maxResultsCount) {
         super(startItem, maxResultsCount);
         this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
-        this.knownShown = knownShown;
     }
 
     public String getMimeType() {
@@ -52,16 +47,11 @@ public class FileTypeMimeSearchParam extends BaseSearchParam {
         return dataSourceId;
     }
 
-    public boolean isKnownShown() {
-        return knownShown;
-    }
-
     @Override
     public int hashCode() {
         int hash = 7;
         hash = 23 * hash + Objects.hashCode(this.mimeType);
         hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + (this.knownShown ? 1 : 0);
         return hash;
     }
 
@@ -76,10 +66,7 @@ public class FileTypeMimeSearchParam extends BaseSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeMimeSearchParam other = (FileTypeMimeSearchParam) obj;
-        if (this.knownShown != other.knownShown) {
-            return false;
-        }
+        final FileTypeMimeSearchParams other = (FileTypeMimeSearchParams) obj;
         if (!(this.mimeType.equals(other.mimeType))) {
             return false;
         }
