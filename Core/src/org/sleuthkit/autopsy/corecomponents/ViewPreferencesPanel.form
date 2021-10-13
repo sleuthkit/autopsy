@@ -419,8 +419,8 @@
                 </Component>
                 <Component class="javax.swing.JSpinner" name="maxResultsSpinner">
                   <Properties>
-                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                      <SpinnerModel initial="0" maximum="50000" minimum="0" numberType="java.lang.Integer" stepSize="10000" type="number"/>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                      <Connection code="new javax.swing.SpinnerNumberModel(0, 0, PAGE_SIZE_DEFAULT, PAGE_SIZE_INTERVAL)" type="code"/>
                     </Property>
                   </Properties>
                   <Events>

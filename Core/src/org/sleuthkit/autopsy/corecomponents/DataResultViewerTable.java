@@ -156,7 +156,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     /**
      * The paging support instance for the current node.
      */
-    private PagingSupport pagingSupport = null;
+    //private PagingSupport pagingSupport = null;
 
     /**
      * Constructs a tabular result viewer that displays the children of the
@@ -305,7 +305,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     public boolean isSupported(Node candidateRootNode) {
         return true;
     }
-    
+
     @Override
     public void setNode(Node rootNode) {
         setNode(rootNode, null);
@@ -320,7 +320,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node rootNode, SearchResultsDTO searchResults) {
         this.searchResults = searchResults;
-        
+
         if (!SwingUtilities.isEventDispatchThread()) {
             LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");
             return;
@@ -345,12 +345,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                  * class for this node.
                  */
                 if (!Node.EMPTY.equals(rootNode)) {
-                    String nodeName = rootNode.getName();
-                    pagingSupport = nodeNameToPagingSupportMap.get(nodeName);
-                    if (pagingSupport == null) {
-                        pagingSupport = new PagingSupport(nodeName);
-                        nodeNameToPagingSupportMap.put(nodeName, pagingSupport);
+                    if (searchResults != null) {
+                        // GVDTODO 
+                    } else {
+                        String nodeName = rootNode.getName();
+                        pagingSupport = nodeNameToPagingSupportMap.get(nodeName);
+                        if (pagingSupport == null && this.searchResults == null) {
+                            pagingSupport = new PagingSupport(nodeName);
+                            nodeNameToPagingSupportMap.put(nodeName, pagingSupport);
+                        }
                     }
+
                     pagingSupport.updateControls();
 
                     rootNode.addNodeListener(new NodeListener() {
@@ -397,7 +402,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
              * root context of the child OutlineView, otherwise make an
              * "empty"node the root context.
              */
-            if ((searchResults != null && searchResults.getTotalResultsCount() > 0) 
+            if ((searchResults != null && searchResults.getTotalResultsCount() > 0)
                     || (rootNode != null && rootNode.getChildren().getNodesCount() > 0)) {
                 this.getExplorerManager().setRootContext(this.rootNode);
                 outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);

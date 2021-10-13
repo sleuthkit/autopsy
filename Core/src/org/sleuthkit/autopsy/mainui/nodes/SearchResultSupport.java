@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.text.MessageFormat;
 import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
@@ -32,6 +33,7 @@ public class SearchResultSupport {
     private int pageSize;
     private int pageIdx = 0;
 
+    private SearchResultsDTO currentSearchResults = null;
     private PageFetcher pageFetcher = null;
     private final MainDAO dao = MainDAO.getInstance();
 
@@ -47,7 +49,7 @@ public class SearchResultSupport {
     /**
      * @return The page size when handing paging.
      */
-    public int getPageSize() {
+    public synchronized int getPageSize() {
         return pageSize;
     }
 
@@ -65,7 +67,7 @@ public class SearchResultSupport {
     /**
      * @return The index of the page to be viewed.
      */
-    public int getPageIdx() {
+    public synchronized int getPageIdx() {
         return pageIdx;
     }
 
@@ -81,6 +83,13 @@ public class SearchResultSupport {
     }
 
     /**
+     * @return The last accessed search results or null.
+     */
+    public SearchResultsDTO getCurrentSearchResults() {
+        return currentSearchResults;
+    }
+
+    /**
      * Updates the page size and returns the results after updating the page
      * size.
      *
@@ -93,9 +102,7 @@ public class SearchResultSupport {
      */
     public synchronized SearchResultsDTO updatePageSize(int pageSize) throws IllegalArgumentException, ExecutionException {
         setPageSize(pageSize);
-        return (this.pageFetcher != null)
-                ? this.pageFetcher.fetch(this.pageSize, this.pageIdx)
-                : null;
+        return fetchResults();
     }
 
     /**
@@ -111,9 +118,44 @@ public class SearchResultSupport {
      */
     public synchronized SearchResultsDTO updatePageIdx(int pageIdx) throws IllegalArgumentException, ExecutionException {
         setPageIdx(pageIdx);
-        return (this.pageFetcher != null)
-                ? this.pageFetcher.fetch(this.pageSize, this.pageIdx)
-                : null;
+        return fetchResults();
+    }
+
+    /**
+     * Increments page index or throws an exception if not possible.
+     *
+     * @return The search results after incrementing.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    public synchronized SearchResultsDTO incrementPageIdx() throws IllegalArgumentException, ExecutionException {
+        if (this.currentSearchResults == null) {
+            throw new IllegalArgumentException("No current results");
+        } else if ((this.pageIdx + 1) * this.pageSize >= this.currentSearchResults.getTotalResultsCount()) {
+            throw new IllegalArgumentException(MessageFormat.format("Page index cannot be incremented. [pageSize: {0}, pageIdx: {1}, total results: {2}]",
+                    this.pageSize, this.pageIdx, this.currentSearchResults.getTotalResultsCount()));
+        }
+
+        return updatePageIdx(this.pageIdx + 1);
+    }
+
+    /**
+     * Decrements page index or throws an exception if not possible.
+     *
+     * @return The search results after decrementing.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    public synchronized SearchResultsDTO decrementPageIdx() throws IllegalArgumentException, ExecutionException {
+        if (this.pageFetcher == null) {
+            throw new IllegalArgumentException("No current page fetcher");
+        } else if (this.pageIdx < 1) {
+            throw new IllegalArgumentException("Page index cannot be decremented.");
+        }
+
+        return updatePageIdx(this.pageIdx - 1);
     }
 
     /**
@@ -122,33 +164,30 @@ public class SearchResultSupport {
      * display data artifacts).
      */
     public synchronized void clearSearchParameters() {
+        resetPaging();
         this.pageFetcher = null;
+        this.currentSearchResults = null;
     }
 
     /**
-     * Sets the search parameters to the data artifact search parameters.
-     * Subsequent calls that don't change search parameters (i.e. page size
-     * changes, page index changes) will use these search parameters to return
-     * results.
+     * Fetches results using current page fetcher or returns null if no current
+     * page fetcher. Also stores current results in local variable.
      *
-     * @param dataArtifactParameters The data artifact search parameters.
-     *
-     * @return The results of querying with current paging parameters.
+     * @return The current search results or null if no current page fetcher.
      *
      * @throws ExecutionException
      */
-    public synchronized SearchResultsDTO setDataArtifact(final DataArtifactSearchParam dataArtifactParameters) throws ExecutionException {
-        resetPaging();
-        this.pageFetcher = (pageSize, pageIdx) -> {
-            DataArtifactSearchParam searchParams = new DataArtifactSearchParam(
-                    dataArtifactParameters.getArtifactType(),
-                    dataArtifactParameters.getDataSourceId(),
-                    pageIdx * pageSize,
-                    (long) pageSize);
-            return dao.getDataArtifactsDAO().getDataArtifactsForTable(searchParams);
-        };
+    private synchronized SearchResultsDTO fetchResults() throws ExecutionException {
+        SearchResultsDTO newResults = (this.pageFetcher != null)
+                ? this.pageFetcher.fetch(this.pageSize, this.pageIdx)
+                : null;
 
-        return this.pageFetcher.fetch(this.pageSize, this.pageIdx);
+        this.currentSearchResults = newResults;
+        return newResults;
+    }
+
+    private synchronized void resetPaging() {
+        this.pageIdx = 0;
     }
 
     /**
@@ -175,20 +214,35 @@ public class SearchResultSupport {
             return dao.getViewsDAO().getFilesByExtension(searchParams);
         };
 
-        return this.pageFetcher.fetch(this.pageSize, this.pageIdx);
+        return fetchResults();
     }
 
-    private synchronized void resetPaging() {
-        this.pageIdx = 0;
+    /**
+     * Sets the search parameters to the data artifact search parameters.
+     * Subsequent calls that don't change search parameters (i.e. page size
+     * changes, page index changes) will use these search parameters to return
+     * results.
+     *
+     * @param dataArtifactParameters The data artifact search parameters.
+     *
+     * @return The results of querying with current paging parameters.
+     *
+     * @throws ExecutionException
+     */
+    public synchronized SearchResultsDTO setDataArtifact(final DataArtifactSearchParam dataArtifactParameters) throws ExecutionException {
+        resetPaging();
+        this.pageFetcher = (pageSize, pageIdx) -> {
+            DataArtifactSearchParam searchParams = new DataArtifactSearchParam(
+                    dataArtifactParameters.getArtifactType(),
+                    dataArtifactParameters.getDataSourceId(),
+                    pageIdx * pageSize,
+                    (long) pageSize);
+            return dao.getDataArtifactsDAO().getDataArtifactsForTable(searchParams);
+        };
+
+        return fetchResults();
     }
 
-//
-//    private void displaySearchResults(SearchResultsDTO searchResults) {
-//        dataResultPanel.setNode(new SearchResultRootNode(searchResults), searchResults);
-//        dataResultPanel.setNumberOfChildNodes(
-//                searchResults.getTotalResultsCount() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) searchResults.getTotalResultsCount());
-//    }
-//    
     /**
      * Means of fetching data based on paging settings.
      */

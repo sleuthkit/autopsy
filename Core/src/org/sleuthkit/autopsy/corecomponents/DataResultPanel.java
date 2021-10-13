@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.prefs.PreferenceChangeEvent;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -38,10 +39,12 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -85,9 +88,8 @@ import org.sleuthkit.autopsy.mainui.nodes.SearchResultSupport;
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName());
-    
-    private final SearchResultSupport searchResultSupport = new SearchResultSupport(TBD);
-    
+
+    private final SearchResultSupport searchResultSupport;
     private static final long serialVersionUID = 1L;
     private static final int NO_TAB_SELECTED = -1;
     private static final String PLEASE_WAIT_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pleasewaitNodeDisplayName");
@@ -98,7 +100,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent contentView;
     private ExplorerManager explorerManager;
     private Node currentRootNode;
-    private SearchResultsDTO searchResults;
     private boolean listeningToTabbedPane;
 
     /**
@@ -249,7 +250,40 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.resultViewers = new ArrayList<>(viewers);
         this.explorerManagerListener = new ExplorerManagerListener();
         this.rootNodeListener = new RootNodeListener();
+        this.searchResultSupport = new SearchResultSupport(UserPreferences.getResultsTablePageSize());
         initComponents();
+        initListeners();
+    }
+
+    private void initListeners() {
+        UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
+            if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
+                int newPageSize = UserPreferences.getResultsTablePageSize();
+                try {
+                    displaySearchResults(this.searchResultSupport.updatePageSize(newPageSize));
+                } catch (IllegalArgumentException | ExecutionException ex) {
+                    logger.log(Level.WARNING, "There was an error while updating page size", ex);
+                }
+            }
+        });
+
+        // GVDTODO integrate page increment/decrement
+        Runnable onIncrement = () -> {
+            try {
+                displaySearchResults(this.searchResultSupport.incrementPageIdx());
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "There was an error while incrementing page index", ex);
+            }
+        };
+        
+        
+        Runnable onDecrement = () -> {
+            try {
+                displaySearchResults(this.searchResultSupport.decrementPageIdx());
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "There was an error while decrementing page index", ex);
+            }
+        };
     }
 
     /**
@@ -368,12 +402,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     @Override
     public void setNode(Node rootNode) {
-        setNode(rootNode, null);
-    }
-
-    private void setNode(Node rootNode, SearchResultsDTO searchResults) {
-        this.searchResults = searchResults;
-
         if (this.currentRootNode != null) {
             this.currentRootNode.removeNodeListener(rootNodeListener);
         }
@@ -407,8 +435,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         setupTabs(this.currentRootNode);
 
         if (this.currentRootNode != null) {
-            long childrenCount = (this.searchResults != null)
-                    ? this.searchResults.getTotalResultsCount()
+            long childrenCount = (this.searchResultSupport.getCurrentSearchResults() != null)
+                    ? this.searchResultSupport.getCurrentSearchResults().getTotalResultsCount()
                     : this.currentRootNode.getChildren().getNodesCount();
             this.numberOfChildNodesLabel.setText(Long.toString(childrenCount));
         }
@@ -499,7 +527,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          */
         if (tabToSelect != NO_TAB_SELECTED) {
             resultViewerTabs.setSelectedIndex(tabToSelect);
-            resultViewers.get(tabToSelect).setNode(selectedNode, this.searchResults);
+            resultViewers.get(tabToSelect).setNode(selectedNode, this.searchResultSupport.getCurrentSearchResults());
         }
     }
 
@@ -517,7 +545,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             DataResultViewer currentViewer = this.resultViewers.get(currentTab);
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             try {
-                currentViewer.setNode(currentRootNode);
+                currentViewer.setNode(currentRootNode, this.searchResultSupport.updatePageIdx(0));
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "There was an error while resetting page index.", ex);
             } finally {
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             }
@@ -660,8 +690,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          *
          */
         private void updateMatches() {
-            if (searchResults != null) {
-                long resultCount = searchResults.getTotalResultsCount();
+            if (DataResultPanel.this.searchResultSupport.getCurrentSearchResults() != null) {
+                long resultCount = DataResultPanel.this.searchResultSupport.getCurrentSearchResults().getTotalResultsCount();
                 if (resultCount > Integer.MAX_VALUE) {
                     resultCount = Integer.MAX_VALUE;
                 }
@@ -829,7 +859,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param searchResults
      */
     private void displaySearchResults(SearchResultsDTO searchResults) {
-        setNode(new SearchResultRootNode(searchResults), searchResults);
+        setNode(new SearchResultRootNode(searchResults));
         setNumberOfChildNodes(
                 searchResults.getTotalResultsCount() > Integer.MAX_VALUE
                 ? Integer.MAX_VALUE
