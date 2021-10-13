@@ -103,7 +103,7 @@ public class ArtifactSearchTest extends NbTestCase {
             AbstractFile fileB1 = db.addLocalFile("fileA.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);      
             
             // Create a custom artifact and attribute types
-            BlackboardArtifact.Type customDataArtifactType = blackboard.getOrAddArtifactType(CUSTOM_DA_TYPE_NAME, CUSTOM_DA_TYPE_DISPLAY_NAME);
+            BlackboardArtifact.Type customDataArtifactType = blackboard.getOrAddArtifactType(CUSTOM_DA_TYPE_NAME, CUSTOM_DA_TYPE_DISPLAY_NAME, BlackboardArtifact.Category.DATA_ARTIFACT);
             BlackboardAttribute.Type customAttributeType = blackboard.getOrAddAttributeType(CUSTOM_ATTR_TYPE_NAME, 
                     BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, CUSTOM_ATTR_TYPE_DISPLAY_NAME);
             
