@@ -420,7 +420,7 @@
                 <Component class="javax.swing.JSpinner" name="maxResultsSpinner">
                   <Properties>
                     <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                      <Connection code="new javax.swing.SpinnerNumberModel(0, 0, PAGE_SIZE_DEFAULT, PAGE_SIZE_INTERVAL)" type="code"/>
+                      <Connection code="new javax.swing.SpinnerNumberModel(0, 0, PAGE_SIZE_MAX, PAGE_SIZE_INTERVAL)" type="code"/>
                     </Property>
                   </Properties>
                   <Events>

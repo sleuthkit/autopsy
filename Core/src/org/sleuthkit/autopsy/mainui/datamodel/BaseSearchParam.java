@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.util.Objects;
+
 /**
  * Base implementation of search parameters to provide to a DAO.
  */
 public class BaseSearchParam implements SearchParam {
+
     private final long startItem;
     private final Long maxResultsCount;
 
@@ -31,7 +34,7 @@ public class BaseSearchParam implements SearchParam {
     public BaseSearchParam() {
         this(0, null);
     }
-    
+
     public BaseSearchParam(long startItem, Long maxResultsCount) {
         this.startItem = startItem;
         this.maxResultsCount = maxResultsCount;
@@ -45,5 +48,38 @@ public class BaseSearchParam implements SearchParam {
     @Override
     public Long getMaxResultsCount() {
         return maxResultsCount;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 19 * hash + (int) (this.startItem ^ (this.startItem >>> 32));
+        hash = 19 * hash + Objects.hashCode(this.maxResultsCount);
+        return hash;
+    }
+
+    /**
+     * Meant to be called from a subclass to determine if fields are equivalent.
+     *
+     * @param obj The object to compare.
+     *
+     * @return True if fields are equal.
+     */
+    public boolean equalFields(BaseSearchParam obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null) {
+            return false;
+        }
+
+        if (this.startItem != obj.startItem) {
+            return false;
+        }
+        if (!Objects.equals(this.maxResultsCount, obj.maxResultsCount)) {
+            return false;
+        }
+        return true;
     }
 }

@@ -39,9 +39,9 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -266,24 +266,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 }
             }
         });
-
-        // GVDTODO integrate page increment/decrement
-        Runnable onIncrement = () -> {
-            try {
-                displaySearchResults(this.searchResultSupport.incrementPageIdx());
-            } catch (IllegalArgumentException | ExecutionException ex) {
-                logger.log(Level.WARNING, "There was an error while incrementing page index", ex);
-            }
-        };
-        
-        
-        Runnable onDecrement = () -> {
-            try {
-                displaySearchResults(this.searchResultSupport.decrementPageIdx());
-            } catch (IllegalArgumentException | ExecutionException ex) {
-                logger.log(Level.WARNING, "There was an error while decrementing page index", ex);
-            }
-        };
     }
 
     /**
@@ -588,9 +570,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         if (!this.isMain) {
             this.resultViewers.forEach(DataResultViewer::clearComponent);
-            this.descriptionLabel.removeAll();
-            this.numberOfChildNodesLabel.removeAll();
-            this.matchLabel.removeAll();
             this.setLayout(null);
             this.removeAll();
             this.setVisible(false);
@@ -728,52 +707,224 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         descriptionLabel = new javax.swing.JLabel();
         numberOfChildNodesLabel = new javax.swing.JLabel();
-        matchLabel = new javax.swing.JLabel();
+        javax.swing.JLabel matchLabel = new javax.swing.JLabel();
+        javax.swing.JLabel pageLabel = new javax.swing.JLabel();
+        pageNumLabel = new javax.swing.JLabel();
+        pagesLabel = new javax.swing.JLabel();
+        pagePrevButton = new javax.swing.JButton();
+        pageNextButton = new javax.swing.JButton();
+        gotoPageLabel = new javax.swing.JLabel();
+        gotoPageTextField = new javax.swing.JTextField();
         resultViewerTabs = new javax.swing.JTabbedPane();
+        javax.swing.JPanel horizontalSpacer = new javax.swing.JPanel();
 
         setMinimumSize(new java.awt.Dimension(0, 5));
         setPreferredSize(new java.awt.Dimension(5, 5));
+        setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.descriptionLabel.text")); // NOI18N
-        descriptionLabel.setMinimumSize(new java.awt.Dimension(5, 14));
+        descriptionLabel.setMaximumSize(new java.awt.Dimension(32767, 16));
+        descriptionLabel.setMinimumSize(new java.awt.Dimension(50, 14));
+        descriptionLabel.setPreferredSize(new java.awt.Dimension(32767, 16));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 7;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(descriptionLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(numberOfChildNodesLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.numberOfChildNodesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 8;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(numberOfChildNodesLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(matchLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.matchLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 9;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
+        add(matchLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(pageLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pageLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(pageLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(pageNumLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pageNumLabel.text")); // NOI18N
+        pageNumLabel.setMaximumSize(null);
+        pageNumLabel.setMinimumSize(null);
+        pageNumLabel.setPreferredSize(null);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(pageNumLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(pagesLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pagesLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(pagesLabel, gridBagConstraints);
+
+        pagePrevButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(pagePrevButton, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pagePrevButton.text")); // NOI18N
+        pagePrevButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
+        pagePrevButton.setFocusable(false);
+        pagePrevButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        pagePrevButton.setIconTextGap(0);
+        pagePrevButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        pagePrevButton.setMaximumSize(new java.awt.Dimension(22, 23));
+        pagePrevButton.setMinimumSize(new java.awt.Dimension(22, 23));
+        pagePrevButton.setPreferredSize(new java.awt.Dimension(22, 23));
+        pagePrevButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
+        pagePrevButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        pagePrevButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pagePrevButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
+        add(pagePrevButton, gridBagConstraints);
+
+        pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(pageNextButton, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pageNextButton.text")); // NOI18N
+        pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
+        pageNextButton.setFocusable(false);
+        pageNextButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        pageNextButton.setIconTextGap(0);
+        pageNextButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        pageNextButton.setMaximumSize(new java.awt.Dimension(22, 23));
+        pageNextButton.setMinimumSize(new java.awt.Dimension(22, 23));
+        pageNextButton.setPreferredSize(new java.awt.Dimension(22, 23));
+        pageNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
+        pageNextButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        pageNextButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pageNextButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(pageNextButton, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(gotoPageLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.gotoPageLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 5;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(gotoPageLabel, gridBagConstraints);
+
+        gotoPageTextField.setText(org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.gotoPageTextField.text")); // NOI18N
+        gotoPageTextField.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        gotoPageTextField.setMaximumSize(new java.awt.Dimension(32767, 22));
+        gotoPageTextField.setMinimumSize(new java.awt.Dimension(50, 22));
+        gotoPageTextField.setPreferredSize(new java.awt.Dimension(50, 22));
+        gotoPageTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                gotoPageTextFieldActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(gotoPageTextField, gridBagConstraints);
 
         resultViewerTabs.setMinimumSize(new java.awt.Dimension(0, 5));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 10;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        add(resultViewerTabs, gridBagConstraints);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(numberOfChildNodesLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(matchLabel))
-            .addComponent(resultViewerTabs, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        horizontalSpacer.setMaximumSize(new java.awt.Dimension(0, 0));
+        horizontalSpacer.setMinimumSize(new java.awt.Dimension(20, 0));
+        horizontalSpacer.setPreferredSize(new java.awt.Dimension(20, 0));
+
+        javax.swing.GroupLayout horizontalSpacerLayout = new javax.swing.GroupLayout(horizontalSpacer);
+        horizontalSpacer.setLayout(horizontalSpacerLayout);
+        horizontalSpacerLayout.setHorizontalGroup(
+            horizontalSpacerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(numberOfChildNodesLabel)
-                        .addComponent(matchLabel))
-                    .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 0, 0)
-                .addComponent(resultViewerTabs, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        horizontalSpacerLayout.setVerticalGroup(
+            horizontalSpacerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 7;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        add(horizontalSpacer, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void pagePrevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pagePrevButtonActionPerformed
+        try {
+            displaySearchResults(this.searchResultSupport.decrementPageIdx());
+        } catch (IllegalArgumentException | ExecutionException ex) {
+            logger.log(Level.WARNING, "Decrementing page index failed", ex);
+        }
+    }//GEN-LAST:event_pagePrevButtonActionPerformed
+
+    private void pageNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pageNextButtonActionPerformed
+        try {
+            displaySearchResults(this.searchResultSupport.incrementPageIdx());
+        } catch (IllegalArgumentException | ExecutionException ex) {
+            logger.log(Level.WARNING, "Decrementing page index failed", ex);
+        }
+    }//GEN-LAST:event_pageNextButtonActionPerformed
+
+    private void gotoPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageTextFieldActionPerformed
+        try {
+            int parsedNum = Integer.parseInt(this.gotoPageTextField.getText());
+            displaySearchResults(this.searchResultSupport.updatePageIdx(parsedNum - 1));
+        } catch (IllegalArgumentException | ExecutionException ex) {
+            logger.log(Level.WARNING, "Go to page index failed", ex);
+        }
+    }//GEN-LAST:event_gotoPageTextFieldActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel descriptionLabel;
-    private javax.swing.JLabel matchLabel;
+    private javax.swing.JLabel gotoPageLabel;
+    private javax.swing.JTextField gotoPageTextField;
     private javax.swing.JLabel numberOfChildNodesLabel;
+    private javax.swing.JButton pageNextButton;
+    private javax.swing.JLabel pageNumLabel;
+    private javax.swing.JButton pagePrevButton;
+    private javax.swing.JLabel pagesLabel;
     private javax.swing.JTabbedPane resultViewerTabs;
     // End of variables declaration//GEN-END:variables
 
@@ -831,7 +982,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}]",
-                            dataArtifactParams.getArtifactType(), dataArtifactParams.getDataSourceId() == null ? "<null>" : dataArtifactParams.getDataSourceId()),
+                            dataArtifactParams.getArtifactType(),
+                            dataArtifactParams.getDataSourceId() == null ? "<null>" : dataArtifactParams.getDataSourceId()),
                     ex);
         }
     }
@@ -849,21 +1001,39 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [search filter: {0}, data source id: {1}]",
-                            fileExtensionsParams.getFilter(), fileExtensionsParams.getDataSourceId() == null ? "<null>" : fileExtensionsParams.getDataSourceId()),
+                            fileExtensionsParams.getFilter(),
+                            fileExtensionsParams.getDataSourceId() == null ? "<null>" : fileExtensionsParams.getDataSourceId()),
                     ex);
         }
     }
 
     /**
+     * Displays current search result in the result view. This assumes that
+     * search result support has already been updated.
      *
-     * @param searchResults
+     * @param searchResults The new search results to display.
      */
+    @Messages({
+        "# {0} - pageNumber",
+        "# {1} - pageCount",
+        "DataResultPanel_pageIdxOfCount={0} of {1}"
+    })
     private void displaySearchResults(SearchResultsDTO searchResults) {
-        setNode(new SearchResultRootNode(searchResults));
-        setNumberOfChildNodes(
-                searchResults.getTotalResultsCount() > Integer.MAX_VALUE
-                ? Integer.MAX_VALUE
-                : (int) searchResults.getTotalResultsCount()
-        );
+        if (searchResults == null) {
+            setNode(null);
+        } else {
+            setNode(new SearchResultRootNode(searchResults));
+            setNumberOfChildNodes(
+                    searchResults.getTotalResultsCount() > Integer.MAX_VALUE
+                    ? Integer.MAX_VALUE
+                    : (int) searchResults.getTotalResultsCount()
+            );
+        }
+        
+        this.gotoPageTextField.setText("");
+        this.pagePrevButton.setEnabled(this.searchResultSupport.hasPrevPage());
+        this.pageNextButton.setEnabled(this.searchResultSupport.hasNextPage());
+        this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(this.searchResultSupport.getPageIdx() + 1, this.searchResultSupport.getTotalPages()));
     }
+
 }

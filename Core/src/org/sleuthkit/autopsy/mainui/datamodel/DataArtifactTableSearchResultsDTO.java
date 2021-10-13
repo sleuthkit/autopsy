@@ -30,8 +30,8 @@ public class DataArtifactTableSearchResultsDTO extends BaseSearchResultsDTO {
 
     private final BlackboardArtifact.Type artifactType;
 
-    public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<ColumnKey> columns, List<RowDTO> items) {
-        super(TYPE_ID, artifactType.getDisplayName(), columns, items);
+    public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<ColumnKey> columns, List<RowDTO> items, long startItem, long totalResultsCount) {
+        super(TYPE_ID, artifactType.getDisplayName(), columns, items, startItem, totalResultsCount);
         this.artifactType = artifactType;
     }
 

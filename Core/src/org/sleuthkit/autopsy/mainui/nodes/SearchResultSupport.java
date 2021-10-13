@@ -72,6 +72,31 @@ public class SearchResultSupport {
     }
 
     /**
+     * @return True if there is a previous page of results.
+     */
+    public synchronized boolean hasPrevPage() {
+        return pageIdx > 0;
+    }
+
+    /**
+     * @return True if there is another page.
+     */
+    public synchronized boolean hasNextPage() {
+        if (this.currentSearchResults == null) {
+            return false;
+        } else {
+            return (this.pageIdx + 1) * this.pageSize < this.currentSearchResults.getTotalResultsCount();
+        }
+    }
+
+    /**
+     * @return The total number of pages based on the current search results.
+     */
+    public synchronized int getTotalPages() {
+        return (int) Math.ceil(((double) this.currentSearchResults.getTotalResultsCount()) / this.pageSize);
+    }
+
+    /**
      * @param pageIdx The index of the page to be viewed.
      */
     private synchronized void setPageIdx(int pageIdx) {

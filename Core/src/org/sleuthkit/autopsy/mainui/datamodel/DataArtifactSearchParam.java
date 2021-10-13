@@ -52,6 +52,7 @@ public class DataArtifactSearchParam extends BaseSearchParam {
         int hash = 7;
         hash = 13 * hash + Objects.hashCode(this.artifactType);
         hash = 13 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 13 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -73,7 +74,7 @@ public class DataArtifactSearchParam extends BaseSearchParam {
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
-        return true;
+        return super.equalFields(other);
     }
     
     

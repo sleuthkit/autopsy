@@ -25,6 +25,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -144,9 +146,19 @@ public class DataArtifactDAO {
         List<DataArtifact> arts = (dataSourceId != null)
                 ? blackboard.getDataArtifacts(artType.getTypeID(), dataSourceId)
                 : blackboard.getDataArtifacts(artType.getTypeID());
+        
+        Stream<DataArtifact> pagedStream = arts.stream()
+                .sorted(Comparator.comparing(art -> art.getId()))
+                .skip(cacheKey.getStartItem());
+        
+        if (cacheKey.getMaxResultsCount() != null) {
+            pagedStream = pagedStream.limit(cacheKey.getMaxResultsCount());
+        }
+        
+        List<DataArtifact> pagedArtifacts = pagedStream.collect(Collectors.toList());
 
         Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
-        for (DataArtifact art : arts) {
+        for (DataArtifact art : pagedArtifacts) {
             Map<BlackboardAttribute.Type, Object> attrs = art.getAttributes().stream()
                     .filter(attr -> isRenderedAttr(artType, attr.getAttributeType()))
                     .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(attr), (attr1, attr2) -> attr1));
@@ -176,7 +188,7 @@ public class DataArtifactDAO {
         // determine all different attribute types present as well as row data for each artifact
         List<RowDTO> rows = new ArrayList<>();
 
-        for (DataArtifact artifact : arts) {
+        for (DataArtifact artifact : pagedArtifacts) {
             List<Object> cellValues = new ArrayList<>();
 
             Content srcContent = artifact.getParent();
@@ -207,7 +219,7 @@ public class DataArtifactDAO {
             rows.add(new DataArtifactRowDTO(artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id));
         }
 
-        return new DataArtifactTableSearchResultsDTO(artType, columnKeys, rows);
+        return new DataArtifactTableSearchResultsDTO(artType, columnKeys, rows, cacheKey.getStartItem(), arts.size());
     }
 
     private boolean isRenderedAttr(BlackboardArtifact.Type artType, BlackboardAttribute.Type attrType) {

@@ -22,11 +22,13 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -159,7 +161,7 @@ public class ViewsDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return fileTypeByExtensionCache.get(key, () -> fetchFileViewFiles(key.getFilter(), key.getDataSourceId(), key.isKnownShown()));
+        return fileTypeByExtensionCache.get(key, () -> fetchFileViewFiles(key));
     }
 
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -202,12 +204,23 @@ public class ViewsDAO {
         return whereClause;
     }
 
-    private SearchResultsDTO fetchFileViewFiles(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) throws NoCurrentCaseException, TskCoreException {
-        String whereStatement = getFileWhereStatement(filter, dataSourceId, showKnown);
+    private SearchResultsDTO fetchFileViewFiles(FileTypeExtensionsSearchParam key) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getFileWhereStatement(key.getFilter(), key.getDataSourceId(), key.isKnownShown());
         List<AbstractFile> files = getCase().findAllFilesWhere(whereStatement);
+        
+        Stream<AbstractFile> pagedFileStream = files.stream()
+                .sorted(Comparator.comparing(af -> af.getId()))
+                .skip(key.getStartItem());
+        
+        if (key.getMaxResultsCount() != null) {
+            pagedFileStream = pagedFileStream.limit(key.getMaxResultsCount());
+        }
+        
+        List<AbstractFile> pagedFiles = pagedFileStream.collect(Collectors.toList());
+        
 
         List<RowDTO> fileRows = new ArrayList<>();
-        for (AbstractFile file : files) {
+        for (AbstractFile file : pagedFiles) {
 
             boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
             boolean encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
@@ -259,7 +272,7 @@ public class ViewsDAO {
                     cellValues));
         }
 
-        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, filter.getDisplayName(), FILE_COLUMNS, fileRows);
+        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, key.getFilter().getDisplayName(), FILE_COLUMNS, fileRows, key.getStartItem(), files.size());
     }
 
 }

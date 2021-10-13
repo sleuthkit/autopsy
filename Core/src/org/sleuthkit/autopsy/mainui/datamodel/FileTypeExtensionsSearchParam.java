@@ -59,9 +59,10 @@ public class FileTypeExtensionsSearchParam extends BaseSearchParam {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.filter);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + (this.knownShown ? 1 : 0);
+        hash = 53 * hash + Objects.hashCode(this.filter);
+        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 53 * hash + (this.knownShown ? 1 : 0);
+        hash = 53 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -86,7 +87,9 @@ public class FileTypeExtensionsSearchParam extends BaseSearchParam {
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
-        return true;
+        
+        return super.equalFields(other);
     }
 
+    
 }
