@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
@@ -350,10 +350,9 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         FileExtensionNode(FileExtSearchFilter filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
             super(typesRoot, Children.LEAF,
                     Lookups.fixed(filter.getDisplayName(), 
-                            new FileTypeExtensionsSearchParam(
+                            new FileTypeExtensionsSearchParams(
                                     filter, 
-                                    filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null, 
-                                    !UserPreferences.hideKnownFilesInViewsTree())));
+                                    filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null)));
             
             this.filter = filter;
             super.setName(filter.getDisplayName());

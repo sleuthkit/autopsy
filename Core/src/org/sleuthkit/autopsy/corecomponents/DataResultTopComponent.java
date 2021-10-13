@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.nodes.DataArtifactNode;
 import org.sleuthkit.autopsy.mainui.nodes.FileNode;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
@@ -386,7 +386,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     }
     
 
-    public void displayFileExtensions(FileTypeExtensionsSearchParam fileExtensionsKey) {
+    public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsKey) {
         try {
             displaySearchResults(threePanelDAO.getViewsDAO().getFilesByExtension(fileExtensionsKey));
         } catch (ExecutionException | IllegalArgumentException ex) {

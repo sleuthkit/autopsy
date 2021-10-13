@@ -19,12 +19,31 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 /**
- * Describes parameters to provide to the DAO for fetching data.
+ * Base implementation of search parameters to provide to a DAO.
  */
-public interface SearchParam {
+public class BaseSearchParams implements SearchParams {
+    private final long startItem;
+    private final Long maxResultsCount;
 
-    long getStartItem();
+    /**
+     * Constructor that gets all results.
+     */
+    public BaseSearchParams() {
+        this(0, null);
+    }
+    
+    public BaseSearchParams(long startItem, Long maxResultsCount) {
+        this.startItem = startItem;
+        this.maxResultsCount = maxResultsCount;
+    }
 
-    // null if no max defined
-    Long getMaxResultsCount();
+    @Override
+    public long getStartItem() {
+        return startItem;
+    }
+
+    @Override
+    public Long getMaxResultsCount() {
+        return maxResultsCount;
+    }
 }

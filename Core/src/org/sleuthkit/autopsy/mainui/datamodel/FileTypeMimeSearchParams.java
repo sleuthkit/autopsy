@@ -21,47 +21,38 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import java.util.Objects;
 
 /**
- * Key for accessing data about file type extensions from the DAO.
+ * Key for accessing data about file MIME type from the DAO.
  */
-public class FileTypeExtensionsSearchParam extends BaseSearchParam {
+public class FileTypeMimeSearchParams extends BaseSearchParams {
 
-    private final FileExtSearchFilter filter;
+    private final String mimeType;
     private final Long dataSourceId;
-    private final boolean knownShown;
 
-    // TODO: This should ideally take in some kind of ENUM once we redo the tree.
-    // this assumes that filters implicitly or explicitly implement hashCode and equals to work
-    public FileTypeExtensionsSearchParam(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) {
-        this.filter = filter;
+    // @@@ TODO: Remove shownKnown from constructors and have DAO figure it out. 
+    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, boolean showKnown) {
+        this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
-        this.knownShown = showKnown;
     }
 
-    public FileTypeExtensionsSearchParam(FileExtSearchFilter filter, Long dataSourceId, boolean knownShown, long startItem, Long maxResultsCount) {
+    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, boolean knownShown, long startItem, Long maxResultsCount) {
         super(startItem, maxResultsCount);
-        this.filter = filter;
+        this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
-        this.knownShown = knownShown;
     }
 
-    public FileExtSearchFilter getFilter() {
-        return filter;
+    public String getMimeType() {
+        return mimeType;
     }
 
     public Long getDataSourceId() {
         return dataSourceId;
     }
 
-    public boolean isKnownShown() {
-        return knownShown;
-    }
-
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.filter);
+        hash = 23 * hash + Objects.hashCode(this.mimeType);
         hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + (this.knownShown ? 1 : 0);
         return hash;
     }
 
@@ -76,11 +67,8 @@ public class FileTypeExtensionsSearchParam extends BaseSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeExtensionsSearchParam other = (FileTypeExtensionsSearchParam) obj;
-        if (this.knownShown != other.knownShown) {
-            return false;
-        }
-        if (!Objects.equals(this.filter, other.filter)) {
+        final FileTypeMimeSearchParams other = (FileTypeMimeSearchParams) obj;
+        if (!(this.mimeType.equals(other.mimeType))) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
