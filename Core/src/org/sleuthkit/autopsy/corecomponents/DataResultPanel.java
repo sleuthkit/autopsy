@@ -21,10 +21,13 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -42,10 +45,13 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
-import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.nodes.SearchResultSupport;
 
 /**
  * A result view panel is a JPanel with a JTabbedPane child component that
@@ -78,6 +84,10 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener, ExplorerManager.Provider {
 
+    private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName());
+    
+    private final SearchResultSupport searchResultSupport = new SearchResultSupport(TBD);
+    
     private static final long serialVersionUID = 1L;
     private static final int NO_TAB_SELECTED = -1;
     private static final String PLEASE_WAIT_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pleasewaitNodeDisplayName");
@@ -345,8 +355,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         this.setVisible(true);
     }
-    
-
 
     /**
      * Sets the current root node for this result view panel. The child nodes of
@@ -362,10 +370,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     public void setNode(Node rootNode) {
         setNode(rootNode, null);
     }
-    
-    void setNode(Node rootNode, SearchResultsDTO searchResults) {
+
+    private void setNode(Node rootNode, SearchResultsDTO searchResults) {
         this.searchResults = searchResults;
-        
+
         if (this.currentRootNode != null) {
             this.currentRootNode.removeNodeListener(rootNodeListener);
         }
@@ -657,7 +665,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 if (resultCount > Integer.MAX_VALUE) {
                     resultCount = Integer.MAX_VALUE;
                 }
-                
+
                 setNumMatches((int) resultCount);
             } else if (currentRootNode != null && currentRootNode.getChildren() != null) {
                 setNumMatches(currentRootNode.getChildren().getNodesCount());
@@ -780,4 +788,52 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.setNode(null);
     }
 
+    /**
+     * Displays results of querying the DAO for data artifacts matching the
+     * search parameters query.
+     *
+     * @param dataArtifactParams The search parameter query.
+     */
+    void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setDataArtifact(dataArtifactParams);
+            displaySearchResults(results);
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING,
+                    MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}]",
+                            dataArtifactParams.getArtifactType(), dataArtifactParams.getDataSourceId() == null ? "<null>" : dataArtifactParams.getDataSourceId()),
+                    ex);
+        }
+    }
+
+    /**
+     * Displays results of querying the DAO for files matching the file
+     * extension search parameters query.
+     *
+     * @param fileExtensionsParams The search parameter query.
+     */
+    void displayFileExtensions(FileTypeExtensionsSearchParam fileExtensionsParams) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setFileExtensions(fileExtensionsParams);
+            displaySearchResults(results);
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING,
+                    MessageFormat.format("There was an error displaying search results for [search filter: {0}, data source id: {1}]",
+                            fileExtensionsParams.getFilter(), fileExtensionsParams.getDataSourceId() == null ? "<null>" : fileExtensionsParams.getDataSourceId()),
+                    ex);
+        }
+    }
+
+    /**
+     *
+     * @param searchResults
+     */
+    private void displaySearchResults(SearchResultsDTO searchResults) {
+        setNode(new SearchResultRootNode(searchResults), searchResults);
+        setNumberOfChildNodes(
+                searchResults.getTotalResultsCount() > Integer.MAX_VALUE
+                ? Integer.MAX_VALUE
+                : (int) searchResults.getTotalResultsCount()
+        );
+    }
 }
