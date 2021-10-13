@@ -44,7 +44,7 @@ public class FileTypeMimeSearchParam extends BaseSearchParam {
         this.knownShown = knownShown;
     }
 
-    public String getFilter() {
+    public String getMimeType() {
         return mimeType;
     }
 

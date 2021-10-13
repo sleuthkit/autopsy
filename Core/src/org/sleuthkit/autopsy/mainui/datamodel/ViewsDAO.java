@@ -166,13 +166,13 @@ public class ViewsDAO {
     }
     
     public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParam key) throws ExecutionException, IllegalArgumentException {
-        if (key.getFilter() == null) {
+        if (key.getMimeType() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return fileTypeByMimeCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), key.isKnownShown()));
+        return fileTypeByMimeCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), key.isKnownShown()));
     }    
     
 
