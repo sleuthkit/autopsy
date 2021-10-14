@@ -51,6 +51,7 @@ import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
@@ -399,14 +400,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public void setPageIndex(int pageIdx) {
-        if (pageIdx >= totalPages || pageIdx < 0) {
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.goToPageTextField.msgDlg", totalPages),
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.goToPageTextField.err"),
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         currentPage = pageIdx + 1;
         switchPage();
     }
@@ -471,8 +464,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
 
         } else {
-            final int imagesFrom = (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
-            final int imagesTo = currentPageImages + (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
+            final int imagesFrom = (currentPage - 1) * UserPreferences.getResultsTablePageSize() + 1;
+            final int imagesTo = currentPageImages + (currentPage - 1) * UserPreferences.getResultsTablePageSize();
             imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);
 
             sortButton.setEnabled(true);

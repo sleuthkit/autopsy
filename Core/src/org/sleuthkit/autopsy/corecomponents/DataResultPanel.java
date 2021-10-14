@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -26,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -49,6 +52,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
@@ -90,6 +95,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName());
 
     private final SearchResultSupport searchResultSupport;
+    private final Map<String, BaseChildFactoryPageCountListener> nodeNameToPageCountListenerMap = new ConcurrentHashMap<>();
     private static final long serialVersionUID = 1L;
     private static final int NO_TAB_SELECTED = -1;
     private static final String PLEASE_WAIT_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pleasewaitNodeDisplayName");
@@ -101,6 +107,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private ExplorerManager explorerManager;
     private Node currentRootNode;
     private boolean listeningToTabbedPane;
+    private int baseChildFactoryPageIdx;
+    private int baseChildFactoryTotalPages;
 
     /**
      * Creates and opens a Swing JPanel with a JTabbedPane child component that
@@ -272,6 +280,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
             }
         });
+
     }
 
     /**
@@ -420,6 +429,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
              */
             rootNodeListener.reset();
             this.currentRootNode.addNodeListener(rootNodeListener);
+
+            if (!(this.currentRootNode instanceof SearchResultRootNode)) {
+                this.nodeNameToPageCountListenerMap.computeIfAbsent(this.currentRootNode.getName(), (name) -> {
+                    BaseChildFactoryPageCountListener listener = new BaseChildFactoryPageCountListener(name);
+                    BaseChildFactory.register(name, listener);
+                    return listener;
+                });
+            }
         }
 
         this.resultViewers.forEach((viewer) -> {
@@ -927,12 +944,21 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     }//GEN-LAST:event_pageNextButtonActionPerformed
 
+    private void setBaseChildFactoryPageIdx(int pageIdx) {
+        int boundedPageIdx = Math.max(0, Math.min(this.baseChildFactoryTotalPages - 1, pageIdx));
+        this.resultViewers.forEach((dcv) -> dcv.setPageIndex(boundedPageIdx));
+    }
+
     private void gotoPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageTextFieldActionPerformed
         try {
-            int parsedNum = Integer.parseInt(this.gotoPageTextField.getText());
+            int parsedIdx = Integer.parseInt(this.gotoPageTextField.getText()) - 1;
             // ensure index is [0, pageNumber)
-            int pageIdx = Math.max(0, Math.min(this.searchResultSupport.getTotalPages() - 1, parsedNum - 1));
-            displaySearchResults(this.searchResultSupport.updatePageIdx(pageIdx));
+            if (this.searchResultSupport.getCurrentSearchResults() != null) {
+                int pageIdx = Math.max(0, Math.min(this.searchResultSupport.getTotalPages() - 1, parsedIdx));
+                displaySearchResults(this.searchResultSupport.updatePageIdx(pageIdx));
+            } else {
+                setBaseChildFactoryPageIdx(parsedIdx);
+            }
         } catch (IllegalArgumentException | ExecutionException ex) {
             logger.log(Level.WARNING, "Go to page index failed", ex);
         }
@@ -1056,5 +1082,45 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.pagePrevButton.setEnabled(this.searchResultSupport.hasPrevPage());
         this.pageNextButton.setEnabled(this.searchResultSupport.hasNextPage());
         this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(this.searchResultSupport.getPageIdx() + 1, this.searchResultSupport.getTotalPages()));
+    }
+
+    /**
+     * Listens for updates in page count for a BaseChildFactory.
+     */
+    private class BaseChildFactoryPageCountListener {
+
+        private final String nodeName;
+
+        public BaseChildFactoryPageCountListener(String nodeName) {
+            this.nodeName = nodeName;
+        }
+
+        /**
+         * Subscribe to notification that the number of pages has changed.
+         *
+         * @param event
+         */
+        @Subscribe
+        public void subscribeToPageCountChange(PageCountChangeEvent event) {
+            if (DataResultPanel.this.searchResultSupport.getCurrentSearchResults() == null
+                    && event != null
+                    && this.nodeName != null
+                    && DataResultPanel.this.currentRootNode != null
+                    && this.nodeName.equals(DataResultPanel.this.currentRootNode.getName())) {
+                DataResultPanel.this.baseChildFactoryTotalPages = event.getPageCount();
+            }
+        }
+    }
+
+    
+    /**
+     * Subscriber to thumbnail viewer page count size.
+     * @param event The page count event.
+     */
+    @Subscribe
+    public void subscribeToThumbnailPageCountChange(PageCountChangeEvent event) {
+        if (this.searchResultSupport.getCurrentSearchResults() == null && event != null) {
+            this.baseChildFactoryTotalPages = event.getPageCount();
+        }
     }
 }

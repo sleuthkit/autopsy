@@ -49,6 +49,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadSortCriteria;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -71,7 +72,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     @NbBundle.Messages("ThumbnailViewChildren.progress.cancelling=(Cancelling)")
     private static final String CANCELLING_POSTIX = Bundle.ThumbnailViewChildren_progress_cancelling();
-    static final int IMAGES_PER_PAGE = 200;
 
     private final ExecutorService executor = Executors.newFixedThreadPool(3,
             new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build());
@@ -116,7 +116,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         }
 
         //divide the supported content into buckets
-        pages.addAll(Lists.partition(suppContent, IMAGES_PER_PAGE));
+        pages.addAll(Lists.partition(suppContent, UserPreferences.getResultsTablePageSize()));
 
         //the keys are just the indices into the pages list.
         setKeys(IntStream.range(0, pages.size()).boxed().collect(Collectors.toList()));
@@ -391,7 +391,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
             super(new ThumbnailPageNodeChildren(childNodes), Lookups.singleton(pageNum));
             setName(Integer.toString(pageNum + 1));
-            int from = 1 + (pageNum * IMAGES_PER_PAGE);
+            int from = 1 + (pageNum * UserPreferences.getResultsTablePageSize());
             int to = from + ((ThumbnailPageNodeChildren) getChildren()).getChildCount() - 1;
             setDisplayName(from + "-" + to);
 
