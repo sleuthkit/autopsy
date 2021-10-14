@@ -84,7 +84,7 @@ import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.datamodel.OsAccounts;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
@@ -872,7 +872,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                     // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
                     DataArtifactSearchParam dataArtifactKey = originNode.getLookup().lookup(DataArtifactSearchParam.class);
-                    FileTypeExtensionsSearchParam fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsSearchParam.class);
+                    FileTypeExtensionsSearchParams fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsSearchParams.class);
                     if (dataArtifactKey != null) {
                         dataResult.displayDataArtifact(dataArtifactKey);
                     } else if (fileExtensionsKey != null) {

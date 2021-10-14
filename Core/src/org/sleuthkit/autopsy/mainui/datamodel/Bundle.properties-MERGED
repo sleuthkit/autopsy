@@ -16,6 +16,7 @@ FileExtRootFilter_documents_displayName=Documents
 FileExtRootFilter_executable_displayName=Executable
 FileExtRootFilter_image_displayName=Images
 FileExtRootFilter_video_displayName=Video
+FileTypesByMimeType.name.text=By MIME Type
 ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.description=Comment
 ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.displayName=C
 ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.name=Comment

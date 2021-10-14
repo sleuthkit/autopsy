@@ -19,28 +19,30 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for data artifact in order to retrieve data from DAO.
+ * Key for accessing data about file type extensions from the DAO.
  */
-public class DataArtifactSearchParam extends BaseSearchParams {
-    private final BlackboardArtifact.Type artifactType;
+public class FileTypeExtensionsSearchParams extends BaseSearchParams {
+
+    private final FileExtSearchFilter filter;
     private final Long dataSourceId;
 
-    public DataArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        this.artifactType = artifactType;
+    // TODO: This should ideally take in some kind of ENUM once we redo the tree.
+    // this assumes that filters implicitly or explicitly implement hashCode and equals to work
+    public FileTypeExtensionsSearchParams(FileExtSearchFilter filter, Long dataSourceId) {
+        this.filter = filter;
         this.dataSourceId = dataSourceId;
     }
 
-    public DataArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, long startItem, Long maxResultsCount) {
+    public FileTypeExtensionsSearchParams(FileExtSearchFilter filter, Long dataSourceId, long startItem, Long maxResultsCount) {
         super(startItem, maxResultsCount);
-        this.artifactType = artifactType;
+        this.filter = filter;
         this.dataSourceId = dataSourceId;
     }
 
-    public BlackboardArtifact.Type getArtifactType() {
-        return artifactType;
+    public FileExtSearchFilter getFilter() {
+        return filter;
     }
 
     public Long getDataSourceId() {
@@ -50,8 +52,8 @@ public class DataArtifactSearchParam extends BaseSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 13 * hash + Objects.hashCode(this.artifactType);
-        hash = 13 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 23 * hash + Objects.hashCode(this.filter);
+        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -66,8 +68,8 @@ public class DataArtifactSearchParam extends BaseSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final DataArtifactSearchParam other = (DataArtifactSearchParam) obj;
-        if (!Objects.equals(this.artifactType, other.artifactType)) {
+        final FileTypeExtensionsSearchParams other = (FileTypeExtensionsSearchParams) obj;
+        if (!Objects.equals(this.filter, other.filter)) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
@@ -75,6 +77,5 @@ public class DataArtifactSearchParam extends BaseSearchParams {
         }
         return true;
     }
-    
-    
+
 }
