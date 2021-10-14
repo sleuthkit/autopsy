@@ -56,7 +56,7 @@ public class SearchResultSupport {
     /**
      * @param pageSize The page size when handling paging.
      */
-    private synchronized void setPageSize(int pageSize) {
+    public synchronized void setPageSize(int pageSize) {
         if (pageSize <= 0) {
             throw new IllegalArgumentException("Page size must be > 0 but was " + pageSize);
         }
@@ -115,8 +115,8 @@ public class SearchResultSupport {
     }
 
     /**
-     * Updates the page size and returns the results after updating the page
-     * size.
+     * Updates the page size, clears page index t0 0, and returns the results
+     * after updating the page size.
      *
      * @param pageSize The page size.
      *
@@ -126,6 +126,7 @@ public class SearchResultSupport {
      * @throws ExecutionException
      */
     public synchronized SearchResultsDTO updatePageSize(int pageSize) throws IllegalArgumentException, ExecutionException {
+        this.pageIdx = 0;
         setPageSize(pageSize);
         return fetchResults();
     }

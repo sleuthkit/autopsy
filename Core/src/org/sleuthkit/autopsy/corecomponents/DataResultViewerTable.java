@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.dnd.DnDConstants;
@@ -43,7 +42,6 @@ import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
-import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import static javax.swing.SwingConstants.CENTER;
@@ -81,12 +79,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
-import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.datamodel.Score.Significance;
@@ -241,13 +238,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     private void initializePagingSupport() {
-        if (pagingSupport == null) {
-            pagingSupport = new PagingSupport("");
-        }
-
-        // Start out with paging controls invisible
-        pagingSupport.togglePageControls(false);
-
         /**
          * Set up a change listener so we know when the user changes the page
          * size
@@ -305,7 +295,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     public boolean isSupported(Node candidateRootNode) {
         return true;
     }
-    
+
     @Override
     public void setNode(Node rootNode) {
         setNode(rootNode, null);
@@ -320,7 +310,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node rootNode, SearchResultsDTO searchResults) {
         this.searchResults = searchResults;
-        
+
         if (!SwingUtilities.isEventDispatchThread()) {
             LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");
             return;
@@ -344,14 +334,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                  * Check to see if we have previously created a paging support
                  * class for this node.
                  */
-                if (!Node.EMPTY.equals(rootNode)) {
+                if (this.searchResults != null) {
+                    this.pagingSupport = null;
+                    SwingUtilities.invokeLater(() -> {
+                        setCursor(null);
+                    });
+                } else if (!Node.EMPTY.equals(rootNode)) {
                     String nodeName = rootNode.getName();
                     pagingSupport = nodeNameToPagingSupportMap.get(nodeName);
                     if (pagingSupport == null) {
                         pagingSupport = new PagingSupport(nodeName);
                         nodeNameToPagingSupportMap.put(nodeName, pagingSupport);
                     }
-                    pagingSupport.updateControls();
 
                     rootNode.addNodeListener(new NodeListener() {
                         @Override
@@ -397,7 +391,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
              * root context of the child OutlineView, otherwise make an
              * "empty"node the root context.
              */
-            if ((searchResults != null && searchResults.getTotalResultsCount() > 0) 
+            if ((searchResults != null && searchResults.getTotalResultsCount() > 0)
                     || (rootNode != null && rootNode.getChildren().getNodesCount() > 0)) {
                 this.getExplorerManager().setRootContext(this.rootNode);
                 outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -857,6 +851,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         super.clearComponent();
     }
 
+    @Override
+    public void setPageIndex(int pageIdx) {
+        if (this.pagingSupport != null) {
+            this.pagingSupport.gotoPage(pageIdx);
+        }
+    }
+
     /**
      * Encapsulates sorting information for a column to make loadSort simpler.
      */
@@ -885,54 +886,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private class PagingSupport {
 
         private int currentPage;
-        private int totalPages;
         private final String nodeName;
 
         PagingSupport(String nodeName) {
             currentPage = 1;
-            totalPages = 0;
             this.nodeName = nodeName;
-            initialize();
-        }
-
-        private void initialize() {
-            if (!nodeName.isEmpty()) {
-                BaseChildFactory.register(nodeName, this);
-            }
-            updateControls();
-        }
-
-        void nextPage() {
-            currentPage++;
-            postPageChangeEvent();
-        }
-
-        void previousPage() {
-            currentPage--;
-            postPageChangeEvent();
         }
 
         @NbBundle.Messages({"# {0} - totalPages",
             "DataResultViewerTable.goToPageTextField.msgDlg=Please enter a valid page number between 1 and {0}",
             "DataResultViewerTable.goToPageTextField.err=Invalid page number"})
-        void gotoPage() {
-            int originalPage = currentPage;
-
-            try {
-                currentPage = Integer.decode(gotoPageTextField.getText());
-            } catch (NumberFormatException e) {
-                //ignore input
-                return;
-            }
-
-            if (currentPage > totalPages || currentPage < 1) {
-                currentPage = originalPage;
-                JOptionPane.showMessageDialog(DataResultViewerTable.this,
-                        Bundle.DataResultViewerTable_goToPageTextField_msgDlg(totalPages),
-                        Bundle.DataResultViewerTable_goToPageTextField_err(),
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+        void gotoPage(int pageIdx) {
+            currentPage = pageIdx + 1;
             postPageChangeEvent();
         }
 
@@ -947,7 +912,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 LOGGER.log(Level.WARNING, "Failed to post page change event.", ex); //NON-NLS
             }
             DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            updateControls();
         }
 
         /**
@@ -957,72 +921,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         void postPageSizeChangeEvent() {
             // Reset page variables when page size changes
             currentPage = 1;
-
-            if (this == pagingSupport) {
-                updateControls();
-            }
             try {
                 BaseChildFactory.post(nodeName, new PageSizeChangeEvent(UserPreferences.getResultsTablePageSize()));
             } catch (BaseChildFactory.NoSuchEventBusException ex) {
                 LOGGER.log(Level.WARNING, "Failed to post page size change event.", ex); //NON-NLS
-            }
-        }
-
-        /**
-         * Subscribe to notification that the number of pages has changed.
-         *
-         * @param event
-         */
-        @Subscribe
-        public void subscribeToPageCountChange(PageCountChangeEvent event) {
-            if (event != null) {
-                totalPages = event.getPageCount();
-                if (totalPages > 1) {
-                    // Make paging controls visible if there is more than one page.
-                    togglePageControls(true);
-                }
-
-                // Only update UI controls if this event is for the node currently being viewed.
-                if (nodeName.equals(rootNode.getName())) {
-                    updateControls();
-                }
-            }
-        }
-
-        /**
-         * Make paging controls visible or invisible based on flag.
-         *
-         * @param onOff
-         */
-        private void togglePageControls(boolean onOff) {
-            pageLabel.setVisible(onOff);
-            pagesLabel.setVisible(onOff);
-            pagePrevButton.setVisible(onOff);
-            pageNextButton.setVisible(onOff);
-            pageNumLabel.setVisible(onOff);
-            gotoPageLabel.setVisible(onOff);
-            gotoPageTextField.setVisible(onOff);
-            gotoPageTextField.setVisible(onOff);
-            validate();
-            repaint();
-        }
-
-        @NbBundle.Messages({"# {0} - currentPage", "# {1} - totalPages",
-            "DataResultViewerTable.pageNumbers.curOfTotal={0} of {1}"})
-        private void updateControls() {
-            if (totalPages == 0) {
-                pagePrevButton.setEnabled(false);
-                pageNextButton.setEnabled(false);
-                pageNumLabel.setText("");
-                gotoPageTextField.setText("");
-                gotoPageTextField.setEnabled(false);
-            } else {
-                pageNumLabel.setText(Bundle.DataResultViewerTable_pageNumbers_curOfTotal(Integer.toString(currentPage), Integer.toString(totalPages)));
-
-                pageNextButton.setEnabled(currentPage != totalPages);
-                pagePrevButton.setEnabled(currentPage != 1);
-                gotoPageTextField.setEnabled(totalPages > 1);
-                gotoPageTextField.setText("");
             }
         }
     }
@@ -1409,61 +1311,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pageLabel = new javax.swing.JLabel();
-        pageNumLabel = new javax.swing.JLabel();
-        pagesLabel = new javax.swing.JLabel();
-        pagePrevButton = new javax.swing.JButton();
-        pageNextButton = new javax.swing.JButton();
         outlineView = new OutlineView(DataResultViewerTable.FIRST_COLUMN_LABEL);
-        gotoPageLabel = new javax.swing.JLabel();
-        gotoPageTextField = new javax.swing.JTextField();
         exportCSVButton = new javax.swing.JButton();
-
-        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.pageLabel.text")); // NOI18N
-
-        pageNumLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.pageNumLabel.text")); // NOI18N
-
-        pagesLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.pagesLabel.text")); // NOI18N
-
-        pagePrevButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-        pagePrevButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.pagePrevButton.text")); // NOI18N
-        pagePrevButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
-        pagePrevButton.setFocusable(false);
-        pagePrevButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        pagePrevButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        pagePrevButton.setPreferredSize(new java.awt.Dimension(55, 23));
-        pagePrevButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
-        pagePrevButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        pagePrevButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pagePrevButtonActionPerformed(evt);
-            }
-        });
-
-        pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-        pageNextButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.pageNextButton.text")); // NOI18N
-        pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
-        pageNextButton.setFocusable(false);
-        pageNextButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        pageNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        pageNextButton.setMaximumSize(new java.awt.Dimension(27, 23));
-        pageNextButton.setMinimumSize(new java.awt.Dimension(27, 23));
-        pageNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
-        pageNextButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        pageNextButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pageNextButtonActionPerformed(evt);
-            }
-        });
-
-        gotoPageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.gotoPageLabel.text")); // NOI18N
-
-        gotoPageTextField.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.gotoPageTextField.text")); // NOI18N
-        gotoPageTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                gotoPageTextFieldActionPerformed(evt);
-            }
-        });
 
         exportCSVButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.exportCSVButton.text")); // NOI18N
         exportCSVButton.addActionListener(new java.awt.event.ActionListener() {
@@ -1478,60 +1327,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 904, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(pageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pageNumLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(14, 14, 14)
-                .addComponent(pagesLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(gotoPageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(gotoPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(exportCSVButton))
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {pageNextButton, pagePrevButton});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(3, 3, 3)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(pageLabel)
-                    .addComponent(pageNumLabel)
-                    .addComponent(pagesLabel)
-                    .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(gotoPageLabel)
-                    .addComponent(gotoPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(exportCSVButton))
+                .addComponent(exportCSVButton)
                 .addGap(3, 3, 3)
                 .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE)
                 .addContainerGap())
         );
-
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {pageNextButton, pagePrevButton});
-
-        gotoPageLabel.getAccessibleContext().setAccessibleName("");
     }// </editor-fold>//GEN-END:initComponents
-
-    private void pagePrevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pagePrevButtonActionPerformed
-        pagingSupport.previousPage();
-    }//GEN-LAST:event_pagePrevButtonActionPerformed
-
-    private void pageNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pageNextButtonActionPerformed
-        pagingSupport.nextPage();
-    }//GEN-LAST:event_pageNextButtonActionPerformed
-
-    private void gotoPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageTextFieldActionPerformed
-        pagingSupport.gotoPage();
-    }//GEN-LAST:event_gotoPageTextFieldActionPerformed
 
     @NbBundle.Messages({"DataResultViewerTable.exportCSVButtonActionPerformed.empty=No data to export"
     })
@@ -1547,14 +1355,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton exportCSVButton;
-    private javax.swing.JLabel gotoPageLabel;
-    private javax.swing.JTextField gotoPageTextField;
     private org.openide.explorer.view.OutlineView outlineView;
-    private javax.swing.JLabel pageLabel;
-    private javax.swing.JButton pageNextButton;
-    private javax.swing.JLabel pageNumLabel;
-    private javax.swing.JButton pagePrevButton;
-    private javax.swing.JLabel pagesLabel;
     // End of variables declaration//GEN-END:variables
 
 }

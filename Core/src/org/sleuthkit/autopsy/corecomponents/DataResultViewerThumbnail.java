@@ -82,10 +82,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private TableFilterNode rootNode;
     private ThumbnailViewChildren rootNodeChildren;
     private NodeSelectionListener selectionListener;
-    private int currentPage;
-    private int totalPages;
     private int currentPageImages;
     private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
+    private int currentPage = -1;
+    private int totalPages = 0;
 
     /**
      * Constructs a thumbnail result viewer, with paging support, that displays
@@ -121,8 +121,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
             Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_large()}));
         thumbnailSizeComboBox.setSelectedIndex(1);
-        currentPage = -1;
-        totalPages = 0;
         currentPageImages = 0;
         
         // The GUI builder is using FlowLayout therefore this change so have no
@@ -144,15 +142,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         buttonBarPanel = new javax.swing.JPanel();
         pagesPanel = new javax.swing.JPanel();
         pageNumberPane = new javax.swing.JPanel();
-        pageLabel = new javax.swing.JLabel();
-        pageNumLabel = new javax.swing.JLabel();
         pageButtonPanel = new javax.swing.JPanel();
-        pagesLabel = new javax.swing.JLabel();
-        pagePrevButton = new javax.swing.JButton();
-        pageNextButton = new javax.swing.JButton();
         pageGotoPane = new javax.swing.JPanel();
-        goToPageLabel = new javax.swing.JLabel();
-        goToPageField = new javax.swing.JTextField();
         imagePane = new javax.swing.JPanel();
         imagesLabel = new javax.swing.JLabel();
         imagesRangeLabel = new javax.swing.JLabel();
@@ -170,27 +161,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         pagesPanel.setLayout(new java.awt.GridBagLayout());
 
         pageNumberPane.setLayout(new java.awt.GridBagLayout());
-
-        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 9);
-        pageNumberPane.add(pageLabel, gridBagConstraints);
-
-        pageNumLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageNumLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 15);
-        pageNumberPane.add(pageNumLabel, gridBagConstraints);
-
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
@@ -199,92 +169,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         buttonBarPanel.add(pagesPanel);
 
         pageButtonPanel.setLayout(new java.awt.GridBagLayout());
-
-        pagesLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pagesLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 9);
-        pageButtonPanel.add(pagesLabel, gridBagConstraints);
-
-        pagePrevButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-        pagePrevButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pagePrevButton.text")); // NOI18N
-        pagePrevButton.setBorder(null);
-        pagePrevButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
-        pagePrevButton.setFocusable(false);
-        pagePrevButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        pagePrevButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        pagePrevButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
-        pagePrevButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        pagePrevButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pagePrevButtonActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        pageButtonPanel.add(pagePrevButton, gridBagConstraints);
-
-        pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-        pageNextButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageNextButton.text")); // NOI18N
-        pageNextButton.setBorder(null);
-        pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
-        pageNextButton.setFocusable(false);
-        pageNextButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        pageNextButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        pageNextButton.setMaximumSize(new java.awt.Dimension(27, 23));
-        pageNextButton.setMinimumSize(new java.awt.Dimension(27, 23));
-        pageNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
-        pageNextButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        pageNextButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pageNextButtonActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 15);
-        pageButtonPanel.add(pageNextButton, gridBagConstraints);
-
         buttonBarPanel.add(pageButtonPanel);
 
         pageGotoPane.setLayout(new java.awt.GridBagLayout());
-
-        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.goToPageLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 9);
-        pageGotoPane.add(goToPageLabel, gridBagConstraints);
-
-        goToPageField.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.goToPageField.text")); // NOI18N
-        goToPageField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                goToPageFieldActionPerformed(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.ipadx = 75;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 15);
-        pageGotoPane.add(goToPageField, gridBagConstraints);
-
         buttonBarPanel.add(pageGotoPane);
 
         imagePane.setLayout(new java.awt.GridBagLayout());
@@ -340,18 +227,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         add(filePathLabel, java.awt.BorderLayout.SOUTH);
         add(iconView, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void pagePrevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pagePrevButtonActionPerformed
-        previousPage();
-    }//GEN-LAST:event_pagePrevButtonActionPerformed
-
-    private void pageNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pageNextButtonActionPerformed
-        nextPage();
-    }//GEN-LAST:event_pageNextButtonActionPerformed
-
-    private void goToPageFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageFieldActionPerformed
-        goToPage(goToPageField.getText());
-    }//GEN-LAST:event_goToPageFieldActionPerformed
 
     private void thumbnailSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thumbnailSizeComboBoxActionPerformed
         int newIconSize;
@@ -425,20 +300,13 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel buttonBarPanel;
     private javax.swing.JLabel filePathLabel;
-    private javax.swing.JTextField goToPageField;
-    private javax.swing.JLabel goToPageLabel;
     private org.openide.explorer.view.IconView iconView;
     private javax.swing.JPanel imagePane;
     private javax.swing.JLabel imagesLabel;
     private javax.swing.JLabel imagesRangeLabel;
     private javax.swing.JPanel pageButtonPanel;
     private javax.swing.JPanel pageGotoPane;
-    private javax.swing.JLabel pageLabel;
-    private javax.swing.JButton pageNextButton;
-    private javax.swing.JLabel pageNumLabel;
     private javax.swing.JPanel pageNumberPane;
-    private javax.swing.JButton pagePrevButton;
-    private javax.swing.JLabel pagesLabel;
     private javax.swing.JPanel pagesPanel;
     private javax.swing.JButton sortButton;
     private javax.swing.JLabel sortLabel;
@@ -518,8 +386,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void resetComponent() {
         super.resetComponent();
-        this.totalPages = 0;
-        this.currentPage = -1;
         currentPageImages = 0;
         updateControls();
     }
@@ -531,30 +397,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         super.clearComponent();
     }
 
-    private void nextPage() {
-        if (currentPage < totalPages) {
-            currentPage++;
-            switchPage();
-        }
-    }
-
-    private void previousPage() {
-        if (currentPage > 1) {
-            currentPage--;
-            switchPage();
-        }
-    }
-
-    private void goToPage(String pageNumText) {
-        int newPage;
-        try {
-            newPage = Integer.parseInt(pageNumText);
-        } catch (NumberFormatException e) {
-            //ignore input
-            return;
-        }
-
-        if (newPage > totalPages || newPage < 1) {
+    @Override
+    public void setPageIndex(int pageIdx) {
+        if (pageIdx >= totalPages || pageIdx < 0) {
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.goToPageTextField.msgDlg", totalPages),
                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.goToPageTextField.err"),
@@ -562,7 +407,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             return;
         }
 
-        currentPage = newPage;
+        currentPage = pageIdx + 1;
         switchPage();
     }
 
@@ -578,9 +423,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
             @Override
             protected Object doInBackground() throws Exception {
-                pagePrevButton.setEnabled(false);
-                pageNextButton.setEnabled(false);
-                goToPageField.setEnabled(false);
                 progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
@@ -623,25 +465,16 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         "DataResultViewerThumbnail.sortLabel.text=Sorted by: ---"})
     private void updateControls() {
         if (totalPages == 0) {
-            pagePrevButton.setEnabled(false);
-            pageNextButton.setEnabled(false);
-            goToPageField.setEnabled(false);
-            pageNumLabel.setText("");
             imagesRangeLabel.setText("");
             thumbnailSizeComboBox.setEnabled(false);
             sortButton.setEnabled(false);
             sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
 
         } else {
-            pageNumLabel.setText(NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
-                    Integer.toString(currentPage), Integer.toString(totalPages)));
             final int imagesFrom = (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
             final int imagesTo = currentPageImages + (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
             imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);
 
-            pageNextButton.setEnabled(!(currentPage == totalPages));
-            pagePrevButton.setEnabled(!(currentPage == 1));
-            goToPageField.setEnabled(totalPages > 1);
             sortButton.setEnabled(true);
             thumbnailSizeComboBox.setEnabled(true);
             if (rootNode != null) {

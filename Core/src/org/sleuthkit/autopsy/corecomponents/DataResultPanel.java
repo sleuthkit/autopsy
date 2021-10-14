@@ -259,11 +259,17 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
             if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
                 int newPageSize = UserPreferences.getResultsTablePageSize();
+
                 try {
-                    displaySearchResults(this.searchResultSupport.updatePageSize(newPageSize));
+                    if (this.searchResultSupport.getCurrentSearchResults() != null) {
+                        displaySearchResults(this.searchResultSupport.updatePageSize(newPageSize));
+                    } else {
+                        this.searchResultSupport.setPageSize(newPageSize);
+                    }
                 } catch (IllegalArgumentException | ExecutionException ex) {
                     logger.log(Level.WARNING, "There was an error while updating page size", ex);
                 }
+
             }
         });
     }
@@ -384,6 +390,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     @Override
     public void setNode(Node rootNode) {
+        // if called with a node not using search results, clear search parameters.
+        if (!(rootNode instanceof SearchResultRootNode)) {
+            this.searchResultSupport.clearSearchParameters();
+        }
+
         if (this.currentRootNode != null) {
             this.currentRootNode.removeNodeListener(rootNodeListener);
         }
@@ -892,25 +903,36 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }// </editor-fold>//GEN-END:initComponents
 
     private void pagePrevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pagePrevButtonActionPerformed
-        try {
-            displaySearchResults(this.searchResultSupport.decrementPageIdx());
-        } catch (IllegalArgumentException | ExecutionException ex) {
-            logger.log(Level.WARNING, "Decrementing page index failed", ex);
+        if (this.searchResultSupport.getCurrentSearchResults() != null) {
+            try {
+                displaySearchResults(this.searchResultSupport.decrementPageIdx());
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Decrementing page index failed", ex);
+            }
+        } else {
+            setBaseChildFactoryPageIdx(this.baseChildFactoryPageIdx - 1);
         }
     }//GEN-LAST:event_pagePrevButtonActionPerformed
 
     private void pageNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pageNextButtonActionPerformed
-        try {
-            displaySearchResults(this.searchResultSupport.incrementPageIdx());
-        } catch (IllegalArgumentException | ExecutionException ex) {
-            logger.log(Level.WARNING, "Decrementing page index failed", ex);
+        if (this.searchResultSupport.getCurrentSearchResults() != null) {
+            try {
+                displaySearchResults(this.searchResultSupport.incrementPageIdx());
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "Decrementing page index failed", ex);
+            }
+        } else {
+            setBaseChildFactoryPageIdx(this.baseChildFactoryPageIdx + 1);
         }
+
     }//GEN-LAST:event_pageNextButtonActionPerformed
 
     private void gotoPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageTextFieldActionPerformed
         try {
             int parsedNum = Integer.parseInt(this.gotoPageTextField.getText());
-            displaySearchResults(this.searchResultSupport.updatePageIdx(parsedNum - 1));
+            // ensure index is [0, pageNumber)
+            int pageIdx = Math.max(0, Math.min(this.searchResultSupport.getTotalPages() - 1, parsedNum - 1));
+            displaySearchResults(this.searchResultSupport.updatePageIdx(pageIdx));
         } catch (IllegalArgumentException | ExecutionException ex) {
             logger.log(Level.WARNING, "Go to page index failed", ex);
         }
@@ -1029,11 +1051,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     : (int) searchResults.getTotalResultsCount()
             );
         }
-        
+
         this.gotoPageTextField.setText("");
         this.pagePrevButton.setEnabled(this.searchResultSupport.hasPrevPage());
         this.pageNextButton.setEnabled(this.searchResultSupport.hasNextPage());
         this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(this.searchResultSupport.getPageIdx() + 1, this.searchResultSupport.getTotalPages()));
     }
-
 }
