@@ -74,4 +74,45 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
     public long getStartItem() {
         return startItem;
     }
+    
+    /**
+     * TEST CODE
+     */
+    int maxWidth = 15;
+    public void printTable() {
+        System.out.println("\nTable: " + displayName);
+        for (ColumnKey key : getColumns()) {
+            System.out.print(formatField(key.getDisplayName()));
+        }
+        System.out.println();
+        
+        for (RowDTO row : getItems()) {
+            for (Object o : row.getCellValues()) {
+                System.out.println(formatField(o.toString()));
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
+    
+    String formatField(String field) {
+        if (field.length() == maxWidth) {
+            return field + " ";
+        }
+        
+        if (field.length() > maxWidth) {
+            return field.substring(0, maxWidth - 2) + ".. ";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append(field);
+        while (sb.length() < maxWidth) {
+            sb.append('0');
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * END TEST CODE
+     */
 }

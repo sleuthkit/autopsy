@@ -24,13 +24,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Search results for analysis results.
  */
-public class AnalysisResultsTableSearchResultsDTO extends BaseSearchResultsDTO {
+public class AnalysisResultTableSearchResultsDTO extends BaseSearchResultsDTO {
 
     private static final String TYPE_ID = "ANALYSIS_RESULT";
 
     private final BlackboardArtifact.Type artifactType;
 
-    public AnalysisResultsTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<ColumnKey> columns, List<RowDTO> items) {
+    public AnalysisResultTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<ColumnKey> columns, List<RowDTO> items) {
         super(TYPE_ID, artifactType.getDisplayName(), columns, items);
         this.artifactType = artifactType;
     }

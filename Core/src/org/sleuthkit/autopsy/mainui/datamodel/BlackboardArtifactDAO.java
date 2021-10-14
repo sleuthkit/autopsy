@@ -2,17 +2,25 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 
 import com.google.common.collect.ImmutableSet;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.mainui.datamodel.Bundle;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -106,6 +114,78 @@ abstract class BlackboardArtifactDAO {
             Bundle.BlackboardArtifactDAO_columnKeys_dataSource_description()
     );
     
+    TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
+        Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
+        for (BlackboardArtifact art : arts) {
+            Map<BlackboardAttribute.Type, Object> attrs = art.getAttributes().stream()
+                    .filter(attr -> isRenderedAttr(artType, attr.getAttributeType()))
+                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(attr), (attr1, attr2) -> attr1));
+
+            artifactAttributes.put(art.getId(), attrs);
+        }
+
+        // NOTE: this has to be in the same order as values are added
+        List<BlackboardAttribute.Type> attributeTypeKeys = artifactAttributes.values().stream()
+                .flatMap(attrs -> attrs.keySet().stream())
+                .distinct()
+                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+                .collect(Collectors.toList());
+
+        List<ColumnKey> columnKeys = new ArrayList<>();
+        columnKeys.add(SRC_FILE_COL);
+        // GVDTODO translated file name
+        columnKeys.add(S_COL);
+        // GVDTODO only show if central repository enabled
+        columnKeys.add(C_COL);
+        columnKeys.add(O_COL);
+        columnKeys.addAll(attributeTypeKeys.stream()
+                .map(attrType -> new ColumnKey(attrType.getTypeName(), attrType.getDisplayName(), attrType.getDisplayName()))
+                .collect(Collectors.toList()));
+        columnKeys.add(DATASOURCE_COL);
+
+        // determine all different attribute types present as well as row data for each artifact
+        List<RowDTO> rows = new ArrayList<>();
+
+        for (BlackboardArtifact artifact : arts) {
+            List<Object> cellValues = new ArrayList<>();
+
+            Content srcContent = artifact.getParent();
+            cellValues.add(srcContent.getName());
+            // GVDTODO handle translated filename here
+            // GVDTODO handle SCO
+            cellValues.add(null);
+            cellValues.add(null);
+            cellValues.add(null);
+
+            long id = artifact.getId();
+            Map<BlackboardAttribute.Type, Object> attrValues = artifactAttributes.getOrDefault(id, Collections.emptyMap());
+            // NOTE: this has to be in the same order as attribute keys
+            for (BlackboardAttribute.Type colAttrType : attributeTypeKeys) {
+                cellValues.add(attrValues.get(colAttrType));
+            }
+
+            String dataSourceName = getDataSourceName(srcContent);
+            cellValues.add(dataSourceName);
+
+            AbstractFile linkedFile = null;
+            if (artType.getCategory().equals(BlackboardArtifact.Category.DATA_ARTIFACT)) {
+                Object linkedId = attrValues.get(BlackboardAttribute.Type.TSK_PATH_ID);
+                linkedFile = linkedId instanceof Long && ((Long) linkedId) >= 0
+                        ? getCase().getAbstractFileById((Long) linkedId)
+                        : null;
+            }
+
+            boolean isTimelineSupported = isTimelineSupported(attrValues.keySet());
+
+            rows.add(createRow(artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id));
+            //rows.add(new AnalysisResultRowDTO(artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id));
+        }
+
+        return new TableData(columnKeys, rows);
+    }
+    
+    abstract RowDTO createRow(BlackboardArtifact dataArtifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id);
+    
     SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
@@ -138,9 +218,7 @@ abstract class BlackboardArtifactDAO {
             return getRootAncestorName(srcContent);
         }
     }
-
-
-
+    
     /**
      * Gets the name of the root ancestor of the source content for the artifact
      * represented by this node.
@@ -209,5 +287,15 @@ abstract class BlackboardArtifactDAO {
             default:
                 throw new IllegalArgumentException("Unknown attribute type value type: " + attr.getAttributeType().getValueType());
         }
-    }    
+    } 
+    
+    class TableData {
+        final List<ColumnKey> columnKeys;
+        final List<RowDTO> rows;
+        
+        TableData(List<ColumnKey> columnKeys, List<RowDTO> rows) {
+            this.columnKeys = columnKeys;
+            this.rows = rows;
+        }
+    }
 }
