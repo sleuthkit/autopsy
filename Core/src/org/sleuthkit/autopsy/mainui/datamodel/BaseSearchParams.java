@@ -23,19 +23,18 @@ import java.util.Objects;
 /**
  * Base implementation of search parameters to provide to a DAO.
  */
-public class BaseSearchParam implements SearchParam {
-
+public class BaseSearchParams implements SearchParams {
     private final long startItem;
     private final Long maxResultsCount;
 
     /**
      * Constructor that gets all results.
      */
-    public BaseSearchParam() {
+    public BaseSearchParams() {
         this(0, null);
     }
-
-    public BaseSearchParam(long startItem, Long maxResultsCount) {
+    
+    public BaseSearchParams(long startItem, Long maxResultsCount) {
         this.startItem = startItem;
         this.maxResultsCount = maxResultsCount;
     }
@@ -65,7 +64,7 @@ public class BaseSearchParam implements SearchParam {
      *
      * @return True if fields are equal.
      */
-    public boolean equalFields(BaseSearchParam obj) {
+    public boolean equalFields(BaseSearchParams obj) {
         if (this == obj) {
             return true;
         }

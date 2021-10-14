@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.text.MessageFormat;
 import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
@@ -228,13 +228,12 @@ public class SearchResultSupport {
      *
      * @throws ExecutionException
      */
-    public synchronized SearchResultsDTO setFileExtensions(final FileTypeExtensionsSearchParam fileExtParameters) throws ExecutionException {
+    public synchronized SearchResultsDTO setFileExtensions(final FileTypeExtensionsSearchParams fileExtParameters) throws ExecutionException {
         resetPaging();
         this.pageFetcher = (pageSize, pageIdx) -> {
-            FileTypeExtensionsSearchParam searchParams = new FileTypeExtensionsSearchParam(
+            FileTypeExtensionsSearchParams searchParams = new FileTypeExtensionsSearchParams(
                     fileExtParameters.getFilter(),
                     fileExtParameters.getDataSourceId(),
-                    fileExtParameters.isKnownShown(),
                     pageIdx * pageSize,
                     (long) pageSize);
             return dao.getViewsDAO().getFilesByExtension(searchParams);

@@ -19,28 +19,29 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for data artifact in order to retrieve data from DAO.
+ * Key for accessing data about file MIME type from the DAO.
  */
-public class DataArtifactSearchParam extends BaseSearchParams {
-    private final BlackboardArtifact.Type artifactType;
+public class FileTypeMimeSearchParams extends BaseSearchParams {
+
+    private final String mimeType;
     private final Long dataSourceId;
 
-    public DataArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        this.artifactType = artifactType;
+    // @@@ TODO: Remove shownKnown from constructors and have DAO figure it out. 
+    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, boolean showKnown) {
+        this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
     }
 
-    public DataArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, long startItem, Long maxResultsCount) {
+    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, boolean knownShown, long startItem, Long maxResultsCount) {
         super(startItem, maxResultsCount);
-        this.artifactType = artifactType;
+        this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
     }
 
-    public BlackboardArtifact.Type getArtifactType() {
-        return artifactType;
+    public String getMimeType() {
+        return mimeType;
     }
 
     public Long getDataSourceId() {
@@ -50,9 +51,8 @@ public class DataArtifactSearchParam extends BaseSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 13 * hash + Objects.hashCode(this.artifactType);
-        hash = 13 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 13 * hash + Objects.hashCode(super.hashCode());
+        hash = 23 * hash + Objects.hashCode(this.mimeType);
+        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -67,15 +67,14 @@ public class DataArtifactSearchParam extends BaseSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final DataArtifactSearchParam other = (DataArtifactSearchParam) obj;
-        if (!Objects.equals(this.artifactType, other.artifactType)) {
+        final FileTypeMimeSearchParams other = (FileTypeMimeSearchParams) obj;
+        if (!(this.mimeType.equals(other.mimeType))) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
-        return super.equalFields(other);
+        return true;
     }
-    
-    
+
 }

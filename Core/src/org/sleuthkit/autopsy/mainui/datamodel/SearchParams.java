@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 /**
  * Describes parameters to provide to the DAO for fetching data.
  */
-public interface SearchParam {
+public interface SearchParams {
 
     long getStartItem();
 

@@ -23,25 +23,22 @@ import java.util.Objects;
 /**
  * Key for accessing data about file type extensions from the DAO.
  */
-public class FileTypeExtensionsSearchParam extends BaseSearchParam {
+public class FileTypeExtensionsSearchParams extends BaseSearchParams {
 
     private final FileExtSearchFilter filter;
     private final Long dataSourceId;
-    private final boolean knownShown;
 
     // TODO: This should ideally take in some kind of ENUM once we redo the tree.
     // this assumes that filters implicitly or explicitly implement hashCode and equals to work
-    public FileTypeExtensionsSearchParam(FileExtSearchFilter filter, Long dataSourceId, boolean showKnown) {
+    public FileTypeExtensionsSearchParams(FileExtSearchFilter filter, Long dataSourceId) {
         this.filter = filter;
         this.dataSourceId = dataSourceId;
-        this.knownShown = showKnown;
     }
 
-    public FileTypeExtensionsSearchParam(FileExtSearchFilter filter, Long dataSourceId, boolean knownShown, long startItem, Long maxResultsCount) {
+    public FileTypeExtensionsSearchParams(FileExtSearchFilter filter, Long dataSourceId, long startItem, Long maxResultsCount) {
         super(startItem, maxResultsCount);
         this.filter = filter;
         this.dataSourceId = dataSourceId;
-        this.knownShown = knownShown;
     }
 
     public FileExtSearchFilter getFilter() {
@@ -52,16 +49,11 @@ public class FileTypeExtensionsSearchParam extends BaseSearchParam {
         return dataSourceId;
     }
 
-    public boolean isKnownShown() {
-        return knownShown;
-    }
-
     @Override
     public int hashCode() {
         int hash = 7;
         hash = 53 * hash + Objects.hashCode(this.filter);
         hash = 53 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 53 * hash + (this.knownShown ? 1 : 0);
         hash = 53 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
@@ -77,10 +69,7 @@ public class FileTypeExtensionsSearchParam extends BaseSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeExtensionsSearchParam other = (FileTypeExtensionsSearchParam) obj;
-        if (this.knownShown != other.knownShown) {
-            return false;
-        }
+        final FileTypeExtensionsSearchParams other = (FileTypeExtensionsSearchParams) obj;
         if (!Objects.equals(this.filter, other.filter)) {
             return false;
         }

@@ -56,7 +56,7 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultSupport;
@@ -1042,7 +1042,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      *
      * @param fileExtensionsParams The search parameter query.
      */
-    void displayFileExtensions(FileTypeExtensionsSearchParam fileExtensionsParams) {
+    void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         try {
             SearchResultsDTO results = searchResultSupport.setFileExtensions(fileExtensionsParams);
             displaySearchResults(results);

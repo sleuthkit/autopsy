@@ -50,74 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * DAO for providing data about data artifacts to populate the results viewer.
  */
-@Messages({
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.name=Source Name",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.displayName=Source Name",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.srcFile.description=Source Name",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.score.name=Score",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.score.displayName=S",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.score.description=Score",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.name=Comment",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.displayName=C",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.comment.description=Comment",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.occurrences.name=Occurrences",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.occurrences.displayName=O",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.occurrences.description=Occurrences",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.name=Data Source",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.displayName=Data Source",
-    "ThreePanelDataArtifactDAO.dataArtifact.columnKeys.dataSource.description=Data Source"
-})
-public class DataArtifactDAO {
-
-    // GVDTODO there is a different standard for normal attr strings and email attr strings
-    private static final int STRING_LENGTH_MAX = 160;
-    private static final String ELLIPSIS = "...";
-
-    @SuppressWarnings("deprecation")
-    private static final Set<Integer> HIDDEN_ATTR_TYPES = ImmutableSet.of(
-            ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID(),
-            BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
-            BlackboardAttribute.Type.TSK_SET_NAME.getTypeID(),
-            BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
-    );
-    private static final Set<Integer> HIDDEN_EMAIL_ATTR_TYPES = ImmutableSet.of(
-            BlackboardAttribute.Type.TSK_DATETIME_SENT.getTypeID(),
-            BlackboardAttribute.Type.TSK_EMAIL_CONTENT_HTML.getTypeID(),
-            BlackboardAttribute.Type.TSK_EMAIL_CONTENT_RTF.getTypeID(),
-            BlackboardAttribute.Type.TSK_EMAIL_BCC.getTypeID(),
-            BlackboardAttribute.Type.TSK_EMAIL_CC.getTypeID(),
-            BlackboardAttribute.Type.TSK_HEADERS.getTypeID()
-    );
-
-    private static final ColumnKey SRC_FILE_COL = new ColumnKey(
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_srcFile_name(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_srcFile_displayName(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_srcFile_description()
-    );
-
-    private static final ColumnKey S_COL = new ColumnKey(
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_score_name(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_score_displayName(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_score_description()
-    );
-
-    private static final ColumnKey C_COL = new ColumnKey(
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_comment_name(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_comment_displayName(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_comment_description()
-    );
-
-    private static final ColumnKey O_COL = new ColumnKey(
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_occurrences_name(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_occurrences_displayName(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_occurrences_description()
-    );
-
-    private static final ColumnKey DATASOURCE_COL = new ColumnKey(
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_name(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_displayName(),
-            Bundle.ThreePanelDataArtifactDAO_dataArtifact_columnKeys_dataSource_description()
-    );
+public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     private static DataArtifactDAO instance = null;
 
@@ -130,10 +63,6 @@ public class DataArtifactDAO {
     }
 
     private final Cache<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-
-    private SleuthkitCase getCase() throws NoCurrentCaseException {
-        return Case.getCurrentCaseThrows().getSleuthkitCase();
-    }
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(DataArtifactSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
         SleuthkitCase skCase = getCase();
@@ -209,7 +138,7 @@ public class DataArtifactDAO {
             String dataSourceName = getDataSourceName(srcContent);
             cellValues.add(dataSourceName);
 
-            Object linkedId = attrValues.get(BlackboardAttribute.Type.TSK_PATH_ID.getTypeName());
+            Object linkedId = attrValues.get(BlackboardAttribute.Type.TSK_PATH_ID);
             AbstractFile linkedFile = linkedId instanceof Long && ((Long) linkedId) >= 0
                     ? skCase.getAbstractFileById((Long) linkedId)
                     : null;
@@ -222,104 +151,7 @@ public class DataArtifactDAO {
         return new DataArtifactTableSearchResultsDTO(artType, columnKeys, rows, cacheKey.getStartItem(), arts.size());
     }
 
-    private boolean isRenderedAttr(BlackboardArtifact.Type artType, BlackboardAttribute.Type attrType) {
-        if (BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() == artType.getTypeID()) {
-            return !HIDDEN_EMAIL_ATTR_TYPES.contains(attrType);
-        } else {
-            return !HIDDEN_ATTR_TYPES.contains(attrType)
-                    && !BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.equals(attrType.getValueType());
-        }
-    }
 
-    private String getTruncated(String str) {
-        return str.length() > STRING_LENGTH_MAX
-                ? str.substring(0, STRING_LENGTH_MAX) + ELLIPSIS
-                : str;
-    }
-
-    private boolean isTimelineSupported(Collection<BlackboardAttribute.Type> attrTypes) {
-        return attrTypes.stream()
-                .anyMatch(tp -> BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME.equals(tp.getValueType()));
-    }
-
-    private String getDataSourceName(Content srcContent) throws TskCoreException {
-        Content dataSource = srcContent.getDataSource();
-        if (dataSource != null) {
-            return dataSource.getName();
-        } else {
-            return getRootAncestorName(srcContent);
-        }
-    }
-
-    /**
-     * Gets the name of the root ancestor of the source content for the artifact
-     * represented by this node.
-     *
-     * @param srcContent The source content.
-     *
-     * @return The root ancestor name or the empty string if an error occurs.
-     */
-    private String getRootAncestorName(Content srcContent) throws TskCoreException {
-        String parentName = srcContent.getName();
-        Content parent = srcContent;
-
-        while ((parent = parent.getParent()) != null) {
-            parentName = parent.getName();
-        }
-        return parentName;
-    }
-
-    /**
-     * Returns a displayable type string for the given content object.
-     *
-     * If the content object is a artifact of a custom type then this method may
-     * cause a DB call BlackboardArtifact.getType
-     *
-     * @param source The object to determine the type of.
-     *
-     * @return A string representing the content type.
-     */
-//    private String getSourceObjType(Content source) throws TskCoreException {
-//        if (source instanceof BlackboardArtifact) {
-//            BlackboardArtifact srcArtifact = (BlackboardArtifact) source;
-//            return srcArtifact.getType().getDisplayName();
-//        } else if (source instanceof Volume) {
-//            return TskData.ObjectType.VOL.toString();
-//        } else if (source instanceof AbstractFile) {
-//            return TskData.ObjectType.ABSTRACTFILE.toString();
-//        } else if (source instanceof Image) {
-//            return TskData.ObjectType.IMG.toString();
-//        } else if (source instanceof VolumeSystem) {
-//            return TskData.ObjectType.VS.toString();
-//        } else if (source instanceof OsAccount) {
-//            return TskData.ObjectType.OS_ACCOUNT.toString();
-//        } else if (source instanceof HostAddress) {
-//            return TskData.ObjectType.HOST_ADDRESS.toString();
-//        } else if (source instanceof Pool) {
-//            return TskData.ObjectType.POOL.toString();
-//        }
-//        return "";
-//    }
-    private Object getAttrValue(BlackboardAttribute attr) {
-        switch (attr.getAttributeType().getValueType()) {
-            case BYTE:
-                return attr.getValueBytes();
-            case DATETIME:
-                return new Date(attr.getValueLong() * 1000);
-            case DOUBLE:
-                return attr.getValueDouble();
-            case INTEGER:
-                return attr.getValueInt();
-            case JSON:
-                return getTruncated(attr.getValueString());
-            case LONG:
-                return attr.getValueLong();
-            case STRING:
-                return getTruncated(attr.getValueString());
-            default:
-                throw new IllegalArgumentException("Unknown attribute type value type: " + attr.getAttributeType().getValueType());
-        }
-    }
 
     public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
