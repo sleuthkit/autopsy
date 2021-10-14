@@ -1748,13 +1748,24 @@ class ExtractRegistry extends Extract {
      * include everything in the osAccountSID up to the last -.
      * 
      * There must be at least three dashes in the SID for it to be useful.
+     * The sid is of a format S-R-X-Y1 where Y1 is the domain identifier which
+     * may contain multiple dashes. Everything after the final dash is the
+     * relative identifier. For example
+     * S-1-5-21-1004336348-1177238915-682003330-512
+     * 
+     * In this example the domain identifier is 
+     * 21-1004336348-1177238915-682003330
+     * The relative identifier is 512.
+     * 
+     * In other words everything between the third and last dash is the domain
+     * identifier.
      * 
      * @param osAccountSID The SID of the os account.
      * 
      * @return The Machine SID
      */
     private String stripRelativeIdentifierFromSID(String osAccountSID) {
-        if(osAccountSID.split("-").length >= 4) {
+        if(osAccountSID.split("-").length > 4) {
             int index = osAccountSID.lastIndexOf('-');
             return index > 1 ? osAccountSID.substring(0, index) : "";
         }
