@@ -48,8 +48,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class ArtifactSearchTest extends NbTestCase {
     
-    private static final String CASE_NAME = "ArtifactSearchTest";
-    static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
     private static final String MODULE_NAME = "ArtifactSearchTest";
     
     private static final String CUSTOM_DA_TYPE_NAME = "SEARCH_TEST_CUSTOM_DA_TYPE";
