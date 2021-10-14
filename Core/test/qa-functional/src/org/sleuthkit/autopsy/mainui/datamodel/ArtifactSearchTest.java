@@ -87,9 +87,9 @@ public class ArtifactSearchTest extends NbTestCase {
             
             // Add two logical files data sources
             SleuthkitCase.CaseDbTransaction trans = db.beginTransaction();
-			DataSource ds1 = db.addLocalFilesDataSource("devId1", "C:\\Fake\\Path\\1", "EST", null, trans);
+            DataSource ds1 = db.addLocalFilesDataSource("devId1", "C:\\Fake\\Path\\1", "EST", null, trans);
             DataSource ds2 = db.addLocalFilesDataSource("devId2", "C:\\Fake\\Path\\2", "EST", null, trans);
-			trans.commit();
+            trans.commit();
             
             // Add a few files to each data source
             AbstractFile folderA1 = db.addLocalDirectory(ds1.getId(), "folder1");
