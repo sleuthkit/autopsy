@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.List;
@@ -46,67 +44,99 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class ArtifactSearchTest extends NbTestCase {
+public class TableSearchTest extends NbTestCase {
     
-    private static final String MODULE_NAME = "ArtifactSearchTest";
+    private static final String MODULE_NAME = "TableSearchTest";
     
+    // Custom artifact and attribute names and display names
     private static final String CUSTOM_DA_TYPE_NAME = "SEARCH_TEST_CUSTOM_DA_TYPE";
     private static final String CUSTOM_DA_TYPE_DISPLAY_NAME = "Search test custom data artifact type";
     private static final String CUSTOM_ATTR_TYPE_NAME = "SEARCH_TEST_CUSTOM_ATTRIBUTE_TYPE";
     private static final String CUSTOM_ATTR_TYPE_DISPLAY_NAME = "Search test custom attribute type";
     
+    // Data used for attributes in the artifact tests
     private static final String ARTIFACT_COMMENT = "Artifact comment";
     private static final String ARTIFACT_CUSTOM_ATTR_STRING = "Custom attribute string";
     private static final int ARTIFACT_INT = 5;
     private static final double ARTIFACT_DOUBLE = 7.89;
     
+    /////////////////////////////////////////////////
+    // Data to be used across the test methods.
+    // These are initialized in setUpCaseDatabase().
+    /////////////////////////////////////////////////
+    Case openCase = null;          // The case for testing
+    SleuthkitCase db = null;       // The case database
+    Blackboard blackboard = null;  // The blackboard
+    
+    DataSource dataSource1 = null; // A local files data source
+    DataSource dataSource2 = null; // A local files data source
+    DataSource dataSource3 = null; // A local files data source
+    
+    BlackboardArtifact.Type customDataArtifactType = null; // A custom data artifact type
+    BlackboardAttribute.Type customAttributeType = null;   // A custom attribute type
+    
+    // Data artifact test
+    DataArtifact customDataArtifact = null;            // A custom artifact in dataSource1
+    AbstractFile customDataArtifactSourceFile = null;  // The source file of customDataArtifact
+    AbstractFile customDataArtifactLinkedFile = null;  // The linked file of customDataArtifact
+    
+    
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(ArtifactSearchTest.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(TableSearchTest.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
     
-    public ArtifactSearchTest(String name) {
+    public TableSearchTest(String name) {
         super(name);
     }
     
-    public void testDataArtifactSearch() {
+    // Main search method
+    public void testTableSearches() {
+        // Set up the database
+        setUpCaseDatabase();
         
+        // Run tests
+        dataArtifactSearchTest();
+    }
+    
+    /**
+     * Create a case and add sample data.
+     */
+    private void setUpCaseDatabase() {
         try {
-            /////////////////////////
-            // SETUP
-            /////////////////////////
-            
             // Create a test case
-            Case openCase = CaseUtils.createAsCurrentCase("testDataArtifactSearchCase");
-            SleuthkitCase db = openCase.getSleuthkitCase();
-            Blackboard blackboard = db.getBlackboard();
-            
+            openCase = CaseUtils.createAsCurrentCase("testTableSearchCase");
+            db = openCase.getSleuthkitCase();
+            blackboard = db.getBlackboard();
+
             // Add two logical files data sources
             SleuthkitCase.CaseDbTransaction trans = db.beginTransaction();
-            DataSource ds1 = db.addLocalFilesDataSource("devId1", "C:\\Fake\\Path\\1", "EST", null, trans);
-            DataSource ds2 = db.addLocalFilesDataSource("devId2", "C:\\Fake\\Path\\2", "EST", null, trans);
+            dataSource1 = db.addLocalFilesDataSource("devId1", "C:\\Fake\\Path\\1", "EST", null, trans);
+            dataSource2 = db.addLocalFilesDataSource("devId2", "C:\\Fake\\Path\\2", "EST", null, trans);
+            dataSource3 = db.addLocalFilesDataSource("devId3", "C:\\Fake\\Path\\3", "EST", null, trans);
             trans.commit();
             
-            // Add a few files to each data source
-            AbstractFile folderA1 = db.addLocalDirectory(ds1.getId(), "folder1");
+            // Add files
+            AbstractFile folderA1 = db.addLocalDirectory(dataSource1.getId(), "folder1");
             AbstractFile fileA1 = db.addLocalFile("file1.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA1);
-            AbstractFile folderA2 = db.addLocalDirectory(ds1.getId(), "folder2");
+            AbstractFile folderA2 = db.addLocalDirectory(dataSource1.getId(), "folder2");
             AbstractFile fileA2 =db.addLocalFile("file2.jpg", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA2);
             AbstractFile folderA3 = db.addLocalDirectory(folderA2.getId(), "folder3");
             AbstractFile fileA3 = db.addLocalFile("file3.doc", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA3);
             
-            AbstractFile folderB1 = db.addLocalDirectory(ds2.getId(), "folder1");
+            AbstractFile folderB1 = db.addLocalDirectory(dataSource2.getId(), "folder1");
             AbstractFile fileB1 = db.addLocalFile("fileA.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);      
             
             // Create a custom artifact and attribute types
-            BlackboardArtifact.Type customDataArtifactType = blackboard.getOrAddArtifactType(CUSTOM_DA_TYPE_NAME, CUSTOM_DA_TYPE_DISPLAY_NAME, BlackboardArtifact.Category.DATA_ARTIFACT);
-            BlackboardAttribute.Type customAttributeType = blackboard.getOrAddAttributeType(CUSTOM_ATTR_TYPE_NAME, 
+            customDataArtifactType = blackboard.getOrAddArtifactType(CUSTOM_DA_TYPE_NAME, CUSTOM_DA_TYPE_DISPLAY_NAME, BlackboardArtifact.Category.DATA_ARTIFACT);
+            customAttributeType = blackboard.getOrAddAttributeType(CUSTOM_ATTR_TYPE_NAME, 
                     BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, CUSTOM_ATTR_TYPE_DISPLAY_NAME);
             
-            
-            // Add some data artifacts
+            // Add data artifacts
+            // DataSource1: contact, bookmark, and custom type
+            // DataSource2: contact
             List<BlackboardAttribute> attrs = new ArrayList<>();
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, "Contact 1"));
             fileA1.newDataArtifact(BlackboardArtifact.Type.TSK_CONTACT, attrs);
@@ -119,20 +149,28 @@ public class ArtifactSearchTest extends NbTestCase {
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, "Contact 2"));
             fileB1.newDataArtifact(BlackboardArtifact.Type.TSK_CONTACT, attrs);
             
-            // This is the main artifact we'll use for testing. Make attributes of several types.
+            // This is the main artifact for the DataArtifact test. Make attributes of several types.
             attrs.clear();
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, ARTIFACT_COMMENT));
             attrs.add(new BlackboardAttribute(customAttributeType, MODULE_NAME, ARTIFACT_CUSTOM_ATTR_STRING));
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COUNT, MODULE_NAME, ARTIFACT_INT));
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_ENTROPY, MODULE_NAME, ARTIFACT_DOUBLE));
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_PATH_ID, MODULE_NAME, fileA2.getId()));
-            DataArtifact customDataArtifact = fileA3.newDataArtifact(customDataArtifactType, attrs);
-
+            customDataArtifact = fileA3.newDataArtifact(customDataArtifactType, attrs);
+            customDataArtifactSourceFile = fileA3;
+            customDataArtifactLinkedFile = fileA2;
             
-            /////////////////////////
-            // Data artifact tests
-            /////////////////////////
-            
+        } catch (TestUtilsException | TskCoreException | BlackboardException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }
+    
+    public void dataArtifactSearchTest() {
+        // Quick test that everything is initialized
+        assertTrue(db != null);
+        
+        try {
             // Get all contacts
             DataArtifactSearchParam param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_CONTACT, null);
             DataArtifactDAO dataArtifactDAO = MainDAO.getInstance().getDataArtifactsDAO();
@@ -143,14 +181,14 @@ public class ArtifactSearchTest extends NbTestCase {
             assertEquals(2, results.getItems().size());
             
             // Get contacts from data source 2
-            param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_CONTACT, ds2.getId());
+            param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_CONTACT, dataSource2.getId());
             results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
             
             // Get bookmarks from data source 2
-            param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, ds2.getId());
+            param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, dataSource2.getId());
             results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, results.getArtifactType());
             assertEquals(0, results.getTotalResultsCount());
@@ -176,8 +214,8 @@ public class ArtifactSearchTest extends NbTestCase {
             
             // Check that the artifact, source content and linked file are correct
             assertEquals(customDataArtifact, dataArtifactRowDTO.getDataArtifact());
-            assertEquals(fileA3, dataArtifactRowDTO.getSrcContent());
-            //assertEquals(fileA2, dataArtifactRowDTO.getLinkedFile()); I'm doing something wrong or this isn't working yet
+            assertEquals(customDataArtifactSourceFile, dataArtifactRowDTO.getSrcContent());
+            //assertEquals(customDataArtifactLinkedFile, dataArtifactRowDTO.getLinkedFile()); I'm doing something wrong or this isn't working yet
             
             // Check that some of the expected column values are present
             assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_CUSTOM_ATTR_STRING));
@@ -185,7 +223,7 @@ public class ArtifactSearchTest extends NbTestCase {
             assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_INT));
             assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_DOUBLE));
             
-        } catch (TestUtilsException | TskCoreException | BlackboardException | ExecutionException ex) {
+        } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -199,5 +237,7 @@ public class ArtifactSearchTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
+        openCase = null;
+        db = null;
     }
 }
