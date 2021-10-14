@@ -87,8 +87,8 @@ public class ArtifactSearchTest extends NbTestCase {
             
             // Add two logical files data sources
             SleuthkitCase.CaseDbTransaction trans = db.beginTransaction();
-			DataSource ds1 = db.addLocalFilesDataSource("devId1", "C:\\Work1", "EST", null, trans);
-            DataSource ds2 = db.addLocalFilesDataSource("devId2", "C:\\Work2", "EST", null, trans);
+			DataSource ds1 = db.addLocalFilesDataSource("devId1", "C:\\Fake\\Path\\1", "EST", null, trans);
+            DataSource ds2 = db.addLocalFilesDataSource("devId2", "C:\\Fake\\Path\\2", "EST", null, trans);
 			trans.commit();
             
             // Add a few files to each data source
@@ -137,28 +137,30 @@ public class ArtifactSearchTest extends NbTestCase {
             
             // Get all contacts
             DataArtifactSearchParam param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_CONTACT, null);
-            DataArtifactTableSearchResultsDTO results = DataArtifactDAO.getInstance().getDataArtifactsForTable(param);
+            DataArtifactDAO dataArtifactDAO = MainDAO.getInstance().getDataArtifactsDAO();
+            
+            DataArtifactTableSearchResultsDTO results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
             
             // Get contacts from data source 2
             param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_CONTACT, ds2.getId());
-            results = DataArtifactDAO.getInstance().getDataArtifactsForTable(param);
+            results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
             
             // Get bookmarks from data source 2
             param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, ds2.getId());
-            results = DataArtifactDAO.getInstance().getDataArtifactsForTable(param);
+            results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, results.getArtifactType());
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
             
             // Get all custom artifacts
             param = new DataArtifactSearchParam(customDataArtifactType, null);
-            results = DataArtifactDAO.getInstance().getDataArtifactsForTable(param);
+            results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(customDataArtifactType, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
