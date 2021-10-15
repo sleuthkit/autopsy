@@ -181,14 +181,7 @@ public final class IngestJob {
             return Collections.emptyList();
         }
 
-        /*
-         * Try to start up the ingest pipeline.
-         */
-        if (files.isEmpty()) {
-            ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
-        } else {
-            ingestJobPipeline = new IngestJobPipeline(this, dataSource, files, settings);
-        }
+        ingestJobPipeline = new IngestJobPipeline(this, dataSource, files, settings);
         List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(ingestJobPipeline.startUp());
         if (errors.isEmpty()) {
@@ -305,8 +298,8 @@ public final class IngestJob {
     }
 
     /**
-     * Provides a callback for the ingest modules pipeline, allowing this
-     * ingest job to notify the ingest manager when it is complete.
+     * Provides a callback for the ingest modules pipeline, allowing this ingest
+     * job to notify the ingest manager when it is complete.
      *
      * @param ingestJobPipeline A completed ingestJobPipeline.
      */

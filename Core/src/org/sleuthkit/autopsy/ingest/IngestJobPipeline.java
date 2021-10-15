@@ -222,22 +222,6 @@ final class IngestJobPipeline {
      * sources in an ingest job. The ingest modules are organized into child
      * pipelines by ingest module type and are run in stages.
      *
-     * @param parentJob  The ingest job.
-     * @param dataSource The data source.
-     * @param settings   The ingest job settings.
-     *
-     * @throws InterruptedException Exception thrown if the thread in which the
-     *                              pipeline is being created is interrupted.
-     */
-    IngestJobPipeline(IngestJob parentJob, Content dataSource, IngestJobSettings settings) throws InterruptedException {
-        this(parentJob, dataSource, Collections.emptyList(), settings);
-    }
-
-    /**
-     * Constructs a pipeline of ingest modules for analyzing one of the data
-     * sources in an ingest job. The ingest modules are organized into child
-     * pipelines by ingest module type and are run in stages.
-     *
      * @param ingestJob  The ingest job.
      * @param dataSource The data source.
      * @param files      A subset of the files from the data source. If the list

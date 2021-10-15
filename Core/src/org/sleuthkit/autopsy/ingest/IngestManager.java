@@ -398,9 +398,12 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Immediately starts bathc mode ingest jobs for one or more data sources.
-     * If any of the jobs fails to start, any jobs already started are cancelled
-     * and any remaining jobs are not attempted.
+     * Immediately starts batch mode ingest jobs for one or more data sources.
+     * If any of the jobs fail to start, any jobs already started are cancelled
+     * and any remaining jobs are not attempted. The idea behind this is that
+     * since all of the jobs have the same settings, if the ingest modules fail
+     * to start up for one job (presumably the first job), all of the jobs will
+     * encounter problems.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest jobs.
@@ -543,8 +546,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *
      * @param job The completed job.
      */
-    void finishIngestJob(IngestJob job
-    ) {
+    void finishIngestJob(IngestJob job) {
         long jobId = job.getId();
         synchronized (ingestJobsById) {
             ingestJobsById.remove(jobId);

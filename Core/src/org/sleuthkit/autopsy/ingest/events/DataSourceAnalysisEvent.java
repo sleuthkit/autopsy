@@ -37,7 +37,7 @@ public abstract class DataSourceAnalysisEvent extends AutopsyEvent implements Se
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataSourceAnalysisEvent.class.getName());
     private final long ingestJobId;
-    private final long dataSourceIngestJobId; // Obsolete, same as ingestJobId
+    private final long dataSourceIngestJobId; // Obsolete, same as ingestJobId. Do not remove for the sake of serialization compatibility.
     private transient Content dataSource;
     private final long dataSourceObjectId;
 
