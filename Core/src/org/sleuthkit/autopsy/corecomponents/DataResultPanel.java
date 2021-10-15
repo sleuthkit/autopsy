@@ -53,7 +53,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
@@ -95,7 +97,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName());
 
     private final SearchResultSupport searchResultSupport;
-    private final Map<String, BaseChildFactoryPageCountListener> nodeNameToPageCountListenerMap = new ConcurrentHashMap<>();
+    private final Map<String, BaseChildFactoryPager> nodeNameToPageCountListenerMap = new ConcurrentHashMap<>();
     private static final long serialVersionUID = 1L;
     private static final int NO_TAB_SELECTED = -1;
     private static final String PLEASE_WAIT_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pleasewaitNodeDisplayName");
@@ -107,8 +109,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private ExplorerManager explorerManager;
     private Node currentRootNode;
     private boolean listeningToTabbedPane;
-    private int baseChildFactoryPageIdx;
-    private int baseChildFactoryTotalPages;
+    private BaseChildFactoryPager pagingSupport = null;
 
     /**
      * Creates and opens a Swing JPanel with a JTabbedPane child component that
@@ -270,13 +271,18 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
                 try {
                     if (this.searchResultSupport.getCurrentSearchResults() != null) {
-                        displaySearchResults(this.searchResultSupport.updatePageSize(newPageSize));
+                        displaySearchResults(this.searchResultSupport.updatePageSize(newPageSize), false);
                     } else {
                         this.searchResultSupport.setPageSize(newPageSize);
                     }
+
                 } catch (IllegalArgumentException | ExecutionException ex) {
                     logger.log(Level.WARNING, "There was an error while updating page size", ex);
                 }
+
+                nodeNameToPageCountListenerMap.values().forEach((ps) -> {
+                    ps.postPageSizeChangeEvent();
+                });
 
             }
         });
@@ -399,11 +405,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     @Override
     public void setNode(Node rootNode) {
-        // if called with a node not using search results, clear search parameters.
-        if (!(rootNode instanceof SearchResultRootNode)) {
-            this.searchResultSupport.clearSearchParameters();
-        }
-
         if (this.currentRootNode != null) {
             this.currentRootNode.removeNodeListener(rootNodeListener);
         }
@@ -419,6 +420,31 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
 
         this.currentRootNode = rootNode;
+
+        // if search result node clear out base child factory paging
+        if (this.currentRootNode instanceof SearchResultRootNode) {
+            this.pagingSupport = null;
+        } else {
+            // otherwise clear out search result support parameters
+            this.searchResultSupport.clearSearchParameters();
+
+            // if there is a node, set up paging
+            if (this.currentRootNode != null) {
+                this.pagingSupport
+                        = this.nodeNameToPageCountListenerMap.computeIfAbsent(this.currentRootNode.getName(), (name) -> {
+                            BaseChildFactoryPager listener = new BaseChildFactoryPager(name);
+                            BaseChildFactory.register(name, listener);
+                            return listener;
+                        });
+
+                if (this.pagingSupport.getCurrentPageIdx() != 0) {
+                    this.pagingSupport.setCurrentPageIdx(0);    
+                }
+            } else {
+                this.pagingSupport = null;
+            }
+        }
+
         if (this.currentRootNode != null) {
             /*
              * The only place we reset the rootNodeListener allowing the
@@ -429,17 +455,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
              */
             rootNodeListener.reset();
             this.currentRootNode.addNodeListener(rootNodeListener);
-
-            if (!(this.currentRootNode instanceof SearchResultRootNode)) {
-                BaseChildFactoryPageCountListener pageListener
-                        = this.nodeNameToPageCountListenerMap.computeIfAbsent(this.currentRootNode.getName(), (name) -> {
-                            BaseChildFactoryPageCountListener listener = new BaseChildFactoryPageCountListener(name);
-                            BaseChildFactory.register(name, listener);
-                            return listener;
-                        });
-                
-                this.baseChildFactoryTotalPages = pageListener.getLastKnownPageCount() == null ? 0 : pageListener.getLastKnownPageCount();
-            }
         }
 
         this.resultViewers.forEach((viewer) -> {
@@ -455,7 +470,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
         this.numberOfChildNodesLabel.setVisible(true);
 
-        this.baseChildFactoryPageIdx = 0;
         updatePagingComponents();
     }
 
@@ -562,14 +576,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             try {
                 if (this.searchResultSupport.getCurrentSearchResults() != null) {
-                    currentViewer.setNode(currentRootNode, this.searchResultSupport.updatePageIdx(0));    
+                    currentViewer.setNode(currentRootNode, this.searchResultSupport.updatePageIdx(0));
                 } else {
                     currentViewer.setNode(currentRootNode);
                 }
             } catch (IllegalArgumentException | ExecutionException ex) {
                 logger.log(Level.WARNING, "There was an error while resetting page index.", ex);
             } finally {
-                this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                this.setCursor(null);
             }
         }
     }
@@ -821,6 +835,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
         add(pagesLabel, gridBagConstraints);
 
+        pagePrevButton.setBackground(null);
         pagePrevButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(pagePrevButton, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pagePrevButton.text")); // NOI18N
         pagePrevButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
@@ -845,6 +860,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
         add(pagePrevButton, gridBagConstraints);
 
+        pageNextButton.setBackground(null);
         pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(pageNextButton, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pageNextButton.text")); // NOI18N
         pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
@@ -932,24 +948,24 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private void pagePrevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pagePrevButtonActionPerformed
         if (this.searchResultSupport.getCurrentSearchResults() != null) {
             try {
-                displaySearchResults(this.searchResultSupport.decrementPageIdx());
+                displaySearchResults(this.searchResultSupport.decrementPageIdx(), false);
             } catch (IllegalArgumentException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Decrementing page index failed", ex);
             }
-        } else {
-            setBaseChildFactoryPageIdx(this.baseChildFactoryPageIdx - 1);
+        } else if (this.pagingSupport != null) {
+            setBaseChildFactoryPageIdx(this.pagingSupport.getCurrentPageIdx() - 1);
         }
     }//GEN-LAST:event_pagePrevButtonActionPerformed
 
     private void pageNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pageNextButtonActionPerformed
         if (this.searchResultSupport.getCurrentSearchResults() != null) {
             try {
-                displaySearchResults(this.searchResultSupport.incrementPageIdx());
+                displaySearchResults(this.searchResultSupport.incrementPageIdx(), false);
             } catch (IllegalArgumentException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Decrementing page index failed", ex);
             }
-        } else {
-            setBaseChildFactoryPageIdx(this.baseChildFactoryPageIdx + 1);
+        } else if (this.pagingSupport != null) {
+            setBaseChildFactoryPageIdx(this.pagingSupport.getCurrentPageIdx() + 1);
         }
 
     }//GEN-LAST:event_pageNextButtonActionPerformed
@@ -960,7 +976,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             // ensure index is [0, pageNumber)
             if (this.searchResultSupport.getCurrentSearchResults() != null) {
                 int pageIdx = Math.max(0, Math.min(this.searchResultSupport.getTotalPages() - 1, parsedIdx));
-                displaySearchResults(this.searchResultSupport.updatePageIdx(pageIdx));
+                displaySearchResults(this.searchResultSupport.updatePageIdx(pageIdx), false);
             } else {
                 setBaseChildFactoryPageIdx(parsedIdx);
             }
@@ -970,12 +986,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }//GEN-LAST:event_gotoPageTextFieldActionPerformed
 
     private void setBaseChildFactoryPageIdx(int pageIdx) {
-        int boundedPageIdx = Math.max(0, Math.min(this.baseChildFactoryTotalPages - 1, pageIdx));
-        int currentTab = this.resultViewerTabs.getSelectedIndex();
-        if (currentTab != NO_TAB_SELECTED) {
-            this.resultViewers.get(currentTab).setPageIndex(boundedPageIdx);
-            this.baseChildFactoryPageIdx = boundedPageIdx;
-            updatePagingComponents();
+        if (this.pagingSupport != null) {
+            int boundedPageIdx = Math.max(0, Math.min(this.pagingSupport.getLastKnownPageCount() - 1, pageIdx));
+            int currentTab = this.resultViewerTabs.getSelectedIndex();
+            if (currentTab != NO_TAB_SELECTED) {
+                this.resultViewers.get(currentTab).setPageIndex(boundedPageIdx);
+                this.pagingSupport.setCurrentPageIdx(boundedPageIdx);
+                updatePagingComponents();
+            }
         }
     }
 
@@ -1042,7 +1060,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
         try {
             SearchResultsDTO results = searchResultSupport.setDataArtifact(dataArtifactParams);
-            displaySearchResults(results);
+            displaySearchResults(results, true);
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}]",
@@ -1061,7 +1079,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         try {
             SearchResultsDTO results = searchResultSupport.setFileExtensions(fileExtensionsParams);
-            displaySearchResults(results);
+            displaySearchResults(results, true);
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [search filter: {0}, data source id: {1}]",
@@ -1076,18 +1094,20 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * search result support has already been updated.
      *
      * @param searchResults The new search results to display.
+     * @param resetPaging Whether or not to reset paging to index 0 and tabs selection.
      */
     @Messages({
         "# {0} - pageNumber",
         "# {1} - pageCount",
         "DataResultPanel_pageIdxOfCount={0} of {1}"
     })
-    private void displaySearchResults(SearchResultsDTO searchResults) {
+    private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging) {
         if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> displaySearchResults(searchResults));
+            SwingUtilities.invokeLater(() -> displaySearchResults(searchResults, resetPaging));
             return;
         }
 
+        // GVDTODO handle resetting node differently if page change versus node change
         if (searchResults == null) {
             setNode(null);
         } else {
@@ -1098,7 +1118,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     : (int) searchResults.getTotalResultsCount()
             );
         }
-        updatePagingComponents();
     }
 
     private void updatePagingComponents() {
@@ -1110,30 +1129,76 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
                     this.searchResultSupport.getPageIdx() + 1,
                     this.searchResultSupport.getTotalPages()));
-        } else {
-            this.pagePrevButton.setEnabled(this.baseChildFactoryPageIdx > 0);
-            this.pageNextButton.setEnabled(this.baseChildFactoryPageIdx < this.baseChildFactoryTotalPages - 1);
+        } else if (this.pagingSupport != null) {
+            this.pagePrevButton.setEnabled(this.pagingSupport.getCurrentPageIdx() > 0);
+            this.pageNextButton.setEnabled(this.pagingSupport.getCurrentPageIdx() < this.pagingSupport.getLastKnownPageCount() - 1);
             this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
-                    this.baseChildFactoryPageIdx + 1,
-                    this.baseChildFactoryTotalPages));
+                    this.pagingSupport.getCurrentPageIdx() + 1,
+                    this.pagingSupport.getLastKnownPageCount()));
+        } else {
+            this.pagePrevButton.setEnabled(false);
+            this.pageNextButton.setEnabled(false);
+            this.pageNumLabel.setText("");
         }
-
     }
 
     /**
      * Listens for updates in page count for a BaseChildFactory.
      */
-    private class BaseChildFactoryPageCountListener {
+    private class BaseChildFactoryPager {
 
         private final String nodeName;
-        private Integer lastKnownPageCount;
+        private int lastKnownPageCount = 0;
+        private int currentPageIdx = 0;
 
-        BaseChildFactoryPageCountListener(String nodeName) {
+        BaseChildFactoryPager(String nodeName) {
             this.nodeName = nodeName;
         }
 
-        Integer getLastKnownPageCount() {
+        int getLastKnownPageCount() {
             return lastKnownPageCount;
+        }
+
+        int getCurrentPageIdx() {
+            return currentPageIdx;
+        }
+
+        void setCurrentPageIdx(int currentPageIdx) {
+            this.currentPageIdx = Math.min(getLastKnownPageCount(), Math.max(0, currentPageIdx));
+            postPageChangeEvent();
+        }
+
+        /**
+         * Notify subscribers (i.e. child factories) that a page change has
+         * occurred.
+         */
+        void postPageChangeEvent() {
+            try {
+                BaseChildFactory.post(nodeName, new PageChangeEvent(currentPageIdx + 1));
+            } catch (BaseChildFactory.NoSuchEventBusException ex) {
+                logger.log(Level.WARNING, "Failed to post page change event.", ex); //NON-NLS
+            }
+
+            if (pagingSupport == this) {
+                updatePagingComponents();
+            }
+        }
+
+        /**
+         * Notify subscribers (i.e. child factories) that a page size change has
+         * occurred.
+         */
+        void postPageSizeChangeEvent() {
+            try {
+                BaseChildFactory.post(nodeName, new PageSizeChangeEvent(UserPreferences.getResultsTablePageSize()));
+                this.currentPageIdx = 0;
+            } catch (BaseChildFactory.NoSuchEventBusException ex) {
+                logger.log(Level.WARNING, "Failed to post page size change event.", ex); //NON-NLS
+            }
+
+            if (pagingSupport == this) {
+                updatePagingComponents();
+            }
         }
 
         /**
@@ -1149,7 +1214,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     && this.nodeName != null
                     && DataResultPanel.this.currentRootNode != null
                     && this.nodeName.equals(DataResultPanel.this.currentRootNode.getName())) {
-                DataResultPanel.this.baseChildFactoryTotalPages = event.getPageCount();
+                this.lastKnownPageCount = event.getPageCount();
                 updatePagingComponents();
             }
         }

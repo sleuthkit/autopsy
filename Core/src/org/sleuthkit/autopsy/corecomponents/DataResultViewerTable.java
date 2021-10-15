@@ -144,18 +144,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private SearchResultsDTO searchResults;
 
     /**
-     * Multiple nodes may have been visited in the context of this
-     * DataResultViewerTable. We keep track of the page state for these nodes in
-     * the following map.
-     */
-    private final Map<String, PagingSupport> nodeNameToPagingSupportMap = new ConcurrentHashMap<>();
-
-    /**
-     * The paging support instance for the current node.
-     */
-    private PagingSupport pagingSupport = null;
-
-    /**
      * Constructs a tabular result viewer that displays the children of the
      * given root node using an OutlineView. The viewer should have an ancestor
      * top component to connect the lookups of the nodes displayed in the
@@ -200,8 +188,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         initComponents();
 
-        initializePagingSupport();
-
         /*
          * Disable the CSV export button for the common properties results
          */
@@ -237,26 +223,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outline.getTableHeader().addMouseListener(outlineViewListener);
     }
 
-    private void initializePagingSupport() {
-        /**
-         * Set up a change listener so we know when the user changes the page
-         * size
-         */
-        UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
-            if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
-                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                /**
-                 * If multiple nodes have been viewed we have to notify all of
-                 * them about the change in page size.
-                 */
-                nodeNameToPagingSupportMap.values().forEach((ps) -> {
-                    ps.postPageSizeChangeEvent();
-                });
 
-                setCursor(null);
-            }
-        });
-    }
 
     /**
      * Creates a new instance of a tabular result viewer that displays the
@@ -325,66 +292,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         outline.unsetQuickFilter();
 
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            if (rootNode != null) {
-                this.rootNode = rootNode;
-
-                /**
-                 * Check to see if we have previously created a paging support
-                 * class for this node.
-                 */
-                if (this.searchResults != null) {
-                    this.pagingSupport = null;
-                    SwingUtilities.invokeLater(() -> {
-                        setCursor(null);
-                    });
-                } else if (!Node.EMPTY.equals(rootNode)) {
-                    String nodeName = rootNode.getName();
-                    pagingSupport = nodeNameToPagingSupportMap.get(nodeName);
-                    if (pagingSupport == null) {
-                        pagingSupport = new PagingSupport(nodeName);
-                        nodeNameToPagingSupportMap.put(nodeName, pagingSupport);
-                    }
-
-                    rootNode.addNodeListener(new NodeListener() {
-                        @Override
-                        public void childrenAdded(NodeMemberEvent nme) {
-                            /**
-                             * This is the only somewhat reliable way I could
-                             * find to reset the cursor after a page change.
-                             * When you change page the old children nodes will
-                             * be removed and new ones added.
-                             */
-                            SwingUtilities.invokeLater(() -> {
-                                setCursor(null);
-                            });
-                        }
-
-                        @Override
-                        public void childrenRemoved(NodeMemberEvent nme) {
-                            SwingUtilities.invokeLater(() -> {
-                                setCursor(null);
-                            });
-                        }
-
-                        @Override
-                        public void childrenReordered(NodeReorderEvent nre) {
-                            // No-op
-                        }
-
-                        @Override
-                        public void nodeDestroyed(NodeEvent ne) {
-                            // No-op
-                        }
-
-                        @Override
-                        public void propertyChange(PropertyChangeEvent evt) {
-                            // No-op
-                        }
-                    });
-                }
-            }
+            this.rootNode = rootNode;
 
             /*
              * If the given node is not null and has children, set it as the
@@ -851,13 +760,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         super.clearComponent();
     }
 
-    @Override
-    public void setPageIndex(int pageIdx) {
-        if (this.pagingSupport != null) {
-            this.pagingSupport.gotoPage(pageIdx);
-        }
-    }
-
     /**
      * Encapsulates sorting information for a column to make loadSort simpler.
      */
@@ -878,55 +780,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
-    /**
-     * Maintains the current page state for a node and provides support for
-     * paging through results. Uses an EventBus to communicate with child
-     * factory implementations.
-     */
-    private class PagingSupport {
-
-        private int currentPage;
-        private final String nodeName;
-
-        PagingSupport(String nodeName) {
-            currentPage = 1;
-            this.nodeName = nodeName;
-        }
-
-        @NbBundle.Messages({"# {0} - totalPages",
-            "DataResultViewerTable.goToPageTextField.msgDlg=Please enter a valid page number between 1 and {0}",
-            "DataResultViewerTable.goToPageTextField.err=Invalid page number"})
-        void gotoPage(int pageIdx) {
-            currentPage = pageIdx + 1;
-            postPageChangeEvent();
-        }
-
-        /**
-         * Notify subscribers (i.e. child factories) that a page change has
-         * occurred.
-         */
-        void postPageChangeEvent() {
-            try {
-                BaseChildFactory.post(nodeName, new PageChangeEvent(currentPage));
-            } catch (BaseChildFactory.NoSuchEventBusException ex) {
-                LOGGER.log(Level.WARNING, "Failed to post page change event.", ex); //NON-NLS
-            }
-        }
-
-        /**
-         * Notify subscribers (i.e. child factories) that a page size change has
-         * occurred.
-         */
-        void postPageSizeChangeEvent() {
-            // Reset page variables when page size changes
-            currentPage = 1;
-            try {
-                BaseChildFactory.post(nodeName, new PageSizeChangeEvent(UserPreferences.getResultsTablePageSize()));
-            } catch (BaseChildFactory.NoSuchEventBusException ex) {
-                LOGGER.log(Level.WARNING, "Failed to post page size change event.", ex); //NON-NLS
-            }
-        }
-    }
 
     /**
      * Listener which sets the custom icon renderer on columns which contain

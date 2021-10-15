@@ -21,21 +21,18 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dialog;
-import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
-import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SortOrder;
-import javax.swing.SwingWorker;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.DialogDescriptor;
@@ -45,10 +42,6 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.NodeEvent;
-import org.openide.nodes.NodeListener;
-import org.openide.nodes.NodeMemberEvent;
-import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.openide.util.lookup.ServiceProvider;
@@ -80,13 +73,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
-    private final PageUpdater pageUpdater = new PageUpdater();
     private TableFilterNode rootNode;
     private ThumbnailViewChildren rootNodeChildren;
     private NodeSelectionListener selectionListener;
     private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
-    private int currentPage = -1;
-    private int totalPages = 0;
 
     private final PreferenceChangeListener changeListener = (evt) -> {
         if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
@@ -122,6 +112,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     public DataResultViewerThumbnail(ExplorerManager explorerManager) {
         super(explorerManager);
         initComponents();
+        initListeners();
         iconView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{
             Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
@@ -133,6 +124,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         // impact on the initally designed layout.  This change will just effect
         // how the components are laid out as size of the window changes.
         buttonBarPanel.setLayout(new WrapLayout());
+    }
+
+    private void initListeners() {
+        UserPreferences.addChangeListener(this.changeListener);
     }
 
     /**
@@ -215,14 +210,14 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         if (thumbSize != newIconSize) {
             thumbSize = newIconSize;
             Node root = this.getExplorerManager().getRootContext();
-            ((ThumbnailViewChildren) root.getChildren()).setThumbsSize(thumbSize);
+            this.rootNodeChildren.setThumbsSize(thumbSize);
 
             // Temporarily set the explored context to the root, instead of a child node.
             // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
             // update even though the new and old Node values are identical. This in turn
             // will cause the entire view to update completely. After this we 
             // immediately set the node back to the current child by calling switchPage().        
-            this.getExplorerManager().setExploredContext(root);
+            this.getExplorerManager().setExploredContext(this.rootNode);
             switchPage();
         }
     }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
@@ -316,11 +311,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
                  * from the child nodes of the given node.
                  */
-                rootNodeChildren = new ThumbnailViewChildren(givenNode, thumbSize);
-                final Node root = new AbstractNode(rootNodeChildren);
-
-                pageUpdater.setRoot(root);
-                root.addNodeListener(pageUpdater);
+                rootNodeChildren = new ThumbnailViewChildren(rootNode, thumbSize);
+                final Node root = new AbstractNode(Children.create(rootNodeChildren, true));
                 this.getExplorerManager().setRootContext(root);
             } else {
                 rootNode = null;
@@ -354,68 +346,45 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     public void clearComponent() {
         this.iconView.removeAll();
         this.iconView = null;
+        UserPreferences.removeChangeListener(this.changeListener);
         super.clearComponent();
     }
 
     @Override
     public void setPageIndex(int pageIdx) {
-        currentPage = pageIdx + 1;
         switchPage();
     }
 
     private void switchPage() {
-
-        EventQueue.invokeLater(() -> {
+        SwingUtilities.invokeLater(() -> {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        });
-
-        //Note the nodes factories are likely creating nodes in EDT anyway, but worker still helps 
-        new SwingWorker<Object, Void>() {
-            private ProgressHandle progress;
-
-            @Override
-            protected Object doInBackground() throws Exception {
-                progress = ProgressHandle.createHandle(
+            try {
+                ProgressHandle progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
                 progress.switchToIndeterminate();
-                ExplorerManager explorerManager = DataResultViewerThumbnail.this.getExplorerManager();
-                Node root = explorerManager.getRootContext();
-                Node pageNode = root.getChildren().getNodeAt(currentPage - 1);
-                explorerManager.setExploredContext(pageNode);
-                currentPageImages = pageNode.getChildren().getNodesCount();
-                return null;
-            }
-
-            @Override
-            protected void done() {
+                DataResultViewerThumbnail.this.rootNodeChildren.update();
                 progress.finish();
+            } catch (Exception ex) {
+                NotifyDescriptor d
+                        = new NotifyDescriptor.Message(
+                                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
+                                        ex.getMessage()),
+                                NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(d);
+                logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
+            } finally {
                 setCursor(null);
                 updateControls();
-                // see if any exceptions were thrown
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    NotifyDescriptor d
-                            = new NotifyDescriptor.Message(
-                                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
-                                            ex.getMessage()),
-                                    NotifyDescriptor.ERROR_MESSAGE);
-                    DialogDisplayer.getDefault().notify(d);
-                    logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
-                } catch (java.util.concurrent.CancellationException ex) {
-                    // catch and ignore if we were cancelled
-                }
             }
-        }.execute();
-
+        });
     }
 
     @NbBundle.Messages({
         "# {0} - sort criteria", "DataResultViewerThumbnail.sortLabel.textTemplate=Sorted by: {0}",
         "DataResultViewerThumbnail.sortLabel.text=Sorted by: ---"})
     private void updateControls() {
-        if (totalPages == 0) {
+        if (rootNode != null && rootNode.getChildren().getNodesCount(true) > 0) {
             thumbnailSizeComboBox.setEnabled(false);
             sortButton.setEnabled(false);
             sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
@@ -432,86 +401,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             } else {
                 sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
             }
-        }
-    }
-
-    /**
-     * Listens for root change updates and updates the paging controls
-     */
-    private class PageUpdater implements NodeListener {
-
-        private Node root;
-
-        void setRoot(Node root) {
-            this.root = root;
-        }
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-        }
-
-        @Override
-        public void childrenAdded(NodeMemberEvent nme) {
-            totalPages = root.getChildren().getNodesCount();
-
-            if (totalPages == 0) {
-                currentPage = -1;
-                updateControls();
-                return;
-            }
-
-            if (currentPage == -1 || currentPage > totalPages) {
-                currentPage = 1;
-            }
-
-            //force load the curPage node
-            final Node pageNode = root.getChildren().getNodeAt(currentPage - 1);
-
-            //em.setSelectedNodes(new Node[]{pageNode});
-            if (pageNode != null) {
-                pageNode.addNodeListener(new NodeListener() {
-                    @Override
-                    public void childrenAdded(NodeMemberEvent nme) {
-                        updateControls();
-                    }
-
-                    @Override
-                    public void childrenRemoved(NodeMemberEvent nme) {
-                        updateControls();
-                    }
-
-                    @Override
-                    public void childrenReordered(NodeReorderEvent nre) {
-                    }
-
-                    @Override
-                    public void nodeDestroyed(NodeEvent ne) {
-                    }
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                    }
-                });
-
-                DataResultViewerThumbnail.this.getExplorerManager().setExploredContext(pageNode);
-            }
-
-            updateControls();
-        }
-
-        @Override
-        public void childrenRemoved(NodeMemberEvent nme) {
-            totalPages = 0;
-            currentPage = -1;
-            updateControls();
-        }
-
-        @Override
-        public void childrenReordered(NodeReorderEvent nre) {
-        }
-
-        @Override
-        public void nodeDestroyed(NodeEvent ne) {
         }
     }
 
