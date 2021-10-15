@@ -228,7 +228,7 @@ public class ViewsDAO {
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
                 + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
                 + "))"
-                + ((dataSourceId > 0) ? " AND data_source_obj_id = " + dataSourceId : " ")
+                + (dataSourceId != null && dataSourceId > 0 ? " AND data_source_obj_id = " + dataSourceId : " ")
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
                 + " AND mime_type = '" + mimeType + "'";
     
