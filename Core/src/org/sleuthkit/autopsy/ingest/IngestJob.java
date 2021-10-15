@@ -562,6 +562,11 @@ public final class IngestJob {
          * ingest module responds by stopping processing.
          */
         public void cancel() {
+            /*
+             * Note that this cancellation mechanism has a race condition. This
+             * could perhaps be solved by adding a cancel() API to the
+             * IngestModule interface.
+             */
             if (this.ingestJobPipeline.getCurrentDataSourceIngestModule() == this.module) {
                 this.ingestJobPipeline.cancelCurrentDataSourceIngestModule();
             }
