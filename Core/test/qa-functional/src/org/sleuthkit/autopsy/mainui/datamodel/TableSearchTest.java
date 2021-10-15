@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -160,6 +161,24 @@ public class TableSearchTest extends NbTestCase {
             customDataArtifactSourceFile = fileA3;
             customDataArtifactLinkedFile = fileA2;
             
+            // Add analysis results
+            // Data source 1: Encryption detected (2),
+            // Data source 2: Encryption detected
+            attrs.clear();
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, "Encryption detected 1"));
+            fileA1.newAnalysisResult(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NONE, "conclusion", "configuration", "justification", attrs);
+            
+            attrs.clear();
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, "Encryption detected 1"));
+            fileA2.newAnalysisResult(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_LIKELY_NOTABLE, "conclusion", "configuration", "justification", attrs);
+            
+            attrs.clear();
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, "Encryption detected 2"));
+            fileB1.newAnalysisResult(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NOTABLE, "conclusion", "configuration", "justification", attrs);
+            
+            
+            
+            
         } catch (TestUtilsException | TskCoreException | BlackboardException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -179,6 +198,7 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
+            results.printTable();
             
             // Get contacts from data source 2
             param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_CONTACT, dataSource2.getId());
@@ -227,6 +247,13 @@ public class TableSearchTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
+    }
+    
+    public void analysisResultSearchTest() {
+        // Quick test that everything is initialized
+        assertTrue(db != null);
+     
+        
     }
     
     @Override

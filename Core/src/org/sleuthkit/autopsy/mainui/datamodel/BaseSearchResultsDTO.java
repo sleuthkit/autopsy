@@ -88,7 +88,11 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
         
         for (RowDTO row : getItems()) {
             for (Object o : row.getCellValues()) {
-                System.out.println(formatField(o.toString()));
+                if (o != null) {
+                    System.out.print(formatField(o.toString()));
+                } else {
+                    System.out.print(formatField(" "));
+                }
             }
             System.out.println();
         }
@@ -107,7 +111,7 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
         StringBuilder sb = new StringBuilder();
         sb.append(field);
         while (sb.length() < maxWidth) {
-            sb.append('0');
+            sb.append(' ');
         }
         return sb.toString();
     }
