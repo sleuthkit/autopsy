@@ -38,8 +38,7 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
-    private static final int PAGE_SIZE_INTERVAL = 100;
-    private static final int PAGE_SIZE_DEFAULT = 1000;
+    private static final int PAGE_SIZE_INTERVAL = 10;
     private static final int PAGE_SIZE_MAX = 50000;
     
     private final boolean immediateUpdates;

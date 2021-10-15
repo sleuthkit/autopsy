@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
@@ -83,10 +84,15 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private TableFilterNode rootNode;
     private ThumbnailViewChildren rootNodeChildren;
     private NodeSelectionListener selectionListener;
-    private int currentPageImages;
     private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
     private int currentPage = -1;
     private int totalPages = 0;
+
+    private final PreferenceChangeListener changeListener = (evt) -> {
+        if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
+            setNode(rootNode);
+        }
+    };
 
     /**
      * Constructs a thumbnail result viewer, with paging support, that displays
@@ -122,8 +128,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
             Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_large()}));
         thumbnailSizeComboBox.setSelectedIndex(1);
-        currentPageImages = 0;
-        
+
         // The GUI builder is using FlowLayout therefore this change so have no
         // impact on the initally designed layout.  This change will just effect
         // how the components are laid out as size of the window changes.
@@ -141,13 +146,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         java.awt.GridBagConstraints gridBagConstraints;
 
         buttonBarPanel = new javax.swing.JPanel();
-        pagesPanel = new javax.swing.JPanel();
-        pageNumberPane = new javax.swing.JPanel();
-        pageButtonPanel = new javax.swing.JPanel();
-        pageGotoPane = new javax.swing.JPanel();
-        imagePane = new javax.swing.JPanel();
-        imagesLabel = new javax.swing.JLabel();
-        imagesRangeLabel = new javax.swing.JLabel();
         thumbnailSizeComboBox = new javax.swing.JComboBox<>();
         sortPane = new javax.swing.JPanel();
         sortLabel = new javax.swing.JLabel();
@@ -158,36 +156,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         setLayout(new java.awt.BorderLayout());
 
         buttonBarPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
-
-        pagesPanel.setLayout(new java.awt.GridBagLayout());
-
-        pageNumberPane.setLayout(new java.awt.GridBagLayout());
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        pagesPanel.add(pageNumberPane, gridBagConstraints);
-
-        buttonBarPanel.add(pagesPanel);
-
-        pageButtonPanel.setLayout(new java.awt.GridBagLayout());
-        buttonBarPanel.add(pageButtonPanel);
-
-        pageGotoPane.setLayout(new java.awt.GridBagLayout());
-        buttonBarPanel.add(pageGotoPane);
-
-        imagePane.setLayout(new java.awt.GridBagLayout());
-
-        imagesLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.imagesLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 9);
-        imagePane.add(imagesLabel, gridBagConstraints);
-
-        imagesRangeLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.imagesRangeLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 15);
-        imagePane.add(imagesRangeLabel, gridBagConstraints);
-
-        buttonBarPanel.add(imagePane);
 
         thumbnailSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -302,13 +270,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private javax.swing.JPanel buttonBarPanel;
     private javax.swing.JLabel filePathLabel;
     private org.openide.explorer.view.IconView iconView;
-    private javax.swing.JPanel imagePane;
-    private javax.swing.JLabel imagesLabel;
-    private javax.swing.JLabel imagesRangeLabel;
-    private javax.swing.JPanel pageButtonPanel;
-    private javax.swing.JPanel pageGotoPane;
-    private javax.swing.JPanel pageNumberPane;
-    private javax.swing.JPanel pagesPanel;
     private javax.swing.JButton sortButton;
     private javax.swing.JLabel sortLabel;
     private javax.swing.JPanel sortPane;
@@ -320,7 +281,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         return (selectedNode != null);
     }
 
-  @Override
+    @Override
     public void setNode(Node givenNode) {
         setNode(givenNode, null);
     }
@@ -328,7 +289,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void setNode(Node givenNode, SearchResultsDTO searchResults) {
         // GVDTODO givenNode cannot be assumed to be a table filter node and search results needs to be captured.
-        
+
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (selectionListener == null) {
             this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener());
@@ -344,13 +305,12 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             // case where the DataResultViewerThumbnail stands along from the 
             // DataResultViewer.  See DataResultViewer setNode for more information.
             if (givenNode != null && givenNode.getChildren().getNodesCount() > 0) {
-                
+
                 // GVDTODO this should be handled more elegantly
-                rootNode = (givenNode instanceof TableFilterNode) 
-                        ? (TableFilterNode) givenNode 
+                rootNode = (givenNode instanceof TableFilterNode)
+                        ? (TableFilterNode) givenNode
                         : new TableFilterNode(givenNode, true);
-                
-                
+
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
@@ -387,7 +347,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void resetComponent() {
         super.resetComponent();
-        currentPageImages = 0;
         updateControls();
     }
 
@@ -444,8 +403,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                                     NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
                     logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
-                }
-                catch (java.util.concurrent.CancellationException ex) {
+                } catch (java.util.concurrent.CancellationException ex) {
                     // catch and ignore if we were cancelled
                 }
             }
@@ -458,16 +416,11 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         "DataResultViewerThumbnail.sortLabel.text=Sorted by: ---"})
     private void updateControls() {
         if (totalPages == 0) {
-            imagesRangeLabel.setText("");
             thumbnailSizeComboBox.setEnabled(false);
             sortButton.setEnabled(false);
             sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
 
         } else {
-            final int imagesFrom = (currentPage - 1) * UserPreferences.getResultsTablePageSize() + 1;
-            final int imagesTo = currentPageImages + (currentPage - 1) * UserPreferences.getResultsTablePageSize();
-            imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);
-
             sortButton.setEnabled(true);
             thumbnailSizeComboBox.setEnabled(true);
             if (rootNode != null) {
@@ -519,13 +472,11 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 pageNode.addNodeListener(new NodeListener() {
                     @Override
                     public void childrenAdded(NodeMemberEvent nme) {
-                        currentPageImages = pageNode.getChildren().getNodesCount();
                         updateControls();
                     }
 
                     @Override
                     public void childrenRemoved(NodeMemberEvent nme) {
-                        currentPageImages = 0;
                         updateControls();
                     }
 
@@ -593,5 +544,5 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 }
             }
         }
-    } 
+    }
 }

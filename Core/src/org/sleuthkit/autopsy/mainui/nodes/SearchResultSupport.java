@@ -93,7 +93,11 @@ public class SearchResultSupport {
      * @return The total number of pages based on the current search results.
      */
     public synchronized int getTotalPages() {
-        return (int) Math.ceil(((double) this.currentSearchResults.getTotalResultsCount()) / this.pageSize);
+        if (this.currentSearchResults == null) {
+            return 0;
+        } else {
+            return (int) Math.ceil(((double) this.currentSearchResults.getTotalResultsCount()) / this.pageSize);
+        }
     }
 
     /**

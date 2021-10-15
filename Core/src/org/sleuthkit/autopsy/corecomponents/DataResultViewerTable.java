@@ -911,7 +911,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             } catch (BaseChildFactory.NoSuchEventBusException ex) {
                 LOGGER.log(Level.WARNING, "Failed to post page change event.", ex); //NON-NLS
             }
-            DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
 
         /**

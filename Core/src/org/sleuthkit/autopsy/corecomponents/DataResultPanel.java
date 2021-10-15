@@ -431,11 +431,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.currentRootNode.addNodeListener(rootNodeListener);
 
             if (!(this.currentRootNode instanceof SearchResultRootNode)) {
-                this.nodeNameToPageCountListenerMap.computeIfAbsent(this.currentRootNode.getName(), (name) -> {
-                    BaseChildFactoryPageCountListener listener = new BaseChildFactoryPageCountListener(name);
-                    BaseChildFactory.register(name, listener);
-                    return listener;
-                });
+                BaseChildFactoryPageCountListener pageListener
+                        = this.nodeNameToPageCountListenerMap.computeIfAbsent(this.currentRootNode.getName(), (name) -> {
+                            BaseChildFactoryPageCountListener listener = new BaseChildFactoryPageCountListener(name);
+                            BaseChildFactory.register(name, listener);
+                            return listener;
+                        });
+                
+                this.baseChildFactoryTotalPages = pageListener.getLastKnownPageCount() == null ? 0 : pageListener.getLastKnownPageCount();
             }
         }
 
@@ -451,6 +454,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.numberOfChildNodesLabel.setText(Long.toString(childrenCount));
         }
         this.numberOfChildNodesLabel.setVisible(true);
+
+        this.baseChildFactoryPageIdx = 0;
+        updatePagingComponents();
     }
 
     /**
@@ -555,7 +561,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             DataResultViewer currentViewer = this.resultViewers.get(currentTab);
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             try {
-                currentViewer.setNode(currentRootNode, this.searchResultSupport.updatePageIdx(0));
+                if (this.searchResultSupport.getCurrentSearchResults() != null) {
+                    currentViewer.setNode(currentRootNode, this.searchResultSupport.updatePageIdx(0));    
+                } else {
+                    currentViewer.setNode(currentRootNode);
+                }
             } catch (IllegalArgumentException | ExecutionException ex) {
                 logger.log(Level.WARNING, "There was an error while resetting page index.", ex);
             } finally {
@@ -944,11 +954,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     }//GEN-LAST:event_pageNextButtonActionPerformed
 
-    private void setBaseChildFactoryPageIdx(int pageIdx) {
-        int boundedPageIdx = Math.max(0, Math.min(this.baseChildFactoryTotalPages - 1, pageIdx));
-        this.resultViewers.forEach((dcv) -> dcv.setPageIndex(boundedPageIdx));
-    }
-
     private void gotoPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageTextFieldActionPerformed
         try {
             int parsedIdx = Integer.parseInt(this.gotoPageTextField.getText()) - 1;
@@ -963,6 +968,17 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             logger.log(Level.WARNING, "Go to page index failed", ex);
         }
     }//GEN-LAST:event_gotoPageTextFieldActionPerformed
+
+    private void setBaseChildFactoryPageIdx(int pageIdx) {
+        int boundedPageIdx = Math.max(0, Math.min(this.baseChildFactoryTotalPages - 1, pageIdx));
+        int currentTab = this.resultViewerTabs.getSelectedIndex();
+        if (currentTab != NO_TAB_SELECTED) {
+            this.resultViewers.get(currentTab).setPageIndex(boundedPageIdx);
+            this.baseChildFactoryPageIdx = boundedPageIdx;
+            updatePagingComponents();
+        }
+    }
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel descriptionLabel;
@@ -1067,6 +1083,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         "DataResultPanel_pageIdxOfCount={0} of {1}"
     })
     private void displaySearchResults(SearchResultsDTO searchResults) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> displaySearchResults(searchResults));
+            return;
+        }
+
         if (searchResults == null) {
             setNode(null);
         } else {
@@ -1077,11 +1098,26 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     : (int) searchResults.getTotalResultsCount()
             );
         }
+        updatePagingComponents();
+    }
 
+    private void updatePagingComponents() {
         this.gotoPageTextField.setText("");
-        this.pagePrevButton.setEnabled(this.searchResultSupport.hasPrevPage());
-        this.pageNextButton.setEnabled(this.searchResultSupport.hasNextPage());
-        this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(this.searchResultSupport.getPageIdx() + 1, this.searchResultSupport.getTotalPages()));
+
+        if (this.searchResultSupport.getCurrentSearchResults() != null) {
+            this.pagePrevButton.setEnabled(this.searchResultSupport.hasPrevPage());
+            this.pageNextButton.setEnabled(this.searchResultSupport.hasNextPage());
+            this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
+                    this.searchResultSupport.getPageIdx() + 1,
+                    this.searchResultSupport.getTotalPages()));
+        } else {
+            this.pagePrevButton.setEnabled(this.baseChildFactoryPageIdx > 0);
+            this.pageNextButton.setEnabled(this.baseChildFactoryPageIdx < this.baseChildFactoryTotalPages - 1);
+            this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
+                    this.baseChildFactoryPageIdx + 1,
+                    this.baseChildFactoryTotalPages));
+        }
+
     }
 
     /**
@@ -1090,9 +1126,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private class BaseChildFactoryPageCountListener {
 
         private final String nodeName;
+        private Integer lastKnownPageCount;
 
-        public BaseChildFactoryPageCountListener(String nodeName) {
+        BaseChildFactoryPageCountListener(String nodeName) {
             this.nodeName = nodeName;
+        }
+
+        Integer getLastKnownPageCount() {
+            return lastKnownPageCount;
         }
 
         /**
@@ -1102,25 +1143,15 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          */
         @Subscribe
         public void subscribeToPageCountChange(PageCountChangeEvent event) {
+            this.lastKnownPageCount = event.getPageCount();
             if (DataResultPanel.this.searchResultSupport.getCurrentSearchResults() == null
                     && event != null
                     && this.nodeName != null
                     && DataResultPanel.this.currentRootNode != null
                     && this.nodeName.equals(DataResultPanel.this.currentRootNode.getName())) {
                 DataResultPanel.this.baseChildFactoryTotalPages = event.getPageCount();
+                updatePagingComponents();
             }
-        }
-    }
-
-    
-    /**
-     * Subscriber to thumbnail viewer page count size.
-     * @param event The page count event.
-     */
-    @Subscribe
-    public void subscribeToThumbnailPageCountChange(PageCountChangeEvent event) {
-        if (this.searchResultSupport.getCurrentSearchResults() == null && event != null) {
-            this.baseChildFactoryTotalPages = event.getPageCount();
         }
     }
 }
