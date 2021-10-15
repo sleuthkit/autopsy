@@ -25,11 +25,11 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
 
-    public KeywordHitSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String setName) {
+    public KeywordHitSearchParam(Long dataSourceId, String setName) {
         super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName);
     }
 
-    public KeywordHitSearchParam(BlackboardArtifact.Type artifactType, String setName, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(artifactType, dataSourceId, setName, startItem, maxResultsCount);
+    public KeywordHitSearchParam(String setName, Long dataSourceId, long startItem, Long maxResultsCount) {
+        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName, startItem, maxResultsCount);
     }
 }

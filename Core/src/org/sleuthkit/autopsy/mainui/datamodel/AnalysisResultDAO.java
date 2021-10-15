@@ -40,7 +40,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
-
     private static AnalysisResultDAO instance = null;
 
     @NbBundle.Messages({
@@ -88,7 +87,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return instance;
     }
 
-    // We can probably combine all the caches at some point
+    // TODO We can probably combine all the caches at some point
     private final Cache<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<HashHitSearchParam, AnalysisResultTableSearchResultsDTO> hashHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<KeywordHitSearchParam, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
@@ -114,7 +113,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows);
     }
     
-    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(HashHitSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(AnalysisResultSetSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
@@ -143,9 +142,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows);
     }    
-    
-    
-    
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
@@ -198,7 +194,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        return hashHitCache.get(artifactKey, () -> fetchHashHitsForTable(artifactKey));
+        return hashHitCache.get(artifactKey, () -> fetchSetNameHitsForTable(artifactKey));
     }    
     
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
@@ -208,7 +204,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        return keywordHitCache.get(artifactKey, () -> fetchKeywordHitsForTable(artifactKey));
+        return keywordHitCache.get(artifactKey, () -> fetchSetNameHitsForTable(artifactKey));
     }  
 
     public void dropAnalysisResultCache() {
