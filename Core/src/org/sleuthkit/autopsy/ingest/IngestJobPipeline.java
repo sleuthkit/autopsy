@@ -368,9 +368,9 @@ final class IngestJobPipeline {
             if (template.isFileIngestModuleTemplate()) {
                 addModuleTemplateToSortingMap(javaFileModuleTemplates, jythonFileModuleTemplates, template);
             }
-//            if (template.isDataArtifactIngestModuleTemplate()) {
-//                addModuleTemplateToSortingMap(javaArtifactModuleTemplates, jythonArtifactModuleTemplates, template);
-//            }
+            if (template.isDataArtifactIngestModuleTemplate()) {
+                addModuleTemplateToSortingMap(javaArtifactModuleTemplates, jythonArtifactModuleTemplates, template);
+            }
         }
 
         /**
@@ -616,13 +616,13 @@ final class IngestJobPipeline {
                 type = IngestModuleType.MULTIPLE;
             }
         }
-//        if (moduleTemplate.isDataArtifactIngestModuleTemplate()) {
-//            if (type == null) {
-//                type = IngestModuleType.DATA_ARTIFACT;
-//            } else {
-//                type = IngestModuleType.MULTIPLE;
-//            }
-//        }
+        if (moduleTemplate.isDataArtifactIngestModuleTemplate()) {
+            if (type == null) {
+                type = IngestModuleType.DATA_ARTIFACT;
+            } else {
+                type = IngestModuleType.MULTIPLE;
+            }
+        }
         return type;
     }
 
