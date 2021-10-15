@@ -110,7 +110,7 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
         
         StringBuilder sb = new StringBuilder();
         sb.append(field);
-        while (sb.length() < maxWidth) {
+        while (sb.length() <= maxWidth) {
             sb.append(' ');
         }
         return sb.toString();

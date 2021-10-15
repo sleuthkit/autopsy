@@ -138,6 +138,7 @@ abstract class BlackboardArtifactDAO {
         // GVDTODO only show if central repository enabled
         columnKeys.add(C_COL);
         columnKeys.add(O_COL);
+        addAnalysisResultColumnKeys(columnKeys);
         columnKeys.addAll(attributeTypeKeys.stream()
                 .map(attrType -> new ColumnKey(attrType.getTypeName(), attrType.getDisplayName(), attrType.getDisplayName()))
                 .collect(Collectors.toList()));
@@ -156,6 +157,8 @@ abstract class BlackboardArtifactDAO {
             cellValues.add(null);
             cellValues.add(null);
             cellValues.add(null);
+            
+            addAnalysisResultFields(artifact, cellValues);
 
             long id = artifact.getId();
             Map<BlackboardAttribute.Type, Object> attrValues = artifactAttributes.getOrDefault(id, Collections.emptyMap());
@@ -185,6 +188,14 @@ abstract class BlackboardArtifactDAO {
     }
     
     abstract RowDTO createRow(BlackboardArtifact dataArtifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id);
+    
+    void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) { 
+        // By default, do nothing
+    }
+    
+    void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) {
+        // By default, do nothing
+    }
     
     SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
