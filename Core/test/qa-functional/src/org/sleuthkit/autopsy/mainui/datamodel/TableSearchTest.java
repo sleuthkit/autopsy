@@ -99,6 +99,7 @@ public class TableSearchTest extends NbTestCase {
         
         // Run tests
         dataArtifactSearchTest();
+        mimeTypeSearchTest();
     }
     
     /**
@@ -121,13 +122,24 @@ public class TableSearchTest extends NbTestCase {
             // Add files
             AbstractFile folderA1 = db.addLocalDirectory(dataSource1.getId(), "folder1");
             AbstractFile fileA1 = db.addLocalFile("file1.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA1);
+            fileA1.setMIMEType("text/plain");
+            fileA1.save();
             AbstractFile folderA2 = db.addLocalDirectory(dataSource1.getId(), "folder2");
             AbstractFile fileA2 =db.addLocalFile("file2.jpg", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA2);
+            fileA2.setMIMEType("image/jpeg");
+            fileA2.save();
             AbstractFile folderA3 = db.addLocalDirectory(folderA2.getId(), "folder3");
             AbstractFile fileA3 = db.addLocalFile("file3.doc", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA3);
+            fileA3.setMIMEType("application/msword");
+            fileA3.save();
+            AbstractFile fileA4 = db.addLocalFile("file4.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA3);
+            fileA4.setMIMEType("text/plain");
+            fileA4.save();
             
             AbstractFile folderB1 = db.addLocalDirectory(dataSource2.getId(), "folder1");
-            AbstractFile fileB1 = db.addLocalFile("fileA.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);      
+            AbstractFile fileB1 = db.addLocalFile("fileA.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);     
+            fileB1.setMIMEType("text/plain");
+            fileB1.save();
             
             // Create a custom artifact and attribute types
             customDataArtifactType = blackboard.getOrAddArtifactType(CUSTOM_DA_TYPE_NAME, CUSTOM_DA_TYPE_DISPLAY_NAME, BlackboardArtifact.Category.DATA_ARTIFACT);
@@ -228,6 +240,67 @@ public class TableSearchTest extends NbTestCase {
             Assert.fail(ex.getMessage());
         }
     }
+    
+    public void mimeTypeSearchTest() {
+        // Quick test that everything is initialized
+        assertTrue(db != null);
+        
+        try {
+            ViewsDAO viewsDAO = MainDAO.getInstance().getViewsDAO();
+            
+            // Get plain text files from data source 1
+            FileTypeMimeSearchParams param = new FileTypeMimeSearchParams("text/plain", dataSource1.getId());
+            SearchResultsDTO results = viewsDAO.getFilesByMime(param);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+            
+            // Get jpeg files from data source 1
+            param = new FileTypeMimeSearchParams("image/jpeg", dataSource1.getId());
+            results = viewsDAO.getFilesByMime(param);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size()); 
+
+            // Get jpeg files from data source 2
+            param = new FileTypeMimeSearchParams("image/jpeg", dataSource2.getId());
+            results = viewsDAO.getFilesByMime(param);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size()); 
+            
+            // Get plain text files from data source 1
+            param = new FileTypeMimeSearchParams("blah/blah", dataSource1.getId());
+            results = viewsDAO.getFilesByMime(param);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+            
+            /*            
+            // Check that a few of the expected column names are present
+            List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
+            assertTrue(columnDisplayNames.contains(BlackboardAttribute.Type.TSK_COMMENT.getDisplayName()));
+            assertTrue(columnDisplayNames.contains(BlackboardAttribute.Type.TSK_COUNT.getDisplayName()));
+            assertTrue(columnDisplayNames.contains(customAttributeType.getDisplayName()));
+            
+            // Get one of the rows
+            RowDTO rowDTO = results.getItems().get(0);
+            assertTrue(rowDTO instanceof DataArtifactRowDTO);
+            DataArtifactRowDTO dataArtifactRowDTO = (DataArtifactRowDTO) rowDTO;
+            
+            // Check that the artifact, source content and linked file are correct
+            assertEquals(customDataArtifact, dataArtifactRowDTO.getDataArtifact());
+            assertEquals(customDataArtifactSourceFile, dataArtifactRowDTO.getSrcContent());
+            //assertEquals(customDataArtifactLinkedFile, dataArtifactRowDTO.getLinkedFile()); I'm doing something wrong or this isn't working yet
+            
+            // Check that some of the expected column values are present
+            assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_CUSTOM_ATTR_STRING));
+            assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_COMMENT));
+            assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_INT));
+            assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_DOUBLE));*/
+            
+        } catch (ExecutionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }    
+    
     
     @Override
     public void tearDown() {
