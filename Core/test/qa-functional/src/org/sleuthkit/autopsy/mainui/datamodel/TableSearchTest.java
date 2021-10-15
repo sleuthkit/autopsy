@@ -279,8 +279,8 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
 
-            // Get plain text files from data source 1
-            param = new FileTypeMimeSearchParams("blah/blah", dataSource1.getId());
+            // Search for mime type that should produce no results
+            param = new FileTypeMimeSearchParams("blah/blah", null);
             results = viewsDAO.getFilesByMime(param);
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
