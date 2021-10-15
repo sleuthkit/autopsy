@@ -334,11 +334,6 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.kml.KMLReport.getDefault"/>
             <attr name="position" intvalue="904"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-modules-stix-STIXReportModule.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.stix.STIXReportModule.getDefault"/>
-            <attr name="position" intvalue="910"/>
-        </file>
         <file name="org-sleuthkit-autopsy-report-modules-caseuco-CaseUcoReportModule.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.caseuco.CaseUcoReportModule.getDefault"/>

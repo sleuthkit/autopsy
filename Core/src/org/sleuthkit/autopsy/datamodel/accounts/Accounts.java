@@ -48,6 +48,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -416,7 +417,7 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Subscribe
@@ -553,9 +554,9 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -731,9 +732,8 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Subscribe
         @Override
@@ -746,7 +746,7 @@ final public class Accounts implements AutopsyVisitableItem {
         void handleDataAdded(ModuleDataEvent event) {
             refresh(true);
         }
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -889,7 +889,7 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
@@ -1105,7 +1105,7 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
@@ -1117,7 +1117,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void finalize() throws Throwable{
+        protected void finalize() throws Throwable {
             super.finalize();
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
@@ -1466,8 +1466,7 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public Action[] getActions(boolean context) {
             Action[] actions = super.getActions(context);
-            ArrayList<Action> arrayList = new ArrayList<>();
-            arrayList.addAll(Arrays.asList(actions));
+            ArrayList<Action> arrayList = new ArrayList<>();           
             try {
                 arrayList.addAll(DataModelActionsFactory.getActions(Accounts.this.skCase.getContentById(fileKey.getObjID()), false));
             } catch (TskCoreException ex) {
@@ -1476,12 +1475,13 @@ final public class Accounts implements AutopsyVisitableItem {
 
             arrayList.add(approveActionInstance);
             arrayList.add(rejectActionInstance);
-
+            arrayList.add(null);
+            arrayList.addAll(Arrays.asList(actions));
             return arrayList.toArray(new Action[arrayList.size()]);
         }
     }
 
-    final private class CreditCardNumberFactory extends ObservingChildren<Long> {
+    final private class CreditCardNumberFactory extends ObservingChildren<DataArtifact> {
 
         private final BinResult bin;
 
@@ -1502,10 +1502,10 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<Long> list) {
+        protected boolean createKeys(List<DataArtifact> list) {
 
             String query
-                    = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
+                    = "SELECT blackboard_artifacts.artifact_obj_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
@@ -1517,7 +1517,7 @@ final public class Accounts implements AutopsyVisitableItem {
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    list.add(rs.getLong("artifact_id")); //NON-NLS
+                    list.add(skCase.getBlackboard().getDataArtifactById(rs.getLong("artifact_obj_id"))); //NON-NLS
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
@@ -1527,18 +1527,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node[] createNodesForKey(Long artifactID) {
-            if (skCase == null) {
-                return new Node[0];
-            }
-
-            try {
-                DataArtifact art = skCase.getBlackboard().getDataArtifactById(artifactID);
-                return new Node[]{new AccountArtifactNode(art)};
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
-                return new Node[0];
-            }
+        protected Node[] createNodesForKey(DataArtifact artifact) {
+            return new Node[]{new AccountArtifactNode(artifact)};
         }
     }
 
@@ -1679,7 +1669,9 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         private void updateSheet() {
-            this.setSheet(createSheet());
+            SwingUtilities.invokeLater(() -> {
+                this.setSheet(createSheet());
+            });
         }
 
     }
@@ -1856,7 +1848,9 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         private void updateSheet() {
-            this.setSheet(createSheet());
+            SwingUtilities.invokeLater(() -> {
+                this.setSheet(createSheet());
+            });
         }
 
     }

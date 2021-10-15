@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,8 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
 
     private static final long serialVersionUID = 1L;
     private static FileSearchAction instance = null;
+    private static FileSearchDialog searchDialog;
+    private static Long selectedDataSourceId;
 
     FileSearchAction() {
         super();
@@ -38,6 +40,9 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 setEnabled(evt.getNewValue() != null);
+                if (searchDialog != null && evt.getNewValue() != null) {
+                    searchDialog.resetCaseDependentFilters();
+                }
             }
         });
     }
@@ -51,12 +56,22 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new FileSearchDialog().setVisible(true);
+        if (searchDialog == null) {
+            searchDialog = new FileSearchDialog();
+        }
+        //Preserve whatever the previously selected data source was
+        selectedDataSourceId = null;
+        searchDialog.setVisible(true);
     }
 
     @Override
     public void performAction() {
-        new FileSearchDialog().setVisible(true);
+        if (searchDialog == null) {
+            searchDialog = new FileSearchDialog();
+        }
+        //
+        searchDialog.setSelectedDataSourceFilter(selectedDataSourceId);
+        searchDialog.setVisible(true);
     }
 
     @Override
@@ -75,7 +90,15 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
     }
 
     @Override
-    public void showDialog() {
+    public void showDialog(Long dataSourceId) {
+        selectedDataSourceId = dataSourceId;
         performAction();
+
+    }
+
+    @Override
+    @Deprecated
+    public void showDialog() {
+        showDialog(null);
     }
 }

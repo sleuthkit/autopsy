@@ -529,7 +529,10 @@ final class IngestJobPipeline {
      * @return True or false.
      */
     boolean hasFileIngestModules() {
-        return (fileIngestPipelines.isEmpty() == false);
+        if (!fileIngestPipelines.isEmpty()) {
+            return !fileIngestPipelines.get(0).isEmpty();
+        }
+        return false;
     }
 
     /**

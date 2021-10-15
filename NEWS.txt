@@ -1,3 +1,33 @@
+---------------- VERSION 4.19.2  --------------
+GUI Updates:
+- Special handling of Interesting Files and Interesting Results analysis results was removed from the tree and they are now shown as individual nodes. 
+- Updated display of analysis results in the tabular results viewer.
+- Improved algorithm for populating the S(core) column in the tabular results view.
+- Updated the right-click menu options for data artifacts and analysis results.
+- The O(ther Cases) column in the tabular results view and the Other Occurrences content viewer now count cases in the same way.  
+
+Misc:
+- Installed applications are now added to the central repository.
+- The Central Repository ingest module no longer uses the generic Interesting Item analysis result and instead creates more specific Previously Seen, Previously Unseen, and Previously Notable analysis results.
+- Automatic destinations (jump lists) parsing added to the Recent Activity module.
+- French translation of user documentation contributed by github user Seb2lyon.
+
+Bug Fixes:
+- Analysis Results and Annotation content viewers now work when parent is a data artifact.
+- Fixed bug that prevented media attachments from being displayed in the Communications Viewer. 
+- Fixed RegRipper bug to support parsing of ShellBags with non-Latin characters.
+- Assorted GUI responsiveness fixes.
+- Fixed NTFS handling of compressed files that were not fully initialized (via TSK). 
+- Other assorted bug fixes.
+
+
+---------------- VERSION 4.19.1  --------------
+Bug Fixes:
+- Fixed connection leak associated with creating OS Accounts
+- Decreased priority of OS Account Content Viewer
+- Misc bound check fixes in TSK
+
+
 ---------------- VERSION 4.19.0  --------------
 Data Source Management:
 - To make managing big cases easier, all data sources are now associated with a host that can be specified in the “Add Data Source” wizard. 

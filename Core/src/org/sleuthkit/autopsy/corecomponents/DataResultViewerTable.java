@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -202,7 +202,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         initializePagingSupport();
 
         /*
-         * Disable the CSV export button for the common properties results 
+         * Disable the CSV export button for the common properties results
          */
         if (this instanceof org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributesSearchResultsViewerTable) {
             exportCSVButton.setEnabled(false);
@@ -258,6 +258,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 nodeNameToPagingSupportMap.values().forEach((ps) -> {
                     ps.postPageSizeChangeEvent();
                 });
+                
+                setCursor(null);
             }
         });
     }
@@ -331,50 +333,52 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                  * Check to see if we have previously created a paging support
                  * class for this node.
                  */
-                String nodeName = rootNode.getName();
-                pagingSupport = nodeNameToPagingSupportMap.get(nodeName);
-                if (pagingSupport == null) {
-                    pagingSupport = new PagingSupport(nodeName);
-                    nodeNameToPagingSupportMap.put(nodeName, pagingSupport);
+                if (!Node.EMPTY.equals(rootNode)) {
+                    String nodeName = rootNode.getName();
+                    pagingSupport = nodeNameToPagingSupportMap.get(nodeName);
+                    if (pagingSupport == null) {
+                        pagingSupport = new PagingSupport(nodeName);
+                        nodeNameToPagingSupportMap.put(nodeName, pagingSupport);
+                    }
+                    pagingSupport.updateControls();
+
+                    rootNode.addNodeListener(new NodeListener() {
+                        @Override
+                        public void childrenAdded(NodeMemberEvent nme) {
+                            /**
+                             * This is the only somewhat reliable way I could
+                             * find to reset the cursor after a page change.
+                             * When you change page the old children nodes will
+                             * be removed and new ones added.
+                             */
+                            SwingUtilities.invokeLater(() -> {
+                                setCursor(null);
+                            });
+                        }
+
+                        @Override
+                        public void childrenRemoved(NodeMemberEvent nme) {
+                            SwingUtilities.invokeLater(() -> {
+                                setCursor(null);
+                            });
+                        }
+
+                        @Override
+                        public void childrenReordered(NodeReorderEvent nre) {
+                            // No-op
+                        }
+
+                        @Override
+                        public void nodeDestroyed(NodeEvent ne) {
+                            // No-op
+                        }
+
+                        @Override
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            // No-op
+                        }
+                    });
                 }
-                pagingSupport.updateControls();
-
-                rootNode.addNodeListener(new NodeListener() {
-                    @Override
-                    public void childrenAdded(NodeMemberEvent nme) {
-                        /**
-                         * This is the only somewhat reliable way I could find
-                         * to reset the cursor after a page change. When you
-                         * change page the old children nodes will be removed
-                         * and new ones added.
-                         */
-                        SwingUtilities.invokeLater(() -> {
-                            setCursor(null);
-                        });
-                    }
-
-                    @Override
-                    public void childrenRemoved(NodeMemberEvent nme) {
-                        SwingUtilities.invokeLater(() -> {
-                            setCursor(null);
-                        });
-                    }
-
-                    @Override
-                    public void childrenReordered(NodeReorderEvent nre) {
-                        // No-op
-                    }
-
-                    @Override
-                    public void nodeDestroyed(NodeEvent ne) {
-                        // No-op
-                    }
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        // No-op
-                    }
-                });
             }
 
             /*
@@ -442,8 +446,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
         }
 
-        setColumnWidths();
-
         /*
          * Load column sorting information from preferences file and apply it to
          * columns.
@@ -464,6 +466,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * to columns.
          */
         loadColumnVisibility();
+
+        /*
+         * Set the column widths.
+         *
+         * IMPORTANT: This needs to come after the preceding calls to determine
+         * the columns that will be displayed and their layout, which includes a
+         * call to ResultViewerPersistence.getAllChildProperties(). That method
+         * calls Children.getNodes(true) on the root node to ensure ALL of the
+         * nodes have been created in the NetBeans asynch child creation thread,
+         * and then uses the first one hundred nodes to determine which columns
+         * to display, including their header text.
+         */
+        setColumnWidths();
 
         /*
          * If one of the child nodes of the root node is to be selected, select
@@ -764,9 +779,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         /*
-        NOTE: it is possible to have "discontinuities" in the keys (i.e. column numbers)
-        of the map. This happens when some of the columns had a previous setting, and 
-        other columns did not. We need to make the keys 0-indexed and continuous.
+         * NOTE: it is possible to have "discontinuities" in the keys (i.e.
+         * column numbers) of the map. This happens when some of the columns had
+         * a previous setting, and other columns did not. We need to make the
+         * keys 0-indexed and continuous.
          */
         compactPropertiesMap();
 

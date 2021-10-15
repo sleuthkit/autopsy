@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2019 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -51,6 +52,9 @@ public class ExtractActionHelper {
 
     private final Logger logger = Logger.getLogger(ExtractActionHelper.class.getName());
     private String userDefinedExportPath;
+    
+    private final JFileChooserFactory extractFileHelper = new JFileChooserFactory();
+    private final JFileChooserFactory extractFilesHelper = new JFileChooserFactory();
 
     /**
      * Extract the specified collection of files with an event specified for
@@ -89,7 +93,7 @@ public class ExtractActionHelper {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
-        JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = extractFileHelper.getChooser();
         fileChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
@@ -117,7 +121,7 @@ public class ExtractActionHelper {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
-        JFileChooser folderChooser = new JFileChooser();
+        JFileChooser folderChooser = extractFilesHelper.getChooser();
         folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         folderChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
         if (folderChooser.showSaveDialog((Component) event.getSource()) == JFileChooser.APPROVE_OPTION) {

@@ -384,6 +384,20 @@ final class RegexQuery implements KeywordSearchQuery {
                         }
                         // Replace all non numeric at the end of the hit.
                         hit = hit.replaceAll("[^0-9]$", "");
+
+                        if (offset > 1) {
+                            /*
+                             * NOTE: our IP and phone number regex patterns look for
+                             * boundary characters immediately before and after
+                             * the keyword hit. After a match, Java pattern
+                             * mather re-starts at the first character not
+                             * matched by the previous match. This basically
+                             * requires two boundary characters to be present
+                             * between each pattern match. To mitigate this we
+                             * are resetting the offest one character back.
+                             */
+                            offset--;
+                        }
                     }
 
                     /**
@@ -397,18 +411,6 @@ final class RegexQuery implements KeywordSearchQuery {
                     if (originalKeyword.searchTermIsLiteral()) {
                         hit = hit.replaceAll("^" + KeywordSearchList.BOUNDARY_CHARACTERS + "*", "");
                         hit = hit.replaceAll(KeywordSearchList.BOUNDARY_CHARACTERS + "*$", "");
-
-                        /**
-                         * The Solr StandardTokenizerFactory maximum token
-                         * length is 255 and attempts to search for tokens
-                         * larger than this limit fail when we attempt to
-                         * highlight later. I have't found a programmatic
-                         * mechanism to get this value so I'm hardcoding it
-                         * here.
-                         */
-                        if (hit.length() > 255) {
-                            break;
-                        }
                     }
 
                     /**

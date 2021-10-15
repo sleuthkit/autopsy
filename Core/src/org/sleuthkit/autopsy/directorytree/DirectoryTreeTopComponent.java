@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +84,7 @@ import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
+import org.sleuthkit.autopsy.datamodel.OsAccounts;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
@@ -95,6 +97,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -1221,6 +1224,86 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
+     * Does depth-first search to find os account list node where the provided
+     * os account is a child.
+     *
+     * @param node      The node.
+     * @param osAccount The os account.
+     * @param hosts     List of hosts.
+     *
+     * @return The parent list node of the os account if found or empty if not.
+     */
+    private Optional<Node> getOsAccountListNode(Node node, OsAccount osAccount, Set<Host> hosts) {
+        if (node == null) {
+            return Optional.empty();
+        }
+
+        Host nodeHost = node.getLookup().lookup(Host.class);
+        if ((nodeHost != null && hosts != null && hosts.contains(nodeHost))
+                || node.getLookup().lookup(DataSource.class) != null
+                || node.getLookup().lookup(Person.class) != null
+                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+
+            return Stream.of(node.getChildren().getNodes(true))
+                    .map(childNode -> getOsAccountListNode(childNode, osAccount, hosts))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .findFirst();
+
+        }
+
+        if (OsAccounts.getListName().equals(node.getName())) {
+            return Optional.of(node);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Navigates to the os account if the os account is found in the tree.
+     *
+     * @param osAccount The os account.
+     */
+    public void viewOsAccount(OsAccount osAccount) {
+        Set<Host> hosts = null;
+
+        if (CasePreferences.getGroupItemsInTreeByDataSource()) {
+            try {
+                hosts = new HashSet<>(Case.getCurrentCase().getSleuthkitCase().getOsAccountManager().getHosts(osAccount));
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.WARNING, "Unable to get valid hosts for osAccount: " + osAccount, ex);
+                return;
+            }
+        }
+        
+        final Set<Host> finalHosts = hosts;
+
+        Optional<Node> osAccountListNodeOpt = Stream.of(em.getRootContext().getChildren().getNodes(true))
+                .map(nd -> getOsAccountListNode(nd, osAccount, finalHosts))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+
+        if (!osAccountListNodeOpt.isPresent()) {
+            return;
+        }
+
+        Node osAccountListNode = osAccountListNodeOpt.get();
+
+        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) osAccountListNode).getOriginal();
+        undecoratedParentNode.setChildNodeSelectionInfo((osAcctNd) -> {
+            OsAccount osAcctOfNd = osAcctNd.getLookup().lookup(OsAccount.class);
+            return osAcctOfNd != null && osAcctOfNd.getId() == osAccount.getId();
+        });
+        getTree().expandNode(osAccountListNode);
+        try {
+            em.setExploredContextAndSelection(osAccountListNode, new Node[]{osAccountListNode});
+        } catch (PropertyVetoException ex) {
+            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+        }
+    }
+
+    /**
      * Attempts to retrieve the artifact type for the given artifact type id.
      *
      * @param artifactTypeId The artifact type id.
@@ -1271,9 +1354,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             treeNode = getHashsetNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
             treeNode = getKeywordHitNode(typesChildren, art);
-        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
-                || typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-            treeNode = getInterestingItemNode(typesChildren, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
             treeNode = getEmailNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
@@ -1401,42 +1485,46 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @param typesChildren The children object of the same category as
      *                      interesting item.
+     * @param artifactType  The type of the artifact (interesting hit or
+     *                      artifact).
      * @param art           The artifact.
      *
      * @return The interesting item artifact's parent node or null if cannot be
      *         found.
      */
-    private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact art) {
-        Node interestingItemsRootNode = typesChildren.findChild(NbBundle
-                .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text"));
-        Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
+    private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact.Type artifactType, BlackboardArtifact art) {
+        Node interestingItemsRootNode = typesChildren.findChild(artifactType.getDisplayName());
+        Children setNodeChildren = (interestingItemsRootNode == null) ? null : interestingItemsRootNode.getChildren();
+        
+        // set node children for type could not be found, so return null.
+        if (setNodeChildren == null) {
+            return null;
+        }
+        
+        String setName = null;
         try {
-            String setName = null;
-            List<BlackboardAttribute> attributes = art.getAttributes();
-            for (BlackboardAttribute att : attributes) {
-                int typeId = att.getAttributeType().getTypeID();
-                if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                    setName = att.getValueString();
-                }
-            }
-            Node setNode = interestingItemsRootChildren.findChild(setName);
-            if (setNode == null) {
-                return null;
-            }
+            setName = art.getAttributes().stream()
+                    .filter(attr -> attr.getAttributeType().getTypeID() == BlackboardAttribute.Type.TSK_SET_NAME.getTypeID())
+                    .map(attr -> attr.getValueString())
+                    .findFirst()
+                    .orElse(null);
 
-            Children fileArtifactChildren = setNode.getChildren();
-            Node[] fileArtifactNodes = fileArtifactChildren == null ? null : fileArtifactChildren.getNodes();
-            if (fileArtifactNodes == null || fileArtifactNodes.length != 2) {
-                return null;
-            }
-
-            return (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID())
-                    ? fileArtifactNodes[0]
-                    : fileArtifactNodes[1];
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
         }
+
+        // if no set name, no set node will be identified.
+        if (setName == null) {
+            return null;
+        }
+
+        // make sure data is fully loaded
+        final String finalSetName = setName;
+        return Stream.of(setNodeChildren.getNodes(true))
+                .filter(setNode -> finalSetName.equals(setNode.getLookup().lookup(String.class)))
+                .findFirst()
+                .orElse(null);
     }
 
     /**

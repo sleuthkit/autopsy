@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
@@ -95,8 +96,7 @@ class SevenZipExtractor {
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
             "EmbeddedFileExtractorIngestModule.ArchiveExtractor.encryptionFileLevel");
-    private static final String ENCRYPTION_FULL = NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
-            "EmbeddedFileExtractorIngestModule.ArchiveExtractor.encryptionFull");
+    private static final String ENCRYPTION_FULL = EncryptionDetectionModuleFactory.PASSWORD_PROTECT_MESSAGE;
 
     //zip bomb detection
     private static final int MAX_DEPTH = 4;
@@ -954,7 +954,7 @@ class SevenZipExtractor {
         }
         charsetDetector.setText(allBytes);
         CharsetMatch cm = charsetDetector.detect();
-        if (cm.getConfidence() >= 90 && Charset.isSupported(cm.getName())) {
+        if (cm != null && cm.getConfidence() >= 90 && Charset.isSupported(cm.getName())) {
             detectedCharset = Charset.forName(cm.getName());
         }
         return detectedCharset;

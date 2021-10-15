@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2021-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,8 @@ package org.sleuthkit.autopsy.contentviewers.analysisresults;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,6 +30,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.AnalysisResultItem;
+import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -38,7 +39,6 @@ import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
  * Creates a representation of a list of analysis results gathered from a node.
  */
 public class AnalysisResultsViewModel {
@@ -72,7 +72,7 @@ public class AnalysisResultsViewModel {
          * @return The attributes to display.
          */
         List<Pair<String, String>> getAttributesToDisplay() {
-            return attributesToDisplay;
+            return Collections.unmodifiableList(attributesToDisplay);
         }
 
         /**
@@ -94,7 +94,7 @@ public class AnalysisResultsViewModel {
         private final List<ResultDisplayAttributes> analysisResults;
         private final Optional<AnalysisResult> selectedResult;
         private final Optional<Score> aggregateScore;
-        private final Optional<Content> content;
+        private final Optional<String> itemName;
 
         /**
          * Constructor.
@@ -104,12 +104,15 @@ public class AnalysisResultsViewModel {
          *                        selected.
          * @param aggregateScore  The aggregate score or empty if no score.
          * @param content         The content associated with these results.
+         * @param itemName        The name of the selected item to display to
+         *                        the user.
          */
-        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult, Optional<Score> aggregateScore, Optional<Content> content) {
+        NodeResults(List<ResultDisplayAttributes> analysisResults, Optional<AnalysisResult> selectedResult,
+                Optional<Score> aggregateScore, Optional<String> itemName) {
             this.analysisResults = analysisResults;
             this.selectedResult = selectedResult;
             this.aggregateScore = aggregateScore;
-            this.content = content;
+            this.itemName = itemName;
         }
 
         /**
@@ -118,7 +121,7 @@ public class AnalysisResultsViewModel {
          * @return The analysis results to be displayed.
          */
         List<ResultDisplayAttributes> getAnalysisResults() {
-            return analysisResults;
+            return Collections.unmodifiableList(analysisResults);
         }
 
         /**
@@ -140,14 +143,12 @@ public class AnalysisResultsViewModel {
         }
 
         /**
-         * Returns the content associated with these results or empty if not
-         * present.
+         * Returns the name of the selected item to display to the user.
          *
-         * @return The content associated with these results or empty if not
-         *         present.
+         * @return The name of the selected item to display to the user.
          */
-        Optional<Content> getContent() {
-            return content;
+        Optional<String> getItemName() {
+            return itemName;
         }
     }
 
@@ -226,6 +227,25 @@ public class AnalysisResultsViewModel {
     }
 
     /**
+     * Returns the item's name to display in the header for the panel.
+     *
+     * @param selectedContent The selected content.
+     *
+     * @return The name to use for the content.
+     *
+     * @throws TskCoreException
+     */
+    private String getName(Content selectedContent) throws TskCoreException {
+        if (selectedContent == null) {
+            return null;
+        } else if (selectedContent instanceof BlackboardArtifact) {
+            return ((BlackboardArtifact) selectedContent).getShortDescription();
+        } else {
+            return selectedContent.getName();
+        }
+    }
+
+    /**
      * Returns the view model data representing the analysis results to be
      * displayed for the node.
      *
@@ -238,58 +258,50 @@ public class AnalysisResultsViewModel {
             return new NodeResults(Collections.emptyList(), Optional.empty(), Optional.empty(), Optional.empty());
         }
 
-        Optional<Score> aggregateScore = Optional.empty();
-        Optional<Content> nodeContent = Optional.empty();
-        // maps id of analysis result to analysis result to prevent duplication
-        Map<Long, AnalysisResult> allAnalysisResults = new HashMap<>();
-        Optional<AnalysisResult> selectedResult = Optional.empty();
-
-        // Find first content that is not an artifact within node
-        for (Content content : node.getLookup().lookupAll(Content.class)) {
-            if (content == null || content instanceof BlackboardArtifact) {
-                continue;
+        String contentName = null;
+        AnalysisResult selectedAnalysisResult = null;
+        Score aggregateScore = null;
+        List<AnalysisResult> analysisResults = Collections.emptyList();
+        long selectedObjectId = 0;
+        try {
+            AnalysisResultItem analysisResultItem = node.getLookup().lookup(AnalysisResultItem.class);
+            Content analyzedContent;
+            if (Objects.nonNull(analysisResultItem)) {
+                /*
+                 * The content represented by the Node is an analysis result.
+                 * Set this analysis result as the analysis result to be
+                 * selected in the content viewer and get the analyzed content
+                 * as the source of the analysis results to display.
+                 */
+                selectedAnalysisResult = analysisResultItem.getTskContent();
+                selectedObjectId = selectedAnalysisResult.getId();
+                analyzedContent = selectedAnalysisResult.getParent();
+            } else {
+                /*
+                 * The content represented by the Node is something other than
+                 * an analysis result. Use it as the source of the analysis
+                 * results to display.
+                 */
+                TskContentItem<?> contentItem = node.getLookup().lookup(TskContentItem.class);
+                analyzedContent = contentItem.getTskContent();
+                selectedObjectId = analyzedContent.getId();
             }
+            aggregateScore = analyzedContent.getAggregateScore();
+            analysisResults = analyzedContent.getAllAnalysisResults();
+            contentName = getName(analyzedContent);
 
-            try {
-                nodeContent = Optional.of(content);
-                
-                // get the aggregate score of that content
-                aggregateScore = Optional.ofNullable(content.getAggregateScore());
-
-                // and add all analysis results to mapping
-                content.getAllAnalysisResults().stream()
-                        .forEach((ar) -> allAnalysisResults.put(ar.getArtifactID(), ar));
-
-                break;
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Unable to get analysis results for content with obj id " + content.getId(), ex);
-            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Error getting analysis result data for selected Content (object ID=%d)", selectedObjectId), ex);
         }
 
-        // Find any analysis results in the node
-        Collection<? extends AnalysisResult> analysisResults = node.getLookup().lookupAll(AnalysisResult.class);
-        if (analysisResults.size() > 0) {
-
-            // get any items with a score
-            List<AnalysisResult> filteredResults = analysisResults.stream()
-                    .collect(Collectors.toList());
-
-            // add them to the map to display
-            filteredResults.forEach((ar) -> allAnalysisResults.put(ar.getArtifactID(), ar));
-
-            // the selected result will be the highest scored analysis result in the node.
-            selectedResult = filteredResults.stream()
-                    .max((a, b) -> a.getScore().compareTo(b.getScore()));
-
-            // if no aggregate score determined at this point, use the selected result score.
-            if (!aggregateScore.isPresent()) {
-                aggregateScore = selectedResult.flatMap(selectedRes -> Optional.ofNullable(selectedRes.getScore()));
-            }
-        }
-
-        // get view model representation
-        List<ResultDisplayAttributes> displayAttributes = getOrderedDisplayAttributes(allAnalysisResults.values());
-
-        return new NodeResults(displayAttributes, selectedResult, aggregateScore, nodeContent);
+        /*
+         * Use the data collected above to construct the view model.
+         */
+        List<ResultDisplayAttributes> displayAttributes = getOrderedDisplayAttributes(analysisResults);
+        return new NodeResults(displayAttributes,
+                Optional.ofNullable(selectedAnalysisResult),
+                Optional.ofNullable(aggregateScore),
+                Optional.ofNullable(contentName));
     }
+
 }

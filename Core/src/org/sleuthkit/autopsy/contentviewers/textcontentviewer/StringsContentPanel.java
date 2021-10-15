@@ -95,12 +95,11 @@ public class StringsContentPanel extends javax.swing.JPanel {
         currentPage = 1;
         currentOffset = 0;
         this.dataSource = null;
-        currentPageLabel.setText("");
+        currentPageLabel.setText("1");
         totalPageLabel.setText("");
         prevPageButton.setEnabled(false);
         nextPageButton.setEnabled(false);
         outputViewPane.setText(""); // reset the output view
-        setComponentsVisibility(false); // hides the components that not needed
     }
 
     /**
@@ -167,9 +166,6 @@ public class StringsContentPanel extends javax.swing.JPanel {
         panelPageOfCount.add(jSepMed1);
 
         currentPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.currentPageLabel.text_1")); // NOI18N
-        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 25));
-        currentPageLabel.setMinimumSize(new java.awt.Dimension(7, 25));
-        currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 25));
         panelPageOfCount.add(currentPageLabel);
 
         jSepMed2.setPreferredSize(new java.awt.Dimension(5, 0));
@@ -185,9 +181,9 @@ public class StringsContentPanel extends javax.swing.JPanel {
         panelPageOfCount.add(jSepMed3);
 
         totalPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.totalPageLabel.text_1")); // NOI18N
-        totalPageLabel.setMaximumSize(new java.awt.Dimension(21, 25));
-        totalPageLabel.setMinimumSize(new java.awt.Dimension(21, 25));
-        totalPageLabel.setPreferredSize(new java.awt.Dimension(21, 25));
+        totalPageLabel.setMaximumSize(new java.awt.Dimension(25, 25));
+        totalPageLabel.setMinimumSize(new java.awt.Dimension(25, 25));
+        totalPageLabel.setPreferredSize(new java.awt.Dimension(25, 25));
         panelPageOfCount.add(totalPageLabel);
 
         jSepMed4.setPreferredSize(new java.awt.Dimension(5, 0));
@@ -409,24 +405,6 @@ public class StringsContentPanel extends javax.swing.JPanel {
         worker.execute();
     }
 
-    /**
-     * To set the visibility of specific components in this class.
-     *
-     * @param isVisible whether to show or hide the specific components
-     */
-    private void setComponentsVisibility(boolean isVisible) {
-        currentPageLabel.setVisible(isVisible);
-        totalPageLabel.setVisible(isVisible);
-        ofLabel.setVisible(isVisible);
-        prevPageButton.setVisible(isVisible);
-        nextPageButton.setVisible(isVisible);
-        pageLabel.setVisible(isVisible);
-        pageLabel2.setVisible(isVisible);
-        goToPageTextField.setVisible(isVisible);
-        goToPageLabel.setVisible(isVisible);
-        languageCombo.setVisible(isVisible);
-        languageLabel.setVisible(isVisible);
-    }
 
     /**
      * Swingworker for getting the text from a content object.
@@ -509,9 +487,7 @@ public class StringsContentPanel extends javax.swing.JPanel {
 
                 int totalPage = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
                 totalPageLabel.setText(Integer.toString(totalPage));
-                currentPageLabel.setText("1");
                 outputViewPane.setText(text); // set the output view
-                setComponentsVisibility(true); // shows the components that not needed
                 outputViewPane.moveCaretPosition(0);
 
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -557,10 +533,7 @@ public class StringsContentPanel extends javax.swing.JPanel {
                 prevPageButton.setEnabled(false);
                 currentPage = 1;
 
-                totalPageLabel.setText("1");
-                currentPageLabel.setText("1");
                 outputViewPane.setText(text); // set the output view
-                setComponentsVisibility(true); // shows the components that not needed
                 outputViewPane.moveCaretPosition(0);
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 

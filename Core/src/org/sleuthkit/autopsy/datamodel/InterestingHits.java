@@ -51,70 +51,95 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 
 public class InterestingHits implements AutopsyVisitableItem {
 
-    private static final String INTERESTING_ITEMS = NbBundle
-            .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text");
-    private static final String DISPLAY_NAME = NbBundle.getMessage(InterestingHits.class, "InterestingHits.displayName.text");
     private static final Logger logger = Logger.getLogger(InterestingHits.class.getName());
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
+
     private SleuthkitCase skCase;
     private final InterestingResults interestingResults = new InterestingResults();
     private final long filteringDSObjId; // 0 if not filtering/grouping by data source
+    private final BlackboardArtifact.Type artifactType;
 
     /**
      * Constructor
      *
-     * @param skCase Case DB
+     * @param skCase       Case DB
+     * @param artifactType The artifact type (either interesting file or
+     *                     artifact).
      *
      */
-    public InterestingHits(SleuthkitCase skCase) {
-        this(skCase, 0);
+    public InterestingHits(SleuthkitCase skCase, BlackboardArtifact.Type artifactType) {
+        this(skCase, artifactType, 0);
     }
 
     /**
      * Constructor
      *
-     * @param skCase Case DB
-     * @param objId  Object id of the data source
+     * @param skCase       Case DB
+     * @param artifactType The artifact type (either interesting file or
+     *                     artifact).
+     * @param objId        Object id of the data source
      *
      */
-    public InterestingHits(SleuthkitCase skCase, long objId) {
+    public InterestingHits(SleuthkitCase skCase, BlackboardArtifact.Type artifactType, long objId) {
         this.skCase = skCase;
+        this.artifactType = artifactType;
         this.filteringDSObjId = objId;
         interestingResults.update();
     }
 
+    /**
+     * Cache of result ids mapped by artifact type -> set name -> artifact id.
+     */
     private class InterestingResults extends Observable {
 
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
-        private final Map<String, Map<String, Set<Long>>> interestingItemsMap = new LinkedHashMap<>();
+        private final Map<String, Set<Long>> interestingItemsMap = new LinkedHashMap<>();
 
-        public List<String> getSetNames() {
+        /**
+         * Returns all the set names for a given interesting item type.
+         *
+         * @param type The interesting item type.
+         *
+         * @return The set names.
+         */
+        List<String> getSetNames() {
             List<String> setNames;
             synchronized (interestingItemsMap) {
                 setNames = new ArrayList<>(interestingItemsMap.keySet());
             }
-            Collections.sort(setNames);
+            Collections.sort(setNames, (a, b) -> a.compareToIgnoreCase(b));
             return setNames;
         }
 
-        public Set<Long> getArtifactIds(String setName, String typeName) {
+        /**
+         * Returns all artifact ids belonging to the specified interesting item
+         * type and set name.
+         *
+         * @param type    The interesting item type.
+         * @param setName The set name.
+         *
+         * @return The artifact ids in that set name and type.
+         */
+        Set<Long> getArtifactIds(String setName) {
             synchronized (interestingItemsMap) {
-                return interestingItemsMap.get(setName).get(typeName);
+                return new HashSet<>(interestingItemsMap.getOrDefault(setName, Collections.emptySet()));
             }
         }
 
-        public void update() {
+        /**
+         * Triggers a fetch from the database to update this cache.
+         */
+        void update() {
             synchronized (interestingItemsMap) {
                 interestingItemsMap.clear();
             }
-            loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT);
-            loadArtifacts(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT);
+            loadArtifacts();
             setChanged();
             notifyObservers();
         }
@@ -124,18 +149,18 @@ public class InterestingHits implements AutopsyVisitableItem {
          * the interestingItemsMap
          */
         @SuppressWarnings("deprecation")
-        private void loadArtifacts(BlackboardArtifact.Type artType) {
+        private void loadArtifacts() {
             if (skCase == null) {
                 return;
             }
 
             int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-            int artId = artType.getTypeID();
-            String query = "SELECT value_text,blackboard_artifacts.artifact_obj_id,attribute_type_id " //NON-NLS
+
+            String query = "SELECT value_text, blackboard_artifacts.artifact_obj_id " //NON-NLS
                     + "FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
                     + "attribute_type_id=" + setNameId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
-                    + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+                    + " AND blackboard_artifacts.artifact_type_id = " + artifactType.getTypeID(); //NON-NLS
             if (filteringDSObjId > 0) {
                 query += "  AND blackboard_artifacts.data_source_obj_id = " + filteringDSObjId;
             }
@@ -146,12 +171,9 @@ public class InterestingHits implements AutopsyVisitableItem {
                     while (resultSet.next()) {
                         String value = resultSet.getString("value_text"); //NON-NLS
                         long artifactObjId = resultSet.getLong("artifact_obj_id"); //NON-NLS
-                        if (!interestingItemsMap.containsKey(value)) {
-                            interestingItemsMap.put(value, new LinkedHashMap<>());
-                            interestingItemsMap.get(value).put(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName(), new HashSet<>());
-                            interestingItemsMap.get(value).put(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName(), new HashSet<>());
-                        }
-                        interestingItemsMap.get(value).get(artType.getDisplayName()).add(artifactObjId);
+                        interestingItemsMap
+                                .computeIfAbsent(value, (k) -> new HashSet<>())
+                                .add(artifactObjId);
                     }
                 }
             } catch (TskCoreException | SQLException ex) {
@@ -166,54 +188,8 @@ public class InterestingHits implements AutopsyVisitableItem {
     }
 
     /**
-     * Node for the interesting items
+     * Creates nodes for all sets for a specified interesting item type.
      */
-    public class RootNode extends UpdatableCountTypeNode {
-
-        public RootNode() {
-            super(Children.create(new SetNameFactory(), true),
-                    Lookups.singleton(DISPLAY_NAME),
-                    DISPLAY_NAME,
-                    filteringDSObjId,
-                    BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT,
-                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT);
-            super.setName(INTERESTING_ITEMS);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
-        }
-
-        @Override
-        public boolean isLeafTypeNode() {
-            return false;
-        }
-
-        @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-
-        @Override
-        protected Sheet createSheet() {
-            Sheet sheet = super.createSheet();
-            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-            if (sheetSet == null) {
-                sheetSet = Sheet.createPropertiesSet();
-                sheet.put(sheetSet);
-            }
-
-            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
-                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.displayName"),
-                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
-                    getName()));
-
-            return sheet;
-        }
-
-        @Override
-        public String getItemType() {
-            return getClass().getName();
-        }
-    }
-
     private class SetNameFactory extends ChildFactory.Detachable<String> implements Observer {
 
         /*
@@ -239,8 +215,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                      * event to have a null oldValue.
                      */
                     ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                    if (null != eventData && (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-                            || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID())) {
+                    if (null != eventData && (eventData.getBlackboardArtifactType().getTypeID() == artifactType.getTypeID())) {
                         interestingResults.update();
                     }
                 } catch (NoCurrentCaseException notUsed) {
@@ -272,26 +247,8 @@ public class InterestingHits implements AutopsyVisitableItem {
                 }
             }
         };
-        
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
-        
-        @Override
-        protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            interestingResults.update();
-            interestingResults.addObserver(this);
-        }
 
-        @Override
-        protected void finalize() throws Throwable {
-            super.finalize();
-            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
-            interestingResults.deleteObserver(this);
-        }
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
         protected boolean createKeys(List<String> list) {
@@ -308,14 +265,35 @@ public class InterestingHits implements AutopsyVisitableItem {
         public void update(Observable o, Object arg) {
             refresh(true);
         }
+
+        @Override
+        protected void addNotify() {
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            interestingResults.addObserver(this);
+            interestingResults.update();
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            super.finalize();
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            interestingResults.deleteObserver(this);
+        }
     }
 
+    /**
+     * A node for a set to be displayed in the tree.
+     */
     public class SetNameNode extends DisplayableItemNode implements Observer {
 
         private final String setName;
 
         public SetNameNode(String setName) {//, Set<Long> children) {
-            super(Children.create(new HitTypeFactory(setName), true), Lookups.singleton(setName));
+            super(Children.create(new HitFactory(setName), true), Lookups.singleton(setName));
             this.setName = setName;
             super.setName(setName);
             updateDisplayName();
@@ -324,9 +302,74 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         private void updateDisplayName() {
-            int sizeOfSet = interestingResults.getArtifactIds(setName, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName()).size()
-                    + interestingResults.getArtifactIds(setName, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName()).size();
+            int sizeOfSet = interestingResults.getArtifactIds(setName).size();
             super.setDisplayName(setName + " (" + sizeOfSet + ")");
+        }
+
+        @Override
+        public boolean isLeafTypeNode() {
+            return true;
+        }
+
+        @Override
+        protected Sheet createSheet() {
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
+            }
+
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
+                    getName()));
+
+            return sheet;
+        }
+
+        @Override
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
+        }
+
+        @Override
+        public String getItemType() {
+            /**
+             * For custom settings for each rule set, return
+             * getClass().getName() + setName instead.
+             */
+            return getClass().getName();
+        }
+    }
+
+    /**
+     * Parent node for interesting item type that shows child set nodes.
+     */
+    public class RootNode extends UpdatableCountTypeNode {
+
+        /**
+         * Main constructor.
+         */
+        public RootNode() {
+            super(Children.create(new SetNameFactory(), true),
+                    Lookups.singleton(artifactType),
+                    artifactType.getDisplayName(),
+                    filteringDSObjId,
+                    artifactType);
+
+            /**
+             * We use the combination of setName and typeName as the name of the
+             * node to ensure that nodes have a unique name. This comes into
+             * play when associating paging state with the node.
+             */
+            setName(artifactType.getDisplayName());
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
         }
 
         @Override
@@ -342,101 +385,6 @@ public class InterestingHits implements AutopsyVisitableItem {
                 sheetSet = Sheet.createPropertiesSet();
                 sheet.put(sheetSet);
             }
-
-            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
-                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
-                    NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
-                    getName()));
-
-            return sheet;
-        }
-
-        @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-            return visitor.visit(this);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
-        public String getItemType() {
-            /**
-             * For custom settings for each rule set, return
-             * getClass().getName() + setName instead.
-             */
-            return getClass().getName();
-        }
-    }
-
-    private class HitTypeFactory extends ChildFactory<String> implements Observer {
-
-        private final String setName;
-        private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
-
-        private HitTypeFactory(String setName) {
-            super();
-            this.setName = setName;
-            interestingResults.addObserver(this);
-        }
-
-        @Override
-        protected boolean createKeys(List<String> list) {
-            list.add(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getDisplayName());
-            list.add(BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName());
-            return true;
-        }
-
-        @Override
-        protected Node createNodeForKey(String key) {
-            return new InterestingItemTypeNode(setName, key);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
-    }
-
-    public class InterestingItemTypeNode extends DisplayableItemNode implements Observer {
-
-        private final String typeName;
-        private final String setName;
-
-        private InterestingItemTypeNode(String setName, String typeName) {
-            super(Children.create(new HitFactory(setName, typeName), true), Lookups.singleton(setName));
-            this.typeName = typeName;
-            this.setName = setName;
-            /**
-             * We use the combination of setName and typeName as the name of the
-             * node to ensure that nodes have a unique name. This comes into
-             * play when associating paging state with the node.
-             */
-            super.setName(setName + "_" + typeName);
-            updateDisplayName();
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
-            interestingResults.addObserver(this);
-        }
-
-        private void updateDisplayName() {
-            super.setDisplayName(typeName + " (" + interestingResults.getArtifactIds(setName, typeName).size() + ")");
-        }
-
-        @Override
-        public boolean isLeafTypeNode() {
-            return true;
-        }
-
-        @Override
-        protected Sheet createSheet() {
-            Sheet sheet = super.createSheet();
-            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-            if (sheetSet == null) {
-                sheetSet = Sheet.createPropertiesSet();
-                sheet.put(sheetSet);
-            }
             sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
@@ -450,11 +398,6 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
         public String getItemType() {
             /**
              * For custom settings for each rule set, return
@@ -464,21 +407,27 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Factory for creating individual interesting item BlackboardArtifactNodes.
+     */
     private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
 
         private final String setName;
-        private final String typeName;
         private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
 
-        private HitFactory(String setName, String typeName) {
+        /**
+         * Main constructor.
+         *
+         * @param setName The set name of artifacts to be displayed.
+         */
+        private HitFactory(String setName) {
             /**
              * The node name passed to the parent constructor must be the same
              * as the name set in the InterestingItemTypeNode constructor, i.e.
              * setName underscore typeName
              */
-            super(setName + "_" + typeName);
+            super(setName);
             this.setName = setName;
-            this.typeName = typeName;
             interestingResults.addObserver(this);
         }
 
@@ -486,7 +435,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         protected List<AnalysisResult> makeKeys() {
 
             if (skCase != null) {
-                interestingResults.getArtifactIds(setName, typeName).forEach((id) -> {
+                interestingResults.getArtifactIds(setName).forEach((id) -> {
                     try {
                         if (!artifactHits.containsKey(id)) {
                             AnalysisResult art = skCase.getBlackboard().getAnalysisResultById(id);

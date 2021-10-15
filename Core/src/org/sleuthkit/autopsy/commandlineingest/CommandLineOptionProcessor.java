@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +20,15 @@ package org.sleuthkit.autopsy.commandlineingest;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.netbeans.api.sendopts.CommandException;
 import org.netbeans.spi.sendopts.Env;
@@ -291,7 +294,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         }
 
         // Add "GENERATE_REPORTS" command, if present
-        String reportProfile = null;
         if (values.containsKey(generateReportsOption)) {
 
             // 'caseDir' must only be specified if the case is not being created during the current run
@@ -300,24 +302,34 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 handleError("'caseDir' argument is empty");
             }
 
+            List<String> reportProfiles;
             argDirs = values.get(generateReportsOption);
             if (argDirs.length > 0) {
-                reportProfile = argDirs[0];
+                // use custom report configuration(s)
+                reportProfiles = Stream.of(argDirs[0].split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
+                
+                if (reportProfiles == null || reportProfiles.isEmpty()) {
+                    handleError("'generateReports' argument is empty");
+                }
+
+                for (String reportProfile : reportProfiles) {
+                    if (reportProfile.isEmpty()) {
+                        handleError("Empty report profile name");
+                    }
+                    CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.GENERATE_REPORTS);
+                    newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+                    newCommand.addInputValue(CommandLineCommand.InputType.REPORT_PROFILE_NAME.name(), reportProfile);
+                    commands.add(newCommand);
+                }
+            } else {
+                // use default report configuration
+                CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.GENERATE_REPORTS);
+                newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+                commands.add(newCommand);
             }
 
-            // If the user doesn't supply an options for generateReports the
-            // argsDirs length will be 0, so if reportProfile is empty
-            // something is not right.
-            if (reportProfile != null && reportProfile.isEmpty()) {
-                handleError("'generateReports' argument is empty");
-            }
-
-            CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.GENERATE_REPORTS);
-            newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
-            if (reportProfile != null) {
-                newCommand.addInputValue(CommandLineCommand.InputType.REPORT_PROFILE_NAME.name(), reportProfile);
-            }
-            commands.add(newCommand);
             runFromCommandLine = true;
         }
     }

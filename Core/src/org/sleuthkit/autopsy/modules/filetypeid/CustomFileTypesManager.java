@@ -336,6 +336,14 @@ final class CustomFileTypesManager {
             signatureList.add(new Signature(byteArray, 8L));
             fileType = new FileType("application/x.android-hdb", signatureList);
             autopsyDefinedFileTypes.add(fileType);
+            
+            /**
+             * Add custom type for fixed-size VHDs.
+             */
+            signatureList.clear();
+            signatureList.add(new Signature("conectix", 511L, false)); //NON-NLS
+            fileType = new FileType("application/x-vhd", signatureList); //NON-NLS
+            autopsyDefinedFileTypes.add(fileType);
 
         } catch (IllegalArgumentException ex) {
             /*

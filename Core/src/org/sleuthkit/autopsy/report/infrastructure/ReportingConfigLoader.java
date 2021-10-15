@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -53,6 +55,11 @@ final class ReportingConfigLoader {
     private static final String FILE_REPORT_CONFIG_FILE = "FileReportSettings.settings";
     private static final String GENERAL_REPORT_CONFIG_FILE = "GeneralReportSettings.settings";
     private static final String MODULE_CONFIG_FILE = "ModuleConfigs.settings";
+    
+    // Collection of standard report modules that are no longer in Autopsy. We keep
+    // track to suppress any errors when searching for the module since it may still
+    // existing in the configuration file.
+    private static final List<String> DELETED_REPORT_MODULES = Arrays.asList("org.sleuthkit.autopsy.report.modules.stix.STIXReportModule");
 
     /**
      * Deserialize all of the settings that make up a reporting configuration in
@@ -124,6 +131,10 @@ final class ReportingConfigLoader {
         // read each ReportModuleSettings object individually
         for (Iterator<Entry<String, ReportModuleConfig>> iterator = moduleConfigs.entrySet().iterator(); iterator.hasNext();) {
             ReportModuleConfig moduleConfig = iterator.next().getValue();
+            if (DELETED_REPORT_MODULES.contains(moduleConfig.getModuleClassName())) {
+                // Don't try to load settings for known deleted modules
+                continue;
+            }
             filePath = reportDirPath.toString() + File.separator + moduleConfig.getModuleClassName() + REPORT_SETTINGS_FILE_EXTENSION;
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
                 moduleConfig.setModuleSettings((ReportModuleSettings) in.readObject());

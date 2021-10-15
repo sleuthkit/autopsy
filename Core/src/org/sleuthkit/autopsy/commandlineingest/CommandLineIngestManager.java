@@ -186,7 +186,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 }
 
                                 String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
-                                dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
+                                dataSource = new AutoIngestDataSource(UUID.randomUUID().toString(), Paths.get(dataSourcePath));
                                 runDataSourceProcessor(caseForJob, dataSource);
 
                                 String outputDirPath = getOutputDirPath(caseForJob);

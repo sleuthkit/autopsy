@@ -1,4 +1,5 @@
 AnalysisResultsContentPanel_aggregateScore_displayKey=Aggregate Score
+AnalysisResultsContentPanel_content_displayKey=Item
 # {0} - analysisResultsNumber
 AnalysisResultsContentPanel_result_headerKey=Analysis Result {0}
 AnalysisResultsContentViewer_setNode_errorMessage=There was an error loading results.

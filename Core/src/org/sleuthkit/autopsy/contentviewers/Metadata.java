@@ -34,6 +34,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -310,7 +311,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     @Override
     public int isPreferred(Node node) {
-        return 1;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 
     /**

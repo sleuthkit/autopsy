@@ -30,6 +30,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
@@ -106,7 +107,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
      * @return the greatest isPreffered value of the supported TextViewers
      */
     int isPreffered(Node node) {
-        int max = 1;
+        int max = ViewerPriority.viewerPriority.LevelOne.getFlag();
         for (UpdateWrapper textViewer : textViewers) {
             if (textViewer.isSupported(node)) {
                 max = Integer.max(max, textViewer.isPreferred(node));
