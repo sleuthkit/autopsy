@@ -266,7 +266,7 @@ public class IngestFileFiltersTest extends NbTestCase {
                     String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
                     assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
 
-                    if (file.getParentPath().equalsIgnoreCase("/$CarvedFiles/")) {
+                    if (file.getParentPath().startsWith("/$CarvedFiles/")) {
                         carvedJpgGifFiles++;
                     }
                 } else if (file.getName().startsWith("Unalloc_")) {
