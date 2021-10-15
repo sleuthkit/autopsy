@@ -27,14 +27,13 @@ public class FileTypeMimeSearchParams extends BaseSearchParams {
 
     private final String mimeType;
     private final Long dataSourceId;
-
-    // @@@ TODO: Remove shownKnown from constructors and have DAO figure it out. 
-    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, boolean showKnown) {
+ 
+    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId) {
         this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, boolean knownShown, long startItem, Long maxResultsCount) {
+    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, long startItem, Long maxResultsCount) {
         super(startItem, maxResultsCount);
         this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
