@@ -1044,13 +1044,7 @@ final class IngestJobPipeline {
             }
         }
 
-        IngestManager ingestManager = IngestManager.getInstance();
-        if (isCancelled()) {
-            ingestManager.fireDataSourceAnalysisCompleted(getIngestJobId(), getDataSource());
-        } else {
-            IngestManager.getInstance().fireDataSourceAnalysisCancelled(getIngestJobId(), getDataSource());
-        }
-        ingestManager.finishIngestJob(ingestJob);
+        ingestJob.notifyIngestPipelineShutDown();        
     }
 
     /**

@@ -305,6 +305,22 @@ public final class IngestJob {
     }
 
     /**
+     * Provides a callback for the ingest modules pipeline, allowing this
+     * ingest job to notify the ingest manager when it is complete.
+     *
+     * @param ingestJobPipeline A completed ingestJobPipeline.
+     */
+    void notifyIngestPipelineShutDown() {
+        IngestManager ingestManager = IngestManager.getInstance();
+        if (!ingestJobPipeline.isCancelled()) {
+            ingestManager.fireDataSourceAnalysisCompleted(id, dataSource);
+        } else {
+            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, dataSource);
+        }
+        ingestManager.finishIngestJob(this);
+    }
+
+    /**
      * A snapshot of the progress of an ingest job.
      */
     public final class ProgressSnapshot {
