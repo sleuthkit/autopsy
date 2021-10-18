@@ -322,7 +322,6 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
-            results.printTable();
             
             // Get contacts from data source 2
             param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_CONTACT, dataSource2.getId());
@@ -445,7 +444,6 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, results.getArtifactType());
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
-            results.printTable();
             
             // Get encryption detected artifacts from data source 2
             param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, dataSource2.getId());
@@ -457,7 +455,6 @@ public class TableSearchTest extends NbTestCase {
             // Get all custom artifacts
             param = new AnalysisResultSearchParam(customAnalysisResultType, null);
             results = analysisResultDAO.getAnalysisResultsForTable(param);
-            results.printTable();
             assertEquals(customAnalysisResultType, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
@@ -501,14 +498,12 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
-            results.printTable();
             
             hashParam = new HashHitSearchParam(dataSource2.getId(), HASH_SET_1);
             results = analysisResultDAO.getHashHitsForTable(hashParam);
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
-            results.printTable();
             
             // Check that a few of the expected column names are present
             List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
@@ -542,14 +537,12 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
-            results.printTable();
             
             kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_1);
             results = analysisResultDAO.getKeywordHitsForTable(kwParam);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
-            results.printTable();
             
             // Check that a few of the expected column names are present
             List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
