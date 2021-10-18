@@ -35,10 +35,15 @@ public class MainDAO {
     }
 
     private final DataArtifactDAO dataArtifactDAO = DataArtifactDAO.getInstance();
+    private final AnalysisResultDAO analysisResultDAO = AnalysisResultDAO.getInstance();
     private final ViewsDAO viewsDAO = ViewsDAO.getInstance();
 
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;
+    }
+    
+    public AnalysisResultDAO getAnalysisResultDAO() {
+        return analysisResultDAO;
     }
 
     public ViewsDAO getViewsDAO() {
