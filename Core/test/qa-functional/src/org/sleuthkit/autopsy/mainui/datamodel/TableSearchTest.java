@@ -18,11 +18,12 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import junit.framework.Assert;
 import junit.framework.Test;
@@ -86,8 +87,8 @@ public class TableSearchTest extends NbTestCase {
     private String customMimeType = "fake/type";
     private String customFileName = "test.fake";
     private static String customExtension = "fake";
-    private static final List<String> CUSTOM_EXTENSIONS = Arrays.asList("." + customExtension); //NON-NLS
-    private static final List<String> EMPTY_RESULT_SET_EXTENSIONS = Arrays.asList(".blah", ".blah2", ".crazy"); //NON-NLS
+    private static final Set<String> CUSTOM_EXTENSIONS = ImmutableSet.of("." + customExtension); //NON-NLS
+    private static final Set<String> EMPTY_RESULT_SET_EXTENSIONS = ImmutableSet.of(".blah", ".blah2", ".crazy"); //NON-NLS
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(TableSearchTest.class).
@@ -377,9 +378,9 @@ public class TableSearchTest extends NbTestCase {
         final int id;
         final String name;
         final String displayName;
-        final List<String> filter;
+        final Set<String> filter;
 
-        private CustomRootFilter(int id, String name, String displayName, List<String> filter) {
+        private CustomRootFilter(int id, String name, String displayName, Set<String> filter) {
             this.id = id;
             this.name = name;
             this.displayName = displayName;
@@ -402,8 +403,8 @@ public class TableSearchTest extends NbTestCase {
         }
 
         @Override
-        public List<String> getFilter() {
-            return Collections.unmodifiableList(this.filter);
+        public Set<String> getFilter() {
+            return Collections.unmodifiableSet(this.filter);
         }
     }
 
