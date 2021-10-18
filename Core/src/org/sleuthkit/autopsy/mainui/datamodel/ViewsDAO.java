@@ -155,6 +155,7 @@ public class ViewsDAO {
 
     private final Cache<FileTypeExtensionsSearchParams, SearchResultsDTO> fileTypeByExtensionCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<FileTypeMimeSearchParams, SearchResultsDTO> fileTypeByMimeCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<FileTypeSizeSearchParams, SearchResultsDTO> fileTypeBySizeCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key) throws ExecutionException, IllegalArgumentException {
         if (key.getFilter() == null) {
@@ -174,8 +175,17 @@ public class ViewsDAO {
         }
 
         return fileTypeByMimeCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId()));
-    }    
+    }
     
+    public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key) throws ExecutionException, IllegalArgumentException {
+        if (key.getSizeFilter() == null) {
+            throw new IllegalArgumentException("Must have non-null filter");
+        } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
+            throw new IllegalArgumentException("Data source id must be greater than 0 or null");
+        }
+
+        return fileTypeBySizeCache.get(key, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId()));
+    }    
 
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
 //
@@ -233,8 +243,37 @@ public class ViewsDAO {
                 + " AND mime_type = '" + mimeType + "'";
     
         return whereClause;
-    }    
-    
+    }
+
+    private static String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
+        String query;
+        switch (filter) {
+            case SIZE_50_200:
+                query = "(size >= 50000000 AND size < 200000000)"; //NON-NLS
+                break;
+            case SIZE_200_1000:
+                query = "(size >= 200000000 AND size < 1000000000)"; //NON-NLS
+                break;
+
+            case SIZE_1000_:
+                query = "(size >= 1000000000)"; //NON-NLS
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unsupported filter type to get files by size: " + filter); //NON-NLS
+        }
+
+        // Ignore unallocated block files.
+        query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
+
+        // filter by datasource if indicated in case preferences
+        if (dataSourceId != null && dataSourceId > 0) {
+            query += " AND data_source_obj_id = " + dataSourceId;
+        }
+
+        return query;
+    }
+
     private SearchResultsDTO fetchExtensionSearchResultsDTOs(FileExtSearchFilter filter, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
         String whereStatement = getFileExtensionWhereStatement(filter, dataSourceId);
         return fetchFileViewFiles(whereStatement, filter.getDisplayName());
@@ -245,6 +284,11 @@ public class ViewsDAO {
         String whereStatement = getFileMimeWhereStatement(mimeType, dataSourceId);
         final String MIME_TYPE_DISPLAY_NAME = Bundle.FileTypesByMimeType_name_text();
         return fetchFileViewFiles(whereStatement, MIME_TYPE_DISPLAY_NAME);
+    }
+
+    private SearchResultsDTO fetchSizeSearchResultsDTOs(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getFileSizesWhereStatement(filter, dataSourceId);
+        return fetchFileViewFiles(whereStatement, filter.getDisplayName());
     }
 
     private SearchResultsDTO fetchFileViewFiles(String whereStatement, String displayName) throws NoCurrentCaseException, TskCoreException {
