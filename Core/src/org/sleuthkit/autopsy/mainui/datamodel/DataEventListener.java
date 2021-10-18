@@ -69,22 +69,22 @@ public interface DataEventListener {
 
         @Override
         public default void onModuleData(ModuleDataEvent evt) {
-            getDelegateListeners().forEach(() -> onModuleData(evt));
+            getDelegateListeners().forEach((listener) -> listener.onModuleData(evt));
         }
 
         @Override
         public default void onContentChange(Content changedContent) {
-            getDelegateListeners().forEach(() -> onContentChange(changedContent));
+            getDelegateListeners().forEach((listener) -> listener.onContentChange(changedContent));
         }
 
         @Override
         public default void onCaseChange(Case oldCase, Case newCase) {
-            getDelegateListeners().forEach(() -> onCaseChange(oldCase, newCase));
+            getDelegateListeners().forEach((listener) -> listener.onCaseChange(oldCase, newCase));
         }
 
         @Override
         public default void onPageSizeChange(int newPageSize) {
-            getDelegateListeners().forEach(() -> onPageSizeChange(newPageSize));
+            getDelegateListeners().forEach((listener) -> listener.onPageSizeChange(newPageSize));
         }
     }
 
