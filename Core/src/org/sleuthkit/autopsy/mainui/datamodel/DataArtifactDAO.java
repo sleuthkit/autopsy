@@ -144,7 +144,13 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return new DataArtifactTableSearchResultsDTO(artType, columnKeys, rows, cacheKey.getStartItem(), arts.size());
     }
 
-
+    @Override
+    RowDTO createRow(BlackboardArtifact artifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) throws IllegalArgumentException {
+        if (! (artifact instanceof DataArtifact)) {
+            throw new IllegalArgumentException("Can not make row for artifact with ID: " + artifact.getId() + " - artifact must be a data artifact");
+        }
+        return new DataArtifactRowDTO((DataArtifact)artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id);
+    }
 
     public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
