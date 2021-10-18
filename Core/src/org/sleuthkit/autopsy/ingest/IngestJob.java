@@ -73,7 +73,7 @@ public final class IngestJob {
     private final List<AbstractFile> files = new ArrayList<>();
     private final Mode ingestMode;
     private final IngestJobSettings settings;
-    private volatile IngestJobPipeline ingestJobPipeline;
+    private volatile IngestModulePipelines ingestModulePipelines;
     private volatile CancellationReason cancellationReason;
 
     /**
@@ -143,8 +143,8 @@ public final class IngestJob {
      */
     void addStreamingIngestFiles(List<Long> fileObjIds) {
         if (ingestMode == Mode.STREAMING) {
-            if (ingestJobPipeline != null) {
-                ingestJobPipeline.addStreamedFiles(fileObjIds);
+            if (ingestModulePipelines != null) {
+                ingestModulePipelines.addStreamedFiles(fileObjIds);
             } else {
                 logger.log(Level.SEVERE, "Attempted to add streamed ingest files with no ingest pipeline");
             }
@@ -159,8 +159,8 @@ public final class IngestJob {
      */
     void processStreamingIngestDataSource() {
         if (ingestMode == Mode.STREAMING) {
-            if (ingestJobPipeline != null) {
-                ingestJobPipeline.addStreamedDataSource();
+            if (ingestModulePipelines != null) {
+                ingestModulePipelines.startStreamingModeDataSrcAnalysis();
             } else {
                 logger.log(Level.SEVERE, "Attempted to start data source analaysis with no ingest pipeline");
             }
@@ -176,16 +176,16 @@ public final class IngestJob {
      * @return A collection of ingest module start up errors, empty on success.
      */
     synchronized List<IngestModuleError> start() throws InterruptedException {
-        if (ingestJobPipeline != null) {
+        if (ingestModulePipelines != null) {
             logger.log(Level.SEVERE, "Attempt to start ingest job that has already been started");
             return Collections.emptyList();
         }
 
-        ingestJobPipeline = new IngestJobPipeline(this, dataSource, files, settings);
+        ingestModulePipelines = new IngestModulePipelines(this, dataSource, files, settings);
         List<IngestModuleError> errors = new ArrayList<>();
-        errors.addAll(ingestJobPipeline.startUp());
+        errors.addAll(ingestModulePipelines.startUp());
         if (errors.isEmpty()) {
-            IngestManager.getInstance().fireDataSourceAnalysisStarted(id, ingestJobPipeline.getDataSource());
+            IngestManager.getInstance().fireDataSourceAnalysisStarted(id, ingestModulePipelines.getDataSource());
         } else {
             cancel(CancellationReason.INGEST_MODULES_STARTUP_FAILED);
         }
@@ -220,7 +220,7 @@ public final class IngestJob {
      */
     public ProgressSnapshot getSnapshot(boolean includeIngestTasksSnapshot) {
         ProgressSnapshot snapshot = null;
-        if (ingestJobPipeline != null) {
+        if (ingestModulePipelines != null) {
             return new ProgressSnapshot(includeIngestTasksSnapshot);
         }
         return snapshot;
@@ -233,8 +233,8 @@ public final class IngestJob {
      */
     Snapshot getDiagnosticStatsSnapshot() {
         Snapshot snapshot = null;
-        if (ingestJobPipeline != null) {
-            snapshot = ingestJobPipeline.getDiagnosticStatsSnapshot(true);
+        if (ingestModulePipelines != null) {
+            snapshot = ingestModulePipelines.getDiagnosticStatsSnapshot(true);
         }
         return snapshot;
     }
@@ -272,8 +272,8 @@ public final class IngestJob {
          * ingest manager's ingest jobs list lock.
          */
         new Thread(() -> {
-            if (ingestJobPipeline != null) {
-                ingestJobPipeline.cancel(reason);
+            if (ingestModulePipelines != null) {
+                ingestModulePipelines.cancel(reason);
             }
         }).start();
     }
@@ -298,14 +298,14 @@ public final class IngestJob {
     }
 
     /**
-     * Provides a callback for the ingest modules pipeline, allowing this ingest
+     * Provides a callback for the ingest module pipelines, allowing this ingest
      * job to notify the ingest manager when it is complete.
      *
      * @param ingestJobPipeline A completed ingestJobPipeline.
      */
-    void notifyIngestPipelineShutDown() {
+    void notifyIngestPipelinesShutDown() {
         IngestManager ingestManager = IngestManager.getInstance();
-        if (!ingestJobPipeline.isCancelled()) {
+        if (!ingestModulePipelines.isCancelled()) {
             ingestManager.fireDataSourceAnalysisCompleted(id, dataSource);
         } else {
             IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, dataSource);
@@ -427,7 +427,7 @@ public final class IngestJob {
              * Note that the getSnapshot() will not construct a ProgressSnapshot
              * if ingestJobPipeline is null.
              */
-            Snapshot snapshot = ingestJobPipeline.getDiagnosticStatsSnapshot(includeIngestTasksSnapshot);
+            Snapshot snapshot = ingestModulePipelines.getDiagnosticStatsSnapshot(includeIngestTasksSnapshot);
             dataSourceProcessingSnapshot = new DataSourceProcessingSnapshot(snapshot);
             jobCancellationRequested = IngestJob.this.isCancelled();
             jobCancellationReason = IngestJob.this.getCancellationReason();
@@ -444,7 +444,7 @@ public final class IngestJob {
             DataSourceIngestModuleHandle moduleHandle = null;
             DataSourceIngestPipeline.DataSourcePipelineModule module = dataSourceProcessingSnapshot.getDataSourceLevelIngestModule();
             if (module != null) {
-                moduleHandle = new DataSourceIngestModuleHandle(ingestJobPipeline, module);
+                moduleHandle = new DataSourceIngestModuleHandle(ingestModulePipelines, module);
             }
             return moduleHandle;
         }
@@ -507,7 +507,7 @@ public final class IngestJob {
      */
     public static class DataSourceIngestModuleHandle {
 
-        private final IngestJobPipeline ingestJobPipeline;
+        private final IngestModulePipelines ingestJobPipeline;
         private final DataSourceIngestPipeline.DataSourcePipelineModule module;
         private final boolean cancelled;
 
@@ -520,7 +520,7 @@ public final class IngestJob {
          *                          source level ingest module.
          * @param module            The data source level ingest module.
          */
-        private DataSourceIngestModuleHandle(IngestJobPipeline ingestJobPipeline, DataSourceIngestPipeline.DataSourcePipelineModule module) {
+        private DataSourceIngestModuleHandle(IngestModulePipelines ingestJobPipeline, DataSourceIngestPipeline.DataSourcePipelineModule module) {
             this.ingestJobPipeline = ingestJobPipeline;
             this.module = module;
             this.cancelled = ingestJobPipeline.currentDataSourceIngestModuleIsCancelled();

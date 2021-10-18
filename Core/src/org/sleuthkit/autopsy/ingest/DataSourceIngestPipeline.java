@@ -42,7 +42,7 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline.
      */
-    DataSourceIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    DataSourceIngestPipeline(IngestModulePipelines ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
     }
 
@@ -83,7 +83,7 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
         }
 
         @Override
-        void executeTask(IngestJobPipeline ingestJobPipeline, DataSourceIngestTask task) throws IngestModuleException {
+        void executeTask(IngestModulePipelines ingestJobPipeline, DataSourceIngestTask task) throws IngestModuleException {
             Content dataSource = task.getDataSource();
             String progressBarDisplayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.displayName", getDisplayName(), dataSource.getName());
             ingestJobPipeline.updateDataSourceIngestProgressBarDisplayName(progressBarDisplayName);

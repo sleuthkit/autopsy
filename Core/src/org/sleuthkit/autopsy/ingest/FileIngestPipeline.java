@@ -45,7 +45,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     private static final String SAVE_RESULTS_ACTIVITY = Bundle.FileIngestPipeline_SaveResults_Activity();
     private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestJobPipeline ingestJobPipeline;
+    private final IngestModulePipelines ingestJobPipeline;
     private final List<AbstractFile> fileBatch;
 
     /**
@@ -56,7 +56,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline.
      */
-    FileIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    FileIngestPipeline(IngestModulePipelines ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
         this.ingestJobPipeline = ingestJobPipeline;
         fileBatch = new ArrayList<>();
@@ -195,7 +195,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         }
 
         @Override
-        void executeTask(IngestJobPipeline ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
+        void executeTask(IngestModulePipelines ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
             AbstractFile file = null;
             try {
                 file = task.getFile();

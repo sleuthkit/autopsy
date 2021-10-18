@@ -138,7 +138,7 @@ final class IngestTasksScheduler {
      *                       task to the pipeline for processing by the
      *                       pipeline's ingest modules.
      */
-    synchronized void scheduleIngestTasks(IngestJobPipeline ingestPipeline) {
+    synchronized void scheduleIngestTasks(IngestModulePipelines ingestPipeline) {
         if (!ingestPipeline.isCancelled()) {
             if (ingestPipeline.hasDataSourceIngestModules()) {
                 scheduleDataSourceIngestTask(ingestPipeline);
@@ -163,7 +163,7 @@ final class IngestTasksScheduler {
      *                       task to the pipeline for processing by the
      *                       pipeline's ingest modules.
      */
-    synchronized void scheduleDataSourceIngestTask(IngestJobPipeline ingestPipeline) {
+    synchronized void scheduleDataSourceIngestTask(IngestModulePipelines ingestPipeline) {
         if (!ingestPipeline.isCancelled()) {
             DataSourceIngestTask task = new DataSourceIngestTask(ingestPipeline);
             try {
@@ -190,7 +190,7 @@ final class IngestTasksScheduler {
      *                       empty, then all if the files from the data source
      *                       are candidates for scheduling.
      */
-    synchronized void scheduleFileIngestTasks(IngestJobPipeline ingestPipeline, Collection<AbstractFile> files) {
+    synchronized void scheduleFileIngestTasks(IngestModulePipelines ingestPipeline, Collection<AbstractFile> files) {
         if (!ingestPipeline.isCancelled()) {
             Collection<AbstractFile> candidateFiles;
             if (files.isEmpty()) {
@@ -220,7 +220,7 @@ final class IngestTasksScheduler {
      *                       processing by the pipeline's ingest modules.
      * @param files          A list of file object IDs for the streamed files.
      */
-    synchronized void scheduleStreamedFileIngestTasks(IngestJobPipeline ingestPipeline, List<Long> fileIds) {
+    synchronized void scheduleStreamedFileIngestTasks(IngestModulePipelines ingestPipeline, List<Long> fileIds) {
         if (!ingestPipeline.isCancelled()) {
             for (long id : fileIds) {
                 /*
@@ -252,7 +252,7 @@ final class IngestTasksScheduler {
      *                       processing by the pipeline's ingest modules.
      * @param files          The files.
      */
-    synchronized void fastTrackFileIngestTasks(IngestJobPipeline ingestPipeline, Collection<AbstractFile> files) {
+    synchronized void fastTrackFileIngestTasks(IngestModulePipelines ingestPipeline, Collection<AbstractFile> files) {
         if (!ingestPipeline.isCancelled()) {
             /*
              * Put the files directly into the queue for the file ingest
@@ -290,7 +290,7 @@ final class IngestTasksScheduler {
      *                       target Content of the task to the pipeline for
      *                       processing by the pipeline's ingest modules.
      */
-    synchronized void scheduleDataArtifactIngestTasks(IngestJobPipeline ingestPipeline) {
+    synchronized void scheduleDataArtifactIngestTasks(IngestModulePipelines ingestPipeline) {
         if (!ingestPipeline.isCancelled()) {
             Blackboard blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard();
             try {
@@ -318,7 +318,7 @@ final class IngestTasksScheduler {
      *                       source; if empty, then all of the data artifacts
      *                       from the data source will be scheduled.
      */
-    synchronized void scheduleDataArtifactIngestTasks(IngestJobPipeline ingestPipeline, List<DataArtifact> artifacts) {
+    synchronized void scheduleDataArtifactIngestTasks(IngestModulePipelines ingestPipeline, List<DataArtifact> artifacts) {
         if (!ingestPipeline.isCancelled()) {
             for (DataArtifact artifact : artifacts) {
                 DataArtifactIngestTask task = new DataArtifactIngestTask(ingestPipeline, artifact);
@@ -373,7 +373,7 @@ final class IngestTasksScheduler {
      *
      * @return True or false.
      */
-    synchronized boolean currentTasksAreCompleted(IngestJobPipeline ingestPipeline) {
+    synchronized boolean currentTasksAreCompleted(IngestModulePipelines ingestPipeline) {
         long pipelineId = ingestPipeline.getIngestJobId();
         return !(dataSourceIngestTasksQueue.hasTasksForJob(pipelineId)
                 || hasTasksForJob(topLevelFileIngestTasksQueue, pipelineId)
@@ -402,7 +402,7 @@ final class IngestTasksScheduler {
      *
      * @param ingestJobPipeline The ingest pipeline for the job.
      */
-    synchronized void cancelPendingFileTasksForIngestJob(IngestJobPipeline ingestJobPipeline) {
+    synchronized void cancelPendingFileTasksForIngestJob(IngestModulePipelines ingestJobPipeline) {
         long jobId = ingestJobPipeline.getIngestJobId();
         removeTasksForJob(topLevelFileIngestTasksQueue, jobId);
         removeTasksForJob(batchedFileIngestTasksQueue, jobId);

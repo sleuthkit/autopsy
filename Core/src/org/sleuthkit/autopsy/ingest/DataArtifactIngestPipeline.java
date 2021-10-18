@@ -37,7 +37,7 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline. May be an empty list.
      */
-    DataArtifactIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    DataArtifactIngestPipeline(IngestModulePipelines ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
     }
 
@@ -80,7 +80,7 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
         }
 
         @Override
-        void executeTask(IngestJobPipeline ingestJobPipeline, DataArtifactIngestTask task) throws IngestModuleException {
+        void executeTask(IngestModulePipelines ingestJobPipeline, DataArtifactIngestTask task) throws IngestModuleException {
             DataArtifact artifact = task.getDataArtifact();
             module.process(artifact);
         }

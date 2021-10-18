@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.DataArtifact;
  */
 public final class IngestJobContext {
 
-    private final IngestJobPipeline ingestJobPipeline;
+    private final IngestModulePipelines ingestJobPipeline;
 
     /**
      * Constructs an ingest job context object that provides an ingest module
@@ -37,7 +37,7 @@ public final class IngestJobContext {
      *
      * @param ingestJobPipeline The ingest pipeline for the job.
      */
-    IngestJobContext(IngestJobPipeline ingestJobPipeline) {
+    IngestJobContext(IngestModulePipelines ingestJobPipeline) {
         this.ingestJobPipeline = ingestJobPipeline;
     }
 

@@ -47,7 +47,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 abstract class IngestTaskPipeline<T extends IngestTask> {
 
     private static final Logger logger = Logger.getLogger(IngestTaskPipeline.class.getName());
-    private final IngestJobPipeline ingestJobPipeline;
+    private final IngestModulePipelines ingestJobPipeline;
     private final List<IngestModuleTemplate> moduleTemplates;
     private final List<PipelineModule<T>> modules;
     private volatile Date startTime;
@@ -63,7 +63,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
      * @param moduleTemplates The ingest module templates that define this
      *                        ingest task pipeline. May be an empty list.
      */
-    IngestTaskPipeline(IngestJobPipeline ingestPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    IngestTaskPipeline(IngestModulePipelines ingestPipeline, List<IngestModuleTemplate> moduleTemplates) {
         this.ingestJobPipeline = ingestPipeline;
         /*
          * The creation of ingest modules from the ingest module templates has
@@ -433,7 +433,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
          * @throws IngestModuleException Exception thrown if there is an error
          *                               performing the task.
          */
-        abstract void executeTask(IngestJobPipeline ingestJobPipeline, T task) throws IngestModuleException;
+        abstract void executeTask(IngestModulePipelines ingestJobPipeline, T task) throws IngestModuleException;
 
         @Override
         public void shutDown() {
