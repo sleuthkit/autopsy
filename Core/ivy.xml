@@ -57,6 +57,8 @@
         <!-- for handling diffs -->
         <dependency org="io.github.java-diff-utils" name="java-diff-utils" rev="4.8"/>
 
+        <!-- for MainUI event updates -->
+        <dependency org="io.projectreactor" name="reactor-core" rev="3.4.11"/>
 
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency conf="core->default" org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0"/>
