@@ -145,6 +145,7 @@ public class TableSearchTest extends NbTestCase {
         keywordHitSearchTest();
         mimeSearchTest();
         extensionSearchTest();
+        sizeSearchTest();
     }
 
     /**
@@ -166,27 +167,27 @@ public class TableSearchTest extends NbTestCase {
 
             // Add files
             AbstractFile folderA1 = db.addLocalDirectory(dataSource1.getId(), "folder1");
-            AbstractFile fileA1 = db.addLocalFile("file1.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA1);
+            AbstractFile fileA1 = db.addLocalFile("file1.txt", "", 10, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA1);
             fileA1.setMIMEType("text/plain");
             fileA1.save();
             AbstractFile folderA2 = db.addLocalDirectory(dataSource1.getId(), "folder2");
-            AbstractFile fileA2 = db.addLocalFile("file2.jpg", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA2);
+            AbstractFile fileA2 = db.addLocalFile("file2.jpg", "", 60000000, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA2);
             fileA2.setMIMEType("image/jpeg");
             fileA2.save();
             AbstractFile folderA3 = db.addLocalDirectory(folderA2.getId(), "folder3");
-            AbstractFile fileA3 = db.addLocalFile("file3.doc", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA3);
+            AbstractFile fileA3 = db.addLocalFile("file3.doc", "", 150000000, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA3);
             fileA3.setMIMEType("application/msword");
             fileA3.save();
-            AbstractFile fileA4 = db.addLocalFile("file4.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA3);
+            AbstractFile fileA4 = db.addLocalFile("file4.txt", "", 100, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderA3);
             fileA4.setMIMEType("text/plain");
             fileA4.save();
 
             AbstractFile folderB1 = db.addLocalDirectory(dataSource2.getId(), "folder1");
-            AbstractFile fileB1 = db.addLocalFile("fileA.txt", "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);
+            AbstractFile fileB1 = db.addLocalFile("fileA.txt", "", 210000000, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);
             fileB1.setMIMEType("text/plain");
             fileB1.save();
 
-            AbstractFile customFile = db.addLocalFile(CUSTOM_MIME_TYPE_FILE_NAME, "", 0, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);
+            AbstractFile customFile = db.addLocalFile(CUSTOM_MIME_TYPE_FILE_NAME, "", 67000000, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);
             customFile.setMIMEType(CUSTOM_MIME_TYPE);
             customFile.save();
 
@@ -430,6 +431,52 @@ public class TableSearchTest extends NbTestCase {
             Assert.fail(ex.getMessage());
         }
     }
+    
+    public void sizeSearchTest() {
+        // Quick test that everything is initialized
+        assertTrue(db != null);
+
+        try {
+            ViewsDAO viewsDAO = MainDAO.getInstance().getViewsDAO();
+
+            // Get "50 - 200MB" files from data source 1
+            FileTypeSizeSearchParams param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_50_200, dataSource1.getId());
+            SearchResultsDTO results = viewsDAO.getFilesBySize(param);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+
+            // Get "200MB - 1GB" files from data source 1
+            param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_200_1000, dataSource1.getId());
+            results = viewsDAO.getFilesBySize(param);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+
+            // Get "200MB - 1GB" files from data source 2
+            param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_200_1000, dataSource2.getId());
+            results = viewsDAO.getFilesBySize(param);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+
+            // Get "1GB+" files from all data sources
+            param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_1000_, null);
+            results = viewsDAO.getFilesBySize(param);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+
+            // Get "50 - 200MB" files from all data sources
+            param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_50_200, null);
+            results = viewsDAO.getFilesBySize(param);
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
+
+            RowDTO rowDTO = results.getItems().get(0);
+            assertTrue(rowDTO instanceof FileRowDTO);
+            FileRowDTO fileRowDTO = (FileRowDTO) rowDTO;
+        } catch (ExecutionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }    
     
     public void analysisResultSearchTest() {
         // Quick test that everything is initialized
