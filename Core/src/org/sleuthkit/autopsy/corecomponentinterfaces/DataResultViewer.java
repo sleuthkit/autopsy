@@ -90,16 +90,6 @@ public interface DataResultViewer {
     }
 
     /**
-     * Sets the page index of the results to be shown. This is handled through
-     * setNode(Node, SearchResultsDTO) for search result nodes.
-     *
-     * @param pageIdx The page index.
-     */
-    @Beta
-    default public void setPageIndex(int pageIdx) {
-    }
-
-    /**
      * Requests selection of the given child nodes of the node passed to
      * setNode. This method should be implemented as a no-op for result viewers
      * that do not display the child nodes of a given root node using a NetBeans

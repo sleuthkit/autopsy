@@ -80,6 +80,8 @@ class ThumbnailViewChildren extends ChildFactory.Detachable<Node> {
 
     private final Map<String, ThumbnailViewNode> nodeCache = new HashMap<>();
 
+    private final Object isSupportedLock = new Object();
+
     /**
      * The constructor
      *
@@ -92,9 +94,9 @@ class ThumbnailViewChildren extends ChildFactory.Detachable<Node> {
     }
 
     @Override
-    protected boolean createKeys(List<Node> toPopulate) {
+    protected synchronized boolean createKeys(List<Node> toPopulate) {
         List<Node> suppContent = Stream.of(parent.getChildren().getNodes())
-                .filter(ThumbnailViewChildren::isSupported)
+                .filter(n -> isSupported(n))
                 .sorted(getComparator())
                 .collect(Collectors.toList());
 
@@ -102,7 +104,11 @@ class ThumbnailViewChildren extends ChildFactory.Detachable<Node> {
                 .map(nd -> nd.getName())
                 .collect(Collectors.toList());
 
+        // find set of keys that are no longer present with current createKeys call.
         Set<String> toRemove = new HashSet<>(nodeCache.keySet());
+        currNodeNames.forEach((k) -> toRemove.remove(k));
+
+        // remove them from cache
         toRemove.forEach((k) -> nodeCache.remove(k));
 
         toPopulate.addAll(suppContent);
@@ -121,7 +127,7 @@ class ThumbnailViewChildren extends ChildFactory.Detachable<Node> {
         super.removeNotify();
         nodeCache.clear();
     }
-    
+
     void update() {
         this.refresh(false);
     }
@@ -208,9 +214,15 @@ class ThumbnailViewChildren extends ChildFactory.Detachable<Node> {
         return null;
     }
 
-    private static boolean isSupported(Node node) {
+    private boolean isSupported(Node node) {
+
         if (node != null) {
-            Content content = node.getLookup().lookup(AbstractFile.class);
+            Content content = null;
+            // this is to prevent dead-locking issue with simultaneous accesses.
+            synchronized (isSupportedLock) {
+                content = node.getLookup().lookup(AbstractFile.class);
+            }
+
             if (content != null) {
                 return ImageUtils.thumbnailSupported(content);
             }
@@ -240,6 +252,7 @@ class ThumbnailViewChildren extends ChildFactory.Detachable<Node> {
             return task;
         } else {
             return null;
+
         }
     }
 

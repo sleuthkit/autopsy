@@ -103,9 +103,9 @@ public class SearchResultSupport {
     /**
      * @param pageIdx The index of the page to be viewed.
      */
-    private synchronized void setPageIdx(int pageIdx) {
-        if (pageIdx < 0) {
-            throw new IllegalArgumentException("Page idx must be >= 0 but was " + pageIdx);
+    private synchronized void setPageIdx(int pageIdx) throws IllegalArgumentException {
+        if (pageIdx < 0 || pageIdx >= getTotalPages()) {
+            throw new IllegalArgumentException(MessageFormat.format("Page idx must be >= 0 and less than {0} but was {1}", getTotalPages(), pageIdx));
         }
 
         this.pageIdx = pageIdx;
@@ -162,9 +162,6 @@ public class SearchResultSupport {
     public synchronized SearchResultsDTO incrementPageIdx() throws IllegalArgumentException, ExecutionException {
         if (this.currentSearchResults == null) {
             throw new IllegalArgumentException("No current results");
-        } else if ((this.pageIdx + 1) * this.pageSize >= this.currentSearchResults.getTotalResultsCount()) {
-            throw new IllegalArgumentException(MessageFormat.format("Page index cannot be incremented. [pageSize: {0}, pageIdx: {1}, total results: {2}]",
-                    this.pageSize, this.pageIdx, this.currentSearchResults.getTotalResultsCount()));
         }
 
         return updatePageIdx(this.pageIdx + 1);
@@ -181,10 +178,8 @@ public class SearchResultSupport {
     public synchronized SearchResultsDTO decrementPageIdx() throws IllegalArgumentException, ExecutionException {
         if (this.pageFetcher == null) {
             throw new IllegalArgumentException("No current page fetcher");
-        } else if (this.pageIdx < 1) {
-            throw new IllegalArgumentException("Page index cannot be decremented.");
         }
-
+        
         return updatePageIdx(this.pageIdx - 1);
     }
 

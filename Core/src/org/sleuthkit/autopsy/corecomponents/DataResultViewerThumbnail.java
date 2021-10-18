@@ -350,11 +350,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         super.clearComponent();
     }
 
-    @Override
-    public void setPageIndex(int pageIdx) {
-        switchPage();
-    }
-
     private void switchPage() {
         SwingUtilities.invokeLater(() -> {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));

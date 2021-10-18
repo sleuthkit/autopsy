@@ -38,6 +38,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
@@ -104,7 +105,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private final boolean isMain;
     private final List<DataResultViewer> resultViewers;
     private final ExplorerManagerListener explorerManagerListener;
-    private final RootNodeListener rootNodeListener;
+    private RootNodeListener rootNodeListener = null;
     private DataContent contentView;
     private ExplorerManager explorerManager;
     private Node currentRootNode;
@@ -258,7 +259,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.contentView = contentView;
         this.resultViewers = new ArrayList<>(viewers);
         this.explorerManagerListener = new ExplorerManagerListener();
-        this.rootNodeListener = new RootNodeListener();
         this.searchResultSupport = new SearchResultSupport(UserPreferences.getResultsTablePageSize());
         initComponents();
         initListeners();
@@ -405,7 +405,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     @Override
     public void setNode(Node rootNode) {
-        if (this.currentRootNode != null) {
+        setNode(rootNode, true);
+    }
+
+    private void setNode(Node rootNode, boolean fullRefresh) {
+        if (this.currentRootNode != null && this.rootNodeListener != null) {
             this.currentRootNode.removeNodeListener(rootNodeListener);
         }
 
@@ -437,8 +441,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                             return listener;
                         });
 
-                if (this.pagingSupport.getCurrentPageIdx() != 0) {
-                    this.pagingSupport.setCurrentPageIdx(0);    
+                if (fullRefresh && this.pagingSupport.getCurrentPageIdx() != 0) {
+                    this.pagingSupport.setCurrentPageIdx(0);
                 }
             } else {
                 this.pagingSupport = null;
@@ -453,21 +457,25 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
              * Necessary when transitioning from "Please wait..." node to having
              * contents.
              */
-            rootNodeListener.reset();
+            rootNodeListener = new RootNodeListener(fullRefresh);
             this.currentRootNode.addNodeListener(rootNodeListener);
         }
 
-        this.resultViewers.forEach((viewer) -> {
-            viewer.resetComponent();
-        });
-        setupTabs(this.currentRootNode);
+        if (fullRefresh) {
+            this.resultViewers.forEach((viewer) -> {
+                viewer.resetComponent();
+            });
+        }
 
-        if (this.currentRootNode != null) {
+        setupTabs(this.currentRootNode, fullRefresh);
+
+        if (fullRefresh && this.currentRootNode != null) {
             long childrenCount = (this.searchResultSupport.getCurrentSearchResults() != null)
                     ? this.searchResultSupport.getCurrentSearchResults().getTotalResultsCount()
                     : this.currentRootNode.getChildren().getNodesCount();
             this.numberOfChildNodesLabel.setText(Long.toString(childrenCount));
         }
+
         this.numberOfChildNodesLabel.setVisible(true);
 
         updatePagingComponents();
@@ -505,24 +513,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Sets the state of the child result viewers, based on a selected root
-     * node.
+     * Returns the data result viewer tab index to select based on selection
+     * info or first available viewer.
      *
      * @param selectedNode The selected node.
+     *
+     * @return The tab index.
      */
-    private void setupTabs(Node selectedNode) {
-        /*
-         * Enable or disable the result viewer tabs based on whether or not the
-         * corresponding results viewer supports display of the selected node.
-         */
-        for (int i = 0; i < resultViewerTabs.getTabCount(); i++) {
-            if (resultViewers.get(i).isSupported(selectedNode)) {
-                resultViewerTabs.setEnabledAt(i, true);
-            } else {
-                resultViewerTabs.setEnabledAt(i, false);
-            }
-        }
-
+    private int getPriorityTabIdx(Node selectedNode) {
         /*
          * If the selected node has a child to be selected, default the selected
          * tab to the table result viewer. Otherwise, use the last selected tab,
@@ -551,6 +549,36 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
         }
 
+        return tabToSelect;
+    }
+
+    /**
+     * Sets the state of the child result viewers, based on a selected root
+     * node.
+     *
+     * @param selectedNode The selected node.
+     * @param fullReset    Whether or not to perform a full reset (including the
+     *                     tab index).
+     */
+    private void setupTabs(Node selectedNode, boolean fullReset) {
+        if (fullReset) {
+            /*
+         * Enable or disable the result viewer tabs based on whether or not the
+         * corresponding results viewer supports display of the selected node.
+             */
+            for (int i = 0; i < resultViewerTabs.getTabCount(); i++) {
+                if (resultViewers.get(i).isSupported(selectedNode)) {
+                    resultViewerTabs.setEnabledAt(i, true);
+                } else {
+                    resultViewerTabs.setEnabledAt(i, false);
+                }
+            }
+        }
+
+        int tabToSelect = fullReset
+                ? getPriorityTabIdx(selectedNode)
+                : resultViewerTabs.getSelectedIndex();
+
         /*
          * If there is a tab to select, do so, and push the selected node to the
          * corresponding result viewer.
@@ -574,17 +602,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         if (currentTab != DataResultPanel.NO_TAB_SELECTED) {
             DataResultViewer currentViewer = this.resultViewers.get(currentTab);
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            try {
-                if (this.searchResultSupport.getCurrentSearchResults() != null) {
-                    currentViewer.setNode(currentRootNode, this.searchResultSupport.updatePageIdx(0));
-                } else {
-                    currentViewer.setNode(currentRootNode);
-                }
-            } catch (IllegalArgumentException | ExecutionException ex) {
-                logger.log(Level.WARNING, "There was an error while resetting page index.", ex);
-            } finally {
-                this.setCursor(null);
+            if (this.searchResultSupport.getCurrentSearchResults() != null) {
+                currentViewer.setNode(currentRootNode, this.searchResultSupport.getCurrentSearchResults());
+            } else {
+                currentViewer.setNode(currentRootNode);
             }
+            this.setCursor(null);
         }
     }
 
@@ -673,13 +696,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * set up again after the "Please wait..." node has ended and actual content
      * should be displayed in the table.
      */
-    private class RootNodeListener implements NodeListener {
+    private class RootNodeListener extends NodeAdapter {
 
         //it is assumed we are still waiting for data when the node is initially constructed
         private volatile boolean waitingForData = true;
+        private final boolean fullReset;
 
-        public void reset() {
-            waitingForData = true;
+        public RootNodeListener(boolean fullReset) {
+            this.fullReset = fullReset;
         }
 
         @Override
@@ -698,10 +722,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             if (waitingForData && containsReal(delta)) {
                 waitingForData = false;
                 if (SwingUtilities.isEventDispatchThread()) {
-                    setupTabs(nme.getNode());
+                    setupTabs(nme.getNode(), this.fullReset);
                 } else {
                     SwingUtilities.invokeLater(() -> {
-                        setupTabs(nme.getNode());
+                        setupTabs(nme.getNode(), this.fullReset);
                     });
                 }
             }
@@ -736,18 +760,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         @Override
         public void childrenRemoved(NodeMemberEvent nme) {
             updateMatches();
-        }
-
-        @Override
-        public void childrenReordered(NodeReorderEvent nre) {
-        }
-
-        @Override
-        public void nodeDestroyed(NodeEvent ne) {
-        }
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
         }
     }
 
@@ -990,7 +1002,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             int boundedPageIdx = Math.max(0, Math.min(this.pagingSupport.getLastKnownPageCount() - 1, pageIdx));
             int currentTab = this.resultViewerTabs.getSelectedIndex();
             if (currentTab != NO_TAB_SELECTED) {
-                this.resultViewers.get(currentTab).setPageIndex(boundedPageIdx);
+                setNode(this.currentRootNode, false);
                 this.pagingSupport.setCurrentPageIdx(boundedPageIdx);
                 updatePagingComponents();
             }
@@ -1094,7 +1106,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * search result support has already been updated.
      *
      * @param searchResults The new search results to display.
-     * @param resetPaging Whether or not to reset paging to index 0 and tabs selection.
+     * @param resetPaging   Whether or not to reset paging to index 0 and tabs
+     *                      selection.
      */
     @Messages({
         "# {0} - pageNumber",
@@ -1109,9 +1122,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         // GVDTODO handle resetting node differently if page change versus node change
         if (searchResults == null) {
-            setNode(null);
+            setNode(null, resetPaging);
         } else {
-            setNode(new SearchResultRootNode(searchResults));
+            setNode(new SearchResultRootNode(searchResults), resetPaging);
             setNumberOfChildNodes(
                     searchResults.getTotalResultsCount() > Integer.MAX_VALUE
                     ? Integer.MAX_VALUE
