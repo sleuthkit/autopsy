@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 
 /**
  * Class which contains the Nodes for the 'By Mime Type' view located in the
@@ -325,7 +326,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             "FileTypesByMimeTypeNode.createSheet.mediaType.desc=no description"})
 
         MediaTypeNode(String name) {
-            super(Children.create(new MediaTypeNodeChildren(name), true), Lookups.singleton(name));
+            super(Children.create(new MediaTypeNodeChildren(name), true), Lookups.fixed(name,
+                    new FileTypeMimeSearchParams(
+                            name,
+                            filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null)));
             setName(name);
             setDisplayName(name);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");

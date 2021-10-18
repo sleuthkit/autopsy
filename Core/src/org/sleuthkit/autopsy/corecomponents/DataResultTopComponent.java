@@ -29,6 +29,7 @@ import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
@@ -48,6 +49,7 @@ import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 
@@ -396,6 +398,19 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
                     fileExtensionsKey.getDataSourceId() == null ? "<null>" : fileExtensionsKey.getDataSourceId()),
                     ex);
         }
+    }
+    
+    public void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
+        try {
+            threePanelDAO.getViewsDAO().getFilesByMime(fileMimeKey);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for files of mime filter: {0} and data source id: {1}.",
+                    fileMimeKey.getMimeType(),
+                    fileMimeKey.getDataSourceId() == null ? "<null>" : fileMimeKey.getDataSourceId()),
+                    ex);
+        }
+
     }
 
     private void displaySearchResults(SearchResultsDTO searchResults) {
