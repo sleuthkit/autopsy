@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import org.apache.commons.collections.set.UnmodifiableSet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 
@@ -34,24 +37,29 @@ import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
     "FileExtRootFilter_audio_displayName=Audio",
     "FileExtRootFilter_archives_displayName=Archives",
     "FileExtRootFilter_documents_displayName=Documents",
-    "FileExtRootFilter_databases_displayName=Databases",
-})
+    "FileExtRootFilter_databases_displayName=Databases",})
 public enum FileExtRootFilter implements FileExtSearchFilter {
-    TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", Bundle.FileExtRootFilter_image_displayName(), FileTypeExtensions.getImageExtensions()),
-    TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", Bundle.FileExtRootFilter_video_displayName(),FileTypeExtensions.getVideoExtensions()),
-    TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", Bundle.FileExtRootFilter_audio_displayName(), FileTypeExtensions.getAudioExtensions()),
-    TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", Bundle.FileExtRootFilter_archives_displayName(), FileTypeExtensions.getArchiveExtensions()),
-    TSK_DATABASE_FILTER(4, "TSK_DATABASE_FILTER", Bundle.FileExtRootFilter_databases_displayName(), FileTypeExtensions.getDatabaseExtensions()),
-    TSK_DOCUMENT_FILTER(5, "TSK_DOCUMENT_FILTER", Bundle.FileExtRootFilter_documents_displayName(), 
-            Arrays.asList(".htm", ".html", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf")), //NON-NLS
-    TSK_EXECUTABLE_FILTER(6, "TSK_EXECUTABLE_FILTER", Bundle.FileExtRootFilter_executable_displayName(), FileTypeExtensions.getExecutableExtensions());
+    TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", Bundle.FileExtRootFilter_image_displayName(),
+            Collections.unmodifiableSet(new HashSet<>(FileTypeExtensions.getImageExtensions()))),
+    TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", Bundle.FileExtRootFilter_video_displayName(),
+            Collections.unmodifiableSet(new HashSet<>(FileTypeExtensions.getVideoExtensions()))),
+    TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", Bundle.FileExtRootFilter_audio_displayName(),
+            Collections.unmodifiableSet(new HashSet<>(FileTypeExtensions.getAudioExtensions()))),
+    TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", Bundle.FileExtRootFilter_archives_displayName(),
+            Collections.unmodifiableSet(new HashSet<>(FileTypeExtensions.getArchiveExtensions()))),
+    TSK_DATABASE_FILTER(4, "TSK_DATABASE_FILTER", Bundle.FileExtRootFilter_databases_displayName(),
+            Collections.unmodifiableSet(new HashSet<>(FileTypeExtensions.getDatabaseExtensions()))),
+    TSK_DOCUMENT_FILTER(5, "TSK_DOCUMENT_FILTER", Bundle.FileExtRootFilter_documents_displayName(),
+            ImmutableSet.of(".htm", ".html", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf")), //NON-NLS
+    TSK_EXECUTABLE_FILTER(6, "TSK_EXECUTABLE_FILTER", Bundle.FileExtRootFilter_executable_displayName(),
+            Collections.unmodifiableSet(new HashSet<>(FileTypeExtensions.getExecutableExtensions())));
     //NON-NLS
     final int id;
     final String name;
     final String displayName;
-    final List<String> filter;
+    final Set<String> filter;
 
-    private FileExtRootFilter(int id, String name, String displayName, List<String> filter) {
+    private FileExtRootFilter(int id, String name, String displayName, Set<String> filter) {
         this.id = id;
         this.name = name;
         this.displayName = displayName;
@@ -74,8 +82,8 @@ public enum FileExtRootFilter implements FileExtSearchFilter {
     }
 
     @Override
-    public List<String> getFilter() {
-        return Collections.unmodifiableList(this.filter);
+    public Set<String> getFilter() {
+        return this.filter;
     }
 
 }

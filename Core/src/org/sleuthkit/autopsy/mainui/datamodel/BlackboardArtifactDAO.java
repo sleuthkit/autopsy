@@ -8,8 +8,7 @@ import java.util.Set;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.mainui.datamodel.Bundle;
-import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
+import org.sleuthkit.autopsy.mainui.datamodel.DataEventListener.DefaultDataEventListener;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "BlackboardArtifactDAO.columnKeys.dataSource.displayName=Data Source",
     "BlackboardArtifactDAO.columnKeys.dataSource.description=Data Source"
 })
-abstract class BlackboardArtifactDAO {
+abstract class BlackboardArtifactDAO implements DefaultDataEventListener {
     // GVDTODO there is a different standard for normal attr strings and email attr strings
     static final int STRING_LENGTH_MAX = 160;
     static final String ELLIPSIS = "...";

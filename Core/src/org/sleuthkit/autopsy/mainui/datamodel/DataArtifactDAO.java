@@ -20,28 +20,22 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableSet;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -169,5 +163,28 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     public void dropDataArtifactCache() {
         dataArtifactCache.invalidateAll();
+    }
+
+    
+    
+    @Override
+    public void onDropCache() {
+        dropDataArtifactCache();
+    }
+
+    @Override
+    public void onModuleData(ModuleDataEvent evt) {
+        if (evt == null || evt.getBlackboardArtifactType() == null) {
+            return;
+        }
+        
+        // GVDTODO data source filtering?
+        
+        final int artifactTypeId = evt.getBlackboardArtifactType().getTypeID();
+        this.dataArtifactCache.asMap().replaceAll((k,v) -> {
+            return (k == null || k.getArtifactType() == null || artifactTypeId != k.getArtifactType().getTypeID())
+                    ? null 
+                    : v;
+        });
     }
 }

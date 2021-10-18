@@ -25,8 +25,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -36,9 +38,11 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTr
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
+import org.sleuthkit.autopsy.mainui.datamodel.DataEventListener.DefaultDataEventListener;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -74,7 +78,7 @@ import org.sleuthkit.datamodel.TskData;
     "ThreePanelViewsDAO.fileColumns.mimeType=MIME Type",
     "ThreePanelViewsDAO.fileColumns.extensionColLbl=Extension",
     "ThreePanelViewsDAO.fileColumns.noDescription=No Description"})
-public class ViewsDAO {
+public class ViewsDAO implements DefaultDataEventListener {
 
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
@@ -165,7 +169,7 @@ public class ViewsDAO {
 
         return fileTypeByExtensionCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId()));
     }
-    
+
     public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key) throws ExecutionException, IllegalArgumentException {
         if (key.getMimeType() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
@@ -174,8 +178,7 @@ public class ViewsDAO {
         }
 
         return fileTypeByMimeCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId()));
-    }    
-    
+    }
 
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
 //
@@ -216,7 +219,7 @@ public class ViewsDAO {
                         .collect(Collectors.joining(", ")) + "))";
         return whereClause;
     }
-    
+
     private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
 
         String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
@@ -231,10 +234,10 @@ public class ViewsDAO {
                 + (dataSourceId != null && dataSourceId > 0 ? " AND data_source_obj_id = " + dataSourceId : " ")
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
                 + " AND mime_type = '" + mimeType + "'";
-    
+
         return whereClause;
-    }    
-    
+    }
+
     private SearchResultsDTO fetchExtensionSearchResultsDTOs(FileExtSearchFilter filter, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
         String whereStatement = getFileExtensionWhereStatement(filter, dataSourceId);
         return fetchFileViewFiles(whereStatement, filter.getDisplayName());
@@ -256,7 +259,7 @@ public class ViewsDAO {
             boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
             boolean encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
             boolean hasVisibleChildren = isArchive || file.isDir();
-            
+
             List<Object> cellValues = Arrays.asList(
                     file.getName(), // GVDTODO handle . and .. from getContentDisplayName()
                     // GVDTODO translation column
@@ -306,4 +309,62 @@ public class ViewsDAO {
         return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows);
     }
 
+    public void dropViewsCache() {
+        fileTypeByExtensionCache.invalidateAll();
+        fileTypeByMimeCache.invalidateAll();
+    }
+
+    @Override
+    public void onDropCache() {
+        dropViewsCache();
+    }
+
+    @Override
+    public void onContentChange(Content content) {
+        if (!(content instanceof AbstractFile)) {
+            return;
+        }
+
+        AbstractFile file = (AbstractFile) content;
+        long dataSourceId = file.getDataSourceObjectId();
+        dropMimeTypeMatches(file.getMIMEType(), dataSourceId);
+        dropFileExtMatches(file.getNameExtension(), dataSourceId);
+    }
+
+    private void dropFileExtMatches(String extension, long dataSourceId) {
+        if (extension == null) {
+            return;
+        }
+
+        String extKey = "." + extension;
+
+        Set<FileExtSearchFilter> matchingFilters = Stream.of(
+                FileExtDocumentFilter.values(),
+                FileExtExecutableFilter.values(),
+                FileExtRootFilter.values()
+        )
+                .flatMap(arr -> Stream.of(arr))
+                .filter(filter -> filter.getFilter().contains(extKey))
+                .collect(Collectors.toSet());
+
+        this.fileTypeByExtensionCache.asMap().replaceAll((k, v) -> {
+            // if filter applies to this item
+            return (matchingFilters.contains(k.getFilter())
+                    // and data source ids are equal
+                    && (k.getDataSourceId() == null || k.getDataSourceId() == dataSourceId))
+                    ? v
+                    : null;
+        });
+    }
+
+    private void dropMimeTypeMatches(String mimeType, long dataSourceId) {
+        this.fileTypeByMimeCache.asMap().replaceAll((k, v) -> {
+            // if mime types are equal
+            return (((mimeType == null && k.getMimeType() == null) || (mimeType != null && mimeType.equals(k.getMimeType())))
+                    // and data source ids are equal
+                    && (k.getDataSourceId() == null || k.getDataSourceId() == dataSourceId))
+                    ? v
+                    : null;
+        });
+    }
 }
