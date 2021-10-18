@@ -78,12 +78,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private NodeSelectionListener selectionListener;
     private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
 
-    private final PreferenceChangeListener changeListener = (evt) -> {
-        if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
-            setNode(rootNode);
-        }
-    };
-
     /**
      * Constructs a thumbnail result viewer, with paging support, that displays
      * the children of the given root node using an IconView. The viewer should
@@ -112,7 +106,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     public DataResultViewerThumbnail(ExplorerManager explorerManager) {
         super(explorerManager);
         initComponents();
-        initListeners();
         iconView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{
             Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
@@ -124,10 +117,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         // impact on the initally designed layout.  This change will just effect
         // how the components are laid out as size of the window changes.
         buttonBarPanel.setLayout(new WrapLayout());
-    }
-
-    private void initListeners() {
-        UserPreferences.addChangeListener(this.changeListener);
     }
 
     /**
@@ -339,6 +328,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void resetComponent() {
         super.resetComponent();
+        setNode(null);
         updateControls();
     }
 
@@ -346,7 +336,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     public void clearComponent() {
         this.iconView.removeAll();
         this.iconView = null;
-        UserPreferences.removeChangeListener(this.changeListener);
         super.clearComponent();
     }
 

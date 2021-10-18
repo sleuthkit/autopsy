@@ -26,12 +26,14 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -39,10 +41,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
-import org.openide.nodes.NodeEvent;
-import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
-import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -97,7 +96,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName());
 
-    private final SearchResultSupport searchResultSupport;
     private final Map<String, BaseChildFactoryPager> nodeNameToPageCountListenerMap = new ConcurrentHashMap<>();
     private static final long serialVersionUID = 1L;
     private static final int NO_TAB_SELECTED = -1;
@@ -111,6 +109,35 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private Node currentRootNode;
     private boolean listeningToTabbedPane;
     private BaseChildFactoryPager pagingSupport = null;
+    private final SearchResultSupport searchResultSupport = new SearchResultSupport(UserPreferences.getResultsTablePageSize());
+
+    private final PreferenceChangeListener pageSizeListener = (PreferenceChangeEvent evt) -> {
+        if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
+            int newPageSize = UserPreferences.getResultsTablePageSize();
+
+            nodeNameToPageCountListenerMap.values().forEach((ps) -> {
+                ps.postPageSizeChangeEvent();
+            });
+
+            try {
+                if (this.searchResultSupport.getCurrentSearchResults() != null) {
+                    displaySearchResults(this.searchResultSupport.updatePageSize(newPageSize), false);
+                } else {
+                    this.searchResultSupport.setPageSize(newPageSize);
+                    setNode(this.currentRootNode);
+                }
+
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "There was an error while updating page size", ex);
+            }
+        }
+    };
+
+    private final PropertyChangeListener caseCloseListener = evt -> {
+        if (evt.getNewValue() == null) {
+            nodeNameToPageCountListenerMap.clear();
+        }
+    };
 
     /**
      * Creates and opens a Swing JPanel with a JTabbedPane child component that
@@ -259,36 +286,15 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.contentView = contentView;
         this.resultViewers = new ArrayList<>(viewers);
         this.explorerManagerListener = new ExplorerManagerListener();
-        this.searchResultSupport = new SearchResultSupport(UserPreferences.getResultsTablePageSize());
         initComponents();
         initListeners();
     }
 
     private void initListeners() {
-        UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
-            if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
-                int newPageSize = UserPreferences.getResultsTablePageSize();
-
-                try {
-                    if (this.searchResultSupport.getCurrentSearchResults() != null) {
-                        displaySearchResults(this.searchResultSupport.updatePageSize(newPageSize), false);
-                    } else {
-                        this.searchResultSupport.setPageSize(newPageSize);
-                    }
-
-                } catch (IllegalArgumentException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "There was an error while updating page size", ex);
-                }
-
-                nodeNameToPageCountListenerMap.values().forEach((ps) -> {
-                    ps.postPageSizeChangeEvent();
-                });
-
-            }
-        });
-
+        UserPreferences.addChangeListener(this.pageSizeListener);
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.caseCloseListener);
     }
-
+        
     /**
      * Gets the preferred identifier for this result view panel in the window
      * system.
@@ -409,6 +415,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     private void setNode(Node rootNode, boolean fullRefresh) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> setNode(rootNode, fullRefresh));
+            return;
+        }
+
         if (this.currentRootNode != null && this.rootNodeListener != null) {
             this.currentRootNode.removeNodeListener(rootNodeListener);
         }
