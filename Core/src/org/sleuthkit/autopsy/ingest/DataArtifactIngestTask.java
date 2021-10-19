@@ -32,12 +32,12 @@ final class DataArtifactIngestTask extends IngestTask {
      * Constructs a data artifact ingest task that will be executed by an ingest
      * thread using a given ingest job pipeline.
      *
-     * @param ingestJobPipeline The ingest job pipeline to use to execute the
+     * @param ingestJobExecutor The ingest job pipeline to use to execute the
      *                          task.
      * @param artifact          The data artifact to be processed.
      */
-    DataArtifactIngestTask(IngestJobExecutor ingestJobPipeline, DataArtifact artifact) {
-        super(ingestJobPipeline);
+    DataArtifactIngestTask(IngestJobExecutor ingestJobExecutor, DataArtifact artifact) {
+        super(ingestJobExecutor);
         this.artifact = artifact;
     }
 
@@ -53,7 +53,7 @@ final class DataArtifactIngestTask extends IngestTask {
     @Override
     void execute(long threadId) {
         super.setThreadId(threadId);
-        getIngestJobPipeline().execute(this);
+        getIngestJobExecutor().execute(this);
     }    
     
 }

@@ -88,7 +88,7 @@ final class FileIngestTask extends IngestTask {
     @Override
     void execute(long threadId) {
         super.setThreadId(threadId);
-        getIngestJobPipeline().execute(this);
+        getIngestJobExecutor().execute(this);
     }        
     
     @Override
@@ -100,8 +100,8 @@ final class FileIngestTask extends IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        IngestJobExecutor thisPipeline = getIngestJobPipeline();
-        IngestJobExecutor otherPipeline = other.getIngestJobPipeline();
+        IngestJobExecutor thisPipeline = getIngestJobExecutor();
+        IngestJobExecutor otherPipeline = other.getIngestJobExecutor();
         if (thisPipeline != otherPipeline && (thisPipeline == null || !thisPipeline.equals(otherPipeline))) {
             return false;
         }
@@ -111,7 +111,7 @@ final class FileIngestTask extends IngestTask {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 47 * hash + Objects.hashCode(getIngestJobPipeline());
+        hash = 47 * hash + Objects.hashCode(getIngestJobExecutor());
         hash = 47 * hash + Objects.hashCode(this.fileId);
         return hash;
     }

@@ -81,7 +81,7 @@ final class DataArtifactIngestPipeline extends IngestPipeline<DataArtifactIngest
         }
 
         @Override
-        void process(IngestJobExecutor ingestJobPipeline, DataArtifactIngestTask task) throws IngestModuleException {
+        void process(IngestJobExecutor ingestJobExecutor, DataArtifactIngestTask task) throws IngestModuleException {
             DataArtifact artifact = task.getDataArtifact();
             module.process(artifact);
         }

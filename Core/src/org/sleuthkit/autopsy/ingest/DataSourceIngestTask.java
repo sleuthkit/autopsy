@@ -38,7 +38,7 @@ final class DataSourceIngestTask extends IngestTask {
     @Override
     void execute(long threadId) {
         super.setThreadId(threadId);
-        getIngestJobPipeline().execute(this);
+        getIngestJobExecutor().execute(this);
     }        
     
 }
