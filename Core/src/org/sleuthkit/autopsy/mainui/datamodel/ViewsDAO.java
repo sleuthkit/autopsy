@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
@@ -76,6 +77,11 @@ import org.sleuthkit.datamodel.TskData;
     "ThreePanelViewsDAO.fileColumns.noDescription=No Description"})
 public class ViewsDAO {
 
+    private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
+    private static final long CACHE_DURATION = 2;
+    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;    
+    private final Cache<BaseSearchParams, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
     private static final List<ColumnKey> FILE_COLUMNS = Arrays.asList(
@@ -153,10 +159,6 @@ public class ViewsDAO {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    private final Cache<FileTypeExtensionsSearchParams, SearchResultsDTO> fileTypeByExtensionCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<FileTypeMimeSearchParams, SearchResultsDTO> fileTypeByMimeCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<FileTypeSizeSearchParams, SearchResultsDTO> fileTypeBySizeCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-
     public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key) throws ExecutionException, IllegalArgumentException {
         if (key.getFilter() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
@@ -164,7 +166,7 @@ public class ViewsDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return fileTypeByExtensionCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId()));
+        return searchParamsCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId()));
     }
     
     public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key) throws ExecutionException, IllegalArgumentException {
@@ -174,7 +176,7 @@ public class ViewsDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return fileTypeByMimeCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId()));
+        return searchParamsCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId()));
     }
     
     public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key) throws ExecutionException, IllegalArgumentException {
@@ -184,7 +186,7 @@ public class ViewsDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return fileTypeBySizeCache.get(key, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId()));
+        return searchParamsCache.get(key, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId()));
     }    
 
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
