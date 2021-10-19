@@ -355,10 +355,7 @@ abstract class IngestPipeline<T extends IngestTask> {
 
     /**
      * An abstract superclass for an ingest module decorator that adds ingest
-     * infrastructure operations to the process() method of an ingest module.
-     * Subclasses of IngestPipeline need to provide a concrete implementation of
-     * this class that provides the additional operations that the pipeline
-     * requires.
+     * infrastructure operations to an ingest module.
      */
     static abstract class PipelineModule<T extends IngestTask> implements IngestModule {
 
@@ -368,10 +365,10 @@ abstract class IngestPipeline<T extends IngestTask> {
 
         /**
          * Constructs an instance of an abstract superclass for an ingest module
-         * decorator that adds ingest infrastructure operations to the process()
-         * method of an ingest module.
+         * decorator that adds ingest infrastructure operations to an ingest
+         * module.
          *
-         * @param module      The ingest module to be wrapped.
+         * @param module      The ingest module to be decorated.
          * @param displayName The display name for the module.
          */
         PipelineModule(IngestModule module, String displayName) {
