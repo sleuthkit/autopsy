@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -43,7 +43,7 @@ public abstract class ListenableCache<D, K, V> {
     private final Cache<K, V> cache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     // taken from https://stackoverflow.com/questions/66671636/why-is-sinks-many-multicast-onbackpressurebuffer-completing-after-one-of-t
-    private final Sinks.Many<K> invalidatedKeyMulticast = Sinks.many().multicast().onBackpressureBuffer(Queues.SMALL_BUFFER_SIZE, false);
+    private final Sinks.Many<Set<K>> invalidatedKeyMulticast = Sinks.many().multicast().onBackpressureBuffer(Queues.SMALL_BUFFER_SIZE, false);
 
     public V getValue(K key) throws IllegalArgumentException, ExecutionException {
         validateCacheKey(key);
@@ -61,38 +61,45 @@ public abstract class ListenableCache<D, K, V> {
 
     public Flux<V> getInitialAndUpdates(K key) throws IllegalArgumentException {
         validateCacheKey(key);
-        
+
         // GVDTODO handle in one transaction
         Flux<V> initial = Flux.fromStream(Stream.of(getValueLoggedError(key)));
 
         Flux<V> updates = this.invalidatedKeyMulticast.asFlux()
-                .filter(invalidatedKey -> key.equals(invalidatedKey))
-                .map((matchingInvalidatedKey) -> getValueLoggedError(matchingInvalidatedKey));
+                .filter(invalidatedKeys -> invalidatedKeys.contains(key))
+                .map((matchingInvalidatedKey) -> getValueLoggedError(key));
 
         return Flux.concat(initial, updates)
                 .filter((data) -> data != null);
     }
 
     public void invalidateAll() {
-        List<K> keys = new ArrayList<>(cache.asMap().keySet());
+        Set<K> keys = new HashSet<>(cache.asMap().keySet());
         invalidateAndBroadcast(keys);
     }
 
     public void invalidate(D eventData) {
-        List<K> keys = cache.asMap().keySet().stream()
+        if (!isCacheRelevant(eventData)) {
+            return;
+        }
+        
+        Set<K> keys = cache.asMap().keySet().stream()
                 .filter((key) -> matches(eventData, key))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
         invalidateAndBroadcast(keys);
     }
 
-    private void invalidateAndBroadcast(Iterable<K> keys) {
+    private void invalidateAndBroadcast(Set<K> keys) {
+        if (keys.isEmpty()) {
+            return;
+        }
+        
         cache.invalidateAll(keys);
-        keys.forEach((k) -> {
-            EmitResult emitResult = invalidatedKeyMulticast.tryEmitNext(k);
-            if (emitResult.isFailure()) {
-                logger.log(Level.WARNING, MessageFormat.format("There was an error broadcasting invalidated key {0}: {1}", k, emitResult.name()));
-            }
-        });
+        EmitResult emitResult = invalidatedKeyMulticast.tryEmitNext(keys);
+        if (emitResult.isFailure()) {
+            logger.log(Level.WARNING, MessageFormat.format("There was an error broadcasting invalidated keys: {0}", emitResult.name()));
+        }
+
     }
 
     protected void validateCacheKey(K key) throws IllegalArgumentException {
@@ -100,6 +107,11 @@ public abstract class ListenableCache<D, K, V> {
         if (key == null) {
             throw new IllegalArgumentException("Expected non-null key");
         }
+    }
+    
+    protected boolean isCacheRelevant(D eventData) {
+        // to be overridden
+        return true;
     }
 
     protected abstract V fetch(K key) throws Exception;

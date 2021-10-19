@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
@@ -81,6 +82,10 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             }
         }
 
+        @Override
+        protected boolean isCacheRelevant(ModuleDataEvent eventData) {
+            return eventData.getBlackboardArtifactType().getCategory() == Category.DATA_ARTIFACT;
+        }
     };
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(DataArtifactSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
