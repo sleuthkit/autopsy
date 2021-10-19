@@ -402,7 +402,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     
     public void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         try {
-            threePanelDAO.getViewsDAO().getFilesByMime(fileMimeKey);
+            displaySearchResults(threePanelDAO.getViewsDAO().getFilesByMime(fileMimeKey));
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for files of mime filter: {0} and data source id: {1}.",
