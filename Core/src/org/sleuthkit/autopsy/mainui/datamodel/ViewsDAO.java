@@ -214,9 +214,7 @@ public class ViewsDAO {
 
     private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId) {
         String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + (hideKnownFilesInViewsTree()
-                        ? " "
-                        : " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")")
+                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
                 + (dataSourceId != null && dataSourceId > 0
                         ? " AND data_source_obj_id = " + dataSourceId
                         : " ")
@@ -264,7 +262,10 @@ public class ViewsDAO {
         }
 
         // Ignore unallocated block files.
-        query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
+        query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
+        
+        // hide known files if specified by configuration
+        query += (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : ""); //NON-NLS
 
         // filter by datasource if indicated in case preferences
         if (dataSourceId != null && dataSourceId > 0) {
