@@ -468,10 +468,6 @@ public class TableSearchTest extends NbTestCase {
             results = viewsDAO.getFilesBySize(param);
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
-
-            RowDTO rowDTO = results.getItems().get(0);
-            assertTrue(rowDTO instanceof FileRowDTO);
-            FileRowDTO fileRowDTO = (FileRowDTO) rowDTO;
         } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
