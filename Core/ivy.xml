@@ -59,6 +59,7 @@
 
         <!-- for MainUI event updates -->
         <dependency org="io.projectreactor" name="reactor-core" rev="3.4.11"/>
+        <dependency org="org.reactivestreams" name="reactive-streams" rev="1.0.3"/>
 
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency conf="core->default" org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0"/>

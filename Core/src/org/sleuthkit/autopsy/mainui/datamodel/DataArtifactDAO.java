@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +38,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import reactor.core.publisher.Flux;
 
 /**
  * DAO for providing data about data artifacts to populate the results viewer.
@@ -56,7 +55,33 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return instance;
     }
 
-    private final Cache<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final ListenableCache<ModuleDataEvent, DataArtifactSearchParam, DataArtifactTableSearchResultsDTO> dataArtifactCache
+            = new ListenableCache<ModuleDataEvent, DataArtifactSearchParam, DataArtifactTableSearchResultsDTO>() {
+
+        @Override
+        protected DataArtifactTableSearchResultsDTO fetch(DataArtifactSearchParam key) throws Exception {
+            return DataArtifactDAO.this.fetchDataArtifactsForTable(key);
+        }
+
+        @Override
+        protected boolean matches(ModuleDataEvent eventData, DataArtifactSearchParam key) {
+            // GVDTODO handle
+            return key.getArtifactType().equals(eventData.getBlackboardArtifactType());
+        }
+
+        @Override
+        protected void validateCacheKey(DataArtifactSearchParam key) throws IllegalArgumentException {
+            BlackboardArtifact.Type artType = key.getArtifactType();
+
+            if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT
+                    || (key.getDataSourceId() != null && key.getDataSourceId() < 0)) {
+                throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
+                        + "Artifact type must be non-null and data artifact.  Data source id must be null or > 0.  "
+                        + "Received artifact type: {0}; data source id: {1}", artType, key.getDataSourceId() == null ? "<null>" : key.getDataSourceId()));
+            }
+        }
+
+    };
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(DataArtifactSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
         SleuthkitCase skCase = getCase();
@@ -69,15 +94,15 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         List<DataArtifact> arts = (dataSourceId != null)
                 ? blackboard.getDataArtifacts(artType.getTypeID(), dataSourceId)
                 : blackboard.getDataArtifacts(artType.getTypeID());
-        
+
         Stream<DataArtifact> pagedStream = arts.stream()
                 .sorted(Comparator.comparing(art -> art.getId()))
                 .skip(cacheKey.getStartItem());
-        
+
         if (cacheKey.getMaxResultsCount() != null) {
             pagedStream = pagedStream.limit(cacheKey.getMaxResultsCount());
         }
-        
+
         List<DataArtifact> pagedArtifacts = pagedStream.collect(Collectors.toList());
 
         Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
@@ -146,27 +171,18 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         //return new DataArtifactTableSearchResultsDTO(artType, columnKeys, rows, cacheKey.getStartItem(), arts.size());
     }
 
-
-
     public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
-        BlackboardArtifact.Type artType = artifactKey.getArtifactType();
-
-        if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT
-                || (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0)) {
-            throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
-                    + "Artifact type must be non-null and data artifact.  Data source id must be null or > 0.  "
-                    + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
-        }
-
-        return dataArtifactCache.get(artifactKey, () -> fetchDataArtifactsForTable(artifactKey));
+        return this.dataArtifactCache.getValue(artifactKey);
+    }
+    
+    public Flux<DataArtifactTableSearchResultsDTO> getDataArtifactUpdates(DataArtifactSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
+        return this.dataArtifactCache.getInitialAndUpdates(artifactKey);
     }
 
     public void dropDataArtifactCache() {
-        dataArtifactCache.invalidateAll();
+        this.dataArtifactCache.invalidateAll();
     }
 
-    
-    
     @Override
     public void onDropCache() {
         dropDataArtifactCache();
@@ -174,17 +190,6 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     @Override
     public void onModuleData(ModuleDataEvent evt) {
-        if (evt == null || evt.getBlackboardArtifactType() == null) {
-            return;
-        }
-        
-        // GVDTODO data source filtering?
-        
-        final int artifactTypeId = evt.getBlackboardArtifactType().getTypeID();
-        this.dataArtifactCache.asMap().replaceAll((k,v) -> {
-            return (k == null || k.getArtifactType() == null || artifactTypeId != k.getArtifactType().getTypeID())
-                    ? null 
-                    : v;
-        });
+        this.dataArtifactCache.invalidate(evt);
     }
 }
