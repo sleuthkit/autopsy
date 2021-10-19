@@ -162,7 +162,7 @@ public final class IngestJob {
      * @param dataArtifacts The data artifacts. 
      */
     void addDataArtifacts(List<DataArtifact> dataArtifacts) {
-        ingestModulePipelines.addDataArtifacts(dataArtifacts);
+        ingestModuleExecutor.addDataArtifacts(dataArtifacts);
     }
     
     /**
