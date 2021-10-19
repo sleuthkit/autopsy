@@ -30,8 +30,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Analyzes one or more data sources using a set of ingest modules specified via
- * ingest job settings.
+ * Analyzes a data sources using a set of ingest modules specified via ingest
+ * job settings.
  */
 public final class IngestJob {
 
@@ -78,12 +78,12 @@ public final class IngestJob {
 
     /**
      * Constructs a batch mode ingest job that analyzes a data source using a
-     * set of ingest modules specified via ingest job settings. Either all of
-     * the files in the data source or a given subset of the files will be
-     * analyzed.
+     * set of ingest modules specified via ingest job settings.
      *
      * @param dataSource The data source to be analyzed.
-     * @param files      A subset of the files from the data source.
+     * @param files      A subset of the files from the data source to be
+     *                   analyzed, may be empty if all of the files should be
+     *                   analyzed.
      * @param settings   The ingest job settings.
      */
     IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
@@ -96,19 +96,12 @@ public final class IngestJob {
      * ingest modules specified via ingest job settings, possibly using an
      * ingest stream.
      *
-     * @param settings The ingest job settings.
-     */
-    /**
-     * Constructs an ingest job that analyzes a data source using a set of
-     * ingest modules specified via ingest job settings, possibly using an
-     * ingest stream.
-     *
      * @param dataSource The data source to be analyzed.
      * @param ingestMode The ingest job mode.
      * @param settings   The ingest job settings.
      */
     IngestJob(Content dataSource, Mode ingestMode, IngestJobSettings settings) {
-        this.id = IngestJob.nextId.getAndIncrement();
+        id = IngestJob.nextId.getAndIncrement();
         this.dataSource = dataSource;
         this.settings = settings;
         this.ingestMode = ingestMode;
@@ -136,20 +129,20 @@ public final class IngestJob {
     }
 
     /**
-     * Adds a set of files to this ingest job if it is running in streaming
+     * Adds a set of files to this ingest job, if it is running in streaming
      * ingest mode.
      *
      * @param fileObjIds The object IDs of the files.
      */
-    void addStreamingIngestFiles(List<Long> fileObjIds) {
+    void addStreamedFiles(List<Long> fileObjIds) {
         if (ingestMode == Mode.STREAMING) {
             if (ingestModuleExecutor != null) {
                 ingestModuleExecutor.addStreamedFiles(fileObjIds);
             } else {
-                logger.log(Level.SEVERE, "Attempted to add streamed ingest files with no ingest pipeline");
+                logger.log(Level.SEVERE, "Attempted to add streamed files with no ingest pipeline");
             }
         } else {
-            logger.log(Level.SEVERE, "Attempted to add streamed ingest files to batch ingest job");
+            logger.log(Level.SEVERE, "Attempted to add streamed files to batch ingest job");
         }
     }
 
@@ -160,7 +153,7 @@ public final class IngestJob {
     void processStreamingIngestDataSource() {
         if (ingestMode == Mode.STREAMING) {
             if (ingestModuleExecutor != null) {
-                ingestModuleExecutor.startStreamingModeDataSrcAnalysis();
+                ingestModuleExecutor.startStreamingModeDataSourceAnalysis();
             } else {
                 logger.log(Level.SEVERE, "Attempted to start data source analaysis with no ingest pipeline");
             }
@@ -284,7 +277,7 @@ public final class IngestJob {
      * @return The cancellation reason, may be not cancelled.
      */
     public CancellationReason getCancellationReason() {
-        return this.cancellationReason;
+        return cancellationReason;
     }
 
     /**
@@ -294,7 +287,7 @@ public final class IngestJob {
      * @return True or false.
      */
     public boolean isCancelled() {
-        return (CancellationReason.NOT_CANCELLED != this.cancellationReason);
+        return (CancellationReason.NOT_CANCELLED != cancellationReason);
     }
 
     /**
@@ -527,7 +520,7 @@ public final class IngestJob {
          * @return The display name.
          */
         public String displayName() {
-            return this.module.getDisplayName();
+            return module.getDisplayName();
         }
 
         /**
@@ -537,7 +530,7 @@ public final class IngestJob {
          * @return The module processing start time.
          */
         public Date startTime() {
-            return this.module.getProcessingStartTime();
+            return module.getProcessingStartTime();
         }
 
         /**
@@ -547,7 +540,7 @@ public final class IngestJob {
          * @return True or false.
          */
         public boolean isCancelled() {
-            return this.cancelled;
+            return cancelled;
         }
 
         /**
@@ -561,8 +554,8 @@ public final class IngestJob {
              * could perhaps be solved by adding a cancel() API to the
              * IngestModule interface.
              */
-            if (this.ingestJobExecutor.getCurrentDataSourceIngestModule() == this.module) {
-                this.ingestJobExecutor.cancelCurrentDataSourceIngestModule();
+            if (ingestJobExecutor.getCurrentDataSourceIngestModule() == module) {
+                ingestJobExecutor.cancelCurrentDataSourceIngestModule();
             }
         }
 

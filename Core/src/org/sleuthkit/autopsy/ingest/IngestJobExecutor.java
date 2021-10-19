@@ -773,7 +773,7 @@ final class IngestJobExecutor {
      * case database and streamed in, and the data source is now ready for
      * analysis.
      */
-    void startStreamingModeDataSrcAnalysis() {
+    void startStreamingModeDataSourceAnalysis() {
         synchronized (stageTransitionLock) {
             logInfoMessage("Starting full first stage analysis in streaming mode"); //NON-NLS
             stage = IngestJobExecutor.IngestJobStages.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
