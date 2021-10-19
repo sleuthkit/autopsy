@@ -85,17 +85,17 @@ final class DataSourceIngestPipeline extends IngestPipeline<DataSourceIngestTask
         }
 
         @Override
-        void process(IngestJobExecutor ingestJobPipeline, DataSourceIngestTask task) throws IngestModuleException {
+        void process(IngestJobExecutor ingestJobExecutor, DataSourceIngestTask task) throws IngestModuleException {
             Content dataSource = task.getDataSource();
             String progressBarDisplayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.displayName", getDisplayName(), dataSource.getName());
-            ingestJobPipeline.updateDataSourceIngestProgressBarDisplayName(progressBarDisplayName);
-            ingestJobPipeline.switchDataSourceIngestProgressBarToIndeterminate();
+            ingestJobExecutor.updateDataSourceIngestProgressBarDisplayName(progressBarDisplayName);
+            ingestJobExecutor.switchDataSourceIngestProgressBarToIndeterminate();
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             logger.log(Level.INFO, "{0} analysis of {1} starting", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS
-            module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobPipeline));
+            module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobExecutor));
             logger.log(Level.INFO, "{0} analysis of {1} finished", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS            
-            if (!ingestJobPipeline.isCancelled() && ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
-                ingestJobPipeline.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
+            if (!ingestJobExecutor.isCancelled() && ingestJobExecutor.currentDataSourceIngestModuleIsCancelled()) {
+                ingestJobExecutor.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
             }
         }
 

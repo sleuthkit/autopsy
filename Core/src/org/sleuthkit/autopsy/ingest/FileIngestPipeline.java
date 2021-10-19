@@ -45,7 +45,7 @@ final class FileIngestPipeline extends IngestPipeline<FileIngestTask> {
     private static final String SAVE_RESULTS_ACTIVITY = Bundle.FileIngestPipeline_SaveResults_Activity();
     private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestJobExecutor ingestJobPipeline;
+    private final IngestJobExecutor ingestJobExecutor;
     private final List<AbstractFile> fileBatch;
 
     /**
@@ -58,9 +58,9 @@ final class FileIngestPipeline extends IngestPipeline<FileIngestTask> {
      *                          May be an empty list if this type of pipeline is
      *                          not needed for the ingest job.
      */
-    FileIngestPipeline(IngestJobExecutor ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
-        super(ingestJobPipeline, moduleTemplates);
-        this.ingestJobPipeline = ingestJobPipeline;
+    FileIngestPipeline(IngestJobExecutor ingestJobExecutor, List<IngestModuleTemplate> moduleTemplates) {
+        super(ingestJobExecutor, moduleTemplates);
+        this.ingestJobExecutor = ingestJobExecutor;
         fileBatch = new ArrayList<>();
     }
 
@@ -148,7 +148,7 @@ final class FileIngestPipeline extends IngestPipeline<FileIngestTask> {
         synchronized (fileBatch) {
             CaseDbTransaction transaction = null;
             try {
-                if (!ingestJobPipeline.isCancelled()) {
+                if (!ingestJobExecutor.isCancelled()) {
                     Case currentCase = Case.getCurrentCaseThrows();
                     SleuthkitCase caseDb = currentCase.getSleuthkitCase();
                     transaction = caseDb.beginTransaction();
@@ -197,7 +197,7 @@ final class FileIngestPipeline extends IngestPipeline<FileIngestTask> {
         }
 
         @Override
-        void process(IngestJobExecutor ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
+        void process(IngestJobExecutor ingestJobExecutor, FileIngestTask task) throws IngestModuleException {
             AbstractFile file = null;
             try {
                 file = task.getFile();
