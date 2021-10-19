@@ -22,7 +22,7 @@ import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * A data artifact ingest task that will be executed by an ingest thread using a
- * given ingest job pipeline.
+ * given ingest job executor.
  */
 final class DataArtifactIngestTask extends IngestTask {
 
@@ -30,9 +30,9 @@ final class DataArtifactIngestTask extends IngestTask {
 
     /**
      * Constructs a data artifact ingest task that will be executed by an ingest
-     * thread using a given ingest job pipeline.
+     * thread using a given ingest job executor.
      *
-     * @param ingestJobExecutor The ingest job pipeline to use to execute the
+     * @param ingestJobExecutor The ingest job executor to use to execute the
      *                          task.
      * @param artifact          The data artifact to be processed.
      */

@@ -20,25 +20,25 @@ package org.sleuthkit.autopsy.ingest;
 
 /**
  * A data source level ingest task that will be executed by an ingest thread
- * using a given ingest job pipeline.
+ * using a given ingest job executor.
  */
 final class DataSourceIngestTask extends IngestTask {
 
     /**
      * Constructs a data source level ingest task that will be executed by an
-     * ingest thread using a given ingest job pipeline.
+     * ingest thread using a given ingest job executor.
      *
-     * @param ingestJobPipeline The ingest job pipeline to use to execute the
+     * @param ingestJobExecutor The ingest job executor to use to execute the
      *                          task.
      */
-    DataSourceIngestTask(IngestJobExecutor ingestJobPipeline) {
-        super(ingestJobPipeline);
+    DataSourceIngestTask(IngestJobExecutor ingestJobExecutor) {
+        super(ingestJobExecutor);
     }
 
     @Override
     void execute(long threadId) {
         super.setThreadId(threadId);
         getIngestJobExecutor().execute(this);
-    }        
-    
+    }
+
 }

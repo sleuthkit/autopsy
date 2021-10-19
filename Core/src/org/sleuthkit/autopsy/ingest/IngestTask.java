@@ -47,7 +47,7 @@ abstract class IngestTask {
     /**
      * Gets the ingest job executor to use to execute this task.
      *
-     * @return The ingest job pipeline.
+     * @return The ingest job executor.
      */
     IngestJobExecutor getIngestJobExecutor() {
         return ingestJobExecutor;

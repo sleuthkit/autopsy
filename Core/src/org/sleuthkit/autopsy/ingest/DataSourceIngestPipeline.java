@@ -38,12 +38,12 @@ final class DataSourceIngestPipeline extends IngestPipeline<DataSourceIngestTask
      * Constructs a pipeline of data source level ingest modules for performing
      * data source level ingest tasks for an ingest job.
      *
-     * @param ingestJobPipeline The ingest job pipeline that owns this pipeline.
+     * @param ingestJobExecutor The ingest job executor that owns this pipeline.
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline.
      */
-    DataSourceIngestPipeline(IngestJobExecutor ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
-        super(ingestJobPipeline, moduleTemplates);
+    DataSourceIngestPipeline(IngestJobExecutor ingestJobExecutor, List<IngestModuleTemplate> moduleTemplates) {
+        super(ingestJobExecutor, moduleTemplates);
     }
 
     @Override
