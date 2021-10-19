@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2020 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Stores basic diagnostic statistics for a data source ingest job.
+ * Stores basic diagnostic statistics for an ingest job.
  */
 public final class Snapshot implements Serializable {
 
@@ -45,8 +45,8 @@ public final class Snapshot implements Serializable {
     transient private final List<String> cancelledDataSourceModules;
 
     /**
-     * Constructs an object to store basic diagnostic statistics for a data
-     * source ingest job.
+     * Constructs an object to store basic diagnostic statistics for an ingest
+     * job.
      */
     Snapshot(String dataSourceName, long jobId, long jobStartTime, DataSourceIngestPipeline.DataSourcePipelineModule dataSourceIngestModule,
             boolean fileIngestRunning, Date fileIngestStartTime,
@@ -119,7 +119,7 @@ public final class Snapshot implements Serializable {
     }
 
     Date getFileIngestStartTime() {
-        return this.fileIngestStartTime;
+        return new Date(fileIngestStartTime.getTime());
     }
 
     /**
@@ -178,13 +178,13 @@ public final class Snapshot implements Serializable {
         }
         return this.tasksSnapshot.getDsQueueSize();
     }
-    
-     long getStreamingQueueSize() {
+
+    long getStreamingQueueSize() {
         if (null == this.tasksSnapshot) {
             return 0;
         }
         return this.tasksSnapshot.getStreamingQueueSize();
-    }   
+    }
 
     long getRunningListSize() {
         if (null == this.tasksSnapshot) {
@@ -199,7 +199,7 @@ public final class Snapshot implements Serializable {
         }
         return tasksSnapshot.getArtifactsQueueSize();
     }
-    
+
     boolean isCancelled() {
         return this.jobCancelled;
     }
