@@ -1855,7 +1855,6 @@ class ExtractRegistry extends Extract {
         } finally {
             if(!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(artifacts);                
-                context.addDataArtifactsToJob(dataArtifacts);
             }
         }
     }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,8 +35,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Event published when new data is posted to the blackboard of a case. The
- * "old" value is a legacy ModuleDataEvent object. The "new" value is null.
+ * Event published when an artifact (data artifct or analysis result = "new
+ * data") is posted to the blackboard. The "old" value is a legacy
+ * ModuleDataEvent object. The "new" value is null.
  */
 public final class BlackboardPostEvent extends AutopsyEvent implements Serializable {
 
@@ -63,9 +64,9 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
                 IngestManager.IngestModuleEvent.DATA_ADDED.toString(),
                 new SerializableEventData(eventData.getModuleName(), eventData.getBlackboardArtifactType(), eventData.getArtifacts() != null
                         ? eventData.getArtifacts()
-                        .stream()
-                        .map(BlackboardArtifact::getArtifactID)
-                        .collect(Collectors.toList()) : Collections.emptyList()),
+                                .stream()
+                                .map(BlackboardArtifact::getArtifactID)
+                                .collect(Collectors.toList()) : Collections.emptyList()),
                 null
         );
         this.eventData = eventData;

@@ -158,14 +158,4 @@ public final class IngestJobContext {
         ingestJobPipeline.addFiles(files);
     }
 
-    /**
-     * Adds one or more data artifacts to the ingest job for processing by its
-     * data artifact ingest modules.
-     *
-     * @param artifacts The artifacts.
-     */
-    public void addDataArtifactsToJob(List<DataArtifact> artifacts) {
-        ingestJobPipeline.addDataArtifacts(artifacts);
-    }
-
 }

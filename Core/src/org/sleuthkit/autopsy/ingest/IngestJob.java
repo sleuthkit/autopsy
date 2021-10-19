@@ -28,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Analyzes one or more data sources using a set of ingest modules specified via
@@ -126,6 +127,14 @@ public final class IngestJob {
     }
 
     /**
+     * RJCTODO
+     * @return 
+     */
+    Content getDataSource() {
+        return dataSource;
+    }     
+    
+    /**
      * Checks to see if this ingest job has at least one non-empty ingest module
      * pipeline.
      *
@@ -153,6 +162,16 @@ public final class IngestJob {
         }
     }
 
+    /**
+     * Adds one or more data artifacts to the ingest job for processing by its
+     * data artifact ingest modules.
+     *
+     * @param dataArtifacts The data artifacts. 
+     */
+    void addDataArtifacts(List<DataArtifact> dataArtifacts) {
+        ingestModulePipelines.addDataArtifacts(dataArtifacts);
+    }
+    
     /**
      * Starts data source level analysis for this job if it is running in
      * streaming ingest mode.
