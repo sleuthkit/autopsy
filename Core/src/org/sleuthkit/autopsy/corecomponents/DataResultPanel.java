@@ -917,7 +917,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         add(gotoPageLabel, gridBagConstraints);
 
         gotoPageTextField.setText(org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.gotoPageTextField.text")); // NOI18N
-        gotoPageTextField.setMargin(new java.awt.Insets(0, 0, 0, 0));
         gotoPageTextField.setMaximumSize(new java.awt.Dimension(32767, 22));
         gotoPageTextField.setMinimumSize(new java.awt.Dimension(50, 22));
         gotoPageTextField.setPreferredSize(new java.awt.Dimension(50, 22));
@@ -1005,6 +1004,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
         } catch (IllegalArgumentException | ExecutionException ex) {
             logger.log(Level.WARNING, "Go to page index failed", ex);
+            updatePagingComponents();
         }
     }//GEN-LAST:event_gotoPageTextFieldActionPerformed
 
@@ -1150,14 +1150,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.pageNextButton.setEnabled(this.searchResultSupport.hasNextPage());
             this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
                     this.searchResultSupport.getPageIdx() + 1,
-                    this.searchResultSupport.getTotalPages()));
+                    Math.max(this.searchResultSupport.getTotalPages(), 1)));
             this.gotoPageTextField.setText(Integer.toString(this.searchResultSupport.getPageIdx() + 1));
         } else if (this.pagingSupport != null) {
             this.pagePrevButton.setEnabled(this.pagingSupport.getCurrentPageIdx() > 0);
             this.pageNextButton.setEnabled(this.pagingSupport.getCurrentPageIdx() < this.pagingSupport.getLastKnownPageCount() - 1);
             this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
                     this.pagingSupport.getCurrentPageIdx() + 1,
-                    this.pagingSupport.getLastKnownPageCount()));
+                    Math.max(this.pagingSupport.getLastKnownPageCount(), 1)));
             this.gotoPageTextField.setText(Integer.toString(this.pagingSupport.getCurrentPageIdx() + 1));
         } else {
             this.pagePrevButton.setEnabled(false);
