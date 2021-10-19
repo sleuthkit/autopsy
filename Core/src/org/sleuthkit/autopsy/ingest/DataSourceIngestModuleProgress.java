@@ -23,10 +23,10 @@ package org.sleuthkit.autopsy.ingest;
  */
 public class DataSourceIngestModuleProgress {
 
-    private final IngestJobExecutor ingestJobPipeline;
+    private final IngestJobExecutor ingestJobExecutor;
 
-    DataSourceIngestModuleProgress(IngestJobExecutor pipeline) {
-        this.ingestJobPipeline = pipeline;
+    DataSourceIngestModuleProgress(IngestJobExecutor ingestJobExecutor) {
+        this.ingestJobExecutor = ingestJobExecutor;
     }
 
     /**
@@ -38,7 +38,7 @@ public class DataSourceIngestModuleProgress {
      *                  data source.
      */
     public void switchToDeterminate(int workUnits) {
-        this.ingestJobPipeline.switchDataSourceIngestProgressBarToDeterminate(workUnits);
+        ingestJobExecutor.switchDataSourceIngestProgressBarToDeterminate(workUnits);
     }
 
     /**
@@ -46,7 +46,7 @@ public class DataSourceIngestModuleProgress {
      * the total work units to process the data source is unknown.
      */
     public void switchToIndeterminate() {
-        this.ingestJobPipeline.switchDataSourceIngestProgressBarToIndeterminate();
+        ingestJobExecutor.switchDataSourceIngestProgressBarToIndeterminate();
     }
 
     /**
@@ -56,7 +56,7 @@ public class DataSourceIngestModuleProgress {
      * @param workUnits Number of work units performed so far by the module.
      */
     public void progress(int workUnits) {
-        this.ingestJobPipeline.advanceDataSourceIngestProgressBar("", workUnits);
+        ingestJobExecutor.advanceDataSourceIngestProgressBar("", workUnits);
     }
 
     /**
@@ -65,7 +65,7 @@ public class DataSourceIngestModuleProgress {
      * @param message Message to display
      */
     public void progress(String message) {
-        this.ingestJobPipeline.advanceDataSourceIngestProgressBar(message);
+        ingestJobExecutor.advanceDataSourceIngestProgressBar(message);
     }
 
     /**
@@ -76,7 +76,7 @@ public class DataSourceIngestModuleProgress {
      * @param workUnits   Number of work units performed so far by the module.
      */
     public void progress(String currentTask, int workUnits) {
-        this.ingestJobPipeline.advanceDataSourceIngestProgressBar(currentTask, workUnits);
+        ingestJobExecutor.advanceDataSourceIngestProgressBar(currentTask, workUnits);
     }
 
 }
