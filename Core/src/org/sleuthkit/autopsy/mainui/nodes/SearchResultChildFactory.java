@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultTableSearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
@@ -68,7 +70,9 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
                 return new DataArtifactNode((DataArtifactTableSearchResultsDTO) key.getSearchResults(), (DataArtifactRowDTO) key.getRow());
             } else if (FileRowDTO.getTypeIdForClass().equals(typeId)) {
                 return new FileNode(key.getSearchResults(), (FileRowDTO) key.getRow());
-            } else {
+            } else if(AnalysisResultRowDTO.getTypeIdForClass().equals(typeId)) {
+                return new AnalysisResultNode((AnalysisResultTableSearchResultsDTO)key.getSearchResults(), (AnalysisResultRowDTO) key.getRow());
+            }else {
                 logger.log(Level.WARNING, MessageFormat.format("No known node for type id: {0} provided by row result: {1}", typeId, key.getRow()));
             }
         } catch (ClassCastException ex) {

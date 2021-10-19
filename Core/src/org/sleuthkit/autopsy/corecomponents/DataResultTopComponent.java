@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 
@@ -385,6 +386,17 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         }
     }
     
+    public void displayAnalysisResult(AnalysisResultSearchParam analysisResultKey) {
+        try {
+            displaySearchResults(threePanelDAO.getAnalysisResultDAO().getAnalysisResultsForTable(analysisResultKey));
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching analysis result type: {0} and data source id: {1}.",
+                    analysisResultKey.getArtifactType().getTypeName(),
+                    analysisResultKey.getDataSourceId() == null ? "<null>" : analysisResultKey.getDataSourceId()),
+                    ex);
+        }
+    }
 
     public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsKey) {
         try {
