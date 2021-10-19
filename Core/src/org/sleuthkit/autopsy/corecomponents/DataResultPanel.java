@@ -1145,24 +1145,25 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     private void updatePagingComponents() {
-        this.gotoPageTextField.setText("");
-
         if (this.searchResultSupport.getCurrentSearchResults() != null) {
             this.pagePrevButton.setEnabled(this.searchResultSupport.hasPrevPage());
             this.pageNextButton.setEnabled(this.searchResultSupport.hasNextPage());
             this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
                     this.searchResultSupport.getPageIdx() + 1,
                     this.searchResultSupport.getTotalPages()));
+            this.gotoPageTextField.setText(Integer.toString(this.searchResultSupport.getPageIdx() + 1));
         } else if (this.pagingSupport != null) {
             this.pagePrevButton.setEnabled(this.pagingSupport.getCurrentPageIdx() > 0);
             this.pageNextButton.setEnabled(this.pagingSupport.getCurrentPageIdx() < this.pagingSupport.getLastKnownPageCount() - 1);
             this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
                     this.pagingSupport.getCurrentPageIdx() + 1,
                     this.pagingSupport.getLastKnownPageCount()));
+            this.gotoPageTextField.setText(Integer.toString(this.pagingSupport.getCurrentPageIdx() + 1));
         } else {
             this.pagePrevButton.setEnabled(false);
             this.pageNextButton.setEnabled(false);
             this.pageNumLabel.setText("");
+            this.gotoPageTextField.setText("");
         }
     }
 
