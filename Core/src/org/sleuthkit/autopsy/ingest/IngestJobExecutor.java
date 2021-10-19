@@ -59,10 +59,10 @@ import org.sleuthkit.datamodel.DataSource;
  * Manages the construction, start up, execution, and shut down of the ingest
  * module pipelines for an ingest job.
  */
-final class IngestModulePipelines {
+final class IngestJobExecutor {
 
     private static final String AUTOPSY_MODULE_PREFIX = "org.sleuthkit.autopsy";
-    private static final Logger logger = Logger.getLogger(IngestModulePipelines.class.getName());
+    private static final Logger logger = Logger.getLogger(IngestJobExecutor.class.getName());
 
     /*
      * A regular expression for identifying the proxy classes Jython generates
@@ -159,7 +159,7 @@ final class IngestModulePipelines {
      * So the stage transition lock is used not to guard the stage field, but to
      * coordinate stage transitions.
      */
-    private volatile IngestJobStages stage = IngestModulePipelines.IngestJobStages.PIPELINES_START_UP;
+    private volatile IngestJobStages stage = IngestJobExecutor.IngestJobStages.PIPELINES_START_UP;
     private final Object stageTransitionLock = new Object();
 
     /*
@@ -238,7 +238,7 @@ final class IngestModulePipelines {
      * @throws InterruptedException Exception thrown if the thread in which the
      *                              pipeline is being created is interrupted.
      */
-    IngestModulePipelines(IngestJob ingestJob, Content dataSource, List<AbstractFile> files, IngestJobSettings settings) throws InterruptedException {
+    IngestJobExecutor(IngestJob ingestJob, Content dataSource, List<AbstractFile> files, IngestJobSettings settings) throws InterruptedException {
         if (!(dataSource instanceof DataSource)) {
             throw new IllegalArgumentException("Passed dataSource that does not implement the DataSource interface"); //NON-NLS
         }
@@ -594,7 +594,7 @@ final class IngestModulePipelines {
      *
      * @return A list of ingest module startup errors, empty on success.
      */
-    private List<IngestModuleError> startUpIngestModulePipeline(IngestTaskPipeline<?> pipeline) {
+    private List<IngestModuleError> startUpIngestModulePipeline(IngestPipeline<?> pipeline) {
         List<IngestModuleError> startUpErrors = pipeline.startUp();
         if (!startUpErrors.isEmpty()) {
             List<IngestModuleError> shutDownErrors = pipeline.shutDown();
@@ -773,10 +773,10 @@ final class IngestModulePipelines {
      * case database and streamed in, and the data source is now ready for
      * analysis.
      */
-    void startStreamingModeDataSrcAnalysis() {
+    void startStreamingModeDataSourceAnalysis() {
         synchronized (stageTransitionLock) {
             logInfoMessage("Starting full first stage analysis in streaming mode"); //NON-NLS
-            stage = IngestModulePipelines.IngestJobStages.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
+            stage = IngestJobExecutor.IngestJobStages.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
             currentDataSourceIngestPipeline = highPriorityDataSourceIngestPipeline;
 
             if (hasFileIngestModules()) {
@@ -809,7 +809,7 @@ final class IngestModulePipelines {
 
             currentDataSourceIngestPipeline = highPriorityDataSourceIngestPipeline;
             if (hasHighPriorityDataSourceIngestModules()) {
-                IngestModulePipelines.taskScheduler.scheduleDataSourceIngestTask(this);
+                IngestJobExecutor.taskScheduler.scheduleDataSourceIngestTask(this);
             } else {
                 /*
                  * If no data source level ingest task is scheduled at this time
@@ -831,7 +831,7 @@ final class IngestModulePipelines {
         synchronized (stageTransitionLock) {
             if (hasLowPriorityDataSourceIngestModules()) {
                 logInfoMessage(String.format("Starting low priority data source analysis for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), ingestJob.getId())); //NON-NLS
-                stage = IngestModulePipelines.IngestJobStages.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
+                stage = IngestJobExecutor.IngestJobStages.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
 
                 if (usingNetBeansGUI) {
                     startDataSourceIngestProgressBar();
@@ -857,7 +857,7 @@ final class IngestModulePipelines {
                 artifactIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
-                        IngestModulePipelines.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                        IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         return true;
                     }
                 });
@@ -891,12 +891,12 @@ final class IngestModulePipelines {
                          * ingest job.
                          */
                         DataSourceIngestCancellationPanel panel = new DataSourceIngestCancellationPanel();
-                        String dialogTitle = NbBundle.getMessage(IngestModulePipelines.this.getClass(), "IngestJob.cancellationDialog.title");
+                        String dialogTitle = NbBundle.getMessage(IngestJobExecutor.this.getClass(), "IngestJob.cancellationDialog.title");
                         JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
                         if (panel.cancelAllDataSourceIngestModules()) {
-                            IngestModulePipelines.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                            IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         } else {
-                            IngestModulePipelines.this.cancelCurrentDataSourceIngestModule();
+                            IngestJobExecutor.this.cancelCurrentDataSourceIngestModule();
                         }
                         return true;
                     }
@@ -921,7 +921,7 @@ final class IngestModulePipelines {
                 fileIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
-                        IngestModulePipelines.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                        IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         return true;
                     }
                 });
@@ -998,7 +998,7 @@ final class IngestModulePipelines {
     private void shutDown() {
         synchronized (stageTransitionLock) {
             logInfoMessage("Finished all tasks"); //NON-NLS        
-            stage = IngestModulePipelines.IngestJobStages.PIPELINES_SHUT_DOWN;
+            stage = IngestJobExecutor.IngestJobStages.PIPELINES_SHUT_DOWN;
 
             shutDownIngestModulePipeline(currentDataSourceIngestPipeline);
             shutDownIngestModulePipeline(artifactIngestPipeline);
@@ -1056,7 +1056,7 @@ final class IngestModulePipelines {
      *
      * @param pipeline The pipeline.
      */
-    private <T extends IngestTask> void shutDownIngestModulePipeline(IngestTaskPipeline<T> pipeline) {
+    private <T extends IngestTask> void shutDownIngestModulePipeline(IngestPipeline<T> pipeline) {
         if (pipeline.isRunning()) {
             List<IngestModuleError> errors = new ArrayList<>();
             errors.addAll(pipeline.shutDown());
@@ -1076,7 +1076,7 @@ final class IngestModulePipelines {
         try {
             if (!isCancelled()) {
                 List<IngestModuleError> errors = new ArrayList<>();
-                errors.addAll(currentDataSourceIngestPipeline.executeTask(task));
+                errors.addAll(currentDataSourceIngestPipeline.performTask(task));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
                 }
@@ -1130,7 +1130,7 @@ final class IngestModulePipelines {
                      * Run the file through the modules in the pipeline.
                      */
                     List<IngestModuleError> errors = new ArrayList<>();
-                    errors.addAll(pipeline.executeTask(task));
+                    errors.addAll(pipeline.performTask(task));
                     if (!errors.isEmpty()) {
                         logIngestModuleErrors(errors, file);
                     }
@@ -1171,7 +1171,7 @@ final class IngestModulePipelines {
         try {
             if (!isCancelled() && !artifactIngestPipeline.isEmpty()) {
                 List<IngestModuleError> errors = new ArrayList<>();
-                errors.addAll(artifactIngestPipeline.executeTask(task));
+                errors.addAll(artifactIngestPipeline.performTask(task));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
                 }
@@ -1191,7 +1191,7 @@ final class IngestModulePipelines {
     void addStreamedFiles(List<Long> fileObjIds) {
         if (hasFileIngestModules()) {
             if (stage.equals(IngestJobStages.STREAMED_FILE_ANALYSIS_ONLY)) {
-                IngestModulePipelines.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
+                IngestJobExecutor.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
             } else {
                 logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
             }
@@ -1412,7 +1412,7 @@ final class IngestModulePipelines {
     void cancel(IngestJob.CancellationReason reason) {
         jobCancelled = true;
         cancellationReason = reason;
-        IngestModulePipelines.taskScheduler.cancelPendingFileTasksForIngestJob(this);
+        IngestJobExecutor.taskScheduler.cancelPendingFileTasksForIngestJob(this);
 
         if (usingNetBeansGUI) {
             synchronized (dataSourceIngestProgressLock) {

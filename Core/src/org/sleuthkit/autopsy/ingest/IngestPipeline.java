@@ -33,21 +33,24 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
- * An abstract superclass for pipelines of ingest modules that execute ingest
- * tasks for an ingest job. Subclasses need to extend this class and to
- * implement a specialization of the inner PipelineModule abstract superclass.
+ * An abstract superclass for pipelines of ingest modules that perform the
+ * ingest tasks that make up an ingest job. A pipeline performs a task by
+ * passing it sequentially to the process() method of each module in the
+ * pipeline.
  *
- * NOTE ON MULTI-THREADING POLICY: This class is primarily designed for use
- * by one thread at a time. There are a few status fields that are volatile to
- * ensure visibility to threads making ingest progress snapshots, but methods
- * such as startUp(), executeTask() and shutDown() are not synchronized.
- *
- * @param <T> The ingest task type.
+ * @param <T> The type of ingest tasks the pipeline performs.
  */
-abstract class IngestTaskPipeline<T extends IngestTask> {
+abstract class IngestPipeline<T extends IngestTask> {
 
-    private static final Logger logger = Logger.getLogger(IngestTaskPipeline.class.getName());
-    private final IngestModulePipelines ingestJobPipeline;
+    /*
+     * NOTE ON MULTI-THREADING POLICY: This class is primarily designed for use
+     * by one thread at a time. There are a few status fields that are volatile
+     * to ensure visibility to threads making ingest progress snapshots, but
+     * methods such as startUp(), performTask() and shutDown() are not
+     * synchronized.
+     */
+    private static final Logger logger = Logger.getLogger(IngestPipeline.class.getName());
+    private final IngestJobExecutor ingestJobExecutor;
     private final List<IngestModuleTemplate> moduleTemplates;
     private final List<PipelineModule<T>> modules;
     private volatile Date startTime;
@@ -56,38 +59,34 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
 
     /**
      * Constructs the superclass part of a pipeline of ingest modules that
-     * executes ingest tasks for an ingest job.
+     * performs ingest tasks for an ingest job.
      *
-     * @param ingestPipeline  The parent ingest job pipeline for this ingest
-     *                        task pipeline.
-     * @param moduleTemplates The ingest module templates that define this
-     *                        ingest task pipeline. May be an empty list.
+     * @param ingestJobExecutor The ingest job executor for this pipeline.
+     * @param moduleTemplates   The ingest module templates to be used to
+     *                          construct the ingest modules for this pipeline.
+     *                          May be an empty list if this type of pipeline is
+     *                          not needed for the ingest job.
      */
-    IngestTaskPipeline(IngestModulePipelines ingestPipeline, List<IngestModuleTemplate> moduleTemplates) {
-        this.ingestJobPipeline = ingestPipeline;
-        /*
-         * The creation of ingest modules from the ingest module templates has
-         * been deliberately deferred to the startUp() method so that any and
-         * all errors in module construction or start up can be reported to the
-         * client code.
-         */
+    IngestPipeline(IngestJobExecutor ingestJobExecutor, List<IngestModuleTemplate> moduleTemplates) {
+        this.ingestJobExecutor = ingestJobExecutor;
         this.moduleTemplates = moduleTemplates;
         modules = new ArrayList<>();
     }
 
     /**
-     * Indicates whether or not there are any ingest modules in this ingest task
+     * Indicates whether or not there are any ingest modules in this ingest
      * pipeline.
      *
-     * @return True or false.
+     * @return True or false; always true before startUp() is called.
      */
     boolean isEmpty() {
         return modules.isEmpty();
     }
 
     /**
-     * Queries whether or not this ingest task pipeline is running, i.e., the
-     * startUp() method has been called and the shutDown() has not been called.
+     * Queries whether or not this ingest pipeline is running, i.e., the
+     * startUp() method has been called and the shutDown() method has not been
+     * called yet.
      *
      * @return True or false.
      */
@@ -96,8 +95,8 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     }
 
     /**
-     * Starts up this ingest task pipeline by calling the startUp() methods of
-     * the ingest modules in the pipeline.
+     * Starts up this ingest pipeline by calling the startUp() methods of the
+     * ingest modules in the pipeline.
      *
      * @return A list of ingest module start up errors, possibly empty.
      */
@@ -110,21 +109,19 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
              * any and all errors in module construction or start up can be
              * reported to the client code.
              */
-            createIngestModules(moduleTemplates);
+            createIngestModules();
             errors.addAll(startUpIngestModules());
         } else {
-            errors.add(new IngestModuleError("Ingest Task Pipeline", new IngestTaskPipelineException("Pipeline already started"))); //NON-NLS                        
+            errors.add(new IngestModuleError("Ingest Task Pipeline", new IngestPipelineException("Pipeline already started"))); //NON-NLS                        
         }
         return errors;
     }
 
     /**
-     * Creates the ingest modules for this ingest task pipeline from the given
-     * ingest module templates.
-     *
-     * @param moduleTemplates The ingest module templates.
+     * Creates the ingest modules for this ingest pipeline using its ingest
+     * module templates.
      */
-    private void createIngestModules(List<IngestModuleTemplate> moduleTemplates) {
+    private void createIngestModules() {
         if (modules.isEmpty()) {
             for (IngestModuleTemplate template : moduleTemplates) {
                 Optional<PipelineModule<T>> module = acceptModuleTemplate(template);
@@ -137,8 +134,8 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
 
     /**
      * Determines if one of the types of ingest modules that can be created from
-     * a given ingest module template should be added to this ingest task
-     * pipeline. If so, the ingest module is created and returned.
+     * a given ingest module template should be added to this ingest pipeline.
+     * If so, the ingest module is created and returned.
      *
      * @param template The ingest module template to be used or ignored, as
      *                 appropriate to the pipeline type.
@@ -149,7 +146,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     abstract Optional<PipelineModule<T>> acceptModuleTemplate(IngestModuleTemplate template);
 
     /**
-     * Starts up the ingest modules in this ingest task pipeline.
+     * Starts up the ingest modules in this ingest pipeline.
      *
      * @return A list of ingest module start up errors, possibly empty.
      */
@@ -159,7 +156,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
         running = true;
         for (PipelineModule<T> module : modules) {
             try {
-                module.startUp(new IngestJobContext(ingestJobPipeline));
+                module.startUp(new IngestJobContext(ingestJobExecutor));
             } catch (Throwable ex) {
                 /*
                  * A catch-all exception firewall. Start up errors for all of
@@ -174,10 +171,10 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     }
 
     /**
-     * Returns the start up time of this ingest task pipeline.
+     * Returns the start up time of this ingest pipeline.
      *
-     * @return The file processing start time, may be null if this pipeline has
-     *         not been started yet.
+     * @return The start up time, may be null if this pipeline has not been
+     *         started yet.
      */
     Date getStartTime() {
         Date reportedStartTime = null;
@@ -188,65 +185,66 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     }
 
     /**
-     * Executes an ingest task by calling the process() methods of the ingest
-     * modules in this ingest task pipeline.
+     * Performs an ingest task by sequentially calling the process() methods of
+     * the ingest modules in this ingest pipeline.
      *
      * @param task The task.
      *
-     * @return A list of ingest module task processing errors, possibly empty.
+     * @return A list of ingest module processing errors, possibly empty.
      */
-    List<IngestModuleError> executeTask(T task) {
+    List<IngestModuleError> performTask(T task) {
         List<IngestModuleError> errors = new ArrayList<>();
         if (running) {
-            if (!ingestJobPipeline.isCancelled()) {
+            if (!ingestJobExecutor.isCancelled()) {
                 pauseIfScheduled();
-                if (ingestJobPipeline.isCancelled()) {
+                if (ingestJobExecutor.isCancelled()) {
                     return errors;
                 }
                 try {
                     prepareForTask(task);
-                } catch (IngestTaskPipelineException ex) {
+                } catch (IngestPipelineException ex) {
                     errors.add(new IngestModuleError("Ingest Task Pipeline", ex)); //NON-NLS
                     return errors;
                 }
                 for (PipelineModule<T> module : modules) {
                     pauseIfScheduled();
-                    if (ingestJobPipeline.isCancelled()) {
+                    if (ingestJobExecutor.isCancelled()) {
                         break;
                     }
                     try {
                         currentModule = module;
                         currentModule.setProcessingStartTime();
-                        module.executeTask(ingestJobPipeline, task);
-                    } catch (Throwable ex) {
+                        module.process(ingestJobExecutor, task);
+                    } catch (Throwable ex) {  // Catch-all exception firewall
                         /*
-                         * A catch-all exception firewall. Note that a runtime
-                         * exception from a single module does not stop
+                         * Note that an exception from a module does not stop
                          * processing of the task by the other modules in the
                          * pipeline.
                          */
                         errors.add(new IngestModuleError(module.getDisplayName(), ex));
                     }
-                    if (ingestJobPipeline.isCancelled()) {
+                    if (ingestJobExecutor.isCancelled()) {
                         break;
                     }
                 }
             }
             try {
                 cleanUpAfterTask(task);
-            } catch (IngestTaskPipelineException ex) {
+            } catch (IngestPipelineException ex) {
                 errors.add(new IngestModuleError("Ingest Task Pipeline", ex)); //NON-NLS
             }
         } else {
-            errors.add(new IngestModuleError("Ingest Task Pipeline", new IngestTaskPipelineException("Pipeline not started or shut down"))); //NON-NLS                        
+            errors.add(new IngestModuleError("Ingest Task Pipeline", new IngestPipelineException("Pipeline not started or shut down"))); //NON-NLS                        
         }
         currentModule = null;
         return errors;
     }
 
     /**
-     * Pauses task execution if ingest has been configured to be paused weekly
-     * at a specified time for a specified duration.
+     * Pauses this pipeline if ingest has been configured to be paused weekly at
+     * a specified time, for a specified duration. A pipeline can only be paused
+     * between calls to module process() methods, i.e., the individual modules
+     * themselves cannot be paused in the middle of processing a task.
      */
     private void pauseIfScheduled() {
         if (ScheduledIngestPauseSettings.getPauseEnabled() == true) {
@@ -278,7 +276,7 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
              */
             LocalDateTime timeNow = LocalDateTime.now();
             if ((timeNow.equals(pauseStart) || timeNow.isAfter(pauseStart)) && timeNow.isBefore(pauseEnd)) {
-                ingestJobPipeline.registerPausedIngestThread(Thread.currentThread());
+                ingestJobExecutor.registerPausedIngestThread(Thread.currentThread());
                 try {
                     long timeRemainingMillis = ChronoUnit.MILLIS.between(timeNow, pauseEnd);
                     logger.log(Level.INFO, String.format("%s pausing at %s for ~%d minutes", Thread.currentThread().getName(), LocalDateTime.now(), TimeUnit.MILLISECONDS.toMinutes(timeRemainingMillis)));
@@ -287,27 +285,27 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
                 } catch (InterruptedException notLogged) {
                     logger.log(Level.INFO, String.format("%s resuming at %s due to sleep interrupt (ingest job canceled)", Thread.currentThread().getName(), LocalDateTime.now()));
                 } finally {
-                    ingestJobPipeline.unregisterPausedIngestThread(Thread.currentThread());
+                    ingestJobExecutor.unregisterPausedIngestThread(Thread.currentThread());
                 }
             }
         }
     }
 
     /**
-     * Does any task type specific preparation required before executing an
+     * Does any task-type-specific preparation required before performing an
      * ingest task.
      *
      * @param task The task.
      *
-     * @throws IngestTaskPipelineException Thrown if there is an error preparing
-     *                                     to execute the task.
+     * @throws IngestPipelineException Thrown if there is an error preparing to
+     *                                 perform the task.
      */
-    abstract void prepareForTask(T task) throws IngestTaskPipelineException;
+    abstract void prepareForTask(T task) throws IngestPipelineException;
 
     /**
      * Gets the currently running ingest module.
      *
-     * @return The module, possibly null if no module is currently running.
+     * @return The module, possibly null, if no module is currently running.
      */
     PipelineModule<T> getCurrentlyRunningModule() {
         return currentModule;
@@ -345,22 +343,19 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     }
 
     /**
-     * Does any task type specific clean up required after executing an ingest
+     * Does any task-type-specific clean up required after performing an ingest
      * task.
      *
      * @param task The task.
      *
-     * @throws IngestTaskPipelineException Thrown if there is an error cleaning
-     *                                     up after performing the task.
+     * @throws IngestPipelineException Thrown if there is an error cleaning up
+     *                                 after performing the task.
      */
-    abstract void cleanUpAfterTask(T task) throws IngestTaskPipelineException;
+    abstract void cleanUpAfterTask(T task) throws IngestPipelineException;
 
     /**
-     * An abstract superclass for a decorator that adds ingest infrastructure
-     * operations to an ingest module.
-     *
-     * IMPORTANT: Subclasses of IngestTaskPipeline need to implement a
-     * specialization this class
+     * An abstract superclass for an ingest module decorator that adds ingest
+     * infrastructure operations to an ingest module.
      */
     static abstract class PipelineModule<T extends IngestTask> implements IngestModule {
 
@@ -369,16 +364,17 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
         private volatile Date processingStartTime;
 
         /**
-         * Constructs an instance of an abstract superclass for a decorator that
-         * adds ingest infrastructure operations to an ingest module.
+         * Constructs an instance of an abstract superclass for an ingest module
+         * decorator that adds ingest infrastructure operations to an ingest
+         * module.
          *
-         * @param module      The ingest module to be wrapped.
+         * @param module      The ingest module to be decorated.
          * @param displayName The display name for the module.
          */
         PipelineModule(IngestModule module, String displayName) {
             this.module = module;
             this.displayName = displayName;
-            this.processingStartTime = new Date();
+            processingStartTime = new Date();
         }
 
         /**
@@ -410,8 +406,8 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
         /**
          * Gets the the processing start time for the decorated module.
          *
-         * @return The start time, will be null if the module has not started
-         *         processing the data source yet.
+         * @return The start time, not valid if setProcessingStartTime() has not
+         *         been called first.
          */
         Date getProcessingStartTime() {
             return new Date(processingStartTime.getTime());
@@ -423,17 +419,17 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
         }
 
         /**
-         * Executes an ingest task using the process() method of the decorated
+         * Performs an ingest task using the process() method of the decorated
          * module.
          *
-         * @param ingestJobPipeline The ingest job pipeline that owns the ingest
-         *                          task pipeline this module belongs to.
-         * @param task              The task to execute.
+         * @param ingestJobExecutor The ingest job executor that owns the ingest
+         *                          pipeline to which this module belongs.
+         * @param task              The task to perform.
          *
          * @throws IngestModuleException Exception thrown if there is an error
          *                               performing the task.
          */
-        abstract void executeTask(IngestModulePipelines ingestJobPipeline, T task) throws IngestModuleException;
+        abstract void process(IngestJobExecutor ingestJobExecutor, T task) throws IngestModuleException;
 
         @Override
         public void shutDown() {
@@ -443,28 +439,28 @@ abstract class IngestTaskPipeline<T extends IngestTask> {
     }
 
     /**
-     * An exception thrown by an ingest task pipeline.
+     * An exception thrown by an ingest pipeline.
      */
-    public static class IngestTaskPipelineException extends Exception {
+    static class IngestPipelineException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
         /**
-         * Constructs an exception to be thrown by an ingest task pipeline.
+         * Constructs an exception to be thrown by an ingest pipeline.
          *
          * @param message The exception message.
          */
-        public IngestTaskPipelineException(String message) {
+        IngestPipelineException(String message) {
             super(message);
         }
 
         /**
-         * Constructs an exception to be thrown by an ingest task pipeline.
+         * Constructs an exception to be thrown by an ingest pipeline.
          *
          * @param message The exception message.
          * @param cause   The exception cause.
          */
-        public IngestTaskPipelineException(String message, Throwable cause) {
+        IngestPipelineException(String message, Throwable cause) {
             super(message, cause);
         }
 

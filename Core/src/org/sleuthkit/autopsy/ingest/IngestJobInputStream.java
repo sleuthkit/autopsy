@@ -56,7 +56,7 @@ class IngestJobInputStream implements IngestStream {
         if (closed) {
             throw new IngestStreamClosedException("Can not add files - ingest stream is closed");
         }
-        ingestJob.addStreamingIngestFiles(fileObjectIds);
+        ingestJob.addStreamedFiles(fileObjectIds);
     }
     
     @Override
