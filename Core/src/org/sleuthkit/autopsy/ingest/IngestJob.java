@@ -73,7 +73,7 @@ public final class IngestJob {
     private final List<AbstractFile> files = new ArrayList<>();
     private final Mode ingestMode;
     private final IngestJobSettings settings;
-    private volatile IngestModulePipelines ingestModulePipelines;
+    private volatile IngestJobExecutor ingestModulePipelines;
     private volatile CancellationReason cancellationReason;
 
     /**
@@ -181,7 +181,7 @@ public final class IngestJob {
             return Collections.emptyList();
         }
 
-        ingestModulePipelines = new IngestModulePipelines(this, dataSource, files, settings);
+        ingestModulePipelines = new IngestJobExecutor(this, dataSource, files, settings);
         List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(ingestModulePipelines.startUp());
         if (errors.isEmpty()) {
@@ -507,7 +507,7 @@ public final class IngestJob {
      */
     public static class DataSourceIngestModuleHandle {
 
-        private final IngestModulePipelines ingestJobPipeline;
+        private final IngestJobExecutor ingestJobPipeline;
         private final DataSourceIngestPipeline.DataSourcePipelineModule module;
         private final boolean cancelled;
 
@@ -520,7 +520,7 @@ public final class IngestJob {
          *                          source level ingest module.
          * @param module            The data source level ingest module.
          */
-        private DataSourceIngestModuleHandle(IngestModulePipelines ingestJobPipeline, DataSourceIngestPipeline.DataSourcePipelineModule module) {
+        private DataSourceIngestModuleHandle(IngestJobExecutor ingestJobPipeline, DataSourceIngestPipeline.DataSourcePipelineModule module) {
             this.ingestJobPipeline = ingestJobPipeline;
             this.module = module;
             this.cancelled = ingestJobPipeline.currentDataSourceIngestModuleIsCancelled();

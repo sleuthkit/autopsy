@@ -40,7 +40,7 @@ final class FileIngestTask extends IngestTask {
      *                          task.
      * @param file              The file to be processed.
      */
-    FileIngestTask(IngestModulePipelines ingestJobPipeline, AbstractFile file) {
+    FileIngestTask(IngestJobExecutor ingestJobPipeline, AbstractFile file) {
         super(ingestJobPipeline);
         this.file = file;
         fileId = file.getId();
@@ -56,7 +56,7 @@ final class FileIngestTask extends IngestTask {
      *                          task.
      * @param fileId            The object ID of the file to be processed.
      */
-    FileIngestTask(IngestModulePipelines ingestJobPipeline, long fileId) {
+    FileIngestTask(IngestJobExecutor ingestJobPipeline, long fileId) {
         super(ingestJobPipeline);
         this.fileId = fileId;
     }
@@ -100,8 +100,8 @@ final class FileIngestTask extends IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        IngestModulePipelines thisPipeline = getIngestJobPipeline();
-        IngestModulePipelines otherPipeline = other.getIngestJobPipeline();
+        IngestJobExecutor thisPipeline = getIngestJobPipeline();
+        IngestJobExecutor otherPipeline = other.getIngestJobPipeline();
         if (thisPipeline != otherPipeline && (thisPipeline == null || !thisPipeline.equals(otherPipeline))) {
             return false;
         }

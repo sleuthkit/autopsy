@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.DataArtifact;
  * A pipeline of data artifact ingest modules used to execute data artifact
  * ingest tasks for an ingest job.
  */
-final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIngestTask> {
+final class DataArtifactIngestPipeline extends IngestPipeline<DataArtifactIngestTask> {
 
     /**
      * Constructs a pipeline of data artifact ingest modules used to execute
@@ -37,13 +37,13 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline. May be an empty list.
      */
-    DataArtifactIngestPipeline(IngestModulePipelines ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    DataArtifactIngestPipeline(IngestJobExecutor ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
     }
 
     @Override
     Optional<PipelineModule<DataArtifactIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
-        Optional<IngestTaskPipeline.PipelineModule<DataArtifactIngestTask>> module = Optional.empty();
+        Optional<IngestPipeline.PipelineModule<DataArtifactIngestTask>> module = Optional.empty();
         if (template.isDataArtifactIngestModuleTemplate()) {
             DataArtifactIngestModule ingestModule = template.createDataArtifactIngestModule();
             module = Optional.of(new DataArtifactIngestPipelineModule(ingestModule, template.getModuleName()));
@@ -52,18 +52,18 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
     }
 
     @Override
-    void prepareForTask(DataArtifactIngestTask task) throws IngestTaskPipelineException {
+    void prepareForTask(DataArtifactIngestTask task) throws IngestPipelineException {
     }
 
     @Override
-    void cleanUpAfterTask(DataArtifactIngestTask task) throws IngestTaskPipelineException {
+    void cleanUpAfterTask(DataArtifactIngestTask task) throws IngestPipelineException {
     }
 
     /**
      * A decorator that adds ingest infrastructure operations to a data artifact
      * ingest module.
      */
-    static final class DataArtifactIngestPipelineModule extends IngestTaskPipeline.PipelineModule<DataArtifactIngestTask> {
+    static final class DataArtifactIngestPipelineModule extends IngestPipeline.PipelineModule<DataArtifactIngestTask> {
 
         private final DataArtifactIngestModule module;
 
@@ -80,7 +80,7 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
         }
 
         @Override
-        void executeTask(IngestModulePipelines ingestJobPipeline, DataArtifactIngestTask task) throws IngestModuleException {
+        void process(IngestJobExecutor ingestJobPipeline, DataArtifactIngestTask task) throws IngestModuleException {
             DataArtifact artifact = task.getDataArtifact();
             module.process(artifact);
         }

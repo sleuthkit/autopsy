@@ -39,13 +39,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages({
     "FileIngestPipeline_SaveResults_Activity=Saving Results"
 })
-final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
+final class FileIngestPipeline extends IngestPipeline<FileIngestTask> {
 
     private static final int FILE_BATCH_SIZE = 500;
     private static final String SAVE_RESULTS_ACTIVITY = Bundle.FileIngestPipeline_SaveResults_Activity();
     private static final Logger logger = Logger.getLogger(FileIngestPipeline.class.getName());
     private static final IngestManager ingestManager = IngestManager.getInstance();
-    private final IngestModulePipelines ingestJobPipeline;
+    private final IngestJobExecutor ingestJobPipeline;
     private final List<AbstractFile> fileBatch;
 
     /**
@@ -56,15 +56,15 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
      * @param moduleTemplates   The ingest module templates that define this
      *                          pipeline.
      */
-    FileIngestPipeline(IngestModulePipelines ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
+    FileIngestPipeline(IngestJobExecutor ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobPipeline, moduleTemplates);
         this.ingestJobPipeline = ingestJobPipeline;
         fileBatch = new ArrayList<>();
     }
 
     @Override
-    Optional<IngestTaskPipeline.PipelineModule<FileIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
-        Optional<IngestTaskPipeline.PipelineModule<FileIngestTask>> module = Optional.empty();
+    Optional<IngestPipeline.PipelineModule<FileIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
+        Optional<IngestPipeline.PipelineModule<FileIngestTask>> module = Optional.empty();
         if (template.isFileIngestModuleTemplate()) {
             FileIngestModule ingestModule = template.createFileIngestModule();
             module = Optional.of(new FileIngestPipelineModule(ingestModule, template.getModuleName()));
@@ -73,18 +73,18 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
     }
 
     @Override
-    void prepareForTask(FileIngestTask task) throws IngestTaskPipelineException {
+    void prepareForTask(FileIngestTask task) throws IngestPipelineException {
     }
 
     @Override
-    void cleanUpAfterTask(FileIngestTask task) throws IngestTaskPipelineException {
+    void cleanUpAfterTask(FileIngestTask task) throws IngestPipelineException {
         try {
             ingestManager.setIngestTaskProgress(task, SAVE_RESULTS_ACTIVITY);
             AbstractFile file = task.getFile();
             file.close();
             cacheFileForBatchUpdate(file);
         } catch (TskCoreException ex) {
-            throw new IngestTaskPipelineException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
+            throw new IngestPipelineException(String.format("Failed to get file (file objId = %d)", task.getFileId()), ex); //NON-NLS
         } finally {
             ingestManager.setIngestTaskProgressCompleted(task);
         }
@@ -96,7 +96,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         Date start = new Date();
         try {
             updateBatchedFiles();
-        } catch (IngestTaskPipelineException ex) {
+        } catch (IngestPipelineException ex) {
             errors.add(new IngestModuleError(SAVE_RESULTS_ACTIVITY, ex));
         }
         Date finish = new Date();
@@ -113,9 +113,9 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
      *
      * @param file The file.
      *
-     * @throws IngestTaskPipelineException if the case database update fails.
+     * @throws IngestPipelineException if the case database update fails.
      */
-    private void cacheFileForBatchUpdate(AbstractFile file) throws IngestTaskPipelineException {
+    private void cacheFileForBatchUpdate(AbstractFile file) throws IngestPipelineException {
         /*
          * Only one file ingest thread at a time will try to access the file
          * cache. The synchronization here is to ensure visibility of the files
@@ -134,9 +134,9 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
      * Updates the case database with new properties added to the files in the
      * cache by the ingest modules that processed them.
      *
-     * @throws IngestTaskPipelineException if the case database update fails.
+     * @throws IngestPipelineException if the case database update fails.
      */
-    private void updateBatchedFiles() throws IngestTaskPipelineException {
+    private void updateBatchedFiles() throws IngestPipelineException {
         /*
          * Only one file ingest thread at a time will try to access the file
          * cache. The synchronization here is to ensure visibility of the files
@@ -166,7 +166,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
                         logger.log(Level.SEVERE, "Error rolling back transaction after failure to save updated properties for cached files from tasks", ex1);
                     }
                 }
-                throw new IngestTaskPipelineException("Failed to save updated properties for cached files from tasks", ex); //NON-NLS                
+                throw new IngestPipelineException("Failed to save updated properties for cached files from tasks", ex); //NON-NLS                
             } finally {
                 fileBatch.clear();
             }
@@ -177,7 +177,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
      * A wrapper that adds ingest infrastructure operations to a file ingest
      * module.
      */
-    static final class FileIngestPipelineModule extends IngestTaskPipeline.PipelineModule<FileIngestTask> {
+    static final class FileIngestPipelineModule extends IngestPipeline.PipelineModule<FileIngestTask> {
 
         private final FileIngestModule module;
 
@@ -195,7 +195,7 @@ final class FileIngestPipeline extends IngestTaskPipeline<FileIngestTask> {
         }
 
         @Override
-        void executeTask(IngestModulePipelines ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
+        void process(IngestJobExecutor ingestJobPipeline, FileIngestTask task) throws IngestModuleException {
             AbstractFile file = null;
             try {
                 file = task.getFile();
