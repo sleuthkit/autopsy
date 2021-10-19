@@ -61,7 +61,7 @@ abstract class IngestPipeline<T extends IngestTask> {
      * Constructs the superclass part of a pipeline of ingest modules that
      * performs ingest tasks for an ingest job.
      *
-     * @param ingestJobExecutor The ingest job executor that owns this pipeline.
+     * @param ingestJobExecutor The ingest job executor for this pipeline.
      * @param moduleTemplates   The ingest module templates to be used to
      *                          construct the ingest modules for this pipeline.
      *                          May be an empty list if this type of pipeline is

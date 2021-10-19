@@ -38,9 +38,11 @@ final class DataSourceIngestPipeline extends IngestPipeline<DataSourceIngestTask
      * Constructs a pipeline of data source level ingest modules for performing
      * data source level ingest tasks for an ingest job.
      *
-     * @param ingestJobExecutor The ingest job executor that owns this pipeline.
-     * @param moduleTemplates   The ingest module templates that define this
-     *                          pipeline.
+     * @param ingestJobExecutor The ingest job executor for this pipeline.
+     * @param moduleTemplates   The ingest module templates to be used to
+     *                          construct the ingest modules for this pipeline.
+     *                          May be an empty list if this type of pipeline is
+     *                          not needed for the ingest job.
      */
     DataSourceIngestPipeline(IngestJobExecutor ingestJobExecutor, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobExecutor, moduleTemplates);
@@ -94,7 +96,7 @@ final class DataSourceIngestPipeline extends IngestPipeline<DataSourceIngestTask
             logger.log(Level.INFO, "{0} analysis of {1} finished", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS            
             if (!ingestJobPipeline.isCancelled() && ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
                 ingestJobPipeline.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
-            }           
+            }
         }
 
     }
