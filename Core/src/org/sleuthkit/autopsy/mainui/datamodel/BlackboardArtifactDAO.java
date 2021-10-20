@@ -64,7 +64,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "BlackboardArtifactDAO.columnKeys.dataSource.displayName=Data Source",
     "BlackboardArtifactDAO.columnKeys.dataSource.description=Data Source"
 })
-abstract class BlackboardArtifactDAO implements DefaultDataEventListener {
+abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
     // GVDTODO there is a different standard for normal attr strings and email attr strings
     static final int STRING_LENGTH_MAX = 160;
     static final String ELLIPSIS = "...";

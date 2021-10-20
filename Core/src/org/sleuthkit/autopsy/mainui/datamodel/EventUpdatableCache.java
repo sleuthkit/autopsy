@@ -34,20 +34,33 @@ import reactor.core.publisher.Sinks.EmitResult;
 import reactor.util.concurrent.Queues;
 
 /**
- *
+ * A cache of key value pairs where an event has the potential to invalidate particular cache entries.
+ * @param <K> The key type.
+ * @param <V> The value type.
+ * @param <E> The event type.
  */
-public abstract class ListenableCache<D, K, V> {
+public abstract class EventUpdatableCache<K, V, E> {
 
-    private static final Logger logger = Logger.getLogger(ListenableCache.class.getName());
+    private static final Logger logger = Logger.getLogger(EventUpdatableCache.class.getName());
 
     private final Cache<K, V> cache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     // taken from https://stackoverflow.com/questions/66671636/why-is-sinks-many-multicast-onbackpressurebuffer-completing-after-one-of-t
     private final Sinks.Many<Set<K>> invalidatedKeyMulticast = Sinks.many().multicast().onBackpressureBuffer(Queues.SMALL_BUFFER_SIZE, false);
 
+    
     public V getValue(K key) throws IllegalArgumentException, ExecutionException {
+        return getValue(key, false);
+    }
+    
+    public V getValue(K key, boolean hardRefresh) throws IllegalArgumentException, ExecutionException {
+        if (hardRefresh) {
+            
+        } else {
+            return cache.get(key, () -> fetch(key));    
+        }
         validateCacheKey(key);
-        return cache.get(key, () -> fetch(key));
+        
     }
 
     private V getValueLoggedError(K key) {
@@ -78,13 +91,13 @@ public abstract class ListenableCache<D, K, V> {
         invalidateAndBroadcast(keys);
     }
 
-    public void invalidate(D eventData) {
-        if (!isCacheRelevant(eventData)) {
+    public void invalidate(E eventData) {
+        if (!isCacheRelevantEvent(eventData)) {
             return;
         }
         
         Set<K> keys = cache.asMap().keySet().stream()
-                .filter((key) -> matches(eventData, key))
+                .filter((key) -> isInvalidatingEvent(key, eventData))
                 .collect(Collectors.toSet());
         invalidateAndBroadcast(keys);
     }
@@ -109,12 +122,12 @@ public abstract class ListenableCache<D, K, V> {
         }
     }
     
-    protected boolean isCacheRelevant(D eventData) {
+    protected boolean isCacheRelevantEvent(E eventData) {
         // to be overridden
         return true;
     }
 
     protected abstract V fetch(K key) throws Exception;
 
-    protected abstract boolean matches(D eventData, K key);
+    protected abstract boolean isInvalidatingEvent(K key, E eventData);
 }

@@ -34,109 +34,172 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Content;
 
-public interface DataEventListener {
+/**
+ * Listener for changes that would affect case data or cached mainui.datamodel
+ * data.
+ */
+abstract class DataEventListener {
 
-    default void onModuleData(ModuleDataEvent evt) {
+    /**
+     * Handles a ModuleDataEvent.
+     *
+     * @param evt The ModuleDataEvent.
+     */
+    protected void onModuleData(ModuleDataEvent evt) {
     }
 
-    default void onContentChange(Content changedContent) {
+    /**
+     * Handles added or modified content.
+     *
+     * @param changedContent The added or modified content.
+     */
+    protected void onContentChange(Content changedContent) {
     }
 
-    default void onCaseChange(Case oldCase, Case newCase) {
+    /**
+     * Handles a change in case.
+     *
+     * @param oldCase The old case (can be null).
+     * @param newCase The new case (can be null).
+     */
+    protected void onCaseChange(Case oldCase, Case newCase) {
     }
 
-    default void onPageSizeChange(int newPageSize) {
+    /**
+     * Handles a user preference change of page size.
+     *
+     * @param newPageSize The new page size.
+     */
+    protected void onPageSizeChange(int newPageSize) {
     }
 
-    
-    
-    public static interface DefaultDataEventListener extends DataEventListener {
+    /**
+     * A default data event listener that handles events like case change and
+     * page size change which should invalidate the entire cache.
+     */
+    static abstract class DefaultDataEventListener extends DataEventListener {
 
-        default void onCaseChange(Case oldCase, Case newCase) {
-            onDropCache();
+        protected void onCaseChange(Case oldCase, Case newCase) {
+            dropCache();
         }
 
-        default void onPageSizeChange(int newPageSize) {
-            onDropCache();
+        protected void onPageSizeChange(int newPageSize) {
+            dropCache();
         }
 
-        void onDropCache();
+        /**
+         * Method to drop all cache entries.
+         */
+        protected abstract void dropCache();
     }
 
-    public static interface DelegatingDataEventListener extends DataEventListener {
+    /**
+     * Delegates events to a list of delegate data event listeners.
+     */
+    static abstract class DelegatingDataEventListener extends DataEventListener {
 
-        Collection<? extends DataEventListener> getDelegateListeners();
+        /**
+         * Returns a collection of the listeners to which this will delegate.
+         * @return The delegate event listeners.
+         */
+        protected abstract Collection<DataEventListener> getDelegateListeners();
 
         @Override
-        public default void onModuleData(ModuleDataEvent evt) {
+        protected void onModuleData(ModuleDataEvent evt) {
             getDelegateListeners().forEach((listener) -> listener.onModuleData(evt));
         }
 
         @Override
-        public default void onContentChange(Content changedContent) {
+        protected void onContentChange(Content changedContent) {
             getDelegateListeners().forEach((listener) -> listener.onContentChange(changedContent));
         }
 
         @Override
-        public default void onCaseChange(Case oldCase, Case newCase) {
+        protected void onCaseChange(Case oldCase, Case newCase) {
             getDelegateListeners().forEach((listener) -> listener.onCaseChange(oldCase, newCase));
         }
 
         @Override
-        public default void onPageSizeChange(int newPageSize) {
+        protected void onPageSizeChange(int newPageSize) {
             getDelegateListeners().forEach((listener) -> listener.onPageSizeChange(newPageSize));
         }
     }
 
-    public static abstract class RegisteringDataEventListener implements DelegatingDataEventListener {
+    /**
+     * A delegating event listener which can register and unregister from
+     * Autopsy event publishers (i.e. Case.addEventTypeSubscriber).
+     */
+    static abstract class RegisteringDataEventListener extends DelegatingDataEventListener {
 
-        private static final Set<IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(IngestModuleEvent.CONTENT_CHANGED, IngestModuleEvent.DATA_ADDED);
         private static final Logger logger = Logger.getLogger(RegisteringDataEventListener.class.getName());
+        
+        /**
+         * The relevant ingest module events.
+         */
+        private static final Set<IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(IngestModuleEvent.CONTENT_CHANGED, IngestModuleEvent.DATA_ADDED);
 
+        /**
+         * The ingest module event listener.
+         */
         private final PropertyChangeListener ingestModuleEventListener = (evt) -> {
             String eventName = evt.getPropertyName();
-            if (IngestModuleEvent.DATA_ADDED.toString().equals(eventName) && 
-                    (evt.getOldValue() instanceof ModuleDataEvent)) {
-                
+            if (IngestModuleEvent.DATA_ADDED.toString().equals(eventName)
+                    && (evt.getOldValue() instanceof ModuleDataEvent)) {
+
                 this.onModuleData((ModuleDataEvent) evt.getOldValue());
-                
-            } else if (IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName) && 
-                    (evt.getOldValue() instanceof ModuleContentEvent) && 
-                    ((ModuleContentEvent) evt.getOldValue()).getSource() instanceof Content) {
-                
+
+            } else if (IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName)
+                    && (evt.getOldValue() instanceof ModuleContentEvent)
+                    && ((ModuleContentEvent) evt.getOldValue()).getSource() instanceof Content) {
+
                 Content changedContent = (Content) ((ModuleContentEvent) evt.getOldValue()).getSource();
                 this.onContentChange(changedContent);
-                
+
             } else {
                 logger.log(Level.WARNING, MessageFormat.format("Unknown event with eventName: {0} and event: {1}.", eventName, evt));
             }
         };
-        
+
+        /**
+         * The relevant case events.
+         */
         private static final Set<Case.Events> CASE_EVENTS = EnumSet.of(Case.Events.CURRENT_CASE);
-        
+
+        /**
+         * The case event listener.
+         */
         private final PropertyChangeListener caseEventListener = (evt) -> {
-            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString()) &&
-                    (evt.getOldValue() == null || evt.getOldValue() instanceof Case) &&
-                    (evt.getNewValue() == null || evt.getNewValue() instanceof Case)) {
+            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())
+                    && (evt.getOldValue() == null || evt.getOldValue() instanceof Case)
+                    && (evt.getNewValue() == null || evt.getNewValue() instanceof Case)) {
                 this.onCaseChange((Case) evt.getOldValue(), (Case) evt.getNewValue());
             } else {
                 logger.log(Level.WARNING, MessageFormat.format("Unknown event with eventName: {0} and event: {1}.", evt.getPropertyName(), evt));
             }
         };
 
+        /**
+         * The user preference listener.
+         */
         private final PreferenceChangeListener userPreferenceListener = (evt) -> {
-             if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
+            if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
                 int pageSize = UserPreferences.getResultsTablePageSize();
                 this.onPageSizeChange(pageSize);
             }
         };
-                
+
+        /**
+         * Registers listeners with autopsy event publishers.
+         */
         protected void register() {
             IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
             Case.addEventTypeSubscriber(CASE_EVENTS, caseEventListener);
             UserPreferences.addChangeListener(userPreferenceListener);
         }
 
+        /**
+         * Unregisters listeners from autopsy event publishers.
+         */
         protected void unregister() {
             IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
             Case.removeEventTypeSubscriber(CASE_EVENTS, caseEventListener);

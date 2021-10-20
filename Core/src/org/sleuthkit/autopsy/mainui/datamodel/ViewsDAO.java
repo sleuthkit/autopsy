@@ -79,7 +79,7 @@ import org.sleuthkit.datamodel.TskData;
     "ThreePanelViewsDAO.fileColumns.mimeType=MIME Type",
     "ThreePanelViewsDAO.fileColumns.extensionColLbl=Extension",
     "ThreePanelViewsDAO.fileColumns.noDescription=No Description"})
-public class ViewsDAO implements DefaultDataEventListener {
+public class ViewsDAO extends DefaultDataEventListener {
 
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
@@ -363,12 +363,12 @@ public class ViewsDAO implements DefaultDataEventListener {
     }
 
     @Override
-    public void onDropCache() {
+    protected void onDropCache() {
         dropViewsCache();
     }
 
     @Override
-    public void onContentChange(Content content) {
+    protected void onContentChange(Content content) {
         if (!(content instanceof AbstractFile)) {
             return;
         }

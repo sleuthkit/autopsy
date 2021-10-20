@@ -56,8 +56,8 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return instance;
     }
 
-    private final ListenableCache<ModuleDataEvent, DataArtifactSearchParam, DataArtifactTableSearchResultsDTO> dataArtifactCache
-            = new ListenableCache<ModuleDataEvent, DataArtifactSearchParam, DataArtifactTableSearchResultsDTO>() {
+    private final EventUpdatableCache<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO, ModuleDataEvent> dataArtifactCache
+            = new EventUpdatableCache<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO, ModuleDataEvent>() {
 
         @Override
         protected DataArtifactTableSearchResultsDTO fetch(DataArtifactSearchParam key) throws Exception {
@@ -65,8 +65,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         @Override
-        protected boolean matches(ModuleDataEvent eventData, DataArtifactSearchParam key) {
-            // GVDTODO handle
+        protected boolean isInvalidatingEvent(DataArtifactSearchParam key, ModuleDataEvent eventData) {
             return key.getArtifactType().equals(eventData.getBlackboardArtifactType());
         }
 
@@ -83,7 +82,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         @Override
-        protected boolean isCacheRelevant(ModuleDataEvent eventData) {
+        protected boolean isCacheRelevantEvent(ModuleDataEvent eventData) {
             return eventData.getBlackboardArtifactType().getCategory() == Category.DATA_ARTIFACT;
         }
     };
@@ -197,12 +196,12 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    public void onDropCache() {
+    protected void onDropCache() {
         dropDataArtifactCache();
     }
 
     @Override
-    public void onModuleData(ModuleDataEvent evt) {
+    protected void onModuleData(ModuleDataEvent evt) {
         this.dataArtifactCache.invalidate(evt);
     }
 }

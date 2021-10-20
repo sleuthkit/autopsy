@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import java.util.List;
-import org.sleuthkit.autopsy.mainui.datamodel.DataEventListener.DelegatingDataEventListener;
 import org.sleuthkit.autopsy.mainui.datamodel.DataEventListener.RegisteringDataEventListener;
 
 /**
@@ -59,7 +58,7 @@ public class MainDAO extends RegisteringDataEventListener {
     }
 
     @Override
-    public Collection<? extends DataEventListener> getDelegateListeners() {
+    protected Collection<DataEventListener> getDelegateListeners() {
         return allDataListeners;
     }
 }

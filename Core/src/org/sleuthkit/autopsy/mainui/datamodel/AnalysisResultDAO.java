@@ -221,14 +221,14 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
     
     @Override
-    public void onDropCache() {
+    protected void onDropCache() {
         dropAnalysisResultCache();
         dropHashHitCache();
         dropKeywordHitCache();
     }
 
     @Override
-    public void onModuleData(ModuleDataEvent evt) {
+    protected void onModuleData(ModuleDataEvent evt) {
         // GVDTODO
     }
 }
