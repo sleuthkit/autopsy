@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * Key for accessing data about file sizeFilter from the DAO.
  */
-public class FileTypeSizeSearchParams extends BaseSearchParams {
+public class FileTypeSizeSearchParams extends DataSourceFilteredSearchParams {
 
     public enum FileSizeFilter {
         SIZE_50_200(0, "SIZE_50_200", "50 - 200MB"), //NON-NLS
@@ -54,14 +54,9 @@ public class FileTypeSizeSearchParams extends BaseSearchParams {
 
     private final FileSizeFilter sizeFilter;
     private final Long dataSourceId;
- 
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
-        this.dataSourceId = dataSourceId;
-    }
 
     public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount);
+        super(startItem, maxResultsCount, dataSourceId);
         this.sizeFilter = sizeFilter;
         this.dataSourceId = dataSourceId;
     }
@@ -69,11 +64,7 @@ public class FileTypeSizeSearchParams extends BaseSearchParams {
     public FileSizeFilter getSizeFilter() {
         return sizeFilter;
     }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
-    }
-
+    
     @Override
     public int hashCode() {
         int hash = 7;

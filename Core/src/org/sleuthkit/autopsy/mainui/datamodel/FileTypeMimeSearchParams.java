@@ -23,18 +23,13 @@ import java.util.Objects;
 /**
  * Key for accessing data about file MIME type from the DAO.
  */
-public class FileTypeMimeSearchParams extends BaseSearchParams {
+public class FileTypeMimeSearchParams extends DataSourceFilteredSearchParams {
 
     private final String mimeType;
     private final Long dataSourceId;
- 
-    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId) {
-        this.mimeType = mimeType;
-        this.dataSourceId = dataSourceId;
-    }
 
     public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount);
+        super(startItem, maxResultsCount, dataSourceId);
         this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
     }

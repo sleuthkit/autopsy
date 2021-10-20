@@ -18,116 +18,56 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
-import reactor.core.publisher.Sinks.EmitResult;
-import reactor.util.concurrent.Queues;
 
 /**
- * A cache of key value pairs where an event has the potential to invalidate particular cache entries.
+ * The public API for a cache of key value pairs where an event has the
+ * potential to invalidate particular cache entries.
+ *
  * @param <K> The key type.
  * @param <V> The value type.
  * @param <E> The event type.
  */
-public abstract class EventUpdatableCache<K, V, E> {
+public interface EventUpdatableCache<K, V, E> {
 
-    private static final Logger logger = Logger.getLogger(EventUpdatableCache.class.getName());
+    /**
+     * Returns the value in the cache for the given key. If the key is not
+     * present in the cache, the data is fetched and cached.
+     *
+     * @param key The key.
+     *
+     * @return The value for the key in the cache.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    V getValue(K key) throws IllegalArgumentException, ExecutionException;
 
-    private final Cache<K, V> cache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    /**
+     * Returns the value in the cache for the given key. If the key is not
+     * present in the cache or hardRefresh is true, the data is fetched and
+     * cached.
+     *
+     * @param key         The key.
+     * @param hardRefresh Whether or not to re-fetch and replace the data in the
+     *                    cache.
+     *
+     * @return The value for the key in the cache.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    V getValue(K key, boolean hardRefresh) throws IllegalArgumentException, ExecutionException;
 
-    // taken from https://stackoverflow.com/questions/66671636/why-is-sinks-many-multicast-onbackpressurebuffer-completing-after-one-of-t
-    private final Sinks.Many<Set<K>> invalidatedKeyMulticast = Sinks.many().multicast().onBackpressureBuffer(Queues.SMALL_BUFFER_SIZE, false);
+    /**
+     * Returns true if the event data would invalidate the data for the
+     * specified key.
+     *
+     * @param key       The key.
+     * @param eventData The event data.
+     *
+     * @return True if the event data invalidates the cached data for the key.
+     */
+    boolean isInvalidatingEvent(K key, E eventData);
 
-    
-    public V getValue(K key) throws IllegalArgumentException, ExecutionException {
-        return getValue(key, false);
-    }
-    
-    public V getValue(K key, boolean hardRefresh) throws IllegalArgumentException, ExecutionException {
-        if (hardRefresh) {
-            
-        } else {
-            return cache.get(key, () -> fetch(key));    
-        }
-        validateCacheKey(key);
-        
-    }
-
-    private V getValueLoggedError(K key) {
-        try {
-            return getValue(key);
-        } catch (IllegalArgumentException | ExecutionException ex) {
-            logger.log(Level.WARNING, "An error occurred while fetching results for key: " + key, ex);
-            return null;
-        }
-    }
-
-    public Flux<V> getInitialAndUpdates(K key) throws IllegalArgumentException {
-        validateCacheKey(key);
-
-        // GVDTODO handle in one transaction
-        Flux<V> initial = Flux.fromStream(Stream.of(getValueLoggedError(key)));
-
-        Flux<V> updates = this.invalidatedKeyMulticast.asFlux()
-                .filter(invalidatedKeys -> invalidatedKeys.contains(key))
-                .map((matchingInvalidatedKey) -> getValueLoggedError(key));
-
-        return Flux.concat(initial, updates)
-                .filter((data) -> data != null);
-    }
-
-    public void invalidateAll() {
-        Set<K> keys = new HashSet<>(cache.asMap().keySet());
-        invalidateAndBroadcast(keys);
-    }
-
-    public void invalidate(E eventData) {
-        if (!isCacheRelevantEvent(eventData)) {
-            return;
-        }
-        
-        Set<K> keys = cache.asMap().keySet().stream()
-                .filter((key) -> isInvalidatingEvent(key, eventData))
-                .collect(Collectors.toSet());
-        invalidateAndBroadcast(keys);
-    }
-
-    private void invalidateAndBroadcast(Set<K> keys) {
-        if (keys.isEmpty()) {
-            return;
-        }
-        
-        cache.invalidateAll(keys);
-        EmitResult emitResult = invalidatedKeyMulticast.tryEmitNext(keys);
-        if (emitResult.isFailure()) {
-            logger.log(Level.WARNING, MessageFormat.format("There was an error broadcasting invalidated keys: {0}", emitResult.name()));
-        }
-
-    }
-
-    protected void validateCacheKey(K key) throws IllegalArgumentException {
-        // to be overridden
-        if (key == null) {
-            throw new IllegalArgumentException("Expected non-null key");
-        }
-    }
-    
-    protected boolean isCacheRelevantEvent(E eventData) {
-        // to be overridden
-        return true;
-    }
-
-    protected abstract V fetch(K key) throws Exception;
-
-    protected abstract boolean isInvalidatingEvent(K key, E eventData);
 }

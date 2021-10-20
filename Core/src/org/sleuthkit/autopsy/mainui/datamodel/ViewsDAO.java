@@ -39,6 +39,7 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTr
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.DataEventListener.DefaultDataEventListener;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -83,9 +84,9 @@ public class ViewsDAO extends DefaultDataEventListener {
 
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;    
+    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
     private final Cache<BaseSearchParams, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-    
+
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
     private static final List<ColumnKey> FILE_COLUMNS = Arrays.asList(
@@ -182,7 +183,7 @@ public class ViewsDAO extends DefaultDataEventListener {
 
         return searchParamsCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId()));
     }
-    
+
     public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key) throws ExecutionException, IllegalArgumentException {
         if (key.getSizeFilter() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
@@ -191,7 +192,7 @@ public class ViewsDAO extends DefaultDataEventListener {
         }
 
         return searchParamsCache.get(key, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId()));
-    }    
+    }
 
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
 //
@@ -269,7 +270,7 @@ public class ViewsDAO extends DefaultDataEventListener {
 
         // Ignore unallocated block files.
         query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
-        
+
         // hide known files if specified by configuration
         query += (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : ""); //NON-NLS
 
@@ -357,14 +358,9 @@ public class ViewsDAO extends DefaultDataEventListener {
         return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows);
     }
 
-    public void dropViewsCache() {
-        searchParamsCache.invalidateAll();
-        searchParamsCache.invalidateAll();
-    }
-
     @Override
-    protected void onDropCache() {
-        dropViewsCache();
+    public void dropCache() {
+        searchParamsCache.invalidateAll();
     }
 
     @Override

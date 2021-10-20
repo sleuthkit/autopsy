@@ -28,11 +28,6 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
     
     private final String setName;
 
-    public AnalysisResultSetSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String setName) {
-        super(artifactType, dataSourceId);
-        this.setName = setName;
-    }
-
     public AnalysisResultSetSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String setName, long startItem, Long maxResultsCount) {
         super(artifactType, dataSourceId, startItem, maxResultsCount);
         this.setName = setName;

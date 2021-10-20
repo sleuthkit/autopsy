@@ -24,27 +24,18 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Key for data artifact in order to retrieve data from DAO.
  */
-public class DataArtifactSearchParam extends BaseSearchParams {
+public class DataArtifactSearchParam extends DataSourceFilteredSearchParams {
     private final BlackboardArtifact.Type artifactType;
     private final Long dataSourceId;
 
-    public DataArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        this.artifactType = artifactType;
-        this.dataSourceId = dataSourceId;
-    }
-
     public DataArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount);
+        super(startItem, maxResultsCount, dataSourceId);
         this.artifactType = artifactType;
         this.dataSourceId = dataSourceId;
     }
 
     public BlackboardArtifact.Type getArtifactType() {
         return artifactType;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
     }
 
     @Override

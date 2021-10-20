@@ -24,28 +24,18 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Key for analysis result in order to retrieve data from DAO.
  */
-public class AnalysisResultSearchParam extends BaseSearchParams {
+public class AnalysisResultSearchParam extends DataSourceFilteredSearchParams {
     private final BlackboardArtifact.Type artifactType;
-    private final Long dataSourceId;
-
-    public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        this.artifactType = artifactType;
-        this.dataSourceId = dataSourceId;
-    }
 
     public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount);
+        super(startItem, maxResultsCount, dataSourceId);
         this.artifactType = artifactType;
-        this.dataSourceId = dataSourceId;
     }
 
     public BlackboardArtifact.Type getArtifactType() {
         return artifactType;
     }
 
-    public Long getDataSourceId() {
-        return dataSourceId;
-    }
 
     @Override
     public int hashCode() {
