@@ -38,6 +38,9 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
+    private static final int PAGE_SIZE_INTERVAL = 100;
+    private static final int PAGE_SIZE_MAX = 50000;
+    
     private final boolean immediateUpdates;
 
     /**
@@ -304,7 +307,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         org.openide.awt.Mnemonics.setLocalizedText(maxResultsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.text")); // NOI18N
         maxResultsLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.toolTipText")); // NOI18N
 
-        maxResultsSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50000, 10000));
+        maxResultsSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, PAGE_SIZE_MAX, PAGE_SIZE_INTERVAL));
         maxResultsSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 maxResultsSpinnerStateChanged(evt);

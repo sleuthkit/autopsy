@@ -44,8 +44,9 @@ public class FileTypeExtensionsSearchParams extends DataSourceFilteredSearchPara
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.filter);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 53 * hash + Objects.hashCode(this.filter);
+        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 53 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -67,7 +68,9 @@ public class FileTypeExtensionsSearchParams extends DataSourceFilteredSearchPara
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
-        return true;
+        
+        return super.equalFields(other);
     }
 
+    
 }

@@ -43,6 +43,7 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
         hash = 13 * hash + Objects.hashCode(this.getArtifactType());
         hash = 13 * hash + Objects.hashCode(this.getDataSourceId());
         hash = 13 * hash + Objects.hashCode(this.setName);
+        hash = 13 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -67,6 +68,6 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
         if (!Objects.equals(this.setName, other.setName)) {
             return false;
         }
-        return true;
+        return super.equalFields(other);
     }
 }

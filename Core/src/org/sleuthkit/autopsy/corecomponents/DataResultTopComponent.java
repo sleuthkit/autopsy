@@ -29,6 +29,7 @@ import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
@@ -48,6 +49,7 @@ import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 
@@ -373,35 +375,28 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
 
     private final MainDAO threePanelDAO = MainDAO.getInstance();
 
-    public void displayDataArtifact(DataArtifactSearchParam dataArtifactKey) {
-        try {
-            displaySearchResults(threePanelDAO.getDataArtifactsDAO().getDataArtifactsForTable(dataArtifactKey));
-        } catch (ExecutionException | IllegalArgumentException ex) {
-            logger.log(Level.WARNING, MessageFormat.format(
-                    "There was an error fetching data for artifact type: {0} and data source id: {1}.",
-                    dataArtifactKey.getArtifactType().getTypeName(),
-                    dataArtifactKey.getDataSourceId() == null ? "<null>" : dataArtifactKey.getDataSourceId()),
-                    ex);
-        }
+    /**
+     * Displays results of querying the DAO for data artifacts matching the
+     * search parameters query.
+     *
+     * @param dataArtifactParams The search parameter query.
+     */
+    public void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
+        dataResultPanel.displayDataArtifact(dataArtifactParams);
     }
     
-
-    public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsKey) {
-        try {
-            displaySearchResults(threePanelDAO.getViewsDAO().getFilesByExtension(fileExtensionsKey));
-        } catch (ExecutionException | IllegalArgumentException ex) {
-            logger.log(Level.WARNING, MessageFormat.format(
-                    "There was an error fetching data for files of extension filter: {0} and data source id: {1}.",
-                    fileExtensionsKey.getFilter().getDisplayName(),
-                    fileExtensionsKey.getDataSourceId() == null ? "<null>" : fileExtensionsKey.getDataSourceId()),
-                    ex);
-        }
+    public void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
+        dataResultPanel.displayFileMimes(fileMimeKey);
     }
 
-    private void displaySearchResults(SearchResultsDTO searchResults) {
-        dataResultPanel.setNode(new SearchResultRootNode(searchResults), searchResults);
-        dataResultPanel.setNumberOfChildNodes(
-                searchResults.getTotalResultsCount() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) searchResults.getTotalResultsCount());
+    /**
+     * Displays results of querying the DAO for files matching the file extension
+     * search parameters query.
+     *
+     * @param fileExtensionsParams The search parameter query.
+     */
+    public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
+        dataResultPanel.displayFileExtensions(fileExtensionsParams);
     }
 
     @Override

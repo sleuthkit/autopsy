@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
+import com.google.common.annotations.Beta;
 import java.awt.Component;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
@@ -75,7 +76,15 @@ public interface DataResultViewer {
      *             equivalent to a call to resetComponent.
      */
     public void setNode(Node node);
-    
+
+    /**
+     * Sets the node for the result viewer but also includes the search results
+     * represented by the children of the node.
+     *
+     * @param node          The node.
+     * @param searchResults The search results for the node.
+     */
+    @Beta
     default public void setNode(Node node, SearchResultsDTO searchResults) {
         setNode(node, null);
     }

@@ -21,7 +21,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -194,7 +193,7 @@ abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
         // By default, do nothing
     }
     
-    void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) {
+    void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) throws TskCoreException {
         // By default, do nothing
     }
     
