@@ -193,7 +193,7 @@ abstract class BlackboardArtifactDAO {
         // By default, do nothing
     }
     
-    void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) {
+    void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) throws TskCoreException {
         // By default, do nothing
     }
     

@@ -24,15 +24,24 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.HostAddress;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * DAO for providing data about analysis results to populate the results viewer.
@@ -54,7 +63,10 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         "AnalysisResultDAO.columnKeys.justification.description=Justification",
         "AnalysisResultDAO.columnKeys.configuration.name=Configuration",
         "AnalysisResultDAO.columnKeys.configuration.displayName=Configuration",
-        "AnalysisResultDAO.columnKeys.configuration.description=Configuration"
+        "AnalysisResultDAO.columnKeys.configuration.description=Configuration",
+        "AnalysisResultDAO.columnKeys.sourceType.name=SourceType",
+        "AnalysisResultDAO.columnKeys.sourceType.displayName=Source Type",
+        "AnalysisResultDAO.columnKeys.sourceType.description=Source Type"
     })
     static final ColumnKey SCORE_COL = new ColumnKey(
         Bundle.AnalysisResultDAO_columnKeys_score_name(),
@@ -78,6 +90,12 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         Bundle.AnalysisResultDAO_columnKeys_justification_name(),
         Bundle.AnalysisResultDAO_columnKeys_justification_displayName(),
         Bundle.AnalysisResultDAO_columnKeys_justification_description()
+    );
+    
+    static final ColumnKey SOURCE_TYPE_COL = new ColumnKey(
+        Bundle.AnalysisResultDAO_columnKeys_sourceType_name(),
+        Bundle.AnalysisResultDAO_columnKeys_sourceType_displayName(),
+        Bundle.AnalysisResultDAO_columnKeys_sourceType_description()
     );
     
     synchronized static AnalysisResultDAO getInstance() {
@@ -145,7 +163,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
-         // Make sure these are in the same order as in addAnalysisResultFields()
+        // Make sure these are in the same order as in addAnalysisResultFields()
+        columnKeys.add(SOURCE_TYPE_COL);
         columnKeys.add(SCORE_COL);
         columnKeys.add(CONCLUSION_COL);
         columnKeys.add(CONFIGURATION_COL);
@@ -153,18 +172,51 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
         
     @Override
-    void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) {
+    void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) throws TskCoreException {
         if (! (artifact instanceof AnalysisResult)) {
             throw new IllegalArgumentException("Can not add fields for artifact with ID: " + artifact.getId() + " - artifact must be an analysis result");
         }
         
         // Make sure these are in the same order as in addAnalysisResultColumnKeys()
         AnalysisResult analysisResult = (AnalysisResult) artifact;
+        cells.add(getSourceObjType(analysisResult.getParent()));
         cells.add(analysisResult.getScore().getSignificance().getDisplayName());
         cells.add(analysisResult.getConclusion());
         cells.add(analysisResult.getConfiguration());
         cells.add(analysisResult.getJustification());
     }
+    
+    /**
+     * Returns a displayable type string for the given content object.
+     *
+     * If the content object is a artifact of a custom type then this method may
+     * cause a DB call BlackboardArtifact.getType
+     *
+     * @param source The object to determine the type of.
+     *
+     * @return A string representing the content type.
+     */
+    private String getSourceObjType(Content source) throws TskCoreException {
+        if (source instanceof BlackboardArtifact) {
+            BlackboardArtifact srcArtifact = (BlackboardArtifact) source;
+            return srcArtifact.getType().getDisplayName();
+        } else if (source instanceof Volume) {
+            return TskData.ObjectType.VOL.toString();
+        } else if (source instanceof AbstractFile) {
+            return TskData.ObjectType.ABSTRACTFILE.toString();
+        } else if (source instanceof Image) {
+            return TskData.ObjectType.IMG.toString();
+        } else if (source instanceof VolumeSystem) {
+            return TskData.ObjectType.VS.toString();
+        } else if (source instanceof OsAccount) {
+            return TskData.ObjectType.OS_ACCOUNT.toString();
+        } else if (source instanceof HostAddress) {
+            return TskData.ObjectType.HOST_ADDRESS.toString();
+        } else if (source instanceof Pool) {
+            return TskData.ObjectType.POOL.toString();
+        }
+        return "";
+    }    
     
     @Override
     RowDTO createRow(BlackboardArtifact artifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) throws IllegalArgumentException {
