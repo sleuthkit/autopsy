@@ -87,8 +87,8 @@ public class TableSearchTest extends NbTestCase {
     private static final String CUSTOM_MIME_TYPE = "fake/type";
     private static final String CUSTOM_MIME_TYPE_FILE_NAME = "test.fake";
     private static final String CUSTOM_EXTENSION = "fake";
-    private static final List<String> CUSTOM_EXTENSIONS = Arrays.asList("." + CUSTOM_EXTENSION); //NON-NLS
-    private static final List<String> EMPTY_RESULT_SET_EXTENSIONS = Arrays.asList(".blah", ".blah2", ".crazy"); //NON-NLS
+    private static final Set<String> CUSTOM_EXTENSIONS = ImmutableSet.of("." + CUSTOM_EXTENSION); //NON-NLS
+    private static final Set<String> EMPTY_RESULT_SET_EXTENSIONS = ImmutableSet.of(".blah", ".blah2", ".crazy"); //NON-NLS
     
     /////////////////////////////////////////////////
     // Data to be used across the test methods.

@@ -358,8 +358,8 @@ public class ViewsDAO implements DefaultDataEventListener {
     }
 
     public void dropViewsCache() {
-        fileTypeByExtensionCache.invalidateAll();
-        fileTypeByMimeCache.invalidateAll();
+        searchParamsCache.invalidateAll();
+        searchParamsCache.invalidateAll();
     }
 
     @Override
@@ -375,44 +375,45 @@ public class ViewsDAO implements DefaultDataEventListener {
 
         AbstractFile file = (AbstractFile) content;
         long dataSourceId = file.getDataSourceObjectId();
-        dropMimeTypeMatches(file.getMIMEType(), dataSourceId);
-        dropFileExtMatches(file.getNameExtension(), dataSourceId);
+        // GVDTODO rewrite
+//        dropMimeTypeMatches(file.getMIMEType(), dataSourceId);
+//        dropFileExtMatches(file.getNameExtension(), dataSourceId);
     }
 
-    private void dropFileExtMatches(String extension, long dataSourceId) {
-        if (extension == null) {
-            return;
-        }
-
-        String extKey = "." + extension;
-
-        Set<FileExtSearchFilter> matchingFilters = Stream.of(
-                FileExtDocumentFilter.values(),
-                FileExtExecutableFilter.values(),
-                FileExtRootFilter.values()
-        )
-                .flatMap(arr -> Stream.of(arr))
-                .filter(filter -> filter.getFilter().contains(extKey))
-                .collect(Collectors.toSet());
-
-        this.fileTypeByExtensionCache.asMap().replaceAll((k, v) -> {
-            // if filter applies to this item
-            return (matchingFilters.contains(k.getFilter())
-                    // and data source ids are equal
-                    && (k.getDataSourceId() == null || k.getDataSourceId() == dataSourceId))
-                    ? v
-                    : null;
-        });
-    }
-
-    private void dropMimeTypeMatches(String mimeType, long dataSourceId) {
-        this.fileTypeByMimeCache.asMap().replaceAll((k, v) -> {
-            // if mime types are equal
-            return (((mimeType == null && k.getMimeType() == null) || (mimeType != null && mimeType.equals(k.getMimeType())))
-                    // and data source ids are equal
-                    && (k.getDataSourceId() == null || k.getDataSourceId() == dataSourceId))
-                    ? v
-                    : null;
-        });
-    }
+//    private void dropFileExtMatches(String extension, long dataSourceId) {
+//        if (extension == null) {
+//            return;
+//        }
+//
+//        String extKey = "." + extension;
+//
+//        Set<FileExtSearchFilter> matchingFilters = Stream.of(
+//                FileExtDocumentFilter.values(),
+//                FileExtExecutableFilter.values(),
+//                FileExtRootFilter.values()
+//        )
+//                .flatMap(arr -> Stream.of(arr))
+//                .filter(filter -> filter.getFilter().contains(extKey))
+//                .collect(Collectors.toSet());
+//
+//        this.searchParamsCache.asMap().replaceAll((k, v) -> {
+//            // if filter applies to this item
+//            return (matchingFilters.contains(k.getFilter())
+//                    // and data source ids are equal
+//                    && (k.getDataSourceId() == null || k.getDataSourceId() == dataSourceId))
+//                    ? v
+//                    : null;
+//        });
+//    }
+//
+//    private void dropMimeTypeMatches(String mimeType, long dataSourceId) {
+//        this.searchParamsCache.asMap().replaceAll((k, v) -> {
+//            // if mime types are equal
+//            return (((mimeType == null && k.getMimeType() == null) || (mimeType != null && mimeType.equals(k.getMimeType())))
+//                    // and data source ids are equal
+//                    && (k.getDataSourceId() == null || k.getDataSourceId() == dataSourceId))
+//                    ? v
+//                    : null;
+//        });
+//    }
 }
