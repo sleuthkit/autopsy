@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
@@ -1090,6 +1091,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}]",
                             dataArtifactParams.getArtifactType(),
                             dataArtifactParams.getDataSourceId() == null ? "<null>" : dataArtifactParams.getDataSourceId()),
+                    ex);
+        }
+    }
+    
+    void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setAnalysisResult(analysisResultParams);
+            displaySearchResults(results, true);
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING,
+                    MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}]",
+                            analysisResultParams.getArtifactType(),
+                            analysisResultParams.getDataSourceId() == null ? "<null>" : analysisResultParams.getDataSourceId()),
                     ex);
         }
     }

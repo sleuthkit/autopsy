@@ -25,34 +25,19 @@ import org.sleuthkit.datamodel.AnalysisResult;
 /**
  * A result for an analysis result.
  */
-public class AnalysisResultRowDTO extends BaseRowDTO {
+public class AnalysisResultRowDTO extends ArtifactRowDTO<AnalysisResult> {
 
     private static final String TYPE_ID = "ANALYSIS_RESULT";
 
     public static String getTypeIdForClass() {
         return TYPE_ID;
     }
-    
-    final AnalysisResult analysisResult;
-    final Content srcContent;
-    final boolean isTimelineSupported;
 
     public AnalysisResultRowDTO(AnalysisResult analysisResult, Content srcContent, boolean isTimelineSupported, List<Object> cellValues, long id) {
-        super(cellValues, TYPE_ID, id);
-        this.analysisResult = analysisResult;
-        this.srcContent = srcContent;
-        this.isTimelineSupported = isTimelineSupported;
+        super(analysisResult, srcContent, null, isTimelineSupported, cellValues, TYPE_ID, id);
     }
 
     public AnalysisResult getAnalysisResult() {
-        return analysisResult;
-    }
-
-    public Content getSrcContent() {
-        return srcContent;
-    }
-
-    public boolean isIsTimelineSupported() {
-        return isTimelineSupported;
+        return getArtifact();
     }
 }
