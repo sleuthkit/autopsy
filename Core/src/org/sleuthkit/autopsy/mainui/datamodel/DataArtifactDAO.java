@@ -55,7 +55,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO implements EventUpdat
     }
 
     @Override
-    public void dropCache() {
+    protected void dropCache() {
         this.dataArtifactCache.invalidateAll();
     }
 
@@ -78,8 +78,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO implements EventUpdat
     public boolean isInvalidatingEvent(DataArtifactSearchParam key, ModuleDataEvent eventData) {
         return dataArtifactCache.isInvalidatingEvent(key, eventData);
     }
-    
-    
+
     private class DataArtifactCache extends EventUpdatableCacheImpl<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO, ModuleDataEvent> {
 
         @Override
@@ -97,9 +96,11 @@ public class DataArtifactDAO extends BlackboardArtifactDAO implements EventUpdat
                 arts.addAll(blackboard.getDataArtifacts(artType.getTypeID()));
             }
 
-            TableData tableData = createTableData(artType, arts);
+            List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
 
-            return new DataArtifactTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows);
+            TableData tableData = createTableData(artType, pagedArtifacts);
+
+            return new DataArtifactTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
 
         }
 

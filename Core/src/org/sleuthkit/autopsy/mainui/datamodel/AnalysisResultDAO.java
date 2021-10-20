@@ -87,13 +87,13 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             Bundle.AnalysisResultDAO_columnKeys_justification_displayName(),
             Bundle.AnalysisResultDAO_columnKeys_justification_description()
     );
-    
+
     static final ColumnKey SOURCE_TYPE_COL = new ColumnKey(
-        Bundle.AnalysisResultDAO_columnKeys_sourceType_name(),
-        Bundle.AnalysisResultDAO_columnKeys_sourceType_displayName(),
-        Bundle.AnalysisResultDAO_columnKeys_sourceType_description()
+            Bundle.AnalysisResultDAO_columnKeys_sourceType_name(),
+            Bundle.AnalysisResultDAO_columnKeys_sourceType_displayName(),
+            Bundle.AnalysisResultDAO_columnKeys_sourceType_description()
     );
-    
+
     synchronized static AnalysisResultDAO getInstance() {
         if (instance == null) {
             instance = new AnalysisResultDAO();
@@ -119,7 +119,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) {
+    void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) throws TskCoreException {
         if (!(artifact instanceof AnalysisResult)) {
             throw new IllegalArgumentException("Can not add fields for artifact with ID: " + artifact.getId() + " - artifact must be an analysis result");
         }
@@ -132,7 +132,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         cells.add(analysisResult.getConfiguration());
         cells.add(analysisResult.getJustification());
     }
-    
+
     /**
      * Returns a displayable type string for the given content object.
      *
@@ -163,8 +163,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             return TskData.ObjectType.POOL.toString();
         }
         return "";
-    }    
-    
+    }
+
     @Override
     RowDTO createRow(BlackboardArtifact artifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) throws IllegalArgumentException {
         if (!(artifact instanceof AnalysisResult)) {
@@ -213,9 +213,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 arts.addAll(blackboard.getAnalysisResultsByType(artType.getTypeID()));
             }
 
-            TableData tableData = createTableData(artType, arts);
+            List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
 
-            return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows);
+            TableData tableData = createTableData(artType, pagedArtifacts);
+
+            return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
         }
 
         @Override
@@ -280,9 +282,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 }
             }
 
-            TableData tableData = createTableData(artType, arts);
+            List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
 
-            return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows);
+            TableData tableData = createTableData(artType, pagedArtifacts);
+
+            return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
         }
 
         @Override

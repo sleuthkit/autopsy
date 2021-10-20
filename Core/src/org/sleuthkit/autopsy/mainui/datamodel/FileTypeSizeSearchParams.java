@@ -53,23 +53,26 @@ public class FileTypeSizeSearchParams extends DataSourceFilteredSearchParams {
     }
 
     private final FileSizeFilter sizeFilter;
-    private final Long dataSourceId;
+
+    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
+        super(dataSourceId);
+        this.sizeFilter = sizeFilter;
+    }
 
     public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId, long startItem, Long maxResultsCount) {
         super(startItem, maxResultsCount, dataSourceId);
         this.sizeFilter = sizeFilter;
-        this.dataSourceId = dataSourceId;
     }
 
     public FileSizeFilter getSizeFilter() {
         return sizeFilter;
     }
-    
+
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
+        int hash = 5;
+        hash = 13 * hash + Objects.hashCode(this.sizeFilter);
+        hash = 13 * hash + super.hashCode();
         return hash;
     }
 
@@ -85,13 +88,10 @@ public class FileTypeSizeSearchParams extends DataSourceFilteredSearchParams {
             return false;
         }
         final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (!Objects.equals(this.sizeFilter, other.sizeFilter)) {
+        if (this.sizeFilter != other.sizeFilter) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
-            return false;
-        }
-        return true;
+        return super.equals(obj);
     }
 
 }

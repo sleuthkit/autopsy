@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.util.Objects;
+
 /**
  * Search parameters filtered by data source id.
  */
@@ -38,6 +40,15 @@ public class DataSourceFilteredSearchParams extends BaseSearchParams {
     }
 
     /**
+     * Main constructor.
+     *
+     * @param dataSourceId    The data source id to filter on or null.
+     */
+    public DataSourceFilteredSearchParams(Long dataSourceId) {
+        this.dataSourceId = dataSourceId;
+    }
+
+    /**
      * Returns the data source id to filter on or null.
      *
      * @return The data source id to filter on or null.
@@ -45,4 +56,31 @@ public class DataSourceFilteredSearchParams extends BaseSearchParams {
     public Long getDataSourceId() {
         return dataSourceId;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 67 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 67 * hash + super.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final DataSourceFilteredSearchParams other = (DataSourceFilteredSearchParams) obj;
+        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+            return false;
+        }
+        return super.equals(obj);
+    }
+
 }

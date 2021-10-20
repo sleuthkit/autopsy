@@ -26,28 +26,26 @@ import java.util.Objects;
 public class FileTypeMimeSearchParams extends DataSourceFilteredSearchParams {
 
     private final String mimeType;
-    private final Long dataSourceId;
+
+    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId) {
+        super(dataSourceId);
+        this.mimeType = mimeType;
+    }
 
     public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, long startItem, Long maxResultsCount) {
         super(startItem, maxResultsCount, dataSourceId);
         this.mimeType = mimeType;
-        this.dataSourceId = dataSourceId;
     }
 
     public String getMimeType() {
         return mimeType;
     }
 
-    public Long getDataSourceId() {
-        return dataSourceId;
-    }
-
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.mimeType);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + Objects.hashCode(super.hashCode());
+        hash = 97 * hash + Objects.hashCode(this.mimeType);
+        hash = 97 * hash + super.hashCode();
         return hash;
     }
 
@@ -63,13 +61,10 @@ public class FileTypeMimeSearchParams extends DataSourceFilteredSearchParams {
             return false;
         }
         final FileTypeMimeSearchParams other = (FileTypeMimeSearchParams) obj;
-        if (!(this.mimeType.equals(other.mimeType))) {
+        if (!Objects.equals(this.mimeType, other.mimeType)) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
-            return false;
-        }
-        return super.equalFields(other);
+        return super.equals(obj);
     }
 
 }
