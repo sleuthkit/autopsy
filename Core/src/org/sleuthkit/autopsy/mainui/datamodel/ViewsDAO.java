@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -80,6 +81,11 @@ import org.sleuthkit.datamodel.TskData;
     "ThreePanelViewsDAO.fileColumns.noDescription=No Description"})
 public class ViewsDAO implements DefaultDataEventListener {
 
+    private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
+    private static final long CACHE_DURATION = 2;
+    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;    
+    private final Cache<BaseSearchParams, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
     private static final List<ColumnKey> FILE_COLUMNS = Arrays.asList(
@@ -157,9 +163,6 @@ public class ViewsDAO implements DefaultDataEventListener {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    private final Cache<FileTypeExtensionsSearchParams, SearchResultsDTO> fileTypeByExtensionCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<FileTypeMimeSearchParams, SearchResultsDTO> fileTypeByMimeCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-
     public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key) throws ExecutionException, IllegalArgumentException {
         if (key.getFilter() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
@@ -167,7 +170,7 @@ public class ViewsDAO implements DefaultDataEventListener {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return fileTypeByExtensionCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId()));
+        return searchParamsCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId()));
     }
 
     public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key) throws ExecutionException, IllegalArgumentException {
@@ -177,8 +180,18 @@ public class ViewsDAO implements DefaultDataEventListener {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return fileTypeByMimeCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId()));
+        return searchParamsCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId()));
     }
+    
+    public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key) throws ExecutionException, IllegalArgumentException {
+        if (key.getSizeFilter() == null) {
+            throw new IllegalArgumentException("Must have non-null filter");
+        } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
+            throw new IllegalArgumentException("Data source id must be greater than 0 or null");
+        }
+
+        return searchParamsCache.get(key, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId()));
+    }    
 
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
 //
@@ -207,9 +220,7 @@ public class ViewsDAO implements DefaultDataEventListener {
 
     private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId) {
         String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + (hideKnownFilesInViewsTree()
-                        ? " "
-                        : " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")")
+                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
                 + (dataSourceId != null && dataSourceId > 0
                         ? " AND data_source_obj_id = " + dataSourceId
                         : " ")
@@ -238,6 +249,38 @@ public class ViewsDAO implements DefaultDataEventListener {
         return whereClause;
     }
 
+    private static String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
+        String query;
+        switch (filter) {
+            case SIZE_50_200:
+                query = "(size >= 50000000 AND size < 200000000)"; //NON-NLS
+                break;
+            case SIZE_200_1000:
+                query = "(size >= 200000000 AND size < 1000000000)"; //NON-NLS
+                break;
+
+            case SIZE_1000_:
+                query = "(size >= 1000000000)"; //NON-NLS
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unsupported filter type to get files by size: " + filter); //NON-NLS
+        }
+
+        // Ignore unallocated block files.
+        query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
+        
+        // hide known files if specified by configuration
+        query += (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : ""); //NON-NLS
+
+        // filter by datasource if indicated in case preferences
+        if (dataSourceId != null && dataSourceId > 0) {
+            query += " AND data_source_obj_id = " + dataSourceId;
+        }
+
+        return query;
+    }
+
     private SearchResultsDTO fetchExtensionSearchResultsDTOs(FileExtSearchFilter filter, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
         String whereStatement = getFileExtensionWhereStatement(filter, dataSourceId);
         return fetchFileViewFiles(whereStatement, filter.getDisplayName());
@@ -248,6 +291,11 @@ public class ViewsDAO implements DefaultDataEventListener {
         String whereStatement = getFileMimeWhereStatement(mimeType, dataSourceId);
         final String MIME_TYPE_DISPLAY_NAME = Bundle.FileTypesByMimeType_name_text();
         return fetchFileViewFiles(whereStatement, MIME_TYPE_DISPLAY_NAME);
+    }
+
+    private SearchResultsDTO fetchSizeSearchResultsDTOs(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getFileSizesWhereStatement(filter, dataSourceId);
+        return fetchFileViewFiles(whereStatement, filter.getDisplayName());
     }
 
     private SearchResultsDTO fetchFileViewFiles(String whereStatement, String displayName) throws NoCurrentCaseException, TskCoreException {
