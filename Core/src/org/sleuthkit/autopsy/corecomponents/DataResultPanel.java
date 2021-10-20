@@ -59,6 +59,7 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultSupport;
@@ -294,7 +295,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         UserPreferences.addChangeListener(this.pageSizeListener);
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.caseCloseListener);
     }
-        
+
     /**
      * Gets the preferred identifier for this result view panel in the window
      * system.
@@ -1110,6 +1111,20 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                             fileExtensionsParams.getDataSourceId() == null ? "<null>" : fileExtensionsParams.getDataSourceId()),
                     ex);
         }
+    }
+
+    void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setFileMimes(fileMimeKey);
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for files of mime filter: {0} and data source id: {1}.",
+                    fileMimeKey.getMimeType(),
+                    fileMimeKey.getDataSourceId() == null ? "<null>" : fileMimeKey.getDataSourceId()),
+                    ex);
+        }
+
     }
 
     /**

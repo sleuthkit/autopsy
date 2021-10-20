@@ -178,6 +178,7 @@ class ExtractRegistry extends Extract {
     private Content dataSource;
     private IngestJobContext context;
     private Map<String, String> userNameMap;
+    private final List<String> samDomainIDsList = new ArrayList<>();
 
     private String compName = "";
     private String domainName = "";
@@ -869,7 +870,7 @@ class ExtractRegistry extends Extract {
                                         // accounts in profileList can be either domain or local
                                         // Assume domain unless the SID was seen before in the SAM (which is only local). 
                                         OsAccountRealm.RealmScope scope = OsAccountRealm.RealmScope.DOMAIN;
-                                        if(knownMachineSID(sid)) {
+                                        if(isDomainIdInSAMList(sid)) {
                                             domName = null;
                                             scope = OsAccountRealm.RealmScope.LOCAL;
                                         }
@@ -1098,7 +1099,9 @@ class ExtractRegistry extends Extract {
             Map<String, Map<String, String>> userInfoMap = new HashMap<>();
             //load all the user info which was read into a map
             for (Map<String, String> userInfo : userSet) {
-                userInfoMap.put(userInfo.get(SID_KEY), userInfo);
+                String sid = userInfo.get(SID_KEY);
+                userInfoMap.put(sid, userInfo);
+                addSIDToSAMList(sid);
             }
             
             // New OsAccount Code 
@@ -1731,8 +1734,10 @@ class ExtractRegistry extends Extract {
 
         for(OsAccount account: tskCase.getOsAccountManager().getOsAccounts(((DataSource)dataSource).getHost())) {
             Optional<String> userName = account.getLoginName();
-            // @@@ BC: Seems like this should be calling account.getAddr() to get the SID. 
-            map.put(account.getName(), userName.isPresent() ? userName.get() : "");
+            String address = account.getAddr().orElse("");
+            if(!address.isEmpty()) {
+                map.put(address, userName.isPresent() ? userName.get() : "");
+            }
         }
 
         return map;
@@ -1742,40 +1747,32 @@ class ExtractRegistry extends Extract {
      * Strip the machine sid off of the osAccountSID. The returned string will
      * include everything in the osAccountSID up to the last -.
      * 
+     * There must be at least three dashes in the SID for it to be useful.
+     * The sid is of a format S-R-X-Y1 where Y1 is the domain identifier which
+     * may contain multiple dashes. Everything after the final dash is the
+     * relative identifier. For example
+     * S-1-5-21-1004336348-1177238915-682003330-512
+     * 
+     * In this example the domain identifier is 
+     * 21-1004336348-1177238915-682003330
+     * The relative identifier is 512.
+     * 
+     * In other words everything between the third and last dash is the domain
+     * identifier.
+     * 
      * @param osAccountSID The SID of the os account.
      * 
      * @return The Machine SID
      */
-    private String getMachineSID(String osAccountSID) {
-        // @@@ We should add checks about mininum number of dashes. 
-        // and we should really call this stripRelativeIdentifierFromSID().
-        int index = osAccountSID.lastIndexOf("-");
-        return osAccountSID.substring(0, index);
+    private String stripRelativeIdentifierFromSID(String osAccountSID) {
+        if(osAccountSID.split("-").length > 4) {
+            int index = osAccountSID.lastIndexOf('-');
+            return index > 1 ? osAccountSID.substring(0, index) : "";
+        }
+        return "";
     }
     
     private final List<String> machineSIDs = new ArrayList<>();
-    /**
-     * Returns true if the machine part of the SID was seen prior
-     * to ExtractRegistry running. 
-     * 
-     * @param osAccountSID
-     * 
-     * @return 
-     */
-    // @@@ BC: This is probably more accurately called 'knownDomainIdSID' 
-    private boolean knownMachineSID(String osAccountSID) {
-        if (machineSIDs.isEmpty()) {
-            Map<String, String> userMap = getUserNameMap();
-            for (String str : userMap.keySet()) {
-                String temp = getMachineSID(str);
-                if (!machineSIDs.contains(temp)) {
-                    machineSIDs.add(temp);
-                }
-            }
-        }
-        String machineSID = getMachineSID(osAccountSID);
-        return machineSIDs.contains(machineSID);
-    }
     
     /**
      * Returns a mapping of user sids to user names.
@@ -2336,4 +2333,30 @@ class ExtractRegistry extends Extract {
     private void addAccountInstance(OsAccountManager accountMgr, OsAccount osAccount, DataSource dataSource) throws TskCoreException {
         accountMgr.newOsAccountInstance(osAccount, dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
     }
+    
+    /**
+     * Add the domainId of the given account sid to the sam domain id list.
+     * 
+     * @param sid OS account sid
+     */
+    private void addSIDToSAMList(String sid) {
+        String relativeID = stripRelativeIdentifierFromSID(sid);
+        if(!relativeID.isEmpty() && !samDomainIDsList.contains(relativeID)) {
+            samDomainIDsList.add(relativeID);
+        }
+    }
+    
+    /**
+     * Returns true if the domain id of the os account sid is in the list
+     * of domain ids seen when parsing the sam file.
+     * 
+     * @param osAccountSID
+     * 
+     * @return If the domainID is in the same file list.
+     */
+    private boolean isDomainIdInSAMList(String osAccountSID) {
+        String relativeID = stripRelativeIdentifierFromSID(osAccountSID);
+        return samDomainIDsList.contains(relativeID);
+    }
+
 }
