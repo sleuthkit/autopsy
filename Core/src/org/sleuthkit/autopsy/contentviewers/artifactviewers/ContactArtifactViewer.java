@@ -148,7 +148,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     @Override
     public Component getComponent() {
         // Slap a vertical scrollbar on the panel.
-        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     }
 
     @Override
