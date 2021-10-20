@@ -371,59 +371,38 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
 
     private final MainDAO threePanelDAO = MainDAO.getInstance();
 
-    public void displayDataArtifact(DataArtifactSearchParam dataArtifactKey) {
-        try {
-            displaySearchResults(threePanelDAO.getDataArtifactsDAO().getDataArtifactsForTable(dataArtifactKey));
-        } catch (ExecutionException | IllegalArgumentException ex) {
-            logger.log(Level.WARNING, MessageFormat.format(
-                    "There was an error fetching data for artifact type: {0} and data source id: {1}.",
-                    dataArtifactKey.getArtifactType().getTypeName(),
-                    dataArtifactKey.getDataSourceId() == null ? "<null>" : dataArtifactKey.getDataSourceId()),
-                    ex);
-        }
-    }
-    
-    public void displayAnalysisResult(AnalysisResultSearchParam analysisResultKey) {
-        try {
-            displaySearchResults(threePanelDAO.getAnalysisResultDAO().getAnalysisResultsForTable(analysisResultKey));
-        } catch (ExecutionException | IllegalArgumentException ex) {
-            logger.log(Level.WARNING, MessageFormat.format(
-                    "There was an error fetching analysis result type: {0} and data source id: {1}.",
-                    analysisResultKey.getArtifactType().getTypeName(),
-                    analysisResultKey.getDataSourceId() == null ? "<null>" : analysisResultKey.getDataSourceId()),
-                    ex);
-        }
+    /**
+     * Displays results of querying the DAO for analysis results matching the
+     * search parameters query.
+     * 
+     * @param analysisResultParams The search parameter query.
+     */
+    public void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
+        dataResultPanel.displayAnalysisResult(analysisResultParams);
     }
 
-    public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsKey) {
-        try {
-            displaySearchResults(threePanelDAO.getViewsDAO().getFilesByExtension(fileExtensionsKey));
-        } catch (ExecutionException | IllegalArgumentException ex) {
-            logger.log(Level.WARNING, MessageFormat.format(
-                    "There was an error fetching data for files of extension filter: {0} and data source id: {1}.",
-                    fileExtensionsKey.getFilter().getDisplayName(),
-                    fileExtensionsKey.getDataSourceId() == null ? "<null>" : fileExtensionsKey.getDataSourceId()),
-                    ex);
-        }
+    /**
+     * Displays results of querying the DAO for data artifacts matching the
+     * search parameters query.
+     *
+     * @param dataArtifactParams The search parameter query.
+     */
+    public void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
+        dataResultPanel.displayDataArtifact(dataArtifactParams);
     }
     
     public void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
-        try {
-            displaySearchResults(threePanelDAO.getViewsDAO().getFilesByMime(fileMimeKey));
-        } catch (ExecutionException | IllegalArgumentException ex) {
-            logger.log(Level.WARNING, MessageFormat.format(
-                    "There was an error fetching data for files of mime filter: {0} and data source id: {1}.",
-                    fileMimeKey.getMimeType(),
-                    fileMimeKey.getDataSourceId() == null ? "<null>" : fileMimeKey.getDataSourceId()),
-                    ex);
-        }
-
+        dataResultPanel.displayFileMimes(fileMimeKey);
     }
 
-    private void displaySearchResults(SearchResultsDTO searchResults) {
-        dataResultPanel.setNode(new SearchResultRootNode(searchResults), searchResults);
-        dataResultPanel.setNumberOfChildNodes(
-                searchResults.getTotalResultsCount() > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) searchResults.getTotalResultsCount());
+    /**
+     * Displays results of querying the DAO for files matching the file extension
+     * search parameters query.
+     *
+     * @param fileExtensionsParams The search parameter query.
+     */
+    public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
+        dataResultPanel.displayFileExtensions(fileExtensionsParams);
     }
 
     @Override

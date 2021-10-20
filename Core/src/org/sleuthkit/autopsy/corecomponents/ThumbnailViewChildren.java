@@ -18,16 +18,18 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -36,19 +38,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadSortCriteria;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -65,61 +64,72 @@ import org.sleuthkit.datamodel.Content;
  * Filter-node like class, but adds additional hierarchy (pages) as parents of
  * the filtered nodes.
  */
-class ThumbnailViewChildren extends Children.Keys<Integer> {
+class ThumbnailViewChildren extends ChildFactory.Detachable<Node> {
 
     private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
 
     @NbBundle.Messages("ThumbnailViewChildren.progress.cancelling=(Cancelling)")
     private static final String CANCELLING_POSTIX = Bundle.ThumbnailViewChildren_progress_cancelling();
-    static final int IMAGES_PER_PAGE = 200;
 
     private final ExecutorService executor = Executors.newFixedThreadPool(3,
             new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build());
     private final List<ThumbnailViewNode.ThumbnailLoadTask> tasks = new ArrayList<>();
 
     private final Node parent;
-    private final List<List<Node>> pages = new ArrayList<>();
     private int thumbSize;
+
+    private final Map<String, ThumbnailViewNode> nodeCache = new HashMap<>();
+
+    private final Object isSupportedLock = new Object();
 
     /**
      * The constructor
      *
-     * @param parent The node which is the parent of this children.
+     * @param parent    The node which is the parent of this children.
      * @param thumbSize The hight and/or width of the thumbnails in pixels.
      */
     ThumbnailViewChildren(Node parent, int thumbSize) {
-        super(true); //support lazy loading
-
         this.parent = parent;
         this.thumbSize = thumbSize;
     }
 
     @Override
-    protected void addNotify() {
-        super.addNotify();
+    protected synchronized boolean createKeys(List<Node> toPopulate) {
+        List<Node> suppContent = Stream.of(parent.getChildren().getNodes())
+                .filter(n -> isSupported(n))
+                .sorted(getComparator())
+                .collect(Collectors.toList());
 
-        /*
-         * TODO: When lazy loading of original nodes is fixed, we should be
-         * asking the datamodel for the children instead and not counting the
-         * children nodes (which might not be preloaded at this point).
-         */
-        // get list of supported children sorted by persisted criteria
-        final List<Node> suppContent
-                = Stream.of(parent.getChildren().getNodes())
-                        .filter(ThumbnailViewChildren::isSupported)
-                        .sorted(getComparator())
-                        .collect(Collectors.toList());
+        List<String> currNodeNames = suppContent.stream()
+                .map(nd -> nd.getName())
+                .collect(Collectors.toList());
 
-        if (suppContent.isEmpty()) {
-            //if there are no images, there is nothing more to do
-            return;
-        }
+        // find set of keys that are no longer present with current createKeys call.
+        Set<String> toRemove = new HashSet<>(nodeCache.keySet());
+        currNodeNames.forEach((k) -> toRemove.remove(k));
 
-        //divide the supported content into buckets
-        pages.addAll(Lists.partition(suppContent, IMAGES_PER_PAGE));
+        // remove them from cache
+        toRemove.forEach((k) -> nodeCache.remove(k));
 
-        //the keys are just the indices into the pages list.
-        setKeys(IntStream.range(0, pages.size()).boxed().collect(Collectors.toList()));
+        toPopulate.addAll(suppContent);
+        return true;
+    }
+
+    @Override
+    protected Node createNodeForKey(Node key) {
+        ThumbnailViewNode retNode = new ThumbnailViewNode(key, this.thumbSize);
+        nodeCache.put(key.getName(), retNode);
+        return retNode;
+    }
+
+    @Override
+    protected void removeNotify() {
+        super.removeNotify();
+        nodeCache.clear();
+    }
+
+    void update() {
+        this.refresh(false);
     }
 
     /**
@@ -204,21 +214,15 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         return null;
     }
 
-    @Override
-    protected void removeNotify() {
-        super.removeNotify();
-        pages.clear();
-    }
+    private boolean isSupported(Node node) {
 
-    @Override
-    protected Node[] createNodes(Integer pageNum) {
-        return new Node[]{new ThumbnailPageNode(pageNum, pages.get(pageNum))};
-
-    }
-
-    private static boolean isSupported(Node node) {
         if (node != null) {
-            Content content = node.getLookup().lookup(AbstractFile.class);
+            Content content = null;
+            // this is to prevent dead-locking issue with simultaneous accesses.
+            synchronized (isSupportedLock) {
+                content = node.getLookup().lookup(AbstractFile.class);
+            }
+
             if (content != null) {
                 return ImageUtils.thumbnailSupported(content);
             }
@@ -228,10 +232,9 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     public void setThumbsSize(int thumbSize) {
         this.thumbSize = thumbSize;
-        for (Node page : getNodes()) {
-            for (Node node : page.getChildren().getNodes()) {
-                ((ThumbnailViewNode) node).setThumbSize(thumbSize);
-            }
+        for (ThumbnailViewNode node : nodeCache.values()) {
+            node.setThumbSize(thumbSize);
+
         }
     }
 
@@ -249,6 +252,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             return task;
         } else {
             return null;
+
         }
     }
 
@@ -273,7 +277,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
          * The constructor
          *
          * @param wrappedNode The original node that this Node wraps.
-         * @param thumbSize The hight and/or width of the thumbnail in pixels.
+         * @param thumbSize   The hight and/or width of the thumbnail in pixels.
          */
         private ThumbnailViewNode(Node wrappedNode, int thumbSize) {
             super(wrappedNode, FilterNode.Children.LEAF);
@@ -377,68 +381,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                         }
                     }
                 });
-            }
-        }
-    }
-
-    /**
-     * Node representing a page of thumbnails, a parent of image nodes, with a
-     * name showing children range
-     */
-    private class ThumbnailPageNode extends AbstractNode {
-
-        private ThumbnailPageNode(Integer pageNum, List<Node> childNodes) {
-
-            super(new ThumbnailPageNodeChildren(childNodes), Lookups.singleton(pageNum));
-            setName(Integer.toString(pageNum + 1));
-            int from = 1 + (pageNum * IMAGES_PER_PAGE);
-            int to = from + ((ThumbnailPageNodeChildren) getChildren()).getChildCount() - 1;
-            setDisplayName(from + "-" + to);
-
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
-        }
-    }
-
-    /**
-     * Children.Keys implementation which uses nodes as keys, and wraps them in
-     * ThumbnailViewNodes as the child nodes.
-     *
-     */
-    private class ThumbnailPageNodeChildren extends Children.Keys<Node> {
-
-        /*
-         * wrapped original nodes
-         */
-        private List<Node> keyNodes = null;
-
-        ThumbnailPageNodeChildren(List<Node> keyNodes) {
-            super(true);
-            this.keyNodes = keyNodes;
-        }
-
-        @Override
-        protected void addNotify() {
-            super.addNotify();
-            setKeys(keyNodes);
-        }
-
-        @Override
-        protected void removeNotify() {
-            super.removeNotify();
-            setKeys(Collections.emptyList());
-        }
-
-        int getChildCount() {
-            return keyNodes.size();
-        }
-
-        @Override
-        protected Node[] createNodes(Node wrapped) {
-            if (wrapped != null) {
-                final ThumbnailViewNode thumb = new ThumbnailViewNode(wrapped, thumbSize);
-                return new Node[]{thumb};
-            } else {
-                return new Node[]{};
             }
         }
     }

@@ -22,12 +22,14 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -166,7 +168,7 @@ public class ViewsDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return searchParamsCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId()));
+        return searchParamsCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
     }
     
     public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key) throws ExecutionException, IllegalArgumentException {
@@ -176,7 +178,7 @@ public class ViewsDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return searchParamsCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId()));
+        return searchParamsCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
     }
     
     public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key) throws ExecutionException, IllegalArgumentException {
@@ -186,7 +188,7 @@ public class ViewsDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return searchParamsCache.get(key, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId()));
+        return searchParamsCache.get(key, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
     }    
 
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -277,28 +279,39 @@ public class ViewsDAO {
         return query;
     }
 
-    private SearchResultsDTO fetchExtensionSearchResultsDTOs(FileExtSearchFilter filter, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchExtensionSearchResultsDTOs(FileExtSearchFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
         String whereStatement = getFileExtensionWhereStatement(filter, dataSourceId);
-        return fetchFileViewFiles(whereStatement, filter.getDisplayName());
+        return fetchFileViewFiles(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
     }
 
     @NbBundle.Messages({"FileTypesByMimeType.name.text=By MIME Type"})
-    private SearchResultsDTO fetchMimeSearchResultsDTOs(String mimeType, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchMimeSearchResultsDTOs(String mimeType, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
         String whereStatement = getFileMimeWhereStatement(mimeType, dataSourceId);
         final String MIME_TYPE_DISPLAY_NAME = Bundle.FileTypesByMimeType_name_text();
-        return fetchFileViewFiles(whereStatement, MIME_TYPE_DISPLAY_NAME);
+        return fetchFileViewFiles(whereStatement, MIME_TYPE_DISPLAY_NAME, startItem, maxResultCount);
     }
 
-    private SearchResultsDTO fetchSizeSearchResultsDTOs(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchSizeSearchResultsDTOs(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
         String whereStatement = getFileSizesWhereStatement(filter, dataSourceId);
-        return fetchFileViewFiles(whereStatement, filter.getDisplayName());
+        return fetchFileViewFiles(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
     }
 
-    private SearchResultsDTO fetchFileViewFiles(String whereStatement, String displayName) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchFileViewFiles(String whereStatement, String displayName, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
         List<AbstractFile> files = getCase().findAllFilesWhere(whereStatement);
+        
+        Stream<AbstractFile> pagedFileStream = files.stream()
+                .sorted(Comparator.comparing(af -> af.getId()))
+                .skip(startItem);
+        
+        if (maxResultCount != null) {
+            pagedFileStream = pagedFileStream.limit(maxResultCount);
+        }
+        
+        List<AbstractFile> pagedFiles = pagedFileStream.collect(Collectors.toList());
+        
 
         List<RowDTO> fileRows = new ArrayList<>();
-        for (AbstractFile file : files) {
+        for (AbstractFile file : pagedFiles) {
 
             boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
             boolean encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
@@ -350,7 +363,7 @@ public class ViewsDAO {
                     cellValues));
         }
 
-        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows);
+        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows, startItem, files.size());
     }
 
 }

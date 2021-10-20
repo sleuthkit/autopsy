@@ -52,6 +52,7 @@ public class FileTypeMimeSearchParams extends BaseSearchParams {
         int hash = 7;
         hash = 23 * hash + Objects.hashCode(this.mimeType);
         hash = 23 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 23 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -73,7 +74,7 @@ public class FileTypeMimeSearchParams extends BaseSearchParams {
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
-        return true;
+        return super.equalFields(other);
     }
 
 }
