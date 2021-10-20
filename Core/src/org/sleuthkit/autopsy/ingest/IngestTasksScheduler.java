@@ -169,7 +169,7 @@ final class IngestTasksScheduler {
             try {
                 dataSourceIngestTasksQueue.putLast(task);
             } catch (InterruptedException ex) {
-                IngestTasksScheduler.logger.log(Level.INFO, String.format("Ingest tasks scheduler interrupted while blocked adding a task to the data source level ingest task queue (pipelineId={%d)", ingestPipeline.getId()), ex);
+                IngestTasksScheduler.logger.log(Level.INFO, String.format("Ingest tasks scheduler interrupted while blocked adding a task to the data source level ingest task queue (pipelineId={%d)", ingestPipeline.getIngestJobId()), ex);
                 Thread.currentThread().interrupt();
             }
         }
@@ -374,7 +374,7 @@ final class IngestTasksScheduler {
      * @return True or false.
      */
     synchronized boolean currentTasksAreCompleted(IngestJobPipeline ingestPipeline) {
-        long pipelineId = ingestPipeline.getId();
+        long pipelineId = ingestPipeline.getIngestJobId();
         return !(dataSourceIngestTasksQueue.hasTasksForJob(pipelineId)
                 || hasTasksForJob(topLevelFileIngestTasksQueue, pipelineId)
                 || hasTasksForJob(batchedFileIngestTasksQueue, pipelineId)
@@ -403,7 +403,7 @@ final class IngestTasksScheduler {
      * @param ingestJobPipeline The ingest pipeline for the job.
      */
     synchronized void cancelPendingFileTasksForIngestJob(IngestJobPipeline ingestJobPipeline) {
-        long jobId = ingestJobPipeline.getId();
+        long jobId = ingestJobPipeline.getIngestJobId();
         removeTasksForJob(topLevelFileIngestTasksQueue, jobId);
         removeTasksForJob(batchedFileIngestTasksQueue, jobId);
         removeTasksForJob(streamedFileIngestTasksQueue, jobId);
@@ -702,7 +702,7 @@ final class IngestTasksScheduler {
      */
     synchronized private static boolean hasTasksForJob(Collection<? extends IngestTask> tasks, long pipelineId) {
         for (IngestTask task : tasks) {
-            if (task.getIngestJobPipeline().getId() == pipelineId) {
+            if (task.getIngestJobPipeline().getIngestJobId() == pipelineId) {
                 return true;
             }
         }
@@ -720,7 +720,7 @@ final class IngestTasksScheduler {
         Iterator<? extends IngestTask> iterator = tasks.iterator();
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
-            if (task.getIngestJobPipeline().getId() == pipelineId) {
+            if (task.getIngestJobPipeline().getIngestJobId() == pipelineId) {
                 iterator.remove();
             }
         }
@@ -738,7 +738,7 @@ final class IngestTasksScheduler {
     private static int countTasksForJob(Collection<? extends IngestTask> tasks, long pipelineId) {
         int count = 0;
         for (IngestTask task : tasks) {
-            if (task.getIngestJobPipeline().getId() == pipelineId) {
+            if (task.getIngestJobPipeline().getIngestJobId() == pipelineId) {
                 count++;
             }
         }

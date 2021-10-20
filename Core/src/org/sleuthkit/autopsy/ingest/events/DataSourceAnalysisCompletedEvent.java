@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Event published when analysis (ingest) of a data source included in an ingest
- * job is completed.
+ * Event published when analysis (ingest) of a data source is completed.
  */
 public final class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEvent implements Serializable {
 
@@ -41,23 +40,42 @@ public final class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEv
     private final Reason reason;
 
     /**
-     * Constructs an event published when analysis (ingest) of a data source
-     * included in an ingest job is completed.
+     * Constructs an event published when analysis (ingest) of a data source is
+     * completed.
      *
-     * @param ingestJobId           The identifier of the ingest job, specific
-     *                              to this node.
-     * @param dataSourceIngestJobId The identifier of the data source ingest
-     *                              job,specific to this node.
-     * @param dataSource            The data source.
-     * @param reason                The reason analysis completed.
+     * @param ingestJobId The identifier of the ingest job. For a multi-user
+     *                    case, this ID is only unique on the host where the
+     *                    ingest job is running.
+     * @param dataSource  The data source.
+     * @param reason      The reason analysis completed.
      */
-    public DataSourceAnalysisCompletedEvent(long ingestJobId, long dataSourceIngestJobId, Content dataSource, Reason reason) {
-        super(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED, ingestJobId, dataSourceIngestJobId, dataSource);
+    public DataSourceAnalysisCompletedEvent(long ingestJobId, Content dataSource, Reason reason) {
+        super(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED, ingestJobId, dataSource);
         this.reason = reason;
     }
 
     /**
+     * Constructs an event published when analysis (ingest) of a data source is
+     * completed.
+     *
+     * @param ingestJobId The identifier of the ingest job. For a multi-user
+     *                    case, this ID is only unique on the host where the
+     *                    ingest job is running.
+     * @param unused      Unused.
+     * @param dataSource  The data source.
+     * @param reason      The reason analysis completed.
+     *
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public DataSourceAnalysisCompletedEvent(long ingestJobId, long unused, Content dataSource, Reason reason) {
+        this(ingestJobId, dataSource, reason);
+    }
+
+    /**
      * Gets the reason why the analysis of the data source completed.
+     *
+     * @return The reason.
      */
     public Reason getResult() {
         return reason;

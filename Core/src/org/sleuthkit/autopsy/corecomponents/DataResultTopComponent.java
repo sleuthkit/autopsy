@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,16 +41,13 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
-import org.sleuthkit.autopsy.mainui.nodes.DataArtifactNode;
-import org.sleuthkit.autopsy.mainui.nodes.FileNode;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -408,6 +405,19 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
                     fileExtensionsKey.getDataSourceId() == null ? "<null>" : fileExtensionsKey.getDataSourceId()),
                     ex);
         }
+    }
+    
+    public void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
+        try {
+            displaySearchResults(threePanelDAO.getViewsDAO().getFilesByMime(fileMimeKey));
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for files of mime filter: {0} and data source id: {1}.",
+                    fileMimeKey.getMimeType(),
+                    fileMimeKey.getDataSourceId() == null ? "<null>" : fileMimeKey.getDataSourceId()),
+                    ex);
+        }
+
     }
 
     private void displaySearchResults(SearchResultsDTO searchResults) {

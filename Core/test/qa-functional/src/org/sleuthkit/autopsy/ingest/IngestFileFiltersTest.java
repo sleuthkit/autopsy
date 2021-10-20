@@ -259,14 +259,14 @@ public class IngestFileFiltersTest extends NbTestCase {
             IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings);
             FileManager fileManager = currentCase.getServices().getFileManager();
             List<AbstractFile> results = fileManager.findFiles("%%");
-            assertEquals(71, results.size()); 
+            assertEquals(72, results.size()); 
             int carvedJpgGifFiles = 0;
             for (AbstractFile file : results) {
                 if (file.getNameExtension().equalsIgnoreCase("jpg") || file.getNameExtension().equalsIgnoreCase("gif")) { //Unalloc file and .jpg files in dir1, dir2, $CarvedFiles, root directory should have MIME type
                     String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
                     assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
 
-                    if (file.getParentPath().equalsIgnoreCase("/$CarvedFiles/")) {
+                    if (file.getParentPath().startsWith("/$CarvedFiles/")) {
                         carvedJpgGifFiles++;
                     }
                 } else if (file.getName().startsWith("Unalloc_")) {
