@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 
 /**
  * Class which contains the Nodes for the 'By Mime Type' view located in the
@@ -406,7 +407,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         private final String subType;
 
         private MediaSubTypeNode(String mimeType) {
-            super(typesRoot, Children.create(new MediaSubTypeNodeChildren(mimeType), true), Lookups.singleton(mimeType));
+            super(typesRoot, Children.LEAF, Lookups.fixed(mimeType,
+                    new FileTypeMimeSearchParams(
+                            mimeType,
+                            filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null)));
             this.mimeType = mimeType;
             this.subType = StringUtils.substringAfter(mimeType, "/");
             super.setName(mimeType);
@@ -462,54 +466,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         @Override
         long calculateChildCount() {
             return existingMimeTypeCounts.get(StringUtils.substringBefore(mimeType, "/")).get(subType);
-        }
-    }
-
-    /**
-     * Factory for populating the contents of the Media Sub Type Node with the
-     * files that match MimeType which is represented by this position in the
-     * tree.
-     */
-    private class MediaSubTypeNodeChildren extends BaseChildFactory<FileTypesKey> implements Observer {
-
-        private final String mimeType;
-
-        private MediaSubTypeNodeChildren(String mimeType) {
-            super(mimeType, new ViewsKnownAndSlackFilter<>());
-            addObserver(this);
-            this.mimeType = mimeType;
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
-
-        @Override
-        protected Node createNodeForKey(FileTypesKey key) {
-            return key.accept(new FileTypes.FileNodeCreationVisitor());
-        }
-
-        @Override
-        protected List<FileTypesKey> makeKeys() {
-            try {
-                return Case.getCurrentCaseThrows().getSleuthkitCase()
-                        .findAllFilesWhere(createBaseWhereExpr() + " AND mime_type = '" + mimeType + "'")
-                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList()); //NON-NLS
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
-            }
-            return Collections.emptyList();
-        }
-
-        @Override
-        protected void onAdd() {
-            // No-op
-        }
-
-        @Override
-        protected void onRemove() {
-            // No-op
         }
     }
 }
