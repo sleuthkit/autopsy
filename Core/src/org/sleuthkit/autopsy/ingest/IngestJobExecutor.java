@@ -116,7 +116,7 @@ final class IngestJobExecutor {
      * The construction, start up, execution, and shut down of the ingest module
      * pipelines for an ingest job is done in stages.
      */
-    private static enum IngestJobStages {
+    private static enum IngestJobStage {
         /*
          * In this stage, the ingest module pipelines are constructed per the
          * user's ingest job settings. This stage ends when all of the ingest
@@ -159,7 +159,7 @@ final class IngestJobExecutor {
      * So the stage transition lock is used not to guard the stage field, but to
      * coordinate stage transitions.
      */
-    private volatile IngestJobStages stage = IngestJobExecutor.IngestJobStages.PIPELINES_START_UP;
+    private volatile IngestJobStage stage = IngestJobExecutor.IngestJobStage.PIPELINES_START_UP;
     private final Object stageTransitionLock = new Object();
 
     /*
@@ -249,7 +249,7 @@ final class IngestJobExecutor {
         this.settings = settings;
         usingNetBeansGUI = RuntimeProperties.runningWithGUI();
         createTime = new Date().getTime();
-        stage = IngestJobStages.PIPELINES_START_UP;
+        stage = IngestJobStage.PIPELINES_START_UP;
         createIngestModulePipelines();
     }
 
@@ -484,7 +484,7 @@ final class IngestJobExecutor {
      * @return True or false.
      */
     boolean hasDataSourceIngestModules() {
-        if (stage == IngestJobStages.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS) {
+        if (stage == IngestJobStage.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS) {
             return hasLowPriorityDataSourceIngestModules();
         } else {
             return hasHighPriorityDataSourceIngestModules();
@@ -665,7 +665,7 @@ final class IngestJobExecutor {
     private void startBatchModeAnalysis() {
         synchronized (stageTransitionLock) {
             logInfoMessage(String.format("Starting analysis in batch mode for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), ingestJob.getId())); //NON-NLS            
-            stage = IngestJobStages.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
+            stage = IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
 
             if (hasFileIngestModules()) {
                 /*
@@ -734,7 +734,7 @@ final class IngestJobExecutor {
     private void startStreamingModeAnalysis() {
         synchronized (stageTransitionLock) {
             logInfoMessage("Starting data source level analysis in streaming mode"); //NON-NLS
-            stage = IngestJobStages.STREAMED_FILE_ANALYSIS_ONLY;
+            stage = IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY;
 
             if (usingNetBeansGUI) {
                 /*
@@ -776,7 +776,7 @@ final class IngestJobExecutor {
     void startStreamingModeDataSourceAnalysis() {
         synchronized (stageTransitionLock) {
             logInfoMessage("Starting full first stage analysis in streaming mode"); //NON-NLS
-            stage = IngestJobExecutor.IngestJobStages.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
+            stage = IngestJobExecutor.IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
             currentDataSourceIngestPipeline = highPriorityDataSourceIngestPipeline;
 
             if (hasFileIngestModules()) {
@@ -831,7 +831,7 @@ final class IngestJobExecutor {
         synchronized (stageTransitionLock) {
             if (hasLowPriorityDataSourceIngestModules()) {
                 logInfoMessage(String.format("Starting low priority data source analysis for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), ingestJob.getId())); //NON-NLS
-                stage = IngestJobExecutor.IngestJobStages.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
+                stage = IngestJobExecutor.IngestJobStage.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
 
                 if (usingNetBeansGUI) {
                     startDataSourceIngestProgressBar();
@@ -937,7 +937,7 @@ final class IngestJobExecutor {
      */
     private void checkForStageCompleted() {
         synchronized (stageTransitionLock) {
-            if (stage == IngestJobStages.STREAMED_FILE_ANALYSIS_ONLY) {
+            if (stage == IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY) {
                 return;
             }
             if (taskScheduler.currentTasksAreCompleted(this)) {
@@ -998,7 +998,7 @@ final class IngestJobExecutor {
     private void shutDown() {
         synchronized (stageTransitionLock) {
             logInfoMessage("Finished all tasks"); //NON-NLS        
-            stage = IngestJobExecutor.IngestJobStages.PIPELINES_SHUT_DOWN;
+            stage = IngestJobExecutor.IngestJobStage.PIPELINES_SHUT_DOWN;
 
             shutDownIngestModulePipeline(currentDataSourceIngestPipeline);
             shutDownIngestModulePipeline(artifactIngestPipeline);
@@ -1190,7 +1190,7 @@ final class IngestJobExecutor {
      */
     void addStreamedFiles(List<Long> fileObjIds) {
         if (hasFileIngestModules()) {
-            if (stage.equals(IngestJobStages.STREAMED_FILE_ANALYSIS_ONLY)) {
+            if (stage.equals(IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY)) {
                 IngestJobExecutor.taskScheduler.scheduleStreamedFileIngestTasks(this, fileObjIds);
             } else {
                 logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
@@ -1204,8 +1204,8 @@ final class IngestJobExecutor {
      * @param files A list of the files to add.
      */
     void addFiles(List<AbstractFile> files) {
-        if (stage.equals(IngestJobStages.STREAMED_FILE_ANALYSIS_ONLY)
-                || stage.equals(IngestJobStages.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
+        if (stage.equals(IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY)
+                || stage.equals(IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
             taskScheduler.fastTrackFileIngestTasks(this, files);
         } else {
             logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
@@ -1228,9 +1228,9 @@ final class IngestJobExecutor {
      */
     void addDataArtifacts(List<DataArtifact> artifacts) {
         List<DataArtifact> artifactsToAnalyze = new ArrayList<>(artifacts);
-        if (stage.equals(IngestJobStages.STREAMED_FILE_ANALYSIS_ONLY)
-                || stage.equals(IngestJobStages.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)
-                || stage.equals(IngestJobStages.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
+        if (stage.equals(IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY)
+                || stage.equals(IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)
+                || stage.equals(IngestJobStage.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
             taskScheduler.scheduleDataArtifactIngestTasks(this, artifactsToAnalyze);
         } else {
             logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
