@@ -1820,7 +1820,6 @@ class ExtractRegistry extends Extract {
      */
     void createShellBagArtifacts(AbstractFile regFile, List<ShellBag> shellbags) throws TskCoreException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
-        List<DataArtifact> dataArtifacts = new ArrayList<>();
         try {
             for (ShellBag bag : shellbags) {
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
@@ -1850,12 +1849,10 @@ class ExtractRegistry extends Extract {
 
                 BlackboardArtifact artifact = createArtifactWithAttributes(getShellBagArtifact(), regFile, attributes); 
                 artifacts.add(artifact);
-                dataArtifacts.add((DataArtifact)artifact);
             }
         } finally {
             if(!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(artifacts);                
-                context.addDataArtifactsToJob(dataArtifacts);
             }
         }
     }
