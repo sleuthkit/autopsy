@@ -32,6 +32,7 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
@@ -44,6 +45,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
@@ -173,9 +176,21 @@ public class FileNode extends AbstractNode {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        if (this.fileData.isEncryptionDetected()) {
-            actionsList.add(new ExtractArchiveWithPasswordAction(this.fileData.getAbstractFile()));    
+        
+        // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
+        // See JIRA-8099
+        AbstractFile file = this.fileData.getAbstractFile();
+        boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
+        boolean encryptionDetected = false;
+        try {
+            encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
+        } catch (TskCoreException ex) {
+            // TODO
         }
+        if (encryptionDetected) {
+            actionsList.add(new ExtractArchiveWithPasswordAction(this.fileData.getAbstractFile()));
+        }
+        //------------------------------------------------
 
         actionsList.add(null);
         actionsList.addAll(Arrays.asList(super.getActions(true)));

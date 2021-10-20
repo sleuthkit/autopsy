@@ -43,12 +43,10 @@ public class FileRowDTO extends BaseRowDTO {
     private final ExtensionMediaType extensionMediaType;
     private final boolean allocated;
     private final TskData.TSK_DB_FILES_TYPE_ENUM fileType;
-    private final boolean encryptionDetected;
-    private final boolean visibleChildren;
 
     public FileRowDTO(AbstractFile abstractFile, long id, String fileName, String extension, 
             ExtensionMediaType extensionMediaType, boolean allocated, TskData.TSK_DB_FILES_TYPE_ENUM fileType, 
-            boolean encryptionDetected, boolean visibleChildren, List<Object> cellValues) {
+            List<Object> cellValues) {
         super(cellValues, TYPE_ID, id);
         this.abstractFile = abstractFile;
         this.fileName = fileName;
@@ -56,8 +54,6 @@ public class FileRowDTO extends BaseRowDTO {
         this.extensionMediaType = extensionMediaType;
         this.allocated = allocated;
         this.fileType = fileType;
-        this.encryptionDetected = encryptionDetected;
-        this.visibleChildren = visibleChildren;
     }
 
     public ExtensionMediaType getExtensionMediaType() {
@@ -80,15 +76,7 @@ public class FileRowDTO extends BaseRowDTO {
         return extension;
     }
 
-    public boolean isEncryptionDetected() {
-        return encryptionDetected;
-    }
-
     public String getFileName() {
         return fileName;
-    }
-
-    public boolean hasVisibleChildren() {
-        return visibleChildren;
     }
 }
