@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -79,7 +79,7 @@ final class ExtractRecycleBin extends Extract {
     private static final int V2_FILE_NAME_OFFSET = 28;
 
     @Messages({
-        "ExtractRecycleBin_module_name=Recycle Bin"
+        "ExtractRecycleBin_module_name=Recycle Bin Analyzer"
     })
     ExtractRecycleBin(IngestJobContext context) {
         super(Bundle.ExtractRecycleBin_module_name(), context);
@@ -136,10 +136,10 @@ final class ExtractRecycleBin extends Extract {
             return;  // No need to continue
         }
 
-        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin", getIngestJobContext().getJobId()); //NON-NLS
+        IngestJobContext context = getIngestJobContext();
+        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin", context.getJobId()); //NON-NLS
 
         // cycle through the $I files and process each. 
-        IngestJobContext context = getIngestJobContext();
         for (AbstractFile iFile : iFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
