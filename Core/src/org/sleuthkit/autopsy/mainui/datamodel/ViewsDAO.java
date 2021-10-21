@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -153,18 +154,42 @@ public class ViewsDAO extends DefaultDataEventListener {
     private final FilesBySizeCache sizeCache = new FilesBySizeCache();
     private final List<EventUpdatableCacheImpl<?, ?, Content>> caches = ImmutableList.of(extensionCache, mimeCache, sizeCache);
 
-    public EventUpdatableCache<FileTypeExtensionsSearchParams, SearchResultsDTO, Content> getFileByExtensions() {
-        return this.extensionCache;
+    public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key) throws ExecutionException, IllegalArgumentException {
+        return this.extensionCache.getValue(key);
     }
 
-    public EventUpdatableCache<FileTypeMimeSearchParams, SearchResultsDTO, Content> getFileByMimeTypes() {
-        return mimeCache;
+    public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        return this.extensionCache.getValue(key, hardRefresh);
+    }
+        
+    public boolean isFilesByExtInvalidating(FileTypeExtensionsSearchParams key, Content changedContent) {
+        return this.extensionCache.isInvalidatingEvent(key, changedContent);
+    }
+            
+    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key) throws ExecutionException, IllegalArgumentException {
+        return this.mimeCache.getValue(key);
     }
 
-    public EventUpdatableCache<FileTypeSizeSearchParams, SearchResultsDTO, Content> getFilesBySize() {
-        return sizeCache;
+    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        return this.mimeCache.getValue(key, hardRefresh);
     }
 
+    public boolean isFilesByMimeInvalidating(FileTypeMimeSearchParams key, Content changedContent) {
+        return this.mimeCache.isInvalidatingEvent(key, changedContent);
+    }
+
+    public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key) throws ExecutionException, IllegalArgumentException {
+        return this.sizeCache.getValue(key);
+    }
+
+    public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        return this.sizeCache.getValue(key, hardRefresh);
+    }
+
+    public boolean isFilesBySizeInvalidating(FileTypeSizeSearchParams key, Content changedContent) {
+        return this.sizeCache.isInvalidatingEvent(key, changedContent);
+    }
+    
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }

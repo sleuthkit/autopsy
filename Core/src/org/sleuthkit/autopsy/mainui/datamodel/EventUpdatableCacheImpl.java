@@ -24,6 +24,7 @@ import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,10 +46,25 @@ abstract class EventUpdatableCacheImpl<K, V, E> implements EventUpdatableCache<K
 
     private static final Logger logger = Logger.getLogger(EventUpdatableCacheImpl.class.getName());
 
-    private final Cache<K, V> cache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private static final int DEFAULT_CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
+    private static final long DEFAULT_CACHE_DURATION = 2;
+    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
+
+    private final Cache<K, V> cache;
 
     // taken from https://stackoverflow.com/questions/66671636/why-is-sinks-many-multicast-onbackpressurebuffer-completing-after-one-of-t
     private final Sinks.Many<Set<K>> invalidatedKeyMulticast = Sinks.many().multicast().onBackpressureBuffer(Queues.SMALL_BUFFER_SIZE, false);
+
+    public EventUpdatableCacheImpl() {
+        this(CacheBuilder.newBuilder()
+                .maximumSize(DEFAULT_CACHE_SIZE)
+                .expireAfterAccess(DEFAULT_CACHE_DURATION, CACHE_DURATION_UNITS)
+                .build());
+    }
+
+    protected EventUpdatableCacheImpl(Cache<K, V> cache) {
+        this.cache = cache;
+    }
 
     @Override
     public V getValue(K key) throws IllegalArgumentException, ExecutionException {

@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.List;
 import java.util.Set;
@@ -320,28 +319,28 @@ public class TableSearchTest extends NbTestCase {
             DataArtifactSearchParam param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_CONTACT, null);
             DataArtifactDAO dataArtifactDAO = MainDAO.getInstance().getDataArtifactsDAO();
 
-            DataArtifactTableSearchResultsDTO results = dataArtifactDAO.getValue(param);
+            DataArtifactTableSearchResultsDTO results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
             
             // Get contacts from data source 2
             param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_CONTACT, dataSource2.getId());
-            results = dataArtifactDAO.getValue(param);
+            results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
 
             // Get bookmarks from data source 2
             param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, dataSource2.getId());
-            results = dataArtifactDAO.getValue(param);
+            results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, results.getArtifactType());
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
 
             // Get all custom artifacts
             param = new DataArtifactSearchParam(customDataArtifactType, null);
-            results = dataArtifactDAO.getValue(param);
+            results = dataArtifactDAO.getDataArtifactsForTable(param);
             assertEquals(customDataArtifactType, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
@@ -387,37 +386,37 @@ public class TableSearchTest extends NbTestCase {
 
             // Get plain text files from data source 1
             FileTypeMimeSearchParams param = new FileTypeMimeSearchParams("text/plain", dataSource1.getId());
-            SearchResultsDTO results = viewsDAO.getFileByMimeTypes().getValue(param);
+            SearchResultsDTO results = viewsDAO.getFilesByMime(param);
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
 
             // Get jpeg files from data source 1
             param = new FileTypeMimeSearchParams("image/jpeg", dataSource1.getId());
-            results = viewsDAO.getFileByMimeTypes().getValue(param);
+            results = viewsDAO.getFilesByMime(param);
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
 
             // Get jpeg files from data source 2
             param = new FileTypeMimeSearchParams("image/jpeg", dataSource2.getId());
-            results = viewsDAO.getFileByMimeTypes().getValue(param);
+            results = viewsDAO.getFilesByMime(param);
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
 
             // Search for mime type that should produce no results
             param = new FileTypeMimeSearchParams("blah/blah", null);
-            results = viewsDAO.getFileByMimeTypes().getValue(param);
+            results = viewsDAO.getFilesByMime(param);
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
 
             // Get plain text files from all data sources
             param = new FileTypeMimeSearchParams("text/plain", null);
-            results = viewsDAO.getFileByMimeTypes().getValue(param);
+            results = viewsDAO.getFilesByMime(param);
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
 
             // Get the custom file by MIME type
             param = new FileTypeMimeSearchParams(CUSTOM_MIME_TYPE, null);
-            results = viewsDAO.getFileByMimeTypes().getValue(param);
+            results = viewsDAO.getFilesByMime(param);
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
 
@@ -442,31 +441,31 @@ public class TableSearchTest extends NbTestCase {
 
             // Get "50 - 200MB" files from data source 1
             FileTypeSizeSearchParams param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_50_200, dataSource1.getId());
-            SearchResultsDTO results = viewsDAO.getFilesBySize().getValue(param);
+            SearchResultsDTO results = viewsDAO.getFilesBySize(param);
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
 
             // Get "200MB - 1GB" files from data source 1
             param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_200_1000, dataSource1.getId());
-            results = viewsDAO.getFilesBySize().getValue(param);
+            results = viewsDAO.getFilesBySize(param);
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
 
             // Get "200MB - 1GB" files from data source 2
             param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_200_1000, dataSource2.getId());
-            results = viewsDAO.getFilesBySize().getValue(param);
+            results = viewsDAO.getFilesBySize(param);
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
 
             // Get "1GB+" files from all data sources
             param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_1000_, null);
-            results = viewsDAO.getFilesBySize().getValue(param);
+            results = viewsDAO.getFilesBySize(param);
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
 
             // Get "50 - 200MB" files from all data sources
             param = new FileTypeSizeSearchParams(FileTypeSizeSearchParams.FileSizeFilter.SIZE_50_200, null);
-            results = viewsDAO.getFilesBySize().getValue(param);
+            results = viewsDAO.getFilesBySize(param);
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
         } catch (ExecutionException ex) {
@@ -484,21 +483,21 @@ public class TableSearchTest extends NbTestCase {
             AnalysisResultSearchParam param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, null);
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
             
-            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getAnalysisResults().getValue(param);
+            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getAnalysisResultsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, results.getArtifactType());
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
             // Get encryption detected artifacts from data source 2
             param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, dataSource2.getId());
-            results = analysisResultDAO.getAnalysisResults().getValue(param);
+            results = analysisResultDAO.getAnalysisResultsForTable(param);
             assertEquals(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
             
             // Get all custom artifacts
             param = new AnalysisResultSearchParam(customAnalysisResultType, null);
-            results = analysisResultDAO.getAnalysisResults().getValue(param);
+            results = analysisResultDAO.getAnalysisResultsForTable(param);
             assertEquals(customAnalysisResultType, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
@@ -538,13 +537,13 @@ public class TableSearchTest extends NbTestCase {
             // Test hash set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
             HashHitSearchParam hashParam = new HashHitSearchParam(null, HASH_SET_1);
-            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getHashsetHits().getValue(hashParam);
+            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getHashHitsForTable(hashParam);
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
             hashParam = new HashHitSearchParam(dataSource2.getId(), HASH_SET_1);
-            results = analysisResultDAO.getHashsetHits().getValue(hashParam);
+            results = analysisResultDAO.getHashHitsForTable(hashParam);
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
@@ -577,13 +576,13 @@ public class TableSearchTest extends NbTestCase {
             // Test keyword set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
             KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1);
-            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getKeywordHits().getValue(kwParam);
+            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getKeywordHitsForTable(kwParam);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
             
             kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_1);
-            results = analysisResultDAO.getKeywordHits().getValue(kwParam);
+            results = analysisResultDAO.getKeywordHitsForTable(kwParam);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
@@ -621,43 +620,43 @@ public class TableSearchTest extends NbTestCase {
 
             // Get all text documents from data source 1
             FileTypeExtensionsSearchParams param = new FileTypeExtensionsSearchParams(FileExtRootFilter.TSK_DOCUMENT_FILTER, dataSource1.getId());
-            SearchResultsDTO results = viewsDAO.getFileByExtensions().getValue(param);
+            SearchResultsDTO results = viewsDAO.getFilesByExtension(param);
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
 
             // Get Word documents from data source 1
             param = new FileTypeExtensionsSearchParams(FileExtDocumentFilter.AUT_DOC_OFFICE, dataSource1.getId());
-            results = viewsDAO.getFileByExtensions().getValue(param);
+            results = viewsDAO.getFilesByExtension(param);
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
 
             // Get image/jpeg files from data source 1
             param = new FileTypeExtensionsSearchParams(FileExtRootFilter.TSK_IMAGE_FILTER, dataSource1.getId());
-            results = viewsDAO.getFileByExtensions().getValue(param);
+            results = viewsDAO.getFilesByExtension(param);
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
 
             // Get text documents from all data sources
             param = new FileTypeExtensionsSearchParams(FileExtRootFilter.TSK_DOCUMENT_FILTER, null);
-            results = viewsDAO.getFileByExtensions().getValue(param);
+            results = viewsDAO.getFilesByExtension(param);
             assertEquals(4, results.getTotalResultsCount());
             assertEquals(4, results.getItems().size());
 
             // Get jpeg files from data source 2
             param = new FileTypeExtensionsSearchParams(FileExtRootFilter.TSK_IMAGE_FILTER, dataSource2.getId());
-            results = viewsDAO.getFileByExtensions().getValue(param);
+            results = viewsDAO.getFilesByExtension(param);
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
 
             // Search for file extensions that should produce no results
             param = new FileTypeExtensionsSearchParams(CustomRootFilter.EMPTY_RESULT_SET_FILTER, null);
-            results = viewsDAO.getFileByExtensions().getValue(param);
+            results = viewsDAO.getFilesByExtension(param);
             assertEquals(0, results.getTotalResultsCount());
             assertEquals(0, results.getItems().size());
 
             // Get the custom file by extension
             param = new FileTypeExtensionsSearchParams(CustomRootFilter.CUSTOM_FILTER, null);
-            results = viewsDAO.getFileByExtensions().getValue(param);
+            results = viewsDAO.getFilesByExtension(param);
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
 
@@ -706,7 +705,7 @@ public class TableSearchTest extends NbTestCase {
 
         @Override
         public Set<String> getFilter() {
-            return Collections.unmodifiableSet(this.filter);
+            return this.filter;
         }
     }
 

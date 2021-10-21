@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.DataArtifact;
 /**
  * DAO for providing data about data artifacts to populate the results viewer.
  */
-public class DataArtifactDAO extends BlackboardArtifactDAO implements EventUpdatableCache<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO, ModuleDataEvent> {
+public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     private static DataArtifactDAO instance = null;
 
@@ -64,21 +64,20 @@ public class DataArtifactDAO extends BlackboardArtifactDAO implements EventUpdat
         this.dataArtifactCache.invalidate(evt);
     }
 
-    @Override
-    public DataArtifactTableSearchResultsDTO getValue(DataArtifactSearchParam key) throws IllegalArgumentException, ExecutionException {
-        return dataArtifactCache.getValue(key);
-    }
-
-    @Override
-    public DataArtifactTableSearchResultsDTO getValue(DataArtifactSearchParam key, boolean hardRefresh) throws IllegalArgumentException, ExecutionException {
-        return dataArtifactCache.getValue(key, hardRefresh);
-    }
-
-    @Override
-    public boolean isInvalidatingEvent(DataArtifactSearchParam key, ModuleDataEvent eventData) {
+        
+    public boolean isDataArtifactInvalidating(DataArtifactSearchParam key, ModuleDataEvent eventData) {
         return dataArtifactCache.isInvalidatingEvent(key, eventData);
     }
 
+    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam key) throws ExecutionException, IllegalArgumentException {
+        return dataArtifactCache.getValue(key);
+    }
+
+    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        return dataArtifactCache.getValue(key, hardRefresh);
+    }
+
+    
     private class DataArtifactCache extends EventUpdatableCacheImpl<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO, ModuleDataEvent> {
 
         @Override

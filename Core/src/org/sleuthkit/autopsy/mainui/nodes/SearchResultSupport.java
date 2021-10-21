@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
@@ -236,7 +237,7 @@ public class SearchResultSupport {
                     fileExtParameters.getDataSourceId(),
                     pageIdx * pageSize,
                     (long) pageSize);
-            return dao.getViewsDAO().getFileByExtensions().getValue(searchParams);
+            return dao.getViewsDAO().getFilesByExtension(searchParams);
         };
 
         return fetchResults();
@@ -262,7 +263,7 @@ public class SearchResultSupport {
                     dataArtifactParameters.getDataSourceId(),
                     pageIdx * pageSize,
                     (long) pageSize);
-            return dao.getDataArtifactsDAO().getValue(searchParams);
+            return dao.getDataArtifactsDAO().getDataArtifactsForTable(searchParams);
         };
 
         return fetchResults();
@@ -289,7 +290,7 @@ public class SearchResultSupport {
                     fileMimeKey.getDataSourceId(),
                     pageIdx * pageSize,
                     (long) pageSize);
-            return dao.getViewsDAO().getFileByMimeTypes().getValue(searchParams);
+            return dao.getViewsDAO().getFilesByMime(searchParams);
         };
 
         return fetchResults();
@@ -312,4 +313,6 @@ public class SearchResultSupport {
          */
         SearchResultsDTO fetch(int pageSize, int pageIdx) throws ExecutionException;
     }
+    
+ 
 }

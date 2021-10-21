@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -183,16 +184,40 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         caches.forEach((cache) -> cache.invalidate(evt));
     }
 
-    public EventUpdatableCache<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> getAnalysisResults() {
-        return this.analysisResultCache;
+    public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
+        return analysisResultCache.getValue(artifactKey);
     }
 
-    public EventUpdatableCache<HashHitSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> getHashsetHits() {
-        return this.hashHitCache;
+    public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        return analysisResultCache.getValue(artifactKey, hardRefresh);
     }
 
-    public EventUpdatableCache<KeywordHitSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> getKeywordHits() {
-        return this.keywordHitCache;
+    public boolean isAnalysisResultsInvalidating(AnalysisResultSearchParam artifactKey, ModuleDataEvent evt) {
+        return analysisResultCache.isInvalidatingEvent(artifactKey, evt);
+    }
+
+    public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
+        return hashHitCache.getValue(artifactKey);
+    }
+
+    public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        return hashHitCache.getValue(artifactKey, hardRefresh);
+    }
+
+    public boolean isHashHitsInvalidating(HashHitSearchParam artifactKey, ModuleDataEvent evt) {
+        return hashHitCache.isInvalidatingEvent(artifactKey, evt);
+    }
+
+    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
+        return keywordHitCache.getValue(artifactKey);
+    }
+
+    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        return keywordHitCache.getValue(artifactKey, hardRefresh);
+    }
+
+    public boolean isKeywordHitsInvalidating(KeywordHitSearchParam artifactKey, ModuleDataEvent evt) {
+        return keywordHitCache.isInvalidatingEvent(artifactKey, evt);
     }
 
     private class AnalysisResultCache extends EventUpdatableCacheImpl<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> {
