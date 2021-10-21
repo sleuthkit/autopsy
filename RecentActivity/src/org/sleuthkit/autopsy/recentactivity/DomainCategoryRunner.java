@@ -359,6 +359,7 @@ class DomainCategoryRunner extends Extract {
     private void findDomainTypes() {
         int artifactsAnalyzed = 0;
         int domainTypeInstancesFound = 0;
+        IngestJobContext context = getIngestJobContext();        
 
         // this will track the different hosts seen to avoid a search for the same host more than once
         Set<String> hostsSeen = new HashSet<>();
@@ -375,7 +376,7 @@ class DomainCategoryRunner extends Extract {
 
             for (BlackboardArtifact artifact : listArtifacts) {
                 // make sure we haven't cancelled
-                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+                if (context.dataSourceIngestIsCancelled()) {
                     //User cancelled the process.
                     break;
                 }
@@ -415,7 +416,7 @@ class DomainCategoryRunner extends Extract {
         } catch (TskCoreException e) {
             logger.log(Level.SEVERE, "Encountered error retrieving artifacts for messaging domains", e); //NON-NLS
         } finally {
-            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 logger.info("Operation terminated by user."); //NON-NLS
             }
             logger.log(Level.INFO, String.format("Extracted %s distinct messaging domain(s) from the blackboard.  "
