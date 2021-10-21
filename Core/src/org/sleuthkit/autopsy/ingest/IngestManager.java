@@ -1008,7 +1008,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             return ingestMonitor.getFreeSpace();
         } else {
             return -1;
-
         }
     }
 
