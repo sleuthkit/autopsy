@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -309,10 +310,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         }
         if (!newDataArtifacts.isEmpty()) {
             IngestJob ingestJob = null;
-            Long ingestJobId = tskEvent.getIngestJobId();
-            if (ingestJobId != null) {
+            Optional<Long> ingestJobId = tskEvent.getIngestJobId();
+            if (ingestJobId.isPresent()) {
                 synchronized (ingestJobsById) {
-                    ingestJob = ingestJobsById.get(ingestJobId);
+                    ingestJob = ingestJobsById.get(ingestJobId.get());
                 }
             } else {
                 DataArtifact dataArtifact = newDataArtifacts.get(0);

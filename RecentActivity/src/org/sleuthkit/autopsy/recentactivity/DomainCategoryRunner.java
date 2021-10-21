@@ -59,7 +59,7 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategory;
  * is created.
  */
 @Messages({
-    "DomainCategoryRunner_moduleName_text=DomainCategoryRunner",
+    "DomainCategoryRunner_moduleName_text=Domain Category Runner",
     "DomainCategoryRunner_Progress_Message_Domain_Types=Finding Domain Types",
     "DomainCategoryRunner_parentModuleName=Recent Activity"
 })
@@ -174,14 +174,13 @@ class DomainCategoryRunner extends Extract {
     };
 
     private Content dataSource;
-    private IngestJobContext context;
     private List<DomainCategorizer> domainProviders = Collections.emptyList();
 
     /**
      * Main constructor.
      */
     DomainCategoryRunner(IngestJobContext context) {
-        super("", context);
+        super(Bundle.DomainCategoryRunner_moduleName_text(), context);
     }
 
     /**
@@ -376,7 +375,7 @@ class DomainCategoryRunner extends Extract {
 
             for (BlackboardArtifact artifact : listArtifacts) {
                 // make sure we haven't cancelled
-                if (context.dataSourceIngestIsCancelled()) {
+                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
                     //User cancelled the process.
                     break;
                 }
@@ -416,7 +415,7 @@ class DomainCategoryRunner extends Extract {
         } catch (TskCoreException e) {
             logger.log(Level.SEVERE, "Encountered error retrieving artifacts for messaging domains", e); //NON-NLS
         } finally {
-            if (context.dataSourceIngestIsCancelled()) {
+            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
                 logger.info("Operation terminated by user."); //NON-NLS
             }
             logger.log(Level.INFO, String.format("Extracted %s distinct messaging domain(s) from the blackboard.  "

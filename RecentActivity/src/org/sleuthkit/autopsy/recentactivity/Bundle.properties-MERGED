@@ -13,20 +13,20 @@ ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries 
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card
 DataSourceUsage_FlashDrive=Flash Drive
+# {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
 DefaultPriorityDomainCategorizer_searchEngineCategory=Search Engine
-DomainCategoryRunner_moduleName_text=DomainCategoryRunner
+DomainCategoryRunner_moduleName_text=Domain Category Runner
 DomainCategoryRunner_parentModuleName=Recent Activity
 DomainCategoryRunner_Progress_Message_Domain_Types=Finding Domain Types
-Extract.indexError.message=Failed to index artifact for keyword search.
-Extract.noOpenCase.errMsg=No open case available.
 ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history
 ExtractEdge_Module_Name=Microsoft Edge
 ExtractEdge_process_errMsg_errGettingWebCacheFiles=Error trying to retrieving Edge WebCacheV01 file
 ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan.edb file
 ExtractEdge_process_errMsg_unableFindESEViewer=Unable to find ESEDatabaseViewer
 ExtractEdge_process_errMsg_webcacheFail=Failure processing Microsoft Edge WebCacheV01.dat file
+# {0} - sub module name
 ExtractIE_executePasco_errMsg_errorRunningPasco={0}: Error analyzing Internet Explorer web history
 ExtractOs.androidOs.label=Android
 ExtractOs.androidVolume.label=OS Drive (Android)
@@ -59,6 +59,7 @@ ExtractOs.windowsVolume.label=OS Drive (Windows)
 ExtractOs.yellowDogLinuxOs.label=Linux (Yellow Dog)
 ExtractOs.yellowDogLinuxVolume.label=OS Drive (Linux Yellow Dog)
 ExtractOS_progressMessage=Checking for OS
+# {0} - sub module name
 ExtractPrefetch_errMsg_prefetchParsingFailed={0}: Error analyzing prefetch files
 ExtractPrefetch_module_name=Windows Prefetch Extractor
 ExtractRecycleBin_module_name=Recycle Bin
@@ -223,6 +224,7 @@ Recently_Used_Artifacts_Winrar=Recently opened according to WinRAR MRU
 Registry_System_Bam=Recently Executed according to Background Activity Moderator (BAM)
 RegRipperFullNotFound=Full version RegRipper executable not found.
 RegRipperNotFound=Autopsy RegRipper executable not found.
+# {0} - file name
 SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.
 SearchEngineURLQueryAnalyzer.moduleName.text=Search Engine
 SearchEngineURLQueryAnalyzer.engineName.none=NONE
