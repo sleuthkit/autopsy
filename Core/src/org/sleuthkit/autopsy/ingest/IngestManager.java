@@ -290,10 +290,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Handles artifacts posted events published by the Sleuth Kit layer
-     * blackboard via the Sleuth Kit event bus for the case database.
+     * blackboard via the Sleuth Kit event bus.
      *
      * @param tskEvent A Sleuth Kit data model ArtifactsPostedEvent from the
-     *                 case database event bus.
+     *                 Sleuth Kit event bus.
      */
     @Subscribe
     void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent tskEvent) {
@@ -316,6 +316,14 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                     ingestJob = ingestJobsById.get(ingestJobId.get());
                 }
             } else {
+                /*
+                 * Data source processors will not, and out-of-date third party
+                 * ingest modules may not, supply an ingest job ID. In such
+                 * cases, try to identify the ingest job, if any, via its data
+                 * source. There is a slight risk here that the wrong ingest job
+                 * will be selected if multiple ingests of the same data source
+                 * are in progress.
+                 */
                 DataArtifact dataArtifact = newDataArtifacts.get(0);
                 try {
                     Content artifactDataSource = dataArtifact.getDataSource();
@@ -329,7 +337,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                         }
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to get data source for data artifact (object ID = %d, type = %s)", dataArtifact.getId()), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Failed to get data source for data artifact (object ID = %d)", dataArtifact.getId()), ex); //NON-NLS
                 }
             }
             if (ingestJob != null) {
