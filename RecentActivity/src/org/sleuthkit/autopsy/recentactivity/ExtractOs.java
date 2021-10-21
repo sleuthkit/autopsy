@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -40,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Create OS INFO artifacts for the Operating Systems believed to be present on
  * the data source.
  */
-@Messages({"ExtractOs.parentModuleName=Recent Activity",
+@Messages({"ExtractOs.displayName=OS Info Extractor",
     "ExtractOS_progressMessage=Checking for OS"})
 class ExtractOs extends Extract {
 
@@ -105,7 +104,7 @@ class ExtractOs extends Extract {
             //if the os info program name is not empty create an os info artifact on the first of the files found
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    Bundle.ExtractOs_parentModuleName(),
+                    getRAModuleName(),
                     osType.getOsInfoLabel())); //NON-NLS
             postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, file, bbattributes));
         }

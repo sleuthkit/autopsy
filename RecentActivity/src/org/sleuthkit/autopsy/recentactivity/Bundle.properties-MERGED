@@ -9,6 +9,7 @@ ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries 
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card
 DataSourceUsage_FlashDrive=Flash Drive
+# {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.displayName=Data Source Usage Analyzer
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
@@ -27,6 +28,7 @@ ExtractOs.androidOs.label=Android
 ExtractOs.androidVolume.label=OS Drive (Android)
 ExtractOs.debianLinuxOs.label=Linux (Debian)
 ExtractOs.debianLinuxVolume.label=OS Drive (Linux Debian)
+ExtractOs.displayName=OS Info Extractor
 ExtractOs.fedoraLinuxOs.label=Linux (Fedora)
 ExtractOs.fedoraLinuxVolume.label=OS Drive (Linux Fedora)
 ExtractOs.gentooLinuxOs.label=Linux (Gentoo)
