@@ -65,7 +65,7 @@ class ExtractOs extends Extract {
     private Content dataSource;
 
     ExtractOs(IngestJobContext context) {
-        super("", context);
+        super(Bundle.ExtractOs_displayName(), context);
     }
 
     @Override

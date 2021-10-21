@@ -205,8 +205,7 @@ final class ExtractPrefetch extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
-        IngestJobContext context = getIngestJobContext();
-        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
+        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(getIngestJobContext(), true));
     }
 
     /**
@@ -257,10 +256,10 @@ final class ExtractPrefetch extends Extract {
                 + " Embeded_date_Time_Unix_6, Embeded_date_Time_Unix_7, Embeded_date_Time_Unix_8 "
                 + " FROM prefetch_file_info;"; //NON-NLS
 
+        IngestJobContext context = getIngestJobContext();
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + prefetchDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
 
-            IngestJobContext context = getIngestJobContext();
             while (resultSet.next()) {
 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -348,7 +347,6 @@ final class ExtractPrefetch extends Extract {
             logger.log(Level.WARNING, ex.getMessage());
         }
 
-        IngestJobContext context = getIngestJobContext();
         if (!blkBrdArtList.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(blkBrdArtList);
         }
