@@ -183,15 +183,15 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         caches.forEach((cache) -> cache.invalidate(evt));
     }
 
-    public EventUpdatableCache<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> getAnalysisResultsCache() {
+    public EventUpdatableCache<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> getAnalysisResults() {
         return this.analysisResultCache;
     }
 
-    public EventUpdatableCache<HashHitSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> getHashHitsCache() {
+    public EventUpdatableCache<HashHitSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> getHashsetHits() {
         return this.hashHitCache;
     }
 
-    public EventUpdatableCache<KeywordHitSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> getKeywordHitsCache() {
+    public EventUpdatableCache<KeywordHitSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> getKeywordHits() {
         return this.keywordHitCache;
     }
 

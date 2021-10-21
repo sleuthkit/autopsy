@@ -25,18 +25,27 @@ import java.util.Objects;
  */
 public class FileTypeSizeSearchParams extends DataSourceFilteredSearchParams {
 
+    private static final long GB_1 = 1000 * 1000 * 1000;
+    private static final long MB_200 = 200 * 1000 * 1000;
+    private static final long MB_50 = 50 * 1000 * 1000;
+
     public enum FileSizeFilter {
-        SIZE_50_200(0, "SIZE_50_200", "50 - 200MB"), //NON-NLS
-        SIZE_200_1000(1, "SIZE_200_1GB", "200MB - 1GB"), //NON-NLS
-        SIZE_1000_(2, "SIZE_1000+", "1GB+"); //NON-NLS
+        SIZE_50_200(0, "SIZE_50_200", "50 - 200MB", MB_50, MB_200), //NON-NLS
+        SIZE_200_1000(1, "SIZE_200_1GB", "200MB - 1GB", MB_200, GB_1), //NON-NLS
+        SIZE_1000_(2, "SIZE_1000+", "1GB+", GB_1, null); //NON-NLS
         private final int id;
         private final String name;
         private final String displayName;
+        private long lowerBound;
+        private Long upperBound;
+        
 
-        private FileSizeFilter(int id, String name, String displayName) {
+        private FileSizeFilter(int id, String name, String displayName, long lowerBound, Long upperBound) {
             this.id = id;
             this.name = name;
             this.displayName = displayName;
+            this.lowerBound = lowerBound;
+            this.upperBound = upperBound;
         }
 
         public String getName() {
@@ -49,6 +58,14 @@ public class FileTypeSizeSearchParams extends DataSourceFilteredSearchParams {
 
         public String getDisplayName() {
             return this.displayName;
+        }
+
+        public long getLowerBound() {
+            return lowerBound;
+        }
+
+        public Long getUpperBound() {
+            return upperBound;
         }
     }
 

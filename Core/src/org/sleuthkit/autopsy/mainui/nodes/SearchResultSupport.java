@@ -236,7 +236,7 @@ public class SearchResultSupport {
                     fileExtParameters.getDataSourceId(),
                     pageIdx * pageSize,
                     (long) pageSize);
-            return dao.getViewsDAO().getFilesByExtension(searchParams);
+            return dao.getViewsDAO().getFileByExtensions().getValue(searchParams);
         };
 
         return fetchResults();
@@ -262,7 +262,7 @@ public class SearchResultSupport {
                     dataArtifactParameters.getDataSourceId(),
                     pageIdx * pageSize,
                     (long) pageSize);
-            return dao.getDataArtifactsDAO().getDataArtifactsForTable(searchParams);
+            return dao.getDataArtifactsDAO().getValue(searchParams);
         };
 
         return fetchResults();
@@ -289,7 +289,7 @@ public class SearchResultSupport {
                     fileMimeKey.getDataSourceId(),
                     pageIdx * pageSize,
                     (long) pageSize);
-            return dao.getViewsDAO().getFilesByMime(searchParams);
+            return dao.getViewsDAO().getFileByMimeTypes().getValue(searchParams);
         };
 
         return fetchResults();

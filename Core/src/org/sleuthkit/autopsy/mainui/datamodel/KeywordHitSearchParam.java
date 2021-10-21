@@ -24,6 +24,11 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Key for keyword hits in order to retrieve data from DAO.
  */
 public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
+
+    public KeywordHitSearchParam(Long dataSourceId, String setName) {
+        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName);
+    }
+
     public KeywordHitSearchParam(String setName, Long dataSourceId, long startItem, Long maxResultsCount) {
         super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName, startItem, maxResultsCount);
     }
