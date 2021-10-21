@@ -38,7 +38,6 @@ import org.sleuthkit.autopsy.coreutils.JLnkParserException;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -58,10 +57,10 @@ class RecentDocumentsByLnk extends Extract {
     
     @Messages({
         "Progress_Message_Extract_Resent_Docs=Recent Documents",
+        "RecentDocumentsByLnk_displayName=Recent Documents by Link Extractor"
     })
-
     RecentDocumentsByLnk(IngestJobContext context) {
-        super("", context);
+        super(Bundle.RecentDocumentsByLnk_displayName(), context);
     }
     
     /**

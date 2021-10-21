@@ -56,13 +56,14 @@ final class ExtractZoneIdentifier extends Extract {
     private Content dataSource;
 
     @Messages({
+        "ExtractZone_displayName= Zone Identifier Extractor",
         "ExtractZone_process_errMsg_find=A failure occured while searching for :Zone.Indentifier files.",
         "ExtractZone_process_errMsg=An error occured processing ':Zone.Indentifier' files.",
         "ExtractZone_progress_Msg=Extracting :Zone.Identifer files"
     })
 
     ExtractZoneIdentifier(IngestJobContext context) {
-        super("", context);
+        super(Bundle.ExtractZone_displayName(), context);
     }    
     
     @Override

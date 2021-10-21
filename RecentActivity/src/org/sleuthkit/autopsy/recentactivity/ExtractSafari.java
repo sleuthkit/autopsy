@@ -91,7 +91,7 @@ final class ExtractSafari extends Extract {
     private static final Logger LOG = Logger.getLogger(ExtractSafari.class.getName());
 
     @Messages({
-        "ExtractSafari_Module_Name=Safari",
+        "ExtractSafari_Module_Name=Safari Extractor",
         "ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files.",
         "ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files",
         "ExtractSafari_Error_Parsing_Cookies=An error occured while processing Safari Cookies files",
@@ -117,7 +117,8 @@ final class ExtractSafari extends Extract {
             LOG.log(Level.SEVERE, "Exception thrown while processing history file.", ex); //NON-NLS
         }
 
-        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+        IngestJobContext context = getIngestJobContext();
+        if (context.dataSourceIngestIsCancelled()) {
             return;
         }
 
@@ -129,7 +130,7 @@ final class ExtractSafari extends Extract {
             LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file.", ex); //NON-NLS
         }
 
-        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (context.dataSourceIngestIsCancelled()) {
             return;
         }
 
@@ -141,7 +142,7 @@ final class ExtractSafari extends Extract {
             LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Download.plist file.", ex); //NON-NLS
         }
 
-        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (context.dataSourceIngestIsCancelled()) {
             return;
         }
 
@@ -185,8 +186,6 @@ final class ExtractSafari extends Extract {
      * Finds all Bookmark.plist files and looks for bookmark entries.
      *
      * @param dataSource
-     * @param getIngestJobContext() @
-     *
      *
      * throws TskCoreException
      *
@@ -207,8 +206,9 @@ final class ExtractSafari extends Extract {
 
         setFoundData(true);
 
+        IngestJobContext context = getIngestJobContext();
         for (AbstractFile file : files) {
-            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
 
@@ -220,8 +220,6 @@ final class ExtractSafari extends Extract {
      * Process the safari download.plist file.
      *
      * @param dataSource
-     * @param getIngestJobContext() @
-     *
      *
      * throws TskCoreException
      *
@@ -255,8 +253,6 @@ final class ExtractSafari extends Extract {
      * Process the Safari Cookie file.
      *
      * @param dataSource
-     * @param getIngestJobContext() @
-     *
      *
      * throws TskCoreException
      *
@@ -273,8 +269,9 @@ final class ExtractSafari extends Extract {
 
         setFoundData(true);
 
+        IngestJobContext context = getIngestJobContext();
         for (AbstractFile file : files) {
-            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
             try {
@@ -372,10 +369,11 @@ final class ExtractSafari extends Extract {
 
         File tempFile = null;
 
+        IngestJobContext context = getIngestJobContext();
         try {
             tempFile = createTemporaryFile(file);
 
-            if (!getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(getCookieArtifacts(file, tempFile));
             }
 
@@ -405,9 +403,10 @@ final class ExtractSafari extends Extract {
             return null;
         }
 
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (HashMap<String, Object> row : historyList) {
-            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return bbartifacts;
             }
 
@@ -553,9 +552,10 @@ final class ExtractSafari extends Extract {
         if (reader != null) {
             bbartifacts = new ArrayList<>();
 
+            IngestJobContext context = getIngestJobContext();
             Iterator<Cookie> iter = reader.iterator();
             while (iter.hasNext()) {
-                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+                if (context.dataSourceIngestIsCancelled()) {
                     return bbartifacts;
                 }
 

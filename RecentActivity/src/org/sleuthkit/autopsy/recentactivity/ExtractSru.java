@@ -61,10 +61,6 @@ final class ExtractSru extends Extract {
 
     private static final String APPLICATION_USAGE_SOURCE_NAME = "System Resource Usage - Application Usage"; //NON-NLS
     private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
-
-//    private static final String ARTIFACT_ATTRIBUTE_NAME = "TSK_ARTIFACT_NAME"; //NON-NLS
-    private static final String MODULE_NAME = "extractSRU"; //NON-NLS
-
     private static final String SRU_TOOL_FOLDER = "markmckinnon"; //NON-NLS
     private static final String SRU_TOOL_NAME_WINDOWS_32 = "Export_Srudb_32.exe"; //NON-NLS
     private static final String SRU_TOOL_NAME_WINDOWS_64 = "Export_Srudb_64.exe"; //NON-NLS
@@ -96,7 +92,8 @@ final class ExtractSru extends Extract {
             dir.mkdirs();
         }
 
-        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru", getIngestJobContext().getJobId()); //NON-NLS
+        IngestJobContext context = getIngestJobContext();
+        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru", context.getJobId()); //NON-NLS
         String softwareHiveFileName = getSoftwareHiveFile(dataSource, tempDirPath);
 
         if (softwareHiveFileName == null) {
@@ -116,7 +113,7 @@ final class ExtractSru extends Extract {
             return; //If we cannot find the export_srudb program we cannot proceed
         }
 
-        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (context.dataSourceIngestIsCancelled()) {
             return;
         }
 
@@ -286,9 +283,10 @@ final class ExtractSru extends Extract {
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + sruDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
 
+            IngestJobContext context = getIngestJobContext();
             while (resultSet.next()) {
 
-                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+                if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled SRU Artifact Creation."); //NON-NLS
                     return;
                 }
@@ -322,6 +320,7 @@ final class ExtractSru extends Extract {
     }
 
     private void createNetUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
+        IngestJobContext context = getIngestJobContext();
         List<BlackboardArtifact> bba = new ArrayList<>();
 
         String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, a.application_name, b.Application_Name formatted_application_name, User_Name, "
@@ -333,7 +332,7 @@ final class ExtractSru extends Extract {
 
             while (resultSet.next()) {
 
-                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+                if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled SRU Net Usage Artifact Creation."); //NON-NLS
                     return;
                 }
@@ -378,12 +377,13 @@ final class ExtractSru extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        if(!getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bba);
         }
     }
 
     private void createAppUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
+        IngestJobContext context = getIngestJobContext();
         List<BlackboardArtifact> bba = new ArrayList<>();
 
         String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, a.application_name, b.Application_Name formatted_application_name, User_Name "
@@ -434,10 +434,10 @@ final class ExtractSru extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        if(!getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!context.dataSourceIngestIsCancelled()) {
             postArtifacts(bba);
         }
-        
+
     }
 
     /**
