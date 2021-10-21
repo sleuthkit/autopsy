@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An event published when an artifact (data artifact or analysis result) is
+ * An event published when a new artifact (data artifact or analysis result) is
  * posted to the blackboard. The "old" value is a legacy ModuleDataEvent object.
  * The "new" value is null.
  */
@@ -46,8 +46,8 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
     private transient ModuleDataEvent eventData;
 
     /**
-     * Constructs an event published when an artifact (data artifact or analysis
-     * result) is posted to the blackboard. The "old" value is a legacy
+     * Constructs an event published when a new artifact (data artifact or
+     * analysis result) is posted to the blackboard. The "old" value is a legacy
      * ModuleDataEvent object. The "new" value is null.
      *
      * @param eventData A ModuleDataEvent object containing the data associated
