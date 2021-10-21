@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -45,6 +46,7 @@ import org.openide.nodes.NodeMemberEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -57,6 +59,7 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
@@ -133,12 +136,28 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
         }
     };
-
+    
     private final PropertyChangeListener caseCloseListener = evt -> {
         if (evt.getNewValue() == null) {
             nodeNameToPageCountListenerMap.clear();
         }
     };
+
+    private final PropertyChangeListener weakCaseCloseListener = WeakListeners.propertyChange(caseCloseListener, null);
+    
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED, IngestManager.IngestModuleEvent.DATA_ADDED);
+
+    private final PropertyChangeListener ingestModuleListener = evt -> {
+        if (this.searchResultSupport.isRefreshRequired(evt)) {
+            try {
+                displaySearchResults(this.searchResultSupport.getRefreshedData(), false);
+            } catch (ExecutionException | IllegalArgumentException ex) {
+                logger.log(Level.WARNING, "There was an error refreshing data: ", ex);
+            }
+        }
+    };
+    
+    private final PropertyChangeListener weakIngestModuleListener = WeakListeners.propertyChange(ingestModuleListener, null);
 
     /**
      * Creates and opens a Swing JPanel with a JTabbedPane child component that
@@ -293,7 +312,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private void initListeners() {
         UserPreferences.addChangeListener(this.pageSizeListener);
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.caseCloseListener);
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
     }
 
     /**
@@ -661,6 +681,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.removeAll();
             this.setVisible(false);
         }
+        
+        UserPreferences.removeChangeListener(this.pageSizeListener);
+        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
+        IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
+        
     }
 
     @Override

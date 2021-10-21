@@ -21,11 +21,16 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.concurrent.ExecutionException;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Provides functionality to handle paging and fetching of search result data.
@@ -36,7 +41,7 @@ public class SearchResultSupport {
     private int pageIdx = 0;
 
     private SearchResultsDTO currentSearchResults = null;
-    private PageFetcher pageFetcher = null;
+    private DataFetcher pageFetcher = null;
     private final MainDAO dao = MainDAO.getInstance();
 
     /**
@@ -134,7 +139,7 @@ public class SearchResultSupport {
     public synchronized SearchResultsDTO updatePageSize(int pageSize) throws IllegalArgumentException, ExecutionException {
         this.pageIdx = 0;
         setPageSize(pageSize);
-        return fetchResults();
+        return fetchResults(false);
     }
 
     /**
@@ -150,7 +155,7 @@ public class SearchResultSupport {
      */
     public synchronized SearchResultsDTO updatePageIdx(int pageIdx) throws IllegalArgumentException, ExecutionException {
         setPageIdx(pageIdx);
-        return fetchResults();
+        return fetchResults(false);
     }
 
     /**
@@ -197,6 +202,43 @@ public class SearchResultSupport {
     }
 
     /**
+     * Determines if a refresh is required for the currently selected item.
+     *
+     * @param evt The ingest module event.
+     *
+     * @return True if an update is required.
+     */
+    public synchronized boolean isRefreshRequired(PropertyChangeEvent evt) {
+        return isRefreshRequired(this.pageFetcher, evt);
+    }
+
+    private synchronized <S extends SearchParams, E> boolean isRefreshRequired(DataFetcher<S, E> dataFetcher, PropertyChangeEvent evt) {
+        if (dataFetcher == null) {
+            return false;
+        }
+
+        E evtData = dataFetcher.extractEvtData(evt);
+
+        if (evtData == null) {
+            return false;
+        }
+
+        S curKey = dataFetcher.getParams(pageSize, pageIdx);
+        return dataFetcher.isRefreshRequired(curKey, evtData);
+    }
+
+    /**
+     * Forces a refresh of data based on current search parameters.
+     *
+     * @return The refreshed data.
+     *
+     * @throws ExecutionException
+     */
+    public synchronized SearchResultsDTO getRefreshedData() throws ExecutionException {
+        return fetchResults(true);
+    }
+
+    /**
      * Fetches results using current page fetcher or returns null if no current
      * page fetcher. Also stores current results in local variable.
      *
@@ -204,9 +246,9 @@ public class SearchResultSupport {
      *
      * @throws ExecutionException
      */
-    private synchronized SearchResultsDTO fetchResults() throws ExecutionException {
+    private synchronized SearchResultsDTO fetchResults(boolean hardRefresh) throws ExecutionException {
         SearchResultsDTO newResults = (this.pageFetcher != null)
-                ? this.pageFetcher.fetch(this.pageSize, this.pageIdx)
+                ? this.pageFetcher.fetch(this.pageFetcher.getParams(pageSize, pageIdx), hardRefresh)
                 : null;
 
         this.currentSearchResults = newResults;
@@ -215,32 +257,6 @@ public class SearchResultSupport {
 
     private synchronized void resetPaging() {
         this.pageIdx = 0;
-    }
-
-    /**
-     * Sets the search parameters to the file type extension search parameters.
-     * Subsequent calls that don't change search parameters (i.e. page size
-     * changes, page index changes) will use these search parameters to return
-     * results.
-     *
-     * @param fileExtParameters The file type extension search parameters.
-     *
-     * @return The results of querying with current paging parameters.
-     *
-     * @throws ExecutionException
-     */
-    public synchronized SearchResultsDTO setFileExtensions(final FileTypeExtensionsSearchParams fileExtParameters) throws ExecutionException {
-        resetPaging();
-        this.pageFetcher = (pageSize, pageIdx) -> {
-            FileTypeExtensionsSearchParams searchParams = new FileTypeExtensionsSearchParams(
-                    fileExtParameters.getFilter(),
-                    fileExtParameters.getDataSourceId(),
-                    pageIdx * pageSize,
-                    (long) pageSize);
-            return dao.getViewsDAO().getFilesByExtension(searchParams);
-        };
-
-        return fetchResults();
     }
 
     /**
@@ -257,16 +273,77 @@ public class SearchResultSupport {
      */
     public synchronized SearchResultsDTO setDataArtifact(final DataArtifactSearchParam dataArtifactParameters) throws ExecutionException {
         resetPaging();
-        this.pageFetcher = (pageSize, pageIdx) -> {
-            DataArtifactSearchParam searchParams = new DataArtifactSearchParam(
-                    dataArtifactParameters.getArtifactType(),
-                    dataArtifactParameters.getDataSourceId(),
-                    pageIdx * pageSize,
-                    (long) pageSize);
-            return dao.getDataArtifactsDAO().getDataArtifactsForTable(searchParams);
+
+        this.pageFetcher = new DataFetcher<DataArtifactSearchParam, ModuleDataEvent>() {
+            @Override
+            public DataArtifactSearchParam getParams(int pageSize, int pageIdx) {
+                return new DataArtifactSearchParam(
+                        dataArtifactParameters.getArtifactType(),
+                        dataArtifactParameters.getDataSourceId(),
+                        pageIdx * pageSize,
+                        (long) pageSize);
+            }
+
+            @Override
+            public SearchResultsDTO fetch(DataArtifactSearchParam searchParams, boolean hardRefresh) throws ExecutionException {
+                return dao.getDataArtifactsDAO().getDataArtifactsForTable(searchParams, hardRefresh);
+            }
+
+            @Override
+            public ModuleDataEvent extractEvtData(PropertyChangeEvent evt) {
+                return getModuleDataFromEvt(evt);
+            }
+
+            @Override
+            public boolean isRefreshRequired(DataArtifactSearchParam searchParams, ModuleDataEvent evtData) {
+                return dao.getDataArtifactsDAO().isDataArtifactInvalidating(searchParams, evtData);
+            }
         };
 
-        return fetchResults();
+        return fetchResults(false);
+    }
+
+    /**
+     * Sets the search parameters to the file type extension search parameters.
+     * Subsequent calls that don't change search parameters (i.e. page size
+     * changes, page index changes) will use these search parameters to return
+     * results.
+     *
+     * @param fileExtParameters The file type extension search parameters.
+     *
+     * @return The results of querying with current paging parameters.
+     *
+     * @throws ExecutionException
+     */
+    public synchronized SearchResultsDTO setFileExtensions(final FileTypeExtensionsSearchParams fileExtParameters) throws ExecutionException {
+        resetPaging();
+        this.pageFetcher = new DataFetcher<FileTypeExtensionsSearchParams, Content>() {
+            @Override
+            public FileTypeExtensionsSearchParams getParams(int pageSize, int pageIdx) {
+                return new FileTypeExtensionsSearchParams(
+                        fileExtParameters.getFilter(),
+                        fileExtParameters.getDataSourceId(),
+                        pageIdx * pageSize,
+                        (long) pageSize);
+            }
+
+            @Override
+            public SearchResultsDTO fetch(FileTypeExtensionsSearchParams searchParams, boolean hardRefresh) throws ExecutionException {
+                return dao.getViewsDAO().getFilesByExtension(searchParams, hardRefresh);
+            }
+
+            @Override
+            public Content extractEvtData(PropertyChangeEvent evt) {
+                return getContentFromEvt(evt);
+            }
+
+            @Override
+            public boolean isRefreshRequired(FileTypeExtensionsSearchParams searchParams, Content evtData) {
+                return dao.getViewsDAO().isFilesByExtInvalidating(searchParams, evtData);
+            }
+        };
+
+        return fetchResults(false);
     }
 
     /**
@@ -284,35 +361,105 @@ public class SearchResultSupport {
      */
     public synchronized SearchResultsDTO setFileMimes(FileTypeMimeSearchParams fileMimeKey) throws ExecutionException, IllegalArgumentException {
         resetPaging();
-        this.pageFetcher = (pageSize, pageIdx) -> {
-            FileTypeMimeSearchParams searchParams = new FileTypeMimeSearchParams(
-                    fileMimeKey.getMimeType(),
-                    fileMimeKey.getDataSourceId(),
-                    pageIdx * pageSize,
-                    (long) pageSize);
-            return dao.getViewsDAO().getFilesByMime(searchParams);
+        this.pageFetcher = new DataFetcher<FileTypeMimeSearchParams, Content>() {
+            @Override
+            public FileTypeMimeSearchParams getParams(int pageSize, int pageIdx) {
+                return new FileTypeMimeSearchParams(
+                        fileMimeKey.getMimeType(),
+                        fileMimeKey.getDataSourceId(),
+                        pageIdx * pageSize,
+                        (long) pageSize);
+            }
+
+            @Override
+            public SearchResultsDTO fetch(FileTypeMimeSearchParams searchParams, boolean hardRefresh) throws ExecutionException {
+                return dao.getViewsDAO().getFilesByMime(searchParams, hardRefresh);
+            }
+
+            @Override
+            public Content extractEvtData(PropertyChangeEvent evt) {
+                return getContentFromEvt(evt);
+            }
+
+            @Override
+            public boolean isRefreshRequired(FileTypeMimeSearchParams searchParams, Content evtData) {
+                return dao.getViewsDAO().isFilesByMimeInvalidating(searchParams, evtData);
+            }
         };
 
-        return fetchResults();
+        return fetchResults(false);
+    }
+
+    private static Content getContentFromEvt(PropertyChangeEvent evt) {
+        String eventName = evt.getPropertyName();
+        if (IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName)
+                && (evt.getOldValue() instanceof ModuleContentEvent)
+                && ((ModuleContentEvent) evt.getOldValue()).getSource() instanceof Content) {
+
+            return (Content) ((ModuleContentEvent) evt.getOldValue()).getSource();
+
+        } else {
+            return null;
+        }
+    }
+
+    private static ModuleDataEvent getModuleDataFromEvt(PropertyChangeEvent evt) {
+        String eventName = evt.getPropertyName();
+        if (IngestManager.IngestModuleEvent.DATA_ADDED.toString().equals(eventName)
+                && (evt.getOldValue() instanceof ModuleDataEvent)) {
+
+            return (ModuleDataEvent) evt.getOldValue();
+        } else {
+            return null;
+        }
     }
 
     /**
      * Means of fetching data based on paging settings.
      */
-    private interface PageFetcher {
+    private interface DataFetcher<S extends SearchParams, D> {
+
+        /**
+         * Returns the search parameters based on the page size and page index.
+         *
+         * @param pageSize The number of items per page.
+         * @param pageIdx  The page index.
+         *
+         * @return The search parameters.
+         */
+        S getParams(int pageSize, int pageIdx);
 
         /**
          * Fetches search results data based on paging settings.
          *
-         * @param pageSize The page size.
-         * @param pageIdx  The page index.
+         *
+         * @param searchParams The search parameters.
+         * @param hardRefresh  Whether or not to perform a hard refresh.
          *
          * @return The retrieved data.
          *
          * @throws ExecutionException
          */
-        SearchResultsDTO fetch(int pageSize, int pageIdx) throws ExecutionException;
+        SearchResultsDTO fetch(S searchParams, boolean hardRefresh) throws ExecutionException;
+
+        /**
+         * Extracts pertinent data from the property change event.
+         *
+         * @param evt The event.
+         *
+         * @return The extracted data. If null, refresh will not be required.
+         */
+        D extractEvtData(PropertyChangeEvent evt);
+
+        /**
+         * Returns true if the ingest module event will require a refresh in the
+         * data.
+         *
+         * @param searchParams The search parameters.
+         * @param evtData      The event data.
+         *
+         * @return True if the
+         */
+        boolean isRefreshRequired(S searchParams, D evtData);
     }
-    
- 
 }

@@ -107,7 +107,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     private final AnalysisResultSetCache<HashHitSearchParam> hashHitCache = new AnalysisResultSetCache<>(BlackboardArtifact.Type.TSK_HASHSET_HIT);
     private final AnalysisResultSetCache<KeywordHitSearchParam> keywordHitCache = new AnalysisResultSetCache<>(BlackboardArtifact.Type.TSK_KEYWORD_HIT);
 
-    private final List<EventUpdatableCacheImpl<?, ?, ModuleDataEvent>> caches = ImmutableList.of(analysisResultCache, hashHitCache, keywordHitCache);
+    private final List<EventUpdatableCache<?, ?, ModuleDataEvent>> caches = ImmutableList.of(analysisResultCache, hashHitCache, keywordHitCache);
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
@@ -220,7 +220,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return keywordHitCache.isInvalidatingEvent(artifactKey, evt);
     }
 
-    private class AnalysisResultCache extends EventUpdatableCacheImpl<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> {
+    private class AnalysisResultCache extends EventUpdatableCache<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> {
 
         @Override
         protected AnalysisResultTableSearchResultsDTO fetch(AnalysisResultSearchParam cacheKey) throws Exception {
@@ -274,7 +274,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     private class AnalysisResultSetCache<K extends AnalysisResultSetSearchParam> extends
-            EventUpdatableCacheImpl<K, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> {
+            EventUpdatableCache<K, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> {
 
         private final BlackboardArtifact.Type artifactType;
 

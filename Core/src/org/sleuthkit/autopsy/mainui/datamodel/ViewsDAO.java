@@ -152,7 +152,7 @@ public class ViewsDAO extends DefaultDataEventListener {
     private final FilesByExtensionCache extensionCache = new FilesByExtensionCache();
     private final FilesByMimeCache mimeCache = new FilesByMimeCache();
     private final FilesBySizeCache sizeCache = new FilesBySizeCache();
-    private final List<EventUpdatableCacheImpl<?, ?, Content>> caches = ImmutableList.of(extensionCache, mimeCache, sizeCache);
+    private final List<EventUpdatableCache<?, ?, Content>> caches = ImmutableList.of(extensionCache, mimeCache, sizeCache);
 
     public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key) throws ExecutionException, IllegalArgumentException {
         return this.extensionCache.getValue(key);
@@ -281,7 +281,7 @@ public class ViewsDAO extends DefaultDataEventListener {
         caches.forEach((cache) -> cache.invalidate(content));
     }
 
-    private class FilesByExtensionCache extends EventUpdatableCacheImpl<FileTypeExtensionsSearchParams, SearchResultsDTO, Content> {
+    private class FilesByExtensionCache extends EventUpdatableCache<FileTypeExtensionsSearchParams, SearchResultsDTO, Content> {
 
         private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId) {
             String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
@@ -322,7 +322,7 @@ public class ViewsDAO extends DefaultDataEventListener {
         }
     }
 
-    private class FilesByMimeCache extends EventUpdatableCacheImpl<FileTypeMimeSearchParams, SearchResultsDTO, Content> {
+    private class FilesByMimeCache extends EventUpdatableCache<FileTypeMimeSearchParams, SearchResultsDTO, Content> {
 
         private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
             String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
@@ -369,7 +369,7 @@ public class ViewsDAO extends DefaultDataEventListener {
         }
     }
 
-    private class FilesBySizeCache extends EventUpdatableCacheImpl<FileTypeSizeSearchParams, SearchResultsDTO, Content> {
+    private class FilesBySizeCache extends EventUpdatableCache<FileTypeSizeSearchParams, SearchResultsDTO, Content> {
 
         private String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
             String lowerBound = "size >= " + filter.getLowerBound();

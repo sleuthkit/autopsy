@@ -78,7 +78,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     }
 
     
-    private class DataArtifactCache extends EventUpdatableCacheImpl<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO, ModuleDataEvent> {
+    private class DataArtifactCache extends EventUpdatableCache<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO, ModuleDataEvent> {
 
         @Override
         protected DataArtifactTableSearchResultsDTO fetch(DataArtifactSearchParam cacheKey) throws Exception {
