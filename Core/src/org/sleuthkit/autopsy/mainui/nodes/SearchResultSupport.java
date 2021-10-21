@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.text.MessageFormat;
 import java.util.concurrent.ExecutionException;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
@@ -264,6 +265,32 @@ public class SearchResultSupport {
                     pageIdx * pageSize,
                     (long) pageSize);
             return dao.getDataArtifactsDAO().getDataArtifactsForTable(searchParams);
+        };
+
+        return fetchResults();
+    }
+    
+     /**
+     * Sets the search parameters to the analysis result search parameters.
+     * Subsequent calls that don't change search parameters (i.e. page size
+     * changes, page index changes) will use these search parameters to return
+     * results.
+     *
+     * @param analysisResultParameters The data artifact search parameters.
+     *
+     * @return The results of querying with current paging parameters.
+     *
+     * @throws ExecutionException
+     */
+    public synchronized SearchResultsDTO setAnalysisResult(final AnalysisResultSearchParam analysisResultParameters) throws ExecutionException {
+        resetPaging();
+        this.pageFetcher = (pSize, pIdx) -> {
+            AnalysisResultSearchParam searchParams = new AnalysisResultSearchParam(
+                    analysisResultParameters.getArtifactType(),
+                    analysisResultParameters.getDataSourceId(),
+                    pIdx * pSize,
+                    (long) pSize);
+            return dao.getAnalysisResultDAO().getAnalysisResultsForTable(searchParams);
         };
 
         return fetchResults();

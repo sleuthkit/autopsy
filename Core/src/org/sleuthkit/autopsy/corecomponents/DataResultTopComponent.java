@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,15 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
@@ -42,17 +39,12 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
-import org.sleuthkit.autopsy.mainui.nodes.DataArtifactNode;
-import org.sleuthkit.autopsy.mainui.nodes.FileNode;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
-import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
-import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -375,6 +367,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     }
 
     private final MainDAO threePanelDAO = MainDAO.getInstance();
+
+    /**
+     * Displays results of querying the DAO for analysis results matching the
+     * search parameters query.
+     * 
+     * @param analysisResultParams The search parameter query.
+     */
+    public void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
+        dataResultPanel.displayAnalysisResult(analysisResultParams);
+    }
 
     /**
      * Displays results of querying the DAO for data artifacts matching the
