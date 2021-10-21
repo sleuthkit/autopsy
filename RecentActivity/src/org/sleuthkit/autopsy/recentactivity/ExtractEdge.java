@@ -39,8 +39,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -419,8 +417,7 @@ final class ExtractEdge extends Extract {
             fileScanner.close();
         }
 
-        IngestJobContext context = getIngestJobContext();
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
