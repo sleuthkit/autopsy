@@ -55,12 +55,15 @@ class RecentDocumentsByLnk extends Extract {
 
     private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
     private Content dataSource;
-    private IngestJobContext context;
     
     @Messages({
         "Progress_Message_Extract_Resent_Docs=Recent Documents",
     })
 
+    RecentDocumentsByLnk(IngestJobContext context) {
+        super("", context);
+    }
+    
     /**
      * Find the documents that Windows stores about recent documents and make
      * artifacts.
@@ -78,7 +81,7 @@ class RecentDocumentsByLnk extends Extract {
             logger.log(Level.WARNING, "Error searching for .lnk files."); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errMsg.errGetLnkFiles",
-                            this.getName()));
+                            this.getDisplayName()));
             return;
         }
         
@@ -90,6 +93,7 @@ class RecentDocumentsByLnk extends Extract {
         dataFound = true;
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         HashMap<String, String> recentFileMap = new HashMap<>();
+        IngestJobContext context = getIngestJobContext();
         for (AbstractFile recentFile : recentFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -129,7 +133,7 @@ class RecentDocumentsByLnk extends Extract {
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
                     recentFile.getCrtime()));
             try{
-                BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
+                BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, recentFile, bbattributes);
                 if(bba != null) {
                     bbartifacts.add(bba);
                     bba = createAssociatedArtifact(path, bba);
@@ -177,9 +181,8 @@ class RecentDocumentsByLnk extends Extract {
     }
     
     @Override
-    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
-        this.context = context;
         dataFound = false;
         
         progressBar.progress(Bundle.Progress_Message_Extract_Resent_Docs());

@@ -97,23 +97,22 @@ class Firefox extends Extract {
     private static final String FORMHISTORY_QUERY = "SELECT fieldname, value FROM moz_formhistory";
     private static final String FORMHISTORY_QUERY_V64 = "SELECT fieldname, value, timesUsed, firstUsed, lastUsed FROM moz_formhistory";
     private Content dataSource;
-    private IngestJobContext context;
 
-    Firefox() {
-        super(NbBundle.getMessage(Firefox.class, "Firefox.moduleName"));
+    Firefox(IngestJobContext context) {
+        super(NbBundle.getMessage(Firefox.class, "Firefox.moduleName"), context);
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
-        this.context = context;
         dataFound = false;
+        IngestJobContext context = getIngestJobContext();
         long ingestJobId = context.getJobId();
         
         progressBar.progress(Bundle.Progress_Message_Firefox_History());
-        this.getHistory(context.getJobId());
+        this.getHistory(getIngestJobContext().getJobId());
         
-        if (context.dataSourceIngestIsCancelled()) {
+        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
             return;
         }
         
@@ -161,7 +160,7 @@ class Firefox extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errFetchingFiles");
             logger.log(Level.WARNING, msg);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -172,6 +171,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile historyFile : historyFiles) {
@@ -192,14 +192,14 @@ class Firefox extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Firefox web history artifacts file '%s' (id=%d).",
                         fileName, historyFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox web history artifacts file '%s' (id=%d).",
                         temps, fileName, historyFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             }
@@ -209,7 +209,7 @@ class Firefox extends Extract {
                 break;
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, HISTORY_QUERY);
-            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -243,7 +243,7 @@ class Firefox extends Extract {
                 }
 
                 try {
-                    bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes));
+                    bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, historyFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create TSK_WEB_HISTORY artifact for file %d", historyFile.getId()), ex);
                 }
@@ -270,7 +270,7 @@ class Firefox extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getBookmark.errMsg.errFetchFiles");
             logger.log(Level.WARNING, msg);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -280,6 +280,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile bookmarkFile : bookmarkFiles) {
@@ -294,14 +295,14 @@ class Firefox extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Firefox bookmark artifacts file '%s' (id=%d).",
                         fileName, bookmarkFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox bookmark artifacts file '%s' (id=%d).",
                         temps, fileName, bookmarkFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getBookmark.errMsg.errAnalyzeFile",
-                        this.getName(), fileName));
+                        this.getDisplayName(), fileName));
                 continue;
             }
             File dbFile = new File(temps);
@@ -310,7 +311,7 @@ class Firefox extends Extract {
                 break;
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, BOOKMARK_QUERY);
-            logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -341,7 +342,7 @@ class Firefox extends Extract {
                 }
 
                 try {
-                    bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes));
+                    bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create TSK_WEB_BOOKMARK artifact for file %d", bookmarkFile.getId()), ex);
                 }
@@ -367,7 +368,7 @@ class Firefox extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getCookie.errMsg.errFetchFile");
             logger.log(Level.WARNING, msg);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -377,6 +378,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile cookiesFile : cookiesFiles) {
@@ -395,14 +397,14 @@ class Firefox extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Firefox cookie artifacts file '%s' (id=%d).",
                         fileName, cookiesFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox cookie artifacts file '%s' (id=%d).",
                         temps, fileName, cookiesFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getCookie.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getCookie.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             }
@@ -420,7 +422,7 @@ class Firefox extends Extract {
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
-            logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -459,7 +461,7 @@ class Firefox extends Extract {
                 }
 
                 try {
-                    bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes));
+                    bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_COOKIE, cookiesFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create TSK_WEB_COOKIE artifact for file %d", cookiesFile.getId()), ex);
                 }
@@ -497,7 +499,7 @@ class Firefox extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getDlPre24.errMsg.errFetchFiles");
             logger.log(Level.WARNING, msg);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -507,6 +509,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
@@ -522,14 +525,14 @@ class Firefox extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Firefox download artifacts file '%s' (id=%d).",
                         fileName, downloadsFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox download artifacts file '%s' (id=%d).",
                         temps, fileName, downloadsFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getDlPre24.errMsg.errAnalyzeFiles",
-                        this.getName(), fileName));
+                        this.getDisplayName(), fileName));
                 continue;
             }
             File dbFile = new File(temps);
@@ -539,7 +542,7 @@ class Firefox extends Extract {
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, DOWNLOAD_QUERY);
-            logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -588,7 +591,7 @@ class Firefox extends Extract {
                             domain)); //NON-NLS
                 }
                 try {
-                    BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                    BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                     bbartifacts.add(webDownloadArtifact);
 
                     // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
@@ -606,7 +609,7 @@ class Firefox extends Extract {
             if (errors > 0) {
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getDlPre24.errMsg.errParsingArtifacts",
-                                this.getName(), errors));
+                                this.getDisplayName(), errors));
             }
             j++;
             dbFile.delete();
@@ -631,7 +634,7 @@ class Firefox extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errFetchFiles");
             logger.log(Level.WARNING, msg);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -641,6 +644,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
@@ -656,14 +660,14 @@ class Firefox extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Firefox download artifacts file '%s' (id=%d).",
                         fileName, downloadsFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox download artifacts file '%s' (id=%d).",
                         temps, fileName, downloadsFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             }
@@ -675,7 +679,7 @@ class Firefox extends Extract {
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, DOWNLOAD_QUERY_V24);
 
-            logger.log(Level.INFO, "{0} - Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0} - Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -724,7 +728,7 @@ class Firefox extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
                 }
                 try {
-                    BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                    BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                     bbartifacts.add(webDownloadArtifact);
 
                     // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
@@ -740,7 +744,7 @@ class Firefox extends Extract {
             }
             if (errors > 0) {
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errParsingArtifacts",
-                        this.getName(), errors));
+                        this.getDisplayName(), errors));
             }
             j++;
             dbFile.delete();
@@ -771,7 +775,7 @@ class Firefox extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.errFetchingFiles");
             logger.log(Level.WARNING, msg);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -782,6 +786,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile formHistoryFile : formHistoryFiles) {
@@ -797,14 +802,14 @@ class Firefox extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Firefox web history artifacts file '%s' (id=%d).",
                         fileName, formHistoryFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox web history artifacts file '%s' (id=%d).",
                         tempFilePath, fileName, formHistoryFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 fileName));
                 continue;
             }
@@ -819,7 +824,7 @@ class Firefox extends Extract {
             String formHistoryQuery = (isFirefoxV64) ? FORMHISTORY_QUERY_V64 : FORMHISTORY_QUERY;
            
             List<HashMap<String, Object>> tempList = this.dbConnect(tempFilePath, formHistoryQuery);
-            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{getName(), tempFilePath, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), tempFilePath, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -859,7 +864,7 @@ class Firefox extends Extract {
                 }
                 try {
                     // Add artifact
-                    bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, formHistoryFile, bbattributes));
+                    bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_FORM_AUTOFILL, formHistoryFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create TSK_WEB_FORM_AUTOFILL artifact for file %d", formHistoryFile.getId()), ex);
                 }
@@ -887,7 +892,7 @@ class Firefox extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -897,8 +902,8 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         int j = 0;
-
         while (j < autofillProfilesFiles.size()) {
             AbstractFile profileFile = autofillProfilesFiles.get(j++);
             if (profileFile.getSize() == 0) {
@@ -911,17 +916,17 @@ class Firefox extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Firefox Autofill profiles artifacts file '%s' (id=%d).",
                         profileFile.getName(), profileFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzingFile",
-                        this.getName(), profileFile.getName()));
+                        this.getDisplayName(), profileFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp file '%s' for Firefox Autofill profiles file '%s' (id=%d).",
                         temps, profileFile.getName(), profileFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzingFile",
-                        this.getName(), profileFile.getName()));
+                        this.getDisplayName(), profileFile.getName()));
                 continue;
             }
 
-            logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{getName(), temps}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{getDisplayName(), temps}); //NON-NLS
             File dbFile = new File(temps);
             if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
@@ -934,7 +939,7 @@ class Firefox extends Extract {
             } catch (FileNotFoundException ex) {
                 logger.log(Level.SEVERE, "Error while trying to read the Autofill profiles json file for Firefox.", ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzeFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzeFile", this.getDisplayName(),
                                 profileFile.getName()));
                 continue;
             }
@@ -950,7 +955,7 @@ class Firefox extends Extract {
             } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
                 logger.log(Level.WARNING, "Error parsing Json for Firefox Autofill profiles.", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzingFile3",
-                        this.getName(), profileFile.getName()));
+                        this.getDisplayName(), profileFile.getName()));
                 continue;
             }
 
@@ -1016,7 +1021,7 @@ class Firefox extends Extract {
                     logger.log(Level.SEVERE, "Error while trying to insert Firefox Autofill profile artifact{0}", ex); //NON-NLS
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzingFile4",
-                                    this.getName(), profileFile.getName()));
+                                    this.getDisplayName(), profileFile.getName()));
                 }
             }
             dbFile.delete();

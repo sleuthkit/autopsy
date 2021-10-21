@@ -1,19 +1,19 @@
 /*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2021 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,9 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -47,70 +45,73 @@ import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 abstract class Extract {
 
-    protected Case currentCase;
-    protected SleuthkitCase tskCase;
-    protected Blackboard blackboard;
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
+    private static final Logger logger = Logger.getLogger(Extract.class.getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
-    private String moduleName = "";
-    boolean dataFound = false;
-    private RAOsAccountCache osAccountCache = null;
+    private final String displayName;
+    private final IngestJobContext context;
+    protected final Case currentCase;
+    protected final SleuthkitCase tskCase;
+    protected boolean dataFound = false;
 
-    Extract() {
-        this("");
-    }
-    
-    Extract(String moduleName) {
-        this.moduleName = moduleName;
-    }
-
-    final void init() throws IngestModuleException {
-        try {
-            currentCase = Case.getCurrentCaseThrows();
-            tskCase = currentCase.getSleuthkitCase();
-            blackboard = tskCase.getBlackboard();
-        } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException(Bundle.Extract_indexError_message(), ex);
-        }
-        configExtractor();
-    }
-    
     /**
-     * Override to add any module-specific configuration
-     * 
-     * @throws IngestModuleException 
+     * Constructs the super class part of an extractor used by the Recent
+     * Activity ingest module.
+     *
+     * @param displayName The display name of the extractor.
+     * @param context     The ingest job context.
      */
-    void configExtractor() throws IngestModuleException  {        
+    Extract(String displayName, IngestJobContext context) {
+        this.displayName = displayName;
+        this.context = context;
+        currentCase = Case.getCurrentCase();
+        tskCase = currentCase.getSleuthkitCase();
     }
 
     /**
-     * Extractor process method intended to mirror the Ingest process method.
-     * 
-     *  Subclasses should overload just the abstract version of the method.
-     * 
-     * @param dataSource The data source object to ingest.
-     * @param context   The the context for the current job.
-     * @param progressBar A handle to the progressBar for the module to update with status.
-     * @param osAccountCache The OsAccountCache.
+     * Configures this extractor. Called by the by the Recent Activity ingest
+     * module in its startUp() method.
+     *
+     * @throws IngestModuleException The exception is thrown if there is an
+     *                               error configuring the extractor.
      */
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar, RAOsAccountCache osAccountCache) {
-        this.osAccountCache = osAccountCache;
-        process(dataSource, context, progressBar);
+    void configExtractor() throws IngestModuleException {
+        logger.info(String.format("%s configured for Recent Activity ingest module", displayName)); //NON-NLS        
     }
-    
-    abstract void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar);
 
-    void complete() {
+    /**
+     * Gets the ingest job context for the ingest job this extractor is working
+     * within.
+     *
+     * @return The context.
+     */
+    protected IngestJobContext getIngestJobContext() {
+        return context;
+    }
+
+    /**
+     * Analyzes the given data source. Called by the by the Recent Activity
+     * ingest module in its startUp() method.
+     *
+     * @param dataSource  The data source to be analyzed.
+     * @param progressBar A progress object that can be used to report analysis
+     *                    progress.
+     */
+    abstract void process(Content dataSource, DataSourceIngestModuleProgress progressBar);
+
+    /**
+     * Cleans up this extractor. Called by the by the Recent Activity ingest
+     * module in its shutDown() method.
+     */
+    void cleanUp() {
+        logger.info(String.format("%s processing completed for Recent Activity ingest module", displayName)); //NON-NLS        
     }
 
     /**
@@ -130,21 +131,7 @@ abstract class Extract {
     protected void addErrorMessage(String message) {
         errorMessages.add(message);
     }
-    
-    /**
-     * Generic method for creating artifacts.
-     *
-     * @param type       The type of artifact.
-     * @param file       The file the artifact originated from.
-     * @param attributes A list of the attributes to associate with the
-     *                   artifact.
-     *
-     * @return The newly created artifact.
-     */
-    BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
-       return createArtifactWithAttributes(new BlackboardArtifact.Type(type), content, attributes);
-    }
-    
+
     /**
      * Generic method for creating artifacts.
      *
@@ -179,44 +166,33 @@ abstract class Extract {
      * @throws TskCoreException
      */
     BlackboardArtifact createAssociatedArtifact(Content content, BlackboardArtifact artifact) throws TskCoreException {
-        return createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, content, Collections.singletonList(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT,
-                RecentActivityExtracterModuleFactory.getModuleName(), artifact.getArtifactID())));
+        BlackboardAttribute attribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, getRAModuleName(), artifact.getArtifactID());
+        return createArtifactWithAttributes(BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT, content, Collections.singletonList(attribute));
     }
-    
+
     /**
-     * Method to post a blackboard artifact to the blackboard.
+     * Posts an artifact to the blackboard.
      *
-     * @param bbart Blackboard artifact to be indexed. Nothing will occure if a null object is passed in.
+     * @param artifact The artifact.
      */
-    @Messages({"Extract.indexError.message=Failed to index artifact for keyword search.",
-               "Extract.noOpenCase.errMsg=No open case available."})
-    void postArtifact(BlackboardArtifact bbart) {
-        if(bbart == null) {
-            return;
-        }
-        
-        try {
-            // index the artifact for keyword search
-            blackboard.postArtifact(bbart, getName());
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
+    void postArtifact(BlackboardArtifact artifact) {
+        if (artifact != null && !context.dataArtifactIngestIsCancelled()) {
+            postArtifacts(Collections.singleton(artifact));
         }
     }
-    
+
     /**
-     * Method to post a list of BlackboardArtifacts to the blackboard.
-     * 
-     * @param artifacts A list of artifacts.  IF list is empty or null, the function will return.
+     * Posts a collection of artifacts to the blackboard.
+     *
+     * @param artifacts The artifacts.
      */
     void postArtifacts(Collection<BlackboardArtifact> artifacts) {
-        if(artifacts == null || artifacts.isEmpty()) {
-            return;
-        }
-        
-        try{
-            blackboard.postArtifacts(artifacts, getName());
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Unable to post blackboard artifacts", ex); //NON-NLS
+        if (artifacts != null && !artifacts.isEmpty() && !context.dataArtifactIngestIsCancelled()) {
+            try {
+                tskCase.getBlackboard().postArtifacts(artifacts, RecentActivityExtracterModuleFactory.getModuleName(), context.getJobId());
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.SEVERE, "Failed to post artifacts", ex); //NON-NLS
+            }
         }
     }
 
@@ -243,8 +219,7 @@ abstract class Extract {
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex); //NON-NLS
             return Collections.<HashMap<String, Object>>emptyList();
-        }
-        finally {
+        } finally {
             if (tempdbconnect != null) {
                 tempdbconnect.closeConnection();
             }
@@ -279,53 +254,58 @@ abstract class Extract {
     }
 
     /**
-     * Returns the name of the inheriting class
+     * Gets the display name of this extractor.
      *
-     * @return Gets the moduleName set in the moduleName data member
+     * @return The display name.
      */
-    protected String getName() {
-        return moduleName;
+    protected String getDisplayName() {
+        return displayName;
     }
-    
+
     protected String getRAModuleName() {
         return RecentActivityExtracterModuleFactory.getModuleName();
     }
 
     /**
      * Returns the state of foundData
-     * @return 
+     *
+     * @return
      */
     public boolean foundData() {
         return dataFound;
     }
-    
+
     /**
      * Sets the value of foundData
-     * @param foundData 
+     *
+     * @param foundData
      */
-    protected void setFoundData(boolean foundData){
+    protected void setFoundData(boolean foundData) {
         dataFound = foundData;
     }
-    
+
     /**
      * Returns the current case instance
+     *
      * @return Current case instance
      */
-    protected Case getCurrentCase(){
+    protected Case getCurrentCase() {
         return this.currentCase;
     }
-    
+
     /**
      * Creates a list of attributes for a history artifact.
      *
-     * @param url 
-     * @param accessTime Time url was accessed
-     * @param referrer referred url
-     * @param title title of the page
+     * @param url
+     * @param accessTime  Time url was accessed
+     * @param referrer    referred url
+     * @param title       title of the page
      * @param programName module name
-     * @param domain domain of the url
-     * @param user user that accessed url
+     * @param domain      domain of the url
+     * @param user        user that accessed url
+     *
      * @return List of BlackboardAttributes for giving attributes
+     *
      * @throws TskCoreException
      */
     protected Collection<BlackboardAttribute> createHistoryAttribute(String url, Long accessTime,
@@ -363,16 +343,17 @@ abstract class Extract {
 
         return bbattributes;
     }
-    
+
     /**
      * Creates a list of attributes for a cookie.
      *
-     * @param url cookie url
-     * @param creationTime cookie creation time 
-     * @param name cookie name
-     * @param value cookie value
-     * @param programName Name of the module creating the attribute
-     * @param domain Domain of the URL
+     * @param url          cookie url
+     * @param creationTime cookie creation time
+     * @param name         cookie name
+     * @param value        cookie value
+     * @param programName  Name of the module creating the attribute
+     * @param domain       Domain of the URL
+     *
      * @return List of BlackboarAttributes for the passed in attributes
      */
     protected Collection<BlackboardAttribute> createCookieAttributes(String url,
@@ -387,13 +368,13 @@ abstract class Extract {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
                     RecentActivityExtracterModuleFactory.getModuleName(), creationTime));
         }
-        
+
         if (accessTime != null && accessTime != 0) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                     RecentActivityExtracterModuleFactory.getModuleName(), accessTime));
         }
-        
-        if(endTime != null && endTime != 0) {
+
+        if (endTime != null && endTime != 0) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END,
                     RecentActivityExtracterModuleFactory.getModuleName(), endTime));
         }
@@ -420,11 +401,12 @@ abstract class Extract {
     /**
      * Creates a list of bookmark attributes from the passed in parameters.
      *
-     * @param url Bookmark url
-     * @param title Title of the bookmarked page
+     * @param url          Bookmark url
+     * @param title        Title of the bookmarked page
      * @param creationTime Date & time at which the bookmark was created
-     * @param programName Name of the module creating the attribute
-     * @param domain The domain of the bookmark's url
+     * @param programName  Name of the module creating the attribute
+     * @param domain       The domain of the bookmark's url
+     *
      * @return A collection of bookmark attributes
      */
     protected Collection<BlackboardAttribute> createBookmarkAttributes(String url, String title, Long creationTime, String programName, String domain) {
@@ -454,14 +436,15 @@ abstract class Extract {
         return bbattributes;
     }
 
-     /**
+    /**
      * Creates a list of the attributes of a downloaded file
      *
      * @param path
-     * @param url URL of the downloaded file
-     * @param accessTime Time the download occurred
-     * @param domain Domain of the URL
+     * @param url         URL of the downloaded file
+     * @param accessTime  Time the download occurred
+     * @param domain      Domain of the URL
      * @param programName Name of the module creating the attribute
+     *
      * @return A collection of attributes of a downloaded file
      */
     protected Collection<BlackboardAttribute> createDownloadAttributes(String path, Long pathID, String url, Long accessTime, String domain, String programName) {
@@ -496,44 +479,39 @@ abstract class Extract {
 
         return bbattributes;
     }
-    
+
     /**
      * Creates a list of the attributes for source of a downloaded file
      *
      * @param url source URL of the downloaded file
+     *
      * @return A collection of attributes for source of a downloaded file
      */
     protected Collection<BlackboardAttribute> createDownloadSourceAttributes(String url) {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
                 RecentActivityExtracterModuleFactory.getModuleName(),
                 (url != null) ? url : "")); //NON-NLS
-
         return bbattributes;
     }
-    
+
     /**
-     * Create temporary file for the given AbstractFile.  The new file will be 
-     * created in the temp directory for the module with a unique file name.
-     * 
-     * @param context
-     * @param file
-     * @param IngestJobId The ingest job id.
-     * @return Newly created copy of the AbstractFile
-     * @throws IOException 
+     * Writes a file to disk in this extractor's dedicated temp directory within
+     * the Recent Activity ingest modules temp directory. The object ID of the
+     * file is appended to the file name for uniqueness.
+     *
+     * @param file The file.
+     *
+     * @return A File object that represents the file on disk.
+     *
+     * @throws IOException Exception thrown if there is a problem writing the
+     *                     file to disk.
      */
-    protected File createTemporaryFile(IngestJobContext context, AbstractFile file, long ingestJobId) throws IOException{
-        Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(
-                getCurrentCase(), getName(), ingestJobId), file.getName() + file.getId() + file.getNameExtension());
+    protected File createTemporaryFile(AbstractFile file) throws IOException {
+        Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(getCurrentCase(), getDisplayName(), context.getJobId()), file.getName() + file.getId() + file.getNameExtension());
         java.io.File tempFile = tempFilePath.toFile();
-        
-        try {
-            ContentUtils.writeToFile(file, tempFile, context::dataSourceIngestIsCancelled);
-        } catch (IOException ex) {
-            throw new IOException("Error writingToFile: " + file, ex); //NON-NLS
-        }
-         
+        ContentUtils.writeToFile(file, tempFile, context::dataSourceIngestIsCancelled);
         return tempFile;
     }
+
 }

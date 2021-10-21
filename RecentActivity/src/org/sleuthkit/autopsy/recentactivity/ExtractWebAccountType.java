@@ -44,8 +44,8 @@ class ExtractWebAccountType extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractWebAccountType.class.getName());
 
-    ExtractWebAccountType() {
-        super(NbBundle.getMessage(ExtractWebAccountType.class, "ExtractWebAccountType.moduleName.text"));
+    ExtractWebAccountType(IngestJobContext context) {
+        super(NbBundle.getMessage(ExtractWebAccountType.class, "ExtractWebAccountType.moduleName.text"), context);
     }
 
     private static final List<BlackboardArtifact.Type> QUERY_ARTIFACTS = Arrays.asList(
@@ -53,7 +53,7 @@ class ExtractWebAccountType extends Extract {
             new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT)
     );
 
-    private void extractDomainRoles(Content dataSource, IngestJobContext context) {
+    private void extractDomainRoles(Content dataSource) {
         try {
             // Get web history blackboard artifacts
             Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
@@ -62,11 +62,11 @@ class ExtractWebAccountType extends Extract {
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
 
             // Set up collector for roles
-            RoleProcessor roleProcessor = new RoleProcessor(context);
+            RoleProcessor roleProcessor = new RoleProcessor(getIngestJobContext());
 
             // Process each URL
             for (BlackboardArtifact artifact : listArtifacts) {
-                if (context.dataSourceIngestIsCancelled()) {
+                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
                     return;
                 }
 
@@ -220,8 +220,8 @@ class ExtractWebAccountType extends Extract {
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
-        extractDomainRoles(dataSource, context);
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
+        extractDomainRoles(dataSource);
     }
 
     /**
@@ -298,7 +298,7 @@ class ExtractWebAccountType extends Extract {
                             NbBundle.getMessage(this.getClass(),
                                     "ExtractWebAccountType.parentModuleName"), role.getUrl()));
 
-                    artifactList.add(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE, file, bbattributes));
+                    artifactList.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_ACCOUNT_TYPE, file, bbattributes));
                 }
                 
                 if (!context.dataSourceIngestIsCancelled()) {

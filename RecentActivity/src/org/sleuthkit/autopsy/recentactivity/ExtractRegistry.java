@@ -176,7 +176,6 @@ class ExtractRegistry extends Extract {
     private final Path rrHome;  // Path to the Autopsy version of RegRipper
     private final Path rrFullHome; // Path to the full version of RegRipper
     private Content dataSource;
-    private IngestJobContext context;
     private Map<String, String> userNameMap;
     private final List<String> samDomainIDsList = new ArrayList<>();
 
@@ -197,8 +196,8 @@ class ExtractRegistry extends Extract {
         REG_RIPPER_TIME_FORMAT.setTimeZone(getTimeZone("GMT"));
     }
 
-    ExtractRegistry() throws IngestModuleException {
-        super(NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text"));
+    ExtractRegistry(IngestJobContext context) throws IngestModuleException {
+        super(NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text"), context);
 
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
@@ -264,7 +263,7 @@ class ExtractRegistry extends Extract {
             String msg = NbBundle.getMessage(this.getClass(),
                     "ExtractRegistry.findRegFiles.errMsg.errReadingFile", "sam");
             logger.log(Level.WARNING, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
         }
 
         // find the user-specific ntuser-dat files
@@ -290,7 +289,7 @@ class ExtractRegistry extends Extract {
                 String msg = NbBundle.getMessage(this.getClass(),
                         "ExtractRegistry.findRegFiles.errMsg.errReadingFile", regFileName);
                 logger.log(Level.WARNING, msg, ex);
-                this.addErrorMessage(this.getName() + ": " + msg);
+                this.addErrorMessage(this.getDisplayName() + ": " + msg);
             }
         }
         return allRegistryFiles;
@@ -312,6 +311,7 @@ class ExtractRegistry extends Extract {
             logger.log(Level.SEVERE, null, ex);
         }
 
+        IngestJobContext context = getIngestJobContext();
         for (AbstractFile regFile : allRegistryFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
@@ -329,14 +329,14 @@ class ExtractRegistry extends Extract {
                         regFile.getName(), regFileId), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
-                                this.getName(), regFileName));
+                                this.getDisplayName(), regFileName));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
                         regFileNameLocal, regFile.getName(), regFileId), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
-                                this.getName(), regFileName));
+                                this.getDisplayName(), regFileName));
                 continue;
             }
 
@@ -352,7 +352,7 @@ class ExtractRegistry extends Extract {
                 logger.log(Level.SEVERE, null, ex);
             }
 
-            logger.log(Level.INFO, "{0}- Now getting registry information from {1}", new Object[]{getName(), regFileNameLocal}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting registry information from {1}", new Object[]{getDisplayName(), regFileNameLocal}); //NON-NLS
             RegOutputFiles regOutputFiles = ripRegistryFile(regFileNameLocal, outputPathBase);
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -362,7 +362,7 @@ class ExtractRegistry extends Extract {
             if (regOutputFiles.autopsyPlugins.isEmpty() == false && parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile) == false) {
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
-                                this.getName(), regFileName));
+                                this.getDisplayName(), regFileName));
             }
             
             if (context.dataSourceIngestIsCancelled()) {
@@ -375,7 +375,7 @@ class ExtractRegistry extends Extract {
                 if (regFileNameLocal.toLowerCase().contains("sam") && parseSamPluginOutput(regOutputFiles.fullPlugins, regFile, ingestJobId) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
-                                    this.getName(), regFileName));     
+                                    this.getDisplayName(), regFileName));     
                 } else if (regFileNameLocal.toLowerCase().contains("ntuser") || regFileNameLocal.toLowerCase().contains("usrclass")) {
                     try {
                         List<ShellBag> shellbags = ShellBagParser.parseShellbagOutput(regOutputFiles.fullPlugins);
@@ -387,7 +387,7 @@ class ExtractRegistry extends Extract {
                 } else if (regFileNameLocal.toLowerCase().contains("system") && parseSystemPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
-                                    this.getName(), regFileName));
+                                    this.getDisplayName(), regFileName));
                 }
                 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -464,7 +464,7 @@ class ExtractRegistry extends Extract {
             logger.log(Level.INFO, "Writing RegRipper results to: {0}", regOutputFiles.autopsyPlugins); //NON-NLS
             executeRegRipper(rrCmd, rrHome, regFilePath, autopsyType, regOutputFiles.autopsyPlugins, errFilePath);
         }
-        if (context.dataSourceIngestIsCancelled()) {
+        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
             return regOutputFiles;
         }
 
@@ -478,7 +478,7 @@ class ExtractRegistry extends Extract {
                 scanErrorLogs(errFilePath);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Unable to run RegRipper on %s", regFilePath), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName(), regFilePath));
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getDisplayName(), regFilePath));
             }
         }
         return regOutputFiles;
@@ -514,10 +514,10 @@ class ExtractRegistry extends Extract {
             processBuilder.directory(regRipperHomeDir.toFile()); // RegRipper 2.8 has to be run from its own directory
             processBuilder.redirectOutput(new File(outputFile));
             processBuilder.redirectError(new File(errFile));
-            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
+            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(getIngestJobContext(), true));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error running RegRipper on %s", hiveFilePath), ex); //NON-NLS
-            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName(), hiveFilePath));
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getDisplayName(), hiveFilePath));
         }
     }
 
@@ -556,7 +556,7 @@ class ExtractRegistry extends Extract {
             int len = children.getLength();
             for (int i = 0; i < len; i++) {
 
-                if (context.dataSourceIngestIsCancelled()) {
+                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
                     return false;
                 }
 
@@ -663,7 +663,7 @@ class ExtractRegistry extends Extract {
                             // Check if there is already an OS_INFO artifact for this file, and add to that if possible.
                             ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
                             if (results.isEmpty()) {
-                                newArtifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_OS_INFO, regFile, bbattributes));
+                                newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
@@ -710,7 +710,7 @@ class ExtractRegistry extends Extract {
                             // Check if there is already an OS_INFO artifact for this file and add to that if possible
                             ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
                             if (results.isEmpty()) {
-                                newArtifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_OS_INFO, regFile, bbattributes));
+                                newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
@@ -743,7 +743,7 @@ class ExtractRegistry extends Extract {
                             // Check if there is already an OS_INFO artifact for this file and add to that if possible
                             ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
                             if (results.isEmpty()) {
-                                newArtifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_OS_INFO, regFile, bbattributes));
+                                newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
                             } else {
                                 results.get(0).addAttributes(bbattributes);
                             }
@@ -801,7 +801,7 @@ class ExtractRegistry extends Extract {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, parentModuleName, make));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, parentModuleName, model));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, value));
-                                        newArtifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, regFile, bbattributes));
+                                        newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_DEVICE_ATTACHED, regFile, bbattributes));
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, String.format("Error adding device_attached artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS
                                     }
@@ -943,7 +943,7 @@ class ExtractRegistry extends Extract {
             } catch (IOException ex) {
             }
             
-            if (!context.dataSourceIngestIsCancelled()) {
+            if (!getIngestJobContext().dataSourceIngestIsCancelled()) {
                 postArtifacts(newArtifacts);
             }
         }
@@ -1015,7 +1015,7 @@ class ExtractRegistry extends Extract {
                     addBlueToothAttribute(line, attributes, TSK_DATETIME_ACCESSED);
                     
                     try {
-                        bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING, regFile, attributes));
+                        bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_BLUETOOTH_PAIRING, regFile, attributes));
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, String.format("Failed to create bluetooth_pairing artifact for file %d", regFile.getId()), ex);
                     }
@@ -1030,7 +1030,7 @@ class ExtractRegistry extends Extract {
             }
         }
         
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1056,9 +1056,9 @@ class ExtractRegistry extends Extract {
                     // we set the timestamp to 0 and continue on processing
                     logger.log(Level.WARNING, String.format("Failed to parse date/time %s for Bluetooth Last Seen attribute.", dateString), ex); //NON-NLS
                 }
-                attributes.add(new BlackboardAttribute(attributeType, getName(), dateLong));
+                attributes.add(new BlackboardAttribute(attributeType, getDisplayName(), dateLong));
             } else {
-                attributes.add(new BlackboardAttribute(attributeType, getName(), tokenString));
+                attributes.add(new BlackboardAttribute(attributeType, getDisplayName(), tokenString));
             }
         }
     }
@@ -1141,7 +1141,7 @@ class ExtractRegistry extends Extract {
             logger.log(Level.WARNING, "Error creating OS Account, input SID is not a user SID.", ex); //NON-NLS
         } 
         finally {
-            if (!context.dataSourceIngestIsCancelled()) {
+            if (!getIngestJobContext().dataSourceIngestIsCancelled()) {
                 postArtifacts(newArtifacts);
             }
         }
@@ -1276,13 +1276,13 @@ class ExtractRegistry extends Extract {
 
             }
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(), fileName));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME, getName(), userName));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getName(), progRunDateTime));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, getName(), comment));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, getDisplayName(), fileName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME, getDisplayName(), userName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, getDisplayName(), progRunDateTime));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, getDisplayName(), comment));
             
             try {
-                BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_PROG_RUN, regFile, attributes);
+                BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_PROG_RUN, regFile, attributes);
                 bbartifacts.add(bba);
                 bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
                 if (bba != null) {
@@ -1293,7 +1293,7 @@ class ExtractRegistry extends Extract {
             }
             line = reader.readLine();
         }
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
                 postArtifacts(bbartifacts);
         }
     }
@@ -1345,11 +1345,11 @@ class ExtractRegistry extends Extract {
                         }
                     }
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                    attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), adobeUsedTime));
-                    attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
+                    attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getDisplayName(), adobeUsedTime));
+                    attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
                     try{
-                        BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                        BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, regFile, attributes);
                         if (bba != null) {
                             bbartifacts.add(bba);
                             fileName = fileName.replace("\0", "");
@@ -1366,7 +1366,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1398,10 +1398,10 @@ class ExtractRegistry extends Extract {
                     String tokens[] = line.split("> ");
                     String fileName = tokens[1];
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                    attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                    attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
+                    attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
+                    attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
                     try{
-                        BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                        BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, regFile, attributes);
                         if (bba != null) {
                             bbartifacts.add(bba);
                             bba = createAssociatedArtifact(fileName, bba);
@@ -1421,7 +1421,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty()&& !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty()&& !getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1455,10 +1455,10 @@ class ExtractRegistry extends Extract {
                     if (tokens.length > 1) {
                         String fileName = tokens[1];
                         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                        attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                        attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
+                        attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
+                        attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
                         try{
-                            BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                            BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, regFile, attributes);
                             if (bba != null) {
                                 bbartifacts.add(bba);
                                 bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
@@ -1475,7 +1475,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1508,10 +1508,10 @@ class ExtractRegistry extends Extract {
                         String tokens[] = line.split("> ");
                         String fileName = tokens[1];
                         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                        attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                        attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
+                        attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
+                        attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
                         try{
-                            BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                            BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, regFile, attributes);
                             bbartifacts.add(bba);
                             bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
                             if (bba != null) {
@@ -1526,7 +1526,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1553,10 +1553,10 @@ class ExtractRegistry extends Extract {
                 // <fileName>
                 String fileName = line;
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
+                attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
+                attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
                 try{
-                    BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);
+                    BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, regFile, attributes);
                     bbartifacts.add(bba);
                     bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
                     if (bba != null) {
@@ -1570,7 +1570,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1605,11 +1605,11 @@ class ExtractRegistry extends Extract {
             String fileNameTokens[] = tokens[4].split(" - ");
             String fileName = fileNameTokens[1];
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), docDate));
-            attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
+            attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getDisplayName(), docDate));
+            attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
             try{
-                BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);       
+                BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, regFile, attributes);       
                 bbartifacts.add(bba);
                 bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
                 if (bba != null) {
@@ -1621,7 +1621,7 @@ class ExtractRegistry extends Extract {
             line = reader.readLine();
             line = line.trim();
         }
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1670,11 +1670,11 @@ class ExtractRegistry extends Extract {
                     logger.log(Level.WARNING, String.format("Failed to parse date/time %s for TrustRecords artifact.", tokens[0]), ex); //NON-NLS
                 }
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getName(), usedTime));
-                attributes.add(new BlackboardAttribute(TSK_COMMENT, getName(), comment));
+                attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getDisplayName(), usedTime));
+                attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
                 try{
-                    BlackboardArtifact bba = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_RECENT_OBJECT, regFile, attributes);         
+                    BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, regFile, attributes);         
                     bbartifacts.add(bba);
                     bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
                     if (bba != null) {
@@ -1686,7 +1686,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1823,35 +1823,35 @@ class ExtractRegistry extends Extract {
         try {
             for (ShellBag bag : shellbags) {
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                attributes.add(new BlackboardAttribute(TSK_PATH, getName(), bag.getResource()));
-                attributes.add(new BlackboardAttribute(getKeyAttribute(), getName(), bag.getKey()));
+                attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), bag.getResource()));
+                attributes.add(new BlackboardAttribute(getKeyAttribute(), getDisplayName(), bag.getKey()));
 
                 long time;
                 time = bag.getLastWrite();
                 if (time != 0) {
-                    attributes.add(new BlackboardAttribute(getLastWriteAttribute(), getName(), time));
+                    attributes.add(new BlackboardAttribute(getLastWriteAttribute(), getDisplayName(), time));
                 }
 
                 time = bag.getModified();
                 if (time != 0) {
-                    attributes.add(new BlackboardAttribute(TSK_DATETIME_MODIFIED, getName(), time));
+                    attributes.add(new BlackboardAttribute(TSK_DATETIME_MODIFIED, getDisplayName(), time));
                 }
 
                 time = bag.getCreated();
                 if (time != 0) {
-                    attributes.add(new BlackboardAttribute(TSK_DATETIME_CREATED, getName(), time));
+                    attributes.add(new BlackboardAttribute(TSK_DATETIME_CREATED, getDisplayName(), time));
                 }
 
                 time = bag.getAccessed();
                 if (time != 0) {
-                    attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getName(), time));
+                    attributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, getDisplayName(), time));
                 }
 
                 BlackboardArtifact artifact = createArtifactWithAttributes(getShellBagArtifact(), regFile, attributes); 
                 artifacts.add(artifact);
             }
         } finally {
-            if(!context.dataSourceIngestIsCancelled()) {
+            if(!getIngestJobContext().dataSourceIngestIsCancelled()) {
                 postArtifacts(artifacts);                
             }
         }
@@ -2004,12 +2004,11 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
-        this.context = context;
 
         progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
-        analyzeRegistryFiles(context.getJobId());
+        analyzeRegistryFiles(getIngestJobContext().getJobId());
 
     }
 

@@ -81,12 +81,12 @@ final class ExtractRecycleBin extends Extract {
     @Messages({
         "ExtractRecycleBin_module_name=Recycle Bin"
     })
-    ExtractRecycleBin() {
-        super(Bundle.ExtractRecycleBin_module_name());
+    ExtractRecycleBin(IngestJobContext context) {
+        super(Bundle.ExtractRecycleBin_module_name(), context);
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         // At this time it was decided that we would not include TSK_RECYCLE_BIN
         // in the default list of BlackboardArtifact types.
         try {
@@ -136,9 +136,10 @@ final class ExtractRecycleBin extends Extract {
             return;  // No need to continue
         }
 
-        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin", context.getJobId()); //NON-NLS
+        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin", getIngestJobContext().getJobId()); //NON-NLS
 
         // cycle through the $I files and process each. 
+        IngestJobContext context = getIngestJobContext();
         for (AbstractFile iFile : iFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
@@ -438,9 +439,9 @@ final class ExtractRecycleBin extends Extract {
      */
     private BlackboardArtifact createArtifact(AbstractFile rFile, BlackboardArtifact.Type type, String fileName, String userName, long dateTime) throws TskCoreException {
         List<BlackboardAttribute> attributes = new ArrayList<>();
-        attributes.add(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-        attributes.add(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
-        attributes.add(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
+        attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
+        attributes.add(new BlackboardAttribute(TSK_DATETIME_DELETED, getDisplayName(), dateTime));
+        attributes.add(new BlackboardAttribute(TSK_USER_NAME, getDisplayName(), userName == null || userName.isEmpty() ? "" : userName));
         return createArtifactWithAttributes(type, rFile, attributes);
     }
 

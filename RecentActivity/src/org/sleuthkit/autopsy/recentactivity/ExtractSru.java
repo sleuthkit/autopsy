@@ -59,8 +59,6 @@ final class ExtractSru extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractSru.class.getName());
 
-    private IngestJobContext context;
-
     private static final String APPLICATION_USAGE_SOURCE_NAME = "System Resource Usage - Application Usage"; //NON-NLS
     private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
 
@@ -80,8 +78,8 @@ final class ExtractSru extends Extract {
     @Messages({
         "ExtractSru_module_name=System Resource Usage Extractor"
     })
-    ExtractSru() {
-        super(Bundle.ExtractSru_module_name());
+    ExtractSru(IngestJobContext context) {
+        super(Bundle.ExtractSru_module_name(), context);
     }
 
     @Messages({
@@ -90,9 +88,7 @@ final class ExtractSru extends Extract {
     })
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
-
-        this.context = context;
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
         String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "sru";
         File dir = new File(modOutPath);
@@ -100,7 +96,7 @@ final class ExtractSru extends Extract {
             dir.mkdirs();
         }
 
-        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru", context.getJobId()); //NON-NLS
+        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru", getIngestJobContext().getJobId()); //NON-NLS
         String softwareHiveFileName = getSoftwareHiveFile(dataSource, tempDirPath);
 
         if (softwareHiveFileName == null) {
@@ -120,7 +116,7 @@ final class ExtractSru extends Extract {
             return; //If we cannot find the export_srudb program we cannot proceed
         }
 
-        if (context.dataSourceIngestIsCancelled()) {
+        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
             return;
         }
 
@@ -253,7 +249,7 @@ final class ExtractSru extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
-        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
+        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(getIngestJobContext(), true));
     }
 
     private String getPathForSruDumper() {
@@ -292,7 +288,7 @@ final class ExtractSru extends Extract {
 
             while (resultSet.next()) {
 
-                if (context.dataSourceIngestIsCancelled()) {
+                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled SRU Artifact Creation."); //NON-NLS
                     return;
                 }
@@ -337,7 +333,7 @@ final class ExtractSru extends Extract {
 
             while (resultSet.next()) {
 
-                if (context.dataSourceIngestIsCancelled()) {
+                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled SRU Net Usage Artifact Creation."); //NON-NLS
                     return;
                 }
@@ -351,23 +347,23 @@ final class ExtractSru extends Extract {
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getDisplayName(),
                                 formattedApplicationName),//NON-NLS
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getDisplayName(),
                                 userName),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getDisplayName(),
                                 executionTime),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_SENT, getName(), bytesSent),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_SENT, getDisplayName(), bytesSent),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_RECEIVED, getName(), bytesRecvd),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_RECEIVED, getDisplayName(), bytesRecvd),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), NETWORK_USAGE_SOURCE_NAME));
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getDisplayName(), NETWORK_USAGE_SOURCE_NAME));
 
                 try {
-                    BlackboardArtifact bbart = createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN, sruAbstractFile, bbattributes);
+                    BlackboardArtifact bbart = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_PROG_RUN, sruAbstractFile, bbattributes);
                     bba.add(bbart);
                     BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
                     if (associateBbArtifact != null) {
@@ -382,7 +378,7 @@ final class ExtractSru extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        if(!context.dataSourceIngestIsCancelled()) {
+        if(!getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bba);
         }
     }
@@ -399,7 +395,7 @@ final class ExtractSru extends Extract {
 
             while (resultSet.next()) {
 
-                if (context.dataSourceIngestIsCancelled()) {
+                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled SRU Net Usage Artifact Creation."); //NON-NLS
                     return;
                 }
@@ -411,19 +407,19 @@ final class ExtractSru extends Extract {
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getDisplayName(),
                                 formattedApplicationName),//NON-NLS
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getDisplayName(),
                                 userName),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getDisplayName(),
                                 executionTime),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), APPLICATION_USAGE_SOURCE_NAME));
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getDisplayName(), APPLICATION_USAGE_SOURCE_NAME));
 
                 try {
-                    BlackboardArtifact bbart = createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN, sruAbstractFile, bbattributes);
+                    BlackboardArtifact bbart = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_PROG_RUN, sruAbstractFile, bbattributes);
                     bba.add(bbart);
                     BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
                     if (associateBbArtifact != null) {
@@ -438,7 +434,7 @@ final class ExtractSru extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        if(!context.dataSourceIngestIsCancelled()) {
+        if(!getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(bba);
         }
         

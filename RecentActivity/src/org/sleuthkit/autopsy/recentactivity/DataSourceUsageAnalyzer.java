@@ -57,36 +57,36 @@ class DataSourceUsageAnalyzer extends Extract {
                 "photos", "dcim", "music", "pictures", "videos"}; //NON-NLS
     private Content dataSource;
 
+    DataSourceUsageAnalyzer(IngestJobContext context) {
+        super("", context);
+    }
+    
     @Messages({
         "# {0} - OS name",
         "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})",
         "Progress_Message_Analyze_Usage=Data Sources Usage Analysis",})
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         try {
             progressBar.progress(Bundle.Progress_Message_Analyze_Usage());
-            createDataSourceUsageArtifacts(context);
+            createDataSourceUsageArtifacts();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained a volume with operating system specific files", ex);
         }
 
     }
 
-    private void createDataSourceUsageArtifacts(IngestJobContext context) throws TskCoreException {
-
+    private void createDataSourceUsageArtifacts() throws TskCoreException {
         createOSInfoDataSourceUsageArtifacts();
-        
+        IngestJobContext context = getIngestJobContext();        
         if (context.dataSourceIngestIsCancelled()) {
             return;
-        }
-        
-        createAndroidMediaCardArtifacts();
-        
+        }        
+        createAndroidMediaCardArtifacts();        
         if (context.dataSourceIngestIsCancelled()) {
             return;
-        }
-        
+        }        
         createDJIDroneDATArtitifacts();
     }
 
@@ -148,7 +148,7 @@ class DataSourceUsageAnalyzer extends Extract {
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                 Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                 dataSourceUsageDescription)); //NON-NLS
-        postArtifact(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes));
+        postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes));
     }
 
     /**

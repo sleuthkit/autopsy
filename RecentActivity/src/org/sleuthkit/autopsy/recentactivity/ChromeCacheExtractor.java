@@ -158,7 +158,7 @@ final class ChromeCacheExtractor {
         "# {3} - cache path",
         "ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}"
     })
-    ChromeCacheExtractor(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar ) { 
+    ChromeCacheExtractor(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) { 
         moduleName = Bundle.ChromeCacheExtractor_moduleName();
         this.dataSource = dataSource;
         this.context = context;

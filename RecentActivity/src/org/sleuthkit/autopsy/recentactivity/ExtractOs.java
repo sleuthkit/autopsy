@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * the data source.
  */
 @Messages({"ExtractOs.parentModuleName=Recent Activity",
-            "ExtractOS_progressMessage=Checking for OS"})
+    "ExtractOS_progressMessage=Checking for OS"})
 class ExtractOs extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractOs.class.getName());
@@ -64,16 +64,21 @@ class ExtractOs extends Extract {
     private static final String LINUX_UBUNTU_PATH = "/etc/lsb-release";
 
     private Content dataSource;
-    
+
+    ExtractOs(IngestJobContext context) {
+        super("", context);
+    }
+
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         try {
             progressBar.progress(Bundle.ExtractOS_progressMessage());
+            IngestJobContext context = getIngestJobContext();
             for (OS_TYPE value : OS_TYPE.values()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     return;
-                }   
+                }
 
                 checkForOSFiles(value);
             }
@@ -102,7 +107,7 @@ class ExtractOs extends Extract {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                     Bundle.ExtractOs_parentModuleName(),
                     osType.getOsInfoLabel())); //NON-NLS
-            postArtifact(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, file, bbattributes));
+            postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, file, bbattributes));
         }
     }
 
@@ -116,7 +121,7 @@ class ExtractOs extends Extract {
      * @return the first AbstractFile found which matched a specified path to
      *         search for
      */
-    private AbstractFile getFirstFileFound(List<String> pathsToSearchFor) throws TskCoreException{
+    private AbstractFile getFirstFileFound(List<String> pathsToSearchFor) throws TskCoreException {
         for (String filePath : pathsToSearchFor) {
             List<AbstractFile> files = currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath));
             if (!files.isEmpty()) {

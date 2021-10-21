@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -32,7 +32,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -55,9 +54,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     private final List<Extract> browserExtractors = new ArrayList<>();
     private final IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
-    private final StringBuilder subCompleted = new StringBuilder();
     protected SleuthkitCase tskCase;
-    private RAOsAccountCache accountCache = new RAOsAccountCache();
 
     RAImageIngestModule() {
     }
@@ -68,23 +65,23 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
         tskCase = Case.getCurrentCase().getSleuthkitCase();
 
-        Extract iexplore = new ExtractIE();
-        Extract edge = new ExtractEdge();
-        Extract registry = new ExtractRegistry();
-        Extract recentDocuments = new RecentDocumentsByLnk();
-        Extract chrome = new Chromium();
-        Extract firefox = new Firefox();
-        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
-        Extract osExtract = new ExtractOs();
-        Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer();
-        Extract safari = new ExtractSafari();
-        Extract zoneInfo = new ExtractZoneIdentifier();
-        Extract recycleBin = new ExtractRecycleBin();
-        Extract sru = new ExtractSru();
-        Extract prefetch = new ExtractPrefetch();
-        Extract webAccountType = new ExtractWebAccountType();
-        Extract messageDomainType = new DomainCategoryRunner();
-        Extract jumpList = new ExtractJumpLists();
+        Extract iexplore = new ExtractIE(context);
+        Extract edge = new ExtractEdge(context);
+        Extract registry = new ExtractRegistry(context);
+        Extract recentDocuments = new RecentDocumentsByLnk(context);
+        Extract chrome = new Chromium(context);
+        Extract firefox = new Firefox(context);
+        Extract SEUQA = new SearchEngineURLQueryAnalyzer(context);
+        Extract osExtract = new ExtractOs(context);
+        Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer(context);
+        Extract safari = new ExtractSafari(context);
+        Extract zoneInfo = new ExtractZoneIdentifier(context);
+        Extract recycleBin = new ExtractRecycleBin(context);
+        Extract sru = new ExtractSru(context);
+        Extract prefetch = new ExtractPrefetch(context);
+        Extract webAccountType = new ExtractWebAccountType(context);
+        Extract messageDomainType = new DomainCategoryRunner(context);
+        Extract jumpList = new ExtractJumpLists(context);
 
         extractors.add(recycleBin); 
         extractors.add(jumpList);
@@ -111,7 +108,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         browserExtractors.add(safari);
 
         for (Extract extractor : extractors) {
-            extractor.init();
+            extractor.configExtractor();
         }
     }
 
@@ -129,21 +126,16 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         for (int i = 0; i < extractors.size(); i++) {
             Extract extracter = extractors.get(i);
             if (context.dataSourceIngestIsCancelled()) {
-                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
+                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getDisplayName()); //NON-NLS
                 break;
             }
 
-            progressBar.progress(extracter.getName(), i);
+            progressBar.progress(extracter.getDisplayName(), i);
 
             try {
-                extracter.process(dataSource, context, progressBar, accountCache);
-                if (extracter instanceof ExtractRegistry) {
-                    accountCache.initialize(tskCase, ((DataSource) dataSource).getHost());
-                }
+                extracter.process(dataSource, progressBar);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
-                subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
-                        extracter.getName()));
+                logger.log(Level.SEVERE, "Exception occurred in " + extracter.getDisplayName(), ex); //NON-NLS
                 errors.add(
                         NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModErrs", RecentActivityExtracterModuleFactory.getModuleName()));
             }
@@ -185,7 +177,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         historyMsg.append(
                 NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.title", dataSource.getName()));
         for (Extract module : browserExtractors) {
-            historyMsg.append("<li>").append(module.getName()); //NON-NLS
+            historyMsg.append("<li>").append(module.getDisplayName()); //NON-NLS
             historyMsg.append(": ").append((module.foundData()) ? NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.found") : NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.notFnd"));
@@ -199,24 +191,21 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
                 historyMsg.toString());
         services.postMessage(inboxMsg);
 
-        if (context.dataSourceIngestIsCancelled()) {
-            return ProcessResult.OK;
-        }
-
-        for (int i = 0; i < extractors.size(); i++) {
-            Extract extracter = extractors.get(i);
-            try {
-                extracter.complete();
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getName(), ex); //NON-NLS
-                subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.complete.errMsg.failed",
-                        extracter.getName()));
-            }
-        }
-
         return ProcessResult.OK;
     }
 
+    @Override
+    public void shutDown() {
+        for (int i = 0; i < extractors.size(); i++) {
+            Extract extracter = extractors.get(i);
+            try {
+                extracter.cleanUp();
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getDisplayName(), ex); //NON-NLS
+            }
+        }        
+    }
+    
     /**
      * Makes a path of the format
      * [basePath]/[RECENT_ACTIVITY_FOLDER]/[module]_[ingest job id] if it does not

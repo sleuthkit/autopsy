@@ -61,8 +61,12 @@ final class ExtractZoneIdentifier extends Extract {
         "ExtractZone_progress_Msg=Extracting :Zone.Identifer files"
     })
 
+    ExtractZoneIdentifier(IngestJobContext context) {
+        super("", context);
+    }    
+    
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         progressBar.progress(Bundle.ExtractZone_progress_Msg());
 
@@ -95,12 +99,12 @@ final class ExtractZoneIdentifier extends Extract {
 
         for (AbstractFile zoneFile : zoneFiles) {
 
-            if (context.dataSourceIngestIsCancelled()) {
+            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
                 return;
             }
 
             try {
-                processZoneFile(context, zoneFile, associatedObjectArtifacts, downloadArtifacts, knownPathIDs);
+                processZoneFile(zoneFile, associatedObjectArtifacts, downloadArtifacts, knownPathIDs);
             } catch (TskCoreException ex) {
                 addErrorMessage(Bundle.ExtractZone_process_errMsg());
                 String message = String.format("Failed to process zone identifier file  %s", zoneFile.getName()); //NON-NLS
@@ -108,7 +112,7 @@ final class ExtractZoneIdentifier extends Extract {
             }
         }
 
-        if (!context.dataSourceIngestIsCancelled()) {
+        if (!getIngestJobContext().dataSourceIngestIsCancelled()) {
             postArtifacts(associatedObjectArtifacts);
             postArtifacts(downloadArtifacts);
         }
@@ -117,14 +121,13 @@ final class ExtractZoneIdentifier extends Extract {
     /**
      * Process a single Zone Identifier file.
      *
-     * @param context                   IngestJobContext
      * @param zoneFile                  Zone Identifier file
      * @param associatedObjectArtifacts List for TSK_ASSOCIATED_OBJECT artifacts
      * @param downloadArtifacts         List for TSK_WEB_DOWNLOAD artifacts
      *
      * @throws TskCoreException
      */
-    private void processZoneFile(IngestJobContext context,
+    private void processZoneFile(
             AbstractFile zoneFile, Collection<BlackboardArtifact> associatedObjectArtifacts,
             Collection<BlackboardArtifact> downloadArtifacts,
             Set<Long> knownPathIDs) throws TskCoreException {
@@ -254,7 +257,7 @@ final class ExtractZoneIdentifier extends Extract {
                     RecentActivityExtracterModuleFactory.getModuleName(),
                     zoneInfo.getZoneIdAsString()));
         }
-        return createArtifactWithAttributes(TSK_WEB_DOWNLOAD, zoneFile, bbattributes);
+        return createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_DOWNLOAD, zoneFile, bbattributes);
     }
 
     /**

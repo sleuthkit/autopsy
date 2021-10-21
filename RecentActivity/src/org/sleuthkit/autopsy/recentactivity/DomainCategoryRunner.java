@@ -180,8 +180,8 @@ class DomainCategoryRunner extends Extract {
     /**
      * Main constructor.
      */
-    DomainCategoryRunner() {
-
+    DomainCategoryRunner(IngestJobContext context) {
+        super("", context);
     }
 
     /**
@@ -439,14 +439,12 @@ class DomainCategoryRunner extends Extract {
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HOST, moduleName, artHost.getHost()),
                 new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, domainCategory)
         );
-        postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_CATEGORIZATION, artHost.getAbstractFile(), bbattributes));
+        postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_CATEGORIZATION, artHost.getAbstractFile(), bbattributes));
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
-        this.context = context;
-
         progressBar.progress(Bundle.DomainCategoryRunner_Progress_Message_Domain_Types());
         this.findDomainTypes();
     }
@@ -500,7 +498,7 @@ class DomainCategoryRunner extends Extract {
     }
 
     @Override
-    public void complete() {
+    public void cleanUp() {
         if (this.domainProviders != null) {
             for (DomainCategorizer provider : this.domainProviders) {
                 try {
@@ -510,7 +508,6 @@ class DomainCategoryRunner extends Extract {
                 }
             }
         }
-
-        logger.info("Domain categorization completed."); //NON-NLS
+        super.cleanUp();
     }
 }

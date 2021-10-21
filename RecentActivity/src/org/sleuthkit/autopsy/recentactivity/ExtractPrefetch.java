@@ -64,9 +64,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class ExtractPrefetch extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractPrefetch.class.getName());
-
-    private IngestJobContext context;
-
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
     private static final String PREFETCH_FILE_LOCATION = "/windows/prefetch";
     private static final String PREFETCH_TOOL_FOLDER = "markmckinnon"; //NON-NLS
@@ -81,27 +78,28 @@ final class ExtractPrefetch extends Extract {
 
     @Messages({
         "ExtractPrefetch_module_name=Windows Prefetch Extractor",
-        "# {0} - sub module name", 
+        "# {0} - sub module name",
         "ExtractPrefetch_errMsg_prefetchParsingFailed={0}: Error analyzing prefetch files"
     })
-    ExtractPrefetch() {
-        super(Bundle.ExtractPrefetch_module_name());
+    ExtractPrefetch(IngestJobContext context) {
+        super(Bundle.ExtractPrefetch_module_name(), context);
     }
 
     /**
      * Get the temp folder name.
-     * 
+     *
      * @param dataSource Current data source
+     *
      * @return The folder name
      */
     private String getPrefetchTempFolder(Content dataSource) {
         return dataSource.getId() + "-" + PREFETCH_PARSER_DB_FILE;
     }
-    
-    @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
 
-        this.context = context;
+    @Override
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
+
+        IngestJobContext context = getIngestJobContext();
         long ingestJobId = context.getJobId();
 
         String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + PREFETCH_DIR_NAME;
@@ -158,6 +156,7 @@ final class ExtractPrefetch extends Extract {
             return;  // No need to continue
         }
 
+        IngestJobContext context = getIngestJobContext();
         for (AbstractFile pFile : pFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
@@ -170,7 +169,7 @@ final class ExtractPrefetch extends Extract {
                 String baseName = FilenameUtils.getBaseName(origFileName);
                 String fileName = escapeFileName(String.format("%s_%d.%s", baseName, pFile.getId(), ext));
                 String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), getPrefetchTempFolder(dataSource), ingestJobId);
-                String prefetchFile =  Paths.get(baseRaTempPath, fileName).toString();
+                String prefetchFile = Paths.get(baseRaTempPath, fileName).toString();
                 try {
                     ContentUtils.writeToFile(pFile, new File(prefetchFile));
                 } catch (IOException ex) {
@@ -206,6 +205,7 @@ final class ExtractPrefetch extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
+        IngestJobContext context = getIngestJobContext();
         ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
     }
 
@@ -260,6 +260,7 @@ final class ExtractPrefetch extends Extract {
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + prefetchDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
 
+            IngestJobContext context = getIngestJobContext();
             while (resultSet.next()) {
 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -289,13 +290,14 @@ final class ExtractPrefetch extends Extract {
                     logger.log(Level.WARNING, "Invalid format for PF file: " + prefetchFileName);//NON-NLS
                     continue;
                 }
-                
-                
+
                 /**
-                 * A prefetch file is created when a program is run and the superfetch service collected data about the first 10 
-                 * seconds of the run, the trace data is then written to a new prefetch file or merged with an existing prefetch file.  
-                 * If the prefetch file gets deleted for some reason then a new one will be created.  See 7500 in JIRA for more 
-                 * information.
+                 * A prefetch file is created when a program is run and the
+                 * superfetch service collected data about the first 10 seconds
+                 * of the run, the trace data is then written to a new prefetch
+                 * file or merged with an existing prefetch file. If the
+                 * prefetch file gets deleted for some reason then a new one
+                 * will be created. See 7500 in JIRA for more information.
                  */
                 AbstractFile pfAbstractFile = null;
                 try {
@@ -303,30 +305,30 @@ final class ExtractPrefetch extends Extract {
                     if (c instanceof AbstractFile) {
                         pfAbstractFile = (AbstractFile) c;
                     }
-                } catch (NoCurrentCaseException | TskCoreException | NumberFormatException ex ) {
+                } catch (NoCurrentCaseException | TskCoreException | NumberFormatException ex) {
                     logger.log(Level.SEVERE, "Unable to find content for: " + prefetchFileName, ex);
                 }
-                        
+
                 if (pfAbstractFile != null) {
                     for (Long executionTime : prefetchExecutionTimes) {
 
                         // only add prefetch file entries that have an actual date associated with them
                         Collection<BlackboardAttribute> blkBrdAttributes = Arrays.asList(
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getDisplayName(),
                                         applicationName),//NON-NLS
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, getName(), filePath),
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, getDisplayName(), filePath),
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getDisplayName(),
                                         executionTime),
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT, getName(), Integer.valueOf(timesProgramRun)),
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT, getDisplayName(), Integer.valueOf(timesProgramRun)),
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), PREFETCH_TSK_COMMENT));
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getDisplayName(), PREFETCH_TSK_COMMENT));
 
                         try {
-                            BlackboardArtifact blkBrdArt = createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN, pfAbstractFile, blkBrdAttributes);
+                            BlackboardArtifact blkBrdArt = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_PROG_RUN, pfAbstractFile, blkBrdAttributes);
                             blkBrdArtList.add(blkBrdArt);
                             BlackboardArtifact associatedBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, blkBrdArt, dataSource);
                             if (associatedBbArtifact != null) {
@@ -346,11 +348,12 @@ final class ExtractPrefetch extends Extract {
             logger.log(Level.WARNING, ex.getMessage());
         }
 
+        IngestJobContext context = getIngestJobContext();
         if (!blkBrdArtList.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(blkBrdArtList);
         }
     }
-    
+
     /**
      * Create associated artifacts using file path name and the artifact it
      * associates with
@@ -365,7 +368,7 @@ final class ExtractPrefetch extends Extract {
     private BlackboardArtifact createAssociatedArtifact(String fileName, String filePathName, BlackboardArtifact bba, Content dataSource) throws TskCoreException {
         AbstractFile sourceFile = getAbstractFile(fileName, filePathName, dataSource);
         if (sourceFile != null) {
-            return createAssociatedArtifact(sourceFile, bba);         
+            return createAssociatedArtifact(sourceFile, bba);
         }
         return null;
     }
@@ -401,7 +404,7 @@ final class ExtractPrefetch extends Extract {
 
         return null;
 
-    }    
+    }
 
     /**
      * Cycle thru the execution times list and only return a new list of times

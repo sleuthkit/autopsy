@@ -69,7 +69,7 @@ import org.sleuthkit.datamodel.blackboardutils.WebBrowserArtifactsHelper;
  * Chromium recent activity extraction
  */
 class Chromium extends Extract {
-    
+
     private static final String HISTORY_QUERY = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, " //NON-NLS
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) AS from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url"; //NON-NLS
     private static final String COOKIE_QUERY = "SELECT name, value, host_key, expires_utc,last_access_utc, creation_utc FROM cookies"; //NON-NLS
@@ -94,13 +94,12 @@ class Chromium extends Extract {
     private static final String WEB_DATA_FILE_NAME = "Web Data";
     private static final String UC_BROWSER_NAME = "UC Browser";
     private static final String ENCRYPTED_FIELD_MESSAGE = "The data was encrypted.";
-    
+
     private Boolean databaseEncrypted = false;
     private Boolean fieldEncrypted = false;
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
-    private IngestJobContext context;
 
     private static final Map<String, String> BROWSERS_MAP = ImmutableMap.<String, String>builder()
             .put("Microsoft Edge", "Microsoft/Edge/User Data/Default")
@@ -127,20 +126,20 @@ class Chromium extends Extract {
         "Progress_Message_Chrome_Logins=Chrome Logins Browser {0}",
         "Progress_Message_Chrome_Cache=Chrome Cache",})
 
-    Chromium() {
-        super(NbBundle.getMessage(Chromium.class, "Chrome.moduleName"));
+    Chromium(IngestJobContext context) {
+        super(NbBundle.getMessage(Chromium.class, "Chrome.moduleName"), context);
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
-        this.context = context;
         dataFound = false;
+        IngestJobContext context = getIngestJobContext();
         long ingestJobId = context.getJobId();
 
         for (Map.Entry<String, String> browser : BROWSERS_MAP.entrySet()) {
             String browserName = browser.getKey();
-            String browserLocation = browser.getValue();
+            //String browserLocation = browser.getValue();
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_History", browserName));
             this.getHistory(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
@@ -181,14 +180,14 @@ class Chromium extends Extract {
         progressBar.progress(Bundle.Progress_Message_Chrome_Cache());
         ChromeCacheExtractor chromeCacheExtractor = new ChromeCacheExtractor(dataSource, context, progressBar);
         chromeCacheExtractor.processCaches();
-
     }
 
     /**
      * Query for history databases and add artifacts
-     * @param browser 
-     * @param browserLocation 
-     * @param ingestJobId The ingest job id.
+     *
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId     The ingest job id.
      */
     private void getHistory(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
@@ -202,7 +201,7 @@ class Chromium extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -222,6 +221,7 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < allocatedHistoryFiles.size()) {
@@ -238,13 +238,13 @@ class Chromium extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Chrome web history artifacts file '%s' (id=%d).",
                         historyFile.getName(), historyFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errAnalyzingFile",
-                        this.getName(), historyFile.getName()));
+                        this.getDisplayName(), historyFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome web history artifacts file '%s' (id=%d).",
                         temps, historyFile.getName(), historyFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errAnalyzingFile",
-                        this.getName(), historyFile.getName()));
+                        this.getDisplayName(), historyFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -254,7 +254,7 @@ class Chromium extends Extract {
             }
             List<HashMap<String, Object>> tempList;
             tempList = this.dbConnect(temps, HISTORY_QUERY);
-            logger.log(Level.INFO, "{0}- Now getting history from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting history from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
@@ -276,7 +276,7 @@ class Chromium extends Extract {
                         (NetworkUtils.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
 
                 try {
-                     bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes));
+                    bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, historyFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create history artifact for file (%d)", historyFile.getId()), ex);
                 }
@@ -291,9 +291,10 @@ class Chromium extends Extract {
 
     /**
      * Search for bookmark files and make artifacts.
+     *
      * @param browser
-     * @param browserLocation 
-     * @param ingestJobId The ingest job id.
+     * @param browserLocation
+     * @param ingestJobId     The ingest job id.
      */
     private void getBookmark(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
@@ -307,7 +308,7 @@ class Chromium extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -317,9 +318,9 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
-
         while (j < bookmarkFiles.size()) {
             AbstractFile bookmarkFile = bookmarkFiles.get(j++);
             if ((bookmarkFile.getSize() == 0) || (bookmarkFile.getName().toLowerCase().contains("-slack"))
@@ -335,17 +336,17 @@ class Chromium extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Chrome bookmark artifacts file '%s' (id=%d).",
                         bookmarkFile.getName(), bookmarkFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile",
-                        this.getName(), bookmarkFile.getName()));
+                        this.getDisplayName(), bookmarkFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome bookmark artifacts file '%s' (id=%d).",
                         temps, bookmarkFile.getName(), bookmarkFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile",
-                        this.getName(), bookmarkFile.getName()));
+                        this.getDisplayName(), bookmarkFile.getName()));
                 continue;
             }
 
-            logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{getName(), temps}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{getDisplayName(), temps}); //NON-NLS
             File dbFile = new File(temps);
             if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
@@ -374,7 +375,7 @@ class Chromium extends Extract {
             } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
                 logger.log(Level.WARNING, "Error parsing Json from Chrome Bookmark.", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile3",
-                        this.getName(), bookmarkFile.getName()));
+                        this.getDisplayName(), bookmarkFile.getName()));
                 continue;
             }
 
@@ -419,14 +420,14 @@ class Chromium extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
 
                 try {
-                    bbartifacts.add(createArtifactWithAttributes(TSK_WEB_BOOKMARK, bookmarkFile, bbattributes));
+                    bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create bookmark artifact for file (%d)", bookmarkFile.getId()), ex);
                 }
-                
+
             }
-            
-            if(!context.dataSourceIngestIsCancelled()) {
+
+            if (!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(bbartifacts);
             }
             bbartifacts.clear();
@@ -436,9 +437,10 @@ class Chromium extends Extract {
 
     /**
      * Queries for cookie files and adds artifacts
+     *
      * @param browser
      * @param browserLocation
-     * @param ingestJobId The ingest job id.
+     * @param ingestJobId     The ingest job id.
      */
     private void getCookie(String browser, String browserLocation, long ingestJobId) {
 
@@ -455,7 +457,7 @@ class Chromium extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -465,6 +467,7 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < cookiesFiles.size()) {
@@ -479,13 +482,13 @@ class Chromium extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Chrome cookie artifacts file '%s' (id=%d).",
                         cookiesFile.getName(), cookiesFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errAnalyzeFile",
-                        this.getName(), cookiesFile.getName()));
+                        this.getDisplayName(), cookiesFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome cookie artifacts file '%s' (id=%d).",
                         temps, cookiesFile.getName(), cookiesFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errAnalyzeFile",
-                        this.getName(), cookiesFile.getName()));
+                        this.getDisplayName(), cookiesFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -495,7 +498,7 @@ class Chromium extends Extract {
             }
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, COOKIE_QUERY);
-            logger.log(Level.INFO, "{0}- Now getting cookies from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting cookies from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
@@ -519,7 +522,7 @@ class Chromium extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
 
                 try {
-                    bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes));
+                    bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_COOKIE, cookiesFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create cookie artifact for file (%d)", cookiesFile.getId()), ex);
                 }
@@ -535,9 +538,10 @@ class Chromium extends Extract {
 
     /**
      * Queries for download files and adds artifacts
+     *
      * @param browser
      * @param browserLocation
-     * @param ingestJobId The ingest job id.
+     * @param ingestJobId     The ingest job id.
      */
     private void getDownload(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
@@ -551,7 +555,7 @@ class Chromium extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -561,6 +565,7 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();        
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < downloadFiles.size()) {
@@ -577,13 +582,13 @@ class Chromium extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Chrome download artifacts file '%s' (id=%d).",
                         downloadFile.getName(), downloadFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errAnalyzeFiles1",
-                        this.getName(), downloadFile.getName()));
+                        this.getDisplayName(), downloadFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome download artifacts file '%s' (id=%d).",
                         temps, downloadFile.getName(), downloadFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errAnalyzeFiles1",
-                        this.getName(), downloadFile.getName()));
+                        this.getDisplayName(), downloadFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -600,7 +605,7 @@ class Chromium extends Extract {
                 tempList = this.dbConnect(temps, DOWNLOAD_QUERY_V30);
             }
 
-            logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 String fullPath = result.get("full_path").toString(); //NON-NLS
@@ -628,9 +633,9 @@ class Chromium extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(), browser));
 
-                    // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
+                // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
                 try {
-                    BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
+                    BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
                     bbartifacts.add(webDownloadArtifact);
                     String normalizedFullPath = FilenameUtils.normalize(fullPath, true);
                     for (AbstractFile downloadedFile : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, FilenameUtils.getName(normalizedFullPath), FilenameUtils.getPath(normalizedFullPath))) {
@@ -652,9 +657,10 @@ class Chromium extends Extract {
 
     /**
      * Gets user logins from Login Data sqlite database
+     *
      * @param browser
      * @param browserLocation
-     * @param ingestJobId The ingest job id.
+     * @param ingestJobId     The ingest job id.
      */
     private void getLogins(String browser, String browserLocation, long ingestJobId) {
 
@@ -670,7 +676,7 @@ class Chromium extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -680,6 +686,7 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();        
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < loginDataFiles.size()) {
@@ -694,13 +701,13 @@ class Chromium extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Chrome login artifacts file '%s' (id=%d).",
                         loginDataFile.getName(), loginDataFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
-                        this.getName(), loginDataFile.getName()));
+                        this.getDisplayName(), loginDataFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome login artifacts file '%s' (id=%d).",
                         temps, loginDataFile.getName(), loginDataFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
-                        this.getName(), loginDataFile.getName()));
+                        this.getDisplayName(), loginDataFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -709,7 +716,7 @@ class Chromium extends Extract {
                 break;
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, LOGIN_QUERY);
-            logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2} artifacts identified.", new Object[]{getName(), temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
@@ -741,7 +748,7 @@ class Chromium extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(), browser));
 
                 try {
-                    bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT, loginDataFile, bbattributes));
+                    bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_SERVICE_ACCOUNT, loginDataFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create service account artifact for file (%d)", loginDataFile.getId()), ex);
                 }
@@ -758,9 +765,10 @@ class Chromium extends Extract {
     /**
      * Gets and parses Autofill data from 'Web Data' database, and creates
      * TSK_WEB_FORM_AUTOFILL, TSK_WEB_FORM_ADDRESS artifacts
+     *
      * @param browser
      * @param browserLocation
-     * @param ingestJobId The ingest job id.
+     * @param ingestJobId     The ingest job id.
      */
     private void getAutofill(String browser, String browserLocation, long ingestJobId) {
 
@@ -776,7 +784,7 @@ class Chromium extends Extract {
         } catch (TskCoreException ex) {
             String msg = NbBundle.getMessage(this.getClass(), "Chrome.getAutofills.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
             return;
         }
 
@@ -786,6 +794,7 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
+        IngestJobContext context = getIngestJobContext();        
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < webDataFiles.size()) {
@@ -801,13 +810,13 @@ class Chromium extends Extract {
                 logger.log(Level.WARNING, String.format("Error reading Chrome Autofill artifacts file '%s' (id=%d).",
                         webDataFile.getName(), webDataFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getAutofill.errMsg.errAnalyzingFiles",
-                        this.getName(), webDataFile.getName()));
+                        this.getDisplayName(), webDataFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome Web data file '%s' (id=%d).",
                         tempFilePath, webDataFile.getName(), webDataFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
-                        this.getName(), webDataFile.getName()));
+                        this.getDisplayName(), webDataFile.getName()));
                 continue;
             }
             File dbFile = new File(tempFilePath);
@@ -826,20 +835,20 @@ class Chromium extends Extract {
                 getFormAddressArtifacts(webDataFile, tempFilePath, isSchemaV8X);
                 if (databaseEncrypted) {
                     String comment = String.format("%s Autofill Database Encryption Detected", browser);
-                   Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                           new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, 
-                                   RecentActivityExtracterModuleFactory.getModuleName(), comment));
+                    Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                            new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                                    RecentActivityExtracterModuleFactory.getModuleName(), comment));
 
-                   bbartifacts.add(
-                           webDataFile.newAnalysisResult(
-                                   BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NOTABLE, 
-                                   null, null, comment, bbattributes).getAnalysisResult()); 
+                    bbartifacts.add(
+                            webDataFile.newAnalysisResult(
+                                    BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, Score.SCORE_NOTABLE,
+                                    null, null, comment, bbattributes).getAnalysisResult());
                 }
             } catch (NoCurrentCaseException | TskCoreException | Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, String.format("Error adding artifacts to the case database "
                         + "for chrome file %s [objId=%d]", webDataFile.getName(), webDataFile.getId()), ex);
             }
-            
+
             dbFile.delete();
         }
 
@@ -852,8 +861,8 @@ class Chromium extends Extract {
      * Extracts and returns autofill artifacts from the given database file
      *
      * @param webDataFile - the database file in the data source
-     * @param dbFilePath - path to a temporary file where the DB file is
-     * extracted
+     * @param dbFilePath  - path to a temporary file where the DB file is
+     *                    extracted
      * @param isSchemaV8X - indicates of the DB schema version is 8X or greater
      *
      * @return collection of TSK_WEB_FORM_AUTOFILL artifacts
@@ -867,7 +876,7 @@ class Chromium extends Extract {
                 : AUTOFILL_QUERY;
 
         List<HashMap<String, Object>> autofills = this.dbConnect(dbFilePath, autoFillquery);
-        logger.log(Level.INFO, "{0}- Now getting Autofill information from {1} with {2} artifacts identified.", new Object[]{getName(), dbFilePath, autofills.size()}); //NON-NLS
+        logger.log(Level.INFO, "{0}- Now getting Autofill information from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), dbFilePath, autofills.size()}); //NON-NLS
         for (HashMap<String, Object> result : autofills) {
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
@@ -902,10 +911,10 @@ class Chromium extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
                         RecentActivityExtracterModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE));
             }
-            
+
             // Add an artifact
             try {
-                bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, webDataFile, bbattributes));
+                bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_FORM_AUTOFILL, webDataFile, bbattributes));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to create web form autopfill artifact for file (%d)", webDataFile.getId()), ex);
             }
@@ -920,8 +929,8 @@ class Chromium extends Extract {
      * database file
      *
      * @param webDataFile - the database file in the data source
-     * @param dbFilePath - path to a temporary file where the DB file is
-     * extracted
+     * @param dbFilePath  - path to a temporary file where the DB file is
+     *                    extracted
      * @param isSchemaV8X - indicates of the DB schema version is 8X or greater
      *
      * @return collection of TSK_WEB_FORM_ADDRESS artifacts
@@ -941,11 +950,11 @@ class Chromium extends Extract {
 
         // Get Web form addresses
         List<HashMap<String, Object>> addresses = this.dbConnect(dbFilePath, webformAddressQuery);
-        logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2} artifacts identified.", new Object[]{getName(), dbFilePath, addresses.size()}); //NON-NLS
+        logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), dbFilePath, addresses.size()}); //NON-NLS
         for (HashMap<String, Object> result : addresses) {
 
             fieldEncrypted = false;
-            
+
             String first_name = processFields(result.get("first_name"));
             String middle_name = processFields(result.get("middle_name"));
             String last_name = processFields(result.get("last_name"));
@@ -968,7 +977,7 @@ class Chromium extends Extract {
             long use_date = 0;
 
             if (isSchemaV8X) {
-                
+
                 full_name = processFields(result.get("full_name"));
                 street_address = processFields(result.get("street_address"));
                 date_modified = result.get("date_modified").toString() != null ? Long.valueOf(result.get("date_modified").toString()) : 0;
@@ -995,7 +1004,7 @@ class Chromium extends Extract {
                 if (fieldEncrypted) {
                     otherAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
                             RecentActivityExtracterModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE)); //NON-NLS
-                    
+
                 }
             }
 
@@ -1007,9 +1016,12 @@ class Chromium extends Extract {
     }
 
     /**
-     * Check the type of the object and if it is bytes then it is encrypted and return the string and
-     * set flag that field and file are encrypted
-     * @param dataValue Object to be checked, the object is from a database result set
+     * Check the type of the object and if it is bytes then it is encrypted and
+     * return the string and set flag that field and file are encrypted
+     *
+     * @param dataValue Object to be checked, the object is from a database
+     *                  result set
+     *
      * @return the actual string or an empty string
      */
     private String processFields(Object dataValue) {
@@ -1018,11 +1030,11 @@ class Chromium extends Extract {
             fieldEncrypted = true;
             databaseEncrypted = true;
         }
-        
+
         return dataValue.toString() != null ? dataValue.toString() : "";
-        
+
     }
-    
+
     private boolean isChromePreVersion30(String temps) {
         String query = "PRAGMA table_info(downloads)"; //NON-NLS
         List<HashMap<String, Object>> columns = this.dbConnect(temps, query);
