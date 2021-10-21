@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
@@ -297,6 +298,50 @@ public class SearchResultSupport {
             @Override
             public boolean isRefreshRequired(DataArtifactSearchParam searchParams, ModuleDataEvent evtData) {
                 return dao.getDataArtifactsDAO().isDataArtifactInvalidating(searchParams, evtData);
+            }
+        };
+
+        return fetchResults(false);
+    }
+
+    /**
+     * Sets the search parameters to the analysis result search parameters.
+     * Subsequent calls that don't change search parameters (i.e. page size
+     * changes, page index changes) will use these search parameters to return
+     * results.
+     *
+     * @param analysisResultParameters The data artifact search parameters.
+     *
+     * @return The results of querying with current paging parameters.
+     *
+     * @throws ExecutionException
+     */
+    public synchronized SearchResultsDTO setAnalysisResult(final AnalysisResultSearchParam analysisResultParameters) throws ExecutionException {
+        resetPaging();
+
+        this.pageFetcher = new DataFetcher<AnalysisResultSearchParam, ModuleDataEvent>() {
+            @Override
+            public AnalysisResultSearchParam getParams(int pageSize, int pageIdx) {
+                return new AnalysisResultSearchParam(
+                        analysisResultParameters.getArtifactType(),
+                        analysisResultParameters.getDataSourceId(),
+                        pageIdx * pageSize,
+                        (long) pageSize);
+            }
+
+            @Override
+            public SearchResultsDTO fetch(AnalysisResultSearchParam searchParams, boolean hardRefresh) throws ExecutionException {
+                return dao.getAnalysisResultDAO().getAnalysisResultsForTable(searchParams, hardRefresh);
+            }
+
+            @Override
+            public ModuleDataEvent extractEvtData(PropertyChangeEvent evt) {
+                return getModuleDataFromEvt(evt);
+            }
+
+            @Override
+            public boolean isRefreshRequired(AnalysisResultSearchParam searchParams, ModuleDataEvent evtData) {
+                return dao.getAnalysisResultDAO().isAnalysisResultsInvalidating(searchParams, evtData);
             }
         };
 

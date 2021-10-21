@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,6 +91,7 @@ import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -874,9 +875,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
                     DataArtifactSearchParam dataArtifactKey = originNode.getLookup().lookup(DataArtifactSearchParam.class);
                     FileTypeExtensionsSearchParams fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsSearchParams.class);
+                    AnalysisResultSearchParam analysisResultKey = originNode.getLookup().lookup(AnalysisResultSearchParam.class);
                     FileTypeMimeSearchParams fileMimeKey = originNode.getLookup().lookup(FileTypeMimeSearchParams.class);
                     if (dataArtifactKey != null) {
                         dataResult.displayDataArtifact(dataArtifactKey);
+                    } else if(analysisResultKey != null) {
+                        dataResult.displayAnalysisResult(analysisResultKey);
                     } else if (fileExtensionsKey != null) {
                         dataResult.displayFileExtensions(fileExtensionsKey);
                     } else if(fileMimeKey != null) {
