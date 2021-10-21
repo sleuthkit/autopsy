@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Event published when an artifact (data artifct or analysis result = "new
+ * An event published when an artifact (data artifct or analysis result = "new
  * data") is posted to the blackboard. The "old" value is a legacy
  * ModuleDataEvent object. The "new" value is null.
  */
