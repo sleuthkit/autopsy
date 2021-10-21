@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
@@ -290,6 +291,33 @@ public class SearchResultSupport {
                     pageIdx * pageSize,
                     (long) pageSize);
             return dao.getViewsDAO().getFilesByMime(searchParams);
+        };
+
+        return fetchResults();
+    }
+    
+    /**
+     * Sets the search parameters to the file size type search parameters.
+     * Subsequent calls that don't change search parameters (i.e. page size
+     * changes, page index changes) will use these search parameters to return
+     * results.
+     *
+     * @param fileSizeKey he file size type search parameters.
+     *
+     * @return The results of querying with current paging parameters.
+     *
+     * @throws ExecutionException
+     * @throws IllegalArgumentException
+     */
+    public synchronized SearchResultsDTO setFileSizes(FileTypeSizeSearchParams fileSizeKey) throws ExecutionException, IllegalArgumentException {
+        resetPaging();
+        this.pageFetcher = (pSize, pIdx) -> {
+            FileTypeSizeSearchParams searchParams = new FileTypeSizeSearchParams(
+                    fileSizeKey.getSizeFilter(),
+                    fileSizeKey.getDataSourceId(),
+                    pIdx * pSize,
+                    (long) pSize);
+            return dao.getViewsDAO().getFilesBySize(searchParams);
         };
 
         return fetchResults();

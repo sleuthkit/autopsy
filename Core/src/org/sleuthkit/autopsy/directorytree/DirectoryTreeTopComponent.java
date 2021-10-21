@@ -92,6 +92,7 @@ import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
@@ -875,12 +876,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     DataArtifactSearchParam dataArtifactKey = originNode.getLookup().lookup(DataArtifactSearchParam.class);
                     FileTypeExtensionsSearchParams fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsSearchParams.class);
                     FileTypeMimeSearchParams fileMimeKey = originNode.getLookup().lookup(FileTypeMimeSearchParams.class);
+                    FileTypeSizeSearchParams fileSizeKey = originNode.getLookup().lookup(FileTypeSizeSearchParams.class);
                     if (dataArtifactKey != null) {
                         dataResult.displayDataArtifact(dataArtifactKey);
                     } else if (fileExtensionsKey != null) {
                         dataResult.displayFileExtensions(fileExtensionsKey);
                     } else if(fileMimeKey != null) {
                         dataResult.displayFileMimes(fileMimeKey);
+                    } else if(fileSizeKey != null) {
+                        dataResult.displayFileSizes(fileSizeKey);
                     } else if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree

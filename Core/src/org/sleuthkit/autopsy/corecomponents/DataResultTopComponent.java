@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 
@@ -398,6 +399,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         dataResultPanel.displayFileExtensions(fileExtensionsParams);
     }
+    
+    /**
+     * Displays results of querying the DAO for files matching the file size 
+     * search parameters query.
+     * 
+     * @param fileSizeParams The search parameter query.
+     */
+    public void displayFileSizes(FileTypeSizeSearchParams fileSizeParams) {
+        dataResultPanel.displayFileSizes(fileSizeParams);
+    } 
 
     @Override
     public void setTitle(String title) {
