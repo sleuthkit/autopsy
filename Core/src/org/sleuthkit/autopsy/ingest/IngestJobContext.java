@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Provides an ingest module with services specific to the ingest job of which
