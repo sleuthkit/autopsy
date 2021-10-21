@@ -292,8 +292,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Handles artifacts posted events published by the Sleuth Kit layer
      * blackboard via the Sleuth Kit event bus.
      *
-     * @param tskEvent A Sleuth Kit data model ArtifactsPostedEvent from the
-     *                 Sleuth Kit event bus.
+     * @param tskEvent The event.
      */
     @Subscribe
     void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent tskEvent) {
