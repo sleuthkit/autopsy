@@ -354,7 +354,7 @@ public class PortableCaseReportModule implements ReportModule {
         }
         for (BlackboardAttribute.ATTRIBUTE_TYPE type : BlackboardAttribute.ATTRIBUTE_TYPE.values()) {
             try {
-                oldAttrTypeIdToNewAttrType.put(type.getTypeID(), portableSkCase.getAttributeType(type.getLabel()));
+                oldAttrTypeIdToNewAttrType.put(type.getTypeID(), portableSkCase.getBlackboard().getAttributeType(type.getLabel()));
             } catch (TskCoreException ex) {
                 handleError("Error looking up attribute name " + type.getLabel(),
                         Bundle.PortableCaseReportModule_generateReport_errorLookingUpAttrType(type.getLabel()),
@@ -1084,7 +1084,7 @@ public class PortableCaseReportModule implements ReportModule {
             return oldArtTypeIdToNewArtTypeId.get(oldArtifact.getArtifactTypeID());
         }
 
-        BlackboardArtifact.Type oldCustomType = currentCase.getSleuthkitCase().getArtifactType(oldArtifact.getArtifactTypeName());
+        BlackboardArtifact.Type oldCustomType = currentCase.getSleuthkitCase().getBlackboard().getArtifactType(oldArtifact.getArtifactTypeName());
         try {
             BlackboardArtifact.Type newCustomType = portableSkCase.getBlackboard().getOrAddArtifactType(oldCustomType.getTypeName(), oldCustomType.getDisplayName());
             oldArtTypeIdToNewArtTypeId.put(oldArtifact.getArtifactTypeID(), newCustomType.getTypeID());
