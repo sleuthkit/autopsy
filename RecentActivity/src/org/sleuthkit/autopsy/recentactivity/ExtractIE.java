@@ -43,7 +43,6 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
