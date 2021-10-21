@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
@@ -53,12 +54,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 abstract class Extract {
 
+    protected final Case currentCase;
+    protected final SleuthkitCase tskCase;
     private static final Logger logger = Logger.getLogger(Extract.class.getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
     private final String displayName;
     private final IngestJobContext context;
-    protected final Case currentCase;
-    protected final SleuthkitCase tskCase;
     protected boolean dataFound = false;
 
     /**
@@ -97,8 +98,8 @@ abstract class Extract {
     abstract void process(Content dataSource, DataSourceIngestModuleProgress progressBar);
 
     /**
-     * Cleans up this extractor. Called by the by the Recent Activity ingest
-     * module in its shutDown() method.
+     * Cleans up this extractor. Called by the Recent Activity ingest module in
+     * its shutDown() method.
      */
     void cleanUp() {
         logger.info(String.format("%s processing completed for Recent Activity ingest module", displayName)); //NON-NLS        
@@ -110,7 +111,7 @@ abstract class Extract {
      * @return errorMessages returns all error messages logged
      */
     List<String> getErrorMessages() {
-        return errorMessages;
+        return Collections.unmodifiableList(errorMessages);
     }
 
     /**
@@ -135,13 +136,12 @@ abstract class Extract {
      * @throws TskCoreException
      */
     BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
-        switch (type.getCategory()) {
-            case DATA_ARTIFACT:
-                return content.newDataArtifact(type, attributes);
-            case ANALYSIS_RESULT:
-                return content.newAnalysisResult(type, Score.SCORE_UNKNOWN, null, null, null, attributes).getAnalysisResult();
-            default:
-                throw new TskCoreException("Unknown category type: " + type.getCategory().getDisplayName());
+        if (type.getCategory() == BlackboardArtifact.Category.DATA_ARTIFACT) {
+                return content.newDataArtifact(type, attributes);            
+        } else if (type.getCategory() == BlackboardArtifact.Category.ANALYSIS_RESULT) {
+                return content.newAnalysisResult(type, Score.SCORE_UNKNOWN, null, null, null, attributes).getAnalysisResult();            
+        } else {
+                throw new TskCoreException("Unknown category type: " + type.getCategory().getDisplayName());            
         }
     }
 
