@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskData;
  * systems the images may have been used by.
  *
  */
-@Messages({"DataSourceUsageAnalyzer.parentModuleName=Recent Activity"})
+@Messages({"DataSourceUsageAnalyzer.displayName=Data Source Usage Analyzer"})
 class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
@@ -58,7 +58,7 @@ class DataSourceUsageAnalyzer extends Extract {
     private Content dataSource;
 
     DataSourceUsageAnalyzer(IngestJobContext context) {
-        super("", context);
+        super(Bundle.DataSourceUsageAnalyzer_displayName(), context);
     }
     
     @Messages({
@@ -146,7 +146,7 @@ class DataSourceUsageAnalyzer extends Extract {
         }
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                getRAModuleName(),
                 dataSourceUsageDescription)); //NON-NLS
         postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes));
     }

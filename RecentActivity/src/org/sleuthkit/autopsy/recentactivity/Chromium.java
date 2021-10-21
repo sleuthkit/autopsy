@@ -139,7 +139,6 @@ class Chromium extends Extract {
 
         for (Map.Entry<String, String> browser : BROWSERS_MAP.entrySet()) {
             String browserName = browser.getKey();
-            //String browserLocation = browser.getValue();
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_History", browserName));
             this.getHistory(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
