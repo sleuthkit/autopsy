@@ -76,10 +76,10 @@ class SearchEngineURLQueryAnalyzer extends Extract {
 
     private Content dataSource;
     private final IngestJobContext context;
-    
+
     SearchEngineURLQueryAnalyzer(IngestJobContext context) {
         super(NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text"), context);
-        this.context = context;        
+        this.context = context;
     }
 
     /**

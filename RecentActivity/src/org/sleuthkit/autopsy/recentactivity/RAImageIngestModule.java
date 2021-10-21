@@ -82,7 +82,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract messageDomainType = new DomainCategoryRunner(context);
         Extract jumpList = new ExtractJumpLists(context);
 
-        extractors.add(recycleBin); 
+        extractors.add(recycleBin);
         extractors.add(jumpList);
         extractors.add(recentDocuments);
         extractors.add(registry); //  needs to run before the DataSourceUsageAnalyzer
@@ -201,18 +201,19 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getDisplayName(), ex); //NON-NLS
             }
-        }        
+        }
     }
-    
+
     /**
      * Makes a path of the format
-     * [basePath]/[RECENT_ACTIVITY_FOLDER]/[module]_[ingest job id] if it does not
-     * already exist and returns the created folder.
+     * [basePath]/[RECENT_ACTIVITY_FOLDER]/[module]_[ingest job id] if it does
+     * not already exist and returns the created folder.
      *
-     * @param basePath The base path (a case-related folder like temp or
-     * output).
-     * @param module The module name to include in the folder name.
+     * @param basePath    The base path (a case-related folder like temp or
+     *                    output).
+     * @param module      The module name to include in the folder name.
      * @param ingestJobId The id of the ingest job.
+     *
      * @return The path to the folder.
      */
     private static String getAndMakeRAPath(String basePath, String module, long ingestJobId) {
@@ -230,8 +231,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      * create the dir if it doesn't exist.
      *
      * @param a_case Case that directory is for
-     * @param mod Module name that will be used for a sub folder in the temp
-     * folder to prevent name collisions
+     * @param mod    Module name that will be used for a sub folder in the temp
+     *               folder to prevent name collisions
      *
      * @return Path to directory
      */
@@ -244,8 +245,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      * create the dir if it doesn't exist.
      *
      * @param a_case Case that directory is for
-     * @param mod Module name that will be used for a sub folder in the temp
-     * folder to prevent name collisions
+     * @param mod    Module name that will be used for a sub folder in the temp
+     *               folder to prevent name collisions
      *
      * @return Path to directory
      */

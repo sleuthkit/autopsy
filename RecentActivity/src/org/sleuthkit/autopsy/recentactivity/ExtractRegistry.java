@@ -174,7 +174,7 @@ class ExtractRegistry extends Extract {
     private final Path rrHome;  // Path to the Autopsy version of RegRipper
     private final Path rrFullHome; // Path to the full version of RegRipper
     private Content dataSource;
-    private final IngestJobContext context;    
+    private final IngestJobContext context;
     private Map<String, String> userNameMap;
     private final List<String> samDomainIDsList = new ArrayList<>();
 

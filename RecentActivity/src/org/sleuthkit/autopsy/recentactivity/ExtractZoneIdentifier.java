@@ -65,9 +65,9 @@ final class ExtractZoneIdentifier extends Extract {
 
     ExtractZoneIdentifier(IngestJobContext context) {
         super(Bundle.ExtractZone_displayName(), context);
-        this.context = context;        
-    }    
-    
+        this.context = context;
+    }
+
     @Override
     void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
@@ -329,7 +329,7 @@ final class ExtractZoneIdentifier extends Extract {
                 properties.load(new ReadContentInputStream(zoneFile));
             } catch (IllegalArgumentException ex) {
                 String message = String.format("Unable to parse Zone Id for File %s", fileName); //NON-NLS
-                LOG.log(Level.WARNING, message);   
+                LOG.log(Level.WARNING, message);
             }
         }
 

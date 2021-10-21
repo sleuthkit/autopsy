@@ -75,7 +75,7 @@ final class ExtractPrefetch extends Extract {
     private static final String PREFETCH_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
     private static final String PREFETCH_PARSER_DB_FILE = "Autopsy_PF_DB.db3"; //NON-NLS
     private static final String PREFETCH_DIR_NAME = "prefetch"; //NON-NLS
-    private final IngestJobContext context;    
+    private final IngestJobContext context;
 
     @Messages({
         "ExtractPrefetch_module_name=Windows Prefetch Extractor",
@@ -84,7 +84,7 @@ final class ExtractPrefetch extends Extract {
     })
     ExtractPrefetch(IngestJobContext context) {
         super(Bundle.ExtractPrefetch_module_name(), context);
-        this.context = context;        
+        this.context = context;
     }
 
     /**

@@ -77,7 +77,7 @@ final class ExtractSru extends Extract {
     })
     ExtractSru(IngestJobContext context) {
         super(Bundle.ExtractSru_module_name(), context);
-         this.context = context;       
+        this.context = context;
     }
 
     @Messages({
