@@ -63,6 +63,7 @@ final class ExtractEdge extends Extract {
 
     private static final Logger LOG = Logger.getLogger(ExtractEdge.class.getName());
     private Content dataSource;
+    private final IngestJobContext context;
     private HashMap<String, ArrayList<String>> containersTable;
 
     private static final String EDGE = "Edge"; //NON-NLS
@@ -122,6 +123,7 @@ final class ExtractEdge extends Extract {
      */
     ExtractEdge(IngestJobContext context) {
         super(Bundle.ExtractEdge_Module_Name(), context);
+        this.context = context;
     }
 
     @Override
@@ -131,7 +133,6 @@ final class ExtractEdge extends Extract {
 
     @Override
     void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        IngestJobContext context = getIngestJobContext();
         String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), EDGE, context.getJobId());
         String moduleTempResultDir = Paths.get(moduleTempDir, EDGE_RESULT_FOLDER_NAME).toString();
 
@@ -212,7 +213,6 @@ final class ExtractEdge extends Extract {
      */
     void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles, DataSourceIngestModuleProgress progressBar,
             String moduleTempDir, String moduleTempResultDir) throws IOException, TskCoreException {
-        IngestJobContext context = getIngestJobContext();
         for (AbstractFile webCacheFile : webCacheFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
@@ -275,7 +275,6 @@ final class ExtractEdge extends Extract {
      * @throws TskCoreException
      */
     void processSpartanDbFile(String eseDumperPath, List<AbstractFile> spartanFiles, String moduleTempDir, String moduleTempResultDir) throws IOException, TskCoreException {
-        IngestJobContext context = getIngestJobContext();
         for (AbstractFile spartanFile : spartanFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
@@ -330,7 +329,6 @@ final class ExtractEdge extends Extract {
             return;
         }
 
-        IngestJobContext context = getIngestJobContext();
         for (File file : historyFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
@@ -417,7 +415,7 @@ final class ExtractEdge extends Extract {
             fileScanner.close();
         }
 
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -437,7 +435,6 @@ final class ExtractEdge extends Extract {
             return;
         }
 
-        IngestJobContext context = getIngestJobContext();        
         for (File file : containerFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
@@ -499,7 +496,6 @@ final class ExtractEdge extends Extract {
             return;
         }
 
-        IngestJobContext context = getIngestJobContext();        
         for (File file : downloadFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
@@ -619,7 +615,7 @@ final class ExtractEdge extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
-        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(getIngestJobContext(), true));
+        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
     }
 
     /**

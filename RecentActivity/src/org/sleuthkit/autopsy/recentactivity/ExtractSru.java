@@ -70,12 +70,14 @@ final class ExtractSru extends Extract {
     private static final String SRU_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
 
     private static final Map<String, AbstractFile> applicationFilesFound = new HashMap<>();
+    private final IngestJobContext context;
 
     @Messages({
         "ExtractSru_module_name=System Resource Usage Extractor"
     })
     ExtractSru(IngestJobContext context) {
         super(Bundle.ExtractSru_module_name(), context);
+         this.context = context;       
     }
 
     @Messages({
@@ -92,7 +94,6 @@ final class ExtractSru extends Extract {
             dir.mkdirs();
         }
 
-        IngestJobContext context = getIngestJobContext();
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru", context.getJobId()); //NON-NLS
         String softwareHiveFileName = getSoftwareHiveFile(dataSource, tempDirPath);
 
@@ -246,7 +247,7 @@ final class ExtractSru extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
-        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(getIngestJobContext(), true));
+        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
     }
 
     private String getPathForSruDumper() {
@@ -283,7 +284,6 @@ final class ExtractSru extends Extract {
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + sruDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
 
-            IngestJobContext context = getIngestJobContext();
             while (resultSet.next()) {
 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -320,7 +320,6 @@ final class ExtractSru extends Extract {
     }
 
     private void createNetUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
-        IngestJobContext context = getIngestJobContext();
         List<BlackboardArtifact> bba = new ArrayList<>();
 
         String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, a.application_name, b.Application_Name formatted_application_name, User_Name, "
@@ -377,13 +376,12 @@ final class ExtractSru extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        if (!getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!context.dataSourceIngestIsCancelled()) {
             postArtifacts(bba);
         }
     }
 
     private void createAppUsageArtifacts(String sruDb, AbstractFile sruAbstractFile) {
-        IngestJobContext context = getIngestJobContext();
         List<BlackboardArtifact> bba = new ArrayList<>();
 
         String sqlStatement = "SELECT STRFTIME('%s', timestamp) ExecutionTime, a.application_name, b.Application_Name formatted_application_name, User_Name "
@@ -395,7 +393,7 @@ final class ExtractSru extends Extract {
 
             while (resultSet.next()) {
 
-                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+                if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled SRU Net Usage Artifact Creation."); //NON-NLS
                     return;
                 }

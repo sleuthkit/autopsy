@@ -68,6 +68,7 @@ final class ExtractJumpLists extends Extract {
     private String moduleName;
     private FileManager fileManager;
     private final IngestServices services = IngestServices.getInstance();
+    private final IngestJobContext context;
 
     @Messages({
         "Jumplist_module_name=Windows Jumplist Extractor",
@@ -75,13 +76,13 @@ final class ExtractJumpLists extends Extract {
     })
     ExtractJumpLists(IngestJobContext context) {
         super(Bundle.Jumplist_module_name(), context);
+        this.context = context;
     }
 
     @Override
     void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         moduleName = Bundle.Jumplist_module_name();
         fileManager = currentCase.getServices().getFileManager();
-        IngestJobContext context = getIngestJobContext();
         long ingestJobId = context.getJobId();
 
         String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), JUMPLIST_DIR_NAME, ingestJobId);
@@ -145,7 +146,6 @@ final class ExtractJumpLists extends Extract {
             return jumpListFiles;  // No need to continue
         }
 
-        IngestJobContext context = getIngestJobContext();
         for (AbstractFile jumpListFile : jumpListFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {

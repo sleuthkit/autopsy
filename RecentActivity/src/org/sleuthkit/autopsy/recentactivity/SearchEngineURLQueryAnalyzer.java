@@ -75,9 +75,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     private static SearchEngineURLQueryAnalyzer.SearchEngine[] engines;
 
     private Content dataSource;
-
+    private final IngestJobContext context;
+    
     SearchEngineURLQueryAnalyzer(IngestJobContext context) {
         super(NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text"), context);
+        this.context = context;        
     }
 
     /**
@@ -309,7 +311,6 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                     Arrays.asList(dataSource.getId()));
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
 
-            IngestJobContext context = getIngestJobContext();
             for (BlackboardArtifact artifact : listArtifacts) {
                 if (context.dataSourceIngestIsCancelled()) {
                     break;       //User cancelled the process.
@@ -388,7 +389,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         } catch (TskCoreException e) {
             logger.log(Level.SEVERE, "Encountered error retrieving artifacts for search engine queries", e); //NON-NLS
         } finally {
-            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 logger.info("Operation terminated by user."); //NON-NLS
             }
             logger.log(Level.INFO, "Extracted {0} queries from the blackboard", totalQueries); //NON-NLS

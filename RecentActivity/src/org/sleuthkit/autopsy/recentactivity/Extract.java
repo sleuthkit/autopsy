@@ -87,16 +87,6 @@ abstract class Extract {
     }
 
     /**
-     * Gets the ingest job context for the ingest job this extractor is working
-     * within.
-     *
-     * @return The context.
-     */
-    protected IngestJobContext getIngestJobContext() {
-        return context;
-    }
-
-    /**
      * Analyzes the given data source. Called by the by the Recent Activity
      * ingest module in its startUp() method.
      *

@@ -54,6 +54,7 @@ class RecentDocumentsByLnk extends Extract {
 
     private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
     private Content dataSource;
+    private final IngestJobContext context;    
     
     @Messages({
         "Progress_Message_Extract_Resent_Docs=Recent Documents",
@@ -61,6 +62,7 @@ class RecentDocumentsByLnk extends Extract {
     })
     RecentDocumentsByLnk(IngestJobContext context) {
         super(Bundle.RecentDocumentsByLnk_displayName(), context);
+        this.context = context;        
     }
     
     /**
@@ -92,7 +94,6 @@ class RecentDocumentsByLnk extends Extract {
         dataFound = true;
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
         HashMap<String, String> recentFileMap = new HashMap<>();
-        IngestJobContext context = getIngestJobContext();
         for (AbstractFile recentFile : recentFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;

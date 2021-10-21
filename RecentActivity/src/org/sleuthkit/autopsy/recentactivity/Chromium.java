@@ -100,6 +100,7 @@ class Chromium extends Extract {
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
+    private final IngestJobContext context;
 
     private static final Map<String, String> BROWSERS_MAP = ImmutableMap.<String, String>builder()
             .put("Microsoft Edge", "Microsoft/Edge/User Data/Default")
@@ -128,13 +129,13 @@ class Chromium extends Extract {
 
     Chromium(IngestJobContext context) {
         super(NbBundle.getMessage(Chromium.class, "Chrome.moduleName"), context);
+        this.context = context;
     }
 
     @Override
     public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         dataFound = false;
-        IngestJobContext context = getIngestJobContext();
         long ingestJobId = context.getJobId();
 
         for (Map.Entry<String, String> browser : BROWSERS_MAP.entrySet()) {
@@ -220,7 +221,6 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < allocatedHistoryFiles.size()) {
@@ -317,7 +317,6 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < bookmarkFiles.size()) {
@@ -466,7 +465,6 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < cookiesFiles.size()) {
@@ -564,7 +562,6 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();        
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < downloadFiles.size()) {
@@ -685,7 +682,6 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();        
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < loginDataFiles.size()) {
@@ -793,7 +789,6 @@ class Chromium extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();        
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < webDataFiles.size()) {

@@ -63,9 +63,11 @@ class ExtractOs extends Extract {
     private static final String LINUX_UBUNTU_PATH = "/etc/lsb-release";
 
     private Content dataSource;
+    private final IngestJobContext context;
 
     ExtractOs(IngestJobContext context) {
         super(Bundle.ExtractOs_displayName(), context);
+        this.context = context;
     }
 
     @Override
@@ -73,7 +75,6 @@ class ExtractOs extends Extract {
         this.dataSource = dataSource;
         try {
             progressBar.progress(Bundle.ExtractOS_progressMessage());
-            IngestJobContext context = getIngestJobContext();
             for (OS_TYPE value : OS_TYPE.values()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     return;

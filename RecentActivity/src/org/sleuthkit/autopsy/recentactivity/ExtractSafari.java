@@ -64,6 +64,7 @@ import org.xml.sax.SAXException;
 final class ExtractSafari extends Extract {
 
     private final IngestServices services = IngestServices.getInstance();
+    private final IngestJobContext context;
 
     // visit_time uses an epoch of Jan 1, 2001 thus the addition of 978307200
     private static final String HISTORY_QUERY = "SELECT url, title, visit_time + 978307200 as time FROM 'history_items' JOIN history_visits ON history_item = history_items.id;"; //NON-NLS
@@ -102,6 +103,7 @@ final class ExtractSafari extends Extract {
 
     ExtractSafari(IngestJobContext context) {
         super(Bundle.ExtractSafari_Module_Name(), context);
+        this.context = context;
     }
 
     @Override
@@ -117,7 +119,6 @@ final class ExtractSafari extends Extract {
             LOG.log(Level.SEVERE, "Exception thrown while processing history file.", ex); //NON-NLS
         }
 
-        IngestJobContext context = getIngestJobContext();
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
@@ -174,7 +175,7 @@ final class ExtractSafari extends Extract {
         setFoundData(true);
 
         for (AbstractFile historyFile : historyFiles) {
-            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
 
@@ -206,7 +207,6 @@ final class ExtractSafari extends Extract {
 
         setFoundData(true);
 
-        IngestJobContext context = getIngestJobContext();
         for (AbstractFile file : files) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -241,7 +241,7 @@ final class ExtractSafari extends Extract {
         setFoundData(true);
 
         for (AbstractFile file : files) {
-            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
 
@@ -269,7 +269,6 @@ final class ExtractSafari extends Extract {
 
         setFoundData(true);
 
-        IngestJobContext context = getIngestJobContext();
         for (AbstractFile file : files) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -369,7 +368,6 @@ final class ExtractSafari extends Extract {
 
         File tempFile = null;
 
-        IngestJobContext context = getIngestJobContext();
         try {
             tempFile = createTemporaryFile(file);
 
@@ -403,7 +401,6 @@ final class ExtractSafari extends Extract {
             return null;
         }
 
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (HashMap<String, Object> row : historyList) {
             if (context.dataSourceIngestIsCancelled()) {
@@ -552,7 +549,6 @@ final class ExtractSafari extends Extract {
         if (reader != null) {
             bbartifacts = new ArrayList<>();
 
-            IngestJobContext context = getIngestJobContext();
             Iterator<Cookie> iter = reader.iterator();
             while (iter.hasNext()) {
                 if (context.dataSourceIngestIsCancelled()) {
@@ -591,7 +587,7 @@ final class ExtractSafari extends Extract {
      */
     private void parseBookmarkDictionary(Collection<BlackboardArtifact> bbartifacts, AbstractFile origFile, NSDictionary root) throws TskCoreException {
 
-        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (context.dataSourceIngestIsCancelled()) {
             return;
         }
 

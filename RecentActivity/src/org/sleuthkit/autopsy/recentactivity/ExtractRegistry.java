@@ -174,6 +174,7 @@ class ExtractRegistry extends Extract {
     private final Path rrHome;  // Path to the Autopsy version of RegRipper
     private final Path rrFullHome; // Path to the full version of RegRipper
     private Content dataSource;
+    private final IngestJobContext context;    
     private Map<String, String> userNameMap;
     private final List<String> samDomainIDsList = new ArrayList<>();
 
@@ -196,6 +197,7 @@ class ExtractRegistry extends Extract {
 
     ExtractRegistry(IngestJobContext context) throws IngestModuleException {
         super(NbBundle.getMessage(ExtractRegistry.class, "ExtractRegistry.moduleName.text"), context);
+        this.context = context;
 
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
@@ -310,7 +312,6 @@ class ExtractRegistry extends Extract {
             logger.log(Level.SEVERE, null, ex);
         }
 
-        IngestJobContext context = getIngestJobContext();
         for (AbstractFile regFile : allRegistryFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
@@ -463,7 +464,7 @@ class ExtractRegistry extends Extract {
             logger.log(Level.INFO, "Writing RegRipper results to: {0}", regOutputFiles.autopsyPlugins); //NON-NLS
             executeRegRipper(rrCmd, rrHome, regFilePath, autopsyType, regOutputFiles.autopsyPlugins, errFilePath);
         }
-        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (context.dataSourceIngestIsCancelled()) {
             return regOutputFiles;
         }
 
@@ -513,7 +514,7 @@ class ExtractRegistry extends Extract {
             processBuilder.directory(regRipperHomeDir.toFile()); // RegRipper 2.8 has to be run from its own directory
             processBuilder.redirectOutput(new File(outputFile));
             processBuilder.redirectError(new File(errFile));
-            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(getIngestJobContext(), true));
+            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error running RegRipper on %s", hiveFilePath), ex); //NON-NLS
             this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getDisplayName(), hiveFilePath));
@@ -530,7 +531,6 @@ class ExtractRegistry extends Extract {
      * @return
      */
     private boolean parseAutopsyPluginOutput(String regFilePath, AbstractFile regFile) {
-        IngestJobContext context = getIngestJobContext();
         FileInputStream fstream = null;
         List<BlackboardArtifact> newArtifacts = new ArrayList<>();
         try {
@@ -1030,7 +1030,7 @@ class ExtractRegistry extends Extract {
             }
         }
 
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1140,7 +1140,7 @@ class ExtractRegistry extends Extract {
         } catch (OsAccountManager.NotUserSIDException ex) {
             logger.log(Level.WARNING, "Error creating OS Account, input SID is not a user SID.", ex); //NON-NLS
         } finally {
-            if (!getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(newArtifacts);
             }
         }
@@ -1292,7 +1292,7 @@ class ExtractRegistry extends Extract {
             }
             line = reader.readLine();
         }
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1365,7 +1365,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1420,7 +1420,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1474,7 +1474,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1525,7 +1525,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1569,7 +1569,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1620,7 +1620,7 @@ class ExtractRegistry extends Extract {
             line = reader.readLine();
             line = line.trim();
         }
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1685,7 +1685,7 @@ class ExtractRegistry extends Extract {
                 line = line.trim();
             }
         }
-        if (!bbartifacts.isEmpty() && !getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -1848,7 +1848,7 @@ class ExtractRegistry extends Extract {
                 artifacts.add(artifact);
             }
         } finally {
-            if (!getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(artifacts);
             }
         }
@@ -2005,7 +2005,7 @@ class ExtractRegistry extends Extract {
         this.dataSource = dataSource;
 
         progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
-        analyzeRegistryFiles(getIngestJobContext().getJobId());
+        analyzeRegistryFiles(context.getJobId());
 
     }
 

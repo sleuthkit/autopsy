@@ -96,22 +96,23 @@ class Firefox extends Extract {
     private static final String FORMHISTORY_QUERY = "SELECT fieldname, value FROM moz_formhistory";
     private static final String FORMHISTORY_QUERY_V64 = "SELECT fieldname, value, timesUsed, firstUsed, lastUsed FROM moz_formhistory";
     private Content dataSource;
+    private final IngestJobContext context;
 
     Firefox(IngestJobContext context) {
         super(NbBundle.getMessage(Firefox.class, "Firefox.moduleName"), context);
+        this.context = context;        
     }
 
     @Override
     public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         dataFound = false;
-        IngestJobContext context = getIngestJobContext();
         long ingestJobId = context.getJobId();
         
         progressBar.progress(Bundle.Progress_Message_Firefox_History());
-        this.getHistory(getIngestJobContext().getJobId());
+        this.getHistory(context.getJobId());
         
-        if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (context.dataSourceIngestIsCancelled()) {
             return;
         }
         
@@ -170,7 +171,6 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile historyFile : historyFiles) {
@@ -279,7 +279,6 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile bookmarkFile : bookmarkFiles) {
@@ -377,7 +376,6 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile cookiesFile : cookiesFiles) {
@@ -508,7 +506,6 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
@@ -643,7 +640,6 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
@@ -785,7 +781,6 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile formHistoryFile : formHistoryFiles) {
@@ -901,7 +896,6 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         int j = 0;
         while (j < autofillProfilesFiles.size()) {
             AbstractFile profileFile = autofillProfilesFiles.get(j++);

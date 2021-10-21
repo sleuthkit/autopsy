@@ -77,12 +77,14 @@ final class ExtractRecycleBin extends Extract {
 
     private static final int V1_FILE_NAME_OFFSET = 24;
     private static final int V2_FILE_NAME_OFFSET = 28;
-
+    private final IngestJobContext context;
+    
     @Messages({
         "ExtractRecycleBin_module_name=Recycle Bin Analyzer"
     })
     ExtractRecycleBin(IngestJobContext context) {
         super(Bundle.ExtractRecycleBin_module_name(), context);
+          this.context = context;  
     }
 
     @Override
@@ -136,7 +138,6 @@ final class ExtractRecycleBin extends Extract {
             return;  // No need to continue
         }
 
-        IngestJobContext context = getIngestJobContext();
         String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin", context.getJobId()); //NON-NLS
 
         // cycle through the $I files and process each. 

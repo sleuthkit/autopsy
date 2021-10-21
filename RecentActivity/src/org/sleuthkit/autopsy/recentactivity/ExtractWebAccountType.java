@@ -43,9 +43,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ExtractWebAccountType extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractWebAccountType.class.getName());
-
+    private final IngestJobContext context;
+    
     ExtractWebAccountType(IngestJobContext context) {
         super(NbBundle.getMessage(ExtractWebAccountType.class, "ExtractWebAccountType.moduleName.text"), context);
+        this.context = context;    
     }
 
     private static final List<BlackboardArtifact.Type> QUERY_ARTIFACTS = Arrays.asList(
@@ -62,11 +64,11 @@ class ExtractWebAccountType extends Extract {
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
 
             // Set up collector for roles
-            RoleProcessor roleProcessor = new RoleProcessor(getIngestJobContext());
+            RoleProcessor roleProcessor = new RoleProcessor(context);
 
             // Process each URL
             for (BlackboardArtifact artifact : listArtifacts) {
-                if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+                if (context.dataSourceIngestIsCancelled()) {
                     return;
                 }
 

@@ -215,6 +215,7 @@ Recently_Used_Artifacts_Winrar=Recently opened according to WinRAR MRU
 Registry_System_Bam=Recently Executed according to Background Activity Moderator (BAM)
 RegRipperFullNotFound=Full version RegRipper executable not found.
 RegRipperNotFound=Autopsy RegRipper executable not found.
+# {0} - file name
 SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.
 SearchEngineURLQueryAnalyzer.moduleName.text=Search Engine
 SearchEngineURLQueryAnalyzer.engineName.none=NONE

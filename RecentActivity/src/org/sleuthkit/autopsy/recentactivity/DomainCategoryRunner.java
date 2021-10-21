@@ -98,13 +98,15 @@ class DomainCategoryRunner extends Extract {
             BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY)
             .map(BlackboardArtifact.Type::new)
             .collect(Collectors.toList());
+    private final IngestJobContext context;
 
     /**
      * Get seconds from epoch from the mapping for the attribute type id.
      *
-     * @param attrMap A mapping of attribute type id to BlackboardAttribute for
-     * an artifact.
+     * @param attrMap    A mapping of attribute type id to BlackboardAttribute
+     *                   for an artifact.
      * @param attrTypeId The attribute type id to fetch.
+     *
      * @return The time in seconds from epoch or 0 if cannot be found.
      */
     private static long getTimeOrZero(Map<Integer, BlackboardAttribute> attrMap, int attrTypeId) {
@@ -119,9 +121,10 @@ class DomainCategoryRunner extends Extract {
     /**
      * Get string for attribute type id or "" if cannot be determined.
      *
-     * @param attrMap A mapping of attribute type id to BlackboardAttribute for
-     * an artifact.
+     * @param attrMap    A mapping of attribute type id to BlackboardAttribute
+     *                   for an artifact.
      * @param attrTypeId The attribute type id to fetch.
+     *
      * @return The string value or "" if cannot be determined or null.
      */
     private static String getStringOrEmpty(Map<Integer, BlackboardAttribute> attrMap, int attrTypeId) {
@@ -181,6 +184,7 @@ class DomainCategoryRunner extends Extract {
      */
     DomainCategoryRunner(IngestJobContext context) {
         super(Bundle.DomainCategoryRunner_moduleName_text(), context);
+        this.context = context;
     }
 
     /**
@@ -188,6 +192,7 @@ class DomainCategoryRunner extends Extract {
      * determined, returns null.
      *
      * @param urlString The url string.
+     *
      * @return The host or null if cannot be determined.
      */
     private String getHost(String urlString) {
@@ -217,7 +222,8 @@ class DomainCategoryRunner extends Extract {
      * Attempts to find the category for the given host/domain.
      *
      * @param domain The domain for the item.
-     * @param host The host for the item.
+     * @param host   The host for the item.
+     *
      * @return The domain category result or null if none can be determined.
      */
     private DomainCategory findCategory(String domain, String host) {
@@ -251,8 +257,10 @@ class DomainCategoryRunner extends Extract {
          * Main constructor.
          *
          * @param abstractFile The parent file of the artifact.
-         * @param host The host of the artifact found in the url attribute.
-         * @param domain The domain of the artifact in the TSK_DOMAIN attribute.
+         * @param host         The host of the artifact found in the url
+         *                     attribute.
+         * @param domain       The domain of the artifact in the TSK_DOMAIN
+         *                     attribute.
          */
         ArtifactHost(AbstractFile abstractFile, String host, String domain) {
             this.abstractFile = abstractFile;
@@ -287,8 +295,10 @@ class DomainCategoryRunner extends Extract {
      * parent file.
      *
      * @param artifact The web artifact to parse.
+     *
      * @return The pertinent information or null if important information cannot
-     * be determined.
+     *         be determined.
+     *
      * @throws TskCoreException
      */
     private ArtifactHost getDomainAndHost(BlackboardArtifact artifact) throws TskCoreException {
@@ -336,9 +346,10 @@ class DomainCategoryRunner extends Extract {
      * item is added to the set.
      *
      * @param items The set of items.
-     * @param item The item whose existence will be checked in the set.
+     * @param item  The item whose existence will be checked in the set.
+     *
      * @return True if item is already contained in 'items'. False if the is
-     * null or if not contained in 'items'.
+     *         null or if not contained in 'items'.
      */
     private static boolean isDuplicateOrAdd(Set<String> items, String item) {
         if (StringUtils.isBlank(item)) {
@@ -359,7 +370,6 @@ class DomainCategoryRunner extends Extract {
     private void findDomainTypes() {
         int artifactsAnalyzed = 0;
         int domainTypeInstancesFound = 0;
-        IngestJobContext context = getIngestJobContext();        
 
         // this will track the different hosts seen to avoid a search for the same host more than once
         Set<String> hostsSeen = new HashSet<>();
@@ -428,8 +438,8 @@ class DomainCategoryRunner extends Extract {
     /**
      * Adds a TSK_WEB_CATEGORIZATION artifact for the given information.
      *
-     * @param artHost Pertinent details for the artifact (i.e. host, domain,
-     * parent file).
+     * @param artHost        Pertinent details for the artifact (i.e. host,
+     *                       domain, parent file).
      * @param domainCategory The category for this host/domain.
      */
     private void addCategoryArtifact(ArtifactHost artHost, String domainCategory) throws TskCoreException {
@@ -453,44 +463,44 @@ class DomainCategoryRunner extends Extract {
     void configExtractor() throws IngestModule.IngestModuleException {
         // lookup all providers, filter null providers, and sort providers
         Collection<? extends DomainCategorizer> lookupCollection = Lookup.getDefault().lookupAll(DomainCategorizer.class);
-        Collection<? extends DomainCategorizer> lookupList = (lookupCollection == null) ? 
-                Collections.emptyList() :
-                lookupCollection;
-        
+        Collection<? extends DomainCategorizer> lookupList = (lookupCollection == null)
+                ? Collections.emptyList()
+                : lookupCollection;
+
         // this will be the class instance of the foundProviders
         List<DomainCategorizer> foundProviders = new ArrayList<>();
-        
+
         // find the custom domain categories provider if present and add it first to the list
         lookupList.stream()
                 .filter(categorizer -> categorizer.getClass().getName().contains(CUSTOM_CATEGORIZER_PATH))
                 .findFirst()
                 .ifPresent((provider) -> foundProviders.add(provider));
-                
+
         // add the default priority categorizer
         foundProviders.add(new DefaultPriorityDomainCategorizer());
-        
+
         // add all others except for the custom web domain categorizer, the default priority 
         // categorizer and the default categorizer
         lookupList.stream()
                 .filter(categorizer -> categorizer != null)
                 .filter(categorizer -> {
                     String className = categorizer.getClass().getName();
-                    return !className.contains(CUSTOM_CATEGORIZER_PATH) &&
-                            !className.equals(DefaultPriorityDomainCategorizer.class.getName()) &&
-                            !className.equals(DefaultDomainCategorizer.class.getName());
+                    return !className.contains(CUSTOM_CATEGORIZER_PATH)
+                            && !className.equals(DefaultPriorityDomainCategorizer.class.getName())
+                            && !className.equals(DefaultDomainCategorizer.class.getName());
                 })
                 .sorted((a, b) -> a.getClass().getName().compareToIgnoreCase(b.getClass().getName()))
                 .forEach(foundProviders::add);
-        
+
         // add the default categorizer last
         foundProviders.add(new DefaultDomainCategorizer());
-        
+
         for (DomainCategorizer provider : foundProviders) {
             try {
                 provider.initialize();
             } catch (DomainCategorizerException ex) {
-                throw new IngestModule.IngestModuleException("There was an error instantiating the provider: " + 
-                        provider.getClass().getSimpleName(), ex);
+                throw new IngestModule.IngestModuleException("There was an error instantiating the provider: "
+                        + provider.getClass().getSimpleName(), ex);
             }
         }
 

@@ -71,6 +71,7 @@ class ExtractIE extends Extract {
     private static final String RESOURCE_URL_PREFIX = "res://";
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
+    private final IngestJobContext context;
 
     @Messages({
         "Progress_Message_IE_History=IE History",
@@ -84,11 +85,11 @@ class ExtractIE extends Extract {
     ExtractIE(IngestJobContext context) {
         super(NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text"), context);
         JAVA_PATH = PlatformUtil.getJavaPath();
+        this.context = context;
     }
 
     @Override
     public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        IngestJobContext context = getIngestJobContext();
         String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), "IE", context.getJobId());
         String moduleTempResultsDir = Paths.get(moduleTempDir, "results").toString();
 
@@ -135,7 +136,6 @@ class ExtractIE extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (AbstractFile fav : favoritesFiles) {
             if (fav.getSize() == 0) {
@@ -237,7 +237,6 @@ class ExtractIE extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (context.dataSourceIngestIsCancelled()) {
@@ -343,7 +342,6 @@ class ExtractIE extends Extract {
         }
 
         dataFound = true;
-        IngestJobContext context = getIngestJobContext();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String temps;
         String indexFileName;
@@ -441,7 +439,7 @@ class ExtractIE extends Extract {
              * contains a lot of useful data and only the last entry is
              * corrupted.
              */
-            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(getIngestJobContext(), true));
+            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
             // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error executing Pasco to process Internet Explorer web history", ex); //NON-NLS
@@ -491,7 +489,6 @@ class ExtractIE extends Extract {
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return bbartifacts;
         }
-        IngestJobContext context = getIngestJobContext();
         while (fileScanner.hasNext()) {
 
             if (context.dataSourceIngestIsCancelled()) {

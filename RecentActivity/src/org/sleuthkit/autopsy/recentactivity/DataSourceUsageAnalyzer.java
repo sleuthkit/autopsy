@@ -56,11 +56,13 @@ class DataSourceUsageAnalyzer extends Extract {
             {".android_secure", "android", "audio",
                 "photos", "dcim", "music", "pictures", "videos"}; //NON-NLS
     private Content dataSource;
+    private final IngestJobContext context;
 
     DataSourceUsageAnalyzer(IngestJobContext context) {
         super(Bundle.DataSourceUsageAnalyzer_displayName(), context);
+        this.context = context;
     }
-    
+
     @Messages({
         "# {0} - OS name",
         "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})",
@@ -79,14 +81,13 @@ class DataSourceUsageAnalyzer extends Extract {
 
     private void createDataSourceUsageArtifacts() throws TskCoreException {
         createOSInfoDataSourceUsageArtifacts();
-        IngestJobContext context = getIngestJobContext();        
         if (context.dataSourceIngestIsCancelled()) {
             return;
-        }        
-        createAndroidMediaCardArtifacts();        
+        }
+        createAndroidMediaCardArtifacts();
         if (context.dataSourceIngestIsCancelled()) {
             return;
-        }        
+        }
         createDJIDroneDATArtitifacts();
     }
 
@@ -160,7 +161,7 @@ class DataSourceUsageAnalyzer extends Extract {
      */
     private void checkIfOsSpecificVolume(ExtractOs.OS_TYPE osType) throws TskCoreException {
         for (String filePath : osType.getFilePaths()) {
-            for (AbstractFile file : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, 
+            for (AbstractFile file : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource,
                     FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
                 createDataSourceUsageArtifact(osType.getDsUsageLabel());
                 return;
@@ -199,7 +200,7 @@ class DataSourceUsageAnalyzer extends Extract {
                     return;
                 }
 
-                if(hasAndroidMediaCardRootNames()) {
+                if (hasAndroidMediaCardRootNames()) {
                     return;
                 }
 
@@ -214,12 +215,12 @@ class DataSourceUsageAnalyzer extends Extract {
 
     /**
      * Checks the data source for any android media card root files
-     * 
+     *
      * @return True if root files were found
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
-    private boolean hasAndroidMediaCardRootNames() throws TskCoreException{
+    private boolean hasAndroidMediaCardRootNames() throws TskCoreException {
         FileManager fileManager = currentCase.getServices().getFileManager();
         for (String fileName : ANDROID_MEDIACARD_ROOT_FILENAMES) {
             for (AbstractFile file : fileManager.findFiles(dataSource, fileName, "/")) { // NON-NLS

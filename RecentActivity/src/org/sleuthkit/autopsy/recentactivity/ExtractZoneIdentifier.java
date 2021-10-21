@@ -54,6 +54,7 @@ final class ExtractZoneIdentifier extends Extract {
     private static final String ZONE_IDENTIFIER_FILE = "%:Zone.Identifier"; //NON-NLS
     private static final String ZONE_IDENTIFIER = ":Zone.Identifier"; //NON-NLS
     private Content dataSource;
+    private final IngestJobContext context;
 
     @Messages({
         "ExtractZone_displayName= Zone Identifier Extractor",
@@ -64,6 +65,7 @@ final class ExtractZoneIdentifier extends Extract {
 
     ExtractZoneIdentifier(IngestJobContext context) {
         super(Bundle.ExtractZone_displayName(), context);
+        this.context = context;        
     }    
     
     @Override
@@ -100,7 +102,7 @@ final class ExtractZoneIdentifier extends Extract {
 
         for (AbstractFile zoneFile : zoneFiles) {
 
-            if (getIngestJobContext().dataSourceIngestIsCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
@@ -113,7 +115,7 @@ final class ExtractZoneIdentifier extends Extract {
             }
         }
 
-        if (!getIngestJobContext().dataSourceIngestIsCancelled()) {
+        if (!context.dataSourceIngestIsCancelled()) {
             postArtifacts(associatedObjectArtifacts);
             postArtifacts(downloadArtifacts);
         }

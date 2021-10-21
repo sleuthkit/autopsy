@@ -75,6 +75,7 @@ final class ExtractPrefetch extends Extract {
     private static final String PREFETCH_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
     private static final String PREFETCH_PARSER_DB_FILE = "Autopsy_PF_DB.db3"; //NON-NLS
     private static final String PREFETCH_DIR_NAME = "prefetch"; //NON-NLS
+    private final IngestJobContext context;    
 
     @Messages({
         "ExtractPrefetch_module_name=Windows Prefetch Extractor",
@@ -83,6 +84,7 @@ final class ExtractPrefetch extends Extract {
     })
     ExtractPrefetch(IngestJobContext context) {
         super(Bundle.ExtractPrefetch_module_name(), context);
+        this.context = context;        
     }
 
     /**
@@ -99,7 +101,6 @@ final class ExtractPrefetch extends Extract {
     @Override
     void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
-        IngestJobContext context = getIngestJobContext();
         long ingestJobId = context.getJobId();
 
         String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + PREFETCH_DIR_NAME;
@@ -156,7 +157,6 @@ final class ExtractPrefetch extends Extract {
             return;  // No need to continue
         }
 
-        IngestJobContext context = getIngestJobContext();
         for (AbstractFile pFile : pFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
@@ -205,7 +205,7 @@ final class ExtractPrefetch extends Extract {
         processBuilder.redirectOutput(outputFilePath.toFile());
         processBuilder.redirectError(errFilePath.toFile());
 
-        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(getIngestJobContext(), true));
+        ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context, true));
     }
 
     /**
@@ -256,7 +256,6 @@ final class ExtractPrefetch extends Extract {
                 + " Embeded_date_Time_Unix_6, Embeded_date_Time_Unix_7, Embeded_date_Time_Unix_8 "
                 + " FROM prefetch_file_info;"; //NON-NLS
 
-        IngestJobContext context = getIngestJobContext();
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + prefetchDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
 
