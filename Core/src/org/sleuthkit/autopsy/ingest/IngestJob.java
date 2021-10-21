@@ -120,7 +120,7 @@ public final class IngestJob {
     }
 
     /**
-     * Gets the data source to be analyzed for this job.
+     * Gets the data source to be analyzed by this job.
      *
      * @return The data source.
      */
