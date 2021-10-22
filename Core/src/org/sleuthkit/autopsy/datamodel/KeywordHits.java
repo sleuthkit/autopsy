@@ -59,7 +59,6 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.datamodel.AnalysisResult;
 
@@ -508,7 +507,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
@@ -521,7 +520,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void finalize() throws Throwable{
+        protected void finalize() throws Throwable {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
@@ -580,11 +579,6 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         private ListNode(String listName) {
             super(Children.create(new TermFactory(listName), true), Lookups.singleton(listName), listName);
-            
-//           super(Children.create(new TermFactory(listName), true),Lookups.fixed(listName, 
-//                            new KeywordHitSearchParam(
-//                                    filteringDSObjId > 0 ? filteringDSObjId : null,listName)), listName);
-            
             super.setName(listName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             this.listName = listName;
@@ -796,7 +790,10 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String instance;
 
         private RegExpInstanceNode(String setName, String keyword, String instance) {
-            super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(instance), instance);
+            super(Children.LEAF, Lookups.fixed(setName,
+                    new KeywordHitSearchParam(
+                            filteringDSObjId > 0 ? filteringDSObjId : null,
+                            setName, keyword, instance)), instance);
 
             /**
              * We differentiate between the programmatic name and the display

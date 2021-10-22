@@ -888,8 +888,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         dataResult.displayFileExtensions(fileExtensionsKey);
                     } else if(fileMimeKey != null) {
                         dataResult.displayFileMimes(fileMimeKey);
-                    } else if (kwHitKey != null) {
-                        dataResult.displayKeywordHits(kwHitKey);
                     } else if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree

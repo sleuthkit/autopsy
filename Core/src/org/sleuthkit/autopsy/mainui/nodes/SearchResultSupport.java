@@ -312,12 +312,12 @@ public class SearchResultSupport {
      */
     public synchronized SearchResultsDTO setFileMimes(FileTypeMimeSearchParams fileMimeKey) throws ExecutionException, IllegalArgumentException {
         resetPaging();
-        this.pageFetcher = (pageSize, pageIdx) -> {
+        this.pageFetcher = (pSize, pIdx) -> {
             FileTypeMimeSearchParams searchParams = new FileTypeMimeSearchParams(
                     fileMimeKey.getMimeType(),
                     fileMimeKey.getDataSourceId(),
-                    pageIdx * pageSize,
-                    (long) pageSize);
+                    pIdx * pSize,
+                    (long) pSize);
             return dao.getViewsDAO().getFilesByMime(searchParams);
         };
 

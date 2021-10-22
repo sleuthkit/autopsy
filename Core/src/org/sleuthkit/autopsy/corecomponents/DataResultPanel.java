@@ -1129,6 +1129,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     }
 
+    /**
+     * Display results of querying the DAO for files matching the file
+     * mime search parameters query.
+     * 
+     * @param fileMimeKey The search parameter query.
+     */
     void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         try {
             SearchResultsDTO results = searchResultSupport.setFileMimes(fileMimeKey);
