@@ -242,7 +242,11 @@ public class PortableCaseReportModule implements ReportModule {
         "PortableCaseReportModule.generateReport.compressingCase=Compressing case...",
         "PortableCaseReportModule_generateReport_copyingAutopsy=Copying application..."
     })
-
+    /**
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
+     */
+    @SuppressWarnings("deprecation")
     public void generateReport(String reportPath, PortableCaseReportModuleSettings options, ReportProgressPanel progressPanel) {
         this.settings = options;
         progressPanel.setIndeterminate(true);
@@ -604,7 +608,11 @@ public class PortableCaseReportModule implements ReportModule {
      * Load all interesting BlackboardArtifacts that belong to the selected
      * SET_NAME. This operation would be duplicated for every data source, since
      * the Sleuthkit API does not have a notion of searching by data source id.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     private Multimap<Long, BlackboardArtifact> getInterestingArtifactsBySetName(SleuthkitCase skCase, List<String> setNames) throws TskCoreException {
         Multimap<Long, BlackboardArtifact> artifactsWithSetName = ArrayListMultimap.create();
         if (!setNames.isEmpty()) {
@@ -670,6 +678,11 @@ public class PortableCaseReportModule implements ReportModule {
         return false;
     }
 
+    /**
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
+     */
+    @SuppressWarnings("deprecation")
     private List<String> getAllInterestingItemsSets() throws NoCurrentCaseException, TskCoreException {
 
         // Get the set names in use for the current case.

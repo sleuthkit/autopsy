@@ -1136,7 +1136,11 @@ class TableReportGenerator {
          *         not defined in artifact
          *
          * @throws TskCoreException
+         *
+         * @SuppressWarnings("deprecation") - we need to support already
+         * existing interesting file and artifact hits.
          */
+        @SuppressWarnings("deprecation")
         private List<String> getOrderedRowDataAsStrings() throws TskCoreException {
 
             List<String> orderedRowData = new ArrayList<>();

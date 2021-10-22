@@ -60,6 +60,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_INTERESTING_AR
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_GEN_INFO;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_INTERESTING_ITEM;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_TL_EVENT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
@@ -235,7 +236,11 @@ public class Artifacts {
          *                is less than or equal to 0, no filtering will occur.
          *
          * @return The generated key.
+         *
+         * @SuppressWarnings("deprecation") - we need to support already
+         * existing interesting file and artifact hits.
          */
+        @SuppressWarnings("deprecation")
         private static TypeNodeKey getTypeKey(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
             int typeId = type.getTypeID();
             if (TSK_EMAIL_MSG.getTypeID() == typeId) {

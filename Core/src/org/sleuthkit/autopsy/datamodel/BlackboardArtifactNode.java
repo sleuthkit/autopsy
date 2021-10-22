@@ -149,9 +149,13 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     /*
      * Artifact types for which the file metadata of the artifact's source file
      * should be displayed in the node's property sheet.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     private static final Integer[] SHOW_FILE_METADATA = new Integer[]{
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(), 
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
         BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()
     };
 
@@ -869,6 +873,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.path.displayName=Path",
         "BlackboardArtifactNode.createSheet.path.name=Path"
     })
+    /*
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
+     */
+    @SuppressWarnings("deprecation")
     @Override
     protected Sheet createSheet() {
         /*
@@ -947,7 +956,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                             associatedArtifact.getShortDescription()));
                 }
             } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting associated artifact of " + artifact.getType().getTypeName() + " artifact (objID={0}))", artifact.getId()), ex); //NON-NLS
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting associated artifact with type " + artifact.getArtifactTypeName() + " artifact (objID={0}))", artifact.getId()), ex); //NON-NLS
             }
         }
 

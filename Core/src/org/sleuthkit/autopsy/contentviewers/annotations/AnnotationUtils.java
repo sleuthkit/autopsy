@@ -203,7 +203,11 @@ public class AnnotationUtils {
      *                      comes.
      *
      * @return If any content was actually rendered.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     private static boolean renderArtifact(Element parent, BlackboardArtifact bba, Content sourceContent) {
         boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(bba), false, true);
 
@@ -246,7 +250,11 @@ public class AnnotationUtils {
      *                      subheader as opposed to a top-level header.
      *
      * @return If any content was actually rendered.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     private static boolean renderContent(Element parent, Content sourceContent, boolean isSubheader) {
         boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(sourceContent), isSubheader, true);
 

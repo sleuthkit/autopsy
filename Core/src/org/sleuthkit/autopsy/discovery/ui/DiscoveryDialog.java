@@ -720,8 +720,13 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      */
     private class ModuleChangeListener implements PropertyChangeListener {
 
-        @Override
+        /**
+         * @SuppressWarnings("deprecation") - we need to support already
+         * existing interesting file and artifact hits.
+         */
+        @SuppressWarnings("deprecation")
         @SuppressWarnings("fallthrough")
+        @Override
         public void propertyChange(PropertyChangeEvent evt) {
             if (!shouldUpdate) {
                 String eventType = evt.getPropertyName();

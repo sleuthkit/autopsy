@@ -1331,7 +1331,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * DirectoryTreeTopComponent.viewArtifact, ViewContextAction
      *
      * @param art The artifact.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     public void viewArtifact(final BlackboardArtifact art) {
         int typeID = art.getArtifactTypeID();
         String typeName = art.getArtifactTypeName();
