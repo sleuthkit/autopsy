@@ -44,7 +44,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -59,7 +58,7 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategory;
  * is created.
  */
 @Messages({
-    "DomainCategoryRunner_moduleName_text=Domain Category Runner",
+    "DomainCategoryRunner_moduleName_text=Domain Category Analyzer",
     "DomainCategoryRunner_Progress_Message_Domain_Types=Finding Domain Types",
     "DomainCategoryRunner_parentModuleName=Recent Activity"
 })
