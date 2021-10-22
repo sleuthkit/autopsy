@@ -879,7 +879,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     FileTypeExtensionsSearchParams fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsSearchParams.class);
                     AnalysisResultSearchParam analysisResultKey = originNode.getLookup().lookup(AnalysisResultSearchParam.class);
                     FileTypeMimeSearchParams fileMimeKey = originNode.getLookup().lookup(FileTypeMimeSearchParams.class);
-                    KeywordHitSearchParam kwHitKey = originNode.getLookup().lookup(KeywordHitSearchParam.class);
                     if (dataArtifactKey != null) {
                         dataResult.displayDataArtifact(dataArtifactKey);
                     } else if(analysisResultKey != null) {
