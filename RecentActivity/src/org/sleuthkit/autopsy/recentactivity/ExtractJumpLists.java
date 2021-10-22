@@ -71,7 +71,7 @@ final class ExtractJumpLists extends Extract {
     private final IngestJobContext context;
 
     @Messages({
-        "Jumplist_module_name=Windows Jumplist Extractor",
+        "Jumplist_module_name=Windows Jumplist Analyzer",
         "Jumplist_adding_extracted_files_msg=Chrome Cache: Adding %d extracted files for analysis."
     })
     ExtractJumpLists(IngestJobContext context) {
