@@ -105,17 +105,17 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     // TODO We can probably combine all the caches at some point
-    private final Cache<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<HashHitSearchParam, AnalysisResultTableSearchResultsDTO> hashHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<KeywordHitSearchParam, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<AnalysisResultSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<HashHitSearchParam>, AnalysisResultTableSearchResultsDTO> hashHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
-    private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(AnalysisResultSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(SearchParams<AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
 
-        Long dataSourceId = cacheKey.getDataSourceId();
-        BlackboardArtifact.Type artType = cacheKey.getArtifactType();
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
         // get analysis results
         List<BlackboardArtifact> arts = new ArrayList<>();
@@ -130,13 +130,13 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
     }
 
-    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(AnalysisResultSetSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSetSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
 
-        Long dataSourceId = cacheKey.getDataSourceId();
-        BlackboardArtifact.Type artType = cacheKey.getArtifactType();
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
         // Get all hash set hits
         List<AnalysisResult> allHashHits;
@@ -150,7 +150,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         List<BlackboardArtifact> arts = new ArrayList<>();
         for (AnalysisResult art : allHashHits) {
             BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
-            if ((setNameAttr != null) && cacheKey.getSetName().equals(setNameAttr.getValueString())) {
+            if ((setNameAttr != null) && cacheKey.getParamData().getSetName().equals(setNameAttr.getValueString())) {
                 arts.add(art);
             }
         }
@@ -225,11 +225,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new AnalysisResultRowDTO((AnalysisResult) artifact, srcContent, isTimelineSupported, cellValues, id);
     }
 
-    public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        if (hardRefresh) {
-            analysisResultCache.invalidate(artifactKey);
-        }
-
+    public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
 
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.ANALYSIS_RESULT
@@ -238,40 +234,47 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     + "Artifact type must be non-null and analysis result.  Data source id must be null or > 0.  "
                     + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
+        
+        SearchParams<AnalysisResultSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        if (hardRefresh) {
+            analysisResultCache.invalidate(searchParams);
+        }
 
-        return analysisResultCache.get(artifactKey, () -> fetchAnalysisResultsForTable(artifactKey));
+        return analysisResultCache.get(searchParams, () -> fetchAnalysisResultsForTable(searchParams));
     }
 
     public boolean isAnalysisResultsInvalidating(AnalysisResultSearchParam key, ModuleDataEvent eventData) {
         return key.getArtifactType().equals(eventData.getBlackboardArtifactType());
     }
 
-    public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        if (hardRefresh) {
-            hashHitCache.invalidate(artifactKey);
-        }
-
+    public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Data source id must be null or > 0.  "
                     + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        return hashHitCache.get(artifactKey, () -> fetchSetNameHitsForTable(artifactKey));
+        SearchParams<HashHitSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        if (hardRefresh) {
+            hashHitCache.invalidate(searchParams);
+        }
+
+        return hashHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
-    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        if (hardRefresh) {
-            keywordHitCache.invalidate(artifactKey);
-        }
-
+    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Data source id must be null or > 0.  "
                     + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        return keywordHitCache.get(artifactKey, () -> fetchSetNameHitsForTable(artifactKey));
+        SearchParams<KeywordHitSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        if (hardRefresh) {
+            keywordHitCache.invalidate(searchParams);
+        }
+
+        return keywordHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
     public void dropAnalysisResultCache() {

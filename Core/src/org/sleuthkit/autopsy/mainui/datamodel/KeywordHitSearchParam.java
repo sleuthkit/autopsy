@@ -34,12 +34,6 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
         this.keyword = keyword;
         this.regex = regex;
     }
-
-    public KeywordHitSearchParam(Long dataSourceId, String setName, String keyword, String regex, long startItem, Long maxResultsCount) {
-        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName, startItem, maxResultsCount);
-        this.keyword = keyword;
-        this.regex = regex;
-    }
     
     public String getRegex() {
         return regex;
@@ -48,13 +42,13 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
     public String getKeyword() {
         return keyword;
     }
-    
+
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.keyword);
-        hash = 23 * hash + Objects.hashCode(this.regex);
-        hash = 23 * hash + Objects.hashCode(super.hashCode());
+        int hash = 3;
+        hash = 29 * hash + Objects.hashCode(this.keyword);
+        hash = 29 * hash + Objects.hashCode(this.regex);
+        hash = 29 * hash + super.hashCode();
         return hash;
     }
 
@@ -70,15 +64,14 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
             return false;
         }
         final KeywordHitSearchParam other = (KeywordHitSearchParam) obj;
-        if (!Objects.equals(this.getDataSourceId(), other.getDataSourceId())) {
+        if (!Objects.equals(this.keyword, other.keyword)) {
             return false;
         }
-        if (!Objects.equals(this.getKeyword(), other.getKeyword())) {
+        if (!Objects.equals(this.regex, other.regex)) {
             return false;
         }
-        if (!Objects.equals(this.getRegex(), other.getRegex())) {
-            return false;
-        }
-        return super.equalFields(other);
+        return super.equals(obj);
     }
+    
+    
 }

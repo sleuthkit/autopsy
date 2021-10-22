@@ -22,14 +22,12 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -41,7 +39,6 @@ import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -83,7 +80,7 @@ public class ViewsDAO {
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<BaseSearchParams, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
@@ -162,46 +159,49 @@ public class ViewsDAO {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        if (hardRefresh) {
-            this.searchParamsCache.invalidate(key);
-        }
-
+    public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (key.getFilter() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return searchParamsCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
-    }
-
-    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        SearchParams<FileTypeExtensionsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
         if (hardRefresh) {
-            this.searchParamsCache.invalidate(key);
+            this.searchParamsCache.invalidate(searchParams);
         }
 
+        return searchParamsCache.get(searchParams, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), startItem, maxCount));
+    }
+
+    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (key.getMimeType() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return searchParamsCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
-    }
-
-    public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        SearchParams<FileTypeMimeSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
         if (hardRefresh) {
-            this.searchParamsCache.invalidate(key);
+            this.searchParamsCache.invalidate(searchParams);
         }
 
+        return searchParamsCache.get(searchParams, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), startItem, maxCount));
+    }
+
+    public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (key.getSizeFilter() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        return searchParamsCache.get(key, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
+        SearchParams<FileTypeSizeSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        if (hardRefresh) {
+            this.searchParamsCache.invalidate(searchParams);
+        }
+
+        return searchParamsCache.get(searchParams, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), startItem, maxCount));
     }
 
     public boolean isFilesByExtInvalidating(FileTypeExtensionsSearchParams key, Content eventData) {

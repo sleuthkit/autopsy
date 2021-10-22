@@ -60,13 +60,17 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import org.sleuthkit.autopsy.mainui.nodes.SearchResultSupport;
+import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
+import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * A result view panel is a JPanel with a JTabbedPane child component that
@@ -114,7 +118,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private Node currentRootNode;
     private boolean listeningToTabbedPane;
     private BaseChildFactoryPager pagingSupport = null;
-    private final SearchResultSupport searchResultSupport = new SearchResultSupport(UserPreferences.getResultsTablePageSize());
+    private int pageSize;
+    private SearchManager searchResultManager = null;
 
     private final PreferenceChangeListener pageSizeListener = (PreferenceChangeEvent evt) -> {
         if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
@@ -125,10 +130,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             });
 
             try {
-                if (this.searchResultSupport.getCurrentSearchResults() != null) {
-                    displaySearchResults(this.searchResultSupport.updatePageSize(newPageSize), false);
+                if (this.searchResultManager.getCurrentSearchResults() != null) {
+                    displaySearchResults(this.searchResultManager.updatePageSize(newPageSize), false);
                 } else {
-                    this.searchResultSupport.setPageSize(newPageSize);
+                    this.searchResultManager.setPageSize(newPageSize);
                     setNode(this.currentRootNode);
                 }
 
@@ -157,7 +162,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             IngestManager.IngestModuleEvent.DATA_ADDED);
 
     private final PropertyChangeListener ingestModuleListener = evt -> {
-        if (this.searchResultSupport.isRefreshRequired(evt)) {
+        if (this.searchResultManager.isRefreshRequired(evt)) {
             refreshSearchResultChildren();
         }
     };
@@ -497,7 +502,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.pagingSupport = null;
         } else {
             // otherwise clear out search result support parameters
-            this.searchResultSupport.clearSearchParameters();
+            this.searchResultManager.clearSearchParameters();
 
             // if there is a node, set up paging
             if (this.currentRootNode != null) {
@@ -537,8 +542,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         setupTabs(this.currentRootNode, fullRefresh);
 
         if (fullRefresh && this.currentRootNode != null) {
-            long childrenCount = (this.searchResultSupport.getCurrentSearchResults() != null)
-                    ? this.searchResultSupport.getCurrentSearchResults().getTotalResultsCount()
+            long childrenCount = (this.searchResultManager.getCurrentSearchResults() != null)
+                    ? this.searchResultManager.getCurrentSearchResults().getTotalResultsCount()
                     : this.currentRootNode.getChildren().getNodesCount();
             this.numberOfChildNodesLabel.setText(Long.toString(childrenCount));
         }
@@ -652,7 +657,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          */
         if (tabToSelect != NO_TAB_SELECTED) {
             resultViewerTabs.setSelectedIndex(tabToSelect);
-            resultViewers.get(tabToSelect).setNode(selectedNode, this.searchResultSupport.getCurrentSearchResults());
+            resultViewers.get(tabToSelect).setNode(selectedNode, this.searchResultManager.getCurrentSearchResults());
         }
     }
 
@@ -669,8 +674,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         if (currentTab != DataResultPanel.NO_TAB_SELECTED) {
             DataResultViewer currentViewer = this.resultViewers.get(currentTab);
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            if (this.searchResultSupport.getCurrentSearchResults() != null) {
-                currentViewer.setNode(currentRootNode, this.searchResultSupport.getCurrentSearchResults());
+            if (this.searchResultManager.getCurrentSearchResults() != null) {
+                currentViewer.setNode(currentRootNode, this.searchResultManager.getCurrentSearchResults());
             } else {
                 currentViewer.setNode(currentRootNode);
             }
@@ -814,8 +819,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          *
          */
         private void updateMatches() {
-            if (DataResultPanel.this.searchResultSupport.getCurrentSearchResults() != null) {
-                long resultCount = DataResultPanel.this.searchResultSupport.getCurrentSearchResults().getTotalResultsCount();
+            if (DataResultPanel.this.searchResultManager.getCurrentSearchResults() != null) {
+                long resultCount = DataResultPanel.this.searchResultManager.getCurrentSearchResults().getTotalResultsCount();
                 if (resultCount > Integer.MAX_VALUE) {
                     resultCount = Integer.MAX_VALUE;
                 }
@@ -1026,9 +1031,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }// </editor-fold>//GEN-END:initComponents
 
     private void pagePrevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pagePrevButtonActionPerformed
-        if (this.searchResultSupport.getCurrentSearchResults() != null) {
+        if (this.searchResultManager.getCurrentSearchResults() != null) {
             try {
-                displaySearchResults(this.searchResultSupport.decrementPageIdx(), false);
+                displaySearchResults(this.searchResultManager.decrementPageIdx(), false);
             } catch (IllegalArgumentException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Decrementing page index failed", ex);
             }
@@ -1038,9 +1043,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }//GEN-LAST:event_pagePrevButtonActionPerformed
 
     private void pageNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pageNextButtonActionPerformed
-        if (this.searchResultSupport.getCurrentSearchResults() != null) {
+        if (this.searchResultManager.getCurrentSearchResults() != null) {
             try {
-                displaySearchResults(this.searchResultSupport.incrementPageIdx(), false);
+                displaySearchResults(this.searchResultManager.incrementPageIdx(), false);
             } catch (IllegalArgumentException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Decrementing page index failed", ex);
             }
@@ -1054,9 +1059,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             int parsedIdx = Integer.parseInt(this.gotoPageTextField.getText()) - 1;
             // ensure index is [0, pageNumber)
-            if (this.searchResultSupport.getCurrentSearchResults() != null) {
-                int pageIdx = Math.max(0, Math.min(this.searchResultSupport.getTotalPages() - 1, parsedIdx));
-                displaySearchResults(this.searchResultSupport.updatePageIdx(pageIdx), false);
+            if (this.searchResultManager.getCurrentSearchResults() != null) {
+                int pageIdx = Math.max(0, Math.min(this.searchResultManager.getTotalPages() - 1, parsedIdx));
+                displaySearchResults(this.searchResultManager.updatePageIdx(pageIdx), false);
             } else {
                 setBaseChildFactoryPageIdx(parsedIdx);
             }
@@ -1140,7 +1145,25 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
         try {
-            SearchResultsDTO results = searchResultSupport.setDataArtifact(dataArtifactParams);
+            DAOFetcher<DataArtifactSearchParam> fetcher = new DAOFetcher<DataArtifactSearchParam>(dataArtifactParameters) {
+                @Override
+                public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+                    return MainDAO.getInstance().getDataArtifactsDAO().getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+                }
+
+                @Override
+                public boolean isRefreshRequired(PropertyChangeEvent evt) {
+                    ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
+                    if (dataEvent == null) {
+                        return false;
+                    }
+
+                    return MainDAO.getInstance().getDataArtifactsDAO().isDataArtifactInvalidating(this.getParameters(), dataEvent);
+                }
+            };
+
+            this.searchResultManager = new SearchManager(fetcher, pageSize);
+            SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
@@ -1153,7 +1176,25 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
         try {
-            SearchResultsDTO results = searchResultSupport.setAnalysisResult(analysisResultParams);
+            DAOFetcher<AnalysisResultSearchParam> fetcher = new DAOFetcher<AnalysisResultSearchParam>(analysisResultParams) {
+                @Override
+                public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+                    return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+                }
+
+                @Override
+                public boolean isRefreshRequired(PropertyChangeEvent evt) {
+                    ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
+                    if (dataEvent == null) {
+                        return false;
+                    }
+
+                    return MainDAO.getInstance().getAnalysisResultDAO().isAnalysisResultsInvalidating(this.getParameters(), dataEvent);
+                }
+            };
+
+            this.searchResultManager = new SearchManager(fetcher, pageSize);
+            SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
@@ -1172,7 +1213,24 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         try {
-            SearchResultsDTO results = searchResultSupport.setFileExtensions(fileExtensionsParams);
+            DAOFetcher<FileTypeExtensionsSearchParams> fetcher = new DAOFetcher<FileTypeExtensionsSearchParams>(fileExtensionsParams) {
+                @Override
+                public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+                    return MainDAO.getInstance().getViewsDAO().getFilesByExtension(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+                }
+
+                @Override
+                public boolean isRefreshRequired(PropertyChangeEvent evt) {
+                    Content content = this.getContentFromEvt(evt);
+                    if (content == null) {
+                        return false;
+                    }
+
+                    return MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(this.getParameters(), content);
+                }
+            };
+            this.searchResultManager = new SearchManager(fetcher, pageSize);
+            SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
@@ -1185,7 +1243,24 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         try {
-            SearchResultsDTO results = searchResultSupport.setFileMimes(fileMimeKey);
+            DAOFetcher<FileTypeMimeSearchParams> fetcher = new DAOFetcher<FileTypeMimeSearchParams>(fileMimeKey) {
+                @Override
+                public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+                    return MainDAO.getInstance().getViewsDAO().getFilesByMime(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+                }
+
+                @Override
+                public boolean isRefreshRequired(PropertyChangeEvent evt) {
+                    Content content = this.getContentFromEvt(evt);
+                    if (content == null) {
+                        return false;
+                    }
+
+                    return MainDAO.getInstance().getViewsDAO().isFilesByMimeInvalidating(this.getParameters(), content);
+                }
+            };
+            this.searchResultManager = new SearchManager(fetcher, pageSize);
+            SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
@@ -1194,7 +1269,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     fileMimeKey.getDataSourceId() == null ? "<null>" : fileMimeKey.getDataSourceId()),
                     ex);
         }
-
     }
 
     /**
@@ -1236,7 +1310,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     private void refreshSearchResultChildren() {
         try {
-            refreshSearchResultChildren(this.searchResultSupport.getRefreshedData());
+            refreshSearchResultChildren(this.searchResultManager.getRefreshedData());
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, "There was an error refreshing data: ", ex);
         }
@@ -1277,13 +1351,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     private void updatePagingComponents() {
-        if (this.searchResultSupport.getCurrentSearchResults() != null) {
-            this.pagePrevButton.setEnabled(this.searchResultSupport.hasPrevPage());
-            this.pageNextButton.setEnabled(this.searchResultSupport.hasNextPage());
+        if (this.searchResultManager.getCurrentSearchResults() != null) {
+            this.pagePrevButton.setEnabled(this.searchResultManager.hasPrevPage());
+            this.pageNextButton.setEnabled(this.searchResultManager.hasNextPage());
             this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
-                    this.searchResultSupport.getPageIdx() + 1,
-                    Math.max(this.searchResultSupport.getTotalPages(), 1)));
-            this.gotoPageTextField.setText(Integer.toString(this.searchResultSupport.getPageIdx() + 1));
+                    this.searchResultManager.getPageIdx() + 1,
+                    Math.max(this.searchResultManager.getTotalPages(), 1)));
+            this.gotoPageTextField.setText(Integer.toString(this.searchResultManager.getPageIdx() + 1));
         } else if (this.pagingSupport != null) {
             this.pagePrevButton.setEnabled(this.pagingSupport.getCurrentPageIdx() > 0);
             this.pageNextButton.setEnabled(this.pagingSupport.getCurrentPageIdx() < this.pagingSupport.getLastKnownPageCount() - 1);
@@ -1367,7 +1441,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         @Subscribe
         public void subscribeToPageCountChange(PageCountChangeEvent event) {
             this.lastKnownPageCount = event.getPageCount();
-            if (DataResultPanel.this.searchResultSupport.getCurrentSearchResults() == null
+            if (DataResultPanel.this.searchResultManager.getCurrentSearchResults() == null
                     && event != null
                     && this.nodeName != null
                     && DataResultPanel.this.currentRootNode != null

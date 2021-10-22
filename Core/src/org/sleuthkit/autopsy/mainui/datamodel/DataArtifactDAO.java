@@ -47,13 +47,13 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return instance;
     }
 
-    private final Cache<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<DataArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
-    private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(DataArtifactSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<DataArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
         Blackboard blackboard = getCase().getBlackboard();
 
-        Long dataSourceId = cacheKey.getDataSourceId();
-        BlackboardArtifact.Type artType = cacheKey.getArtifactType();
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
         // get analysis results
         List<BlackboardArtifact> arts = new ArrayList<>();
@@ -76,11 +76,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return new DataArtifactRowDTO((DataArtifact) artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id);
     }
 
-    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        if (hardRefresh) {
-            this.dataArtifactCache.invalidate(artifactKey);
-        }
-        
+    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
 
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT
@@ -90,7 +86,12 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                     + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        return dataArtifactCache.get(artifactKey, () -> fetchDataArtifactsForTable(artifactKey));
+        SearchParams<DataArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        if (hardRefresh) {
+            this.dataArtifactCache.invalidate(searchParams);
+        }
+
+        return dataArtifactCache.get(searchParams, () -> fetchDataArtifactsForTable(searchParams));
     }
 
     public boolean isDataArtifactInvalidating(DataArtifactSearchParam key, ModuleDataEvent eventData) {

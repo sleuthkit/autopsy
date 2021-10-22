@@ -32,11 +32,6 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
         super(artifactType, dataSourceId);
         this.setName = setName;
     }
-
-    public AnalysisResultSetSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String setName, long startItem, Long maxResultsCount) {
-        super(artifactType, dataSourceId, startItem, maxResultsCount);
-        this.setName = setName;
-    }
     
     public String getSetName() {
         return setName;
@@ -44,9 +39,9 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 13 * hash + Objects.hashCode(this.setName);
-        hash = 13 * hash + Objects.hashCode(super.hashCode());
+        int hash = 3;
+        hash = 79 * hash + Objects.hashCode(this.setName);
+        hash = 79 * hash + super.hashCode();
         return hash;
     }
 
@@ -65,6 +60,8 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
         if (!Objects.equals(this.setName, other.setName)) {
             return false;
         }
-        return super.equalFields(other);
+        return super.equals(obj);
     }
+
+    
 }
