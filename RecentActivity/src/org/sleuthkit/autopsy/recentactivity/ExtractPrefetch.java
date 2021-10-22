@@ -65,8 +65,7 @@ final class ExtractPrefetch extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractPrefetch.class.getName());
 
-    private final IngestJobContext context;
-    
+    private final IngestJobContext context;    
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
     private static final String PREFETCH_FILE_LOCATION = "/windows/prefetch";
     private static final String PREFETCH_TOOL_FOLDER = "markmckinnon"; //NON-NLS

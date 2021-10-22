@@ -274,16 +274,33 @@ final class ExtractRecycleBin extends Extract {
 
     /**
      * Parse the $I file. This file contains metadata information about deleted
-     * files
+     * files.
      *
-     * File format prior to Windows 10: Offset Size Description 0 8 Header 8 8
-     * File Size 16 8 Deleted Timestamp 24 520 File Name
+     * File format prior to Windows 10:
      *
-     * File format Windows 10+ Offset Size Description 0 8 Header 8 8 File Size
-     * 16 8 Deleted TimeStamp 24 4 File Name Length 28 var File Name
+     * Offset Size Description
      *
-     * For versions of Windows prior to 10, header = 0x01. Windows 10+ header ==
-     * 0x02
+     * 0 8 Header
+     *
+     * 8 8 File Size
+     *
+     * 16 8 Deleted Timestamp
+     *
+     * 24 520 File Name
+     *
+     * File format Windows 10+
+     *
+     * Offset Size Description
+     *
+     * 0 8 Header
+     *
+     * 8 8 File Size
+     *
+     * 16 8 Deleted TimeStamp
+     *
+     * 24 4 File Name Length
+     *
+     * 28 var File Name
      *
      * @param iFilePath Path to local copy of file in temp folder
      *

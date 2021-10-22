@@ -34,9 +34,10 @@ ExtractOs.windowsVolume.label=OS Drive (Windows)
 ExtractOs.yellowDogLinuxOs.label=Linux (Yellow Dog)
 ExtractOs.yellowDogLinuxVolume.label=OS Drive (Linux Yellow Dog)
 ExtractOS_progressMessage=Checking for OS
-# {0} - sub module name
 ExtractPrefetch_errMsg_prefetchParsingFailed={0}: Error analyzing prefetch files
 ExtractPrefetch_module_name=Windows Prefetch Analyzer
+ExtractRecycleBin_module_name=Recycle Bin Analyzer
+ExtractRecycleBin_Recyle_Bin_Display_Name=Recycle Bin
 Jumplist_adding_extracted_files_msg=Chrome Cache: Adding %d extracted files for analysis.
 Jumplist_module_name=Windows Jumplist Analyzer
 OpenIDE-Module-Display-Category=Ingest Module
