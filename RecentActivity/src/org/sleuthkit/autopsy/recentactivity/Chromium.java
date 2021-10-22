@@ -252,7 +252,7 @@ class Chromium extends Extract {
                 break;
             }
             List<HashMap<String, Object>> tempList;
-            tempList = this.dbConnect(temps, HISTORY_QUERY);
+            tempList = this.querySQLiteDb(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0}- Now getting history from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -494,7 +494,7 @@ class Chromium extends Extract {
                 break;
             }
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, COOKIE_QUERY);
+            List<HashMap<String, Object>> tempList = this.querySQLiteDb(temps, COOKIE_QUERY);
             logger.log(Level.INFO, "{0}- Now getting cookies from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -596,9 +596,9 @@ class Chromium extends Extract {
             List<HashMap<String, Object>> tempList;
 
             if (isChromePreVersion30(temps)) {
-                tempList = this.dbConnect(temps, DOWNLOAD_QUERY);
+                tempList = this.querySQLiteDb(temps, DOWNLOAD_QUERY);
             } else {
-                tempList = this.dbConnect(temps, DOWNLOAD_QUERY_V30);
+                tempList = this.querySQLiteDb(temps, DOWNLOAD_QUERY_V30);
             }
 
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
@@ -710,7 +710,7 @@ class Chromium extends Extract {
                 dbFile.delete();
                 break;
             }
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, LOGIN_QUERY);
+            List<HashMap<String, Object>> tempList = this.querySQLiteDb(temps, LOGIN_QUERY);
             logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -869,7 +869,7 @@ class Chromium extends Extract {
         String autoFillquery = (isSchemaV8X) ? AUTOFILL_QUERY_V8X
                 : AUTOFILL_QUERY;
 
-        List<HashMap<String, Object>> autofills = this.dbConnect(dbFilePath, autoFillquery);
+        List<HashMap<String, Object>> autofills = this.querySQLiteDb(dbFilePath, autoFillquery);
         logger.log(Level.INFO, "{0}- Now getting Autofill information from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), dbFilePath, autofills.size()}); //NON-NLS
         for (HashMap<String, Object> result : autofills) {
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -943,7 +943,7 @@ class Chromium extends Extract {
         );
 
         // Get Web form addresses
-        List<HashMap<String, Object>> addresses = this.dbConnect(dbFilePath, webformAddressQuery);
+        List<HashMap<String, Object>> addresses = this.querySQLiteDb(dbFilePath, webformAddressQuery);
         logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), dbFilePath, addresses.size()}); //NON-NLS
         for (HashMap<String, Object> result : addresses) {
 
@@ -1031,7 +1031,7 @@ class Chromium extends Extract {
 
     private boolean isChromePreVersion30(String temps) {
         String query = "PRAGMA table_info(downloads)"; //NON-NLS
-        List<HashMap<String, Object>> columns = this.dbConnect(temps, query);
+        List<HashMap<String, Object>> columns = this.querySQLiteDb(temps, query);
         for (HashMap<String, Object> col : columns) {
             if (col.get("name").equals("url")) { //NON-NLS
                 return true;

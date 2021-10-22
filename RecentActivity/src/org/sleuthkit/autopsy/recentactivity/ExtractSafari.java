@@ -395,7 +395,7 @@ final class ExtractSafari extends Extract {
      * @throws TskCoreException
      */
     private Collection<BlackboardArtifact> getHistoryArtifacts(AbstractFile origFile, Path tempFilePath) throws TskCoreException {
-        List<HashMap<String, Object>> historyList = this.dbConnect(tempFilePath.toString(), HISTORY_QUERY);
+        List<HashMap<String, Object>> historyList = this.querySQLiteDb(tempFilePath.toString(), HISTORY_QUERY);
 
         if (historyList == null || historyList.isEmpty()) {
             return null;

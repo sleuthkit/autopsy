@@ -201,7 +201,7 @@ abstract class Extract {
      *         consists of a column name as a key and an Object as a column
      *         value, with empty strings substituted for nulls.
      */
-    protected List<HashMap<String, Object>> dbConnect(String path, String query) {
+    protected List<HashMap<String, Object>> querySQLiteDb(String path, String query) {
         ResultSet resultSet;
         List<HashMap<String, Object>> list;
         String connectionString = "jdbc:sqlite:" + path; //NON-NLS
@@ -233,7 +233,7 @@ abstract class Extract {
     private List<HashMap<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
         ResultSetMetaData md = rs.getMetaData();
         int columns = md.getColumnCount();
-        List<HashMap<String, Object>> list = new ArrayList<>(50);
+        List<HashMap<String, Object>> results = new ArrayList<>(50);
         while (rs.next()) {
             HashMap<String, Object> row = new HashMap<>(columns);
             for (int i = 1; i <= columns; ++i) {
@@ -243,10 +243,9 @@ abstract class Extract {
                     row.put(md.getColumnName(i), rs.getObject(i));
                 }
             }
-            list.add(row);
+            results.add(row);
         }
-
-        return list;
+        return results;
     }
 
     /**
@@ -297,19 +296,21 @@ abstract class Extract {
     }
 
     /**
-     * Creates a list of attributes for a history artifact.
+     * Creates a list of attributes for a web history artifact.
      *
-     * @param url
-     * @param accessTime  Time url was accessed
-     * @param referrer    referred url
-     * @param title       title of the page
-     * @param programName module name
-     * @param domain      domain of the url
-     * @param user        user that accessed url
+     * @param url         The URL, may be null.
+     * @param accessTime  The time the URL was accessed, may be null.
+     * @param referrer    The referring URL, may be null.
+     * @param title       Title of the returned resource, may be null.
+     * @param programName The program that executed the request, may be the
+     *                    empty string, may be null.
+     * @param domain      The domain of the URL, may be null.
+     * @param user        The user that accessed URL, may be null.
      *
-     * @return List of BlackboardAttributes for giving attributes
+     * @return The list of attributes.
      *
-     * @throws TskCoreException
+     * @throws TskCoreException The exception is thrown if there is an issue
+     *                          creating the attributes.
      */
     protected Collection<BlackboardAttribute> createHistoryAttributes(String url, Long accessTime,
             String referrer, String title, String programName, String domain, String user) throws TskCoreException {
@@ -348,16 +349,16 @@ abstract class Extract {
     }
 
     /**
-     * Creates a list of attributes for a cookie.
+     * Creates a list of attributes for a web cookie artifact.
      *
-     * @param url          cookie url
-     * @param creationTime cookie creation time
-     * @param name         cookie name
-     * @param value        cookie value
-     * @param programName  Name of the module creating the attribute
-     * @param domain       Domain of the URL
+     * @param url          The cookie url, may be null.
+     * @param creationTime The cookie creation time, may be null.
+     * @param name         The cookie name, may be null.
+     * @param value        The cookie value, may be null.
+     * @param programName  The program that created the cookie, may be null.
+     * @param domain       The domain of the cookie URL, may be null.
      *
-     * @return List of BlackboarAttributes for the passed in attributes
+     * @return The list of attributes.
      */
     protected Collection<BlackboardAttribute> createCookieAttributes(String url,
             Long creationTime, Long accessTime, Long endTime, String name, String value, String programName, String domain) {
@@ -402,15 +403,16 @@ abstract class Extract {
     }
 
     /**
-     * Creates a list of bookmark attributes from the passed in parameters.
+     * Creates a list of attributes for a web bookmark artifact.
      *
-     * @param url          Bookmark url.
-     * @param title        Title of the bookmarked page.
-     * @param creationTime Date and time at which the bookmark was created
-     * @param programName  Name of the program creating the attribute RJCTODO
-     * @param domain       The domain of the bookmark's url
+     * @param url          The bookmark URL, may be null.
+     * @param title        The title of the bookmarked page, may be null.
+     * @param creationTime The date and time at which the bookmark was created,
+     *                     may be null.
+     * @param programName  The program that created the bookmark, may be null.
+     * @param domain       The domain of the bookmark's URL, may be null.
      *
-     * @return A collection of bookmark attributes
+     * @return The list of attributes.
      */
     protected Collection<BlackboardAttribute> createBookmarkAttributes(String url, String title, Long creationTime, String programName, String domain) {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -440,15 +442,15 @@ abstract class Extract {
     }
 
     /**
-     * Creates a list of the attributes of a downloaded file
+     * Creates a list of attributes for a web download artifact.
      *
-     * @param path
-     * @param url         URL of the downloaded file
-     * @param accessTime  Time the download occurred
-     * @param domain      Domain of the URL
-     * @param programName Name of the module creating the attribute
+     * @param path        The path of the downloaded file, may be null.
+     * @param url         The URL of the downloaded file, may be null.
+     * @param accessTime  The time the download occurred, may be null.
+     * @param domain      The domain of the URL, may be null.
+     * @param programName The program that downloaded the file, may be null.
      *
-     * @return A collection of attributes of a downloaded file
+     * @return The list of attributes.
      */
     protected Collection<BlackboardAttribute> createDownloadAttributes(String path, Long pathID, String url, Long accessTime, String domain, String programName) {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -480,21 +482,6 @@ abstract class Extract {
                 RecentActivityExtracterModuleFactory.getModuleName(),
                 (programName != null) ? programName : "")); //NON-NLS
 
-        return bbattributes;
-    }
-
-    /**
-     * Creates a list of the attributes for source of a downloaded file
-     *
-     * @param url source URL of the downloaded file
-     *
-     * @return A collection of attributes for source of a downloaded file
-     */
-    protected Collection<BlackboardAttribute> createDownloadSourceAttributes(String url) {
-        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                (url != null) ? url : "")); //NON-NLS
         return bbattributes;
     }
 

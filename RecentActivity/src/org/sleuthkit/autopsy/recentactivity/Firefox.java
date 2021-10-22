@@ -208,7 +208,7 @@ class Firefox extends Extract {
                 dbFile.delete();
                 break;
             }
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, HISTORY_QUERY);
+            List<HashMap<String, Object>> tempList = this.querySQLiteDb(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
@@ -310,7 +310,7 @@ class Firefox extends Extract {
                 dbFile.delete();
                 break;
             }
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, BOOKMARK_QUERY);
+            List<HashMap<String, Object>> tempList = this.querySQLiteDb(temps, BOOKMARK_QUERY);
             logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
@@ -421,7 +421,7 @@ class Firefox extends Extract {
                 query = COOKIE_QUERY_V3;
             }
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
+            List<HashMap<String, Object>> tempList = this.querySQLiteDb(temps, query);
             logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
@@ -542,7 +542,7 @@ class Firefox extends Extract {
                 break;
             }
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, DOWNLOAD_QUERY);
+            List<HashMap<String, Object>> tempList = this.querySQLiteDb(temps, DOWNLOAD_QUERY);
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
@@ -678,7 +678,7 @@ class Firefox extends Extract {
                 break;
             }
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, DOWNLOAD_QUERY_V24);
+            List<HashMap<String, Object>> tempList = this.querySQLiteDb(temps, DOWNLOAD_QUERY_V24);
 
             logger.log(Level.INFO, "{0} - Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
@@ -824,7 +824,7 @@ class Firefox extends Extract {
             boolean isFirefoxV64 = Util.checkColumn("timesUsed", "moz_formhistory", tempFilePath);
             String formHistoryQuery = (isFirefoxV64) ? FORMHISTORY_QUERY_V64 : FORMHISTORY_QUERY;
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(tempFilePath, formHistoryQuery);
+            List<HashMap<String, Object>> tempList = this.querySQLiteDb(tempFilePath, formHistoryQuery);
             logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), tempFilePath, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
