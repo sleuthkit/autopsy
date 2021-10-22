@@ -226,7 +226,7 @@ abstract class Extract {
      * a column name as a key and an Object as a column value, with empty
      * strings substituted for nulls.
      *
-     * @param rs The result set
+     * @param rs The result set.
      *
      * @return The list of maps.
      */

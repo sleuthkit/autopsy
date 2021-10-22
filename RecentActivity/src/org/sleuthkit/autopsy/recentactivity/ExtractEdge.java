@@ -112,7 +112,7 @@ final class ExtractEdge extends Extract {
         "ExtractEdge_process_errMsg_errGettingWebCacheFiles=Error trying to retrieving Edge WebCacheV01 file",
         "ExtractEdge_process_errMsg_webcacheFail=Failure processing Microsoft Edge WebCacheV01.dat file",
         "ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan.edb file",
-        "ExtractEdge_Module_Name=Microsoft Edge",
+        "ExtractEdge_Module_Name=Microsoft Edge Analyzer",
         "ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history",
         "Progress_Message_Edge_History=Microsoft Edge History",
         "Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks",
