@@ -57,7 +57,7 @@ final class ExtractZoneIdentifier extends Extract {
     private final IngestJobContext context;
 
     @Messages({
-        "ExtractZone_displayName= Zone Identifier Extractor",
+        "ExtractZone_displayName= Zone Identifier Analyzer",
         "ExtractZone_process_errMsg_find=A failure occured while searching for :Zone.Indentifier files.",
         "ExtractZone_process_errMsg=An error occured processing ':Zone.Indentifier' files.",
         "ExtractZone_progress_Msg=Extracting :Zone.Identifer files"

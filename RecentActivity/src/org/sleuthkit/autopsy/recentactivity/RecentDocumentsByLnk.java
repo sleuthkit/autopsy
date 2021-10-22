@@ -58,7 +58,7 @@ class RecentDocumentsByLnk extends Extract {
 
     @Messages({
         "Progress_Message_Extract_Resent_Docs=Recent Documents",
-        "RecentDocumentsByLnk_displayName=Recent Documents by Link Extractor"
+        "RecentDocumentsByLnk_displayName=Recent Documents by Link Analyzer"
     })
     RecentDocumentsByLnk(IngestJobContext context) {
         super(Bundle.RecentDocumentsByLnk_displayName(), context);

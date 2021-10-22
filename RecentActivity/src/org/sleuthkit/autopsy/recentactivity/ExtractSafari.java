@@ -92,7 +92,7 @@ final class ExtractSafari extends Extract {
     private static final Logger LOG = Logger.getLogger(ExtractSafari.class.getName());
 
     @Messages({
-        "ExtractSafari_Module_Name=Safari Extractor",
+        "ExtractSafari_Module_Name=Safari Analyzer",
         "ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files.",
         "ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files",
         "ExtractSafari_Error_Parsing_Cookies=An error occured while processing Safari Cookies files",

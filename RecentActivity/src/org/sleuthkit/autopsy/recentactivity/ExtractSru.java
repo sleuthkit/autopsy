@@ -73,7 +73,7 @@ final class ExtractSru extends Extract {
     private final IngestJobContext context;
 
     @Messages({
-        "ExtractSru_module_name=System Resource Usage Extractor"
+        "ExtractSru_module_name=System Resource Usage Analyzer"
     })
     ExtractSru(IngestJobContext context) {
         super(Bundle.ExtractSru_module_name(), context);
