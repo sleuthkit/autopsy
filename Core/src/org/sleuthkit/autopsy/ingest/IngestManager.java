@@ -316,12 +316,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 }
             } else {
                 /*
-                 * Data source processors will not, and out-of-date third party
-                 * ingest modules may not, supply an ingest job ID. In such
-                 * cases, try to identify the ingest job, if any, via its data
-                 * source. There is a slight risk here that the wrong ingest job
-                 * will be selected if multiple ingests of the same data source
-                 * are in progress.
+                 * Handle the case where ingest modules may not supply an ingest
+                 * job ID. In such cases, try to identify the ingest job, if
+                 * any, via its data source. There is a slight risk here that
+                 * the wrong ingest job will be selected if multiple ingests of
+                 * the same data source are in progress.
                  */
                 DataArtifact dataArtifact = newDataArtifacts.get(0);
                 try {
