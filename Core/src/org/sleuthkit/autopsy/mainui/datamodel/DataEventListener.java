@@ -100,6 +100,7 @@ abstract class DataEventListener {
 
         /**
          * Returns a collection of the listeners to which this will delegate.
+         *
          * @return The delegate event listeners.
          */
         protected abstract Collection<DataEventListener> getDelegateListeners();
@@ -132,7 +133,7 @@ abstract class DataEventListener {
     static abstract class RegisteringDataEventListener extends DelegatingDataEventListener {
 
         private static final Logger logger = Logger.getLogger(RegisteringDataEventListener.class.getName());
-        
+
         /**
          * The relevant ingest module events.
          */
@@ -155,6 +156,12 @@ abstract class DataEventListener {
                 Content changedContent = (Content) ((ModuleContentEvent) evt.getOldValue()).getSource();
                 this.onContentChange(changedContent);
 
+            } else if (IngestModuleEvent.FILE_DONE.toString().equals(eventName)
+                    && evt.getNewValue() instanceof Content) {
+
+                Content changedContent = (Content) evt.getNewValue();
+                this.onContentChange(changedContent);
+                
             } else {
                 logger.log(Level.WARNING, MessageFormat.format("Unknown event with eventName: {0} and event: {1}.", eventName, evt));
             }

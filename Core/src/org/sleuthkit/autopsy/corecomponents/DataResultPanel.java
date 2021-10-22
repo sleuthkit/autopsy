@@ -146,7 +146,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private final PropertyChangeListener weakCaseCloseListener = WeakListeners.propertyChange(caseCloseListener, null);
 
-    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED, IngestManager.IngestModuleEvent.DATA_ADDED);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(
+            IngestManager.IngestModuleEvent.FILE_DONE, 
+            IngestManager.IngestModuleEvent.CONTENT_CHANGED, 
+            IngestManager.IngestModuleEvent.DATA_ADDED);
 
     private final PropertyChangeListener ingestModuleListener = evt -> {
         if (this.searchResultSupport.isRefreshRequired(evt)) {
@@ -1234,6 +1237,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             displaySearchResults(searchResults, true);
         } else {
             searchResultNode.updateChildren(searchResults);
+                        setNumberOfChildNodes(
+                    searchResults.getTotalResultsCount() > Integer.MAX_VALUE
+                    ? Integer.MAX_VALUE
+                    : (int) searchResults.getTotalResultsCount()
+            );
+            updatePagingComponents();
         }
     }
 

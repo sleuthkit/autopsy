@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.concurrent.ExecutionException;
 import java.util.List;
 import java.util.Set;
@@ -86,8 +88,8 @@ public class TableSearchTest extends NbTestCase {
     private static final String CUSTOM_MIME_TYPE = "fake/type";
     private static final String CUSTOM_MIME_TYPE_FILE_NAME = "test.fake";
     private static final String CUSTOM_EXTENSION = "fake";
-    private static final Set<String> CUSTOM_EXTENSIONS = ImmutableSet.of("." + CUSTOM_EXTENSION); //NON-NLS
-    private static final Set<String> EMPTY_RESULT_SET_EXTENSIONS = ImmutableSet.of(".blah", ".blah2", ".crazy"); //NON-NLS
+    private static final Set<String> CUSTOM_EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("." + CUSTOM_EXTENSION))); //NON-NLS
+    private static final Set<String> EMPTY_RESULT_SET_EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(".blah", ".blah2", ".crazy"))); //NON-NLS
     
     /////////////////////////////////////////////////
     // Data to be used across the test methods.
@@ -537,13 +539,13 @@ public class TableSearchTest extends NbTestCase {
             // Test hash set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
             HashHitSearchParam hashParam = new HashHitSearchParam(null, HASH_SET_1);
-            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getHashHitsForTable(hashParam);
+            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getAnalysisResultsForTable(hashParam);
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
             hashParam = new HashHitSearchParam(dataSource2.getId(), HASH_SET_1);
-            results = analysisResultDAO.getHashHitsForTable(hashParam);
+            results = analysisResultDAO.getAnalysisResultsForTable(hashParam);
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
@@ -576,13 +578,13 @@ public class TableSearchTest extends NbTestCase {
             // Test keyword set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
             KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1);
-            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getKeywordHitsForTable(kwParam);
+            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getAnalysisResultsForTable(kwParam);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
             
             kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_1);
-            results = analysisResultDAO.getKeywordHitsForTable(kwParam);
+            results = analysisResultDAO.getAnalysisResultsForTable(kwParam);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());

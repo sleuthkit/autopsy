@@ -20,16 +20,18 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * A partial implementation of a cache of key value pairs where an event has the
  * potential to invalidate particular cache entries.
  *
- * @param <K> The key type.
- * @param <V> The value type.
- * @param <E> The event type.
+ * @param K The key type.
+ * @param V The value type.
+ * @param E The event type.
  */
 abstract class EventUpdatableCache<K, V, E> {
 
@@ -37,6 +39,7 @@ abstract class EventUpdatableCache<K, V, E> {
     private static final long DEFAULT_CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
 
+    private final Object cacheLock = new Object();
     private final Cache<K, V> cache;
 
     /**
@@ -51,7 +54,8 @@ abstract class EventUpdatableCache<K, V, E> {
 
     /**
      * Constructor.
-     * @param cache Non-default cache to use as underlying data source. 
+     *
+     * @param cache Non-default cache to use as underlying data source.
      */
     EventUpdatableCache(Cache<K, V> cache) {
         this.cache = cache;
@@ -69,7 +73,7 @@ abstract class EventUpdatableCache<K, V, E> {
      * @throws ExecutionException
      */
     V getValue(K key) throws IllegalArgumentException, ExecutionException {
-        return cache.get(key, () -> fetch(key));
+        return getValue(key, false);
     }
 
     /**
@@ -88,18 +92,22 @@ abstract class EventUpdatableCache<K, V, E> {
      */
     V getValue(K key, boolean hardRefresh) throws IllegalArgumentException, ExecutionException {
         validateCacheKey(key);
-        if (hardRefresh) {
-            cache.invalidate(key);
-        }
+        synchronized (this.cacheLock) {
+            if (hardRefresh) {
+                cache.invalidate(key);
+            }
 
-        return cache.get(key, () -> fetch(key));
+            return cache.get(key, () -> fetch(key));
+        }
     }
 
     /**
      * Invalidates all cached entries.
      */
     void invalidateAll() {
-        cache.invalidateAll();
+        synchronized (this.cacheLock) {
+            cache.invalidateAll();
+        }
     }
 
     /**
@@ -112,8 +120,14 @@ abstract class EventUpdatableCache<K, V, E> {
         if (!isCacheRelevantEvent(eventData)) {
             return;
         }
-
-        cache.asMap().replaceAll((k,v) -> isInvalidatingEvent(k, eventData) ? null : v);
+        
+        synchronized (this.cacheLock) {
+            List<K> keys = cache.asMap().keySet().stream()
+                    .filter(k -> isInvalidatingEvent(k, eventData))
+                    .collect(Collectors.toList());
+            
+            cache.invalidateAll(keys);
+        }
     }
 
     /**

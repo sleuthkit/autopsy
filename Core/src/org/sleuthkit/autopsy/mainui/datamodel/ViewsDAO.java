@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -330,6 +329,7 @@ public class ViewsDAO extends DefaultDataEventListener {
         }
 
         @Override
+        @Messages({"FileTypesByMimeType.name.text=By MIME Type"})
         protected SearchResultsDTO fetch(DataSourceFilteredSearchParams genericKey) throws Exception {
             if (genericKey instanceof FileTypeExtensionsSearchParams) {
                 FileTypeExtensionsSearchParams key = (FileTypeExtensionsSearchParams) genericKey;

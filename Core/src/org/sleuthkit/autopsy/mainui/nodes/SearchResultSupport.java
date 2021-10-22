@@ -467,6 +467,9 @@ public class SearchResultSupport {
 
             return (Content) ((ModuleContentEvent) evt.getOldValue()).getSource();
 
+        } else if (IngestManager.IngestModuleEvent.FILE_DONE.toString().equals(eventName)
+                && (evt.getNewValue() instanceof Content)) {
+            return (Content) evt.getNewValue();
         } else {
             return null;
         }
