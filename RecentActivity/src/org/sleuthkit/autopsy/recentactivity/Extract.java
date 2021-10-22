@@ -77,19 +77,18 @@ abstract class Extract {
     }
 
     /**
-     * Configures this extractor. Called by the by the Recent Activity ingest
-     * module in its startUp() method.
+     * Starts up this extractor. Called by the Recent Activity ingest module in
+     * its startUp() method.
      *
      * @throws IngestModuleException The exception is thrown if there is an
-     *                               error configuring the extractor.
+     *                               error starting up the extractor.
      */
-    void configExtractor() throws IngestModuleException {
-        logger.info(String.format("%s configured for Recent Activity ingest module", displayName)); //NON-NLS        
+    void startUp() throws IngestModuleException {
     }
 
     /**
      * Analyzes the given data source. Called by the by the Recent Activity
-     * ingest module in its startUp() method.
+     * ingest module in its process() method.
      *
      * @param dataSource  The data source to be analyzed.
      * @param progressBar A progress object that can be used to report analysis
@@ -101,8 +100,7 @@ abstract class Extract {
      * Cleans up this extractor. Called by the Recent Activity ingest module in
      * its shutDown() method.
      */
-    void cleanUp() {
-        logger.info(String.format("%s processing completed for Recent Activity ingest module", displayName)); //NON-NLS        
+    void shutDown() {
     }
 
     /**
@@ -137,11 +135,11 @@ abstract class Extract {
      */
     BlackboardArtifact createArtifactWithAttributes(BlackboardArtifact.Type type, Content content, Collection<BlackboardAttribute> attributes) throws TskCoreException {
         if (type.getCategory() == BlackboardArtifact.Category.DATA_ARTIFACT) {
-                return content.newDataArtifact(type, attributes);            
+            return content.newDataArtifact(type, attributes);
         } else if (type.getCategory() == BlackboardArtifact.Category.ANALYSIS_RESULT) {
-                return content.newAnalysisResult(type, Score.SCORE_UNKNOWN, null, null, null, attributes).getAnalysisResult();            
+            return content.newAnalysisResult(type, Score.SCORE_UNKNOWN, null, null, null, attributes).getAnalysisResult();
         } else {
-                throw new TskCoreException("Unknown category type: " + type.getCategory().getDisplayName());            
+            throw new TskCoreException("Unknown category type: " + type.getCategory().getDisplayName());
         }
     }
 

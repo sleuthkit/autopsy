@@ -417,7 +417,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     }
 
     @Override
-    void configExtractor() throws IngestModuleException {
+    void startUp() throws IngestModuleException {
         try {
             PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE, true);
         } catch (IOException e) {

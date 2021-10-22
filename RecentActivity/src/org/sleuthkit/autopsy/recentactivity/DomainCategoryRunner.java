@@ -459,7 +459,7 @@ class DomainCategoryRunner extends Extract {
     }
 
     @Override
-    void configExtractor() throws IngestModule.IngestModuleException {
+    void startUp() throws IngestModule.IngestModuleException {
         // lookup all providers, filter null providers, and sort providers
         Collection<? extends DomainCategorizer> lookupCollection = Lookup.getDefault().lookupAll(DomainCategorizer.class);
         Collection<? extends DomainCategorizer> lookupList = (lookupCollection == null)
@@ -507,7 +507,7 @@ class DomainCategoryRunner extends Extract {
     }
 
     @Override
-    public void cleanUp() {
+    public void shutDown() {
         if (this.domainProviders != null) {
             for (DomainCategorizer provider : this.domainProviders) {
                 try {
@@ -517,6 +517,6 @@ class DomainCategoryRunner extends Extract {
                 }
             }
         }
-        super.cleanUp();
+        super.shutDown();
     }
 }

@@ -107,7 +107,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         browserExtractors.add(safari);
 
         for (Extract extractor : extractors) {
-            extractor.configExtractor();
+            extractor.startUp();
         }
     }
 
@@ -197,7 +197,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         for (int i = 0; i < extractors.size(); i++) {
             Extract extracter = extractors.get(i);
             try {
-                extracter.cleanUp();
+                extracter.shutDown();
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getDisplayName(), ex); //NON-NLS
             }
