@@ -42,7 +42,7 @@ public class SearchResultSupport {
     private int pageIdx = 0;
 
     private SearchResultsDTO currentSearchResults = null;
-    private DataFetcher pageFetcher = null;
+    private DataFetcher<?, ?> pageFetcher = null;
     private final MainDAO dao = MainDAO.getInstance();
 
     /**
@@ -248,12 +248,19 @@ public class SearchResultSupport {
      * @throws ExecutionException
      */
     private synchronized SearchResultsDTO fetchResults(boolean hardRefresh) throws ExecutionException {
-        SearchResultsDTO newResults = (this.pageFetcher != null)
-                ? this.pageFetcher.fetch(this.pageFetcher.getParams(pageSize, pageIdx), hardRefresh)
-                : null;
+        return fetchResults(this.pageFetcher, hardRefresh);
+    }
+
+    private synchronized <S extends SearchParams> SearchResultsDTO fetchResults(DataFetcher<S, ?> dataFetcher, boolean hardRefresh) throws ExecutionException {
+        SearchResultsDTO newResults = null;
+        if (dataFetcher != null) {
+            S searchParams = dataFetcher.getParams(this.pageSize, this.pageIdx);
+            newResults = dataFetcher.fetch(searchParams, hardRefresh);
+        }
 
         this.currentSearchResults = newResults;
         return newResults;
+
     }
 
     private synchronized void resetPaging() {

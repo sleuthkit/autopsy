@@ -43,7 +43,7 @@ public class MainDAO extends RegisteringDataEventListener {
     private final DataArtifactDAO dataArtifactDAO = DataArtifactDAO.getInstance();
     private final AnalysisResultDAO analysisResultDAO = AnalysisResultDAO.getInstance();
     private final ViewsDAO viewsDAO = ViewsDAO.getInstance();
-    private final List<DataEventListener> allDataListeners = ImmutableList.of(dataArtifactDAO, viewsDAO);
+    private final List<DataEventListener> allDataListeners = ImmutableList.of(dataArtifactDAO, analysisResultDAO, viewsDAO);
 
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;

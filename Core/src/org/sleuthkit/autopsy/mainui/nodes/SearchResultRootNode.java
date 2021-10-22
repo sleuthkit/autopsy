@@ -43,9 +43,6 @@ public class SearchResultRootNode extends AbstractNode {
 
         setName(initialResults.getTypeId());
         setDisplayName(initialResults.getDisplayName());
-
-//        String iconPath = IconsUtil.getIconFilePath(initialResults.getArtifactType().getTypeID());
-//        setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
     }
 
     @Override
@@ -68,5 +65,9 @@ public class SearchResultRootNode extends AbstractNode {
                 this.factory.getResultCount()));
 
         return sheet;
+    }
+    
+    public void updateChildren(SearchResultsDTO updatedResults) {
+        this.factory.update(updatedResults);
     }
 }

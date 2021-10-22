@@ -137,7 +137,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
         }
     };
-    
+
     private final PropertyChangeListener caseCloseListener = evt -> {
         if (evt.getNewValue() == null) {
             nodeNameToPageCountListenerMap.clear();
@@ -145,19 +145,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     };
 
     private final PropertyChangeListener weakCaseCloseListener = WeakListeners.propertyChange(caseCloseListener, null);
-    
+
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED, IngestManager.IngestModuleEvent.DATA_ADDED);
 
     private final PropertyChangeListener ingestModuleListener = evt -> {
         if (this.searchResultSupport.isRefreshRequired(evt)) {
             try {
-                displaySearchResults(this.searchResultSupport.getRefreshedData(), false);
+                refreshSearchResultChildren(this.searchResultSupport.getRefreshedData());
             } catch (ExecutionException | IllegalArgumentException ex) {
                 logger.log(Level.WARNING, "There was an error refreshing data: ", ex);
             }
         }
     };
-    
+
     private final PropertyChangeListener weakIngestModuleListener = WeakListeners.propertyChange(ingestModuleListener, null);
 
     /**
@@ -308,13 +308,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.resultViewers = new ArrayList<>(viewers);
         this.explorerManagerListener = new ExplorerManagerListener();
         initComponents();
-        initListeners();
-    }
-
-    private void initListeners() {
-        UserPreferences.addChangeListener(this.pageSizeListener);
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
-        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
     }
 
     /**
@@ -418,7 +411,21 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.resultViewers.forEach((resultViewer) -> resultViewerTabs.addTab(resultViewer.getTitle(), resultViewer.getComponent()));
         }
 
+        initListeners();
+
         this.setVisible(true);
+    }
+
+    private void initListeners() {
+        UserPreferences.addChangeListener(this.pageSizeListener);
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
+    }
+
+    private void closeListeners() {
+        UserPreferences.removeChangeListener(this.pageSizeListener);
+        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
+        IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
     }
 
     /**
@@ -682,11 +689,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.removeAll();
             this.setVisible(false);
         }
-        
-        UserPreferences.removeChangeListener(this.pageSizeListener);
-        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
-        IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
-        
+
+        closeListeners();
     }
 
     @Override
@@ -1119,7 +1123,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
     }
-    
+
     void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
         try {
             SearchResultsDTO results = searchResultSupport.setAnalysisResult(analysisResultParams);
@@ -1195,6 +1199,29 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ? Integer.MAX_VALUE
                     : (int) searchResults.getTotalResultsCount()
             );
+        }
+    }
+
+    private void refreshSearchResultChildren(SearchResultsDTO searchResults) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> refreshSearchResultChildren(searchResults));
+            return;
+        }
+
+        // GVDTODO handle resetting node differently if page change versus node change
+        if (searchResults == null) {
+            setNode(null, false);
+            return;
+        }
+
+        SearchResultRootNode searchResultNode = this.currentRootNode instanceof SearchResultRootNode
+                ? (SearchResultRootNode) this.currentRootNode
+                : null;
+        
+        if (searchResultNode == null) {
+            displaySearchResults(searchResults, true);
+        } else {
+            searchResultNode.updateChildren(searchResults);
         }
     }
 
