@@ -60,7 +60,6 @@ import org.sleuthkit.datamodel.TskData;
 final class ExtractJumpLists extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractJumpLists.class.getName());
-    private static final String JUMPLIST_TSK_COMMENT = "Jumplist File";
     private static final String RA_DIR_NAME = "RecentActivity"; //NON-NLS
     private static final String AUTOMATIC_DESTINATIONS_FILE_DIRECTORY = "%/AppData/Roaming/Microsoft/Windows/Recent/AutomaticDestinations/";
     private static final String JUMPLIST_DIR_NAME = "jumplists"; //NON-NLS
