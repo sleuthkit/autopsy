@@ -1198,7 +1198,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             return;
         }
 
-        // GVDTODO handle resetting node differently if page change versus node change
         if (searchResults == null) {
             setNode(null, resetPaging);
         } else {
@@ -1223,7 +1222,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             return;
         }
 
-        // GVDTODO handle resetting node differently if page change versus node change
         if (searchResults == null) {
             setNode(null, false);
             return;
