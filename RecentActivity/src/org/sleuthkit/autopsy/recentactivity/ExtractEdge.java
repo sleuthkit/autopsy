@@ -644,7 +644,7 @@ final class ExtractEdge extends Extract {
         String accessTime = rowSplit[index].trim();
         Long ftime = parseTimestamp(accessTime);
 
-        return createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, origFile, createHistoryAttribute(url, ftime,
+        return createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, origFile, createHistoryAttributes(url, ftime,
                 null, null,
                 this.getDisplayName(),
                 NetworkUtils.extractDomain(url), user));

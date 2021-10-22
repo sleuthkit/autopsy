@@ -415,7 +415,7 @@ final class ExtractSafari extends Extract {
                     createArtifactWithAttributes(
                             BlackboardArtifact.Type.TSK_WEB_HISTORY,
                             origFile,
-                            createHistoryAttribute(url, time, null, title,
+                            createHistoryAttributes(url, time, null, title,
                                     this.getDisplayName(), NetworkUtils.extractDomain(url), null)));
         }
 
