@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import com.google.common.collect.ImmutableList;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -188,30 +187,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     public boolean isAnalysisResultsInvalidating(AnalysisResultSearchParam artifactKey, ModuleDataEvent evt) {
-        return cache.isInvalidatingEvent(artifactKey, evt);
-    }
-
-    public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
-        return cache.getValue(artifactKey);
-    }
-
-    public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return cache.getValue(artifactKey, hardRefresh);
-    }
-
-    public boolean isHashHitsInvalidating(HashHitSearchParam artifactKey, ModuleDataEvent evt) {
-        return cache.isInvalidatingEvent(artifactKey, evt);
-    }
-
-    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
-        return cache.getValue(artifactKey);
-    }
-
-    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return cache.getValue(artifactKey, hardRefresh);
-    }
-
-    public boolean isKeywordHitsInvalidating(KeywordHitSearchParam artifactKey, ModuleDataEvent evt) {
         return cache.isInvalidatingEvent(artifactKey, evt);
     }
 
