@@ -59,12 +59,12 @@ abstract class Extract {
     private static final Logger logger = Logger.getLogger(Extract.class.getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
     private final String displayName;
-    private final IngestJobContext context;
     protected boolean dataFound = false;
+    private final IngestJobContext context;
 
     /**
      * Constructs the super class part of an extractor used by the Recent
-     * Activity ingest module.
+     * Activity ingest module to do its analysis for an ingest job.
      *
      * @param displayName The display name of the extractor.
      * @param context     The ingest job context.
@@ -87,8 +87,8 @@ abstract class Extract {
     }
 
     /**
-     * Analyzes the given data source. Called by the by the Recent Activity
-     * ingest module in its process() method.
+     * Analyzes the given data source. Called by the Recent Activity ingest
+     * module in its process() method.
      *
      * @param dataSource  The data source to be analyzed.
      * @param progressBar A progress object that can be used to report analysis
