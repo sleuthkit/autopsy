@@ -66,7 +66,13 @@ public class SearchResultRootNode extends AbstractNode {
 
         return sheet;
     }
-    
+
+    /**
+     * Updates the child factory with the backing search results data performing
+     * a refresh of data without entirely resetting the node.
+     *
+     * @param updatedResults The search results.
+     */
     public void updateChildren(SearchResultsDTO updatedResults) {
         this.factory.update(updatedResults);
     }

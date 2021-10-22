@@ -102,12 +102,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return instance;
     }
 
-    // TODO We can probably combine all the caches at some point
-    private final AnalysisResultCache analysisResultCache = new AnalysisResultCache();
-    private final AnalysisResultSetCache<HashHitSearchParam> hashHitCache = new AnalysisResultSetCache<>(BlackboardArtifact.Type.TSK_HASHSET_HIT);
-    private final AnalysisResultSetCache<KeywordHitSearchParam> keywordHitCache = new AnalysisResultSetCache<>(BlackboardArtifact.Type.TSK_KEYWORD_HIT);
-
-    private final List<EventUpdatableCache<?, ?, ModuleDataEvent>> caches = ImmutableList.of(analysisResultCache, hashHitCache, keywordHitCache);
+    private final AnalysisResultCache cache = new AnalysisResultCache();
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
@@ -176,50 +171,53 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     @Override
     protected void dropCache() {
-        caches.forEach((cache) -> cache.invalidateAll());
+        cache.invalidateAll();
     }
 
     @Override
     protected void onModuleData(ModuleDataEvent evt) {
-        caches.forEach((cache) -> cache.invalidate(evt));
+        cache.invalidate(evt);
     }
 
     public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
-        return analysisResultCache.getValue(artifactKey);
+        return cache.getValue(artifactKey);
     }
 
     public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return analysisResultCache.getValue(artifactKey, hardRefresh);
+        return cache.getValue(artifactKey, hardRefresh);
     }
 
     public boolean isAnalysisResultsInvalidating(AnalysisResultSearchParam artifactKey, ModuleDataEvent evt) {
-        return analysisResultCache.isInvalidatingEvent(artifactKey, evt);
+        return cache.isInvalidatingEvent(artifactKey, evt);
     }
 
     public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
-        return hashHitCache.getValue(artifactKey);
+        return cache.getValue(artifactKey);
     }
 
     public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return hashHitCache.getValue(artifactKey, hardRefresh);
+        return cache.getValue(artifactKey, hardRefresh);
     }
 
     public boolean isHashHitsInvalidating(HashHitSearchParam artifactKey, ModuleDataEvent evt) {
-        return hashHitCache.isInvalidatingEvent(artifactKey, evt);
+        return cache.isInvalidatingEvent(artifactKey, evt);
     }
 
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
-        return keywordHitCache.getValue(artifactKey);
+        return cache.getValue(artifactKey);
     }
 
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return keywordHitCache.getValue(artifactKey, hardRefresh);
+        return cache.getValue(artifactKey, hardRefresh);
     }
 
     public boolean isKeywordHitsInvalidating(KeywordHitSearchParam artifactKey, ModuleDataEvent evt) {
-        return keywordHitCache.isInvalidatingEvent(artifactKey, evt);
+        return cache.isInvalidatingEvent(artifactKey, evt);
     }
 
+    /**
+     * Cache for analysis results.
+     */
     private class AnalysisResultCache extends EventUpdatableCache<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> {
 
         @Override
@@ -231,17 +229,28 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             BlackboardArtifact.Type artType = cacheKey.getArtifactType();
 
             // get analysis results
-            List<BlackboardArtifact> arts = new ArrayList<>();
+            List<AnalysisResult> arts;
             if (dataSourceId != null) {
-                arts.addAll(blackboard.getAnalysisResultsByType(artType.getTypeID(), dataSourceId));
+                arts = blackboard.getAnalysisResultsByType(artType.getTypeID(), dataSourceId);
             } else {
-                arts.addAll(blackboard.getAnalysisResultsByType(artType.getTypeID()));
+                arts = blackboard.getAnalysisResultsByType(artType.getTypeID());
+            }
+
+            if (cacheKey instanceof AnalysisResultSetSearchParam) {
+                AnalysisResultSetSearchParam setKey = (AnalysisResultSetSearchParam) cacheKey;
+                List<AnalysisResult> setFilteredArts = new ArrayList<>();
+                for (AnalysisResult art : arts) {
+                    BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
+                    if ((setNameAttr != null) && setKey.getSetName().equals(setNameAttr.getValueString())) {
+                        setFilteredArts.add(art);
+                    }
+                }
+
+                arts = setFilteredArts;
             }
 
             List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
-
             TableData tableData = createTableData(artType, pagedArtifacts);
-
             return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
         }
 
@@ -256,8 +265,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
             if (artType == null
                     || artType.getCategory() != BlackboardArtifact.Category.ANALYSIS_RESULT
-                    || artType.getTypeID() == BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()
-                    || artType.getTypeID() == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()
                     || (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0)) {
                 throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                         + "Artifact type must be non-null and analysis result.  Data source id must be null or > 0.  "
@@ -267,71 +274,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         @Override
         protected boolean isCacheRelevantEvent(ModuleDataEvent eventData) {
-            return eventData.getBlackboardArtifactType().getCategory() == BlackboardArtifact.Category.ANALYSIS_RESULT
-                    && BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID() != eventData.getBlackboardArtifactType().getTypeID()
-                    && BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() != eventData.getBlackboardArtifactType().getTypeID();
-        }
-    }
-
-    private class AnalysisResultSetCache<K extends AnalysisResultSetSearchParam> extends
-            EventUpdatableCache<K, AnalysisResultTableSearchResultsDTO, ModuleDataEvent> {
-
-        private final BlackboardArtifact.Type artifactType;
-
-        AnalysisResultSetCache(BlackboardArtifact.Type artifactType) {
-            this.artifactType = artifactType;
-        }
-
-        @Override
-        protected AnalysisResultTableSearchResultsDTO fetch(K cacheKey) throws Exception {
-            SleuthkitCase skCase = getCase();
-            Blackboard blackboard = skCase.getBlackboard();
-
-            Long dataSourceId = cacheKey.getDataSourceId();
-            BlackboardArtifact.Type artType = cacheKey.getArtifactType();
-
-            // Get all hash set hits
-            List<AnalysisResult> allHashHits;
-            if (dataSourceId != null) {
-                allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID(), dataSourceId);
-            } else {
-                allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID());
-            }
-
-            // Filter for the selected set
-            List<BlackboardArtifact> arts = new ArrayList<>();
-            for (AnalysisResult art : allHashHits) {
-                BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
-                if ((setNameAttr != null) && cacheKey.getSetName().equals(setNameAttr.getValueString())) {
-                    arts.add(art);
-                }
-            }
-
-            List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
-
-            TableData tableData = createTableData(artType, pagedArtifacts);
-
-            return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
-        }
-
-        @Override
-        public boolean isInvalidatingEvent(K key, ModuleDataEvent eventData) {
-            return key.getArtifactType().equals(this.artifactType);
-        }
-
-        @Override
-        protected void validateCacheKey(K artifactKey) throws IllegalArgumentException {
-            BlackboardArtifact.Type artType = artifactKey.getArtifactType();
-
-            if (artType == null || !this.artifactType.equals(artType)) {
-                throw new IllegalArgumentException(MessageFormat.format("Expected artifact type of: {0} but received: {1}",
-                        this.artifactType.getDisplayName(), artType == null ? "<null>" : artType.getDisplayName()));
-
-            } else if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
-                throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
-                        + "Data source id must be null or > 0.  "
-                        + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
-            }
+            return eventData.getBlackboardArtifactType().getCategory() == BlackboardArtifact.Category.ANALYSIS_RESULT;
         }
     }
 }

@@ -255,8 +255,8 @@ abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
      * @param searchParams The search parameters including the paging.
      * @return The list of paged artifacts.
      */
-    List<BlackboardArtifact> getPaged(List<BlackboardArtifact> arts, SearchParams searchParams) {
-        Stream<BlackboardArtifact> pagedArtsStream = arts.stream()
+    List<BlackboardArtifact> getPaged(List<? extends BlackboardArtifact> arts, SearchParams searchParams) {
+        Stream<? extends BlackboardArtifact> pagedArtsStream = arts.stream()
                 .sorted(Comparator.comparing((art) -> art.getId()))
                 .skip(searchParams.getStartItem());
 

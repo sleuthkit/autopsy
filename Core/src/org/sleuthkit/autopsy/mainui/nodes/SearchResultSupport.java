@@ -213,6 +213,14 @@ public class SearchResultSupport {
         return isRefreshRequired(this.pageFetcher, evt);
     }
 
+    /**
+     * Determines if a refresh is required for the currently selected item.
+     *
+     * @param dataFetcher The data fetcher.
+     * @param evt         The ingest module event.
+     *
+     * @return True if an update is required.
+     */
     private synchronized <S extends SearchParams, E> boolean isRefreshRequired(DataFetcher<S, E> dataFetcher, PropertyChangeEvent evt) {
         if (dataFetcher == null) {
             return false;
@@ -442,6 +450,15 @@ public class SearchResultSupport {
         return fetchResults(false);
     }
 
+    /**
+     * Returns the content from the ModuleContentEvent. If the event does not
+     * contain a ModuleContentEvent or the event does not contain Content, null
+     * is returned.
+     *
+     * @param evt The event
+     *
+     * @return The inner content or null if no content.
+     */
     private static Content getContentFromEvt(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
         if (IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName)
@@ -455,6 +472,14 @@ public class SearchResultSupport {
         }
     }
 
+    /**
+     * Returns the ModuleDataEvent in the event if there is a child
+     * ModuleDataEvent. If not, null is returned.
+     *
+     * @param evt The event.
+     *
+     * @return The inner ModuleDataEvent or null.
+     */
     private static ModuleDataEvent getModuleDataFromEvt(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
         if (IngestManager.IngestModuleEvent.DATA_ADDED.toString().equals(eventName)

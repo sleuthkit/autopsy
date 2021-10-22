@@ -416,12 +416,18 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         this.setVisible(true);
     }
 
+    /**
+     * Initializes autopsy event listeners.
+     */
     private void initListeners() {
         UserPreferences.addChangeListener(this.pageSizeListener);
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
     }
 
+    /**
+     * Unregisters this panel from autopsy event listeners.
+     */
     private void closeListeners() {
         UserPreferences.removeChangeListener(this.pageSizeListener);
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
@@ -1202,6 +1208,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     }
 
+    /**
+     * Refreshes the currently displayed search result node by updating the
+     * children with the search results as backing data.
+     *
+     * @param searchResults The search results to serve as the updated children.
+     */
     private void refreshSearchResultChildren(SearchResultsDTO searchResults) {
         if (!SwingUtilities.isEventDispatchThread()) {
             SwingUtilities.invokeLater(() -> refreshSearchResultChildren(searchResults));
@@ -1217,7 +1229,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         SearchResultRootNode searchResultNode = this.currentRootNode instanceof SearchResultRootNode
                 ? (SearchResultRootNode) this.currentRootNode
                 : null;
-        
+
         if (searchResultNode == null) {
             displaySearchResults(searchResults, true);
         } else {

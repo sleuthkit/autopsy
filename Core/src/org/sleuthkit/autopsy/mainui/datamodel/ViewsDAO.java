@@ -149,47 +149,44 @@ public class ViewsDAO extends DefaultDataEventListener {
         }
     }
 
-    private final FilesByExtensionCache extensionCache = new FilesByExtensionCache();
-    private final FilesByMimeCache mimeCache = new FilesByMimeCache();
-    private final FilesBySizeCache sizeCache = new FilesBySizeCache();
-    private final List<EventUpdatableCache<?, ?, Content>> caches = ImmutableList.of(extensionCache, mimeCache, sizeCache);
-
+    private final FilesCache cache = new FilesCache();
+            
     public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key) throws ExecutionException, IllegalArgumentException {
-        return this.extensionCache.getValue(key);
+        return this.cache.getValue(key);
     }
 
     public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return this.extensionCache.getValue(key, hardRefresh);
+        return this.cache.getValue(key, hardRefresh);
     }
-        
+
     public boolean isFilesByExtInvalidating(FileTypeExtensionsSearchParams key, Content changedContent) {
-        return this.extensionCache.isInvalidatingEvent(key, changedContent);
+        return this.cache.isInvalidatingEvent(key, changedContent);
     }
-            
+
     public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key) throws ExecutionException, IllegalArgumentException {
-        return this.mimeCache.getValue(key);
+        return this.cache.getValue(key);
     }
 
     public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return this.mimeCache.getValue(key, hardRefresh);
+        return this.cache.getValue(key, hardRefresh);
     }
 
     public boolean isFilesByMimeInvalidating(FileTypeMimeSearchParams key, Content changedContent) {
-        return this.mimeCache.isInvalidatingEvent(key, changedContent);
+        return this.cache.isInvalidatingEvent(key, changedContent);
     }
 
     public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key) throws ExecutionException, IllegalArgumentException {
-        return this.sizeCache.getValue(key);
+        return this.cache.getValue(key);
     }
 
     public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return this.sizeCache.getValue(key, hardRefresh);
+        return this.cache.getValue(key, hardRefresh);
     }
 
     public boolean isFilesBySizeInvalidating(FileTypeSizeSearchParams key, Content changedContent) {
-        return this.sizeCache.isInvalidatingEvent(key, changedContent);
+        return this.cache.isInvalidatingEvent(key, changedContent);
     }
-    
+
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
@@ -273,15 +270,15 @@ public class ViewsDAO extends DefaultDataEventListener {
 
     @Override
     public void dropCache() {
-        caches.forEach((cache) -> cache.invalidateAll());
+        cache.invalidateAll();
     }
 
     @Override
     protected void onContentChange(Content content) {
-        caches.forEach((cache) -> cache.invalidate(content));
+        cache.invalidate(content);
     }
 
-    private class FilesByExtensionCache extends EventUpdatableCache<FileTypeExtensionsSearchParams, SearchResultsDTO, Content> {
+    private class FilesCache extends EventUpdatableCache<DataSourceFilteredSearchParams, SearchResultsDTO, Content> {
 
         private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId) {
             String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
@@ -295,34 +292,6 @@ public class ViewsDAO extends DefaultDataEventListener {
                             .collect(Collectors.joining(", ")) + "))";
             return whereClause;
         }
-
-        @Override
-        protected SearchResultsDTO fetch(FileTypeExtensionsSearchParams key) throws Exception {
-            String whereStatement = getFileExtensionWhereStatement(key.getFilter(), key.getDataSourceId());
-            return fetchFileViewFiles(whereStatement, key.getFilter().getDisplayName(), key.getStartItem(), key.getMaxResultsCount());
-        }
-
-        @Override
-        public boolean isInvalidatingEvent(FileTypeExtensionsSearchParams key, Content eventData) {
-            if (!(eventData instanceof AbstractFile)) {
-                return false;
-            }
-
-            AbstractFile file = (AbstractFile) eventData;
-            String extension = "." + file.getNameExtension().toLowerCase();
-            return key.getFilter().getFilter().contains(extension);
-        }
-
-        @Override
-        protected void validateCacheKey(FileTypeExtensionsSearchParams key) throws IllegalArgumentException {
-            validateDataSourceParams(key);
-            if (key.getFilter() == null) {
-                throw new IllegalArgumentException("Must have non-null filter");
-            }
-        }
-    }
-
-    private class FilesByMimeCache extends EventUpdatableCache<FileTypeMimeSearchParams, SearchResultsDTO, Content> {
 
         private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
             String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
@@ -340,36 +309,6 @@ public class ViewsDAO extends DefaultDataEventListener {
 
             return whereClause;
         }
-
-        @Override
-        @Messages({"FileTypesByMimeType.name.text=By MIME Type"})
-        protected SearchResultsDTO fetch(FileTypeMimeSearchParams key) throws Exception {
-            String whereStatement = getFileMimeWhereStatement(key.getMimeType(), key.getDataSourceId());
-            final String mimeTypeDisplayName = Bundle.FileTypesByMimeType_name_text();
-            return fetchFileViewFiles(whereStatement, mimeTypeDisplayName, key.getStartItem(), key.getMaxResultsCount());
-        }
-
-        @Override
-        public boolean isInvalidatingEvent(FileTypeMimeSearchParams key, Content eventData) {
-            if (!(eventData instanceof AbstractFile)) {
-                return false;
-            }
-
-            AbstractFile file = (AbstractFile) eventData;
-            String mimeType = file.getMIMEType();
-            return key.getMimeType().equalsIgnoreCase(mimeType);
-        }
-
-        @Override
-        protected void validateCacheKey(FileTypeMimeSearchParams key) throws IllegalArgumentException {
-            validateDataSourceParams(key);
-            if (key.getMimeType() == null) {
-                throw new IllegalArgumentException("Must have non-null filter");
-            }
-        }
-    }
-
-    private class FilesBySizeCache extends EventUpdatableCache<FileTypeSizeSearchParams, SearchResultsDTO, Content> {
 
         private String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
             String lowerBound = "size >= " + filter.getLowerBound();
@@ -391,24 +330,72 @@ public class ViewsDAO extends DefaultDataEventListener {
         }
 
         @Override
-        protected SearchResultsDTO fetch(FileTypeSizeSearchParams key) throws Exception {
-            String whereStatement = getFileSizesWhereStatement(key.getSizeFilter(), key.getDataSourceId());
-            return fetchFileViewFiles(whereStatement, key.getSizeFilter().getDisplayName(), key.getStartItem(), key.getMaxResultsCount());
+        protected SearchResultsDTO fetch(DataSourceFilteredSearchParams genericKey) throws Exception {
+            if (genericKey instanceof FileTypeExtensionsSearchParams) {
+                FileTypeExtensionsSearchParams key = (FileTypeExtensionsSearchParams) genericKey;
+                String whereStatement = getFileExtensionWhereStatement(key.getFilter(), key.getDataSourceId());
+                return fetchFileViewFiles(whereStatement, key.getFilter().getDisplayName(), key.getStartItem(), key.getMaxResultsCount());
+            } else if (genericKey instanceof FileTypeMimeSearchParams) {
+                FileTypeMimeSearchParams key = (FileTypeMimeSearchParams) genericKey;
+                String whereStatement = getFileMimeWhereStatement(key.getMimeType(), key.getDataSourceId());
+                final String mimeTypeDisplayName = Bundle.FileTypesByMimeType_name_text();
+                return fetchFileViewFiles(whereStatement, mimeTypeDisplayName, key.getStartItem(), key.getMaxResultsCount());
+            } else if (genericKey instanceof FileTypeSizeSearchParams) {
+                FileTypeSizeSearchParams key = (FileTypeSizeSearchParams) genericKey;
+                String whereStatement = getFileSizesWhereStatement(key.getSizeFilter(), key.getDataSourceId());
+                return fetchFileViewFiles(whereStatement, key.getSizeFilter().getDisplayName(), key.getStartItem(), key.getMaxResultsCount());
+            } else {
+                throw new IllegalArgumentException("Unknown key type: " + ((genericKey == null) ? "<null>" : genericKey));
+            }
         }
 
         @Override
-        public boolean isInvalidatingEvent(FileTypeSizeSearchParams key, Content eventData) {
-            long size = eventData.getSize();
+        public boolean isInvalidatingEvent(DataSourceFilteredSearchParams genericKey, Content eventData) {
+            if (!(eventData instanceof AbstractFile)) {
+                return false;
+            }
 
-            return size >= key.getSizeFilter().getLowerBound()
-                    && (key.getSizeFilter().getUpperBound() == null || size < key.getSizeFilter().getUpperBound());
+            AbstractFile file = (AbstractFile) eventData;
+
+            if (genericKey instanceof FileTypeExtensionsSearchParams) {
+                FileTypeExtensionsSearchParams key = (FileTypeExtensionsSearchParams) genericKey;
+                String extension = "." + file.getNameExtension().toLowerCase();
+                return key.getFilter().getFilter().contains(extension);
+            } else if (genericKey instanceof FileTypeMimeSearchParams) {
+                FileTypeMimeSearchParams key = (FileTypeMimeSearchParams) genericKey;
+                String mimeType = file.getMIMEType();
+                return key.getMimeType().equalsIgnoreCase(mimeType);
+            } else if (genericKey instanceof FileTypeSizeSearchParams) {
+                FileTypeSizeSearchParams key = (FileTypeSizeSearchParams) genericKey;
+                long size = eventData.getSize();
+                return size >= key.getSizeFilter().getLowerBound()
+                        && (key.getSizeFilter().getUpperBound() == null || size < key.getSizeFilter().getUpperBound());
+            } else {
+                return false;
+            }
         }
 
         @Override
-        protected void validateCacheKey(FileTypeSizeSearchParams key) throws IllegalArgumentException {
-            validateDataSourceParams(key);
-            if (key.getSizeFilter() == null) {
-                throw new IllegalArgumentException("Must have non-null filter");
+        protected void validateCacheKey(DataSourceFilteredSearchParams genericKey) throws IllegalArgumentException {
+            validateDataSourceParams(genericKey);
+
+            if (genericKey instanceof FileTypeExtensionsSearchParams) {
+                FileTypeExtensionsSearchParams key = (FileTypeExtensionsSearchParams) genericKey;
+                if (key.getFilter() == null) {
+                    throw new IllegalArgumentException("Must have non-null filter");
+                }
+            } else if (genericKey instanceof FileTypeMimeSearchParams) {
+                FileTypeMimeSearchParams key = (FileTypeMimeSearchParams) genericKey;
+                if (key.getMimeType() == null) {
+                    throw new IllegalArgumentException("Must have non-null filter");
+                }
+            } else if (genericKey instanceof FileTypeSizeSearchParams) {
+                FileTypeSizeSearchParams key = (FileTypeSizeSearchParams) genericKey;
+                if (key.getSizeFilter() == null) {
+                    throw new IllegalArgumentException("Must have non-null filter");
+                }
+            } else {
+                throw new IllegalArgumentException("Unknown key type: " + ((genericKey == null) ? "<null>" : genericKey));
             }
         }
     }

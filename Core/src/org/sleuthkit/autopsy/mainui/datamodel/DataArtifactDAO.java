@@ -64,7 +64,6 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         this.dataArtifactCache.invalidate(evt);
     }
 
-        
     public boolean isDataArtifactInvalidating(DataArtifactSearchParam key, ModuleDataEvent eventData) {
         return dataArtifactCache.isInvalidatingEvent(key, eventData);
     }
@@ -77,7 +76,9 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return dataArtifactCache.getValue(key, hardRefresh);
     }
 
-    
+    /**
+     * Cache for data artifacts.
+     */
     private class DataArtifactCache extends EventUpdatableCache<DataArtifactSearchParam, DataArtifactTableSearchResultsDTO, ModuleDataEvent> {
 
         @Override
