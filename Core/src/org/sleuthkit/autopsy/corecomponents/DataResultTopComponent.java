@@ -393,6 +393,12 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         dataResultPanel.displayDataArtifact(dataArtifactParams);
     }
     
+    /**
+     * Displays results of querying the DAO for files matching the mime
+     * search parameters query.
+     * 
+     * @param fileMimeKey The search parameter query.
+     */
     public void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         dataResultPanel.displayFileMimes(fileMimeKey);
     }
@@ -405,6 +411,26 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      */
     public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         dataResultPanel.displayFileExtensions(fileExtensionsParams);
+    }
+    
+    /**
+     * Displays results of querying the DAO for hash sets matching the
+     * search parameters query.
+     * 
+     * @param hashHitParams The search parameter query.
+     */
+    public void displayHashHits(HashHitSearchParam hashHitParams) {
+        dataResultPanel.displayHashHits(hashHitParams);
+    }
+    
+    /**
+     * Displays results of querying the DAO for keyword hits matching the
+     * search parameters query.
+     * 
+     * @param keywordParams The search parameter query.
+     */
+    public void displayKeywordHits(KeywordHitSearchParam keywordParams) {
+       dataResultPanel.displayKeywordHits(keywordParams);
     }
 
     @Override

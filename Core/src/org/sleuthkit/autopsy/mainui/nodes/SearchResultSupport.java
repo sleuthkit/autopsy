@@ -325,6 +325,61 @@ public class SearchResultSupport {
     }
     
     /**
+     * Sets the search parameters to the hash set hit search parameters.
+     * Subsequent calls that don't change search parameters (i.e. page size
+     * changes, page index changes) will use these search parameters to return
+     * results.
+     *
+     * @param hashHitKey The search parameters.
+     *
+     * @return The results of querying with current paging parameters.
+     *
+     * @throws ExecutionException
+     * @throws IllegalArgumentException
+     */
+    public synchronized SearchResultsDTO setHashHits(HashHitSearchParam hashHitKey) throws ExecutionException, IllegalArgumentException {
+        resetPaging();
+        this.pageFetcher = (pSize, pIdx) -> {
+            HashHitSearchParam searchParams = new HashHitSearchParam(
+                    hashHitKey.getDataSourceId(),
+                    hashHitKey.getSetName(),
+                    pIdx * pSize,
+                    (long) pSize);
+            return dao.getAnalysisResultDAO().getHashHitsForTable(searchParams);
+        };
+
+        return fetchResults();
+    }
+
+    /**
+     * Sets the search parameters to the file mime type search parameters.
+     * Subsequent calls that don't change search parameters (i.e. page size
+     * changes, page index changes) will use these search parameters to return
+     * results.
+     *
+     * @param keywordHitKey The search parameters.
+     *
+     * @return The results of querying with current paging parameters.
+     *
+     * @throws ExecutionException
+     * @throws IllegalArgumentException
+     */
+    public synchronized SearchResultsDTO setKeywordHits(KeywordHitSearchParam keywordHitKey) throws ExecutionException, IllegalArgumentException {
+        resetPaging();
+        this.pageFetcher = (pSize, pIdx) -> {
+            KeywordHitSearchParam searchParams = new KeywordHitSearchParam(
+                    keywordHitKey.getDataSourceId(),
+                    keywordHitKey.getSetName(),
+                    keywordHitKey.getKeyword(),
+                    keywordHitKey.getRegex(),
+                    pIdx * pSize,
+                    (long) pSize);
+            return dao.getAnalysisResultDAO().getKeywordHitsForTable(searchParams);
+        };
+
+        return fetchResults();
+    }
+    /**
      * Means of fetching data based on paging settings.
      */
     private interface PageFetcher {

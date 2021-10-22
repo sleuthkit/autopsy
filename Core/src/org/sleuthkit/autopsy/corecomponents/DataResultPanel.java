@@ -1146,7 +1146,42 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     fileMimeKey.getDataSourceId() == null ? "<null>" : fileMimeKey.getDataSourceId()),
                     ex);
         }
+    }
 
+    /**
+     * Displays results of querying the DAO for given search parameters query.
+     *
+     * @param keywordHitKey The search parameter query.
+     */
+    void displayKeywordHits(KeywordHitSearchParam keywordHitKey) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setKeywordHits(keywordHitKey);
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for keyword filter: {0} and data source id: {1}.",
+                    keywordHitKey.getSetName(),
+                    keywordHitKey.getDataSourceId() == null ? "<null>" : keywordHitKey.getDataSourceId()),
+                    ex);
+        }
+    }
+
+    /**
+     * Displays results of querying the DAO for given search parameters query.
+     *
+     * @param hashHitKey The search parameter query.
+     */
+    void displayHashHits(HashHitSearchParam hashHitKey) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setHashHits(hashHitKey);
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for hash set filter: {0} and data source id: {1}.",
+                    hashHitKey.getSetName(),
+                    hashHitKey.getDataSourceId() == null ? "<null>" : hashHitKey.getDataSourceId()),
+                    ex);
+        }
     }
     
     /**
