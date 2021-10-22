@@ -45,8 +45,6 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 13 * hash + Objects.hashCode(this.getArtifactType());
-        hash = 13 * hash + Objects.hashCode(this.getDataSourceId());
         hash = 13 * hash + Objects.hashCode(this.setName);
         hash = 13 * hash + Objects.hashCode(super.hashCode());
         return hash;
@@ -64,12 +62,6 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
             return false;
         }
         final AnalysisResultSetSearchParam other = (AnalysisResultSetSearchParam) obj;
-        if (!Objects.equals(this.getArtifactType(), other.getArtifactType())) {
-            return false;
-        }
-        if (!Objects.equals(this.getDataSourceId(), other.getDataSourceId())) {
-            return false;
-        }
         if (!Objects.equals(this.setName, other.setName)) {
             return false;
         }

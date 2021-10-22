@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -25,11 +26,59 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
 
-    public KeywordHitSearchParam(Long dataSourceId, String setName) {
+    private final String keyword;
+    private final String regex;
+    
+    public KeywordHitSearchParam(Long dataSourceId, String setName, String keyword, String regex) {
         super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName);
+        this.keyword = keyword;
+        this.regex = regex;
     }
 
-    public KeywordHitSearchParam(String setName, Long dataSourceId, long startItem, Long maxResultsCount) {
+    public KeywordHitSearchParam(Long dataSourceId, String setName, String keyword, String regex, long startItem, Long maxResultsCount) {
         super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName, startItem, maxResultsCount);
+        this.keyword = keyword;
+        this.regex = regex;
+    }
+    
+    public String getRegex() {
+        return regex;
+    }
+    
+    public String getKeyword() {
+        return keyword;
+    }
+    
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 23 * hash + Objects.hashCode(this.keyword);
+        hash = 23 * hash + Objects.hashCode(this.regex);
+        hash = 23 * hash + Objects.hashCode(super.hashCode());
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final KeywordHitSearchParam other = (KeywordHitSearchParam) obj;
+        if (!Objects.equals(this.getDataSourceId(), other.getDataSourceId())) {
+            return false;
+        }
+        if (!Objects.equals(this.getKeyword(), other.getKeyword())) {
+            return false;
+        }
+        if (!Objects.equals(this.getRegex(), other.getRegex())) {
+            return false;
+        }
+        return super.equalFields(other);
     }
 }
