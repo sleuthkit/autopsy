@@ -23,31 +23,38 @@ import java.util.Objects;
 /**
  * Key for accessing data about file type extensions from the DAO.
  */
-public class FileTypeExtensionsSearchParams extends DataSourceFilteredSearchParams {
+public class FileTypeExtensionsSearchParams extends BaseSearchParams {
 
     private final FileExtSearchFilter filter;
+    private final Long dataSourceId;
 
     // TODO: This should ideally take in some kind of ENUM once we redo the tree.
     // this assumes that filters implicitly or explicitly implement hashCode and equals to work
     public FileTypeExtensionsSearchParams(FileExtSearchFilter filter, Long dataSourceId) {
-        super(dataSourceId);
         this.filter = filter;
+        this.dataSourceId = dataSourceId;
     }
 
     public FileTypeExtensionsSearchParams(FileExtSearchFilter filter, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount, dataSourceId);
+        super(startItem, maxResultsCount);
         this.filter = filter;
+        this.dataSourceId = dataSourceId;
     }
 
     public FileExtSearchFilter getFilter() {
         return filter;
     }
 
+    public Long getDataSourceId() {
+        return dataSourceId;
+    }
+
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 17 * hash + Objects.hashCode(this.filter);
-        hash = 17 * hash + super.hashCode();
+        int hash = 7;
+        hash = 53 * hash + Objects.hashCode(this.filter);
+        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 53 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -66,7 +73,12 @@ public class FileTypeExtensionsSearchParams extends DataSourceFilteredSearchPara
         if (!Objects.equals(this.filter, other.filter)) {
             return false;
         }
-        return super.equals(obj);
+        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+            return false;
+        }
+        
+        return super.equalFields(other);
     }
 
+    
 }

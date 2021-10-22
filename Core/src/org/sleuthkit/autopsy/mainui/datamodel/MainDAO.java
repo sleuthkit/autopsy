@@ -18,23 +18,17 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import com.google.common.collect.ImmutableList;
-import java.util.Collection;
-import java.util.List;
-import org.sleuthkit.autopsy.mainui.datamodel.DataEventListener.RegisteringDataEventListener;
-
 /**
  * Main entry point for DAO for providing data to populate the data results
  * viewer.
  */
-public class MainDAO extends RegisteringDataEventListener {
+public class MainDAO {
 
     private static MainDAO instance = null;
 
     public synchronized static MainDAO getInstance() {
         if (instance == null) {
             instance = new MainDAO();
-            instance.register();
         }
 
         return instance;
@@ -43,7 +37,6 @@ public class MainDAO extends RegisteringDataEventListener {
     private final DataArtifactDAO dataArtifactDAO = DataArtifactDAO.getInstance();
     private final AnalysisResultDAO analysisResultDAO = AnalysisResultDAO.getInstance();
     private final ViewsDAO viewsDAO = ViewsDAO.getInstance();
-    private final List<DataEventListener> allDataListeners = ImmutableList.of(dataArtifactDAO, analysisResultDAO, viewsDAO);
 
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;
@@ -55,10 +48,5 @@ public class MainDAO extends RegisteringDataEventListener {
 
     public ViewsDAO getViewsDAO() {
         return viewsDAO;
-    }
-
-    @Override
-    protected Collection<DataEventListener> getDelegateListeners() {
-        return allDataListeners;
     }
 }

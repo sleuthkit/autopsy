@@ -57,26 +57,28 @@ public class BaseSearchParams implements SearchParams {
         return hash;
     }
 
-    @Override
-    public boolean equals(Object obj) {
+    /**
+     * Meant to be called from a subclass to determine if fields are equivalent.
+     *
+     * @param obj The object to compare.
+     *
+     * @return True if fields are equal.
+     */
+    public boolean equalFields(BaseSearchParams obj) {
         if (this == obj) {
             return true;
         }
+
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
+
+        if (this.startItem != obj.startItem) {
             return false;
         }
-        final BaseSearchParams other = (BaseSearchParams) obj;
-        if (this.startItem != other.startItem) {
-            return false;
-        }
-        if (!Objects.equals(this.maxResultsCount, other.maxResultsCount)) {
+        if (!Objects.equals(this.maxResultsCount, obj.maxResultsCount)) {
             return false;
         }
         return true;
     }
-
-    
 }

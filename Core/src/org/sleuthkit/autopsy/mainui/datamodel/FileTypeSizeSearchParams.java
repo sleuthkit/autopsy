@@ -23,29 +23,20 @@ import java.util.Objects;
 /**
  * Key for accessing data about file sizeFilter from the DAO.
  */
-public class FileTypeSizeSearchParams extends DataSourceFilteredSearchParams {
-
-    private static final long GB_1 = 1000 * 1000 * 1000;
-    private static final long MB_200 = 200 * 1000 * 1000;
-    private static final long MB_50 = 50 * 1000 * 1000;
+public class FileTypeSizeSearchParams extends BaseSearchParams {
 
     public enum FileSizeFilter {
-        SIZE_50_200(0, "SIZE_50_200", "50 - 200MB", MB_50, MB_200), //NON-NLS
-        SIZE_200_1000(1, "SIZE_200_1GB", "200MB - 1GB", MB_200, GB_1), //NON-NLS
-        SIZE_1000_(2, "SIZE_1000+", "1GB+", GB_1, null); //NON-NLS
+        SIZE_50_200(0, "SIZE_50_200", "50 - 200MB"), //NON-NLS
+        SIZE_200_1000(1, "SIZE_200_1GB", "200MB - 1GB"), //NON-NLS
+        SIZE_1000_(2, "SIZE_1000+", "1GB+"); //NON-NLS
         private final int id;
         private final String name;
         private final String displayName;
-        private long lowerBound;
-        private Long upperBound;
-        
 
-        private FileSizeFilter(int id, String name, String displayName, long lowerBound, Long upperBound) {
+        private FileSizeFilter(int id, String name, String displayName) {
             this.id = id;
             this.name = name;
             this.displayName = displayName;
-            this.lowerBound = lowerBound;
-            this.upperBound = upperBound;
         }
 
         public String getName() {
@@ -59,37 +50,36 @@ public class FileTypeSizeSearchParams extends DataSourceFilteredSearchParams {
         public String getDisplayName() {
             return this.displayName;
         }
-
-        public long getLowerBound() {
-            return lowerBound;
-        }
-
-        public Long getUpperBound() {
-            return upperBound;
-        }
     }
 
     private final FileSizeFilter sizeFilter;
-
+    private final Long dataSourceId;
+ 
     public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        super(dataSourceId);
         this.sizeFilter = sizeFilter;
+        this.dataSourceId = dataSourceId;
     }
 
     public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount, dataSourceId);
+        super(startItem, maxResultsCount);
         this.sizeFilter = sizeFilter;
+        this.dataSourceId = dataSourceId;
     }
 
     public FileSizeFilter getSizeFilter() {
         return sizeFilter;
     }
 
+    public Long getDataSourceId() {
+        return dataSourceId;
+    }
+
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 13 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 13 * hash + super.hashCode();
+        int hash = 7;
+        hash = 23 * hash + Objects.hashCode(this.sizeFilter);
+        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 23 * hash + super.hashCode();
         return hash;
     }
 
@@ -105,10 +95,13 @@ public class FileTypeSizeSearchParams extends DataSourceFilteredSearchParams {
             return false;
         }
         final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (this.sizeFilter != other.sizeFilter) {
+        if (!Objects.equals(this.sizeFilter, other.sizeFilter)) {
             return false;
         }
-        return super.equals(obj);
+        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+            return false;
+        }
+        return super.equalFields(other);
     }
 
 }

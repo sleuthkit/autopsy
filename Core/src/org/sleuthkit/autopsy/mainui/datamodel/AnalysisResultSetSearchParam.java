@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Base class for search params for analysis results that filter by set name.
  */
 abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
-
+    
     private final String setName;
 
     public AnalysisResultSetSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String setName) {
@@ -37,16 +37,18 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
         super(artifactType, dataSourceId, startItem, maxResultsCount);
         this.setName = setName;
     }
-
+    
     public String getSetName() {
         return setName;
     }
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 61 * hash + Objects.hashCode(this.setName);
-        hash = 61 * hash + super.hashCode();
+        int hash = 7;
+        hash = 13 * hash + Objects.hashCode(this.getArtifactType());
+        hash = 13 * hash + Objects.hashCode(this.getDataSourceId());
+        hash = 13 * hash + Objects.hashCode(this.setName);
+        hash = 13 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -62,10 +64,15 @@ abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
             return false;
         }
         final AnalysisResultSetSearchParam other = (AnalysisResultSetSearchParam) obj;
+        if (!Objects.equals(this.getArtifactType(), other.getArtifactType())) {
+            return false;
+        }
+        if (!Objects.equals(this.getDataSourceId(), other.getDataSourceId())) {
+            return false;
+        }
         if (!Objects.equals(this.setName, other.setName)) {
             return false;
         }
-        return super.equals(obj);
+        return super.equalFields(other);
     }
-
 }

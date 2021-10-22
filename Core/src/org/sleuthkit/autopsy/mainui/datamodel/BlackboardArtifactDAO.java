@@ -1,23 +1,19 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.mainui.datamodel.DataEventListener.DefaultDataEventListener;
-import org.sleuthkit.autopsy.mainui.datamodel.Bundle;
-import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -43,6 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
  * Base class for common methods.
  */
@@ -63,8 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "BlackboardArtifactDAO.columnKeys.dataSource.displayName=Data Source",
     "BlackboardArtifactDAO.columnKeys.dataSource.description=Data Source"
 })
-abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
-
+abstract class BlackboardArtifactDAO {
     // GVDTODO there is a different standard for normal attr strings and email attr strings
     static final int STRING_LENGTH_MAX = 160;
     static final String ELLIPSIS = "...";
@@ -114,7 +110,7 @@ abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
             Bundle.BlackboardArtifactDAO_columnKeys_dataSource_displayName(),
             Bundle.BlackboardArtifactDAO_columnKeys_dataSource_description()
     );
-
+    
     TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
         Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
         for (BlackboardArtifact art : arts) {
@@ -158,7 +154,7 @@ abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
             cellValues.add(null);
             cellValues.add(null);
             cellValues.add(null);
-
+            
             addAnalysisResultFields(artifact, cellValues);
 
             long id = artifact.getId();
@@ -187,21 +183,21 @@ abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
 
         return new TableData(columnKeys, rows);
     }
-
+    
     abstract RowDTO createRow(BlackboardArtifact dataArtifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id);
-
-    void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
+    
+    void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) { 
         // By default, do nothing
     }
-
+    
     void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) throws TskCoreException {
         // By default, do nothing
     }
-
+    
     SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
-
+    
     boolean isRenderedAttr(BlackboardArtifact.Type artType, BlackboardAttribute.Type attrType) {
         if (BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() == artType.getTypeID()) {
             return !HIDDEN_EMAIL_ATTR_TYPES.contains(attrType.getTypeID());
@@ -230,7 +226,7 @@ abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
             return getRootAncestorName(srcContent);
         }
     }
-
+    
     /**
      * Gets the name of the root ancestor of the source content for the artifact
      * represented by this node.
@@ -247,24 +243,6 @@ abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
             parentName = parent.getName();
         }
         return parentName;
-    }
-
-    /**
-     * Returns a list of paged artifacts.
-     * @param arts The artifacts.
-     * @param searchParams The search parameters including the paging.
-     * @return The list of paged artifacts.
-     */
-    List<BlackboardArtifact> getPaged(List<? extends BlackboardArtifact> arts, SearchParams searchParams) {
-        Stream<? extends BlackboardArtifact> pagedArtsStream = arts.stream()
-                .sorted(Comparator.comparing((art) -> art.getId()))
-                .skip(searchParams.getStartItem());
-
-        if (searchParams.getMaxResultsCount() != null) {
-            pagedArtsStream = pagedArtsStream.limit(searchParams.getMaxResultsCount());
-        }
-
-        return pagedArtsStream.collect(Collectors.toList());
     }
 
     /**
@@ -317,13 +295,12 @@ abstract class BlackboardArtifactDAO extends DefaultDataEventListener {
             default:
                 throw new IllegalArgumentException("Unknown attribute type value type: " + attr.getAttributeType().getValueType());
         }
-    }
-
+    } 
+    
     class TableData {
-
         final List<ColumnKey> columnKeys;
         final List<RowDTO> rows;
-
+        
         TableData(List<ColumnKey> columnKeys, List<RowDTO> rows) {
             this.columnKeys = columnKeys;
             this.rows = rows;

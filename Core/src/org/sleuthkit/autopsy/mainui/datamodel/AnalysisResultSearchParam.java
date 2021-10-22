@@ -24,29 +24,35 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Key for analysis result in order to retrieve data from DAO.
  */
-public class AnalysisResultSearchParam extends DataSourceFilteredSearchParams {
-
+public class AnalysisResultSearchParam extends BaseSearchParams {
     private final BlackboardArtifact.Type artifactType;
+    private final Long dataSourceId;
 
     public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        super(dataSourceId);
         this.artifactType = artifactType;
+        this.dataSourceId = dataSourceId;
     }
 
     public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount, dataSourceId);
+        super(startItem, maxResultsCount);
         this.artifactType = artifactType;
+        this.dataSourceId = dataSourceId;
     }
 
     public BlackboardArtifact.Type getArtifactType() {
         return artifactType;
     }
 
+    public Long getDataSourceId() {
+        return dataSourceId;
+    }
+
     @Override
     public int hashCode() {
         int hash = 7;
         hash = 13 * hash + Objects.hashCode(this.artifactType);
-        hash = 13 * super.hashCode();
+        hash = 13 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 13 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -65,8 +71,11 @@ public class AnalysisResultSearchParam extends DataSourceFilteredSearchParams {
         if (!Objects.equals(this.artifactType, other.artifactType)) {
             return false;
         }
-
-        return super.equals(obj);
+        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+            return false;
+        }
+        return super.equalFields(other);
     }
-
+    
+    
 }

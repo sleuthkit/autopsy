@@ -23,29 +23,36 @@ import java.util.Objects;
 /**
  * Key for accessing data about file MIME type from the DAO.
  */
-public class FileTypeMimeSearchParams extends DataSourceFilteredSearchParams {
+public class FileTypeMimeSearchParams extends BaseSearchParams {
 
     private final String mimeType;
-
+    private final Long dataSourceId;
+ 
     public FileTypeMimeSearchParams(String mimeType, Long dataSourceId) {
-        super(dataSourceId);
         this.mimeType = mimeType;
+        this.dataSourceId = dataSourceId;
     }
 
     public FileTypeMimeSearchParams(String mimeType, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount, dataSourceId);
+        super(startItem, maxResultsCount);
         this.mimeType = mimeType;
+        this.dataSourceId = dataSourceId;
     }
 
     public String getMimeType() {
         return mimeType;
     }
 
+    public Long getDataSourceId() {
+        return dataSourceId;
+    }
+
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 97 * hash + Objects.hashCode(this.mimeType);
-        hash = 97 * hash + super.hashCode();
+        hash = 23 * hash + Objects.hashCode(this.mimeType);
+        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 23 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -61,10 +68,13 @@ public class FileTypeMimeSearchParams extends DataSourceFilteredSearchParams {
             return false;
         }
         final FileTypeMimeSearchParams other = (FileTypeMimeSearchParams) obj;
-        if (!Objects.equals(this.mimeType, other.mimeType)) {
+        if (!(this.mimeType.equals(other.mimeType))) {
             return false;
         }
-        return super.equals(obj);
+        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+            return false;
+        }
+        return super.equalFields(other);
     }
 
 }

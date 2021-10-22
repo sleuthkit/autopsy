@@ -18,14 +18,20 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -33,11 +39,9 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTr
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
-import org.sleuthkit.autopsy.mainui.datamodel.DataEventListener.DefaultDataEventListener;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -73,8 +77,13 @@ import org.sleuthkit.datamodel.TskData;
     "ThreePanelViewsDAO.fileColumns.mimeType=MIME Type",
     "ThreePanelViewsDAO.fileColumns.extensionColLbl=Extension",
     "ThreePanelViewsDAO.fileColumns.noDescription=No Description"})
-public class ViewsDAO extends DefaultDataEventListener {
+public class ViewsDAO {
 
+    private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
+    private static final long CACHE_DURATION = 2;
+    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;    
+    private final Cache<BaseSearchParams, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
     private static final List<ColumnKey> FILE_COLUMNS = Arrays.asList(
@@ -119,7 +128,7 @@ public class ViewsDAO extends DefaultDataEventListener {
         return new ColumnKey(name, name, Bundle.ThreePanelViewsDAO_fileColumns_noDescription());
     }
 
-    private static ExtensionMediaType getExtensionMediaType(String ext) {
+    static ExtensionMediaType getExtensionMediaType(String ext) {
         if (StringUtils.isBlank(ext)) {
             return ExtensionMediaType.UNCATEGORIZED;
         } else {
@@ -148,68 +157,185 @@ public class ViewsDAO extends DefaultDataEventListener {
         }
     }
 
-    private final FilesCache cache = new FilesCache();
-            
-    public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key) throws ExecutionException, IllegalArgumentException {
-        return this.cache.getValue(key);
-    }
-
-    public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return this.cache.getValue(key, hardRefresh);
-    }
-
-    public boolean isFilesByExtInvalidating(FileTypeExtensionsSearchParams key, Content changedContent) {
-        return this.cache.isInvalidatingEvent(key, changedContent);
-    }
-
-    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key) throws ExecutionException, IllegalArgumentException {
-        return this.cache.getValue(key);
-    }
-
-    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return this.cache.getValue(key, hardRefresh);
-    }
-
-    public boolean isFilesByMimeInvalidating(FileTypeMimeSearchParams key, Content changedContent) {
-        return this.cache.isInvalidatingEvent(key, changedContent);
-    }
-
-    public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key) throws ExecutionException, IllegalArgumentException {
-        return this.cache.getValue(key);
-    }
-
-    public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        return this.cache.getValue(key, hardRefresh);
-    }
-
-    public boolean isFilesBySizeInvalidating(FileTypeSizeSearchParams key, Content changedContent) {
-        return this.cache.isInvalidatingEvent(key, changedContent);
-    }
-
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    private void validateDataSourceParams(DataSourceFilteredSearchParams searchParams) throws IllegalArgumentException {
-        if (searchParams == null) {
-            throw new IllegalArgumentException("Search parameters must be non-null");
-        } else if (searchParams.getDataSourceId() != null && searchParams.getDataSourceId() <= 0) {
+    public SearchResultsDTO getFilesByExtension(FileTypeExtensionsSearchParams key) throws ExecutionException, IllegalArgumentException {
+        if (key.getFilter() == null) {
+            throw new IllegalArgumentException("Must have non-null filter");
+        } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
+
+        return searchParamsCache.get(key, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
+    }
+    
+    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key) throws ExecutionException, IllegalArgumentException {
+        if (key.getMimeType() == null) {
+            throw new IllegalArgumentException("Must have non-null filter");
+        } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
+            throw new IllegalArgumentException("Data source id must be greater than 0 or null");
+        }
+
+        return searchParamsCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
+    }
+    
+    public SearchResultsDTO getFilesBySize(FileTypeSizeSearchParams key) throws ExecutionException, IllegalArgumentException {
+        if (key.getSizeFilter() == null) {
+            throw new IllegalArgumentException("Must have non-null filter");
+        } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
+            throw new IllegalArgumentException("Data source id must be greater than 0 or null");
+        }
+
+        return searchParamsCache.get(key, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
+    }    
+
+    @Override
+    public boolean isInvalidatingEvent(DataSourceFilteredSearchParams genericKey, Content eventData) {
+        if (!(eventData instanceof AbstractFile)) {
+            return false;
+        }
+
+        AbstractFile file = (AbstractFile) eventData;
+
+        if (genericKey instanceof FileTypeExtensionsSearchParams) {
+            FileTypeExtensionsSearchParams key = (FileTypeExtensionsSearchParams) genericKey;
+            String extension = "." + file.getNameExtension().toLowerCase();
+            return key.getFilter().getFilter().contains(extension);
+        } else if (genericKey instanceof FileTypeMimeSearchParams) {
+            FileTypeMimeSearchParams key = (FileTypeMimeSearchParams) genericKey;
+            String mimeType = file.getMIMEType();
+            return key.getMimeType().equalsIgnoreCase(mimeType);
+        } else if (genericKey instanceof FileTypeSizeSearchParams) {
+            FileTypeSizeSearchParams key = (FileTypeSizeSearchParams) genericKey;
+            long size = eventData.getSize();
+            return size >= key.getSizeFilter().getLowerBound()
+                    && (key.getSizeFilter().getUpperBound() == null || size < key.getSizeFilter().getUpperBound());
+        } else {
+            return false;
+        }
+    }
+
+
+//    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
+//
+//    }
+//
+//    public ViewFileTableSearchResultsDTO getFilewViewForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException, IllegalArgumentException {
+//        if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT) {
+//            throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
+//                    + "Artifact type must be non-null and data artifact.  "
+//                    + "Received {0}", artType));
+//        }
+//
+//        ViewFileCacheKey cacheKey = new ViewFileCacheKey(artType, dataSourceId);
+//        return dataArtifactCache.get(cacheKey, () -> fetchFilesForTable(cacheKey));
+//    }
+    private Map<Integer, Long> fetchFileViewCounts(List<FileExtSearchFilter> filters, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
+        Map<Integer, Long> counts = new HashMap<>();
+        for (FileExtSearchFilter filter : filters) {
+            String whereClause = getFileExtensionWhereStatement(filter, dataSourceId);
+            long count = getCase().countFilesWhere(whereClause);
+            counts.put(filter.getId(), count);
+        }
+
+        return counts;
+    }
+
+    private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId) {
+        String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
+                + (dataSourceId != null && dataSourceId > 0
+                        ? " AND data_source_obj_id = " + dataSourceId
+                        : " ")
+                + " AND (extension IN (" + filter.getFilter().stream()
+                        .map(String::toLowerCase)
+                        .map(s -> "'" + StringUtils.substringAfter(s, ".") + "'")
+                        .collect(Collectors.joining(", ")) + "))";
+        return whereClause;
+    }
+    
+    private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
+
+        String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + " AND (type IN ("
+                + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
+                + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
+                + "))"
+                + (dataSourceId != null && dataSourceId > 0 ? " AND data_source_obj_id = " + dataSourceId : " ")
+                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
+                + " AND mime_type = '" + mimeType + "'";
+    
+        return whereClause;
+    }
+
+    private static String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
+        String query;
+        switch (filter) {
+            case SIZE_50_200:
+                query = "(size >= 50000000 AND size < 200000000)"; //NON-NLS
+                break;
+            case SIZE_200_1000:
+                query = "(size >= 200000000 AND size < 1000000000)"; //NON-NLS
+                break;
+
+            case SIZE_1000_:
+                query = "(size >= 1000000000)"; //NON-NLS
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unsupported filter type to get files by size: " + filter); //NON-NLS
+        }
+
+        // Ignore unallocated block files.
+        query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
+        
+        // hide known files if specified by configuration
+        query += (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : ""); //NON-NLS
+
+        // filter by datasource if indicated in case preferences
+        if (dataSourceId != null && dataSourceId > 0) {
+            query += " AND data_source_obj_id = " + dataSourceId;
+        }
+
+        return query;
+    }
+
+    private SearchResultsDTO fetchExtensionSearchResultsDTOs(FileExtSearchFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getFileExtensionWhereStatement(filter, dataSourceId);
+        return fetchFileViewFiles(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
+    }
+
+    @NbBundle.Messages({"FileTypesByMimeType.name.text=By MIME Type"})
+    private SearchResultsDTO fetchMimeSearchResultsDTOs(String mimeType, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getFileMimeWhereStatement(mimeType, dataSourceId);
+        final String MIME_TYPE_DISPLAY_NAME = Bundle.FileTypesByMimeType_name_text();
+        return fetchFileViewFiles(whereStatement, MIME_TYPE_DISPLAY_NAME, startItem, maxResultCount);
+    }
+
+    private SearchResultsDTO fetchSizeSearchResultsDTOs(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getFileSizesWhereStatement(filter, dataSourceId);
+        return fetchFileViewFiles(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
     }
 
     private SearchResultsDTO fetchFileViewFiles(String whereStatement, String displayName, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
         List<AbstractFile> files = getCase().findAllFilesWhere(whereStatement);
-
+        
         Stream<AbstractFile> pagedFileStream = files.stream()
                 .sorted(Comparator.comparing(af -> af.getId()))
                 .skip(startItem);
-
+        
         if (maxResultCount != null) {
             pagedFileStream = pagedFileStream.limit(maxResultCount);
         }
-
+        
         List<AbstractFile> pagedFiles = pagedFileStream.collect(Collectors.toList());
+        
 
         List<RowDTO> fileRows = new ArrayList<>();
         for (AbstractFile file : pagedFiles) {
@@ -217,7 +343,7 @@ public class ViewsDAO extends DefaultDataEventListener {
             boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
             boolean encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
             boolean hasVisibleChildren = isArchive || file.isDir();
-
+            
             List<Object> cellValues = Arrays.asList(
                     file.getName(), // GVDTODO handle . and .. from getContentDisplayName()
                     // GVDTODO translation column
@@ -267,136 +393,4 @@ public class ViewsDAO extends DefaultDataEventListener {
         return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows, startItem, files.size());
     }
 
-    @Override
-    public void dropCache() {
-        cache.invalidateAll();
-    }
-
-    @Override
-    protected void onContentChange(Content content) {
-        cache.invalidate(content);
-    }
-
-    private class FilesCache extends EventUpdatableCache<DataSourceFilteredSearchParams, SearchResultsDTO, Content> {
-
-        private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId) {
-            String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                    + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
-                    + (dataSourceId != null && dataSourceId > 0
-                            ? " AND data_source_obj_id = " + dataSourceId
-                            : " ")
-                    + " AND (extension IN (" + filter.getFilter().stream()
-                            .map(String::toLowerCase)
-                            .map(s -> "'" + StringUtils.substringAfter(s, ".") + "'")
-                            .collect(Collectors.joining(", ")) + "))";
-            return whereClause;
-        }
-
-        private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
-            String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                    + " AND (type IN ("
-                    + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
-                    + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
-                    + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
-                    + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.ordinal() + ","
-                    + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
-                    + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
-                    + "))"
-                    + (dataSourceId != null && dataSourceId > 0 ? " AND data_source_obj_id = " + dataSourceId : " ")
-                    + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
-                    + " AND mime_type = '" + mimeType + "'";
-
-            return whereClause;
-        }
-
-        private String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
-            String lowerBound = "size >= " + filter.getLowerBound();
-            String upperBound = filter.getUpperBound() == null ? "" : " AND size < " + filter.getUpperBound();
-            String query = "(" + lowerBound + upperBound + ")";
-
-            // Ignore unallocated block files.
-            query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
-
-            // hide known files if specified by configuration
-            query += (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : ""); //NON-NLS
-
-            // filter by datasource if indicated in case preferences
-            if (dataSourceId != null && dataSourceId > 0) {
-                query += " AND data_source_obj_id = " + dataSourceId;
-            }
-
-            return query;
-        }
-
-        @Override
-        @Messages({"FileTypesByMimeType.name.text=By MIME Type"})
-        protected SearchResultsDTO fetch(DataSourceFilteredSearchParams genericKey) throws Exception {
-            if (genericKey instanceof FileTypeExtensionsSearchParams) {
-                FileTypeExtensionsSearchParams key = (FileTypeExtensionsSearchParams) genericKey;
-                String whereStatement = getFileExtensionWhereStatement(key.getFilter(), key.getDataSourceId());
-                return fetchFileViewFiles(whereStatement, key.getFilter().getDisplayName(), key.getStartItem(), key.getMaxResultsCount());
-            } else if (genericKey instanceof FileTypeMimeSearchParams) {
-                FileTypeMimeSearchParams key = (FileTypeMimeSearchParams) genericKey;
-                String whereStatement = getFileMimeWhereStatement(key.getMimeType(), key.getDataSourceId());
-                final String mimeTypeDisplayName = Bundle.FileTypesByMimeType_name_text();
-                return fetchFileViewFiles(whereStatement, mimeTypeDisplayName, key.getStartItem(), key.getMaxResultsCount());
-            } else if (genericKey instanceof FileTypeSizeSearchParams) {
-                FileTypeSizeSearchParams key = (FileTypeSizeSearchParams) genericKey;
-                String whereStatement = getFileSizesWhereStatement(key.getSizeFilter(), key.getDataSourceId());
-                return fetchFileViewFiles(whereStatement, key.getSizeFilter().getDisplayName(), key.getStartItem(), key.getMaxResultsCount());
-            } else {
-                throw new IllegalArgumentException("Unknown key type: " + ((genericKey == null) ? "<null>" : genericKey));
-            }
-        }
-
-        @Override
-        public boolean isInvalidatingEvent(DataSourceFilteredSearchParams genericKey, Content eventData) {
-            if (!(eventData instanceof AbstractFile)) {
-                return false;
-            }
-
-            AbstractFile file = (AbstractFile) eventData;
-
-            if (genericKey instanceof FileTypeExtensionsSearchParams) {
-                FileTypeExtensionsSearchParams key = (FileTypeExtensionsSearchParams) genericKey;
-                String extension = "." + file.getNameExtension().toLowerCase();
-                return key.getFilter().getFilter().contains(extension);
-            } else if (genericKey instanceof FileTypeMimeSearchParams) {
-                FileTypeMimeSearchParams key = (FileTypeMimeSearchParams) genericKey;
-                String mimeType = file.getMIMEType();
-                return key.getMimeType().equalsIgnoreCase(mimeType);
-            } else if (genericKey instanceof FileTypeSizeSearchParams) {
-                FileTypeSizeSearchParams key = (FileTypeSizeSearchParams) genericKey;
-                long size = eventData.getSize();
-                return size >= key.getSizeFilter().getLowerBound()
-                        && (key.getSizeFilter().getUpperBound() == null || size < key.getSizeFilter().getUpperBound());
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        protected void validateCacheKey(DataSourceFilteredSearchParams genericKey) throws IllegalArgumentException {
-            validateDataSourceParams(genericKey);
-
-            if (genericKey instanceof FileTypeExtensionsSearchParams) {
-                FileTypeExtensionsSearchParams key = (FileTypeExtensionsSearchParams) genericKey;
-                if (key.getFilter() == null) {
-                    throw new IllegalArgumentException("Must have non-null filter");
-                }
-            } else if (genericKey instanceof FileTypeMimeSearchParams) {
-                FileTypeMimeSearchParams key = (FileTypeMimeSearchParams) genericKey;
-                if (key.getMimeType() == null) {
-                    throw new IllegalArgumentException("Must have non-null filter");
-                }
-            } else if (genericKey instanceof FileTypeSizeSearchParams) {
-                FileTypeSizeSearchParams key = (FileTypeSizeSearchParams) genericKey;
-                if (key.getSizeFilter() == null) {
-                    throw new IllegalArgumentException("Must have non-null filter");
-                }
-            } else {
-                throw new IllegalArgumentException("Unknown key type: " + ((genericKey == null) ? "<null>" : genericKey));
-            }
-        }
-    }
 }
