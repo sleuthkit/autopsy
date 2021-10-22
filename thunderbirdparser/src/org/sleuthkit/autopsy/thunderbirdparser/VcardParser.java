@@ -423,7 +423,7 @@ final class VcardParser {
                 }
 
                 try {
-                    BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                    BlackboardAttribute.Type attributeType = tskCase.getBlackboard().getAttributeType(attributeTypeName);
                     if (attributeType == null) {
                         try{
                             // Add this attribute type to the case database.
@@ -479,7 +479,7 @@ final class VcardParser {
                    attributeTypeName = "TSK_EMAIL";
                }
                try {
-                   BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                   BlackboardAttribute.Type attributeType = tskCase.getBlackboard().getAttributeType(attributeTypeName);
                    if (attributeType == null) {
                        // Add this attribute type to the case database.
                        attributeType = tskCase.getBlackboard().getOrAddAttributeType(attributeTypeName, 
