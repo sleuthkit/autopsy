@@ -120,9 +120,9 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
         # Look for files bigger than 10MB that are a multiple of 4096            
         if ((file.getSize() > 10485760) and ((file.getSize() % 4096) == 0)):
 
-            # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
+            # Make an artifact on the blackboard.  TSK_INTERESTING_ITEM is a generic type of
             # artifact.  Refer to the developer docs for other examples.
-            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE,
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE,
                                          None, "Big and Round Files", None,
                                          Arrays.asList(
                                              BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,

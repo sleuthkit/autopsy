@@ -250,6 +250,9 @@ public class Artifacts {
                 KeywordHits.RootNode keywordsNode = new KeywordHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(keywordsNode, TSK_KEYWORD_HIT);
 
+            } else if (TSK_INTERESTING_ITEM.getTypeID() == typeId) {
+                InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, TSK_INTERESTING_ITEM, dsObjId).new RootNode();
+                return new TypeNodeKey(interestingHitsNode, TSK_INTERESTING_ITEM);
             } else if (TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == typeId) {
                 InterestingHits.RootNode interestingHitsNode = new InterestingHits(skCase, TSK_INTERESTING_ARTIFACT_HIT, dsObjId).new RootNode();
                 return new TypeNodeKey(interestingHitsNode, TSK_INTERESTING_ARTIFACT_HIT);

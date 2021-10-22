@@ -151,7 +151,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * should be displayed in the node's property sheet.
      */
     private static final Integer[] SHOW_FILE_METADATA = new Integer[]{
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(), 
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()
     };
 
     private final BlackboardArtifact artifact;
@@ -925,7 +926,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
          * hit, add the type and description of the interesting artifact to the
          * sheet.
          */
-        if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+        if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() || artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
@@ -946,7 +947,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                             associatedArtifact.getShortDescription()));
                 }
             } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, MessageFormat.format("Error getting associated artifact of TSK_INTERESTING_ARTIFACT_HIT artifact (objID={0}))", artifact.getId()), ex); //NON-NLS
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting associated artifact of " + artifact.getType().getTypeName() + " artifact (objID={0}))", artifact.getId()), ex); //NON-NLS
             }
         }
 

@@ -358,7 +358,7 @@ class TableReportGenerator {
         // Give the modules the rows for the content tags. 
         for (ContentTag tag : tags) {
             try {
-                if(shouldFilterFromReport(tag.getContent())) {
+                if (shouldFilterFromReport(tag.getContent())) {
                     continue;
                 }
             } catch (TskCoreException ex) {
@@ -366,7 +366,7 @@ class TableReportGenerator {
                 logger.log(Level.SEVERE, "Failed to access content data from the case database.", ex); //NON-NLS
                 return;
             }
-            
+
             // skip tags that we are not reporting on 
             String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
             if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
@@ -451,15 +451,15 @@ class TableReportGenerator {
         // Give the modules the rows for the content tags. 
         for (BlackboardArtifactTag tag : tags) {
             try {
-                if(shouldFilterFromReport(tag.getContent())) {
+                if (shouldFilterFromReport(tag.getContent())) {
                     continue;
                 }
-            }  catch (TskCoreException ex) {
+            } catch (TskCoreException ex) {
                 errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBArtifactTags"));
                 logger.log(Level.SEVERE, "Failed to access content data from the case database.", ex); //NON-NLS
                 return;
             }
-            
+
             String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
             if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
                 continue;
@@ -813,7 +813,7 @@ class TableReportGenerator {
                     AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
                     if (f != null) {
                         uniquePath = openCase.getSleuthkitCase().getAbstractFileById(objId).getUniquePath();
-                        if(shouldFilterFromReport(f)) {
+                        if (shouldFilterFromReport(f)) {
                             continue;
                         }
                     }
@@ -973,7 +973,7 @@ class TableReportGenerator {
                     AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
                     if (f != null) {
                         uniquePath = openCase.getSleuthkitCase().getAbstractFileById(objId).getUniquePath();
-                        if(shouldFilterFromReport(f)) {
+                        if (shouldFilterFromReport(f)) {
                             continue;
                         }
                     }
@@ -1161,8 +1161,9 @@ class TableReportGenerator {
                 }
                 orderedRowData.add(makeCommaSeparatedList(getTags()));
 
-            } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                String[] attributeDataArray = new String[5];
+            } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == getArtifact().getArtifactTypeID()
+                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID() == getArtifact().getArtifactTypeID()) {
+                String[] attributeDataArray = new String[7];
                 // Array is used so that order of the attributes is maintained.
                 for (BlackboardAttribute attr : attributes) {
                     if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME))) {
@@ -1173,6 +1174,10 @@ class TableReportGenerator {
                         attributeDataArray[3] = attr.getDisplayString();
                     } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION))) {
                         attributeDataArray[4] = attr.getDisplayString();
+                    } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT))) {
+                        attributeDataArray[5] = attr.getDisplayString();
+                    } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME))) {
+                        attributeDataArray[6] = attr.getDisplayString();
                     }
                 }
 
@@ -1218,10 +1223,10 @@ class TableReportGenerator {
         List<ArtifactData> artifacts = new ArrayList<>();
         try {
             for (BlackboardArtifact artifact : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifacts(type.getTypeID())) {
-                if(shouldFilterFromReport(artifact)) {
+                if (shouldFilterFromReport(artifact)) {
                     continue;
                 }
-                
+
                 List<BlackboardArtifactTag> tags = Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);
                 HashSet<String> uniqueTagNames = new HashSet<>();
                 for (BlackboardArtifactTag tag : tags) {
@@ -1339,7 +1344,7 @@ class TableReportGenerator {
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)));
 
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED )));
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED)));
 
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID() == artifactTypeId) {
@@ -1708,6 +1713,28 @@ class TableReportGenerator {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)));
 
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID() == artifactTypeId) {
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskSetName"),
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME)));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.associatedArtifact"),
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT)));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskInterestingFilesCategory"),
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY)));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath"),
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.comment"),
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT)));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.description"),
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)));
+
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)));
@@ -1817,19 +1844,19 @@ class TableReportGenerator {
         return "";
 
     }
-    
+
     /**
      * Indicates if the content should be filtered from the report.
      */
     private boolean shouldFilterFromReport(Content content) throws TskCoreException {
-        if(this.settings.getSelectedDataSources() == null) {
+        if (this.settings.getSelectedDataSources() == null) {
             return false;
         }
-        
+
         if (content.getDataSource() == null) {
             return false;
         }
-        
+
         long dataSourceId = content.getDataSource().getId();
         return !this.settings.getSelectedDataSources().contains(dataSourceId);
     }

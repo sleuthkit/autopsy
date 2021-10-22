@@ -1275,7 +1275,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 return;
             }
         }
-        
+
         final Set<Host> finalHosts = hosts;
 
         Optional<Node> osAccountListNodeOpt = Stream.of(em.getRootContext().getChildren().getNodes(true))
@@ -1358,6 +1358,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
             treeNode = getEmailNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
@@ -1495,12 +1497,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact.Type artifactType, BlackboardArtifact art) {
         Node interestingItemsRootNode = typesChildren.findChild(artifactType.getDisplayName());
         Children setNodeChildren = (interestingItemsRootNode == null) ? null : interestingItemsRootNode.getChildren();
-        
+
         // set node children for type could not be found, so return null.
         if (setNodeChildren == null) {
             return null;
         }
-        
+
         String setName = null;
         try {
             setName = art.getAttributes().stream()
