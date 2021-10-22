@@ -577,13 +577,13 @@ public class TableSearchTest extends NbTestCase {
         try {
             // Test keyword set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
-            KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1);
+            KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1, "", "");
             AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getKeywordHitsForTable(kwParam, false);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
             
-            kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_1);
+            kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_1, "", "");
             results = analysisResultDAO.getKeywordHitsForTable(kwParam, false);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());

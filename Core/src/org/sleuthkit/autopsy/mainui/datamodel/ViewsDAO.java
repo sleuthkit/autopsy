@@ -348,6 +348,7 @@ public class ViewsDAO {
         return fetchFileViewFiles(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
     }
 
+<<<<<<< HEAD
     private SearchResultsDTO fetchFileViewFiles(String whereStatement, String displayName, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
         List<AbstractFile> files = getCase().findAllFilesWhere(whereStatement);
 
@@ -368,6 +369,32 @@ public class ViewsDAO {
             boolean encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
             boolean hasVisibleChildren = isArchive || file.isDir();
 
+=======
+    private SearchResultsDTO fetchFileViewFiles(String originalWhereStatement, String displayName, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+        
+        // Add offset and/or paging, if specified
+        String modifiedWhereStatement = originalWhereStatement 
+                + " ORDER BY obj_id ASC"                
+                + (maxResultCount != null && maxResultCount > 0 ? " LIMIT " + maxResultCount : "")
+                + (startItem > 0 ? " OFFSET " + startItem : "");
+
+        List<AbstractFile> files = getCase().findAllFilesWhere(modifiedWhereStatement);
+        
+        long totalResultsCount;
+        // get total number of results
+        if ( (startItem == 0) // offset is zero AND
+                && ( (maxResultCount != null && files.size() < maxResultCount) // number of results is less than max
+                    || (maxResultCount == null)) ) { // OR max number of results was not specified
+                totalResultsCount = files.size();
+        } else {
+            // do a query to get total number of results
+            totalResultsCount = getCase().countFilesWhere(originalWhereStatement);
+        }
+
+        List<RowDTO> fileRows = new ArrayList<>();
+        for (AbstractFile file : files) {
+            
+>>>>>>> 55777459211f9334e218cf17e2bdf1e6f32bedc1
             List<Object> cellValues = Arrays.asList(
                     file.getName(), // GVDTODO handle . and .. from getContentDisplayName()
                     // GVDTODO translation column
@@ -409,12 +436,10 @@ public class ViewsDAO {
                     getExtensionMediaType(file.getNameExtension()),
                     file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
                     file.getType(),
-                    encryptionDetected,
-                    hasVisibleChildren,
                     cellValues));
         }
 
-        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows, startItem, files.size());
+        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows, startItem, totalResultsCount);
     }
 
 }
