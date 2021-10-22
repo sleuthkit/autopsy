@@ -59,6 +59,8 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
@@ -578,6 +580,11 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         private ListNode(String listName) {
             super(Children.create(new TermFactory(listName), true), Lookups.singleton(listName), listName);
+            
+//           super(Children.create(new TermFactory(listName), true),Lookups.fixed(listName, 
+//                            new KeywordHitSearchParam(
+//                                    filteringDSObjId > 0 ? filteringDSObjId : null,listName)), listName);
+            
             super.setName(listName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             this.listName = listName;

@@ -48,6 +48,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -394,7 +396,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         dataResultPanel.displayFileMimes(fileMimeKey);
     }
-
+    
     /**
      * Displays results of querying the DAO for files matching the file extension
      * search parameters query.

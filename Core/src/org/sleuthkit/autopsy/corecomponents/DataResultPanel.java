@@ -61,6 +61,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultSupport;
@@ -1140,7 +1142,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
 
     }
-
+    
     /**
      * Displays current search result in the result view. This assumes that
      * search result support has already been updated.

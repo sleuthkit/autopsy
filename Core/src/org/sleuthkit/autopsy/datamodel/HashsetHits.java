@@ -53,6 +53,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
@@ -325,7 +327,11 @@ public class HashsetHits implements AutopsyVisitableItem {
         private final String hashSetName;
 
         public HashsetNameNode(String hashSetName) {
-            super(Children.create(new HitFactory(hashSetName), true), Lookups.singleton(hashSetName));
+            super(Children.LEAF,
+                    Lookups.fixed(hashSetName, 
+                            new HashHitSearchParam( 
+                                    filteringDSObjId > 0 ? filteringDSObjId : null,
+                                    hashSetName)));
             super.setName(hashSetName);
             this.hashSetName = hashSetName;
             updateDisplayName();
@@ -385,56 +391,56 @@ public class HashsetHits implements AutopsyVisitableItem {
     /**
      * Creates the nodes for the hits in a given set.
      */
-    private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
-
-        private final String hashsetName;
-        private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
-
-        private HitFactory(String hashsetName) {
-            super(hashsetName);
-            this.hashsetName = hashsetName;
-        }
-
-        @Override
-        protected void onAdd() {
-            hashsetResults.addObserver(this);
-        }
-
-        @Override
-        protected void onRemove() {
-            hashsetResults.deleteObserver(this);
-        }
-
-        @Override
-        protected Node createNodeForKey(AnalysisResult key) {
-            return new BlackboardArtifactNode(key);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
-
-        @Override
-        protected List<AnalysisResult> makeKeys() {
-            if (skCase != null) {
-
-                hashsetResults.getArtifactIds(hashsetName).forEach((id) -> {
-                    try {
-                        if (!artifactHits.containsKey(id)) {
-                            AnalysisResult art = skCase.getBlackboard().getAnalysisResultById(id);
-                            //Cache attributes while we are off the EDT.
-                            //See JIRA-5969
-                            art.getAttributes();
-                            artifactHits.put(id, art);
-                        }
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
-                    }
-                });
-                return new ArrayList<>(artifactHits.values());
-            }
-            return Collections.emptyList();
-        }
-    }
+//    private class HitFactory extends BaseChildFactory<AnalysisResult> implements Observer {
+//
+//        private final String hashsetName;
+//        private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
+//
+//        private HitFactory(String hashsetName) {
+//            super(hashsetName);
+//            this.hashsetName = hashsetName;
+//        }
+//
+//        @Override
+//        protected void onAdd() {
+//            hashsetResults.addObserver(this);
+//        }
+//
+//        @Override
+//        protected void onRemove() {
+//            hashsetResults.deleteObserver(this);
+//        }
+//
+//        @Override
+//        protected Node createNodeForKey(AnalysisResult key) {
+//            return new BlackboardArtifactNode(key);
+//        }
+//
+//        @Override
+//        public void update(Observable o, Object arg) {
+//            refresh(true);
+//        }
+//
+//        @Override
+//        protected List<AnalysisResult> makeKeys() {
+//            if (skCase != null) {
+//
+//                hashsetResults.getArtifactIds(hashsetName).forEach((id) -> {
+//                    try {
+//                        if (!artifactHits.containsKey(id)) {
+//                            AnalysisResult art = skCase.getBlackboard().getAnalysisResultById(id);
+//                            //Cache attributes while we are off the EDT.
+//                            //See JIRA-5969
+//                            art.getAttributes();
+//                            artifactHits.put(id, art);
+//                        }
+//                    } catch (TskCoreException ex) {
+//                        logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
+//                    }
+//                });
+//                return new ArrayList<>(artifactHits.values());
+//            }
+//            return Collections.emptyList();
+//        }
+//    }
 }

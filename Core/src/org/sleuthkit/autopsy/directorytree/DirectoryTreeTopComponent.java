@@ -93,6 +93,8 @@ import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
@@ -877,6 +879,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     FileTypeExtensionsSearchParams fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsSearchParams.class);
                     AnalysisResultSearchParam analysisResultKey = originNode.getLookup().lookup(AnalysisResultSearchParam.class);
                     FileTypeMimeSearchParams fileMimeKey = originNode.getLookup().lookup(FileTypeMimeSearchParams.class);
+                    KeywordHitSearchParam kwHitKey = originNode.getLookup().lookup(KeywordHitSearchParam.class);
                     if (dataArtifactKey != null) {
                         dataResult.displayDataArtifact(dataArtifactKey);
                     } else if(analysisResultKey != null) {
@@ -885,6 +888,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         dataResult.displayFileExtensions(fileExtensionsKey);
                     } else if(fileMimeKey != null) {
                         dataResult.displayFileMimes(fileMimeKey);
+                    } else if (kwHitKey != null) {
+                        dataResult.displayKeywordHits(kwHitKey);
                     } else if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree
