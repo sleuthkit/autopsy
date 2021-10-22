@@ -388,10 +388,10 @@ public class ResultsSorter implements Comparator<Result> {
                 Bundle.FileSorter_SortingMethod_keywordlist_displayName()), // Sort alphabetically by list of keyword list names found
         BY_FULL_PATH(new ArrayList<>(),
                 Bundle.FileSorter_SortingMethod_fullPath_displayName()), // Sort alphabetically by path
-        BY_DOMAIN_NAME(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute()), Bundle.FileSorter_SortingMethod_domain_displayName()),
-        BY_PAGE_VIEWS(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute()), Bundle.FileSorter_SortingMethod_pageViews_displayName()),
-        BY_DOWNLOADS(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute()), Bundle.FileSorter_SortingMethod_downloads_displayName()),
-        BY_LAST_ACTIVITY(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute()), Bundle.FileSorter_SortingMethod_activity_displayName());
+        BY_DOMAIN_NAME(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute(), new DiscoveryAttributes.PreviouslyNotableAttribute()), Bundle.FileSorter_SortingMethod_domain_displayName()),
+        BY_PAGE_VIEWS(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute(), new DiscoveryAttributes.PreviouslyNotableAttribute()), Bundle.FileSorter_SortingMethod_pageViews_displayName()),
+        BY_DOWNLOADS(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute(), new DiscoveryAttributes.PreviouslyNotableAttribute()), Bundle.FileSorter_SortingMethod_downloads_displayName()),
+        BY_LAST_ACTIVITY(Arrays.asList(new DiscoveryAttributes.DomainCategoryAttribute(), new DiscoveryAttributes.PreviouslyNotableAttribute()), Bundle.FileSorter_SortingMethod_activity_displayName());
 
         private final String displayName;
         private final List<DiscoveryAttributes.AttributeType> requiredAttributes;

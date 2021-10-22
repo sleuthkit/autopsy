@@ -100,7 +100,7 @@ final class ExtractRecycleBin extends Extract {
         BlackboardArtifact.Type recycleBinArtifactType;
 
         try {
-            recycleBinArtifactType = tskCase.getArtifactType(RECYCLE_BIN_ARTIFACT_NAME);
+            recycleBinArtifactType = tskCase.getBlackboard().getArtifactType(RECYCLE_BIN_ARTIFACT_NAME);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("Unable to retrive custom artifact type %s", RECYCLE_BIN_ARTIFACT_NAME), ex); // NON-NLS
             // If this doesn't work bail.
