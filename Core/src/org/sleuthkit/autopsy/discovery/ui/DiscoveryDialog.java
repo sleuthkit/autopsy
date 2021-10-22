@@ -725,7 +725,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
          * existing interesting file and artifact hits.
          */
         @SuppressWarnings("deprecation")
-        @SuppressWarnings("fallthrough")
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             if (!shouldUpdate) {
