@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Create OS INFO artifacts for the Operating Systems believed to be present on
  * the data source.
  */
-@Messages({"ExtractOs.displayName=OS Info Extractor",
+@Messages({"ExtractOs.displayName=OS Info Analyzer",
     "ExtractOS_progressMessage=Checking for OS"})
 class ExtractOs extends Extract {
 

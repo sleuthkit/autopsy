@@ -64,6 +64,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class ExtractPrefetch extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractPrefetch.class.getName());
+
+    private final IngestJobContext context;
+    
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
     private static final String PREFETCH_FILE_LOCATION = "/windows/prefetch";
     private static final String PREFETCH_TOOL_FOLDER = "markmckinnon"; //NON-NLS
@@ -75,10 +78,9 @@ final class ExtractPrefetch extends Extract {
     private static final String PREFETCH_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
     private static final String PREFETCH_PARSER_DB_FILE = "Autopsy_PF_DB.db3"; //NON-NLS
     private static final String PREFETCH_DIR_NAME = "prefetch"; //NON-NLS
-    private final IngestJobContext context;
 
     @Messages({
-        "ExtractPrefetch_module_name=Windows Prefetch Extractor",
+        "ExtractPrefetch_module_name=Windows Prefetch Analyzer",
         "# {0} - sub module name",
         "ExtractPrefetch_errMsg_prefetchParsingFailed={0}: Error analyzing prefetch files"
     })
