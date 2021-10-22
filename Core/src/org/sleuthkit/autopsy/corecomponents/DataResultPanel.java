@@ -138,30 +138,45 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     };
 
-    private final PropertyChangeListener caseCloseListener = evt -> {
-        if (evt.getNewValue() == null) {
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.CURRENT_CASE);
+
+    private final PropertyChangeListener caseEventListener = evt -> {
+        String evtName = evt.getPropertyName();
+        if (Case.Events.DATA_SOURCE_ADDED.toString().equals(evtName)) {
+            refreshSearchResultChildren();
+        } else if (Case.Events.CURRENT_CASE.toString().equals(evtName) && evt.getNewValue() == null) {
             nodeNameToPageCountListenerMap.clear();
         }
     };
 
-    private final PropertyChangeListener weakCaseCloseListener = WeakListeners.propertyChange(caseCloseListener, null);
+    private final PropertyChangeListener weakCaseEventListener = WeakListeners.propertyChange(caseEventListener, null);
 
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(
-            IngestManager.IngestModuleEvent.FILE_DONE, 
-            IngestManager.IngestModuleEvent.CONTENT_CHANGED, 
+            IngestManager.IngestModuleEvent.FILE_DONE,
+            IngestManager.IngestModuleEvent.CONTENT_CHANGED,
             IngestManager.IngestModuleEvent.DATA_ADDED);
 
     private final PropertyChangeListener ingestModuleListener = evt -> {
         if (this.searchResultSupport.isRefreshRequired(evt)) {
-            try {
-                refreshSearchResultChildren(this.searchResultSupport.getRefreshedData());
-            } catch (ExecutionException | IllegalArgumentException ex) {
-                logger.log(Level.WARNING, "There was an error refreshing data: ", ex);
-            }
+            refreshSearchResultChildren();
         }
     };
 
     private final PropertyChangeListener weakIngestModuleListener = WeakListeners.propertyChange(ingestModuleListener, null);
+
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = EnumSet.of(
+            IngestManager.IngestJobEvent.COMPLETED,
+            IngestManager.IngestJobEvent.CANCELLED);
+
+    private final PropertyChangeListener ingestJobListener = (PropertyChangeEvent evt) -> {
+        String eventType = evt.getPropertyName();
+        if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+            refreshSearchResultChildren();
+        }
+    };
+
+    private final PropertyChangeListener weakIngestJobListener = WeakListeners.propertyChange(ingestJobListener, null);
 
     /**
      * Creates and opens a Swing JPanel with a JTabbedPane child component that
@@ -403,7 +418,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          */
         if (this.resultViewerTabs.getTabCount() == 0) {
             if (this.resultViewers.isEmpty()) {
-                for (DataResultViewer resultViewer : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
+                for (DataResultViewer resultViewer : Lookup.getDefault().lookupAll(DataResultViewer.class
+                )) {
                     if (this.isMain) {
                         this.resultViewers.add(resultViewer);
                     } else {
@@ -424,8 +440,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     private void initListeners() {
         UserPreferences.addChangeListener(this.pageSizeListener);
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.weakCaseEventListener);
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS, weakIngestJobListener);
     }
 
     /**
@@ -433,8 +450,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     private void closeListeners() {
         UserPreferences.removeChangeListener(this.pageSizeListener);
-        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseCloseListener);
+        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseEventListener);
         IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
+        IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS, weakIngestJobListener);
     }
 
     /**
@@ -1212,6 +1230,20 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     /**
      * Refreshes the currently displayed search result node by updating the
+     * children with the search results as backing data handling errors with a
+     * log entry.
+     *
+     */
+    private void refreshSearchResultChildren() {
+        try {
+            refreshSearchResultChildren(this.searchResultSupport.getRefreshedData());
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, "There was an error refreshing data: ", ex);
+        }
+    }
+
+    /**
+     * Refreshes the currently displayed search result node by updating the
      * children with the search results as backing data.
      *
      * @param searchResults The search results to serve as the updated children.
@@ -1235,7 +1267,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             displaySearchResults(searchResults, true);
         } else {
             searchResultNode.updateChildren(searchResults);
-                        setNumberOfChildNodes(
+            setNumberOfChildNodes(
                     searchResults.getTotalResultsCount() > Integer.MAX_VALUE
                     ? Integer.MAX_VALUE
                     : (int) searchResults.getTotalResultsCount()
@@ -1264,6 +1296,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.pageNextButton.setEnabled(false);
             this.pageNumLabel.setText("");
             this.gotoPageTextField.setText("");
+
         }
     }
 
