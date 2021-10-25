@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 /**
  * Provides functionality to handle paging and fetching of search result data.
  */
-public class SearchResultsManager {
+public class SearchManager {
 
     private final DAOFetcher<?> daoFetcher;
     private final int pageSize;
@@ -40,7 +40,7 @@ public class SearchResultsManager {
      * @param daoFetcher Means of fetching data from the DAO.
      * @param pageSize   The size of a page.
      */
-    public SearchResultsManager(DAOFetcher<?> daoFetcher, int pageSize) {
+    public SearchManager(DAOFetcher<?> daoFetcher, int pageSize) {
         this.daoFetcher = daoFetcher;
         this.pageSize = pageSize;
     }

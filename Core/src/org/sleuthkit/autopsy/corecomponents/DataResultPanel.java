@@ -69,7 +69,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
-import org.sleuthkit.autopsy.mainui.nodes.SearchResultsManager;
+import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -118,8 +118,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private Node currentRootNode;
     private boolean listeningToTabbedPane;
     private BaseChildFactoryPager pagingSupport = null;
-    private int pageSize;
-    private SearchResultsManager searchResultManager = null;
+    private SearchManager searchResultManager = null;
 
     private final PreferenceChangeListener pageSizeListener = (PreferenceChangeEvent evt) -> {
         if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
@@ -132,7 +131,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             try {
                 if (this.searchResultManager != null) {
                     DAOFetcher<?> previousFetcher = this.searchResultManager.getDaoFetcher();
-                    this.searchResultManager = new SearchResultsManager(previousFetcher, newPageSize);
+                    this.searchResultManager = new SearchManager(previousFetcher, newPageSize);
                     displaySearchResults(this.searchResultManager.getResults(), false);
                 }
             } catch (IllegalArgumentException | ExecutionException ex) {
@@ -1140,6 +1139,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
+     * @return The current user preference page size.
+     */
+    private int getPageSize() {
+        return UserPreferences.getResultsTablePageSize();
+    }
+    
+    /**
      * Displays results of querying the DAO for data artifacts matching the
      * search parameters query.
      *
@@ -1164,7 +1170,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 }
             };
 
-            this.searchResultManager = new SearchResultsManager(fetcher, pageSize);
+            this.searchResultManager = new SearchManager(fetcher, getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1195,7 +1201,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 }
             };
 
-            this.searchResultManager = new SearchResultsManager(fetcher, pageSize);
+            this.searchResultManager = new SearchManager(fetcher, getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1231,7 +1237,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     return MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(this.getParameters(), content);
                 }
             };
-            this.searchResultManager = new SearchResultsManager(fetcher, pageSize);
+            this.searchResultManager = new SearchManager(fetcher, getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1261,7 +1267,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     return MainDAO.getInstance().getViewsDAO().isFilesByMimeInvalidating(this.getParameters(), content);
                 }
             };
-            this.searchResultManager = new SearchResultsManager(fetcher, pageSize);
+            this.searchResultManager = new SearchManager(fetcher, getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
