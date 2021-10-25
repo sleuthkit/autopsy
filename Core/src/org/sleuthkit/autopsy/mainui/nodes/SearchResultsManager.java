@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 /**
  * Provides functionality to handle paging and fetching of search result data.
  */
-public class SearchManager {
+public class SearchResultsManager {
 
     private final DAOFetcher<?> daoFetcher;
     private final int pageSize;
@@ -40,7 +40,7 @@ public class SearchManager {
      * @param daoFetcher Means of fetching data from the DAO.
      * @param pageSize   The size of a page.
      */
-    public SearchManager(DAOFetcher<?> daoFetcher, int pageSize) {
+    public SearchResultsManager(DAOFetcher<?> daoFetcher, int pageSize) {
         this.daoFetcher = daoFetcher;
         this.pageSize = pageSize;
     }
@@ -114,17 +114,10 @@ public class SearchManager {
     }
 
     /**
-     * Queries the dao cache for results storing the result in the current
-     * search results.
-     *
-     * @return The current search results.
-     *
-     * @throws IllegalArgumentException
-     * @throws ExecutionException
+     * @return The total results or 0 if no current search results.
      */
-    public synchronized SearchResultsDTO getResults() throws IllegalArgumentException, ExecutionException {
-        this.currentSearchResults = this.daoFetcher.getSearchResults(this.pageSize, this.pageIdx, false);
-        return this.currentSearchResults;
+    public synchronized long getTotalResults() {
+        return this.currentSearchResults == null ? 0 : this.currentSearchResults.getTotalResultsCount();
     }
 
     /**
@@ -211,6 +204,19 @@ public class SearchManager {
      */
     public synchronized SearchResultsDTO getRefreshedData() throws ExecutionException {
         return fetchResults(true);
+    }
+
+    /**
+     * Queries the dao cache for results storing the result in the current
+     * search results.
+     *
+     * @return The current search results.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    public synchronized SearchResultsDTO getResults() throws IllegalArgumentException, ExecutionException {
+        return fetchResults(false);
     }
 
     /**
