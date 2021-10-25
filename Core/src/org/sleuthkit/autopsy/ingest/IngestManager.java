@@ -72,6 +72,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -288,13 +289,63 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Handles artifacts posted events published by the Sleuth Kit layer
-     * blackboard via the event bus for the case database.
+     * blackboard via the Sleuth Kit event bus.
      *
-     * @param tskEvent A Sleuth Kit data model ArtifactsPostedEvent from the
-     *                 case database event bus.
+     * @param tskEvent The event.
      */
     @Subscribe
     void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent tskEvent) {
+        /*
+         * Add any new data artifacts to the source ingest job for possible
+         * analysis.
+         */
+        List<DataArtifact> newDataArtifacts = new ArrayList<>();
+        Collection<BlackboardArtifact> newArtifacts = tskEvent.getArtifacts();
+        for (BlackboardArtifact artifact : newArtifacts) {
+            if (artifact instanceof DataArtifact) {
+                newDataArtifacts.add((DataArtifact) artifact);
+            }
+        }
+        if (!newDataArtifacts.isEmpty()) {
+            IngestJob ingestJob = null;
+            Long ingestJobId = tskEvent.getIngestJobId();
+            if (ingestJobId != null) {
+                synchronized (ingestJobsById) {
+                    ingestJob = ingestJobsById.get(ingestJobId);
+                }
+            } else {
+                /*
+                 * Handle the case where ingest modules may not supply an ingest
+                 * job ID. In such cases, try to identify the ingest job, if
+                 * any, via its data source. There is a slight risk here that
+                 * the wrong ingest job will be selected if multiple ingests of
+                 * the same data source are in progress.
+                 */
+                DataArtifact dataArtifact = newDataArtifacts.get(0);
+                try {
+                    Content artifactDataSource = dataArtifact.getDataSource();
+                    synchronized (ingestJobsById) {
+                        for (IngestJob job : ingestJobsById.values()) {
+                            Content dataSource = job.getDataSource();
+                            if (artifactDataSource.getId() == dataSource.getId()) {
+                                ingestJob = job;
+                                break;
+                            }
+                        }
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to get data source for data artifact (object ID = %d)", dataArtifact.getId()), ex); //NON-NLS
+                }
+            }
+            if (ingestJob != null) {
+                ingestJob.addDataArtifacts(newDataArtifacts);
+            }
+        }
+
+        /*
+         * Publish Autopsy events for the new artifacts, one event per artifact
+         * type.
+         */
         for (BlackboardArtifact.Type artifactType : tskEvent.getArtifactTypes()) {
             ModuleDataEvent legacyEvent = new ModuleDataEvent(tskEvent.getModuleName(), artifactType, tskEvent.getArtifacts(artifactType));
             AutopsyEvent autopsyEvent = new BlackboardPostEvent(legacyEvent);
