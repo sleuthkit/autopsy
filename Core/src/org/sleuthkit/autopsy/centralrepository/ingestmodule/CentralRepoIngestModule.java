@@ -256,7 +256,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         }
         if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagUniqueArtifacts()) {
             IngestEventsListener.setFlagUniqueArtifacts(flagUniqueArtifacts);
-        }        
+        }
 
         if (CentralRepository.isEnabled() == false) {
             /*
@@ -360,7 +360,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_NOTABLE, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, Score.SCORE_NOTABLE, 
+                        BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, Score.SCORE_NOTABLE,
                         null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), justification, attributes)
                         .getAnalysisResult();
                 try {
