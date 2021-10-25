@@ -93,7 +93,11 @@ import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+<<<<<<< HEAD
 import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
+=======
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
+>>>>>>> 8094-table-support-for-size
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
@@ -879,6 +883,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     }
                     
                     // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
+
                     if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree

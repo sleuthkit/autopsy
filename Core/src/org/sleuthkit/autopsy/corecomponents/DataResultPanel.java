@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultSupport;
@@ -1139,6 +1140,25 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
 
+    }
+    
+    /**
+     * Displays results of querying the DAO for files matching the file
+     * size search parameters query.
+     * 
+     * @param fileSizeKey 
+     */
+    void displayFileSizes(FileTypeSizeSearchParams fileSizeKey) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setFileSizes(fileSizeKey);
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for files of size filter: {0} and data source id: {1}.",
+                    fileSizeKey.getSizeFilter().getDisplayName(),
+                    fileSizeKey.getDataSourceId() == null ? "<null>" : fileSizeKey.getDataSourceId()),
+                    ex);
+        }
     }
 
     /**

@@ -45,8 +45,6 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(FileSize fs);
 
-    T visit(FileSize.FileSizeFilter fsf);
-
     T visit(KeywordHits kh);
 
     T visit(HashsetHits hh);
@@ -108,12 +106,7 @@ public interface AutopsyItemVisitor<T> {
         public T visit(FileSize fs) {
             return defaultVisit(fs);
         }
-
-        @Override
-        public T visit(FileSize.FileSizeFilter fsf) {
-            return defaultVisit(fsf);
-        }
-
+        
         @Override
         public T visit(RecentFiles rf) {
             return defaultVisit(rf);

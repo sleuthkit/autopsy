@@ -18,12 +18,10 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
@@ -42,12 +40,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
-import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
-import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -404,6 +401,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         dataResultPanel.displayFileExtensions(fileExtensionsParams);
     }
+    
+    /**
+     * Displays results of querying the DAO for files matching the file size 
+     * search parameters query.
+     * 
+     * @param fileSizeParams The search parameter query.
+     */
+    public void displayFileSizes(FileTypeSizeSearchParams fileSizeParams) {
+        dataResultPanel.displayFileSizes(fileSizeParams);
+    } 
 
     @Override
     public void setTitle(String title) {
