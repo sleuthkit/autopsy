@@ -35,7 +35,7 @@ import org.openide.util.NbBundle.Messages;
     "CountsRowResultDTO_columns_count_displayName=Name",
     "CountsRowResultDTO_columns_count_description=Name"
 })
-public class CountsRowDTO implements RowDTO {
+public class CountsRowDTO<T> implements RowDTO {
 
     private static final String DEFAULT_TYPE_ID = "COUNTS";
     
@@ -55,11 +55,11 @@ public class CountsRowDTO implements RowDTO {
     private final List<Object> cellValues;
     private final String typeId;
 
-    public CountsRowDTO(long id, String displayName, long count) {
-        this(DEFAULT_TYPE_ID, id, displayName, count);
+    public CountsRowDTO(T itemType, long id, String displayName, long count) {
+        this(DEFAULT_TYPE_ID, itemType, id, displayName, count);
     }
     
-    public CountsRowDTO(String typeId, long id, String displayName, long count) {
+    public CountsRowDTO(String typeId, T itemType, long id, String displayName, long count) {
         this.typeId = typeId;
         this.id = id;
         this.displayName = displayName;
