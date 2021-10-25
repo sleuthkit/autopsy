@@ -45,6 +45,8 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -388,10 +390,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         dataResultPanel.displayDataArtifact(dataArtifactParams);
     }
     
+    /**
+     * Displays results of querying the DAO for files matching the mime
+     * search parameters query.
+     * 
+     * @param fileMimeKey The search parameter query.
+     */
     public void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         dataResultPanel.displayFileMimes(fileMimeKey);
     }
-
+    
     /**
      * Displays results of querying the DAO for files matching the file extension
      * search parameters query.
@@ -411,6 +419,26 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayFileSizes(FileTypeSizeSearchParams fileSizeParams) {
         dataResultPanel.displayFileSizes(fileSizeParams);
     } 
+    
+    /**
+     * Displays results of querying the DAO for hash sets matching the
+     * search parameters query.
+     * 
+     * @param hashHitParams The search parameter query.
+     */
+    public void displayHashHits(HashHitSearchParam hashHitParams) {
+        dataResultPanel.displayHashHits(hashHitParams);
+    }
+    
+    /**
+     * Displays results of querying the DAO for keyword hits matching the
+     * search parameters query.
+     * 
+     * @param keywordParams The search parameter query.
+     */
+    public void displayKeywordHits(KeywordHitSearchParam keywordParams) {
+       dataResultPanel.displayKeywordHits(keywordParams);
+    }
 
     @Override
     public void setTitle(String title) {
