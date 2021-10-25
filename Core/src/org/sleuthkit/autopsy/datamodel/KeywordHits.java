@@ -46,9 +46,9 @@ import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -59,6 +59,8 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
+import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
 import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
@@ -70,11 +72,11 @@ public class KeywordHits implements AutopsyVisitableItem {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
     @NbBundle.Messages("KeywordHits.kwHits.text=Keyword Hits")
-    private static final String KEYWORD_HITS = KeywordHits_kwHits_text();
+    private static final String KEYWORD_HITS = Bundle.KeywordHits_kwHits_text();
     @NbBundle.Messages("KeywordHits.simpleLiteralSearch.text=Single Literal Keyword Search")
-    private static final String SIMPLE_LITERAL_SEARCH = KeywordHits_simpleLiteralSearch_text();
+    private static final String SIMPLE_LITERAL_SEARCH = Bundle.KeywordHits_simpleLiteralSearch_text();
     @NbBundle.Messages("KeywordHits.singleRegexSearch.text=Single Regular Expression Search")
-    private static final String SIMPLE_REGEX_SEARCH = KeywordHits_singleRegexSearch_text();
+    private static final String SIMPLE_REGEX_SEARCH = Bundle.KeywordHits_singleRegexSearch_text();
 
     public static final String NAME = BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeName();
 
@@ -416,9 +418,9 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             sheetSet.put(new NodeProperty<>(
-                    KeywordHits_createSheet_name_name(),
-                    KeywordHits_createSheet_name_displayName(),
-                    KeywordHits_createSheet_name_desc(),
+                    Bundle.KeywordHits_createSheet_name_name(),
+                    Bundle.KeywordHits_createSheet_name_displayName(),
+                    Bundle.KeywordHits_createSheet_name_desc(),
                     getName()));
 
             return sheet;
@@ -506,7 +508,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
@@ -519,7 +521,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void finalize() throws Throwable{
+        protected void finalize() throws Throwable {
             IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
             IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
             Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
@@ -614,15 +616,15 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             sheetSet.put(new NodeProperty<>(
-                    KeywordHits_createSheet_listName_name(),
-                    KeywordHits_createSheet_listName_displayName(),
-                    KeywordHits_createSheet_listName_desc(),
+                    Bundle.KeywordHits_createSheet_listName_name(),
+                    Bundle.KeywordHits_createSheet_listName_displayName(),
+                    Bundle.KeywordHits_createSheet_listName_desc(),
                     listName));
 
             sheetSet.put(new NodeProperty<>(
-                    KeywordHits_createSheet_numChildren_name(),
-                    KeywordHits_createSheet_numChildren_displayName(),
-                    KeywordHits_createSheet_numChildren_desc(),
+                    Bundle.KeywordHits_createSheet_numChildren_name(),
+                    Bundle.KeywordHits_createSheet_numChildren_displayName(),
+                    Bundle.KeywordHits_createSheet_numChildren_desc(),
                     keywordResults.getKeywords(listName).size()));
 
             return sheet;
@@ -737,15 +739,15 @@ public class KeywordHits implements AutopsyVisitableItem {
                 sheet.put(sheetSet);
             }
             sheetSet.put(new NodeProperty<>(
-                    KeywordHits_createSheet_listName_name(),
-                    KeywordHits_createSheet_listName_displayName(),
-                    KeywordHits_createSheet_listName_desc(),
+                    Bundle.KeywordHits_createSheet_listName_name(),
+                    Bundle.KeywordHits_createSheet_listName_displayName(),
+                    Bundle.KeywordHits_createSheet_listName_desc(),
                     getDisplayName()));
 
             sheetSet.put(new NodeProperty<>(
-                    KeywordHits_createSheet_filesWithHits_name(),
-                    KeywordHits_createSheet_filesWithHits_displayName(),
-                    KeywordHits_createSheet_filesWithHits_desc(),
+                    Bundle.KeywordHits_createSheet_filesWithHits_name(),
+                    Bundle.KeywordHits_createSheet_filesWithHits_displayName(),
+                    Bundle.KeywordHits_createSheet_filesWithHits_desc(),
                     countTotalDescendants()));
 
             return sheet;
@@ -782,14 +784,14 @@ public class KeywordHits implements AutopsyVisitableItem {
     /**
      * Represents a specific term that was found from a regexp
      */
-    class RegExpInstanceNode extends KWHitsNodeBase {
+    class RegExpInstanceNode extends KWHitsNodeBase implements SelectionResponder{
 
         private final String setName;
         private final String keyword;
         private final String instance;
 
         private RegExpInstanceNode(String setName, String keyword, String instance) {
-            super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(instance), instance);
+            super(Children.LEAF,  Lookups.singleton(instance), instance);
 
             /**
              * We differentiate between the programmatic name and the display
@@ -805,6 +807,13 @@ public class KeywordHits implements AutopsyVisitableItem {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             updateDisplayName();
             keywordResults.addObserver(this);
+        }
+        
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            dataResultPanel.displayKeywordHits(new KeywordHitSearchParam(
+                    filteringDSObjId > 0 ? filteringDSObjId : null,
+                    setName, keyword, instance));
         }
 
         @Override
@@ -832,15 +841,15 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             sheetSet.put(new NodeProperty<>(
-                    KeywordHits_createSheet_listName_name(),
-                    KeywordHits_createSheet_listName_displayName(),
-                    KeywordHits_createSheet_listName_desc(),
+                    Bundle.KeywordHits_createSheet_listName_name(),
+                    Bundle.KeywordHits_createSheet_listName_displayName(),
+                    Bundle.KeywordHits_createSheet_listName_desc(),
                     getDisplayName()));
 
             sheetSet.put(new NodeProperty<>(
-                    KeywordHits_createSheet_filesWithHits_name(),
-                    KeywordHits_createSheet_filesWithHits_displayName(),
-                    KeywordHits_createSheet_filesWithHits_desc(),
+                    Bundle.KeywordHits_createSheet_filesWithHits_name(),
+                    Bundle.KeywordHits_createSheet_filesWithHits_displayName(),
+                    Bundle.KeywordHits_createSheet_filesWithHits_desc(),
                     keywordResults.getArtifactIds(setName, keyword, instance).size()));
 
             return sheet;
@@ -891,19 +900,19 @@ public class KeywordHits implements AutopsyVisitableItem {
             return n;
         }
         n.addNodeProperty(new NodeProperty<>(
-                KeywordHits_createNodeForKey_modTime_name(),
-                KeywordHits_createNodeForKey_modTime_displayName(),
-                KeywordHits_createNodeForKey_modTime_desc(),
+                Bundle.KeywordHits_createNodeForKey_modTime_name(),
+                Bundle.KeywordHits_createNodeForKey_modTime_displayName(),
+                Bundle.KeywordHits_createNodeForKey_modTime_desc(),
                 TimeZoneUtils.getFormattedTime(file.getMtime())));
         n.addNodeProperty(new NodeProperty<>(
-                KeywordHits_createNodeForKey_accessTime_name(),
-                KeywordHits_createNodeForKey_accessTime_displayName(),
-                KeywordHits_createNodeForKey_accessTime_desc(),
+                Bundle.KeywordHits_createNodeForKey_accessTime_name(),
+                Bundle.KeywordHits_createNodeForKey_accessTime_displayName(),
+                Bundle.KeywordHits_createNodeForKey_accessTime_desc(),
                 TimeZoneUtils.getFormattedTime(file.getAtime())));
         n.addNodeProperty(new NodeProperty<>(
-                KeywordHits_createNodeForKey_chgTime_name(),
-                KeywordHits_createNodeForKey_chgTime_displayName(),
-                KeywordHits_createNodeForKey_chgTime_desc(),
+                Bundle.KeywordHits_createNodeForKey_chgTime_name(),
+                Bundle.KeywordHits_createNodeForKey_chgTime_displayName(),
+                Bundle.KeywordHits_createNodeForKey_chgTime_desc(),
                 TimeZoneUtils.getFormattedTime(file.getCtime())));
         return n;
     }
