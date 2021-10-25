@@ -567,7 +567,7 @@ class ExtractRegistry extends Extract {
                 Long mtime = null;
                 if (timenodes.getLength() > 0) {
                     Element timenode = (Element) timenodes.item(0);
-                    String etime = timenode.getTextContent();
+                    String etime = timenode.getTextContent().trim();
                     //sometimes etime will be an empty string and therefore can not be parsed into a date
                     if (etime != null && !etime.isEmpty()) {
                         try {
