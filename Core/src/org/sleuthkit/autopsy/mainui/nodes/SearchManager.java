@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.concurrent.ExecutionException;
-import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
@@ -29,26 +28,30 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
  */
 public class SearchManager {
 
-    private final MainDAO dao = MainDAO.getInstance();
     private final DAOFetcher<?> daoFetcher;
     private final int pageSize;
-    
-    
+
     private SearchResultsDTO currentSearchResults = null;
     private int pageIdx = 0;
 
     /**
      * Main constructor.
+     *
      * @param daoFetcher Means of fetching data from the DAO.
-     * @param pageSize The size of a page.
+     * @param pageSize   The size of a page.
      */
     public SearchManager(DAOFetcher<?> daoFetcher, int pageSize) {
         this.daoFetcher = daoFetcher;
         this.pageSize = pageSize;
     }
 
-    
-    
+    /**
+     * @return The dao fetcher responsible for gathering data.
+     */
+    public DAOFetcher<?> getDaoFetcher() {
+        return daoFetcher;
+    }
+
     /**
      * @return The page size when handing paging.
      */
@@ -106,8 +109,22 @@ public class SearchManager {
     /**
      * @return The last accessed search results or null.
      */
-    public SearchResultsDTO getCurrentSearchResults() {
+    public synchronized SearchResultsDTO getCurrentSearchResults() {
         return currentSearchResults;
+    }
+
+    /**
+     * Queries the dao cache for results storing the result in the current
+     * search results.
+     *
+     * @return The current search results.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    public synchronized SearchResultsDTO getResults() throws IllegalArgumentException, ExecutionException {
+        this.currentSearchResults = this.daoFetcher.getSearchResults(this.pageSize, this.pageIdx, false);
+        return this.currentSearchResults;
     }
 
     /**
