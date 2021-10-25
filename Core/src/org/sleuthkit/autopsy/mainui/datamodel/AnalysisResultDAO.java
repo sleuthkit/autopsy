@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
@@ -234,7 +236,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     + "Artifact type must be non-null and analysis result.  Data source id must be null or > 0.  "
                     + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
-        
+
         SearchParams<AnalysisResultSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         if (hardRefresh) {
             analysisResultCache.invalidate(searchParams);
@@ -288,4 +290,35 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     public void dropKeywordHitCache() {
         keywordHitCache.invalidateAll();
     }
+
+    /**
+     * Handles fetching and paging of analysis results.
+     */
+    public static class AnalysisResultFetcher extends DAOFetcher<AnalysisResultSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public AnalysisResultFetcher(AnalysisResultSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
+            if (dataEvent == null) {
+                return false;
+            }
+
+            return MainDAO.getInstance().getAnalysisResultDAO().isAnalysisResultsInvalidating(this.getParameters(), dataEvent);
+        }
+    }
+
 }

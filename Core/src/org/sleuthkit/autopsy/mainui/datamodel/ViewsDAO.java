@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,6 +39,7 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTr
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
+import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -417,6 +419,66 @@ public class ViewsDAO {
         }
 
         return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows, startItem, totalResultsCount);
+    }
+
+    /**
+     * Handles fetching and paging of data for file types by extension.
+     */
+    public static class FileTypeExtFetcher extends DAOFetcher<FileTypeExtensionsSearchParams> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public FileTypeExtFetcher(FileTypeExtensionsSearchParams params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getViewsDAO().getFilesByExtension(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            Content content = this.getContentFromEvt(evt);
+            if (content == null) {
+                return false;
+            }
+
+            return MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(this.getParameters(), content);
+        }
+    }
+
+    /**
+     * Handles fetching and paging of data for file types by mime type.
+     */
+    public static class FileTypeMimeFetcher extends DAOFetcher<FileTypeMimeSearchParams> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public FileTypeMimeFetcher(FileTypeMimeSearchParams params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getViewsDAO().getFilesByMime(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            Content content = this.getContentFromEvt(evt);
+            if (content == null) {
+                return false;
+            }
+
+            return MainDAO.getInstance().getViewsDAO().isFilesByMimeInvalidating(this.getParameters(), content);
+        }
     }
 
 }

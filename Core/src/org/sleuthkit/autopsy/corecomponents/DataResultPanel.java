@@ -60,17 +60,18 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeExtFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * A result view panel is a JPanel with a JTabbedPane child component that
@@ -1153,24 +1154,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
         try {
-            DAOFetcher<DataArtifactSearchParam> fetcher = new DAOFetcher<DataArtifactSearchParam>(dataArtifactParams) {
-                @Override
-                public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-                    return MainDAO.getInstance().getDataArtifactsDAO().getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
-                }
-
-                @Override
-                public boolean isRefreshRequired(PropertyChangeEvent evt) {
-                    ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
-                    if (dataEvent == null) {
-                        return false;
-                    }
-
-                    return MainDAO.getInstance().getDataArtifactsDAO().isDataArtifactInvalidating(this.getParameters(), dataEvent);
-                }
-            };
-
-            this.searchResultManager = new SearchManager(fetcher, getPageSize());
+            this.searchResultManager = new SearchManager(new DataArtifactFetcher(dataArtifactParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1184,24 +1168,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
         try {
-            DAOFetcher<AnalysisResultSearchParam> fetcher = new DAOFetcher<AnalysisResultSearchParam>(analysisResultParams) {
-                @Override
-                public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-                    return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
-                }
-
-                @Override
-                public boolean isRefreshRequired(PropertyChangeEvent evt) {
-                    ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
-                    if (dataEvent == null) {
-                        return false;
-                    }
-
-                    return MainDAO.getInstance().getAnalysisResultDAO().isAnalysisResultsInvalidating(this.getParameters(), dataEvent);
-                }
-            };
-
-            this.searchResultManager = new SearchManager(fetcher, getPageSize());
+            this.searchResultManager = new SearchManager(new AnalysisResultFetcher(analysisResultParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1221,23 +1188,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         try {
-            DAOFetcher<FileTypeExtensionsSearchParams> fetcher = new DAOFetcher<FileTypeExtensionsSearchParams>(fileExtensionsParams) {
-                @Override
-                public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-                    return MainDAO.getInstance().getViewsDAO().getFilesByExtension(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
-                }
 
-                @Override
-                public boolean isRefreshRequired(PropertyChangeEvent evt) {
-                    Content content = this.getContentFromEvt(evt);
-                    if (content == null) {
-                        return false;
-                    }
-
-                    return MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(this.getParameters(), content);
-                }
-            };
-            this.searchResultManager = new SearchManager(fetcher, getPageSize());
+            this.searchResultManager = new SearchManager(new FileTypeExtFetcher(fileExtensionsParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1251,23 +1203,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         try {
-            DAOFetcher<FileTypeMimeSearchParams> fetcher = new DAOFetcher<FileTypeMimeSearchParams>(fileMimeKey) {
-                @Override
-                public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-                    return MainDAO.getInstance().getViewsDAO().getFilesByMime(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
-                }
 
-                @Override
-                public boolean isRefreshRequired(PropertyChangeEvent evt) {
-                    Content content = this.getContentFromEvt(evt);
-                    if (content == null) {
-                        return false;
-                    }
-
-                    return MainDAO.getInstance().getViewsDAO().isFilesByMimeInvalidating(this.getParameters(), content);
-                }
-            };
-            this.searchResultManager = new SearchManager(fetcher, getPageSize());
+            this.searchResultManager = new SearchManager(new FileTypeMimeFetcher(fileMimeKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {

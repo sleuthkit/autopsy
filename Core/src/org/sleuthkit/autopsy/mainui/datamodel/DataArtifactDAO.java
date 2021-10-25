@@ -20,12 +20,14 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -100,5 +102,34 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     public void dropDataArtifactCache() {
         dataArtifactCache.invalidateAll();
+    }
+
+    /**
+     * Handles fetching and paging of data artifacts.
+     */
+    public static class DataArtifactFetcher extends DAOFetcher<DataArtifactSearchParam> {
+
+        /**
+         * Main constructor.
+         * @param params Parameters to handle fetching of data.
+         */
+        public DataArtifactFetcher(DataArtifactSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getDataArtifactsDAO().getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
+            if (dataEvent == null) {
+                return false;
+            }
+
+            return MainDAO.getInstance().getDataArtifactsDAO().isDataArtifactInvalidating(this.getParameters(), dataEvent);
+        }
     }
 }
