@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -301,7 +300,7 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             for (String phone : calleeList) {
                 try {
                     currentCase.getCommunicationsManager().createAccountFileInstance(
-                            Account.Type.PHONE, phone, PARSER_NAME, parent);
+                            Account.Type.PHONE, phone, PARSER_NAME, parent, null);
                 } catch (InvalidAccountIDException ex) {
                     logger.log(Level.WARNING, String.format("Invalid account identifier %s", phone), ex);
                 }
@@ -314,13 +313,13 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             if (!otherAttributes.isEmpty()) {
                 BlackboardArtifact artifact = parent.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG), otherAttributes);
 
-                currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
+                currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME, null);
             }
         } else {
 
             // Otherwise we can safely use the helper.
             CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
-                    currentCase, PARSER_NAME, parent, Account.Type.PHONE);
+                    currentCase, PARSER_NAME, parent, Account.Type.PHONE, null);
 
             helper.addCalllog(direction, callerId, calleeList, startTime,
                     endTime, callType, otherAttributes);

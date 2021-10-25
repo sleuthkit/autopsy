@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -308,32 +309,37 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         }
         if (!newDataArtifacts.isEmpty()) {
             IngestJob ingestJob = null;
-            Long ingestJobId = tskEvent.getIngestJobId();
-            if (ingestJobId != null) {
+            Optional<Long> ingestJobId = tskEvent.getIngestJobId();
+            if (ingestJobId.isPresent()) {
                 synchronized (ingestJobsById) {
-                    ingestJob = ingestJobsById.get(ingestJobId);
+                    ingestJob = ingestJobsById.get(ingestJobId.get());
                 }
             } else {
                 /*
-                 * Cases where the ingest job ID returned by the event will be
-                 * null:
+                 * There are two cases where the ingest job ID returned by the
+                 * event is expected be null:
                  *
                  * 1. The artifacts are being posted by a data source proccessor
-                 * (DSP) that runs before the ingest job is created, i.e., a DSP
-                 * that does not support streaming ingest. In this use case, the
-                 * event is handled synchronously before the ingest job is
+                 * (DSP) module that runs before the ingest job is created,
+                 * i.e., a DSP that does not support streaming ingest and has no
+                 * noton of an ingest job ID. In this use case, the event is
+                 * handled synchronously (the DSP calls
+                 * Blackboard.postArtifacts(), which puts the event on the event
+                 * bus to which this method subscribes) before the ingest job is
                  * created, so the code below will not find an ingest job to
                  * which to add the artifacts. However, the artifacts will be
                  * analyzed when the ingest job executor, working in batch mode,
                  * schedules ingest tasks for all of the data artifacts in the
                  * case database.
                  *
-                 * 2. The artifacts were posted by a third party ingest module
-                 * that either has not been updated to use the current
-                 * Blackboard.postartifacts() API, or is using it incorrectly.
+                 * 2. The artifacts were posted by an ingest module that either
+                 * has not been updated to use the current
+                 * Blackboard.postArtifacts() API, or is using it incorrectly.
                  * In this use case, the code below should be able to find the
                  * ingest job to which to add the artifacts via their data
-                 * source. However, there is a slight risk here that the wrong
+                 * source.
+                 *
+                 * In both use cases, there is a slight risk that the wrong
                  * ingest job will be selected if multiple ingests of the same
                  * data source are in progress.
                  */
