@@ -306,7 +306,7 @@ abstract class BlackboardArtifactDAO {
      *
      * @return The list of paged artifacts.
      */
-    List<BlackboardArtifact> getPaged(List<? extends BlackboardArtifact> arts, SearchParams searchParams) {
+    List<BlackboardArtifact> getPaged(List<? extends BlackboardArtifact> arts, SearchParams<?> searchParams) {
         Stream<? extends BlackboardArtifact> pagedArtsStream = arts.stream()
                 .sorted(Comparator.comparing((art) -> art.getId()))
                 .skip(searchParams.getStartItem());
