@@ -27,7 +27,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Means of fetching data based on paging settings.
+ * Provides a generic interface to perform searches and determine if refreshes
+ * are needed without needing to know which DAO to use.
  */
 public abstract class DAOFetcher<P> {
 
@@ -69,15 +70,12 @@ public abstract class DAOFetcher<P> {
      * Returns true if the ingest module event will require a refresh in the
      * data.
      *
-     * @param evt          The event.
+     * @param evt The event.
      *
      * @return True if the
      */
     public abstract boolean isRefreshRequired(PropertyChangeEvent evt);
-    
-    
-    
-    
+
     /**
      * Returns the content from the ModuleContentEvent. If the event does not
      * contain a ModuleContentEvent or the event does not contain Content, null
