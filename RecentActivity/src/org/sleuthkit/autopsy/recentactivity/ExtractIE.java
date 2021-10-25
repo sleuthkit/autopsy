@@ -43,7 +43,6 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -72,7 +71,7 @@ class ExtractIE extends Extract {
     private static final String RESOURCE_URL_PREFIX = "res://";
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
-    private IngestJobContext context;
+    private final IngestJobContext context;
 
     @Messages({
         "Progress_Message_IE_History=IE History",
@@ -83,30 +82,30 @@ class ExtractIE extends Extract {
         "Progress_Message_IE_AutoFill=IE Auto Fill",
         "Progress_Message_IE_Logins=IE Logins",})
 
-    ExtractIE() {
-        super(NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text"));
+    ExtractIE(IngestJobContext context) {
+        super(NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text"), context);
         JAVA_PATH = PlatformUtil.getJavaPath();
+        this.context = context;
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), "IE", context.getJobId());
         String moduleTempResultsDir = Paths.get(moduleTempDir, "results").toString();
-                
+
         this.dataSource = dataSource;
-        this.context = context;
         dataFound = false;
 
         progressBar.progress(Bundle.Progress_Message_IE_Bookmarks());
         this.getBookmark();
-        
+
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
 
         progressBar.progress(Bundle.Progress_Message_IE_Cookies());
         this.getCookie();
-        
+
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
@@ -127,7 +126,7 @@ class ExtractIE extends Extract {
             logger.log(Level.WARNING, "Error fetching 'url' files for Internet Explorer bookmarks.", ex); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getBookmark.errMsg.errGettingBookmarks",
-                            this.getName()));
+                            this.getDisplayName()));
             return;
         }
 
@@ -171,13 +170,13 @@ class ExtractIE extends Extract {
             }
 
             try {
-                bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes));
+                bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, fav, bbattributes));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d",ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getDisplayName(), fav.getId() ), ex);
+                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d", ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getDisplayName(), fav.getId()), ex);
             }
         }
 
-        if(!context.dataSourceIngestIsCancelled()) {
+        if (!context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -199,12 +198,12 @@ class ExtractIE extends Extract {
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex); //NON-NLS
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getDisplayName(),
                             fav.getName()));
         } catch (IndexOutOfBoundsException ex) {
             logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex); //NON-NLS
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getDisplayName(),
                             fav.getName()));
         } finally {
             try {
@@ -228,7 +227,7 @@ class ExtractIE extends Extract {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error getting cookie files for IE"); //NON-NLS
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errGettingFile", this.getName()));
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errGettingFile", this.getDisplayName()));
             return;
         }
 
@@ -254,7 +253,7 @@ class ExtractIE extends Extract {
                 logger.log(Level.WARNING, "Error reading bytes of Internet Explorer cookie.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errReadingIECookie",
-                                this.getName(), cookiesFile.getName()));
+                                this.getDisplayName(), cookiesFile.getName()));
                 continue;
             }
             String cookieString = new String(t);
@@ -285,21 +284,23 @@ class ExtractIE extends Extract {
             }
 
             try {
-                bbartifacts.add(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes));
+                bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_COOKIE, cookiesFile, bbattributes));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d",ARTIFACT_TYPE.TSK_WEB_COOKIE.getDisplayName(), cookiesFile.getId() ), ex);
+                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d", BlackboardArtifact.Type.TSK_WEB_COOKIE.getDisplayName(), cookiesFile.getId()), ex);
             }
         }
 
-        if(!context.dataSourceIngestIsCancelled()) {
+        if (!context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
 
     /**
      * Locates index.dat files, runs Pasco on them, and creates artifacts.
-     * @param moduleTempDir The path to the module temp directory.
-     * @param moduleTempResultsDir The path to the module temp results directory.
+     *
+     * @param moduleTempDir        The path to the module temp directory.
+     * @param moduleTempResultsDir The path to the module temp results
+     *                             directory.
      */
     private void getHistory(String moduleTempDir, String moduleTempResultsDir) {
         logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
@@ -308,7 +309,7 @@ class ExtractIE extends Extract {
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false); //NON-NLS
         if (pascoRoot == null) {
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getName()));
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getDisplayName()));
             logger.log(Level.SEVERE, "Error finding pasco program "); //NON-NLS
             return;
         }
@@ -329,7 +330,7 @@ class ExtractIE extends Extract {
             indexFiles = fileManager.findFiles(dataSource, "index.dat"); //NON-NLS
         } catch (TskCoreException ex) {
             this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errGettingHistFiles",
-                    this.getName()));
+                    this.getDisplayName()));
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
             return;
         }
@@ -363,7 +364,7 @@ class ExtractIE extends Extract {
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getDisplayName(),
                                 datFile.getAbsolutePath()));
                 continue;
             }
@@ -391,11 +392,11 @@ class ExtractIE extends Extract {
             } else {
                 logger.log(Level.WARNING, "pasco execution failed on: {0}", filename); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getDisplayName()));
             }
         }
 
-        if(!context.dataSourceIngestIsCancelled()) {
+        if (!context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
         }
     }
@@ -403,16 +404,15 @@ class ExtractIE extends Extract {
     /**
      * Execute pasco on a single file that has been saved to disk.
      *
-     * @param indexFilePath  Path to local index.dat file to analyze
-     * @param outputFileName Name of file to save output to
+     * @param indexFilePath        Path to local index.dat file to analyze
+     * @param outputFileName       Name of file to save output to
      * @param moduleTempResultsDir the path to the module temp directory.
      *
      * @return false on error
      */
     @Messages({
-        "# {0} - sub module name", 
-        "ExtractIE_executePasco_errMsg_errorRunningPasco={0}: Error analyzing Internet Explorer web history",
-    })
+        "# {0} - sub module name",
+        "ExtractIE_executePasco_errMsg_errorRunningPasco={0}: Error analyzing Internet Explorer web history",})
     private boolean executePasco(String indexFilePath, String outputFileName, String moduleTempResultsDir) {
         boolean success = true;
         try {
@@ -443,7 +443,7 @@ class ExtractIE extends Extract {
             // @@@ Investigate use of history versus cache as type.
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error executing Pasco to process Internet Explorer web history", ex); //NON-NLS
-            addErrorMessage(Bundle.ExtractIE_executePasco_errMsg_errorRunningPasco(getName()));            
+            addErrorMessage(Bundle.ExtractIE_executePasco_errMsg_errorRunningPasco(getDisplayName()));
             success = false;
         }
         return success;
@@ -452,9 +452,9 @@ class ExtractIE extends Extract {
     /**
      * parse Pasco output and create artifacts
      *
-     * @param origFile            Original index.dat file that was analyzed to
-     *                            get this output
-     * @param pascoOutputFileName name of pasco output file
+     * @param origFile             Original index.dat file that was analyzed to
+     *                             get this output
+     * @param pascoOutputFileName  name of pasco output file
      * @param moduleTempResultsDir the path to the module temp directory.
      *
      * @return A collection of created artifacts
@@ -467,7 +467,7 @@ class ExtractIE extends Extract {
         File file = new File(fnAbs);
         if (file.exists() == false) {
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getDisplayName(),
                             file.getName()));
             logger.log(Level.WARNING, "Pasco Output not found: {0}", file.getPath()); //NON-NLS
             return bbartifacts;
@@ -484,7 +484,7 @@ class ExtractIE extends Extract {
             fileScanner = new Scanner(new FileInputStream(file.toString()));
         } catch (FileNotFoundException ex) {
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getDisplayName(),
                             file.getName()));
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return bbartifacts;
@@ -562,7 +562,7 @@ class ExtractIE extends Extract {
                 } catch (ParseException e) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
-                                    this.getName()));
+                                    this.getDisplayName()));
                     logger.log(Level.WARNING, String.format("Error parsing Pasco results, may have partial processing of corrupt file (id=%d)", origFile.getId()), e); //NON-NLS
                 }
             }
@@ -589,9 +589,9 @@ class ExtractIE extends Extract {
                     RecentActivityExtracterModuleFactory.getModuleName(), user));
 
             try {
-                bbartifacts.add(createArtifactWithAttributes(TSK_WEB_HISTORY, origFile, bbattributes));
+                bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, origFile, bbattributes));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d",ARTIFACT_TYPE.TSK_WEB_HISTORY.getDisplayName(), origFile.getId() ), ex);
+                logger.log(Level.SEVERE, String.format("Failed to create %s for file %d", BlackboardArtifact.Type.TSK_WEB_HISTORY.getDisplayName(), origFile.getId()), ex);
             }
         }
         fileScanner.close();

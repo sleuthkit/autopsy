@@ -1120,7 +1120,7 @@ public final class LeappFileProcessor {
 
             BlackboardArtifact.Type foundArtifactType = null;
             try {
-                foundArtifactType = Case.getCurrentCase().getSleuthkitCase().getArtifactType(artifactName);
+                foundArtifactType = Case.getCurrentCase().getSleuthkitCase().getBlackboard().getArtifactType(artifactName);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("There was an issue that arose while trying to fetch artifact type for %s.", artifactName), ex);
             }
@@ -1165,7 +1165,7 @@ public final class LeappFileProcessor {
 
                 BlackboardAttribute.Type foundAttrType = null;
                 try {
-                    foundAttrType = Case.getCurrentCase().getSleuthkitCase().getAttributeType(attributeName.toUpperCase());
+                    foundAttrType = Case.getCurrentCase().getSleuthkitCase().getBlackboard().getAttributeType(attributeName.toUpperCase());
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("There was an issue that arose while trying to fetch attribute type for %s.", attributeName), ex);
                 }

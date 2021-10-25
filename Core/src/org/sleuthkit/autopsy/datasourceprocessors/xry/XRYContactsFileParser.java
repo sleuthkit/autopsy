@@ -144,7 +144,7 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
             // Just create an artifact with the attributes that we do have.
             if (!additionalAttributes.isEmpty()) {
                 BlackboardArtifact artifact = parent.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), additionalAttributes);
-                        
+
                 currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
             }
         }
