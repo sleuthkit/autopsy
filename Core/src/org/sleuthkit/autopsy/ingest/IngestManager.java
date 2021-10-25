@@ -296,8 +296,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     @Subscribe
     void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent tskEvent) {
         /*
-         * Add any new data artifacts to the source ingest job for possible
-         * analysis.
+         * Add any new data artifacts included in the event to the source ingest
+         * job for possible analysis.
          */
         List<DataArtifact> newDataArtifacts = new ArrayList<>();
         Collection<BlackboardArtifact> newArtifacts = tskEvent.getArtifacts();
@@ -315,11 +315,27 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 }
             } else {
                 /*
-                 * Handle the case where ingest modules may not supply an ingest
-                 * job ID. In such cases, try to identify the ingest job, if
-                 * any, via its data source. There is a slight risk here that
-                 * the wrong ingest job will be selected if multiple ingests of
-                 * the same data source are in progress.
+                 * Cases where the ingest job ID returned by the event will be
+                 * null:
+                 *
+                 * 1. The artifacts are being posted by a data source proccessor
+                 * (DSP) that runs before the ingest job is created, i.e., a DSP
+                 * that does not support streaming ingest. In this use case, the
+                 * event is handled synchronously before the ingest job is
+                 * created, so the code below will not find an ingest job to
+                 * which to add the artifacts. However, the artifacts will be
+                 * analyzed when the ingest job executor, working in batch mode,
+                 * schedules ingest tasks for all of the data artifacts in the
+                 * case database.
+                 *
+                 * 2. The artifacts were posted by a third party ingest module
+                 * that either has not been updated to use the current
+                 * Blackboard.postartifacts() API, or is using it incorrectly.
+                 * In this use case, the code below should be able to find the
+                 * ingest job to which to add the artifacts via their data
+                 * source. However, there is a slight risk here that the wrong
+                 * ingest job will be selected if multiple ingests of the same
+                 * data source are in progress.
                  */
                 DataArtifact dataArtifact = newDataArtifacts.get(0);
                 try {
