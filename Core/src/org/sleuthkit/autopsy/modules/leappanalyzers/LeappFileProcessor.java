@@ -218,7 +218,8 @@ public final class LeappFileProcessor {
         "LeappFileProcessor.has.run=Leapp",
         "LeappFileProcessor.Leapp.cancelled=Leapp run was canceled",
         "LeappFileProcessor.completed=Leapp Processing Completed",
-        "LeappFileProcessor.error.reading.Leapp.directory=Error reading Leapp Output Directory"})
+        "LeappFileProcessor.error.reading.Leapp.directory=Error reading Leapp Output Directory"
+    })
     public ProcessResult processFiles(Content dataSource, Path moduleOutputPath, AbstractFile LeappFile) {
         try {
             List<String> LeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
@@ -418,8 +419,8 @@ public final class LeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.waypoint.relationship=Cannot create TSK_WAYPOINT artifact.",})
-
+        "LeappFileProcessor.cannot.create.waypoint.relationship=Cannot create TSK_WAYPOINT artifact."
+    })
     private void createRoute(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         Double startLatitude = Double.valueOf(0);
@@ -486,8 +487,8 @@ public final class LeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.trackpoint.relationship=Cannot create TSK_TRACK_POINT artifact.",})
-
+        "LeappFileProcessor.cannot.create.trackpoint.relationship=Cannot create TSK_TRACK_POINT artifact."
+    })
     private AbstractFile createTrackpoint(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName, String trackpointSegmentName, GeoTrackPoints pointList) throws IngestModuleException {
 
         Double latitude = Double.valueOf(0);
@@ -554,8 +555,8 @@ public final class LeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.message.relationship=Cannot create TSK_MESSAGE Relationship.",})
-
+        "LeappFileProcessor.cannot.create.message.relationship=Cannot create TSK_MESSAGE Relationship."
+    })
     private void createMessageRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         String messageType = null;
@@ -657,7 +658,8 @@ public final class LeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.contact.relationship=Cannot create TSK_CONTACT Relationship.",})
+        "LeappFileProcessor.cannot.create.contact.relationship=Cannot create TSK_CONTACT Relationship."
+    })
     private void createContactRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         String alternateId = null;
@@ -726,8 +728,8 @@ public final class LeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.calllog.relationship=Cannot create TSK_CALLLOG Relationship.",})
-
+        "LeappFileProcessor.cannot.create.calllog.relationship=Cannot create TSK_CALLLOG Relationship."
+    })
     private void createCalllogRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         String callerId = null;
@@ -1064,6 +1066,9 @@ public final class LeappFileProcessor {
         }
     }
 
+    /**
+     * Read the XML config file and load the mappings into maps
+     */
     @NbBundle.Messages({
         "LeappFileProcessor.cannot.load.artifact.xml=Cannot load xml artifact file.",
         "LeappFileProcessor.cannotBuildXmlParser=Cannot buld an XML parser.",
@@ -1071,10 +1076,6 @@ public final class LeappFileProcessor {
         "LeappFileProcessor.postartifacts_error=Error posting Blackboard Artifact",
         "LeappFileProcessor.error.creating.new.artifacts=Error creating new artifacts."
     })
-
-    /**
-     * Read the XML config file and load the mappings into maps
-     */
     private void loadConfigFile() throws IngestModuleException {
         Document xmlinput;
         try {
