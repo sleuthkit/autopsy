@@ -54,17 +54,19 @@ public class CountsRowDTO<T> implements RowDTO {
     private final long count;
     private final List<Object> cellValues;
     private final String typeId;
+    private final T typeData;
 
-    public CountsRowDTO(T itemType, long id, String displayName, long count) {
-        this(DEFAULT_TYPE_ID, itemType, id, displayName, count);
+    public CountsRowDTO(T typeData, long id, String displayName, long count) {
+        this(DEFAULT_TYPE_ID, typeData, id, displayName, count);
     }
     
-    public CountsRowDTO(String typeId, T itemType, long id, String displayName, long count) {
+    public CountsRowDTO(String typeId, T typeData, long id, String displayName, long count) {
         this.typeId = typeId;
         this.id = id;
         this.displayName = displayName;
         this.count = count;
         this.cellValues = ImmutableList.of(Arrays.asList(displayName, count));
+        this.typeData = typeData;
     }
 
     @Override
@@ -89,4 +91,10 @@ public class CountsRowDTO<T> implements RowDTO {
     public String getTypeId() {
         return typeId;
     }
+
+    public T getTypeData() {
+        return typeData;
+    }
+    
+    
 }

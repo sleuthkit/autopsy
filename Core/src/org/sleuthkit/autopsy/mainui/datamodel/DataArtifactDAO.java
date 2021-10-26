@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -167,5 +168,32 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     public void dropDataArtifactCache() {
         dataArtifactCache.invalidateAll();
+    }
+    
+    
+    public SearchResultsDTO getDataArtifactsCounts() throws ExecutionException {
+        SleuthkitCase skCase = getCase();
+        String query = "SELECT artifact_type_id, COUNT(*) AS count FROM blackboard_artifacts GROUP BY artifact_type_id";
+        Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
+        skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+            while (resultSet.next()) {
+                typeCounts.
+                typeIdCounts.put(resultSet.getInt("artifact_type_id"), resultSet.getLong("count"));
+            }
+        });
+        
+        
+        Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
+        for (Entry<Integer, Long> typeIdCount : typeIdCounts.entrySet()) {
+            typeCounts.put(skCase.getArtifactType(typeIdCount.getKey()), typeIdCount.getValue());
+        }
+        
+        typeCounts.entrySet().stream()
+                .map(entry -> new CountsRowDTO<>(
+                        BlackboardArtifact.Type.Category.DATA_ARTIFACT.name(), 
+                        entry.getKey(), 
+                        entry.getKey().getTypeId(), 
+                        entry.getKey().getDisplayName(), 
+                        entry.getValue()));
     }
 }
