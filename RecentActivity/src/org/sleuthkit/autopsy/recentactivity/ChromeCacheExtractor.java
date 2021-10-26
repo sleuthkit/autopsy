@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  *
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  *
@@ -151,15 +151,14 @@ final class ChromeCacheExtractor {
     }
 
     @NbBundle.Messages({
-        "ChromeCacheExtractor.moduleName=ChromeCacheExtractor",
         "# {0} - module name",
         "# {1} - row number",
         "# {2} - table length",
         "# {3} - cache path",
         "ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}"
     })
-    ChromeCacheExtractor(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar ) { 
-        moduleName = Bundle.ChromeCacheExtractor_moduleName();
+    ChromeCacheExtractor(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) { 
+        moduleName = NbBundle.getMessage(Chromium.class, "Chrome.moduleName");
         this.dataSource = dataSource;
         this.context = context;
         this.progressBar = progressBar;
@@ -415,7 +414,7 @@ final class ChromeCacheExtractor {
         progressBar.progress(String.format(Bundle.ChromeCacheExtract_adding_artifacts_msg(), artifactsAdded.size()));
         Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
         try {
-            blackboard.postArtifacts(artifactsAdded, moduleName);
+            blackboard.postArtifacts(artifactsAdded, moduleName, context.getJobId());
         } catch (Blackboard.BlackboardException ex) {
            logger.log(Level.WARNING, String.format("Failed to post cacheIndex artifacts "), ex); //NON-NLS
         }
@@ -592,8 +591,13 @@ final class ChromeCacheExtractor {
        
         // see if it is cached
         String fileTableKey = cacheFolderName + cacheFileName;
-        if (cacheFileName.startsWith("f_") && externalFilesTable.containsKey(fileTableKey)) {
-            return Optional.of(externalFilesTable.get(fileTableKey));
+
+        if (cacheFileName != null) {
+            if (cacheFileName.startsWith("f_") && externalFilesTable.containsKey(fileTableKey)) {
+                return Optional.of(externalFilesTable.get(fileTableKey));
+            }
+        } else {
+            return Optional.empty();
         }
         
         if (fileCopyCache.containsKey(fileTableKey)) {
@@ -1306,7 +1310,7 @@ final class ChromeCacheExtractor {
        
         private String key;     // Key may be found within the entry or may be external
         
-        CacheEntry(CacheAddress cacheAdress, FileWrapper cacheFileCopy ) throws TskCoreException {
+        CacheEntry(CacheAddress cacheAdress, FileWrapper cacheFileCopy ) throws TskCoreException, IngestModuleException {
             this.selfAddress = cacheAdress;
             this.cacheFileCopy = cacheFileCopy;
             
@@ -1315,7 +1319,11 @@ final class ChromeCacheExtractor {
             int entryOffset = DATAFILE_HDR_SIZE + cacheAdress.getStartBlock() * cacheAdress.getBlockSize();
             
             // reposition the buffer to the the correct offset
-            fileROBuf.position(entryOffset);
+            if (entryOffset < fileROBuf.capacity()) {
+                fileROBuf.position(entryOffset);
+            } else {
+                throw new IngestModuleException("Position seeked in Buffer to big"); // NON-NLS
+            }
             
             hash = fileROBuf.getInt() & UINT32_MASK;
             
@@ -1364,11 +1372,13 @@ final class ChromeCacheExtractor {
             if (longKeyAddresses != null) {
                 // Key is stored outside of the entry
                 try {
-                    CacheDataSegment data = new CacheDataSegment(longKeyAddresses, this.keyLen, true);
-                    key = data.getDataString();
+                    if (longKeyAddresses.getFilename() != null) {
+                        CacheDataSegment data = new CacheDataSegment(longKeyAddresses, this.keyLen, true);
+                        key = data.getDataString();
+                    }
                 } catch (TskCoreException | IngestModuleException ex) {
                     throw new TskCoreException(String.format("Failed to get external key from address %s", longKeyAddresses)); //NON-NLS 
-                } 
+                }
             }
             else {  // key stored within entry 
                 StringBuilder strBuilder = new StringBuilder(MAX_KEY_LEN);

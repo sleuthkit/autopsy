@@ -67,7 +67,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
             addToDatabase = true;
             final List<CorrelationAttributeInstance> md5CorrelationAttr = CorrelationAttributeUtil.makeCorrAttrsForSearch(file);
             if (!md5CorrelationAttr.isEmpty()) {
-                //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistancy with other makeCorrAttrsForSearch methods per 7852 
+                //for an abstract file the 'list' of attributes will be a single attribute or empty and is returning a list for consistency with other makeCorrAttrsForSearch methods per 7852 
                 correlationAttributeInstance = md5CorrelationAttr.get(0);
             } else {
                 correlationAttributeInstance = null;

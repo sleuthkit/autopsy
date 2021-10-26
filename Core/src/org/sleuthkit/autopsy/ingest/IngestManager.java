@@ -72,8 +72,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -289,13 +289,63 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Handles artifacts posted events published by the Sleuth Kit layer
-     * blackboard via the event bus for the case database.
+     * blackboard via the Sleuth Kit event bus.
      *
-     * @param tskEvent A Sleuth Kit data model ArtifactsPostedEvent from the
-     *                 case database event bus.
+     * @param tskEvent The event.
      */
     @Subscribe
     void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent tskEvent) {
+        /*
+         * Add any new data artifacts to the source ingest job for possible
+         * analysis.
+         */
+        List<DataArtifact> newDataArtifacts = new ArrayList<>();
+        Collection<BlackboardArtifact> newArtifacts = tskEvent.getArtifacts();
+        for (BlackboardArtifact artifact : newArtifacts) {
+            if (artifact instanceof DataArtifact) {
+                newDataArtifacts.add((DataArtifact) artifact);
+            }
+        }
+        if (!newDataArtifacts.isEmpty()) {
+            IngestJob ingestJob = null;
+            Long ingestJobId = tskEvent.getIngestJobId();
+            if (ingestJobId != null) {
+                synchronized (ingestJobsById) {
+                    ingestJob = ingestJobsById.get(ingestJobId);
+                }
+            } else {
+                /*
+                 * Handle the case where ingest modules may not supply an ingest
+                 * job ID. In such cases, try to identify the ingest job, if
+                 * any, via its data source. There is a slight risk here that
+                 * the wrong ingest job will be selected if multiple ingests of
+                 * the same data source are in progress.
+                 */
+                DataArtifact dataArtifact = newDataArtifacts.get(0);
+                try {
+                    Content artifactDataSource = dataArtifact.getDataSource();
+                    synchronized (ingestJobsById) {
+                        for (IngestJob job : ingestJobsById.values()) {
+                            Content dataSource = job.getDataSource();
+                            if (artifactDataSource.getId() == dataSource.getId()) {
+                                ingestJob = job;
+                                break;
+                            }
+                        }
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to get data source for data artifact (object ID = %d)", dataArtifact.getId()), ex); //NON-NLS
+                }
+            }
+            if (ingestJob != null) {
+                ingestJob.addDataArtifacts(newDataArtifacts);
+            }
+        }
+
+        /*
+         * Publish Autopsy events for the new artifacts, one event per artifact
+         * type.
+         */
         for (BlackboardArtifact.Type artifactType : tskEvent.getArtifactTypes()) {
             ModuleDataEvent legacyEvent = new ModuleDataEvent(tskEvent.getModuleName(), artifactType, tskEvent.getArtifacts(artifactType));
             AutopsyEvent autopsyEvent = new BlackboardPostEvent(legacyEvent);
@@ -362,30 +412,27 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Queues an ingest job for for one or more data sources.
+     * Queues batch mode ingest jobs for one or more data sources.
      *
      * @param dataSources The data sources to analyze.
-     * @param settings    The settings for the ingest job.
+     * @param settings    The settings for the ingest jobs.
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings);
-            if (job.hasIngestPipeline()) {
-                long taskId = nextIngestManagerTaskId.incrementAndGet();
-                Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
-                synchronized (startIngestJobFutures) {
-                    startIngestJobFutures.put(taskId, task);
-                }
+            List<AbstractFile> emptyFilesSubset = new ArrayList<>();
+            for (Content dataSource : dataSources) {
+                queueIngestJob(dataSource, emptyFilesSubset, settings);
             }
         }
     }
 
     /**
-     * Queues an ingest job for for a data source. Either all of the files in
-     * the data source or a given subset of the files will be analyzed.
+     * Queues a batch mode ingest job for a data source. Either all of the files
+     * in the data source or a given subset of the files will be analyzed.
      *
      * @param dataSource The data source to analyze.
-     * @param files      A subset of the files for the data source.
+     * @param files      A subset of the files for the data source. May be
+     *                   empty.
      * @param settings   The settings for the ingest job.
      */
     public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
@@ -402,23 +449,44 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Immediately starts an ingest job for one or more data sources.
+     * Immediately starts batch mode ingest jobs for one or more data sources.
+     * If any of the jobs fail to start, any jobs already started are cancelled
+     * and any remaining jobs are not attempted. The idea behind this is that
+     * since all of the jobs have the same settings, if the ingest modules fail
+     * to start up for one job (presumably the first job), all of the jobs will
+     * encounter problems.
      *
      * @param dataSources The data sources to process.
-     * @param settings    The settings for the ingest job.
+     * @param settings    The settings for the ingest jobs.
      *
-     * @return The IngestJobStartResult describing the results of attempting to
-     *         start the ingest job.
+     * @return An IngestJobStartResult object describing the results of
+     *         attempting to start the ingest jobs.
      */
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
+        IngestJobStartResult startResult = null;
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings);
-            if (job.hasIngestPipeline()) {
-                return startIngestJob(job);
+            for (Content dataSource : dataSources) {
+                List<IngestJob> startedJobs = new ArrayList<>();
+                IngestJob job = new IngestJob(dataSource, IngestJob.Mode.BATCH, settings);
+                if (job.hasIngestPipeline()) {
+                    startResult = startIngestJob(job);
+                    if (startResult.getModuleErrors().isEmpty() && startResult.getStartupException() == null) {
+                        startedJobs.add(job);
+                    } else {
+                        for (IngestJob jobToCancel : startedJobs) {
+                            jobToCancel.cancel(IngestJob.CancellationReason.INGEST_MODULES_STARTUP_FAILED);
+                        }
+                        break;
+                    }
+                } else {
+                    startResult = new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled"), null); //NON-NLS
+                    break;
+                }
             }
-            return new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled"), null); //NON-NLS
+        } else {
+            startResult = new IngestJobStartResult(null, new IngestManagerException("No case open"), null); //NON-NLS
         }
-        return new IngestJobStartResult(null, new IngestManagerException("No case open"), null); //NON-NLS
+        return startResult;
     }
 
     /**
@@ -529,8 +597,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *
      * @param job The completed job.
      */
-    void finishIngestJob(IngestJob job
-    ) {
+    void finishIngestJob(IngestJob job) {
         long jobId = job.getId();
         synchronized (ingestJobsById) {
             ingestJobsById.remove(jobId);
@@ -692,12 +759,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Publishes an ingest job event signifying analysis of a data source
      * started.
      *
-     * @param ingestJobId           The ingest job id.
-     * @param dataSourceIngestJobId The data source ingest job id.
-     * @param dataSource            The data source.
+     * @param ingestJobId The ingest job id.
+     * @param dataSource  The data source.
      */
-    void fireDataSourceAnalysisStarted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSourceIngestJobId, dataSource);
+    void fireDataSourceAnalysisStarted(long ingestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSource);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -705,12 +771,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Publishes an ingest job event signifying analysis of a data source
      * finished.
      *
-     * @param ingestJobId           The ingest job id.
-     * @param dataSourceIngestJobId The data source ingest job id.
-     * @param dataSource            The data source.
+     * @param ingestJobId The ingest job id.
+     * @param dataSource  The data source.
      */
-    void fireDataSourceAnalysisCompleted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
+    void fireDataSourceAnalysisCompleted(long ingestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -718,12 +783,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Publishes an ingest job event signifying analysis of a data source was
      * canceled.
      *
-     * @param ingestJobId           The ingest job id.
-     * @param dataSourceIngestJobId The data source ingest job id.
-     * @param dataSource            The data source.
+     * @param ingestJobId The ingest job id.
+     * @param dataSource  The data source.
      */
-    void fireDataSourceAnalysisCancelled(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
+    void fireDataSourceAnalysisCancelled(long ingestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -812,7 +876,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      */
     void setIngestTaskProgress(DataSourceIngestTask task, String currentModuleName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
-        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
+        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobExecutor().getIngestJobId(), currentModuleName, task.getDataSource());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
 
         /*
@@ -834,10 +898,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap;
         try {
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource(), task.getFile());
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobExecutor().getIngestJobId(), currentModuleName, task.getDataSource(), task.getFile());
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
+            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobExecutor().getIngestJobId(), currentModuleName, task.getDataSource());
         }
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
 
@@ -921,7 +985,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         List<Snapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
-                snapShots.addAll(job.getDataSourceIngestJobSnapshots());
+                Snapshot snapshot = job.getDiagnosticStatsSnapshot();
+                if (snapshot != null) {
+                    snapShots.add(snapshot);
+                }
             });
         }
         return snapShots;

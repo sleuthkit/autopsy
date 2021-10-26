@@ -47,7 +47,7 @@ import org.sleuthkit.datamodel.DataSource;
  */
 @Messages({
     "RecentFilesPanel_docsTable_tabName=Recently Opened Documents",
-    "RecentFilesPanel_downloadsTable_tabName=Recently Downloads",
+    "RecentFilesPanel_downloadsTable_tabName=Recent Downloads",
     "RecentFilesPanel_attachmentsTable_tabName=Recent Attachments",})
 public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
 

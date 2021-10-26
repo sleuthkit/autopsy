@@ -149,17 +149,17 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     @Override
     @NbBundle.Messages({
         "FileNode.getActions.viewFileInDir.text=View File in Directory",
-        "FileNode.getActions.viewInNewWin.text=View in New Window",
+        "FileNode.getActions.viewInNewWin.text=View Item in New Window",
         "FileNode.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E",
         "FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-        actionsList.addAll(Arrays.asList(super.getActions(true)));
 
         if (!this.getDirectoryBrowseMode()) {
-            actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));
-            actionsList.add(null); // Creates an item separator
+            actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));   
         }
+        actionsList.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
+        actionsList.add(null); // Creates an item separator
 
         actionsList.add(new NewWindowViewAction(Bundle.FileNode_getActions_viewInNewWin_text(), this));
         final Collection<AbstractFile> selectedFilesList
@@ -170,7 +170,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         } else {
             actionsList.add(ExternalViewerShortcutAction.getInstance());
         }
-        actionsList.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
+        
         actionsList.add(null); // Creates an item separator
 
         actionsList.add(ExtractAction.getInstance());
@@ -191,6 +191,10 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
                 logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
             }
         }
+        
+        actionsList.add(null);
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
+        
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 

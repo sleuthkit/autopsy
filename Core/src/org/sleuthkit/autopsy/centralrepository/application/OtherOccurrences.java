@@ -25,8 +25,8 @@ import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -46,16 +46,11 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountInstance;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -81,160 +76,34 @@ public final class OtherOccurrences {
      * @return A list of attributes that can be used for correlation
      */
     public static Collection<CorrelationAttributeInstance> getCorrelationAttributeFromOsAccount(Node node, OsAccount osAccount) {
-        Collection<CorrelationAttributeInstance> ret = new ArrayList<>();
         Optional<String> osAccountAddr = osAccount.getAddr();
-
         if (osAccountAddr.isPresent()) {
             try {
-                for (OsAccountInstance instance : osAccount.getOsAccountInstances()) {                    
-                    CorrelationAttributeInstance correlationAttributeInstance = CorrelationAttributeUtil.makeCorrAttr(instance.getOsAccount(), instance.getDataSource());
-                    if (correlationAttributeInstance != null) {
-                        ret.add(correlationAttributeInstance);
+                for (OsAccountInstance instance : osAccount.getOsAccountInstances()) {
+                    List<CorrelationAttributeInstance> correlationAttributeInstances = CorrelationAttributeUtil.makeCorrAttrsForSearch(instance);
+                    if (!correlationAttributeInstances.isEmpty()) {
+                        return correlationAttributeInstances;
                     }
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.INFO, String.format("Unable to check create CorrelationAttribtueInstance for osAccount %s.", osAccountAddr.get()), ex);
             }
         }
-
-        return ret;
-    }
-
-    /**
-     * Determine what attributes can be used for correlation based on the node.
-     * If EamDB is not enabled, get the default Files correlation.
-     *
-     * @param node The node to correlate.
-     * @param file The file to correlate.
-     *
-     * @return A list of attributes that can be used for correlation
-     */
-    public static Collection<CorrelationAttributeInstance> getCorrelationAttributesFromNode(Node node, AbstractFile file) {
-        Collection<CorrelationAttributeInstance> ret = new ArrayList<>();
-
-        // correlate on blackboard artifact attributes if they exist and supported
-        BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
-        if (bbArtifact != null && CentralRepository.isEnabled()) {
-            ret.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch(bbArtifact));
-        }
-
-        // we can correlate based on the MD5 if it is enabled      
-        if (file != null && CentralRepository.isEnabled() && file.getSize() > 0) {
-            try {
-
-                List<CorrelationAttributeInstance.Type> artifactTypes = CentralRepository.getInstance().getDefinedCorrelationTypes();
-                String md5 = file.getMd5Hash();
-                if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
-                    for (CorrelationAttributeInstance.Type aType : artifactTypes) {
-                        if (aType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
-                            CorrelationCase corCase = CentralRepository.getInstance().getCase(Case.getCurrentCase());
-                            try {
-                                ret.add(new CorrelationAttributeInstance(
-                                        aType,
-                                        md5,
-                                        corCase,
-                                        CorrelationDataSource.fromTSKDataSource(corCase, file.getDataSource()),
-                                        file.getParentPath() + file.getName(),
-                                        "",
-                                        file.getKnown(),
-                                        file.getId()));
-                            } catch (CorrelationAttributeNormalizationException ex) {
-                                logger.log(Level.INFO, String.format("Unable to check create CorrelationAttribtueInstance for value %s and type %s.", md5, aType.toString()), ex);
-                            }
-                            break;
-                        }
-                    }
-                }
-            } catch (CentralRepoException | TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
-            }
-            // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.  
-        } else if (file != null && file.getSize() > 0) {
-            String md5 = file.getMd5Hash();
-            if (md5 != null && !md5.isEmpty()) {
-                try {
-                    final CorrelationAttributeInstance.Type fileAttributeType
-                            = CorrelationAttributeInstance.getDefaultCorrelationTypes()
-                                    .stream()
-                                    .filter(attrType -> attrType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID)
-                                    .findAny()
-                                    .get();
-                    //The Central Repository is not enabled
-                    ret.add(new CorrelationAttributeInstance(fileAttributeType, md5, null, null, "", "", TskData.FileKnown.UNKNOWN, file.getId()));
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
-                } catch (CorrelationAttributeNormalizationException ex) {
-                    logger.log(Level.INFO, String.format("Unable to create CorrelationAttributeInstance for value %s", md5), ex); // NON-NLS
-                }
-            }
-        }
-        return ret;
-    }
-
-    /**
-     * Get the associated BlackboardArtifact from a node, if it exists.
-     *
-     * @param node The node
-     *
-     * @return The associated BlackboardArtifact, or null
-     */
-    public static BlackboardArtifact getBlackboardArtifactFromNode(Node node) {
-        BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
-        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class);
-
-        if (nodeBbArtifactTag != null) {
-            return nodeBbArtifactTag.getArtifact();
-        } else if (nodeBbArtifact != null) {
-            return nodeBbArtifact;
-        }
-
-        return null;
-
-    }
-
-    /**
-     * Get the associated AbstractFile from a node, if it exists.
-     *
-     * @param node The node
-     *
-     * @return The associated AbstractFile, or null
-     */
-    public static AbstractFile getAbstractFileFromNode(Node node) {
-        BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
-        ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class);
-        AbstractFile nodeAbstractFile = node.getLookup().lookup(AbstractFile.class);
-
-        if (nodeBbArtifactTag != null) {
-            Content content = nodeBbArtifactTag.getContent();
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeContentTag != null) {
-            Content content = nodeContentTag.getContent();
-            if (content instanceof AbstractFile) {
-                return (AbstractFile) content;
-            }
-        } else if (nodeAbstractFile != null) {
-            return nodeAbstractFile;
-        }
-
-        return null;
+        return Collections.emptyList();
     }
 
     /**
      * Query the central repo database (if enabled) and the case database to
      * find all artifact instances correlated to the given central repository
-     * artifact. If the central repo is not enabled, this will only return files
-     * from the current case with matching MD5 hashes.
+     * artifact.
      *
-     * @param file           The current file.
      * @param deviceId       The device ID for the current data source.
      * @param dataSourceName The name of the current data source.
      * @param corAttr        CorrelationAttribute to query for
      *
      * @return A collection of correlated artifact instances
      */
-    public static Map<UniquePathKey, NodeData> getCorrelatedInstances(AbstractFile file, String deviceId, String dataSourceName, CorrelationAttributeInstance corAttr) {
+    public static Map<UniquePathKey, NodeData> getCorrelatedInstances(String deviceId, String dataSourceName, CorrelationAttributeInstance corAttr) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCaseThrows();
@@ -251,23 +120,19 @@ public final class OtherOccurrences {
                     // - the case UUID is different
                     // - the data source name is different
                     // - the data source device ID is different
-                    // - the file path is different
+                    // - the object id for the underlying file is different
                     if (artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
                             && (!StringUtils.isBlank(dataSourceName) && artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName))
-                            && (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                            && (file != null && artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName()))) {
-                        continue;
+                            && (!StringUtils.isBlank(deviceId) && artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))) {
+                        Long foundObjectId = artifactInstance.getFileObjectId();
+                        Long currentObjectId = corAttr.getFileObjectId();
+                        if (foundObjectId != null && currentObjectId != null && foundObjectId.equals(currentObjectId)) {
+                            continue;
+                        }
                     }
                     NodeData newNode = new NodeData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
                     UniquePathKey uniquePathKey = new UniquePathKey(newNode);
                     nodeDataMap.put(uniquePathKey, newNode);
-                }
-            }
-            if (file != null && corAttr.getCorrelationType().getDisplayName().equals("Files")) {
-                List<AbstractFile> caseDbFiles = getCaseDbMatches(corAttr, openCase, file);
-
-                for (AbstractFile caseDbFile : caseDbFiles) {
-                    addOrUpdateNodeData(openCase, nodeDataMap, caseDbFile);
                 }
             }
             return nodeDataMap;
@@ -277,46 +142,10 @@ public final class OtherOccurrences {
             logger.log(Level.INFO, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-        } catch (TskCoreException ex) {
-            // do nothing. 
-            // @@@ Review this behavior
-            logger.log(Level.SEVERE, "Exception while querying open case.", ex); // NON-NLS
         }
 
         return new HashMap<>(
                 0);
-    }
-
-    /**
-     * Get all other abstract files in the current case with the same MD5 as the
-     * selected node.
-     *
-     * @param corAttr  The CorrelationAttribute containing the MD5 to search for
-     * @param openCase The current case
-     * @param file     The current file.
-     *
-     * @return List of matching AbstractFile objects
-     *
-     * @throws NoCurrentCaseException
-     * @throws TskCoreException
-     * @throws CentralRepoException
-     */
-    public static List<AbstractFile> getCaseDbMatches(CorrelationAttributeInstance corAttr, Case openCase, AbstractFile file) throws NoCurrentCaseException, TskCoreException, CentralRepoException {
-        List<AbstractFile> caseDbArtifactInstances = new ArrayList<>();
-        if (file != null) {
-            String md5 = corAttr.getCorrelationValue();
-            SleuthkitCase tsk = openCase.getSleuthkitCase();
-            List<AbstractFile> matches = tsk.findAllFilesWhere(String.format("md5 = '%s'", new Object[]{md5}));
-
-            for (AbstractFile fileMatch : matches) {
-                if (file.equals(fileMatch)) {
-                    continue; // If this is the file the user clicked on
-                }
-                caseDbArtifactInstances.add(fileMatch);
-            }
-        }
-        return caseDbArtifactInstances;
-
     }
 
     /**
@@ -415,7 +244,6 @@ public final class OtherOccurrences {
      * Create a cvs file of occurrences for the given parameters.
      *
      * @param destFile           Output file for the csv data.
-     * @param abstractFile       Source file.
      * @param correlationAttList List of correclationAttributeInstances, should
      *                           not be null.
      * @param dataSourceName     Name of the data source.
@@ -423,7 +251,7 @@ public final class OtherOccurrences {
      *
      * @throws IOException
      */
-    public static void writeOtherOccurrencesToFileAsCSV(File destFile, AbstractFile abstractFile, Collection<CorrelationAttributeInstance> correlationAttList, String dataSourceName, String deviceId) throws IOException {
+    public static void writeOtherOccurrencesToFileAsCSV(File destFile, Collection<CorrelationAttributeInstance> correlationAttList, String dataSourceName, String deviceId) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(destFile.toPath())) {
             //write headers 
             StringBuilder headers = new StringBuilder("\"");
@@ -440,7 +268,7 @@ public final class OtherOccurrences {
             for (CorrelationAttributeInstance corAttr : correlationAttList) {
                 Map<UniquePathKey, NodeData> correlatedNodeDataMap = new HashMap<>(0);
                 // get correlation and reference set instances from DB
-                correlatedNodeDataMap.putAll(getCorrelatedInstances(abstractFile, deviceId, dataSourceName, corAttr));
+                correlatedNodeDataMap.putAll(getCorrelatedInstances(deviceId, dataSourceName, corAttr));
                 for (NodeData nodeData : correlatedNodeDataMap.values()) {
                     writer.write(nodeData.toCsvString());
                 }

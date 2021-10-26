@@ -1,4 +1,12 @@
+# {0} - AbstractFileName
+AnalysisResultTestIngestModule_process_start=Started {0}
+AnalysisResultTestIngestModuleFactory_Description=Just makes a custom data artifact and analysis result
+AnalysisResultTestIngestModuleFactory_Name=Analysis Result Test Module
 CTL_RunIngestAction=Run Ingest
+CustomGPSIngestModule_Description=Just makes a few custom artifacts with GPS data
+CustomGPSIngestModule_Name=Custom GPS Module
+# {0} - AbstractFileName
+CustomGPSIngestModule_process_start=Started {0}
 FileIngestPipeline_SaveResults_Activity=Saving Results
 IngestJobSettingsPanel.IngestModulesTableRenderer.info.message=A previous version of this ingest module has been run before on this data source.
 IngestJobSettingsPanel.IngestModulesTableRenderer.warning.message=This ingest module has been run before on this data source.
@@ -159,3 +167,7 @@ IngestSettingsPanel.restartRequiredLabel.text=For this computer, a maximum of {0
 IngestSettingsPanel.jLabelNumThreads.text=Number of threads to use for file ingest:
 IngestSettingsPanel.ingestWarningLabel.text=Ingest is ongoing, some settings will be unavailable until it finishes.
 ProfileSettingsPanel.ingestWarningLabel.text=Ingest is ongoing, some settings will be unavailable until it finishes.
+# {0} - AbstractFileName
+SampleDSIngestModule_process_start=Started {0}
+SampleDSIngestModuleFactory_Description=Creates a custom artifact every half second
+SampleDSIngestModuleFactory_Name=\ Sample DS Test Module

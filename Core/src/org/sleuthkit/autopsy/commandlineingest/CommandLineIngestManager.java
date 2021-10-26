@@ -550,22 +550,21 @@ public class CommandLineIngestManager extends CommandLineManager {
                             ingestLock.wait();
                             LOGGER.log(Level.INFO, "Finished ingest modules analysis for {0} ", dataSource.getPath());
                             IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
-                            for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
-                                if (!snapshot.isCancelled()) {
-                                    List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
-                                    if (!cancelledModules.isEmpty()) {
-                                        LOGGER.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", dataSource.getPath()));
-                                        for (String module : snapshot.getCancelledDataSourceIngestModules()) {
-                                            LOGGER.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, dataSource.getPath()));
-                                        }
+                            IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot = jobSnapshot.getDataSourceProcessingSnapshot();
+                            if (!snapshot.isCancelled()) {
+                                List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
+                                if (!cancelledModules.isEmpty()) {
+                                    LOGGER.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", dataSource.getPath()));
+                                    for (String module : snapshot.getCancelledDataSourceIngestModules()) {
+                                        LOGGER.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, dataSource.getPath()));
                                     }
-                                    LOGGER.log(Level.INFO, "Analysis of data source completed");
-                                } else {
-                                    LOGGER.log(Level.WARNING, "Analysis of data source cancelled");
-                                    IngestJob.CancellationReason cancellationReason = snapshot.getCancellationReason();
-                                    if (IngestJob.CancellationReason.NOT_CANCELLED != cancellationReason && IngestJob.CancellationReason.USER_CANCELLED != cancellationReason) {
-                                        throw new AnalysisStartupException(String.format("Analysis cancelled due to %s for %s", cancellationReason.getDisplayName(), dataSource.getPath()));
-                                    }
+                                }
+                                LOGGER.log(Level.INFO, "Analysis of data source completed");
+                            } else {
+                                LOGGER.log(Level.WARNING, "Analysis of data source cancelled");
+                                IngestJob.CancellationReason cancellationReason = snapshot.getCancellationReason();
+                                if (IngestJob.CancellationReason.NOT_CANCELLED != cancellationReason && IngestJob.CancellationReason.USER_CANCELLED != cancellationReason) {
+                                    throw new AnalysisStartupException(String.format("Analysis cancelled due to %s for %s", cancellationReason.getDisplayName(), dataSource.getPath()));
                                 }
                             }
                         } else if (!ingestJobStartResult.getModuleErrors().isEmpty()) {

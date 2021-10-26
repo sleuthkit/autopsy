@@ -954,7 +954,7 @@ class SevenZipExtractor {
         }
         charsetDetector.setText(allBytes);
         CharsetMatch cm = charsetDetector.detect();
-        if (cm.getConfidence() >= 90 && Charset.isSupported(cm.getName())) {
+        if (cm != null && cm.getConfidence() >= 90 && Charset.isSupported(cm.getName())) {
             detectedCharset = Charset.forName(cm.getName());
         }
         return detectedCharset;
