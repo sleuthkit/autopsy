@@ -316,8 +316,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 }
             } else {
                 /*
-                 * There are four cases where the ingest job ID returned by the
-                 * event is expected be null:
+                 * There are four use cases where the ingest job ID returned by
+                 * the event is expected be null:
                  *
                  * 1. The artifacts are being posted by a data source proccessor
                  * (DSP) module that runs before the ingest job is created,

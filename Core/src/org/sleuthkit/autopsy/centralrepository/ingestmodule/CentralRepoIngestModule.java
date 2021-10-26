@@ -102,11 +102,6 @@ final class CentralRepoIngestModule implements FileIngestModule {
     }
 
     @Override
-    public void startUp(IngestJobContext context) throws IngestModuleException {
-        this.context = context;
-    }    
-    
-    @Override
     public ProcessResult process(AbstractFile abstractFile) {
         if (CentralRepository.isEnabled() == false) {
             /*
@@ -235,6 +230,8 @@ final class CentralRepoIngestModule implements FileIngestModule {
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
+        
         IngestEventsListener.incrementCorrelationEngineModuleCount();
 
         /*
