@@ -610,7 +610,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             };
 
-            root = new DirectoryTreeFilterNode(root, true);
+//            root = new DirectoryTreeFilterNode(root, true);
 
             em.setRootContext(root);
             em.getRootContext().setName(currentCase.getName());
@@ -866,7 +866,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             try {
                 Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                 if (treeNode != null) {
-                    Node originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
+                    Node originNode = treeNode instanceof DirectoryTreeFilterNode
+                            ? ((DirectoryTreeFilterNode) treeNode).getOriginal() :
+                            treeNode;
                     //set node, wrap in filter node first to filter out children
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                     if(originNode instanceof SelectionResponder) {

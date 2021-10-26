@@ -28,15 +28,22 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_GEN_INFO;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_TL_EVENT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
@@ -48,6 +55,26 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DataArtifactDAO extends BlackboardArtifactDAO {
 
+    /**
+     * Types that should not be shown in the tree.
+     */
+    @SuppressWarnings("deprecation")
+    private static final Set<BlackboardArtifact.Type> IGNORED_TYPES = Sets.newHashSet(
+            // these are shown in other parts of the UI (and different node types)
+            TSK_DATA_SOURCE_USAGE,
+            TSK_GEN_INFO,
+            new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE),
+            TSK_TL_EVENT,
+            //This is not meant to be shown in the UI at all. It is more of a meta artifact.
+            TSK_ASSOCIATED_OBJECT
+    );
+
+    private static final String IGNORED_TYPES_SQL_SET = IGNORED_TYPES.stream()
+            .map(tp -> Integer.toString(tp.getTypeID()))
+            .collect(Collectors.joining(", "));
+    
+
+//    private static final String IGNORED_TYPES_SQL_SET = "(1)";
     private static Logger logger = Logger.getLogger(DataArtifactDAO.class.getName());
 
     private static DataArtifactDAO instance = null;
@@ -192,7 +219,10 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             SleuthkitCase skCase = getCase();
             String query = "artifact_type_id, COUNT(*) AS count "
                     + " FROM blackboard_artifacts "
-                    + (dataSourceId == null ? "" : (" WHERE data_source_obj_id = " + dataSourceId + " "))
+                    + " WHERE artifact_type_id NOT IN (" + IGNORED_TYPES_SQL_SET + ") "
+                    + " AND artifact_type_id IN "
+                    + " (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + BlackboardArtifact.Category.DATA_ARTIFACT.getID() + ")"
+                    + (dataSourceId == null ? "" : (" AND data_source_obj_id = " + dataSourceId + " "))
                     + " GROUP BY artifact_type_id";
             Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
             skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
