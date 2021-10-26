@@ -21,53 +21,34 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import java.util.Objects;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * Key for accessing data about tags from the DAO.
  */
-public class FileTypeSizeSearchParams extends BaseSearchParams {
-
-    public enum FileSizeFilter {
-        SIZE_50_200(0, "SIZE_50_200", "50 - 200MB"), //NON-NLS
-        SIZE_200_1000(1, "SIZE_200_1GB", "200MB - 1GB"), //NON-NLS
-        SIZE_1000_(2, "SIZE_1000+", "1GB+"); //NON-NLS
-        private final int id;
-        private final String name;
-        private final String displayName;
-
-        private FileSizeFilter(int id, String name, String displayName) {
-            this.id = id;
-            this.name = name;
-            this.displayName = displayName;
-        }
-
-        public String getName() {
-            return this.name;
-        }
-
-        public int getId() {
-            return this.id;
-        }
-
-        public String getDisplayName() {
-            return this.displayName;
-        }
+public class TagsSearchParams extends BaseSearchParams {
+    
+    public enum TagType {
+        FILE,
+        RESULT;
     }
 
-    private final FileSizeFilter sizeFilter;
+    private final TagType type;
+    private final String tagName;
     private final Long dataSourceId;
  
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
+    public TagsSearchParams(String tagName, TagType type, Long dataSourceId) {
+        this.tagName = tagName;
+        this.type = type;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId, long startItem, Long maxResultsCount) {
+    public TagsSearchParams(String tagName, TagType type, Long dataSourceId, long startItem, Long maxResultsCount) {
         super(startItem, maxResultsCount);
-        this.sizeFilter = sizeFilter;
+        this.tagName = tagName;
+        this.type = type;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
+    public String getMimeType() {
+        return tagName;
     }
 
     public Long getDataSourceId() {
@@ -77,7 +58,8 @@ public class FileTypeSizeSearchParams extends BaseSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.sizeFilter);
+        hash = 23 * hash + Objects.hashCode(this.tagName);
+        hash = 23 * hash + Objects.hashCode(this.type);
         hash = 23 * hash + Objects.hashCode(this.dataSourceId);
         hash = 23 * hash + Objects.hashCode(super.hashCode());
         return hash;
@@ -94,14 +76,17 @@ public class FileTypeSizeSearchParams extends BaseSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (!Objects.equals(this.sizeFilter, other.sizeFilter)) {
+        final TagsSearchParams other = (TagsSearchParams) obj;
+        if (!(this.tagName.equals(other.tagName))) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
-        return true;
+        if (!Objects.equals(this.type, other.type)) {
+            return false;
+        }
+        return super.equalFields(other);
     }
 
 }
