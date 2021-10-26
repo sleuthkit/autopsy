@@ -323,12 +323,15 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                  * (DSP) module that runs before the ingest job is created,
                  * i.e., a DSP that does not support streaming ingest and has no
                  * noton of an ingest job ID. In this use case, the event is
-                 * handled synchronously (the DSP calls
+                 * handled synchronously. The DSP calls
                  * Blackboard.postArtifacts(), which puts the event on the event
-                 * bus to which this method subscribes) before the ingest job is
-                 * created, so the code below will not find an ingest job to
-                 * which to add the artifacts. However, the artifacts will be
-                 * analyzed when the ingest job executor, working in batch mode,
+                 * bus to which this method subscribes, so the event will be
+                 * handled here before the DSP completes and calls
+                 * DataSourceProcessorCallback.done(). This means the code below
+                 * will execute before the ingest job is created, so it will not
+                 * find an ingest job to which to add the artifacts. However,
+                 * the artifacts WILL be analyzed after the ingest job is
+                 * started, when the ingest job executor, working in batch mode,
                  * schedules ingest tasks for all of the data artifacts in the
                  * case database.
                  *
