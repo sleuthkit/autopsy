@@ -23,12 +23,13 @@ import java.util.List;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.CountsRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
  * Factory for populating tree with results.
  */
-public class TreeChildFactory<T> extends ChildFactory<T> {
+public class TreeChildFactory<T> extends ChildFactory<CountsRowDTO<T>> {
     private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
     private SearchResultsDTO results;
 
@@ -38,14 +39,14 @@ public class TreeChildFactory<T> extends ChildFactory<T> {
 
     @Override
     protected boolean createKeys(List<T> toPopulate) {
-
+        
     }
 
     @Override
     protected Node createNodeForKey(T key) {
-        
+        return new TreeCountNode<>();
     }
-
+    
     public void update(SearchResultsDTO newResults) {
         this.results = newResults;
         this.refresh(false);
