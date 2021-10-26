@@ -25,7 +25,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,6 +42,7 @@ import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -53,9 +53,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
-import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
 
 /**
  * Hash set hits node support. Inner classes have all of the nodes in the tree.
@@ -322,21 +321,25 @@ public class HashsetHits implements AutopsyVisitableItem {
     /**
      * Node for a hash set name
      */
-    public class HashsetNameNode extends DisplayableItemNode implements Observer {
+    public class HashsetNameNode extends DisplayableItemNode implements Observer, SelectionResponder {
 
         private final String hashSetName;
 
         public HashsetNameNode(String hashSetName) {
             super(Children.LEAF,
-                    Lookups.fixed(hashSetName, 
-                            new HashHitSearchParam( 
-                                    filteringDSObjId > 0 ? filteringDSObjId : null,
-                                    hashSetName)));
+                    Lookups.fixed(hashSetName));
             super.setName(hashSetName);
             this.hashSetName = hashSetName;
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png"); //NON-NLS
             hashsetResults.addObserver(this);
+        }
+        
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            dataResultPanel.displayHashHits(new HashHitSearchParam(
+                    filteringDSObjId > 0 ? filteringDSObjId : null,
+                    hashSetName));
         }
 
         /**

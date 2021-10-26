@@ -326,11 +326,12 @@ public class SearchResultSupport {
     }
     
     /**
+     * Sets the search parameters to the file size type search parameters.
      * Subsequent calls that don't change search parameters (i.e. page size
      * changes, page index changes) will use these search parameters to return
      * results.
      *
-     * @param fileSizeKey he file size type search parameters.
+     * @param fileSizeKey The file size type search parameters.
      *
      * @return The results of querying with current paging parameters.
      *
@@ -347,20 +348,22 @@ public class SearchResultSupport {
                     (long) pSize);
             return dao.getViewsDAO().getFilesBySize(searchParams);
         };
+                
         return fetchResults();
-    }
+    }         
 
     /**
-     * Sets the search parameters for the hash hit search parameters. Subsequent
-     * calls that don't change search parameters (i.e. page size changes, page
-     * index changes) will use these search parameters to return results.
-     *
-     * @param hashHitKey
-     *
+     * Sets the search parameters for the keyword search parameters.
+     * Subsequent calls that don't change search parameters (i.e. page size
+     * changes, page index changes) will use these search parameters to return
+     * results.
+     * 
+     * @param hashHitKey The hash hit search parameters.
+     * 
      * @return The results of querying with current paging parameters.
-     *
+     * 
      * @throws ExecutionException
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException 
      */
     public synchronized SearchResultsDTO setHashHits(HashHitSearchParam hashHitKey) throws ExecutionException, IllegalArgumentException {
         resetPaging();
@@ -377,7 +380,7 @@ public class SearchResultSupport {
     }
 
     /**
-     * Sets the search parameters to the file mime type search parameters.
+     * Sets the search parameters for the keyword search parameters.
      * Subsequent calls that don't change search parameters (i.e. page size
      * changes, page index changes) will use these search parameters to return
      * results.

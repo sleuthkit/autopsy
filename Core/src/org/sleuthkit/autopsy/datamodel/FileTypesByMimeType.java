@@ -32,7 +32,6 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -44,14 +43,15 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesKey;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
 
 /**
  * Class which contains the Nodes for the 'By Mime Type' view located in the
@@ -398,7 +398,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * Node which represents the media sub type in the By MIME type tree, the
      * media subtype is the portion of the MIME type following the /.
      */
-    final class MediaSubTypeNode extends FileTypes.BGCountUpdatingNode {
+    final class MediaSubTypeNode extends FileTypes.BGCountUpdatingNode implements SelectionResponder {
 
         @NbBundle.Messages({"FileTypesByMimeTypeNode.createSheet.mediaSubtype.name=Subtype",
             "FileTypesByMimeTypeNode.createSheet.mediaSubtype.displayName=Subtype",
@@ -407,10 +407,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         private final String subType;
 
         private MediaSubTypeNode(String mimeType) {
-            super(typesRoot, Children.LEAF, Lookups.fixed(mimeType,
-                    new FileTypeMimeSearchParams(
-                            mimeType,
-                            filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null)));
+            super(typesRoot, Children.LEAF, Lookups.fixed(mimeType));
             this.mimeType = mimeType;
             this.subType = StringUtils.substringAfter(mimeType, "/");
             super.setName(mimeType);
@@ -418,6 +415,13 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
             addObserver(this);
+        }
+        
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            dataResultPanel.displayFileMimes(new FileTypeMimeSearchParams(
+                    mimeType,
+                    filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null));
         }
 
         /**

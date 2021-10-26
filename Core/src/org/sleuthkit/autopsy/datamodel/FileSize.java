@@ -39,10 +39,13 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams.FileSizeFilter;
+import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -228,7 +231,7 @@ public class FileSize implements AutopsyVisitableItem {
         /*
          * Node for a specific size range. Children are files.
          */
-        public class FileSizeNode extends DisplayableItemNode {
+        public class FileSizeNode extends DisplayableItemNode implements SelectionResponder{
 
             private final FileSizeFilter filter;
             private final long datasourceObjId;
@@ -260,15 +263,19 @@ public class FileSize implements AutopsyVisitableItem {
              */
             FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter, Observable o, long datasourceObjId) {
                 super(Children.LEAF,
-                        Lookups.fixed(filter.getDisplayName(),
-                                new FileTypeSizeSearchParams(
-                                        filter,
-                                        datasourceObjId > 0 ? datasourceObjId : null)));
+                        Lookups.fixed(filter.getDisplayName()));
                 this.filter = filter;
                 this.datasourceObjId = datasourceObjId;
                 this.skCase = skCase;
                 init();
                 o.addObserver(new FileSizeNodeObserver());
+            }
+            
+            @Override
+            public void respondSelection(DataResultTopComponent dataResultPanel) {
+                dataResultPanel.displayFileSizes(new FileTypeSizeSearchParams(
+                                        filter,
+                                        datasourceObjId > 0 ? datasourceObjId : null));
             }
 
             private void init() {

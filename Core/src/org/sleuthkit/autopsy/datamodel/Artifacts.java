@@ -52,7 +52,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.python.google.common.collect.Sets;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
+import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
 import org.sleuthkit.datamodel.Blackboard;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
@@ -495,6 +497,10 @@ public class Artifacts {
             }
             return count;
         }
+        
+        long getFilteringDataSourceId() {
+            return filteringDSObjId;
+        }
 
         /**
          * When this method is called, the count to be displayed will be
@@ -519,7 +525,7 @@ public class Artifacts {
      * all of the artifacts of a given type. Its children will be
      * BlackboardArtifactNode objects.
      */
-    static class TypeNode extends UpdatableCountTypeNode {
+    static class TypeNode extends UpdatableCountTypeNode implements SelectionResponder{
 
         private final BlackboardArtifact.Type type;
 
@@ -533,11 +539,7 @@ public class Artifacts {
          */
         TypeNode(BlackboardArtifact.Type type, long filteringDSObjId) {
             super(new Children.Array(),
-                    
-                    type.getCategory() == Category.DATA_ARTIFACT
-                    ? Lookups.fixed(type.getDisplayName(), new DataArtifactSearchParam(type, filteringDSObjId > 0 ? filteringDSObjId : null))
-                    : Lookups.fixed(type.getDisplayName(), new AnalysisResultSearchParam(type, filteringDSObjId > 0 ? filteringDSObjId : null)),
-                    
+                    Lookups.fixed(type.getDisplayName()),                   
                     type.getDisplayName(),
                     filteringDSObjId,
                     type);
@@ -546,6 +548,17 @@ public class Artifacts {
             this.type = type;
             String iconPath = IconsUtil.getIconFilePath(type.getTypeID());
             setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
+        }
+        
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            switch(type.getCategory()) {
+                case DATA_ARTIFACT:
+                    dataResultPanel.displayDataArtifact(new DataArtifactSearchParam(type, getFilteringDataSourceId() > 0 ? getFilteringDataSourceId() : null)) ;
+                    break;
+                default:
+                    dataResultPanel.displayAnalysisResult(new AnalysisResultSearchParam(type, getFilteringDataSourceId() > 0 ? getFilteringDataSourceId() : null));
+            }
         }
 
         @Override

@@ -420,8 +420,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         dataResultPanel.displayFileSizes(fileSizeParams);
     } 
     
-    /**
-     * Displays results of querying the DAO for hash sets matching the
+    /** Displays results of querying the DAO for hash sets matching the
      * search parameters query.
      * 
      * @param hashHitParams The search parameter query.
