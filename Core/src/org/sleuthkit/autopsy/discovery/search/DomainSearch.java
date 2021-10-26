@@ -126,6 +126,7 @@ public class DomainSearch {
      * @param caseDb              The case database.
      * @param centralRepoDb       The central repository database. Can be null
      *                            if not needed.
+     * @param context             The search context.
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters.
      *

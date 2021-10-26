@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
@@ -55,10 +56,6 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
     })
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<>();
-        for (Action a : super.getActions(true)) {
-            actions.add(a);
-        }
-
         actions.add(new NewWindowViewAction(
                 Bundle.SpecialDirectoryNode_getActions_viewInNewWin_text(), this));
         actions.add(null); // creates a menu separator
@@ -74,6 +71,8 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
             actions.add(new RunIngestModulesAction(content));
         }
         actions.addAll(ContextMenuExtensionPoint.getActions());
+        actions.add(null);
+        actions.addAll(Arrays.asList(super.getActions(true)));
         return actions.toArray(new Action[0]);
     }
 

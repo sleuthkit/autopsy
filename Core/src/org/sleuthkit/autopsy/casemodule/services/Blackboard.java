@@ -117,6 +117,7 @@ public final class Blackboard implements Closeable {
      * @deprecated Do not use.
      */
     @Deprecated
+    @Override
     public void close() throws IOException {
         /*
          * No-op maintained for backwards compatibility. Clients should not

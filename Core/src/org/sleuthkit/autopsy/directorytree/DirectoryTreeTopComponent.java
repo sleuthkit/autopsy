@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +84,7 @@ import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
+import org.sleuthkit.autopsy.datamodel.OsAccounts;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
@@ -95,6 +97,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -1218,6 +1221,86 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .findFirst();
+    }
+
+    /**
+     * Does depth-first search to find os account list node where the provided
+     * os account is a child.
+     *
+     * @param node      The node.
+     * @param osAccount The os account.
+     * @param hosts     List of hosts.
+     *
+     * @return The parent list node of the os account if found or empty if not.
+     */
+    private Optional<Node> getOsAccountListNode(Node node, OsAccount osAccount, Set<Host> hosts) {
+        if (node == null) {
+            return Optional.empty();
+        }
+
+        Host nodeHost = node.getLookup().lookup(Host.class);
+        if ((nodeHost != null && hosts != null && hosts.contains(nodeHost))
+                || node.getLookup().lookup(DataSource.class) != null
+                || node.getLookup().lookup(Person.class) != null
+                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+
+            return Stream.of(node.getChildren().getNodes(true))
+                    .map(childNode -> getOsAccountListNode(childNode, osAccount, hosts))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .findFirst();
+
+        }
+
+        if (OsAccounts.getListName().equals(node.getName())) {
+            return Optional.of(node);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Navigates to the os account if the os account is found in the tree.
+     *
+     * @param osAccount The os account.
+     */
+    public void viewOsAccount(OsAccount osAccount) {
+        Set<Host> hosts = null;
+
+        if (CasePreferences.getGroupItemsInTreeByDataSource()) {
+            try {
+                hosts = new HashSet<>(Case.getCurrentCase().getSleuthkitCase().getOsAccountManager().getHosts(osAccount));
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.WARNING, "Unable to get valid hosts for osAccount: " + osAccount, ex);
+                return;
+            }
+        }
+        
+        final Set<Host> finalHosts = hosts;
+
+        Optional<Node> osAccountListNodeOpt = Stream.of(em.getRootContext().getChildren().getNodes(true))
+                .map(nd -> getOsAccountListNode(nd, osAccount, finalHosts))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+
+        if (!osAccountListNodeOpt.isPresent()) {
+            return;
+        }
+
+        Node osAccountListNode = osAccountListNodeOpt.get();
+
+        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) osAccountListNode).getOriginal();
+        undecoratedParentNode.setChildNodeSelectionInfo((osAcctNd) -> {
+            OsAccount osAcctOfNd = osAcctNd.getLookup().lookup(OsAccount.class);
+            return osAcctOfNd != null && osAcctOfNd.getId() == osAccount.getId();
+        });
+        getTree().expandNode(osAccountListNode);
+        try {
+            em.setExploredContextAndSelection(osAccountListNode, new Node[]{osAccountListNode});
+        } catch (PropertyVetoException ex) {
+            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+        }
     }
 
     /**

@@ -104,6 +104,11 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                     }
 
                     if (this.abstractFile == null) {
+                        
+                        if (currentFullPath == null || currentFullPath.isEmpty()) {
+                            return null;
+                        }
+                        
                         // We failed to find the file using the file id so now we
                         // will try using the file name, parent path and data source id.
                         File fileFromPath = new File(currentFullPath);
@@ -112,6 +117,9 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
                         // Create the parent path. Make sure not to add a separator if there is already one there.
                         String parentPath = fileFromPath.getParent();
+                        if (parentPath == null) {
+                            return null;
+                        }
                         if (!parentPath.endsWith(File.separator)) {
                             parentPath += File.separator;
                         }

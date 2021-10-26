@@ -27,9 +27,12 @@ import ezvcard.property.Organization;
 import ezvcard.property.Photo;
 import ezvcard.property.Telephone;
 import ezvcard.property.Url;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -144,7 +147,7 @@ final class VcardParser {
      * @throws NoCurrentCaseException If there is no open case.
      */
     void parse(AbstractFile abstractFile) throws IOException, NoCurrentCaseException {
-        for (VCard vcard: Ezvcard.parse(new ReadContentInputStream(abstractFile)).all()) {
+        for (VCard vcard: Ezvcard.parse(new InputStreamReader(new BufferedInputStream(new ReadContentInputStream(abstractFile)), StandardCharsets.UTF_8)).all()) {
             addContactArtifact(vcard, abstractFile);
         }
     }
@@ -420,7 +423,7 @@ final class VcardParser {
                 }
 
                 try {
-                    BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                    BlackboardAttribute.Type attributeType = tskCase.getBlackboard().getAttributeType(attributeTypeName);
                     if (attributeType == null) {
                         try{
                             // Add this attribute type to the case database.
@@ -476,7 +479,7 @@ final class VcardParser {
                    attributeTypeName = "TSK_EMAIL";
                }
                try {
-                   BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                   BlackboardAttribute.Type attributeType = tskCase.getBlackboard().getAttributeType(attributeTypeName);
                    if (attributeType == null) {
                        // Add this attribute type to the case database.
                        attributeType = tskCase.getBlackboard().getOrAddAttributeType(attributeTypeName, 
