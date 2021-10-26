@@ -186,14 +186,14 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
      *
      * @throws ExecutionException
      */
-    public SearchResultsDTO getDataArtifactsCounts(Long dataSourceId) throws ExecutionException {
+    public SearchResultsDTO getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
         try {
             // get artifact types and counts
             SleuthkitCase skCase = getCase();
-            String query = "SELECT artifact_type_id, COUNT(*) AS count "
-                    + "FROM blackboard_artifacts "
-                    + (dataSourceId == null ? "" : "data_source_obj_id = " + dataSourceId)
-                    + "GROUP BY artifact_type_id";
+            String query = "artifact_type_id, COUNT(*) AS count "
+                    + " FROM blackboard_artifacts "
+                    + (dataSourceId == null ? "" : (" WHERE data_source_obj_id = " + dataSourceId + " "))
+                    + " GROUP BY artifact_type_id";
             Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
             skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
                 try {
@@ -212,7 +212,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             List<RowDTO> typeCountRows = typeCounts.entrySet().stream()
                     .map(entry -> {
                         return new CountsRowDTO<>(
-                                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                                entry.getKey().getTypeName(),
                                 new DataArtifactSearchParam(entry.getKey(), dataSourceId),
                                 entry.getKey().getTypeID(),
                                 entry.getKey().getDisplayName(),

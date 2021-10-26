@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
+import org.sleuthkit.autopsy.mainui.nodes.TreeChildFactory;
 
 /**
  * Analysis Results node support.
@@ -28,6 +32,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 @NbBundle.Messages({
     "DataArtifacts_name=Data Artifacts",})
 public class DataArtifacts implements AutopsyVisitableItem {
+
+    private static final Logger logger = Logger.getLogger(DataArtifacts.class.getName());
 
     /**
      * Returns the name of this node that is the key in the children object.
@@ -43,6 +49,17 @@ public class DataArtifacts implements AutopsyVisitableItem {
      */
     static class RootNode extends Artifacts.BaseArtifactNode {
 
+        private static Children getChildren(long filteringDSObjId) {
+            try {
+                return Children.create(
+                        new TreeChildFactory(MainDAO.getInstance().getDataArtifactsDAO()
+                                .getDataArtifactCounts(filteringDSObjId > 0 ? filteringDSObjId : null)), true);
+            } catch (ExecutionException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching keys for data artifacts tree.", ex);
+                return Children.LEAF;
+            }
+        }
+
         /**
          * Main constructor.
          *
@@ -52,7 +69,7 @@ public class DataArtifacts implements AutopsyVisitableItem {
          *                         equal to 0.
          */
         RootNode(long filteringDSObjId) {
-            super(Children.create(new Artifacts.TypeFactory(BlackboardArtifact.Category.DATA_ARTIFACT, filteringDSObjId), true),
+            super(getChildren(filteringDSObjId),
                     "org/sleuthkit/autopsy/images/extracted_content.png",
                     DataArtifacts.getName(),
                     DataArtifacts.getName());

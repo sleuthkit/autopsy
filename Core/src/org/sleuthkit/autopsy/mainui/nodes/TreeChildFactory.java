@@ -25,15 +25,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.CountsRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Factory for populating tree with results.
  */
 public class TreeChildFactory extends ChildFactory<RowDTO> {
+    private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
+    
     private final Map<RowDTO, UpdatableNode> typeNodeMap = new HashMap<>();
     private SearchResultsDTO results;
     
@@ -72,7 +79,16 @@ public class TreeChildFactory extends ChildFactory<RowDTO> {
     }
     
     protected UpdatableNode createNewNode(SearchResultsDTO searchResults, RowDTO rowData) {
-        
+        try {
+            if (BlackboardArtifact.Category.DATA_ARTIFACT.name().equals(searchResults.getTypeId())) {
+                return new DataArtifactTypeTreeNode((CountsRowDTO<DataArtifactSearchParam>) rowData);
+            } else {
+                return null;
+            }    
+        } catch (ClassCastException ex) {
+            logger.log(Level.WARNING, "Unable to cast to proper type", ex);
+            return null;
+        }
     }
 
     @Override

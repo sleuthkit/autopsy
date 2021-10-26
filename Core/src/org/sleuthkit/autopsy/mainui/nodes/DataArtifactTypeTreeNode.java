@@ -19,16 +19,28 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.CountsRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Display name and count of a data artifact type in the tree.
  */
 public class DataArtifactTypeTreeNode extends TreeCountNode<DataArtifactSearchParam> {
-    public DataArtifactTypeTreeNode(CountsRowDTO<DataArtifactSearchParam> rowData) {
-        super(rowData);
+    private static String getIconPath(BlackboardArtifact.Type artType) {
+            String iconPath = IconsUtil.getIconFilePath(artType.getTypeID());
+            return iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath;
     }
+    
+    
+    public DataArtifactTypeTreeNode(CountsRowDTO<DataArtifactSearchParam> rowData) {
+        super(rowData.getTypeData().getArtifactType().getTypeName(), 
+                getIconPath(rowData.getTypeData().getArtifactType()), 
+                rowData, 
+                DataArtifactSearchParam.class);
+    }
+    
 
     @Override
     public void respondSelection(DataResultTopComponent dataResultPanel) {
