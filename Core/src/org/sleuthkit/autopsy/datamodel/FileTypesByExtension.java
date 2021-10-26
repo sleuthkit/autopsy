@@ -37,6 +37,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtExecutableFilter;
@@ -49,6 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtSearchFilter;
+import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
 
 /**
  * Filters database results by file extension.
@@ -336,7 +338,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      * Node for a specific file type / extension. Children of it will be the
      * files of that type.
      */
-    final class FileExtensionNode extends FileTypes.BGCountUpdatingNode {
+    final class FileExtensionNode extends FileTypes.BGCountUpdatingNode implements SelectionResponder {
 
         private final FileExtSearchFilter filter;
 
@@ -349,10 +351,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          */
         FileExtensionNode(FileExtSearchFilter filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
             super(typesRoot, Children.LEAF,
-                    Lookups.fixed(filter.getDisplayName(), 
-                            new FileTypeExtensionsSearchParams(
-                                    filter, 
-                                    filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null)));
+                    Lookups.fixed(filter.getDisplayName()));
             
             this.filter = filter;
             super.setName(filter.getDisplayName());
@@ -360,6 +359,13 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
 
             o.addObserver(this);
+        }
+        
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            dataResultPanel.displayFileExtensions(new FileTypeExtensionsSearchParams(
+                    filter,
+                    filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null));
         }
 
         @Override

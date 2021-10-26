@@ -25,74 +25,63 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.datamodel.CountsRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
  * Factory for populating tree with results.
  */
-public class TreeChildFactory<T extends CountsRowDTO> extends ChildFactory<Long> {
-    private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
+public class TreeChildFactory extends ChildFactory<RowDTO> {
+    private final Map<RowDTO, UpdatableNode> typeNodeMap = new HashMap<>();
     private SearchResultsDTO results;
-
-    private final Map<Long, TreeCountNode<?>> typeNodeMap = new HashMap<>();
     
     public TreeChildFactory(SearchResultsDTO initialResults) {
         this.results = initialResults;
     }
 
     @Override
-    protected boolean createKeys(List<Long> toPopulate) {
+    protected boolean createKeys(List<RowDTO> toPopulate) {
         SearchResultsDTO curResults = this.results;
-        Set<Long> resultsRowIds = curResults.getItems().stream()
-                .map(row -> row.getId())
-                .collect(Collectors.toSet());
+        Set<RowDTO> resultRows = new HashSet<>(curResults.getItems());
         
         // remove no longer present
-        Set<Long> toBeRemoved = new HashSet<>(typeNodeMap.keySet());
-        toBeRemoved.removeAll(resultsRowIds);
-        for (Long presentId : toBeRemoved) {
+        Set<RowDTO> toBeRemoved = new HashSet<>(typeNodeMap.keySet());
+        toBeRemoved.removeAll(resultRows);
+        for (RowDTO presentId : toBeRemoved) {
             typeNodeMap.remove(presentId);
         }
         
-        List<CountsRowDTO<?>> rowsToReturn = new ArrayList<>();
-        for (CountsRowDTO<?> dto : curResults.getItems()) {
+        List<RowDTO> rowsToReturn = new ArrayList<>();
+        for (RowDTO dto : curResults.getItems()) {
             // update cached that remain
-            TreeCountNode<?> currentlyCached = typeNodeMap.get(dto.getId());
+            UpdatableNode currentlyCached = typeNodeMap.get(dto.getId());
             if (currentlyCached != null) {
-                currentlyCached.updateData(dto);
+                currentlyCached.update(curResults, dto);
             } else {
                 // add new items
-                typeNodeMap.put(dto.getId(), new TreeCountNode<?>(dto));
+                typeNodeMap.put(dto, createNewNode(curResults, dto));
             }
             
-            idsToReturn.add(dto);
+            rowsToReturn.add(dto);
         }
-        
-        List<Long> idsToReturn = rowsToReturn.stream()
-                .sorted((a,b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
-                .map(row -> row.getId())
-                .collect(Collectors.toList());
-        
-        toPopulate.addAll(idsToReturn);
+
+        toPopulate.addAll(rowsToReturn);
         return true;
+    }
+    
+    protected UpdatableNode createNewNode(SearchResultsDTO searchResults, RowDTO rowData) {
+        
     }
 
     @Override
-    protected Node createNodeForKey(T key) {
-        return new TreeCountNode<>();
+    protected Node createNodeForKey(RowDTO key) {
+        return typeNodeMap.get(key);
     }
-    
+
     public void update(SearchResultsDTO newResults) {
         this.results = newResults;
         this.refresh(false);
-    }
-
-    public long getResultCount() {
-        return results == null ? 0 : results.getTotalResultsCount();
     }
 }

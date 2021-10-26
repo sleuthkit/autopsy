@@ -61,6 +61,9 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultSupport;
@@ -1127,6 +1130,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     }
 
+    /**
+     * Display results of querying the DAO for files matching the file
+     * mime search parameters query.
+     * 
+     * @param fileMimeKey The search parameter query.
+     */
     void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         try {
             SearchResultsDTO results = searchResultSupport.setFileMimes(fileMimeKey);
@@ -1138,9 +1147,63 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     fileMimeKey.getDataSourceId() == null ? "<null>" : fileMimeKey.getDataSourceId()),
                     ex);
         }
-
     }
 
+    /**
+     * Displays results of querying the DAO for given search parameters query.
+     *
+     * @param keywordHitKey The search parameter query.
+     */
+    void displayKeywordHits(KeywordHitSearchParam keywordHitKey) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setKeywordHits(keywordHitKey);
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for keyword filter: {0} and data source id: {1}.",
+                    keywordHitKey.getSetName(),
+                    keywordHitKey.getDataSourceId() == null ? "<null>" : keywordHitKey.getDataSourceId()),
+                    ex);
+        }
+    }
+    
+    /**
+     * Displays results of querying the DAO for files matching the file
+     * size search parameters query.
+     * 
+     * @param fileSizeKey 
+     */
+    void displayFileSizes(FileTypeSizeSearchParams fileSizeKey) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setFileSizes(fileSizeKey);
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for files of size filter: {0} and data source id: {1}.",
+                    fileSizeKey.getSizeFilter().getDisplayName(),
+                    fileSizeKey.getDataSourceId() == null ? "<null>" : fileSizeKey.getDataSourceId()),
+                    ex);
+        }
+    }
+
+    /**
+     * Displays results of querying the DAO for given search parameters query.
+     *
+     * @param hashHitKey The search parameter query.
+     */
+    void displayHashHits(HashHitSearchParam hashHitKey) {
+        try {
+            SearchResultsDTO results = searchResultSupport.setHashHits(hashHitKey);
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for hash set filter: {0} and data source id: {1}.",
+                    hashHitKey.getSetName(),
+                    hashHitKey.getDataSourceId() == null ? "<null>" : hashHitKey.getDataSourceId()),
+                    ex);
+        }
+    }
+    
     /**
      * Displays current search result in the result view. This assumes that
      * search result support has already been updated.
