@@ -130,6 +130,7 @@ FileNode.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E
 FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash
 FileNode.getActions.viewFileInDir.text=View File in Directory
 FileNode.getActions.viewInNewWin.text=View Item in New Window
+FileSizeNode_counting_placeholder=\ (counting...)
 FileTypes.bgCounting.placeholder=\ (counting...)
 FileTypes.createSheet.name.desc=no description
 FileTypes.createSheet.name.displayName=Name

@@ -24,6 +24,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
@@ -325,12 +326,36 @@ public class SearchResultSupport {
     }
     
     /**
-     * Sets the search parameters to the hash set hit search parameters.
      * Subsequent calls that don't change search parameters (i.e. page size
      * changes, page index changes) will use these search parameters to return
      * results.
      *
-     * @param hashHitKey The search parameters.
+     * @param fileSizeKey he file size type search parameters.
+     *
+     * @return The results of querying with current paging parameters.
+     *
+     * @throws ExecutionException
+     * @throws IllegalArgumentException
+     */
+    public synchronized SearchResultsDTO setFileSizes(FileTypeSizeSearchParams fileSizeKey) throws ExecutionException, IllegalArgumentException {
+        resetPaging();
+        this.pageFetcher = (pSize, pIdx) -> {
+            FileTypeSizeSearchParams searchParams = new FileTypeSizeSearchParams(
+                    fileSizeKey.getSizeFilter(),
+                    fileSizeKey.getDataSourceId(),
+                    pIdx * pSize,
+                    (long) pSize);
+            return dao.getViewsDAO().getFilesBySize(searchParams);
+        };
+        return fetchResults();
+    }
+
+    /**
+     * Sets the search parameters for the hash hit search parameters. Subsequent
+     * calls that don't change search parameters (i.e. page size changes, page
+     * index changes) will use these search parameters to return results.
+     *
+     * @param hashHitKey
      *
      * @return The results of querying with current paging parameters.
      *

@@ -93,6 +93,7 @@ import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.datamodel.Account;
@@ -879,6 +880,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     FileTypeExtensionsSearchParams fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsSearchParams.class);
                     AnalysisResultSearchParam analysisResultKey = originNode.getLookup().lookup(AnalysisResultSearchParam.class);
                     FileTypeMimeSearchParams fileMimeKey = originNode.getLookup().lookup(FileTypeMimeSearchParams.class);
+                    FileTypeSizeSearchParams fileSizeKey = originNode.getLookup().lookup(FileTypeSizeSearchParams.class);
                     KeywordHitSearchParam kwHitKey = originNode.getLookup().lookup(KeywordHitSearchParam.class);
                     HashHitSearchParam hashHitKey = originNode.getLookup().lookup(HashHitSearchParam.class);
                     if (dataArtifactKey != null) {
@@ -893,6 +895,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         dataResult.displayFileExtensions(fileExtensionsKey);
                     } else if(fileMimeKey != null) {
                         dataResult.displayFileMimes(fileMimeKey);
+                    } else if(fileSizeKey != null) {
+                        dataResult.displayFileSizes(fileSizeKey);
                     } else if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree
