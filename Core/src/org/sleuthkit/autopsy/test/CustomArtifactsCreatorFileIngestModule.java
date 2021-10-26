@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2020 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapter {
 
     private static final Logger logger = Logger.getLogger(CustomArtifactsCreatorFileIngestModule.class.getName());
+    private IngestJobContext context;
 
     /**
      * Adds the custom artifact type this module uses to the case database of
@@ -50,6 +51,7 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
      */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
         try {
             CustomArtifactType.addToCaseDatabase();
         } catch (Blackboard.BlackboardException ex) {
@@ -71,7 +73,7 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
             return ProcessResult.OK;
         }
         try {
-            CustomArtifactType.createAndPostInstance(file);
+            CustomArtifactType.createAndPostInstance(file, context.getJobId());
         } catch (TskCoreException | Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;

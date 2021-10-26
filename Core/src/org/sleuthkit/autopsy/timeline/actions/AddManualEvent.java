@@ -157,7 +157,7 @@ public class AddManualEvent extends Action {
             BlackboardArtifact artifact = eventInfo.datasource.newDataArtifact(new BlackboardArtifact.Type(TSK_TL_EVENT), attributes, null);
             
             try {
-                sleuthkitCase.getBlackboard().postArtifact(artifact, source);
+                sleuthkitCase.getBlackboard().postArtifact(artifact, source, null);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Error posting artifact to the blackboard.", ex); //NON-NLS
                 new Alert(Alert.AlertType.ERROR, Bundle.AddManualEvent_postArtifactFailed(), ButtonType.OK).showAndWait();

@@ -206,7 +206,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
                      * keyword search, and fire an event to notify UI of this
                      * new artifact
                      */
-                    tskBlackboard.postArtifact(artifact, FileTypeIdModuleFactory.getModuleName());
+                    tskBlackboard.postArtifact(artifact, FileTypeIdModuleFactory.getModuleName(), jobId);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
                 }

@@ -1424,7 +1424,7 @@ public class PortableCaseReportModule implements ReportModule {
                 
                 // Add the attachment. The account type specified in the constructor will not be used.
                 CommunicationArtifactsHelper communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
-                        newSourceStr, newFile, Account.Type.EMAIL);
+                        newSourceStr, newFile, Account.Type.EMAIL, null);
                 communicationArtifactsHelper.addAttachments(newArtifact, new MessageAttachments(newFileAttachments, msgAttachments.getUrlAttachments()));
             } 
             catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {

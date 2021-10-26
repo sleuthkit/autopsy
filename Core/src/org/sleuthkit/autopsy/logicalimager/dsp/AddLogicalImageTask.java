@@ -513,8 +513,7 @@ final class AddLogicalImageTask implements Runnable {
 
     private void postArtifacts(List<BlackboardArtifact> artifacts) {
         try {
-            // index the artifact for keyword search
-            blackboard.postArtifacts(artifacts, MODULE_NAME);
+            blackboard.postArtifacts(artifacts, MODULE_NAME, null);
         } catch (Blackboard.BlackboardException ex) {
             LOGGER.log(Level.SEVERE, "Unable to post artifacts to blackboard", ex); //NON-NLS
         }

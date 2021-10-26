@@ -87,6 +87,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private Blackboard blackboard;
     private final boolean createCorrelationProperties;
     private final boolean flagUniqueArtifacts;
+    private long ingestJobId;
 
     /**
      * Instantiate the Central Repository ingest module.
@@ -100,6 +101,11 @@ final class CentralRepoIngestModule implements FileIngestModule {
         flagUniqueArtifacts = settings.isFlagUniqueArtifacts();
     }
 
+    @Override
+    public void startUp(IngestJobContext context) throws IngestModuleException {
+        ingestJobId = context.getJobId();
+    }    
+    
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         if (CentralRepository.isEnabled() == false) {
@@ -365,7 +371,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
                         .getAnalysisResult();
                 try {
                     // index the artifact for keyword search
-                    blackboard.postArtifact(tifArtifact, MODULE_NAME);
+                    blackboard.postArtifact(tifArtifact, MODULE_NAME, ingestJobId);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }

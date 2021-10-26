@@ -411,7 +411,7 @@ public final class LeappFileProcessor {
 
         try {
             if (ACCOUNT_RELATIONSHIPS.getOrDefault(fileName.toLowerCase(), "norelationship").toLowerCase().equals("trackpoint")) {
-                (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, "", geoAbstractFile)).addTrack(trackpointSegmentName, pointList, new ArrayList<>());
+                (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, "", geoAbstractFile, context.getJobId())).addTrack(trackpointSegmentName, pointList, new ArrayList<>());
 
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
@@ -480,7 +480,7 @@ public final class LeappFileProcessor {
             GeoWaypoints waypointList = new GeoWaypoints();
             waypointList.addPoint(new Waypoint(startLatitude, startLongitude, zeroValue, ""));
             waypointList.addPoint(new Waypoint(endLatitude, endLongitude, zeroValue, locationName));
-            (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile)).addRoute(destinationName, dateTime, waypointList, new ArrayList<>());
+            (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile, context.getJobId())).addRoute(destinationName, dateTime, waypointList, new ArrayList<>());
 
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_waypoint_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
@@ -542,7 +542,7 @@ public final class LeappFileProcessor {
                 trackpointSegmentName = segmentName;
                 pointList.addPoint(new TrackPoint(latitude, longitude, altitude, segmentName, zeroValue, zeroValue, zeroValue, dateTime));
             } else {
-                (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile)).addTrack(segmentName, pointList, new ArrayList<>());
+                (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile, context.getJobId())).addTrack(segmentName, pointList, new ArrayList<>());
                 trackpointSegmentName = segmentName;
                 pointList = new GeoTrackPoints();
                 pointList.addPoint(new TrackPoint(latitude, longitude, altitude, segmentName, zeroValue, zeroValue, zeroValue, dateTime));
@@ -641,10 +641,10 @@ public final class LeappFileProcessor {
             Account.Type accountType = getAccountType(fileName);
             if (alternateId == null) {
                 accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                        moduleName, absFile, accountType);
+                        moduleName, absFile, accountType, context.getJobId());
             } else {
                 accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                        moduleName, absFile, accountType, accountType, alternateId);
+                        moduleName, absFile, accountType, accountType, alternateId, context.getJobId());
             }
             BlackboardArtifact messageArtifact = accountArtifact.addMessage(messageType, communicationDirection, senderId,
                     receipentId, dateTime, messageStatus, subject,
@@ -716,10 +716,10 @@ public final class LeappFileProcessor {
                 CommunicationArtifactsHelper accountArtifact;
                 if (alternateId == null) {
                     accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                            moduleName, absFile, accountType);
+                            moduleName, absFile, accountType, context.getJobId());
                 } else {
                     accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                            moduleName, absFile, accountType, accountType, alternateId);
+                            moduleName, absFile, accountType, accountType, alternateId, context.getJobId());
                 }
                 BlackboardArtifact messageArtifact = accountArtifact.addContact(contactName, phoneNumber, homePhoneNumber, mobilePhoneNumber, emailAddr, otherAttributes);
             }
@@ -796,10 +796,10 @@ public final class LeappFileProcessor {
             CommunicationArtifactsHelper accountArtifact;
             if (accountType != null) {
                 accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                        moduleName, absFile, accountType);
+                        moduleName, absFile, accountType, context.getJobId());
             } else {
                 accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                        moduleName, absFile, accountType, accountType, alternateId);
+                        moduleName, absFile, accountType, accountType, alternateId, context.getJobId());
             }
             BlackboardArtifact callLogArtifact = accountArtifact.addCalllog(communicationDirection, callerId, calleeId, startDateTime, endDateTime, mediaType, otherAttributes);
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {

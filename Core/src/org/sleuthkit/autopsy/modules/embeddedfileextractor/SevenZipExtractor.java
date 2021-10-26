@@ -341,7 +341,7 @@ class SevenZipExtractor {
                      * keyword search, and fire an event to notify UI of this
                      * new artifact
                      */
-                    blackboard.postArtifact(artifact, MODULE_NAME);
+                    blackboard.postArtifact(artifact, MODULE_NAME, context.getJobId());
 
                     String msg = NbBundle.getMessage(SevenZipExtractor.class,
                             "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnMsg", archiveFile.getName(), escapedFilePath);//NON-NLS
@@ -870,7 +870,7 @@ class SevenZipExtractor {
                      * keyword search, and fire an event to notify UI of this
                      * new artifact
                      */
-                    blackboard.postArtifact(artifact, MODULE_NAME);
+                    blackboard.postArtifact(artifact, MODULE_NAME, context.getJobId());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to post blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(

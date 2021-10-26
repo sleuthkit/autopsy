@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2020 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class CustomArtifactsCreatorDataSourceIngestModule extends DataSourceIngestModuleAdapter {
 
     private static final Logger logger = Logger.getLogger(CustomArtifactsCreatorDataSourceIngestModule.class.getName());
-
+    private IngestJobContext context;
+    
     /**
      * Adds the custom artifact type this module uses to the case database of
      * the current case.
@@ -51,6 +52,7 @@ public class CustomArtifactsCreatorDataSourceIngestModule extends DataSourceInge
      */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
         try {
             CustomArtifactType.addToCaseDatabase();
         } catch (Blackboard.BlackboardException ex) {

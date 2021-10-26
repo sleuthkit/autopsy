@@ -212,7 +212,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                  * post the artifact which will index the artifact for keyword
                  * search, and fire an event to notify UI of this new artifact
                  */
-                blackboard.postArtifact(artifact, EncryptionDetectionModuleFactory.getModuleName());
+                blackboard.postArtifact(artifact, EncryptionDetectionModuleFactory.getModuleName(), context.getJobId());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }
