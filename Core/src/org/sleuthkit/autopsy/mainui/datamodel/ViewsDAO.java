@@ -481,4 +481,33 @@ public class ViewsDAO {
         }
     }
 
+    /**
+     * Handles fetching and paging of data for file types by size.
+     */
+    public static class FileTypeSizeFetcher extends DAOFetcher<FileTypeSizeSearchParams> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public FileTypeSizeFetcher(FileTypeSizeSearchParams params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getViewsDAO().getFilesBySize(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            Content content = this.getContentFromEvt(evt);
+            if (content == null) {
+                return false;
+            }
+
+            return MainDAO.getInstance().getViewsDAO().isFilesBySizeInvalidating(this.getParameters(), content);
+        }
+    }
 }

@@ -82,17 +82,14 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
-import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.datamodel.OsAccounts;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
@@ -872,19 +869,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Node originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
                     //set node, wrap in filter node first to filter out children
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                    // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
-                    DataArtifactSearchParam dataArtifactKey = originNode.getLookup().lookup(DataArtifactSearchParam.class);
-                    FileTypeExtensionsSearchParams fileExtensionsKey = originNode.getLookup().lookup(FileTypeExtensionsSearchParams.class);
-                    AnalysisResultSearchParam analysisResultKey = originNode.getLookup().lookup(AnalysisResultSearchParam.class);
-                    FileTypeMimeSearchParams fileMimeKey = originNode.getLookup().lookup(FileTypeMimeSearchParams.class);
-                    if (dataArtifactKey != null) {
-                        dataResult.displayDataArtifact(dataArtifactKey);
-                    } else if(analysisResultKey != null) {
-                        dataResult.displayAnalysisResult(analysisResultKey);
-                    } else if (fileExtensionsKey != null) {
-                        dataResult.displayFileExtensions(fileExtensionsKey);
-                    } else if(fileMimeKey != null) {
-                        dataResult.displayFileMimes(fileMimeKey);
+                    if(originNode instanceof SelectionResponder) {
+                        ((SelectionResponder) originNode).respondSelection(dataResult);
                     } else if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree

@@ -292,9 +292,34 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     /**
+     * Handles basic functionality of fetching and paging of analysis results.
+     */
+    static abstract class AbstractAnalysisResultFetcher<T extends AnalysisResultSearchParam> extends DAOFetcher<T> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public AbstractAnalysisResultFetcher(T params) {
+            super(params);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
+            if (dataEvent == null) {
+                return false;
+            }
+
+            return MainDAO.getInstance().getAnalysisResultDAO().isAnalysisResultsInvalidating(this.getParameters(), dataEvent);
+        }
+    }
+
+    /**
      * Handles fetching and paging of analysis results.
      */
-    public static class AnalysisResultFetcher extends DAOFetcher<AnalysisResultSearchParam> {
+    public static class AnalysisResultFetcher extends AbstractAnalysisResultFetcher<AnalysisResultSearchParam> {
 
         /**
          * Main constructor.
@@ -309,16 +334,45 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
             return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
-
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
-            if (dataEvent == null) {
-                return false;
-            }
-
-            return MainDAO.getInstance().getAnalysisResultDAO().isAnalysisResultsInvalidating(this.getParameters(), dataEvent);
-        }
     }
 
+    /**
+     * Handles fetching and paging of hashset hits.
+     */
+    public static class HashsetResultFetcher extends AbstractAnalysisResultFetcher<HashHitSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public HashsetResultFetcher(HashHitSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getHashHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+    }
+    
+    /**
+     * Handles fetching and paging of keyword hits.
+     */
+    public static class KeywordHitResultFetcher extends AbstractAnalysisResultFetcher<KeywordHitSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public KeywordHitResultFetcher(KeywordHitSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+    }
 }
