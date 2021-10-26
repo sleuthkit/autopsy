@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.collect.ImmutableList;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
 import org.openide.util.NbBundle.Messages;
@@ -36,18 +37,25 @@ import org.openide.util.NbBundle.Messages;
     "CountsRowResultDTO_columns_count_description=Name"
 })
 public class CountsRowDTO<T> implements RowDTO {
-
-    private static final String DEFAULT_TYPE_ID = "COUNTS";
-    
-    public static ColumnKey DISPLAY_NAME_COL = new ColumnKey(
+    private static final ColumnKey DISPLAY_NAME_COL = new ColumnKey(
             Bundle.CountsRowResultDTO_columns_displayName_name(),
             Bundle.CountsRowResultDTO_columns_displayName_displayName(),
             Bundle.CountsRowResultDTO_columns_displayName_description());
 
-    public static ColumnKey COUNT_COL = new ColumnKey(
+    private static final ColumnKey COUNT_COL = new ColumnKey(
             Bundle.CountsRowResultDTO_columns_count_name(),
             Bundle.CountsRowResultDTO_columns_count_displayName(),
             Bundle.CountsRowResultDTO_columns_count_description());
+
+    private static final List<ColumnKey> DEFAULT_KEYS = ImmutableList.of(DISPLAY_NAME_COL, COUNT_COL);
+
+    /**
+     * @return The default column keys to be displayed for a counts row (display
+     *         name and count).
+     */
+    public static List<ColumnKey> getDefaultColumnKeys() {
+        return DEFAULT_KEYS;
+    }
 
     private final long id;
     private final String displayName;
@@ -56,10 +64,17 @@ public class CountsRowDTO<T> implements RowDTO {
     private final String typeId;
     private final T typeData;
 
-    public CountsRowDTO(T typeData, long id, String displayName, long count) {
-        this(DEFAULT_TYPE_ID, typeData, id, displayName, count);
-    }
-    
+    /**
+     * Main constructor.
+     *
+     * @param typeId      The string id for the type of result.
+     * @param typeData    Data for this particular row's type (i.e.
+     *                    BlackboardArtifact.Type for counts of a particular
+     *                    artifact type).
+     * @param id          The numerical id of this row.
+     * @param displayName The display name of this row.
+     * @param count       The count of results for this row.
+     */
     public CountsRowDTO(String typeId, T typeData, long id, String displayName, long count) {
         this.typeId = typeId;
         this.id = id;
@@ -74,10 +89,16 @@ public class CountsRowDTO<T> implements RowDTO {
         return id;
     }
 
+    /**
+     * @return The display name of this row.
+     */
     public String getDisplayName() {
         return displayName;
     }
 
+    /**
+     * @return The count of results for this row.
+     */
     public long getCount() {
         return count;
     }
@@ -92,9 +113,12 @@ public class CountsRowDTO<T> implements RowDTO {
         return typeId;
     }
 
+    /**
+     *
+     * @return Data for this particular row's type (i.e. BlackboardArtifact.Type
+     *         for counts of a particular artifact type).
+     */
     public T getTypeData() {
         return typeData;
     }
-    
-    
 }

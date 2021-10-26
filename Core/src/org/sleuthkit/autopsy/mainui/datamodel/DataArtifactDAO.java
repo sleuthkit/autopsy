@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,11 +28,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -45,6 +47,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * DAO for providing data about data artifacts to populate the results viewer.
  */
 public class DataArtifactDAO extends BlackboardArtifactDAO {
+
+    private static Logger logger = Logger.getLogger(DataArtifactDAO.class.getName());
 
     private static DataArtifactDAO instance = null;
 
@@ -69,15 +73,15 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         List<DataArtifact> arts = (dataSourceId != null)
                 ? blackboard.getDataArtifacts(artType.getTypeID(), dataSourceId)
                 : blackboard.getDataArtifacts(artType.getTypeID());
-        
+
         Stream<DataArtifact> pagedStream = arts.stream()
                 .sorted(Comparator.comparing(art -> art.getId()))
                 .skip(cacheKey.getStartItem());
-        
+
         if (cacheKey.getMaxResultsCount() != null) {
             pagedStream = pagedStream.limit(cacheKey.getMaxResultsCount());
         }
-        
+
         List<DataArtifact> pagedArtifacts = pagedStream.collect(Collectors.toList());
 
         Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
@@ -147,10 +151,10 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     @Override
     RowDTO createRow(BlackboardArtifact artifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) throws IllegalArgumentException {
-        if (! (artifact instanceof DataArtifact)) {
+        if (!(artifact instanceof DataArtifact)) {
             throw new IllegalArgumentException("Can not make row for artifact with ID: " + artifact.getId() + " - artifact must be a data artifact");
         }
-        return new DataArtifactRowDTO((DataArtifact)artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id);
+        return new DataArtifactRowDTO((DataArtifact) artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id);
     }
 
     public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
@@ -169,31 +173,63 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     public void dropDataArtifactCache() {
         dataArtifactCache.invalidateAll();
     }
-    
-    
-    public SearchResultsDTO getDataArtifactsCounts() throws ExecutionException {
-        SleuthkitCase skCase = getCase();
-        String query = "SELECT artifact_type_id, COUNT(*) AS count FROM blackboard_artifacts GROUP BY artifact_type_id";
-        Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
-        skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
-            while (resultSet.next()) {
-                typeCounts.
-                typeIdCounts.put(resultSet.getInt("artifact_type_id"), resultSet.getLong("count"));
-            }
-        });
-        
-        
-        Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
-        for (Entry<Integer, Long> typeIdCount : typeIdCounts.entrySet()) {
-            typeCounts.put(skCase.getArtifactType(typeIdCount.getKey()), typeIdCount.getValue());
+
+    /**
+     * Returns a search results dto containing rows of counts data.
+     *
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return The results where rows are CountsRowDTO of
+     *         DataArtifactSearchParam.
+     *
+     * @throws ExecutionException
+     */
+    public SearchResultsDTO getDataArtifactsCounts(Long dataSourceId) throws ExecutionException {
+        try {
+            // get artifact types and counts
+            SleuthkitCase skCase = getCase();
+            String query = "SELECT artifact_type_id, COUNT(*) AS count "
+                    + "FROM blackboard_artifacts "
+                    + (dataSourceId == null ? "" : "data_source_obj_id = " + dataSourceId)
+                    + "GROUP BY artifact_type_id";
+            Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
+            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        int artifactTypeId = resultSet.getInt("artifact_type_id");
+                        BlackboardArtifact.Type type = skCase.getBlackboard().getArtifactType(artifactTypeId);
+                        long count = resultSet.getLong("count");
+                        typeCounts.put(type, count);
+                    }
+                } catch (TskCoreException | SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
+                }
+            });
+
+            // get row dto's sorted by display name
+            List<RowDTO> typeCountRows = typeCounts.entrySet().stream()
+                    .map(entry -> {
+                        return new CountsRowDTO<>(
+                                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                                new DataArtifactSearchParam(entry.getKey(), dataSourceId),
+                                entry.getKey().getTypeID(),
+                                entry.getKey().getDisplayName(),
+                                entry.getValue());
+                    })
+                    .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
+                    .collect(Collectors.toList());
+
+            // return results
+            return new BaseSearchResultsDTO(
+                    BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                    BlackboardArtifact.Category.DATA_ARTIFACT.getDisplayName(),
+                    CountsRowDTO.getDefaultColumnKeys(),
+                    typeCountRows);
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
         }
-        
-        typeCounts.entrySet().stream()
-                .map(entry -> new CountsRowDTO<>(
-                        BlackboardArtifact.Type.Category.DATA_ARTIFACT.name(), 
-                        entry.getKey(), 
-                        entry.getKey().getTypeId(), 
-                        entry.getKey().getDisplayName(), 
-                        entry.getValue()));
     }
 }
