@@ -351,7 +351,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                  * job ID, and the CommunicatonsArtifactHelper posts artifacts.
                  * Ingest of that data source might be running, in which case
                  * the data artifact will be analyzed. It also might be analyzed
-                 * by a suvsequent ingest job for the data source. This is an
+                 * by a subsequent ingest job for the data source. This is an
                  * acceptable edge case.
                  *
                  * 4. The user can manually create timeline events with the
@@ -359,7 +359,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                  * The user selects the data source for these artifacts. Ingest
                  * of that data source might be running, in which case the data
                  * artifact will be analyzed. It also might be analyzed by a
-                 * suvsequent ingest job for the data source. This is an
+                 * subsequent ingest job for the data source. This is an
                  * acceptable edge case.
                  */
                 DataArtifact dataArtifact = newDataArtifacts.get(0);
