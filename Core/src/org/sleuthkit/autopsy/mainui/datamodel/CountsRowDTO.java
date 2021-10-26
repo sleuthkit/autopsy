@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.collect.ImmutableList;
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
 import org.openide.util.NbBundle.Messages;
@@ -36,7 +35,7 @@ import org.openide.util.NbBundle.Messages;
     "CountsRowResultDTO_columns_count_displayName=Name",
     "CountsRowResultDTO_columns_count_description=Name"
 })
-public class CountsRowDTO<T> implements RowDTO {
+public class CountsRowDTO<T> extends BaseRowDTO {
     private static final ColumnKey DISPLAY_NAME_COL = new ColumnKey(
             Bundle.CountsRowResultDTO_columns_displayName_name(),
             Bundle.CountsRowResultDTO_columns_displayName_displayName(),
@@ -57,11 +56,8 @@ public class CountsRowDTO<T> implements RowDTO {
         return DEFAULT_KEYS;
     }
 
-    private final long id;
     private final String displayName;
     private final long count;
-    private final List<Object> cellValues;
-    private final String typeId;
     private final T typeData;
 
     /**
@@ -76,17 +72,10 @@ public class CountsRowDTO<T> implements RowDTO {
      * @param count       The count of results for this row.
      */
     public CountsRowDTO(String typeId, T typeData, long id, String displayName, long count) {
-        this.typeId = typeId;
-        this.id = id;
+        super(ImmutableList.of(Arrays.asList(displayName, count)), typeId, id);
         this.displayName = displayName;
         this.count = count;
-        this.cellValues = ImmutableList.of(Arrays.asList(displayName, count));
         this.typeData = typeData;
-    }
-
-    @Override
-    public long getId() {
-        return id;
     }
 
     /**
@@ -101,16 +90,6 @@ public class CountsRowDTO<T> implements RowDTO {
      */
     public long getCount() {
         return count;
-    }
-
-    @Override
-    public List<Object> getCellValues() {
-        return cellValues;
-    }
-
-    @Override
-    public String getTypeId() {
-        return typeId;
     }
 
     /**
