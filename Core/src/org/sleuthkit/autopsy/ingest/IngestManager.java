@@ -333,31 +333,34 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                  * the artifacts WILL be analyzed after the ingest job is
                  * started, when the ingest job executor, working in batch mode,
                  * schedules ingest tasks for all of the data artifacts in the
-                 * case database.
+                 * case database. There is a slight risk that the wrong ingest
+                 * job will be selected if multiple ingests of the same data
+                 * source are in progress.
                  *
                  * 2. The artifacts were posted by an ingest module that either
                  * has not been updated to use the current
                  * Blackboard.postArtifacts() API, or is using it incorrectly.
                  * In this use case, the code below should be able to find the
                  * ingest job to which to add the artifacts via their data
-                 * source.
-                 *
-                 * In both of the use cases above, there is a slight risk that
-                 * the wrong ingest job will be selected if multiple ingests of
-                 * the same data source are in progress.
+                 * source. There is a slight risk that the wrong ingest job will
+                 * be selected if multiple ingests of the same data source are
+                 * in progress.
                  *
                  * 3. The portable case generator uses a
-                 * CommunicatonsArtifactHelper constructed with a null ingest
+                 * CommunicationArtifactsHelper constructed with a null ingest
                  * job ID, and the CommunicatonsArtifactHelper posts artifacts.
-                 * Clearly, no data artifact ingest modules will be running, as
-                 * might not have been so in the original case. This is an
-                 * acceptable edge case, given the goals of portable cases.
+                 * Ingest of that data source might be running, in which case
+                 * the data artifact will be analyzed. It also might be analyzed
+                 * by a suvsequent ingest job for the data source. This is an
+                 * acceptable edge case.
                  *
                  * 4. The user can manually create timeline events with the
                  * timeline tool, which posts the TSK_TL_EVENT data artifacts.
-                 * The user selects the data source for these artifacts. INgest
-                 * of that data source might be running. This is an acceptabel
-                 * edge case.
+                 * The user selects the data source for these artifacts. Ingest
+                 * of that data source might be running, in which case the data
+                 * artifact will be analyzed. It also might be analyzed by a
+                 * suvsequent ingest job for the data source. This is an
+                 * acceptable edge case.
                  */
                 DataArtifact dataArtifact = newDataArtifacts.get(0);
                 try {
