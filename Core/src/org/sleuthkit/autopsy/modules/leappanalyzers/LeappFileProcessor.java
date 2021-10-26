@@ -108,10 +108,10 @@ public final class LeappFileProcessor {
          * Main constructor.
          *
          * @param attributeType The BlackboardAttribute type or null if not
-         * used. used.
-         * @param columnName The name of the column in the tsv file.
-         * @param required Whether or not this attribute is required to be
-         * present.
+         *                      used. used.
+         * @param columnName    The name of the column in the tsv file.
+         * @param required      Whether or not this attribute is required to be
+         *                      present.
          */
         TsvColumn(BlackboardAttribute.Type attributeType, String columnName, boolean required) {
             this.attributeType = attributeType;
@@ -275,7 +275,7 @@ public final class LeappFileProcessor {
      * Process the Leapp files that were found that match the xml mapping file
      *
      * @param LeappFilesToProcess List of files to process
-     * @param LeappImageFile Abstract file to create artifact for
+     * @param LeappImageFile      Abstract file to create artifact for
      *
      * @throws FileNotFoundException
      * @throws IOException
@@ -308,7 +308,7 @@ public final class LeappFileProcessor {
      * Process the Leapp files that were found that match the xml mapping file
      *
      * @param LeappFilesToProcess List of files to process
-     * @param dataSource The data source.
+     * @param dataSource          The data source.
      *
      * @throws FileNotFoundException
      * @throws IOException
@@ -318,7 +318,7 @@ public final class LeappFileProcessor {
 
         for (String LeappFileName : LeappFilesToProcess) {
             String fileName = FilenameUtils.getName(LeappFileName);
-                File LeappFile = new File(LeappFileName);
+            File LeappFile = new File(LeappFileName);
             if (tsvFileAttributes.containsKey(fileName)) {
                 List<TsvColumn> attrList = tsvFileAttributes.get(fileName);
                 BlackboardArtifact.Type artifactType = tsvFileArtifacts.get(fileName);
@@ -345,7 +345,7 @@ public final class LeappFileProcessor {
         String trackpointSegmentName = null;
         GeoTrackPoints pointList = new GeoTrackPoints();
         AbstractFile geoAbstractFile = null;
-        
+
         if (LeappFile == null || !LeappFile.exists() || fileName == null) {
             logger.log(Level.WARNING, String.format("Leap file: %s is null or does not exist", LeappFile == null ? LeappFile.toString() : "<null>"));
             return;
@@ -405,11 +405,11 @@ public final class LeappFileProcessor {
                 }
             }
         }
-        
+
         try {
             if (ACCOUNT_RELATIONSHIPS.getOrDefault(fileName.toLowerCase(), "norelationship").toLowerCase() == "trackpoint") {
-               (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, "", geoAbstractFile)).addTrack(trackpointSegmentName, pointList, new ArrayList<>());
-                
+                (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, "", geoAbstractFile)).addTrack(trackpointSegmentName, pointList, new ArrayList<>());
+
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
@@ -418,10 +418,9 @@ public final class LeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.waypoint.relationship=Cannot create TSK_WAYPOINT artifact.",
-    })
+        "LeappFileProcessor.cannot.create.waypoint.relationship=Cannot create TSK_WAYPOINT artifact.",})
 
-    private void createRoute (Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
+    private void createRoute(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         Double startLatitude = Double.valueOf(0);
         Double startLongitude = Double.valueOf(0);
@@ -435,7 +434,7 @@ public final class LeappFileProcessor {
         String sourceFile = null;
         AbstractFile absFile = null;
         String comment = "";
-        
+
         try {
             for (BlackboardAttribute bba : bbattributes) {
                 switch (bba.getAttributeType().getTypeName()) {
@@ -478,18 +477,16 @@ public final class LeappFileProcessor {
             GeoWaypoints waypointList = new GeoWaypoints();
             waypointList.addPoint(new Waypoint(startLatitude, startLongitude, zeroValue, ""));
             waypointList.addPoint(new Waypoint(endLatitude, endLongitude, zeroValue, locationName));
-           (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile)).addRoute(destinationName, dateTime, waypointList, new ArrayList<>());
-                    
+            (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile)).addRoute(destinationName, dateTime, waypointList, new ArrayList<>());
+
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_waypoint_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
-         
-        
+
     }
-        
+
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.trackpoint.relationship=Cannot create TSK_TRACK_POINT artifact.",
-    })
+        "LeappFileProcessor.cannot.create.trackpoint.relationship=Cannot create TSK_TRACK_POINT artifact.",})
 
     private AbstractFile createTrackpoint(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName, String trackpointSegmentName, GeoTrackPoints pointList) throws IngestModuleException {
 
@@ -503,7 +500,7 @@ public final class LeappFileProcessor {
         String sourceFile = null;
         String comment = null;
         AbstractFile absFile = null;
-        
+
         try {
             for (BlackboardAttribute bba : bbattributes) {
                 switch (bba.getAttributeType().getTypeName()) {
@@ -539,28 +536,26 @@ public final class LeappFileProcessor {
                 absFile = (AbstractFile) dataSource;
             }
             if ((trackpointSegmentName == null) || (trackpointSegmentName == segmentName)) {
-                    trackpointSegmentName = segmentName;
-                    pointList.addPoint(new TrackPoint(latitude, longitude, altitude, segmentName, zeroValue, zeroValue, zeroValue, dateTime));
+                trackpointSegmentName = segmentName;
+                pointList.addPoint(new TrackPoint(latitude, longitude, altitude, segmentName, zeroValue, zeroValue, zeroValue, dateTime));
             } else {
-                    (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile)).addTrack(segmentName, pointList, new ArrayList<>());
-                    trackpointSegmentName = segmentName;
-                    pointList = new GeoTrackPoints();
-                    pointList.addPoint(new TrackPoint(latitude, longitude, altitude, segmentName, zeroValue, zeroValue, zeroValue, dateTime));
-                    
+                (new GeoArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(), moduleName, comment, absFile)).addTrack(segmentName, pointList, new ArrayList<>());
+                trackpointSegmentName = segmentName;
+                pointList = new GeoTrackPoints();
+                pointList.addPoint(new TrackPoint(latitude, longitude, altitude, segmentName, zeroValue, zeroValue, zeroValue, dateTime));
+
             }
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_trackpoint_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
-        
-        return absFile; 
-        
+
+        return absFile;
+
     }
 
-    
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.message.relationship=Cannot create TSK_MESSAGE Relationship.",
-    })
-    
+        "LeappFileProcessor.cannot.create.message.relationship=Cannot create TSK_MESSAGE Relationship.",})
+
     private void createMessageRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         String messageType = null;
@@ -614,7 +609,7 @@ public final class LeappFileProcessor {
                         sourceFile = bba.getValueString();
                         break;
                     case "TSK_READ_STATUS":
-                        if (bba.getValueInt() == 1 ) {
+                        if (bba.getValueInt() == 1) {
                             messageStatus = MessageReadStatus.READ;
                         } else {
                             messageStatus = MessageReadStatus.UNREAD;
@@ -638,19 +633,19 @@ public final class LeappFileProcessor {
             AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
             if (absFile == null) {
                 absFile = (AbstractFile) dataSource;
-            }            
+            }
             CommunicationArtifactsHelper accountArtifact;
-	    Account.Type accountType = getAccountType(fileName);
+            Account.Type accountType = getAccountType(fileName);
             if (alternateId == null) {
                 accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                                                               moduleName, absFile, accountType);
+                        moduleName, absFile, accountType);
             } else {
                 accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                                                               moduleName, absFile, accountType, accountType, alternateId);                    
+                        moduleName, absFile, accountType, accountType, alternateId);
             }
             BlackboardArtifact messageArtifact = accountArtifact.addMessage(messageType, communicationDirection, senderId,
-                                                                            receipentId, dateTime, messageStatus, subject,
-                                                                            messageText, threadId, otherAttributes);
+                    receipentId, dateTime, messageStatus, subject,
+                    messageText, threadId, otherAttributes);
             if (!fileAttachments.isEmpty()) {
                 messageAttachments = new MessageAttachments(fileAttachments, new ArrayList<>());
                 accountArtifact.addAttachments(messageArtifact, messageAttachments);
@@ -662,8 +657,7 @@ public final class LeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.contact.relationship=Cannot create TSK_CONTACT Relationship.",
-    })
+        "LeappFileProcessor.cannot.create.contact.relationship=Cannot create TSK_CONTACT Relationship.",})
     private void createContactRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         String alternateId = null;
@@ -715,14 +709,14 @@ public final class LeappFileProcessor {
             }
             Account.Type accountType = getAccountType(fileName);
             if (accountType != null) {
-                
+
                 CommunicationArtifactsHelper accountArtifact;
                 if (alternateId == null) {
                     accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                                                               moduleName, absFile, accountType);
+                            moduleName, absFile, accountType);
                 } else {
                     accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                                                               moduleName, absFile, accountType, accountType, alternateId);                    
+                            moduleName, absFile, accountType, accountType, alternateId);
                 }
                 BlackboardArtifact messageArtifact = accountArtifact.addContact(contactName, phoneNumber, homePhoneNumber, mobilePhoneNumber, emailAddr, otherAttributes);
             }
@@ -732,14 +726,13 @@ public final class LeappFileProcessor {
     }
 
     @NbBundle.Messages({
-        "LeappFileProcessor.cannot.create.calllog.relationship=Cannot create TSK_CALLLOG Relationship.",
-    })
+        "LeappFileProcessor.cannot.create.calllog.relationship=Cannot create TSK_CALLLOG Relationship.",})
 
     private void createCalllogRelationship(Collection<BlackboardAttribute> bbattributes, Content dataSource, String fileName) throws IngestModuleException {
 
         String callerId = null;
         String alternateId = null;
-        List<String> calleeId  = Arrays.asList();
+        List<String> calleeId = Arrays.asList();
         CommunicationDirection communicationDirection = CommunicationDirection.UNKNOWN;
         Long startDateTime = Long.valueOf(0);
         Long endDateTime = Long.valueOf(0);
@@ -751,14 +744,14 @@ public final class LeappFileProcessor {
             for (BlackboardAttribute bba : bbattributes) {
                 switch (bba.getAttributeType().getTypeName()) {
                     case "TSK_TEXT_FILE":
-                         sourceFile = bba.getValueString();
-                         break;
+                        sourceFile = bba.getValueString();
+                        break;
                     case "TSK_DATETIME_START":
-                         startDateTime = bba.getValueLong();
-                         break;
+                        startDateTime = bba.getValueLong();
+                        break;
                     case "TSK_DATETIME_END":
-                         startDateTime = bba.getValueLong();
-                         break;
+                        startDateTime = bba.getValueLong();
+                        break;
                     case "TSK_DIRECTION":
                         if (bba.getValueString().toLowerCase().equals("outgoing")) {
                             communicationDirection = CommunicationDirection.OUTGOING;
@@ -773,8 +766,8 @@ public final class LeappFileProcessor {
                         break;
                     case "TSK_PHONE_NUMBER_TO":
                         if (!bba.getValueString().isEmpty()) {
-                            String [] calleeTempList = bba.getValueString().split(",", 0);
-                            calleeId  = Arrays.asList(calleeTempList);
+                            String[] calleeTempList = bba.getValueString().split(",", 0);
+                            calleeId = Arrays.asList(calleeTempList);
                         }
                         break;
                     case "TSK_ID":
@@ -786,12 +779,12 @@ public final class LeappFileProcessor {
                         break;
                 }
             }
-            
+
             if (calleeId.isEmpty() && communicationDirection == CommunicationDirection.OUTGOING) {
-                String [] calleeTempList = callerId.split(",", 0);
-                calleeId  = Arrays.asList(calleeTempList);
-                callerId = null;       
-            }            
+                String[] calleeTempList = callerId.split(",", 0);
+                calleeId = Arrays.asList(calleeTempList);
+                callerId = null;
+            }
             AbstractFile absFile = findAbstractFile(dataSource, sourceFile);
             if (absFile == null) {
                 absFile = (AbstractFile) dataSource;
@@ -800,10 +793,10 @@ public final class LeappFileProcessor {
             CommunicationArtifactsHelper accountArtifact;
             if (accountType != null) {
                 accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                                                               moduleName, absFile, accountType);
+                        moduleName, absFile, accountType);
             } else {
                 accountArtifact = new CommunicationArtifactsHelper(Case.getCurrentCaseThrows().getSleuthkitCase(),
-                                                               moduleName, absFile, accountType, accountType, alternateId);                    
+                        moduleName, absFile, accountType, accountType, alternateId);
             }
             BlackboardArtifact callLogArtifact = accountArtifact.addCalllog(communicationDirection, callerId, calleeId, startDateTime, endDateTime, mediaType, otherAttributes);
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
@@ -811,7 +804,7 @@ public final class LeappFileProcessor {
         }
 
     }
-        
+
     private Account.Type getAccountType(String AccountTypeName) {
         switch (AccountTypeName.toLowerCase()) {
             case "zapya.tsv":
@@ -849,7 +842,7 @@ public final class LeappFileProcessor {
             case "whatsapp - contacts.tsv":
                 return Account.Type.WHATSAPP;
             case "tangomessages messages.tsv":
-                return Account.Type.TANGO;  
+                return Account.Type.TANGO;
             case "shareit file transfer.tsv":
                 return Account.Type.SHAREIT;
             case "line - calllogs.tsv":
@@ -880,20 +873,22 @@ public final class LeappFileProcessor {
                 return Account.Type.PHONE;
         }
     }
-    
+
     /**
      * Process the line read and create the necessary attributes for it.
      *
-     * @param lineValues List of column values.
+     * @param lineValues    List of column values.
      * @param columnIndexes Mapping of column headers (trimmed; to lower case)
-     * to column index. All header columns and only all header columns should be
-     * present.
-     * @param attrList The list of attributes as specified for the schema of
-     * this file.
-     * @param fileName The name of the file being processed.
-     * @param lineNum The line number in the file.
+     *                      to column index. All header columns and only all
+     *                      header columns should be present.
+     * @param attrList      The list of attributes as specified for the schema
+     *                      of this file.
+     * @param fileName      The name of the file being processed.
+     * @param lineNum       The line number in the file.
+     *
      * @return The collection of blackboard attributes for the artifact created
-     * from this line.
+     *         from this line.
+     *
      * @throws IngestModuleException
      */
     private Collection<BlackboardAttribute> processReadLine(List<String> lineValues, Map<String, Integer> columnIndexes,
@@ -949,9 +944,10 @@ public final class LeappFileProcessor {
      * Check type of attribute and possibly format string based on it.
      *
      * @param colAttr Column Attribute information
-     * @param value string to be formatted
+     * @param value   string to be formatted
+     *
      * @return formatted string based on attribute type if no attribute type
-     * found then return original string
+     *         found then return original string
      */
     private String formatValueBasedOnAttrType(TsvColumn colAttr, String value) {
         if (colAttr.getAttributeType().getTypeName().equals("TSK_DOMAIN")) {
@@ -971,9 +967,10 @@ public final class LeappFileProcessor {
      * value.
      *
      * @param attrType The attribute type.
-     * @param value The string value to be converted to the appropriate data
-     * type for the attribute type.
+     * @param value    The string value to be converted to the appropriate data
+     *                 type for the attribute type.
      * @param fileName The file name that the value comes from.
+     *
      * @return The generated blackboard attribute.
      */
     private BlackboardAttribute getAttribute(BlackboardAttribute.Type attrType, String value, String fileName) {
@@ -1022,7 +1019,9 @@ public final class LeappFileProcessor {
          * Handles converting a string value to a blackboard attribute.
          *
          * @param orig The original string value.
+         *
          * @return The generated blackboard attribute.
+         *
          * @throws ParseException
          * @throws NumberFormatException
          */
@@ -1033,13 +1032,15 @@ public final class LeappFileProcessor {
      * Runs parsing function on string value to convert to right data type and
      * generates a blackboard attribute for that converted data type.
      *
-     * @param value The string value.
-     * @param attrType The blackboard attribute type.
-     * @param fileName The name of the file from which the value comes.
-     * @param blankIsNull If string is blank return null attribute.
-     * @param zeroIsNull If string is some version of 0, return null attribute.
+     * @param value          The string value.
+     * @param attrType       The blackboard attribute type.
+     * @param fileName       The name of the file from which the value comes.
+     * @param blankIsNull    If string is blank return null attribute.
+     * @param zeroIsNull     If string is some version of 0, return null
+     *                       attribute.
      * @param valueConverter The means of converting the string value to an
-     * appropriate blackboard attribute.
+     *                       appropriate blackboard attribute.
+     *
      * @return The generated blackboard attribute or null if not determined.
      */
     private BlackboardAttribute parseAttrValue(String value, BlackboardAttribute.Type attrType, String fileName, boolean blankIsNull, boolean zeroIsNull, ParseExceptionFunction valueConverter) {
@@ -1157,7 +1158,7 @@ public final class LeappFileProcessor {
         for (int k = 0; k < attributeNlist.getLength(); k++) {
             NamedNodeMap nnm = attributeNlist.item(k).getAttributes();
             String attributeName = nnm.getNamedItem("attributename").getNodeValue();
-            
+
             if (!attributeName.toLowerCase().matches("null")) {
                 String columnName = nnm.getNamedItem("columnName").getNodeValue();
                 String required = nnm.getNamedItem("required").getNodeValue();
@@ -1209,11 +1210,12 @@ public final class LeappFileProcessor {
     /**
      * Generic method for creating a blackboard artifact with attributes
      *
-     * @param artType The artifact type.
-     * @param dataSource is the Content object that needs to have the artifact
-     * added for it
+     * @param artType      The artifact type.
+     * @param dataSource   is the Content object that needs to have the artifact
+     *                     added for it
      * @param bbattributes is the collection of blackboard attributes that need
-     * to be added to the artifact after the artifact has been created
+     *                     to be added to the artifact after the artifact has
+     *                     been created
      *
      * @return The newly-created artifact, or null on error
      */
@@ -1238,7 +1240,7 @@ public final class LeappFileProcessor {
      * Method to post a list of BlackboardArtifacts to the blackboard.
      *
      * @param artifacts A list of artifacts. IF list is empty or null, the
-     * function will return.
+     *                  function will return.
      */
     void postArtifacts(Collection<BlackboardArtifact> artifacts) {
         if (artifacts == null || artifacts.isEmpty()) {
@@ -1259,7 +1261,7 @@ public final class LeappFileProcessor {
      */
     private void configExtractor() throws IOException {
         PlatformUtil.extractResourceToUserConfigDir(LeappFileProcessor.class,
-                 xmlFile, true);
+                xmlFile, true);
     }
 
     private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList("zip", "tar", "tgz"));
@@ -1316,14 +1318,14 @@ public final class LeappFileProcessor {
 
         }
     }
-    
+
     private AbstractFile findAbstractFile(Content dataSource, String fileNamePath) {
         if (fileNamePath == null) {
             return null;
         }
-        
+
         List<AbstractFile> files;
-        
+
         String fileName = FilenameUtils.getName(fileNamePath);
         String filePath = FilenameUtils.normalize(FilenameUtils.getPath(fileNamePath), true);
 
@@ -1347,4 +1349,4 @@ public final class LeappFileProcessor {
         return null;
 
     }
-    }
+}
