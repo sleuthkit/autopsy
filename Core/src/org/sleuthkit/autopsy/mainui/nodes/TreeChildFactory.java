@@ -19,75 +19,67 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.Artifacts;
 import org.sleuthkit.autopsy.mainui.datamodel.CountsRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Factory for populating tree with results.
  */
-public class TreeChildFactory<T> extends ChildFactory<CountsRowDTO<T>> {
+public class TreeChildFactory<T extends CountsRowDTO> extends ChildFactory<Long> {
     private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
     private SearchResultsDTO results;
 
-    private final Map<Long, CountsRowDTO<T>> typeNodeMap = new HashMap<>();
+    private final Map<Long, TreeCountNode<?>> typeNodeMap = new HashMap<>();
     
     public TreeChildFactory(SearchResultsDTO initialResults) {
         this.results = initialResults;
     }
 
     @Override
-    protected boolean createKeys(List<CountsRowDTO<T>> toPopulate) {
+    protected boolean createKeys(List<Long> toPopulate) {
+        SearchResultsDTO curResults = this.results;
+        Set<Long> resultsRowIds = curResults.getItems().stream()
+                .map(row -> row.getId())
+                .collect(Collectors.toSet());
         
+        // remove no longer present
+        Set<Long> toBeRemoved = new HashSet<>(typeNodeMap.keySet());
+        toBeRemoved.removeAll(resultsRowIds);
+        for (Long presentId : toBeRemoved) {
+            typeNodeMap.remove(presentId);
+        }
         
-        List<CountsRowDTO<T>> rowsToAdd = typeNodeMap.values().stream()
+        List<CountsRowDTO<?>> rowsToReturn = new ArrayList<>();
+        for (CountsRowDTO<?> dto : curResults.getItems()) {
+            // update cached that remain
+            TreeCountNode<?> currentlyCached = typeNodeMap.get(dto.getId());
+            if (currentlyCached != null) {
+                currentlyCached.updateData(dto);
+            } else {
+                // add new items
+                typeNodeMap.put(dto.getId(), new TreeCountNode<?>(dto));
+            }
+            
+            idsToReturn.add(dto);
+        }
+        
+        List<Long> idsToReturn = rowsToReturn.stream()
                 .sorted((a,b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+                .map(row -> row.getId())
                 .collect(Collectors.toList());
         
-        toPopulate.addAll(rowsToAdd);
+        toPopulate.addAll(idsToReturn);
         return true;
-        
-                List<Artifacts.TypeNodeKey> allKeysSorted = types.stream()
-                        // filter types by category and ensure they are not in the list of ignored types
-                        .filter(tp -> category.equals(tp.getCategory()) && !IGNORED_TYPES.contains(tp))
-                        .map(tp -> {
-                            // if typeNodeMap already contains key, update the relevant node and return the node
-                            if (typeNodeMap.containsKey(tp)) {
-                                Artifacts.TypeNodeKey typeKey = typeNodeMap.get(tp);
-                                typeKey.getNode().updateDisplayName();
-                                return typeKey;
-                            } else {
-                                // if key is not in map, create the type key and add to map
-                                Artifacts.TypeNodeKey newTypeKey = getTypeKey(tp, skCase, filteringDSObjId);
-                                for (BlackboardArtifact.Type recordType : newTypeKey.getApplicableTypes()) {
-                                    typeNodeMap.put(recordType, newTypeKey);
-                                }
-                                return newTypeKey;
-                            }
-                        })
-                        // ensure record is returned
-                        .filter(record -> record != null)
-                        // there are potentially multiple types that apply to the same node (i.e. Interesting Files / Artifacts)
-                        // ensure the keys are distinct
-                        .distinct()
-                        // sort by display name
-                        .sorted((a, b) -> {
-                            String aSafe = (a.getNode() == null || a.getNode().getDisplayName() == null) ? "" : a.getNode().getDisplayName();
-                            String bSafe = (b.getNode() == null || b.getNode().getDisplayName() == null) ? "" : b.getNode().getDisplayName();
-                            return aSafe.compareToIgnoreCase(bSafe);
-                        })
-                        .collect(Collectors.toList());
-
-                list.addAll(allKeysSorted);
     }
 
     @Override
