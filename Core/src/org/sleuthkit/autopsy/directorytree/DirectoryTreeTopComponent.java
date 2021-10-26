@@ -869,7 +869,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Node originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
                     //set node, wrap in filter node first to filter out children
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                    
                     if(originNode instanceof SelectionResponder) {
                         ((SelectionResponder) originNode).respondSelection(dataResult);
                     }
