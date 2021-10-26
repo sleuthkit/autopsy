@@ -72,7 +72,7 @@ public class CustomArtifactsCreatorDataSourceIngestModule extends DataSourceInge
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         try {
-            CustomArtifactType.createAndPostInstance(dataSource);
+            CustomArtifactType.createAndPostInstance(dataSource, context.getJobId());
         } catch (TskCoreException | Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process data source (obj_id = %d)", dataSource.getId()), ex);
             return ProcessResult.ERROR;

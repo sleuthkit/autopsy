@@ -316,7 +316,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 }
             } else {
                 /*
-                 * There are two cases where the ingest job ID returned by the
+                 * There are four cases where the ingest job ID returned by the
                  * event is expected be null:
                  *
                  * 1. The artifacts are being posted by a data source proccessor
@@ -342,9 +342,22 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                  * ingest job to which to add the artifacts via their data
                  * source.
                  *
-                 * In both use cases, there is a slight risk that the wrong
-                 * ingest job will be selected if multiple ingests of the same
-                 * data source are in progress.
+                 * In both of the use cases above, there is a slight risk that
+                 * the wrong ingest job will be selected if multiple ingests of
+                 * the same data source are in progress.
+                 *
+                 * 3. The portable case generator uses a
+                 * CommunicatonsArtifactHelper constructed with a null ingest
+                 * job ID, and the CommunicatonsArtifactHelper posts artifacts.
+                 * Clearly, no data artifact ingest modules will be running, as
+                 * might not have been so in the original case. This is an
+                 * acceptable edge case, given the goals of portable cases.
+                 *
+                 * 4. The user can manually create timeline events with the
+                 * timeline tool, which posts the TSK_TL_EVENT data artifacts.
+                 * The user selects the data source for these artifacts. INgest
+                 * of that data source might be running. This is an acceptabel
+                 * edge case.
                  */
                 DataArtifact dataArtifact = newDataArtifacts.get(0);
                 try {
