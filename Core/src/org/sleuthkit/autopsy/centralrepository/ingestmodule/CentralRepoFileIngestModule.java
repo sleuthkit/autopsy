@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +66,7 @@ import org.sleuthkit.datamodel.Score;
  */
 @Messages({"CentralRepoIngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
     "CentralRepoIngestModule.prevCaseComment.text=Previous Case: "})
-final class CentralRepoIngestModule implements FileIngestModule {
+final class CentralRepoFileIngestModule implements FileIngestModule {
 
     private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = false;
@@ -74,7 +74,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     static final boolean DEFAULT_FLAG_UNIQUE_DEVICES = false;
     static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
 
-    private final static Logger logger = Logger.getLogger(CentralRepoIngestModule.class.getName());
+    private final static Logger logger = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
@@ -83,21 +83,17 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private CorrelationDataSource eamDataSource;
     private CorrelationAttributeInstance.Type filesType;
     private final boolean flagTaggedNotableItems;
-    private final boolean flagPreviouslySeenDevices;
     private Blackboard blackboard;
     private final boolean createCorrelationProperties;
-    private final boolean flagUniqueArtifacts;
 
     /**
      * Instantiate the Central Repository ingest module.
      *
      * @param settings The ingest settings for the module instance.
      */
-    CentralRepoIngestModule(IngestSettings settings) {
+    CentralRepoFileIngestModule(IngestSettings settings) {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
-        flagPreviouslySeenDevices = settings.isFlagPreviousDevices();
         createCorrelationProperties = settings.shouldCreateCorrelationProperties();
-        flagUniqueArtifacts = settings.isFlagUniqueArtifacts();
     }
 
     @Override
@@ -230,33 +226,6 @@ final class CentralRepoIngestModule implements FileIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         IngestEventsListener.incrementCorrelationEngineModuleCount();
-
-        /*
-         * Tell the IngestEventsListener to flag notable items based on the
-         * current module's configuration. This is a work around for the lack of
-         * an artifacts pipeline. Note that this can be changed by another
-         * module instance. All modules are affected by the value. While not
-         * ideal, this will be good enough until a better solution can be
-         * posited.
-         *
-         * Note: Flagging cannot be disabled if any other instances of the
-         * Central Repository module are running. This restriction is to prevent
-         * missing results in the case where the first module is flagging
-         * notable items, and the proceeding module (with flagging disabled)
-         * causes the first to stop flagging.
-         */
-        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagNotableItems()) {
-            IngestEventsListener.setFlagNotableItems(flagTaggedNotableItems);
-        }
-        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagSeenDevices()) {
-            IngestEventsListener.setFlagSeenDevices(flagPreviouslySeenDevices);
-        }
-        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.shouldCreateCrProperties()) {
-            IngestEventsListener.setCreateCrProperties(createCorrelationProperties);
-        }
-        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagUniqueArtifacts()) {
-            IngestEventsListener.setFlagUniqueArtifacts(flagUniqueArtifacts);
-        }
 
         if (CentralRepository.isEnabled() == false) {
             /*
