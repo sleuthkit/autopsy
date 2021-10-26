@@ -871,9 +871,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                     if(originNode instanceof SelectionResponder) {
                         ((SelectionResponder) originNode).respondSelection(dataResult);
-                    }
-                    
-                    if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
+                    } else if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree
                         EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTreeTopComponent_emptyMimeNode_text());
