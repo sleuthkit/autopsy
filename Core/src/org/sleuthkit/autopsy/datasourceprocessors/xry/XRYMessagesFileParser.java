@@ -95,6 +95,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
          * Indicates if the display name of the XRY key is a recognized type.
          *
          * @param name
+         *
          * @return
          */
         public static boolean contains(String name) {
@@ -114,6 +115,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
          * contains() before hand.
          *
          * @param name
+         *
          * @return
          */
         public static XryKey fromDisplayName(String name) {
@@ -149,6 +151,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
          * type.
          *
          * @param xryNamespace
+         *
          * @return
          */
         public static boolean contains(String xryNamespace) {
@@ -169,6 +172,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
          * contains() before hand.
          *
          * @param xryNamespace
+         *
          * @return
          */
         public static XryNamespace fromDisplayName(String xryNamespace) {
@@ -206,6 +210,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
          * Indicates if the display name of the XRY key is a recognized type.
          *
          * @param name
+         *
          * @return
          */
         public static boolean contains(String name) {
@@ -225,6 +230,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
          * contains() before hand.
          *
          * @param name
+         *
          * @return
          */
         public static XryMetaKey fromDisplayName(String name) {
@@ -253,11 +259,13 @@ final class XRYMessagesFileParser implements XRYFileParser {
      * assumption is correct, otherwise an error will appear in the logs.
      *
      * @param reader The XRYFileReader that reads XRY entities from the
-     * Message-SMS report.
+     *               Message-SMS report.
      * @param parent The parent Content to create artifacts from.
-     * @throws IOException If an I/O error is encountered during report reading
+     *
+     * @throws IOException      If an I/O error is encountered during report
+     *                          reading
      * @throws TskCoreException If an error during artifact creation is
-     * encountered.
+     *                          encountered.
      */
     @Override
     public void parse(XRYFileReader reader, Content parent, SleuthkitCase currentCase) throws IOException, TskCoreException, BlackboardException {
@@ -270,10 +278,10 @@ final class XRYMessagesFileParser implements XRYFileParser {
 
         while (reader.hasNextEntity()) {
             String xryEntity = reader.nextEntity();
-            
+
             // This call will combine all segmented text into a single key value pair
             List<XRYKeyValuePair> pairs = getXRYKeyValuePairs(xryEntity, reader, referenceNumbersSeen);
-            
+
             // Transform all the data from XRY land into the appropriate CommHelper
             // data types.
             final String messageType = PARSER_NAME;
@@ -286,8 +294,8 @@ final class XRYMessagesFileParser implements XRYFileParser {
             String text = null;
             final String threadId = null;
             final Collection<BlackboardAttribute> otherAttributes = new ArrayList<>();
-            
-            for(XRYKeyValuePair pair : pairs) {
+
+            for (XRYKeyValuePair pair : pairs) {
                 XryNamespace namespace = XryNamespace.NONE;
                 if (XryNamespace.contains(pair.getNamespace())) {
                     namespace = XryNamespace.fromDisplayName(pair.getNamespace());
@@ -298,14 +306,14 @@ final class XRYMessagesFileParser implements XRYFileParser {
                 switch (key) {
                     case TEL:
                     case NUMBER:
-                        if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        if (!XRYUtils.isPhoneValid(pair.getValue())) {
                             continue;
                         }
-                        
+
                         // Apply namespace or direction
-                        if(namespace == XryNamespace.FROM || direction == CommunicationDirection.INCOMING) {
+                        if (namespace == XryNamespace.FROM || direction == CommunicationDirection.INCOMING) {
                             senderId = pair.getValue();
-                        } else if(namespace == XryNamespace.TO || direction == CommunicationDirection.OUTGOING) {
+                        } else if (namespace == XryNamespace.TO || direction == CommunicationDirection.OUTGOING) {
                             recipientIdsList.add(pair.getValue());
                         } else {
                             try {
@@ -316,37 +324,37 @@ final class XRYMessagesFileParser implements XRYFileParser {
                             }
 
                             otherAttributes.add(new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
-                                        PARSER_NAME, pair.getValue()));
+                                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
+                                    PARSER_NAME, pair.getValue()));
                         }
                         break;
                     // Although confusing, as these are also 'name spaces', it appears
                     // later versions of XRY just made these standardized lines.
                     case FROM:
-                        if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        if (!XRYUtils.isPhoneValid(pair.getValue())) {
                             continue;
                         }
-                        
+
                         senderId = pair.getValue();
                         break;
                     case TO:
-                        if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        if (!XRYUtils.isPhoneValid(pair.getValue())) {
                             continue;
                         }
-                        
+
                         recipientIdsList.add(pair.getValue());
                         break;
                     case TIME:
                         try {
-                            //Tranform value to seconds since epoch
-                            long dateTimeSinceInEpoch = XRYUtils.calculateSecondsSinceEpoch(pair.getValue());
-                            dateTime = dateTimeSinceInEpoch;
-                        } catch (DateTimeParseException ex) {
-                            logger.log(Level.WARNING, String.format("[%s] Assumption"
-                                    + " about the date time formatting of messages is "
-                                    + "not right. Here is the pair [ %s ]", PARSER_NAME, pair), ex);
-                        }
-                        break;
+                        //Tranform value to seconds since epoch
+                        long dateTimeSinceInEpoch = XRYUtils.calculateSecondsSinceEpoch(pair.getValue());
+                        dateTime = dateTimeSinceInEpoch;
+                    } catch (DateTimeParseException ex) {
+                        logger.log(Level.WARNING, String.format("[%s] Assumption"
+                                + " about the date time formatting of messages is "
+                                + "not right. Here is the pair [ %s ]", PARSER_NAME, pair), ex);
+                    }
+                    break;
                     case TYPE:
                         switch (normalizedValue) {
                             case "incoming":
@@ -406,11 +414,11 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         }
                         break;
                     case SERVICE_CENTER:
-                        if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                        if (!XRYUtils.isPhoneValid(pair.getValue())) {
                             continue;
                         }
-                        
-                        otherAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, 
+
+                        otherAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
                                 PARSER_NAME, pair.getValue()));
                         break;
                     default:
@@ -427,18 +435,18 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         }
                 }
             }
-            
-            CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
-                currentCase, PARSER_NAME, parent, Account.Type.PHONE);
 
-            helper.addMessage(messageType, direction, senderId, recipientIdsList, 
-                dateTime, readStatus, subject, text, threadId, otherAttributes);
+            CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
+                    currentCase, PARSER_NAME, parent, Account.Type.PHONE);
+
+            helper.addMessage(messageType, direction, senderId, recipientIdsList,
+                    dateTime, readStatus, subject, text, threadId, otherAttributes);
         }
     }
 
     /**
-     * Extracts all pairs from the XRY Entity. This function
-     * will unify any segmented text, if need be.
+     * Extracts all pairs from the XRY Entity. This function will unify any
+     * segmented text, if need be.
      */
     private List<XRYKeyValuePair> getXRYKeyValuePairs(String xryEntity,
             XRYFileReader reader, Set<Integer> referenceValues) throws IOException {
@@ -508,10 +516,13 @@ final class XRYMessagesFileParser implements XRYFileParser {
      * Builds up segmented message entities so that the text is unified for a
      * single artifact.
      *
-     * @param reader File reader that is producing XRY entities.
-     * @param referenceNumbersSeen All known references numbers up until this point.
-     * @param xryEntity The source XRY entity.
+     * @param reader               File reader that is producing XRY entities.
+     * @param referenceNumbersSeen All known references numbers up until this
+     *                             point.
+     * @param xryEntity            The source XRY entity.
+     *
      * @return
+     *
      * @throws IOException
      */
     private String getSegmentedText(String[] xryEntity, XRYFileReader reader,
@@ -604,7 +615,8 @@ final class XRYMessagesFileParser implements XRYFileParser {
      * Extracts the value of the XRY meta key, if any.
      *
      * @param xryLines XRY entity to extract from.
-     * @param metaKey The key type to extract.
+     * @param metaKey  The key type to extract.
+     *
      * @return
      */
     private Optional<Integer> getMetaKeyValue(String[] xryLines, XryMetaKey metaKey) {
@@ -629,10 +641,12 @@ final class XRYMessagesFileParser implements XRYFileParser {
     /**
      * Extracts the ith XRY Key Value pair in the XRY Entity.
      *
-     * The total number of pairs can be determined via getCountOfKeyValuePairs().
+     * The total number of pairs can be determined via
+     * getCountOfKeyValuePairs().
      *
      * @param xryLines XRY entity.
-     * @param index The requested Key Value pair.
+     * @param index    The requested Key Value pair.
+     *
      * @return
      */
     private Optional<XRYKeyValuePair> getKeyValuePairByIndex(String[] xryLines, int index) {

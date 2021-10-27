@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Provides an ingest module with services specific to the ingest job of which
@@ -156,16 +155,6 @@ public final class IngestJobContext {
      */
     public void addFilesToJob(List<AbstractFile> files) {
         ingestJobExecutor.addFiles(files);
-    }
-
-    /**
-     * Adds one or more data artifacts to the ingest job for processing by its
-     * data artifact ingest modules.
-     *
-     * @param artifacts The artifacts.
-     */
-    public void addDataArtifactsToJob(List<DataArtifact> artifacts) {
-        ingestJobExecutor.addDataArtifacts(artifacts);
     }
 
 }

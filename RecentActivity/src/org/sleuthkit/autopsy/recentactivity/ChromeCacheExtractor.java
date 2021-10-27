@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  *
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  *
@@ -151,15 +151,14 @@ final class ChromeCacheExtractor {
     }
 
     @NbBundle.Messages({
-        "ChromeCacheExtractor.moduleName=ChromeCacheExtractor",
         "# {0} - module name",
         "# {1} - row number",
         "# {2} - table length",
         "# {3} - cache path",
         "ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}"
     })
-    ChromeCacheExtractor(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar ) { 
-        moduleName = Bundle.ChromeCacheExtractor_moduleName();
+    ChromeCacheExtractor(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) { 
+        moduleName = NbBundle.getMessage(Chromium.class, "Chrome.moduleName");
         this.dataSource = dataSource;
         this.context = context;
         this.progressBar = progressBar;
@@ -415,7 +414,7 @@ final class ChromeCacheExtractor {
         progressBar.progress(String.format(Bundle.ChromeCacheExtract_adding_artifacts_msg(), artifactsAdded.size()));
         Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
         try {
-            blackboard.postArtifacts(artifactsAdded, moduleName);
+            blackboard.postArtifacts(artifactsAdded, moduleName, context.getJobId());
         } catch (Blackboard.BlackboardException ex) {
            logger.log(Level.WARNING, String.format("Failed to post cacheIndex artifacts "), ex); //NON-NLS
         }

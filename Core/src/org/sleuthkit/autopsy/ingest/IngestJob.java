@@ -28,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * Analyzes a data sources using a set of ingest modules specified via ingest
@@ -119,6 +120,15 @@ public final class IngestJob {
     }
 
     /**
+     * Gets the data source to be analyzed by this job.
+     *
+     * @return The data source.
+     */
+    Content getDataSource() {
+        return dataSource;
+    }
+
+    /**
      * Checks to see if this ingest job has at least one non-empty ingest module
      * pipeline.
      *
@@ -144,6 +154,16 @@ public final class IngestJob {
         } else {
             logger.log(Level.SEVERE, "Attempted to add streamed files to batch ingest job");
         }
+    }
+
+    /**
+     * Adds one or more data artifacts to this ingest job for processing by its
+     * data artifact ingest modules.
+     *
+     * @param dataArtifacts The data artifacts.
+     */
+    void addDataArtifacts(List<DataArtifact> dataArtifacts) {
+        ingestModuleExecutor.addDataArtifacts(dataArtifacts);
     }
 
     /**
