@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -119,7 +119,7 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for historyDb in historyDbs:
                 try:
                     historyDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self._MODULE_NAME, historyDb.getDBFile())
+                                            self._MODULE_NAME, historyDb.getDBFile(), context.getJobId())
                     historyResultSet = historyDb.runQuery("SELECT url, title, last_visit_time FROM urls")
                     if historyResultSet is not None:
                         while historyResultSet.next():
@@ -148,7 +148,7 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for downloadsDb in downloadsDbs:
                 try:
                     downloadsDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self._MODULE_NAME, downloadsDb.getDBFile())
+                                            self._MODULE_NAME, downloadsDb.getDBFile(), context.getJobId())
                     queryString = "SELECT target_path, start_time, url FROM downloads"\
                                   " INNER JOIN downloads_url_chains ON downloads.id = downloads_url_chains.id"
                     downloadsResultSet = downloadsDb.runQuery(queryString)
@@ -177,7 +177,7 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for autofillDb in autofillDbs:
                 try:
                     autofillDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self._MODULE_NAME, autofillDb.getDBFile())
+                                            self._MODULE_NAME, autofillDb.getDBFile(), context.getJobId())
                     autofillsResultSet = autofillDb.runQuery("SELECT name, value, count, date_created FROM autofill")
                     if autofillsResultSet is not None:
                         while autofillsResultSet.next():
@@ -205,7 +205,7 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for webFormAddressDb in webFormAddressDbs:
                 try:
                     webFormAddressDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                                self._MODULE_NAME, webFormAddressDb.getDBFile())
+                                                self._MODULE_NAME, webFormAddressDb.getDBFile(), context.getJobId())
                     queryString = """
                                 SELECT street_address, city, state, zipcode, country_code,
                                        date_modified, first_name, last_name, number, email
