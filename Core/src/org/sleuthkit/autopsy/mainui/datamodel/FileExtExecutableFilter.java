@@ -18,26 +18,26 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.util.Arrays;
+import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Executable sub-node filters.
  */
 public enum FileExtExecutableFilter implements FileExtSearchFilter {
-    ExecutableFilter_EXE(0, "ExecutableFilter_EXE", ".exe", Arrays.asList(".exe")), //NON-NLS
-    ExecutableFilter_DLL(1, "ExecutableFilter_DLL", ".dll", Arrays.asList(".dll")), //NON-NLS
-    ExecutableFilter_BAT(2, "ExecutableFilter_BAT", ".bat", Arrays.asList(".bat")), //NON-NLS
-    ExecutableFilter_CMD(3, "ExecutableFilter_CMD", ".cmd", Arrays.asList(".cmd")), //NON-NLS
-    ExecutableFilter_COM(4, "ExecutableFilter_COM", ".com", Arrays.asList(".com"));
+    ExecutableFilter_EXE(0, "ExecutableFilter_EXE", ".exe", ImmutableSet.of(".exe")), //NON-NLS
+    ExecutableFilter_DLL(1, "ExecutableFilter_DLL", ".dll", ImmutableSet.of(".dll")), //NON-NLS
+    ExecutableFilter_BAT(2, "ExecutableFilter_BAT", ".bat", ImmutableSet.of(".bat")), //NON-NLS
+    ExecutableFilter_CMD(3, "ExecutableFilter_CMD", ".cmd", ImmutableSet.of(".cmd")), //NON-NLS
+    ExecutableFilter_COM(4, "ExecutableFilter_COM", ".com", ImmutableSet.of(".com"));
     //NON-NLS
     final int id;
     final String name;
     final String displayName;
-    final List<String> filter;
+    final Set<String> filter;
 
-    private FileExtExecutableFilter(int id, String name, String displayName, List<String> filter) {
+    private FileExtExecutableFilter(int id, String name, String displayName, Set<String> filter) {
         this.id = id;
         this.name = name;
         this.displayName = displayName;
@@ -60,8 +60,8 @@ public enum FileExtExecutableFilter implements FileExtSearchFilter {
     }
 
     @Override
-    public List<String> getFilter() {
-        return Collections.unmodifiableList(this.filter);
+    public Set<String> getFilter() {
+        return this.filter;
     }
     
 }

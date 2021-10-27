@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * Key for accessing data about file sizeFilter from the DAO.
  */
-public class FileTypeSizeSearchParams extends BaseSearchParams {
+public class FileTypeSizeSearchParams {
 
     public enum FileSizeFilter {
         SIZE_50_200(0, "SIZE_50_200", "50 - 200MB"), //NON-NLS
@@ -60,12 +60,6 @@ public class FileTypeSizeSearchParams extends BaseSearchParams {
         this.dataSourceId = dataSourceId;
     }
 
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount);
-        this.sizeFilter = sizeFilter;
-        this.dataSourceId = dataSourceId;
-    }
-
     public FileSizeFilter getSizeFilter() {
         return sizeFilter;
     }
@@ -77,8 +71,8 @@ public class FileTypeSizeSearchParams extends BaseSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
+        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -94,7 +88,7 @@ public class FileTypeSizeSearchParams extends BaseSearchParams {
             return false;
         }
         final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (!Objects.equals(this.sizeFilter, other.sizeFilter)) {
+        if (this.sizeFilter != other.sizeFilter) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
@@ -102,5 +96,6 @@ public class FileTypeSizeSearchParams extends BaseSearchParams {
         }
         return true;
     }
-
+    
+    
 }
