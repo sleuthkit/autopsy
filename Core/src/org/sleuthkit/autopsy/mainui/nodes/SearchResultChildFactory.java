@@ -112,7 +112,7 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
         @Override
         public int hashCode() {
             int hash = 3;
-            hash = 97 * hash + Objects.hashCode(this.row);
+            hash = 97 * hash + (this.row == null ? 0 : Objects.hashCode(this.row.getId()));
             return hash;
         }
 
@@ -128,10 +128,7 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
                 return false;
             }
             final ChildKey other = (ChildKey) obj;
-            if (!Objects.equals(this.row, other.row)) {
-                return false;
-            }
-            return true;
+            return this.row.getId() == other.row.getId();
         }
 
     }

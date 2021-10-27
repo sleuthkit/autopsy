@@ -20,13 +20,15 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
@@ -46,7 +48,6 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * DAO for providing data about analysis results to populate the results viewer.
  */
-
 public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     private static AnalysisResultDAO instance = null;
@@ -69,35 +70,35 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         "AnalysisResultDAO.columnKeys.sourceType.description=Source Type"
     })
     static final ColumnKey SCORE_COL = new ColumnKey(
-        Bundle.AnalysisResultDAO_columnKeys_score_name(),
-        Bundle.AnalysisResultDAO_columnKeys_score_displayName(),
-        Bundle.AnalysisResultDAO_columnKeys_score_description()
+            Bundle.AnalysisResultDAO_columnKeys_score_name(),
+            Bundle.AnalysisResultDAO_columnKeys_score_displayName(),
+            Bundle.AnalysisResultDAO_columnKeys_score_description()
     );
 
     static final ColumnKey CONCLUSION_COL = new ColumnKey(
-        Bundle.AnalysisResultDAO_columnKeys_conclusion_name(),
-        Bundle.AnalysisResultDAO_columnKeys_conclusion_displayName(),
-        Bundle.AnalysisResultDAO_columnKeys_conclusion_description()
+            Bundle.AnalysisResultDAO_columnKeys_conclusion_name(),
+            Bundle.AnalysisResultDAO_columnKeys_conclusion_displayName(),
+            Bundle.AnalysisResultDAO_columnKeys_conclusion_description()
     );
 
     static final ColumnKey CONFIGURATION_COL = new ColumnKey(
-        Bundle.AnalysisResultDAO_columnKeys_configuration_name(),
-        Bundle.AnalysisResultDAO_columnKeys_configuration_displayName(),
-        Bundle.AnalysisResultDAO_columnKeys_configuration_description()
+            Bundle.AnalysisResultDAO_columnKeys_configuration_name(),
+            Bundle.AnalysisResultDAO_columnKeys_configuration_displayName(),
+            Bundle.AnalysisResultDAO_columnKeys_configuration_description()
     );
 
     static final ColumnKey JUSTIFICATION_COL = new ColumnKey(
-        Bundle.AnalysisResultDAO_columnKeys_justification_name(),
-        Bundle.AnalysisResultDAO_columnKeys_justification_displayName(),
-        Bundle.AnalysisResultDAO_columnKeys_justification_description()
+            Bundle.AnalysisResultDAO_columnKeys_justification_name(),
+            Bundle.AnalysisResultDAO_columnKeys_justification_displayName(),
+            Bundle.AnalysisResultDAO_columnKeys_justification_description()
     );
-    
+
     static final ColumnKey SOURCE_TYPE_COL = new ColumnKey(
-        Bundle.AnalysisResultDAO_columnKeys_sourceType_name(),
-        Bundle.AnalysisResultDAO_columnKeys_sourceType_displayName(),
-        Bundle.AnalysisResultDAO_columnKeys_sourceType_description()
+            Bundle.AnalysisResultDAO_columnKeys_sourceType_name(),
+            Bundle.AnalysisResultDAO_columnKeys_sourceType_displayName(),
+            Bundle.AnalysisResultDAO_columnKeys_sourceType_description()
     );
-    
+
     synchronized static AnalysisResultDAO getInstance() {
         if (instance == null) {
             instance = new AnalysisResultDAO();
@@ -106,17 +107,17 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     // TODO We can probably combine all the caches at some point
-    private final Cache<AnalysisResultSearchParam, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<HashHitSearchParam, AnalysisResultTableSearchResultsDTO> hashHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<KeywordHitSearchParam, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<AnalysisResultSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<HashHitSearchParam>, AnalysisResultTableSearchResultsDTO> hashHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
-    private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(AnalysisResultSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(SearchParams<AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
 
-        Long dataSourceId = cacheKey.getDataSourceId();
-        BlackboardArtifact.Type artType = cacheKey.getArtifactType();
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
         // get analysis results
         List<BlackboardArtifact> arts = new ArrayList<>();
@@ -126,18 +127,18 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             arts.addAll(blackboard.getAnalysisResultsByType(artType.getTypeID()));
         }
 
-        TableData tableData = createTableData(artType, arts);
-
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows);
+        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
+        TableData tableData = createTableData(artType, pagedArtifacts);
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
     }
-    
-    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(AnalysisResultSetSearchParam cacheKey) throws NoCurrentCaseException, TskCoreException {
+
+    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSetSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
 
-        Long dataSourceId = cacheKey.getDataSourceId();
-        BlackboardArtifact.Type artType = cacheKey.getArtifactType();
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
         // Get all hash set hits
         List<AnalysisResult> allHashHits;
@@ -146,20 +147,20 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         } else {
             allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID());
         }
-        
+
         // Filter for the selected set
         List<BlackboardArtifact> arts = new ArrayList<>();
         for (AnalysisResult art : allHashHits) {
             BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
-            if ((setNameAttr != null) && cacheKey.getSetName().equals(setNameAttr.getValueString())) {
+            if ((setNameAttr != null) && cacheKey.getParamData().getSetName().equals(setNameAttr.getValueString())) {
                 arts.add(art);
             }
         }
 
-        TableData tableData = createTableData(artType, arts);
-
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows);
-    }    
+        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
+        TableData tableData = createTableData(artType, pagedArtifacts);
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
+    }
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
@@ -170,13 +171,13 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         columnKeys.add(CONFIGURATION_COL);
         columnKeys.add(JUSTIFICATION_COL);
     }
-        
+
     @Override
     void addAnalysisResultFields(BlackboardArtifact artifact, List<Object> cells) throws TskCoreException {
-        if (! (artifact instanceof AnalysisResult)) {
+        if (!(artifact instanceof AnalysisResult)) {
             throw new IllegalArgumentException("Can not add fields for artifact with ID: " + artifact.getId() + " - artifact must be an analysis result");
         }
-        
+
         // Make sure these are in the same order as in addAnalysisResultColumnKeys()
         AnalysisResult analysisResult = (AnalysisResult) artifact;
         cells.add(getSourceObjType(analysisResult.getParent()));
@@ -185,7 +186,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         cells.add(analysisResult.getConfiguration());
         cells.add(analysisResult.getJustification());
     }
-    
+
     /**
      * Returns a displayable type string for the given content object.
      *
@@ -216,17 +217,17 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             return TskData.ObjectType.POOL.toString();
         }
         return "";
-    }    
-    
-    @Override
-    RowDTO createRow(BlackboardArtifact artifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) throws IllegalArgumentException {
-        if (! (artifact instanceof AnalysisResult)) {
-            throw new IllegalArgumentException("Can not make row for artifact with ID: " + artifact.getId() + " - artifact must be an analysis result");
-        }
-        return new AnalysisResultRowDTO((AnalysisResult)artifact, srcContent, isTimelineSupported, cellValues, id);
     }
 
-    public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
+    @Override
+    RowDTO createRow(BlackboardArtifact artifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) throws IllegalArgumentException {
+        if (!(artifact instanceof AnalysisResult)) {
+            throw new IllegalArgumentException("Can not make row for artifact with ID: " + artifact.getId() + " - artifact must be an analysis result");
+        }
+        return new AnalysisResultRowDTO((AnalysisResult) artifact, srcContent, isTimelineSupported, cellValues, id);
+    }
+
+    public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
 
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.ANALYSIS_RESULT
@@ -236,38 +237,142 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        return analysisResultCache.get(artifactKey, () -> fetchAnalysisResultsForTable(artifactKey));
+        SearchParams<AnalysisResultSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        if (hardRefresh) {
+            analysisResultCache.invalidate(searchParams);
+        }
+
+        return analysisResultCache.get(searchParams, () -> fetchAnalysisResultsForTable(searchParams));
     }
-    
-    public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
+
+    public boolean isAnalysisResultsInvalidating(AnalysisResultSearchParam key, ModuleDataEvent eventData) {
+        return key.getArtifactType().equals(eventData.getBlackboardArtifactType());
+    }
+
+    public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Data source id must be null or > 0.  "
                     + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        return hashHitCache.get(artifactKey, () -> fetchSetNameHitsForTable(artifactKey));
-    }    
-    
-    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey) throws ExecutionException, IllegalArgumentException {
+        SearchParams<HashHitSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        if (hardRefresh) {
+            hashHitCache.invalidate(searchParams);
+        }
+
+        return hashHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
+    }
+
+    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Data source id must be null or > 0.  "
                     + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        return keywordHitCache.get(artifactKey, () -> fetchSetNameHitsForTable(artifactKey));
-    }  
+        SearchParams<KeywordHitSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        if (hardRefresh) {
+            keywordHitCache.invalidate(searchParams);
+        }
+
+        return keywordHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
+    }
 
     public void dropAnalysisResultCache() {
         analysisResultCache.invalidateAll();
     }
-    
+
     public void dropHashHitCache() {
         hashHitCache.invalidateAll();
     }
-    
+
     public void dropKeywordHitCache() {
         keywordHitCache.invalidateAll();
+    }
+
+    /**
+     * Handles basic functionality of fetching and paging of analysis results.
+     */
+    static abstract class AbstractAnalysisResultFetcher<T extends AnalysisResultSearchParam> extends DAOFetcher<T> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public AbstractAnalysisResultFetcher(T params) {
+            super(params);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
+            if (dataEvent == null) {
+                return false;
+            }
+
+            return MainDAO.getInstance().getAnalysisResultDAO().isAnalysisResultsInvalidating(this.getParameters(), dataEvent);
+        }
+    }
+
+    /**
+     * Handles fetching and paging of analysis results.
+     */
+    public static class AnalysisResultFetcher extends AbstractAnalysisResultFetcher<AnalysisResultSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public AnalysisResultFetcher(AnalysisResultSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+    }
+
+    /**
+     * Handles fetching and paging of hashset hits.
+     */
+    public static class HashsetResultFetcher extends AbstractAnalysisResultFetcher<HashHitSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public HashsetResultFetcher(HashHitSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getHashHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+    }
+    
+    /**
+     * Handles fetching and paging of keyword hits.
+     */
+    public static class KeywordHitResultFetcher extends AbstractAnalysisResultFetcher<KeywordHitSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public KeywordHitResultFetcher(KeywordHitSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
     }
 }
