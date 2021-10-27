@@ -53,7 +53,7 @@ public final class IngestJobRunner {
      */
     public static List<IngestModuleError> runIngestJob(Collection<Content> dataSources, IngestJobSettings settings) throws InterruptedException {
         Object ingestMonitor = new Object();
-        IngestJobCompletiontListener completiontListener = new IngestJobCompletiontListener(ingestMonitor);
+        IngestJobCompletiontListener completiontListener = new IngestJobCompletiontListener(ingestMonitor, dataSources.size());
         IngestManager ingestManager = IngestManager.getInstance();
         ingestManager.addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, completiontListener);
         try {
@@ -84,6 +84,7 @@ public final class IngestJobRunner {
     private static final class IngestJobCompletiontListener implements PropertyChangeListener {
 
         private final Object ingestMonitor;
+        private int remainingJobsCount;
 
         /**
          * Constructs an ingest job event listener that allows
@@ -92,9 +93,11 @@ public final class IngestJobRunner {
          *
          * @param ingestMonitor A Java object to notify when the ingest job is
          *                      omcpleted.
+         * @param jobsCount The number of jobs to listen for before notifying monitor.
          */
-        IngestJobCompletiontListener(Object ingestMonitor) {
+        IngestJobCompletiontListener(Object ingestMonitor, int jobsCount) {
             this.ingestMonitor = ingestMonitor;
+            this.remainingJobsCount = jobsCount;
         }
 
         /**
@@ -109,7 +112,10 @@ public final class IngestJobRunner {
                 String eventType = event.getPropertyName();
                 if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     synchronized (ingestMonitor) {
-                        ingestMonitor.notify();
+                        this.remainingJobsCount--;
+                        if (this.remainingJobsCount <= 0) {
+                            ingestMonitor.notify();    
+                        }
                     }
                 }
             }
