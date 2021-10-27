@@ -71,7 +71,7 @@ public class TagsDAO {
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;    
-    private final Cache<BaseSearchParams, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     
     private static final String FILE_TAG_TYPE_ID = "FILE_TAG";
     private static final String RESULT_TAG_TYPE_ID = "RESULT_TAG";
@@ -144,14 +144,19 @@ public class TagsDAO {
         }
     }
     
-    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key) throws ExecutionException, IllegalArgumentException {
+    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (key.getMimeType() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
+        
+        SearchParams<FileTypeMimeSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        if (hardRefresh) {
+            this.searchParamsCache.invalidate(searchParams);
+        }
 
-        return searchParamsCache.get(key, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), key.getStartItem(), key.getMaxResultsCount()));
+        return searchParamsCache.get(searchParams, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), startItem, maxCount));
     }
     
     private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {

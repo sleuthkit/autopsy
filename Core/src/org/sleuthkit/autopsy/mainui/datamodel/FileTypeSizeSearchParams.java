@@ -73,7 +73,6 @@ public class FileTypeSizeSearchParams {
         int hash = 7;
         hash = 23 * hash + Objects.hashCode(this.sizeFilter);
         hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 

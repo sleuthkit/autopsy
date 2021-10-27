@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * Key for accessing data about tags from the DAO.
  */
-public class TagsSearchParams extends BaseSearchParams {
+public class TagsSearchParams {
     
     public enum TagType {
         FILE,
@@ -41,7 +41,6 @@ public class TagsSearchParams extends BaseSearchParams {
     }
 
     public TagsSearchParams(String tagName, TagType type, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount);
         this.tagName = tagName;
         this.type = type;
         this.dataSourceId = dataSourceId;
@@ -61,7 +60,6 @@ public class TagsSearchParams extends BaseSearchParams {
         hash = 23 * hash + Objects.hashCode(this.tagName);
         hash = 23 * hash + Objects.hashCode(this.type);
         hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + Objects.hashCode(super.hashCode());
         return hash;
     }
 
@@ -86,7 +84,7 @@ public class TagsSearchParams extends BaseSearchParams {
         if (!Objects.equals(this.type, other.type)) {
             return false;
         }
-        return super.equalFields(other);
+        return true;
     }
 
 }
