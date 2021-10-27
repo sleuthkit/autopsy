@@ -73,8 +73,6 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             .map(tp -> Integer.toString(tp.getTypeID()))
             .collect(Collectors.joining(", "));
     
-
-//    private static final String IGNORED_TYPES_SQL_SET = "(1)";
     private static Logger logger = Logger.getLogger(DataArtifactDAO.class.getName());
 
     private static DataArtifactDAO instance = null;
