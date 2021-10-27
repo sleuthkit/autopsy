@@ -18,86 +18,96 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.datamodel.CountsRowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeDTO.TreeItemDTO;
 
 /**
  * Factory for populating tree with results.
  */
-public class TreeChildFactory extends ChildFactory<RowDTO> {
+public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<TreeItemDTO<? extends T>> {
+
     private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
-    
-    private final Map<RowDTO, UpdatableNode> typeNodeMap = new HashMap<>();
-    private SearchResultsDTO results;
-    
-    public TreeChildFactory(SearchResultsDTO initialResults) {
-        this.results = initialResults;
-    }
+
+    private final Map<TreeItemDTO<? extends T>, TreeNode<T>> typeNodeMap = new HashMap<>();
+    private TreeDTO<? extends T> curResults = null;
 
     @Override
-    protected boolean createKeys(List<RowDTO> toPopulate) {
-        SearchResultsDTO curResults = this.results;
-        Set<RowDTO> resultRows = new HashSet<>(curResults.getItems());
-        
+    protected boolean createKeys(List<TreeItemDTO<? extends T>> toPopulate) {
+        if (curResults == null) {
+            try {
+                curResults = getChildResults();
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching keys", ex);
+                return false;
+            }
+        }
+
+        Set<TreeItemDTO<? extends T>> resultRows = new HashSet<>(curResults.getItems());
+
         // remove no longer present
-        Set<RowDTO> toBeRemoved = new HashSet<>(typeNodeMap.keySet());
+        Set<TreeItemDTO<? extends T>> toBeRemoved = new HashSet<>(typeNodeMap.keySet());
         toBeRemoved.removeAll(resultRows);
-        for (RowDTO presentId : toBeRemoved) {
+        for (TreeItemDTO<? extends T> presentId : toBeRemoved) {
             typeNodeMap.remove(presentId);
         }
-        
-        List<RowDTO> rowsToReturn = new ArrayList<>();
-        for (RowDTO dto : curResults.getItems()) {
+
+        List<TreeItemDTO<? extends T>> rowsToReturn = new ArrayList<>();
+        for (TreeItemDTO<? extends T> dto : curResults.getItems()) {
             // update cached that remain
-            UpdatableNode currentlyCached = typeNodeMap.get(dto.getId());
+            TreeNode<T> currentlyCached = typeNodeMap.get(dto.getId());
             if (currentlyCached != null) {
-                currentlyCached.update(curResults, dto);
+                currentlyCached.update(dto);
             } else {
                 // add new items
-                typeNodeMap.put(dto, createNewNode(curResults, dto));
+                typeNodeMap.put(dto, createNewNode(dto));
             }
-            
+
             rowsToReturn.add(dto);
         }
 
         toPopulate.addAll(rowsToReturn);
         return true;
     }
-    
-    protected UpdatableNode createNewNode(SearchResultsDTO searchResults, RowDTO rowData) {
-        try {
-            if (BlackboardArtifact.Category.DATA_ARTIFACT.name().equals(searchResults.getTypeId())) {
-                return new DataArtifactTypeTreeNode((CountsRowDTO<DataArtifactSearchParam>) rowData);
-            } else {
-                return null;
-            }    
-        } catch (ClassCastException ex) {
-            logger.log(Level.WARNING, "Unable to cast to proper type", ex);
-            return null;
-        }
+
+    @Override
+    protected void removeNotify() {
+        curResults = null;
+        typeNodeMap.clear();
+        super.removeNotify();
     }
 
     @Override
-    protected Node createNodeForKey(RowDTO key) {
+    protected void addNotify() {
+        super.addNotify();
+    }
+
+    @Override
+    protected Node createNodeForKey(TreeItemDTO<? extends T> key) {
         return typeNodeMap.get(key);
     }
 
-    public void update(SearchResultsDTO newResults) {
-        this.results = newResults;
+    public void update() {
+        try {
+            this.curResults = getChildResults();
+        } catch (IllegalArgumentException | ExecutionException ex) {
+            logger.log(Level.WARNING, "An error occurred while fetching keys", ex);
+            return;
+        }
         this.refresh(false);
     }
+
+    protected abstract TreeNode createNewNode(TreeItemDTO<? extends T> rowData);
+
+    protected abstract TreeDTO<? extends T> getChildResults() throws IllegalArgumentException, ExecutionException;
 }

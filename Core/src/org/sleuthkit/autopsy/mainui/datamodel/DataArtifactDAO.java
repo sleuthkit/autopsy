@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeDTO.TreeItemDTO;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -211,7 +212,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
      *
      * @throws ExecutionException
      */
-    public SearchResultsDTO getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
+    public TreeDTO<DataArtifactSearchParam> getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
         try {
             // get artifact types and counts
             SleuthkitCase skCase = getCase();
@@ -237,10 +238,10 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             });
 
             // get row dto's sorted by display name
-            List<RowDTO> typeCountRows = typeCounts.entrySet().stream()
+            List<TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
                     .map(entry -> {
-                        return new CountsRowDTO<>(
-                                entry.getKey().getTypeName(),
+                        return new TreeItemDTO<>(
+                                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
                                 new DataArtifactSearchParam(entry.getKey(), dataSourceId),
                                 entry.getKey().getTypeID(),
                                 entry.getKey().getDisplayName(),
@@ -250,11 +251,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                     .collect(Collectors.toList());
 
             // return results
-            return new BaseSearchResultsDTO(
-                    BlackboardArtifact.Category.DATA_ARTIFACT.name(),
-                    BlackboardArtifact.Category.DATA_ARTIFACT.getDisplayName(),
-                    CountsRowDTO.getDefaultColumnKeys(),
-                    typeCountRows);
+            return new TreeDTO<>(treeItemRows);
 
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);

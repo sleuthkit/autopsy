@@ -23,8 +23,7 @@ import java.util.logging.Level;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
-import org.sleuthkit.autopsy.mainui.nodes.TreeChildFactory;
+import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory;
 
 /**
  * Analysis Results node support.
@@ -50,14 +49,8 @@ public class DataArtifacts implements AutopsyVisitableItem {
     static class RootNode extends Artifacts.BaseArtifactNode {
 
         private static Children getChildren(long filteringDSObjId) {
-            try {
-                return Children.create(
-                        new TreeChildFactory(MainDAO.getInstance().getDataArtifactsDAO()
-                                .getDataArtifactCounts(filteringDSObjId > 0 ? filteringDSObjId : null)), true);
-            } catch (ExecutionException ex) {
-                logger.log(Level.WARNING, "An error occurred while fetching keys for data artifacts tree.", ex);
-                return Children.LEAF;
-            }
+            return Children.create(
+                    new DataArtifactTypeFactory(filteringDSObjId > 0 ? filteringDSObjId : null), true);
         }
 
         /**
