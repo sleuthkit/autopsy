@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * Key for accessing data about file type extensions from the DAO.
  */
-public class FileTypeExtensionsSearchParams extends BaseSearchParams {
+public class FileTypeExtensionsSearchParams {
 
     private final FileExtSearchFilter filter;
     private final Long dataSourceId;
@@ -31,12 +31,6 @@ public class FileTypeExtensionsSearchParams extends BaseSearchParams {
     // TODO: This should ideally take in some kind of ENUM once we redo the tree.
     // this assumes that filters implicitly or explicitly implement hashCode and equals to work
     public FileTypeExtensionsSearchParams(FileExtSearchFilter filter, Long dataSourceId) {
-        this.filter = filter;
-        this.dataSourceId = dataSourceId;
-    }
-
-    public FileTypeExtensionsSearchParams(FileExtSearchFilter filter, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount);
         this.filter = filter;
         this.dataSourceId = dataSourceId;
     }
@@ -52,9 +46,8 @@ public class FileTypeExtensionsSearchParams extends BaseSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.filter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 53 * hash + Objects.hashCode(super.hashCode());
+        hash = 31 * hash + Objects.hashCode(this.filter);
+        hash = 31 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -76,9 +69,6 @@ public class FileTypeExtensionsSearchParams extends BaseSearchParams {
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
-        
-        return super.equalFields(other);
+        return true;
     }
-
-    
 }

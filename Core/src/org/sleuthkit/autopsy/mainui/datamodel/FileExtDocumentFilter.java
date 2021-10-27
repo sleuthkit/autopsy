@@ -18,9 +18,8 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -33,18 +32,18 @@ import org.openide.util.NbBundle.Messages;
     "FileExtDocumentFilter_txt_displayName=Plain Text",
     "FileExtDocumentFilter_rtf_displayName=Rich Text",})
 public enum FileExtDocumentFilter implements FileExtSearchFilter {
-    AUT_DOC_HTML(0, "AUT_DOC_HTML", Bundle.FileExtDocumentFilter_html_displayName(), Arrays.asList(".htm", ".html")), //NON-NLS
-    AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", Bundle.FileExtDocumentFilter_office_displayName(), Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")), //NON-NLS
-    AUT_DOC_PDF(2, "AUT_DOC_PDF", Bundle.FileExtDocumentFilter_pdf_displayName(), Arrays.asList(".pdf")), //NON-NLS
-    AUT_DOC_TXT(3, "AUT_DOC_TXT", Bundle.FileExtDocumentFilter_txt_displayName(), Arrays.asList(".txt")), //NON-NLS
-    AUT_DOC_RTF(4, "AUT_DOC_RTF", Bundle.FileExtDocumentFilter_rtf_displayName(), Arrays.asList(".rtf"));
+    AUT_DOC_HTML(0, "AUT_DOC_HTML", Bundle.FileExtDocumentFilter_html_displayName(), ImmutableSet.of(".htm", ".html")), //NON-NLS
+    AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", Bundle.FileExtDocumentFilter_office_displayName(), ImmutableSet.of(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")), //NON-NLS
+    AUT_DOC_PDF(2, "AUT_DOC_PDF", Bundle.FileExtDocumentFilter_pdf_displayName(), ImmutableSet.of(".pdf")), //NON-NLS
+    AUT_DOC_TXT(3, "AUT_DOC_TXT", Bundle.FileExtDocumentFilter_txt_displayName(), ImmutableSet.of(".txt")), //NON-NLS
+    AUT_DOC_RTF(4, "AUT_DOC_RTF", Bundle.FileExtDocumentFilter_rtf_displayName(), ImmutableSet.of(".rtf"));
     //NON-NLS
     final int id;
     final String name;
     final String displayName;
-    final List<String> filter;
+    final Set<String> filter;
 
-    private FileExtDocumentFilter(int id, String name, String displayName, List<String> filter) {
+    private FileExtDocumentFilter(int id, String name, String displayName, Set<String> filter) {
         this.id = id;
         this.name = name;
         this.displayName = displayName;
@@ -67,8 +66,8 @@ public enum FileExtDocumentFilter implements FileExtSearchFilter {
     }
 
     @Override
-    public List<String> getFilter() {
-        return Collections.unmodifiableList(this.filter);
+    public Set<String> getFilter() {
+        return this.filter;
     }
 
 }

@@ -24,17 +24,11 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Key for analysis result in order to retrieve data from DAO.
  */
-public class AnalysisResultSearchParam extends BaseSearchParams {
+public class AnalysisResultSearchParam {
     private final BlackboardArtifact.Type artifactType;
     private final Long dataSourceId;
 
     public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        this.artifactType = artifactType;
-        this.dataSourceId = dataSourceId;
-    }
-
-    public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, long startItem, Long maxResultsCount) {
-        super(startItem, maxResultsCount);
         this.artifactType = artifactType;
         this.dataSourceId = dataSourceId;
     }
@@ -50,9 +44,8 @@ public class AnalysisResultSearchParam extends BaseSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 13 * hash + Objects.hashCode(this.artifactType);
-        hash = 13 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 13 * hash + Objects.hashCode(super.hashCode());
+        hash = 79 * hash + Objects.hashCode(this.artifactType);
+        hash = 79 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -74,7 +67,7 @@ public class AnalysisResultSearchParam extends BaseSearchParams {
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
-        return super.equalFields(other);
+        return true;
     }
     
     

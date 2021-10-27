@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * Interface for filters by file extensions.
@@ -31,6 +31,6 @@ public interface FileExtSearchFilter {
 
     public String getDisplayName();
 
-    public List<String> getFilter();
+    public Set<String> getFilter();
     
 }
