@@ -53,6 +53,7 @@ import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
@@ -866,12 +867,19 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             try {
                 Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                 if (treeNode != null) {
-                    Node originNode = treeNode instanceof DirectoryTreeFilterNode
-                            ? ((DirectoryTreeFilterNode) treeNode).getOriginal() :
-                            treeNode;
+
+                    Node originNode;
+                    if (treeNode instanceof DirectoryTreeFilterNode) {
+                        originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
+//                    } else if (treeNode instanceof FilterAcceptedNode) {
+//                        originNode = ((FilterAcceptedNode) treeNode).getOriginal();
+                    } else {
+                        originNode = treeNode;
+                    }
+
                     //set node, wrap in filter node first to filter out children
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                    if(originNode instanceof SelectionResponder) {
+                    if (originNode instanceof SelectionResponder) {
                         ((SelectionResponder) originNode).respondSelection(dataResult);
                     } else if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
@@ -1278,7 +1286,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 return;
             }
         }
-        
+
         final Set<Host> finalHosts = hosts;
 
         Optional<Node> osAccountListNodeOpt = Stream.of(em.getRootContext().getChildren().getNodes(true))
@@ -1498,12 +1506,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact.Type artifactType, BlackboardArtifact art) {
         Node interestingItemsRootNode = typesChildren.findChild(artifactType.getDisplayName());
         Children setNodeChildren = (interestingItemsRootNode == null) ? null : interestingItemsRootNode.getChildren();
-        
+
         // set node children for type could not be found, so return null.
         if (setNodeChildren == null) {
             return null;
         }
-        
+
         String setName = null;
         try {
             setName = art.getAttributes().stream()

@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeTreeNode;
+import org.sleuthkit.autopsy.mainui.nodes.UpdatableNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -74,6 +75,18 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         return new DirectoryTreeFilterNode(arg0, createChildren);
     }
 
+    public static class FilterAcceptedNode extends FilterNode {
+
+        public FilterAcceptedNode(Node original) {
+            super(original);
+        }
+
+        @Override
+        public Node getOriginal() {
+            return super.getOriginal();
+        }
+    }
+
     /*
      * This method takes in a node as an argument and will create a new one if
      * it should be displayed in the tree. If it is to be displayed, it also
@@ -84,10 +97,10 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
      */
     @Override
     protected Node[] createNodes(Node origNode) {
-//        if (origNode instanceof DataArtifactTypeTreeNode) {
-//            return new Node[]{origNode};
+//        if (origNode instanceof DataArtifacts.RootNode || origNode instanceof UpdatableNode) {
+//            return new Node[]{new FilterAcceptedNode(origNode)};
 //        } else 
-
+//            
         if (origNode == null || !(origNode instanceof DisplayableItemNode)) {
             return new Node[]{};
         }
