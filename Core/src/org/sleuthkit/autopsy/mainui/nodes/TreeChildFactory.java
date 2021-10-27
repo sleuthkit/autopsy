@@ -97,6 +97,9 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<TreeIt
         return typeNodeMap.get(key);
     }
 
+    /**
+     * Fetches child view from the database and updates the tree.
+     */
     public void update() {
         try {
             this.curResults = getChildResults();
@@ -107,7 +110,18 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<TreeIt
         this.refresh(false);
     }
 
+    /**
+     * Creates a TreeNode given the tree item data.
+     * @param rowData The tree item data.
+     * @return The generated tree node.
+     */
     protected abstract TreeNode createNewNode(TreeItemDTO<? extends T> rowData);
 
+    /**
+     * Fetches data from the database to populate this part of the tree.
+     * @return The data.
+     * @throws IllegalArgumentException
+     * @throws ExecutionException 
+     */
     protected abstract TreeDTO<? extends T> getChildResults() throws IllegalArgumentException, ExecutionException;
 }
