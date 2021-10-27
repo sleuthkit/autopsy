@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * Key for accessing data about tags from the DAO.
@@ -31,23 +32,21 @@ public class TagsSearchParams {
     }
 
     private final TagType type;
-    private final String tagName;
+    private final TagName tagName;
     private final Long dataSourceId;
  
-    public TagsSearchParams(String tagName, TagType type, Long dataSourceId) {
+    public TagsSearchParams(TagName tagName, TagType type, Long dataSourceId) {
         this.tagName = tagName;
         this.type = type;
         this.dataSourceId = dataSourceId;
     }
 
-    public TagsSearchParams(String tagName, TagType type, Long dataSourceId, long startItem, Long maxResultsCount) {
-        this.tagName = tagName;
-        this.type = type;
-        this.dataSourceId = dataSourceId;
-    }
-
-    public String getMimeType() {
+    public TagName getTagName() {
         return tagName;
+    }
+
+    public TagType getTagType() {
+        return type;
     }
 
     public Long getDataSourceId() {
@@ -75,7 +74,7 @@ public class TagsSearchParams {
             return false;
         }
         final TagsSearchParams other = (TagsSearchParams) obj;
-        if (!(this.tagName.equals(other.tagName))) {
+        if (!Objects.equals(this.tagName, other.tagName)) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {

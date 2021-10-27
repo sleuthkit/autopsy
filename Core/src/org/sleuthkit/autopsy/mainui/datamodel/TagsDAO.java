@@ -22,27 +22,25 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
-import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Provides information to populate the results viewer for data in the views
@@ -73,12 +71,16 @@ public class TagsDAO {
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;    
     private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     
+    private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
+    
     private static final String FILE_TAG_TYPE_ID = "FILE_TAG";
     private static final String RESULT_TAG_TYPE_ID = "RESULT_TAG";
-
+    private static final String FILE_TAG_DISPLAY_NAME = "File Tag";
+    private static final String RESULT_TAG_DISPLAY_NAME = "Result Tag";
+    
     private static final List<ColumnKey> FILE_TAG_COLUMNS = Arrays.asList(
             getFileColumnKey(Bundle.TagsDAO_fileColumns_nameColLbl()),
-            getFileColumnKey(Bundle.TagsDAO_fileColumns_originalName()),
+            getFileColumnKey(Bundle.TagsDAO_fileColumns_originalName()), // ELODO handle translation
             getFileColumnKey(Bundle.TagsDAO_fileColumns_filePathColLbl()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_commentColLbl()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_modifiedTimeColLbl()),
@@ -144,115 +146,146 @@ public class TagsDAO {
         }
     }
     
-    public SearchResultsDTO getFilesByMime(FileTypeMimeSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        if (key.getMimeType() == null) {
+    public SearchResultsDTO getTags(TagsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+        if (key.getTagName() == null) {
             throw new IllegalArgumentException("Must have non-null filter");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
         
-        SearchParams<FileTypeMimeSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        SearchParams<TagsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
         if (hardRefresh) {
             this.searchParamsCache.invalidate(searchParams);
         }
 
-        return searchParamsCache.get(searchParams, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), startItem, maxCount));
-    }
-    
-    private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
-
-        String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + " AND (type IN ("
-                + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
-                + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
-                + "))"
-                + (dataSourceId != null && dataSourceId > 0 ? " AND data_source_obj_id = " + dataSourceId : " ")
-                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
-                + " AND mime_type = '" + mimeType + "'";
-    
-        return whereClause;
+        return searchParamsCache.get(searchParams, () -> fetchTagsDTOs(key.getTagName(), key.getTagType(), key.getDataSourceId(), startItem, maxCount));
     }
 
     @NbBundle.Messages({"FileTag.name.text=File Tag"})
-    private SearchResultsDTO fetchMimeSearchResultsDTOs(String mimeType, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
-        String whereStatement = getFileMimeWhereStatement(mimeType, dataSourceId);
-        final String FILE_TAG_DISPLAY_NAME = Bundle.FileTag_name_text();
-        return fetchFileViewFiles(whereStatement, FILE_TAG_DISPLAY_NAME, startItem, maxResultCount);
+    private SearchResultsDTO fetchTagsDTOs(TagName tagName, TagsSearchParams.TagType type, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+        if (null == type) {
+            // ELTODO throw?
+            return null;
+        }
+
+        switch (type) {
+            case FILE:
+                return fetchFileTags(tagName, dataSourceId, startItem, maxResultCount);
+            case RESULT:
+                return fetchResultTags(tagName, dataSourceId, startItem, maxResultCount);
+            default:
+                // ELTODO throw?
+            return null;
+        }
     }
+    
+    /* GET RESULT TAGS
+     * BlackboardArtifactTagNodeFactory.createKeys(List<BlackboardArtifactTag> tags)
+     * BlackboardArtifactTagNode.createSheet()
+     */
+    
+    /* GET FILE TAGS
+     * ContentTagNodeFactory.createKeys(List<ContentTag> tags)
+     * ContentTagNode.createSheet()
+     */
+    
+    private SearchResultsDTO fetchResultTags(TagName tagName, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
 
-    private SearchResultsDTO fetchFileViewFiles(String originalWhereStatement, String displayName, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+        // ELTODO startItem, maxResultCount
         
-        // Add offset and/or paging, if specified
-        String modifiedWhereStatement = originalWhereStatement 
-                + " ORDER BY obj_id ASC"                
-                + (maxResultCount != null && maxResultCount > 0 ? " LIMIT " + maxResultCount : "")
-                + (startItem > 0 ? " OFFSET " + startItem : "");
-
-        List<AbstractFile> files = getCase().findAllFilesWhere(modifiedWhereStatement);
-        
-        long totalResultsCount;
-        // get total number of results
-        if ( (startItem == 0) // offset is zero AND
-                && ( (maxResultCount != null && files.size() < maxResultCount) // number of results is less than max
-                    || (maxResultCount == null)) ) { // OR max number of results was not specified
-                totalResultsCount = files.size();
+        List<BlackboardArtifactTag> tags = new ArrayList<>();
+        // Use the blackboard artifact tags bearing the specified tag name as the tags.
+        List<BlackboardArtifactTag> artifactTags = (dataSourceId != null && dataSourceId > 0)
+                ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, dataSourceId)
+                : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName);
+        if (UserPreferences.showOnlyCurrentUserTags()) {
+            String userName = System.getProperty(USER_NAME_PROPERTY);
+            for (BlackboardArtifactTag tag : artifactTags) {
+                if (userName.equals(tag.getUserName())) {
+                    tags.add(tag);
+                }
+            }
         } else {
-            // do a query to get total number of results
-            totalResultsCount = getCase().countFilesWhere(originalWhereStatement);
+            tags.addAll(artifactTags);
         }
 
         List<RowDTO> fileRows = new ArrayList<>();
-        for (AbstractFile file : files) {
+        for (BlackboardArtifactTag tag : tags) {
+            String name = tag.getContent().getName();  // As a backup.
+            try {
+                name = tag.getArtifact().getShortDescription();
+            } catch (TskCoreException ignore) {
+                // it's a WARNING, skip
+            }
             
+            String contentPath;
+            try {
+                contentPath = tag.getContent().getUniquePath();
+            } catch (TskCoreException ex) {
+                contentPath = NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.unavail.text");
+            }
+
             List<Object> cellValues = Arrays.asList(
-                    file.getName(), // GVDTODO handle . and .. from getContentDisplayName()
-                    // GVDTODO translation column
-                    null,
-                    //GVDTDO replace nulls with SCO
-                    null,
-                    null,
-                    null,
-                    file.getUniquePath(),
-                    TimeZoneUtils.getFormattedTime(file.getMtime()),
-                    TimeZoneUtils.getFormattedTime(file.getCtime()),
-                    TimeZoneUtils.getFormattedTime(file.getAtime()),
-                    TimeZoneUtils.getFormattedTime(file.getCrtime()),
-                    file.getSize(),
-                    file.getDirFlagAsString(),
-                    file.getMetaFlagsAsString(),
-                    // mode,
-                    // userid,
-                    // groupid,
-                    // metaAddr,
-                    // attrAddr,
-                    // typeDir,
-                    // typeMeta,
+                    name,
+                    null, // ELTODO translation column
+                    contentPath,
+                    tag.getArtifact().getDisplayName(),
+                    tag.getComment(),
+                    tag.getUserName());
 
-                    file.getKnown().getName(),
-                    StringUtils.defaultString(file.getMd5Hash()),
-                    StringUtils.defaultString(file.getSha256Hash()),
-                    // objectId,
-
-                    StringUtils.defaultString(file.getMIMEType()),
-                    file.getNameExtension()
-            );
-
-            fileRows.add(new FileRowDTO(
-                    file,
-                    file.getId(),
-                    file.getName(),
-                    file.getNameExtension(),
-                    getExtensionMediaType(file.getNameExtension()),
-                    file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
-                    file.getType(),
-                    cellValues));
+            fileRows.add(new BaseRowDTO(
+                    cellValues,
+                    RESULT_TAG_TYPE_ID,
+                    tag.getId()));
         }
 
-        return new BaseSearchResultsDTO(FILE_TAG_TYPE_ID, displayName, FILE_TAG_COLUMNS, fileRows, startItem, totalResultsCount);
+        return new BaseSearchResultsDTO(RESULT_TAG_TYPE_ID, RESULT_TAG_DISPLAY_NAME, RESULT_TAG_COLUMNS, fileRows, startItem, fileRows.size());
     }
+    
+    private SearchResultsDTO fetchFileTags(TagName tagName, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
 
+        // ELTODO startItem, maxResultCount
+        
+        List<ContentTag> tags = new ArrayList<>();
+        List<ContentTag> contentTags = (dataSourceId != null && dataSourceId > 0)
+                ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName, dataSourceId)
+                : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName);
+        if (UserPreferences.showOnlyCurrentUserTags()) {
+            String userName = System.getProperty(USER_NAME_PROPERTY);
+            for (ContentTag tag : contentTags) {
+                if (userName.equals(tag.getUserName())) {
+                    tags.add(tag);
+                }
+            }
+        } else {
+            tags.addAll(contentTags);
+        }
+
+        List<RowDTO> fileRows = new ArrayList<>();
+        for (ContentTag tag : tags) {
+            Content content = tag.getContent();
+            String contentPath = content.getUniquePath();
+            AbstractFile file = content instanceof AbstractFile ? (AbstractFile) content : null;
+
+            List<Object> cellValues = Arrays.asList(
+                    content.getName(),
+                    null, // ELTODO translation column
+                    contentPath,
+                    tag.getComment(),
+                    file != null ? TimeZoneUtils.getFormattedTime(file.getMtime()) : "",
+                    file != null ? TimeZoneUtils.getFormattedTime(file.getCtime()) : "",
+                    file != null ? TimeZoneUtils.getFormattedTime(file.getAtime()) : "",
+                    file != null ? TimeZoneUtils.getFormattedTime(file.getCrtime()) : "",
+                    content.getSize(),
+                    file != null ? StringUtils.defaultString(file.getMd5Hash()) : "",
+                    tag.getUserName());
+
+            fileRows.add(new BaseRowDTO(
+                    cellValues,
+                    FILE_TAG_TYPE_ID,
+                    file.getId()));
+        }
+
+        return new BaseSearchResultsDTO(FILE_TAG_TYPE_ID, FILE_TAG_DISPLAY_NAME, FILE_TAG_COLUMNS, fileRows, startItem, fileRows.size());
+    }
 }
