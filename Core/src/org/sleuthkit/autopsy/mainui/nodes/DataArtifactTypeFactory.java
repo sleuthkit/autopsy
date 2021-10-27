@@ -33,6 +33,10 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
     private final Long dataSourceId;
 
+    /**
+     * Main constructor.
+     * @param dataSourceId The data source id to filter on or null if no filter.
+     */
     public DataArtifactTypeFactory(Long dataSourceId) {
         this.dataSourceId = dataSourceId;
     }

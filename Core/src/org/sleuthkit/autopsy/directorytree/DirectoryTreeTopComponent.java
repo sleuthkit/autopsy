@@ -90,6 +90,7 @@ import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeFilterChildren.FilterAcceptedNode;
 import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -611,7 +612,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             };
 
-//            root = new DirectoryTreeFilterNode(root, true);
+            root = new DirectoryTreeFilterNode(root, true);
 
             em.setRootContext(root);
             em.getRootContext().setName(currentCase.getName());
@@ -871,8 +872,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Node originNode;
                     if (treeNode instanceof DirectoryTreeFilterNode) {
                         originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
-//                    } else if (treeNode instanceof FilterAcceptedNode) {
-//                        originNode = ((FilterAcceptedNode) treeNode).getOriginal();
                     } else {
                         originNode = treeNode;
                     }

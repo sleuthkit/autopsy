@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory;
@@ -46,12 +47,13 @@ public class DataArtifacts implements AutopsyVisitableItem {
     /**
      * Parent node of all data artifacts.
      */
-    static class RootNode extends Artifacts.BaseArtifactNode {
+    public static class RootNode extends Artifacts.BaseArtifactNode {
 
         private static Children getChildren(long filteringDSObjId) {
             return Children.create(
                     new DataArtifactTypeFactory(filteringDSObjId > 0 ? filteringDSObjId : null), true);
         }
+        private final long filteringDSObjId;
 
         /**
          * Main constructor.
@@ -66,6 +68,11 @@ public class DataArtifacts implements AutopsyVisitableItem {
                     "org/sleuthkit/autopsy/images/extracted_content.png",
                     DataArtifacts.getName(),
                     DataArtifacts.getName());
+            this.filteringDSObjId = filteringDSObjId;
+        }
+        
+        public Node clone() {
+            return new RootNode(this.filteringDSObjId);
         }
     }
 

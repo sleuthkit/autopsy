@@ -25,9 +25,11 @@ import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.DataArtifacts;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -38,6 +40,7 @@ import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
+import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -73,18 +76,6 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         return new DirectoryTreeFilterNode(arg0, createChildren);
     }
 
-    public static class FilterAcceptedNode extends FilterNode {
-
-        public FilterAcceptedNode(Node original) {
-            super(original);
-        }
-
-        @Override
-        public Node getOriginal() {
-            return super.getOriginal();
-        }
-    }
-
     /*
      * This method takes in a node as an argument and will create a new one if
      * it should be displayed in the tree. If it is to be displayed, it also
@@ -95,11 +86,10 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
      */
     @Override
     protected Node[] createNodes(Node origNode) {
-//        if (origNode instanceof DataArtifacts.RootNode || origNode instanceof UpdatableNode) {
-//            return new Node[]{new FilterAcceptedNode(origNode)};
-//        } else 
-//            
-        if (origNode == null || !(origNode instanceof DisplayableItemNode)) {
+        if (origNode instanceof DataArtifacts.RootNode) {
+            Node cloned = ((DataArtifacts.RootNode) origNode).clone();
+            return new Node[]{cloned};
+        } else if (origNode == null || !(origNode instanceof DisplayableItemNode)) {
             return new Node[]{};
         }
 
