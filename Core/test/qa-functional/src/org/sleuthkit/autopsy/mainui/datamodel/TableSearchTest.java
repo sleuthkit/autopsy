@@ -32,6 +32,7 @@ import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -45,6 +46,7 @@ import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -85,6 +87,7 @@ public class TableSearchTest extends NbTestCase {
     private static final String KEYWORD_PREVIEW = "There is a bomb.";
     
     // Extension and MIME type test
+    private static AbstractFile customFile;
     private static final String CUSTOM_MIME_TYPE = "fake/type";
     private static final String CUSTOM_MIME_TYPE_FILE_NAME = "test.fake";
     private static final String CUSTOM_EXTENSION = "fake";
@@ -98,6 +101,7 @@ public class TableSearchTest extends NbTestCase {
     Case openCase = null;          // The case for testing
     SleuthkitCase db = null;       // The case database
     Blackboard blackboard = null;  // The blackboard
+    TagsManager tagsManager = null;// Tags manager
 
     DataSource dataSource1 = null; // A local files data source
     DataSource dataSource2 = null; // A local files data source
@@ -123,6 +127,10 @@ public class TableSearchTest extends NbTestCase {
     // Keyword hits test
     AnalysisResult keywordHitAnalysisResult = null; // A keyword hit
     Content keywordHitSource = null;                 // The source of the keyword hit above
+    
+    // Tags test
+    TagName knownTag1 = null;
+    TagName tag2 = null;
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(TableSearchTest.class).
@@ -148,6 +156,7 @@ public class TableSearchTest extends NbTestCase {
         mimeSearchTest();
         extensionSearchTest();
         sizeSearchTest();
+        tagsTest();
     }
 
     /**
@@ -159,6 +168,7 @@ public class TableSearchTest extends NbTestCase {
             openCase = CaseUtils.createAsCurrentCase("testTableSearchCase");
             db = openCase.getSleuthkitCase();
             blackboard = db.getBlackboard();
+            tagsManager = openCase.getServices().getTagsManager();
 
             // Add two logical files data sources
             SleuthkitCase.CaseDbTransaction trans = db.beginTransaction();
@@ -189,7 +199,7 @@ public class TableSearchTest extends NbTestCase {
             fileB1.setMIMEType("text/plain");
             fileB1.save();
 
-            AbstractFile customFile = db.addLocalFile(CUSTOM_MIME_TYPE_FILE_NAME, "", 67000000, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);
+            customFile = db.addLocalFile(CUSTOM_MIME_TYPE_FILE_NAME, "", 67000000, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);
             customFile.setMIMEType(CUSTOM_MIME_TYPE);
             customFile.save();
 
@@ -306,7 +316,25 @@ public class TableSearchTest extends NbTestCase {
                     null, KEYWORD_SET_1, null, attrs).getAnalysisResult();
             keywordHitSource = hashHitAnalysisResult;
             
-        } catch (TestUtilsException | TskCoreException | BlackboardException ex) {
+            // Add tags ----
+            knownTag1 = tagsManager.addTagName("Tag 1", "Descrition", TagName.HTML_COLOR.RED, TskData.FileKnown.KNOWN);
+            tag2 = tagsManager.addTagName("Tag 2", "Descrition");
+            
+            // Tag the custom artifacts in data source 1
+            openCase.getServices().getTagsManager().addBlackboardArtifactTag(customDataArtifact, knownTag1, "Comment");
+            openCase.getServices().getTagsManager().addBlackboardArtifactTag(customAnalysisResult, tag2, "Comment 2");
+            
+            // Tag file in data source 1
+            openCase.getServices().getTagsManager().addContentTag(fileA2, tag2);
+            openCase.getServices().getTagsManager().addContentTag(fileA3, tag2);            
+            
+            // Tag file in data source 2
+            openCase.getServices().getTagsManager().addContentTag(fileB1, tag2);
+            
+            // Tag the custom file in data source 2
+            openCase.getServices().getTagsManager().addContentTag(customFile, knownTag1);            
+            
+        } catch (TestUtilsException | TskCoreException | BlackboardException | TagsManager.TagNameAlreadyExistsException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -470,6 +498,52 @@ public class TableSearchTest extends NbTestCase {
             results = viewsDAO.getFilesBySize(param, 0, null, false);
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
+        } catch (ExecutionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }    
+    
+    public void tagsTest() {
+        // Quick test that everything is initialized
+        assertTrue(db != null);
+
+        try {
+            TagsDAO tagsDAO = MainDAO.getInstance().getTagsDAO();
+
+            // Get "Tag1" file tags from data source 1
+            TagsSearchParams param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.FILE, dataSource1.getId());
+            SearchResultsDTO results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+
+            // Get "Tag2" file tags from data source 1
+            param = new TagsSearchParams(tag2, TagsSearchParams.TagType.FILE, dataSource1.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+
+            // Get "Tag2" file tags from all data sources
+            param = new TagsSearchParams(tag2, TagsSearchParams.TagType.FILE, null);
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
+
+            // Get "Tag1" result tags from data source 1
+            param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.RESULT, dataSource1.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+            // Get "Tag1" result tags from data source 2
+            param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.RESULT, dataSource2.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+
+            // Test custom tags
+
+            
         } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -721,5 +795,7 @@ public class TableSearchTest extends NbTestCase {
         }
         openCase = null;
         db = null;
+        blackboard = null;
+        tagsManager = null;
     }
 }
