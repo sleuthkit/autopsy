@@ -538,6 +538,20 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
+            // Get "Tag1" file tags from data source 2
+            param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.FILE, dataSource2.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+            // Get the row
+            RowDTO rowDTO = results.getItems().get(0);
+            assertTrue(rowDTO instanceof BaseRowDTO);
+            BaseRowDTO tagResultRowDTO = (BaseRowDTO) rowDTO;
+
+            // Check that the file tag is for the custom file
+            assertTrue(tagResultRowDTO.getCellValues().contains(customFile.getName()));            
+            
             // Check that a few of the expected file tag column names are present
             List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
             assertTrue(columnDisplayNames.contains(MD5_COLUMN));
@@ -567,9 +581,9 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(1, results.getItems().size());
             
             // Get the row
-            RowDTO rowDTO = results.getItems().get(0);
+            rowDTO = results.getItems().get(0);
             assertTrue(rowDTO instanceof BaseRowDTO);
-            BaseRowDTO tagResultRowDTO = (BaseRowDTO) rowDTO;
+            tagResultRowDTO = (BaseRowDTO) rowDTO;
 
             // Check that some of the expected result tag column values are present
             assertTrue(tagResultRowDTO.getCellValues().contains(TAG_COMMENT));
