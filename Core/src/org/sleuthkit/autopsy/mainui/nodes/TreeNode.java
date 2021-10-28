@@ -91,14 +91,20 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
      * Sets the display name of the node to include the display name and count
      * of the item.
      *
-     * @param itemData The item data.
+     * @param prevData The previous item data (may be null).
+     * @param curData The item data (must be non-null).
      */
-    protected void setDisplayName(TreeItemDTO<? extends T> itemData) {
-        String displayName = itemData.getCount() == null
-                ? itemData.getDisplayName()
-                : MessageFormat.format("{0} ({1})", itemData.getDisplayName(), itemData.getCount());
+    protected void updateDisplayName(TreeItemDTO<? extends T> prevData, TreeItemDTO<? extends T> curData) {
+        // update display name only if there is a change.
+        if (prevData == null
+                || !prevData.getDisplayName().equals(curData.getDisplayName())
+                || prevData.getCount() != curData.getCount()) {
+            String displayName = curData.getCount() == null
+                    ? curData.getDisplayName()
+                    : MessageFormat.format("{0} ({1})", curData.getDisplayName(), curData.getCount());
 
-        this.setDisplayName(displayName);
+            this.setDisplayName(displayName);
+        }
     }
 
     /**
@@ -109,19 +115,18 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
      * @thitems IllegalArgumentException
      */
     public void update(TreeItemDTO<? extends T> updatedData) {
-        if (this.itemData != null && 
-                (updatedData == null ||
-                this.itemData.getId() != updatedData.getId() || 
-                !this.itemData.getTypeData().equals(updatedData.getTypeData()))) {
+        if (updatedData == null) {
+            logger.log(Level.WARNING, "Expected non-null updatedData");
+        } else if (this.itemData != null && this.itemData.getId() != updatedData.getId()) {
             logger.log(Level.WARNING, MessageFormat.format(
-                    "Expected update data to have same id and type data but received [id: {0}, type: {1}] replacing [id: {2}, type: {3}]",
-                    (updatedData == null ? "<null>" : updatedData.getId()), 
-                    (updatedData == null ? "<null>" : updatedData.getTypeData()),
-                    this.itemData.getId(), 
-                    this.itemData.getTypeData()));
+                    "Expected update data to have same id but received [id: {0}] replacing [id: {1}]",
+                    updatedData.getId(),
+                    this.itemData.getId()));
             return;
         }
+
+        TreeItemDTO<? extends T> prevData = this.itemData;
         this.itemData = updatedData;
-        this.setDisplayName(updatedData);
+        updateDisplayName(prevData, updatedData);
     }
 }

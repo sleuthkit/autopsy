@@ -19,6 +19,7 @@ import org.openide.util.NbBundle;
 import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
@@ -70,6 +71,8 @@ import org.sleuthkit.datamodel.TskCoreException;
     "BlackboardArtifactDAO.columnKeys.dataSource.description=Data Source"
 })
 abstract class BlackboardArtifactDAO {
+
+    private static Logger logger = Logger.getLogger(BlackboardArtifactDAO.class.getName());
 
     // GVDTODO there is a different standard for normal attr strings and email attr strings
     static final int STRING_LENGTH_MAX = 160;
@@ -138,6 +141,13 @@ abstract class BlackboardArtifactDAO {
     private static final String IGNORED_TYPES_SQL_SET = IGNORED_TYPES.stream()
             .map(tp -> Integer.toString(tp.getTypeID()))
             .collect(Collectors.joining(", "));
+
+    /**
+     * @return The set of types that are not shown in the tree.
+     */
+    protected static Set<BlackboardArtifact.Type> getIgnoredTreeTypes() {
+        return IGNORED_TYPES;
+    }
 
     TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
         Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
@@ -356,7 +366,20 @@ abstract class BlackboardArtifactDAO {
         }
     }
 
-    Map<BlackboardArtifact.Type, Long> getCounts(BlackboardArtifact.Category category, Long dataSourceId) {
+    /**
+     * Returns the count of each artifact type in the category.
+     *
+     * @param category     The artifact type category.
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return The mapping of type to count.
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
+    Map<BlackboardArtifact.Type, Long> getCounts(BlackboardArtifact.Category category, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
 
         // get artifact types and counts
         SleuthkitCase skCase = getCase();
@@ -364,10 +387,11 @@ abstract class BlackboardArtifactDAO {
                 + " FROM blackboard_artifacts "
                 + " WHERE artifact_type_id NOT IN (" + IGNORED_TYPES_SQL_SET + ") "
                 + " AND artifact_type_id IN "
-                + " (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + BlackboardArtifact.Category.DATA_ARTIFACT.getID() + ")"
+                + " (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + category.getID() + ")"
                 + (dataSourceId == null ? "" : (" AND data_source_obj_id = " + dataSourceId + " "))
                 + " GROUP BY artifact_type_id";
         Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
+
         skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
             try {
                 while (resultSet.next()) {

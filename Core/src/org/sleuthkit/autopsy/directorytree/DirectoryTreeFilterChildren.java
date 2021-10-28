@@ -28,6 +28,7 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
+import org.sleuthkit.autopsy.datamodel.AnalysisResults;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
@@ -88,6 +89,9 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
     protected Node[] createNodes(Node origNode) {
         if (origNode instanceof DataArtifacts.RootNode) {
             Node cloned = ((DataArtifacts.RootNode) origNode).clone();
+            return new Node[]{cloned};
+        } else if (origNode instanceof AnalysisResults.RootNode) {
+            Node cloned = ((AnalysisResults.RootNode) origNode).clone();
             return new Node[]{cloned};
         } else if (origNode == null || !(origNode instanceof DisplayableItemNode)) {
             return new Node[]{};

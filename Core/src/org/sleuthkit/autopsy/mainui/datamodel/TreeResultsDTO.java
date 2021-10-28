@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A list of items to display in the tree.
@@ -54,7 +53,7 @@ public class TreeResultsDTO<T> {
         private final String typeId;
         private final Long count;
         private final T typeData;
-        private final long id;
+        private final Object id;
 
         /**
          * Main constructor.
@@ -63,12 +62,13 @@ public class TreeResultsDTO<T> {
          * @param typeData    Data for this particular row's type (i.e.
          *                    BlackboardArtifact.Type for counts of a particular
          *                    artifact type).
-         * @param id          The numerical id of this row.
+         * @param id          The id of this row. Can be any object that
+         *                    implements equals and hashCode.
          * @param displayName The display name of this row.
          * @param count       The count of results for this row or null if not
          *                    applicable.
          */
-        public TreeItemDTO(String typeId, T typeData, long id, String displayName, Long count) {
+        public TreeItemDTO(String typeId, T typeData, Object id, String displayName, Long count) {
             this.typeId = typeId;
             this.id = id;
             this.displayName = displayName;
@@ -101,45 +101,11 @@ public class TreeResultsDTO<T> {
         }
 
         /**
-         * @return The numerical id for this item.
+         * @return The id of this row. Can be any object that implements equals
+         *         and hashCode.
          */
-        public long getId() {
+        public Object getId() {
             return id;
         }
-
-        @Override
-        public int hashCode() {
-            int hash = 7;
-            hash = 29 * hash + Objects.hashCode(this.typeId);
-            hash = 29 * hash + Objects.hashCode(this.typeData);
-            hash = 29 * hash + (int) (this.id ^ (this.id >>> 32));
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final TreeItemDTO<?> other = (TreeItemDTO<?>) obj;
-            if (this.id != other.id) {
-                return false;
-            }
-            if (!Objects.equals(this.typeId, other.typeId)) {
-                return false;
-            }
-            if (!Objects.equals(this.typeData, other.typeData)) {
-                return false;
-            }
-            return true;
-        }
-
-        
     }
 }

@@ -25,6 +25,8 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.concurrent.ExecutionException;
@@ -52,6 +54,13 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         return instance;
+    }
+
+    /**
+     * @return The set of types that are not shown in the tree.
+     */
+    public static Set<BlackboardArtifact.Type> getIgnoredTreeTypes() {
+        return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
     private final Cache<SearchParams<DataArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
@@ -124,6 +133,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     public TreeResultsDTO<DataArtifactSearchParam> getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
         try {
             // get row dto's sorted by display name
+            Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
             List<TreeResultsDTO.TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
                     .map(entry -> {
                         return new TreeResultsDTO.TreeItemDTO<>(
