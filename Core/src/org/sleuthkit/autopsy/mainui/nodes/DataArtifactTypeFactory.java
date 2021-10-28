@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -42,12 +42,12 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     }
 
     @Override
-    protected TreeDTO<? extends DataArtifactSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
+    protected TreeResultsDTO<? extends DataArtifactSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
         return MainDAO.getInstance().getDataArtifactsDAO().getDataArtifactCounts(dataSourceId);
     }
 
     @Override
-    protected TreeNode<?> createNewNode(TreeDTO.TreeItemDTO<? extends DataArtifactSearchParam> rowData) {
+    protected TreeNode<?> createNewNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> rowData) {
         return new DataArtifactTypeTreeNode(rowData);
     }
 
@@ -61,7 +61,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
             return iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath;
         }
 
-        public DataArtifactTypeTreeNode(TreeDTO.TreeItemDTO<? extends DataArtifactSearchParam> itemData) {
+        public DataArtifactTypeTreeNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> itemData) {
             super(itemData.getTypeData().getArtifactType().getTypeName(),
                     getIconPath(itemData.getTypeData().getArtifactType()),
                     itemData);

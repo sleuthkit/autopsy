@@ -25,7 +25,7 @@ import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 
 /**
  * A node to be displayed in the tree that shows the count.

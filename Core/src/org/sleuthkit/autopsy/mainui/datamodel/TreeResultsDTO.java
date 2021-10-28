@@ -24,7 +24,7 @@ import java.util.Objects;
 /**
  * A list of items to display in the tree.
  */
-public class TreeDTO<T> {
+public class TreeResultsDTO<T> {
 
     private final List<TreeItemDTO<T>> items;
 
@@ -33,7 +33,7 @@ public class TreeDTO<T> {
      *
      * @param items The items to display.
      */
-    public TreeDTO(List<TreeItemDTO<T>> items) {
+    public TreeResultsDTO(List<TreeItemDTO<T>> items) {
         this.items = items;
     }
 

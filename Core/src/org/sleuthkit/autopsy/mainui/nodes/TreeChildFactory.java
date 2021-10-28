@@ -29,8 +29,8 @@ import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 
 /**
  * Factory for populating tree with results.
@@ -40,7 +40,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<TreeIt
     private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
 
     private final Map<TreeItemDTO<? extends T>, TreeNode<T>> typeNodeMap = new HashMap<>();
-    private TreeDTO<? extends T> curResults = null;
+    private TreeResultsDTO<? extends T> curResults = null;
 
     @Override
     protected boolean createKeys(List<TreeItemDTO<? extends T>> toPopulate) {
@@ -123,5 +123,5 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<TreeIt
      * @throws IllegalArgumentException
      * @throws ExecutionException 
      */
-    protected abstract TreeDTO<? extends T> getChildResults() throws IllegalArgumentException, ExecutionException;
+    protected abstract TreeResultsDTO<? extends T> getChildResults() throws IllegalArgumentException, ExecutionException;
 }

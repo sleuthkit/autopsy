@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
@@ -152,7 +152,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
      *
      * @throws ExecutionException
      */
-    public TreeDTO<DataArtifactSearchParam> getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
+    public TreeResultsDTO<DataArtifactSearchParam> getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
         try {
             // get artifact types and counts
             SleuthkitCase skCase = getCase();
@@ -191,7 +191,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                     .collect(Collectors.toList());
 
             // return results
-            return new TreeDTO<>(treeItemRows);
+            return new TreeResultsDTO<>(treeItemRows);
 
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
