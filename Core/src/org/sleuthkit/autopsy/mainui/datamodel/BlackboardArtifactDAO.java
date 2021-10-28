@@ -16,6 +16,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -217,6 +218,40 @@ abstract class BlackboardArtifactDAO {
     boolean isTimelineSupported(Collection<BlackboardAttribute.Type> attrTypes) {
         return attrTypes.stream()
                 .anyMatch(tp -> BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME.equals(tp.getValueType()));
+    }
+    
+    String getWhereClause(SearchParams<BlackboardArtifactSearchParam> cacheKey) {
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
+
+        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() + " ";
+        if (dataSourceId != null) {
+            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
+        }
+        
+        String pagedWhereClause = originalWhereClause
+            + " ORDER BY artifacts.obj_id ASC"                
+            + (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0 ? " LIMIT " + cacheKey.getMaxResultsCount() : "")
+            + (cacheKey.getStartItem() > 0 ? " OFFSET " + cacheKey.getStartItem() : "");
+        return pagedWhereClause;
+    }
+    
+    long getTotalResultsCount(SearchParams<BlackboardArtifactSearchParam> cacheKey, long currentPageSize) throws TskCoreException, NoCurrentCaseException {
+        Blackboard blackboard = getCase().getBlackboard();
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
+        
+        if ( (cacheKey.getStartItem() == 0) // offset is zero AND
+            && ( (cacheKey.getMaxResultsCount() != null && currentPageSize < cacheKey.getMaxResultsCount()) // number of results is less than max
+                || (cacheKey.getMaxResultsCount() == null)) ) { // OR max number of results was not specified
+            return currentPageSize;
+        } else {
+            if (dataSourceId != null) {
+                return blackboard.getArtifactsCount(artType.getTypeID(), dataSourceId);
+            } else {
+                return blackboard.getArtifactsCount(artType.getTypeID());
+            }
+        }  
     }
 
     String getDataSourceName(Content srcContent) throws TskCoreException {

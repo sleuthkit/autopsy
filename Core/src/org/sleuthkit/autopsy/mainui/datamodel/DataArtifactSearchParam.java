@@ -18,58 +18,14 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Key for data artifact in order to retrieve data from DAO.
  */
-public class DataArtifactSearchParam {
-    private final BlackboardArtifact.Type artifactType;
-    private final Long dataSourceId;
+public class DataArtifactSearchParam extends BlackboardArtifactSearchParam {
 
     public DataArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        this.artifactType = artifactType;
-        this.dataSourceId = dataSourceId;
-    }
-
-    public BlackboardArtifact.Type getArtifactType() {
-        return artifactType;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 67 * hash + Objects.hashCode(this.artifactType);
-        hash = 67 * hash + Objects.hashCode(this.dataSourceId);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final DataArtifactSearchParam other = (DataArtifactSearchParam) obj;
-        if (!Objects.equals(this.artifactType, other.artifactType)) {
-            return false;
-        }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
-            return false;
-        }
-        return true;
-    }
-
-    
-    
+        super (artifactType, dataSourceId);
+    }  
 }
