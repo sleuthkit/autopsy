@@ -149,7 +149,8 @@ class MessageArtifactWorker extends SwingWorker<MessageArtifactWorker.MesssageAr
     static Optional<BlackboardArtifact> getAssociatedArtifact(final BlackboardArtifact artifact) throws TskCoreException {
         BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_TYPE);
         if (attribute != null) {
-            return Optional.of(artifact.getSleuthkitCase().getArtifactByArtifactId(attribute.getValueLong()));
+            //in the context of the Message content viewer the assoicated artifact will always be a data artifact
+            return Optional.of(artifact.getSleuthkitCase().getBlackboard().getDataArtifactById(attribute.getValueLong()));
         }
         return Optional.empty();
     }
