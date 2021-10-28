@@ -94,6 +94,15 @@ public class TableSearchTest extends NbTestCase {
     private static final Set<String> CUSTOM_EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("." + CUSTOM_EXTENSION))); //NON-NLS
     private static final Set<String> EMPTY_RESULT_SET_EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(".blah", ".blah2", ".crazy"))); //NON-NLS
     
+    // Tag test
+    private static final String TAG_COMMENT = "Tag comment";
+    private static final String TAG_DESCRIPTION = "Tag description";
+    private static final String MD5_COLUMN = "MD5 Hash";
+    private static final String FILE_PATH_COLUMN = "File Path";
+    private static final String MODIFIED_TIME_COLUMN = "Modified Time";
+    private static final String SOURCE_NAME_COLUMN = "Source Name";
+    private static final String SOURCE_FILE_PATH_COLUMN = "Source File Path";
+    
     /////////////////////////////////////////////////
     // Data to be used across the test methods.
     // These are initialized in setUpCaseDatabase().
@@ -317,11 +326,11 @@ public class TableSearchTest extends NbTestCase {
             keywordHitSource = hashHitAnalysisResult;
             
             // Add tags ----
-            knownTag1 = tagsManager.addTagName("Tag 1", "Descrition", TagName.HTML_COLOR.RED, TskData.FileKnown.KNOWN);
+            knownTag1 = tagsManager.addTagName("Tag 1", TAG_DESCRIPTION, TagName.HTML_COLOR.RED, TskData.FileKnown.KNOWN);
             tag2 = tagsManager.addTagName("Tag 2", "Descrition");
             
             // Tag the custom artifacts in data source 1
-            openCase.getServices().getTagsManager().addBlackboardArtifactTag(customDataArtifact, knownTag1, "Comment");
+            openCase.getServices().getTagsManager().addBlackboardArtifactTag(customDataArtifact, knownTag1, TAG_COMMENT);
             openCase.getServices().getTagsManager().addBlackboardArtifactTag(customAnalysisResult, tag2, "Comment 2");
             
             // Tag file in data source 1
@@ -528,6 +537,28 @@ public class TableSearchTest extends NbTestCase {
             results = tagsDAO.getTags(param, 0, null, false);
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
+            
+            // Check that a few of the expected file tag column names are present
+            List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
+            assertTrue(columnDisplayNames.contains(MD5_COLUMN));
+            assertTrue(columnDisplayNames.contains(FILE_PATH_COLUMN));
+            assertTrue(columnDisplayNames.contains(MODIFIED_TIME_COLUMN));
+            
+            // Check that the result tag columns are not present
+            assertFalse(columnDisplayNames.contains(SOURCE_NAME_COLUMN));
+            assertFalse(columnDisplayNames.contains(SOURCE_FILE_PATH_COLUMN));
+            
+            // Get "Tag1" result tags from data source 2
+            param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.RESULT, dataSource2.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+            
+            // Get "Tag2" result tags from data source 1
+            param = new TagsSearchParams(tag2, TagsSearchParams.TagType.RESULT, dataSource1.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
 
             // Get "Tag1" result tags from data source 1
             param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.RESULT, dataSource1.getId());
@@ -535,14 +566,13 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
             
-            // Get "Tag1" result tags from data source 2
-            param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.RESULT, dataSource2.getId());
-            results = tagsDAO.getTags(param, 0, null, false);
-            assertEquals(0, results.getTotalResultsCount());
-            assertEquals(0, results.getItems().size());
+            // Get the row
+            RowDTO rowDTO = results.getItems().get(0);
+            assertTrue(rowDTO instanceof BaseRowDTO);
+            BaseRowDTO tagResultRowDTO = (BaseRowDTO) rowDTO;
 
-            // Test custom tags
-
+            // Check that some of the expected result tag column values are present
+            assertTrue(tagResultRowDTO.getCellValues().contains(TAG_COMMENT));
             
         } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
