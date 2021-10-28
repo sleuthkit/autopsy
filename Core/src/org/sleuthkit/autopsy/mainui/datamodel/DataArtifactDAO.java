@@ -20,25 +20,13 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import java.sql.SQLException;
 import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_GEN_INFO;
-import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_TL_EVENT;
 import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -47,31 +35,12 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * DAO for providing data about data artifacts to populate the results viewer.
  */
 public class DataArtifactDAO extends BlackboardArtifactDAO {
-
-    /**
-     * Types that should not be shown in the tree.
-     */
-    @SuppressWarnings("deprecation")
-    private static final Set<BlackboardArtifact.Type> IGNORED_TYPES = Sets.newHashSet(
-            // these are shown in other parts of the UI (and different node types)
-            TSK_DATA_SOURCE_USAGE,
-            TSK_GEN_INFO,
-            new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE),
-            TSK_TL_EVENT,
-            //This is not meant to be shown in the UI at all. It is more of a meta artifact.
-            TSK_ASSOCIATED_OBJECT
-    );
-
-    private static final String IGNORED_TYPES_SQL_SET = IGNORED_TYPES.stream()
-            .map(tp -> Integer.toString(tp.getTypeID()))
-            .collect(Collectors.joining(", "));
 
     private static Logger logger = Logger.getLogger(DataArtifactDAO.class.getName());
 
@@ -154,33 +123,10 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
      */
     public TreeResultsDTO<DataArtifactSearchParam> getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
         try {
-            // get artifact types and counts
-            SleuthkitCase skCase = getCase();
-            String query = "artifact_type_id, COUNT(*) AS count "
-                    + " FROM blackboard_artifacts "
-                    + " WHERE artifact_type_id NOT IN (" + IGNORED_TYPES_SQL_SET + ") "
-                    + " AND artifact_type_id IN "
-                    + " (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + BlackboardArtifact.Category.DATA_ARTIFACT.getID() + ")"
-                    + (dataSourceId == null ? "" : (" AND data_source_obj_id = " + dataSourceId + " "))
-                    + " GROUP BY artifact_type_id";
-            Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
-            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
-                try {
-                    while (resultSet.next()) {
-                        int artifactTypeId = resultSet.getInt("artifact_type_id");
-                        BlackboardArtifact.Type type = skCase.getBlackboard().getArtifactType(artifactTypeId);
-                        long count = resultSet.getLong("count");
-                        typeCounts.put(type, count);
-                    }
-                } catch (TskCoreException | SQLException ex) {
-                    logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
-                }
-            });
-
             // get row dto's sorted by display name
-            List<TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
+            List<TreeResultsDTO.TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
                     .map(entry -> {
-                        return new TreeItemDTO<>(
+                        return new TreeResultsDTO.TreeItemDTO<>(
                                 BlackboardArtifact.Category.DATA_ARTIFACT.name(),
                                 new DataArtifactSearchParam(entry.getKey(), dataSourceId),
                                 entry.getKey().getTypeID(),
