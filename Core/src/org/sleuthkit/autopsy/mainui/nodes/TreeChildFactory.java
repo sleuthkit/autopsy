@@ -103,6 +103,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Long> 
             if (currentlyCached != null) {
                 currentlyCached.update(dto);
             }
+            curResultIds.add(dto.getId());
         }
 
         toPopulate.addAll(curResultIds);
