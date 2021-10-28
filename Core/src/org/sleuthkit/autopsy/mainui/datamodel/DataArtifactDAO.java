@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableSet;
 import java.sql.SQLException;
 import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
@@ -31,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
@@ -59,7 +59,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
      * Types that should not be shown in the tree.
      */
     @SuppressWarnings("deprecation")
-    private static final Set<BlackboardArtifact.Type> IGNORED_TYPES = Sets.newHashSet(
+    private static final Set<BlackboardArtifact.Type> IGNORED_TYPES = ImmutableSet.of(
             // these are shown in other parts of the UI (and different node types)
             TSK_DATA_SOURCE_USAGE,
             TSK_GEN_INFO,
@@ -84,6 +84,15 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
         return instance;
     }
+
+    /**
+     * @return The set of types that are not shown in the tree.
+     */
+    public static Set<BlackboardArtifact.Type> getIgnoredTreeTypes() {
+        return IGNORED_TYPES;
+    }
+    
+    
 
     private final Cache<SearchParams<DataArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 

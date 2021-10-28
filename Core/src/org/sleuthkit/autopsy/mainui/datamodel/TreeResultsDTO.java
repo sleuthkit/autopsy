@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A list of items to display in the tree.
@@ -106,40 +105,5 @@ public class TreeResultsDTO<T> {
         public long getId() {
             return id;
         }
-
-        @Override
-        public int hashCode() {
-            int hash = 7;
-            hash = 29 * hash + Objects.hashCode(this.typeId);
-            hash = 29 * hash + Objects.hashCode(this.typeData);
-            hash = 29 * hash + (int) (this.id ^ (this.id >>> 32));
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final TreeItemDTO<?> other = (TreeItemDTO<?>) obj;
-            if (this.id != other.id) {
-                return false;
-            }
-            if (!Objects.equals(this.typeId, other.typeId)) {
-                return false;
-            }
-            if (!Objects.equals(this.typeData, other.typeData)) {
-                return false;
-            }
-            return true;
-        }
-
-        
     }
 }
