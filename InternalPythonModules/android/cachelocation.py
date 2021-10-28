@@ -103,7 +103,7 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                     #    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(), AndroidModuleFactorymodule.moduleName, confidence))
                     try:
                         blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                        blackboard.postArtifact(artifact, general.MODULE_NAME, context.getJobId(), context.getJobId())
+                        blackboard.postArtifact(artifact, general.MODULE_NAME, context.getJobId())
                     except Blackboard.BlackboardException as ex:
                         self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
                         self._logger.log(Level.SEVERE, traceback.format_exc())
