@@ -316,32 +316,51 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 }
             } else {
                 /*
-                 * There are two cases where the ingest job ID returned by the
-                 * event is expected be null:
+                 * There are four use cases where the ingest job ID returned by
+                 * the event is expected be null:
                  *
                  * 1. The artifacts are being posted by a data source proccessor
                  * (DSP) module that runs before the ingest job is created,
                  * i.e., a DSP that does not support streaming ingest and has no
                  * noton of an ingest job ID. In this use case, the event is
-                 * handled synchronously (the DSP calls
+                 * handled synchronously. The DSP calls
                  * Blackboard.postArtifacts(), which puts the event on the event
-                 * bus to which this method subscribes) before the ingest job is
-                 * created, so the code below will not find an ingest job to
-                 * which to add the artifacts. However, the artifacts will be
-                 * analyzed when the ingest job executor, working in batch mode,
+                 * bus to which this method subscribes, so the event will be
+                 * handled here before the DSP completes and calls
+                 * DataSourceProcessorCallback.done(). This means the code below
+                 * will execute before the ingest job is created, so it will not
+                 * find an ingest job to which to add the artifacts. However,
+                 * the artifacts WILL be analyzed after the ingest job is
+                 * started, when the ingest job executor, working in batch mode,
                  * schedules ingest tasks for all of the data artifacts in the
-                 * case database.
+                 * case database. There is a slight risk that the wrong ingest
+                 * job will be selected if multiple ingests of the same data
+                 * source are in progress.
                  *
                  * 2. The artifacts were posted by an ingest module that either
                  * has not been updated to use the current
                  * Blackboard.postArtifacts() API, or is using it incorrectly.
                  * In this use case, the code below should be able to find the
                  * ingest job to which to add the artifacts via their data
-                 * source.
+                 * source. There is a slight risk that the wrong ingest job will
+                 * be selected if multiple ingests of the same data source are
+                 * in progress.
                  *
-                 * In both use cases, there is a slight risk that the wrong
-                 * ingest job will be selected if multiple ingests of the same
-                 * data source are in progress.
+                 * 3. The portable case generator uses a
+                 * CommunicationArtifactsHelper constructed with a null ingest
+                 * job ID, and the CommunicatonsArtifactHelper posts artifacts.
+                 * Ingest of that data source might be running, in which case
+                 * the data artifact will be analyzed. It also might be analyzed
+                 * by a subsequent ingest job for the data source. This is an
+                 * acceptable edge case.
+                 *
+                 * 4. The user can manually create timeline events with the
+                 * timeline tool, which posts the TSK_TL_EVENT data artifacts.
+                 * The user selects the data source for these artifacts. Ingest
+                 * of that data source might be running, in which case the data
+                 * artifact will be analyzed. It also might be analyzed by a
+                 * subsequent ingest job for the data source. This is an
+                 * acceptable edge case.
                  */
                 DataArtifact dataArtifact = newDataArtifacts.get(0);
                 try {

@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,7 +91,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME, 
-                        contact_and_calllog_db.getDBFile(), Account.Type.VIBER) 
+                        contact_and_calllog_db.getDBFile(), Account.Type.VIBER, context.getJobId()) 
                 self.parse_contacts(contact_and_calllog_db, helper)
                 self.parse_calllogs(contact_and_calllog_db, helper)
 
@@ -100,7 +100,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME, 
-                        message_db.getDBFile(), Account.Type.VIBER)
+                        message_db.getDBFile(), Account.Type.VIBER, context.getJobId())
                 self.parse_messages(message_db, helper, current_case)
 
         except NoCurrentCaseException as ex:
@@ -131,9 +131,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                     attributes = ArrayList()
                     attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), self._PARSER_NAME, contacts_parser.get_contact_name()))
                     artifact = contacts_db.getDBFile().newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), attributes)
-                    
-                    # Post the artifact to blackboard
-                    current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME)
+                    current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME, context.getJobId())
 
             contacts_parser.close()
         except SQLException as ex:

@@ -82,13 +82,6 @@ public class IngestedWithHashAndFileTypeIntraCaseTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-        
-        // wait 10 seconds for all processes to finish before beginning tests
-        try {
-            Thread.sleep(10_000);
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-        }
     }
 
     @Override

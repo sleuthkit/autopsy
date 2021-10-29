@@ -34,7 +34,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUti
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
-import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -85,6 +84,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
     private final boolean flagTaggedNotableItems;
     private Blackboard blackboard;
     private final boolean createCorrelationProperties;
+    private IngestJobContext context;
 
     /**
      * Instantiate the Central Repository ingest module.
@@ -225,6 +225,8 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
+        
         IngestEventsListener.incrementCorrelationEngineModuleCount();
 
         if (CentralRepository.isEnabled() == false) {
@@ -334,7 +336,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                         .getAnalysisResult();
                 try {
                     // index the artifact for keyword search
-                    blackboard.postArtifact(tifArtifact, MODULE_NAME);
+                    blackboard.postArtifact(tifArtifact, MODULE_NAME, context.getJobId());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }

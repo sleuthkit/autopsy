@@ -54,8 +54,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -939,7 +937,7 @@ class Chromium extends Extract {
         WebBrowserArtifactsHelper helper = new WebBrowserArtifactsHelper(
                 Case.getCurrentCaseThrows().getSleuthkitCase(),
                 NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                webDataFile
+                webDataFile, context.getJobId()
         );
 
         // Get Web form addresses

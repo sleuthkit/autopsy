@@ -644,7 +644,6 @@ public final class CaseEventListener implements PropertyChangeListener {
              */
             if ((null == event.getOldValue()) && (event.getNewValue() instanceof Case)) {
                 Case curCase = (Case) event.getNewValue();
-                IngestEventsListener.resetCeModuleInstanceCount();
 
                 if (!CentralRepository.isEnabled()) {
                     return;
@@ -761,8 +760,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                                                 BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, score,
                                                 null, Bundle.CaseEventsListener_prevExists_text(), justification, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
                                         try {
-                                            // index the artifact for keyword search
-                                            blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
+                                            blackboard.postArtifact(newAnalysisResult, MODULE_NAME, null);
                                             break;
                                         } catch (Blackboard.BlackboardException ex) {
                                             LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS

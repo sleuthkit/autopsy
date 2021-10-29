@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -513,8 +513,7 @@ final class AddLogicalImageTask implements Runnable {
 
     private void postArtifacts(List<BlackboardArtifact> artifacts) {
         try {
-            // index the artifact for keyword search
-            blackboard.postArtifacts(artifacts, MODULE_NAME);
+            blackboard.postArtifacts(artifacts, MODULE_NAME, null);
         } catch (Blackboard.BlackboardException ex) {
             LOGGER.log(Level.SEVERE, "Unable to post artifacts to blackboard", ex); //NON-NLS
         }

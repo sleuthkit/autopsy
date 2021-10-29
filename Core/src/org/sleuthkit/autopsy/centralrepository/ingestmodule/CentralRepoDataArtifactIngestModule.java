@@ -345,9 +345,9 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         }
         /*
          * Data artifact ingest modules are shut down at the end of the ingest
-         * job. Now that the job is complete ensures the data source in the
-         * central repository has hash values that match those in the case
-         * database.
+         * job. Now that the job is complete, ensure that the data source in the
+         * central repository that corresponds to the data source for the ingest
+         * job has hash values that match those in the case database.
          */
         syncDataSourceHashes();
     }
@@ -371,7 +371,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
             if (correlationDataSource == null) {
                 correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource);
             }
-            
+
             Image image = (Image) dataSource;
             String imageMd5Hash = image.getMd5();
             if (imageMd5Hash == null) {
@@ -399,7 +399,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
             if (StringUtils.equals(imageSha256Hash, crSha256Hash) == false) {
                 correlationDataSource.setSha256(imageSha256Hash);
             }
-            
+
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error fetching data from the central repository for data source '%s' (obj_id=%d)", dataSource.getName(), dataSource.getId()), ex);
         } catch (TskCoreException ex) {

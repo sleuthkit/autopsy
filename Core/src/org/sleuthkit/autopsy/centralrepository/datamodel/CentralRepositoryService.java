@@ -24,7 +24,6 @@ import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.eventlisteners.CaseEventListener;
-import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -36,7 +35,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class CentralRepositoryService implements AutopsyService {
 
     private CaseEventListener caseEventListener = new CaseEventListener();
-    private IngestEventsListener ingestEventListener = new IngestEventsListener();
     
     @Override
     @NbBundle.Messages({
@@ -66,11 +64,7 @@ public class CentralRepositoryService implements AutopsyService {
         dataUpgradeForVersion1dot2(context.getCase());
         
         caseEventListener = new CaseEventListener();
-        caseEventListener.installListeners();
-        
-        ingestEventListener = new IngestEventsListener();
-        ingestEventListener.installListeners();
-        
+        caseEventListener.installListeners();                
     }
     
     @NbBundle.Messages({
@@ -85,11 +79,7 @@ public class CentralRepositoryService implements AutopsyService {
             caseEventListener.uninstallListeners();
             caseEventListener.shutdown();
         }
-        
-        if (ingestEventListener != null) {
-            ingestEventListener.uninstallListeners();
-            ingestEventListener.shutdown();
-        }
+
     }
 
     /**
