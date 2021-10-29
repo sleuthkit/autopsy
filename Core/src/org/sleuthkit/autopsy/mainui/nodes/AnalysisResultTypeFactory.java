@@ -36,9 +36,21 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 
 /**
- * Factory for displaying data artifact types in the tree.
+ * Factory for displaying analysis result types in the tree.
  */
 public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSearchParam> {
+
+    /**
+     * Returns the path to the icon to use for this artifact type.
+     *
+     * @param artType The artifact type.
+     *
+     * @return The path to the icon to use for this artifact type.
+     */
+    private static String getIconPath(BlackboardArtifact.Type artType) {
+        String iconPath = IconsUtil.getIconFilePath(artType.getTypeID());
+        return iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath;
+    }
 
     private final Long dataSourceId;
 
@@ -95,16 +107,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         return false;
     }
 
-    private static String getIconPath(BlackboardArtifact.Type artType) {
-        String iconPath = IconsUtil.getIconFilePath(artType.getTypeID());
-        return iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath;
-    }
-
     /**
-     * Display name and count of a data artifact type in the tree.
+     * Display name and count of an analysis result type in the tree.
      */
     public static class AnalysisResultTypeTreeNode extends TreeNode<AnalysisResultSearchParam> {
 
+        /**
+         * Main constructor.
+         *
+         * @param itemData The data to display.
+         */
         public AnalysisResultTypeTreeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
             super(itemData.getTypeData().getArtifactType().getTypeName(),
                     getIconPath(itemData.getTypeData().getArtifactType()),
@@ -117,8 +129,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
     }
 
+    /**
+     * The root hashset hit type in the tree.
+     */
     public static class HashHitTypeNode extends TreeNode<AnalysisResultSearchParam> {
 
+        /**
+         * Main constructor.
+         *
+         * @param itemData The data to display.
+         */
         public HashHitTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
             super(itemData.getTypeData().getArtifactType().getTypeName(),
                     getIconPath(itemData.getTypeData().getArtifactType()),
@@ -133,10 +153,20 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
     }
 
+    /**
+     * Factory displaying all hashset sets with count in the tree.
+     */
     public static class HashHitSetFactory extends TreeChildFactory<HashHitSearchParam> {
 
         private final Long dataSourceId;
 
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceId The data source object id for which the results
+         *                     should be filtered or null if no data source
+         *                     filtering.
+         */
         public HashHitSetFactory(Long dataSourceId) {
             this.dataSourceId = dataSourceId;
         }
@@ -158,8 +188,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
     }
 
+    /**
+     * A node displaying the set name and count for a hashset hit set.
+     */
     public static class HashHitSetNode extends TreeNode<HashHitSearchParam> {
 
+        /**
+         * Main constructor.
+         *
+         * @param itemData Set data to display.
+         */
         public HashHitSetNode(TreeResultsDTO.TreeItemDTO<? extends HashHitSearchParam> itemData) {
             super(itemData.getTypeData().getSetName(), getIconPath(BlackboardArtifact.Type.TSK_HASHSET_HIT), itemData);
         }

@@ -344,6 +344,19 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
     }
 
+    /**
+     *
+     * @param type         The artifact type to filter on.
+     * @param setNameAttr  The blackboard attribute denoting the set name.
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
     Map<String, Long> getSetCounts(BlackboardArtifact.Type type, BlackboardAttribute.Type setNameAttr, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         if (dataSourceId != null && dataSourceId <= 0) {
             throw new IllegalArgumentException("Expected data source id to be > 0");
@@ -370,7 +383,9 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     while (resultSet.next()) {
                         String setName = resultSet.getString("set_name");
                         long count = resultSet.getLong("count");
-                        setCounts.put(setName, count);
+                        if (setName != null) {
+                            setCounts.put(setName, count);
+                        }
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
@@ -383,6 +398,19 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
     }
 
+    /**
+     * Get counts for individual sets of TSK_HASHSET_HIT's to be used in the
+     * tree view.
+     *
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return The sets along with counts to display.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
     public TreeResultsDTO<HashHitSearchParam> getHashSetCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         List<TreeItemDTO<HashHitSearchParam>> allSets
                 = getSetCounts(BlackboardArtifact.Type.TSK_HASHSET_HIT, BlackboardAttribute.Type.TSK_SET_NAME, dataSourceId).entrySet().stream()

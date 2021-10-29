@@ -107,5 +107,14 @@ public class TreeResultsDTO<T> {
         public Object getId() {
             return id;
         }
+
+        /**
+         * @return The id of this item type.
+         */
+        public String getTypeId() {
+            return typeId;
+        }
+        
+        
     }
 }
