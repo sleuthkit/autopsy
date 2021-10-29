@@ -352,7 +352,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      *                     should be filtered or null if no data source
      *                     filtering.
      *
-     * @return
+     * @return A mapping of set names to their counts.
      *
      * @throws IllegalArgumentException
      * @throws ExecutionException
