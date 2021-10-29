@@ -89,7 +89,7 @@ class OperaAnalyzer(general.AndroidComponentAnalyzer):
             for cookiesDb in cookiesDbs:
                 try:
                     cookiesDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                        self._MODULE_NAME, cookiesDb.getDBFile())
+                                        self._MODULE_NAME, cookiesDb.getDBFile(), context.getJobId())
                     cookiesResultSet = cookiesDb.runQuery("SELECT host_key, name, value, creation_utc FROM cookies")
                     if cookiesResultSet is not None:
                         while cookiesResultSet.next():
