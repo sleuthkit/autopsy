@@ -333,7 +333,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
      * added to reports
      */
     private void addILeappReportToReports(Path iLeappOutputDir, Case currentCase) {
-        List<String> allIndexFiles = new ArrayList<>();
+        List<String> allIndexFiles;
 
         try (Stream<Path> walk = Files.walk(iLeappOutputDir)) { 
 
@@ -402,7 +402,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             String fileName = FilenameUtils.getName(ffp);
             String filePath = FilenameUtils.getPath(ffp);
 
-            List<AbstractFile> iLeappFiles = new ArrayList<>();
+            List<AbstractFile> iLeappFiles;
             try {
                 if (filePath.isEmpty()) {
                     iLeappFiles = fileManager.findFiles(dataSource, fileName); //NON-NLS                

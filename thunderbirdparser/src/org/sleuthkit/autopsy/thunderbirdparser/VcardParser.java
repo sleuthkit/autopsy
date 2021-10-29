@@ -243,7 +243,7 @@ final class VcardParser {
                 
                 // Index the artifact for keyword search.
                 try {
-                    blackboard.postArtifact(artifact,  EmailParserModuleFactory.getModuleName());
+                    blackboard.postArtifact(artifact,  EmailParserModuleFactory.getModuleName(), context.getJobId());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(Bundle.VcardParser_addContactArtifact_indexError(), artifact.getDisplayName());
