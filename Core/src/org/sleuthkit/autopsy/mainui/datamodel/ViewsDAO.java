@@ -21,14 +21,20 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -39,6 +45,7 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTr
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -78,6 +85,8 @@ import org.sleuthkit.datamodel.TskData;
     "ThreePanelViewsDAO.fileColumns.extensionColLbl=Extension",
     "ThreePanelViewsDAO.fileColumns.noDescription=No Description"})
 public class ViewsDAO {
+
+    private static final Logger logger = Logger.getLogger(ViewsDAO.class.getName());
 
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
@@ -233,16 +242,7 @@ public class ViewsDAO {
 
         long size = eventData.getSize();
 
-        switch (key.getSizeFilter()) {
-            case SIZE_50_200:
-                return size >= 50_000_000 && size < 200_000_000;
-            case SIZE_200_1000:
-                return size >= 200_000_000 && size < 1_000_000_000;
-            case SIZE_1000_:
-                return size >= 1_000_000_000;
-            default:
-                throw new IllegalArgumentException("Unsupported filter type to get files by size: " + key.getSizeFilter());
-        }
+        return size >= key.getSizeFilter().getMinBound() && (key.getSizeFilter().getMaxBound() == null || size < key.getSizeFilter().getMaxBound());
     }
 
 //    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -270,16 +270,20 @@ public class ViewsDAO {
         return counts;
     }
 
+    private static String getFileExtensionClause(FileExtSearchFilter filter) {
+        return "extension IN (" + filter.getFilter().stream()
+                .map(String::toLowerCase)
+                .map(s -> "'" + StringUtils.substringAfter(s, ".") + "'")
+                .collect(Collectors.joining(", ")) + ")";
+    }
+
     private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId) {
         String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
                 + (dataSourceId != null && dataSourceId > 0
                         ? " AND data_source_obj_id = " + dataSourceId
                         : " ")
-                + " AND (extension IN (" + filter.getFilter().stream()
-                        .map(String::toLowerCase)
-                        .map(s -> "'" + StringUtils.substringAfter(s, ".") + "'")
-                        .collect(Collectors.joining(", ")) + "))";
+                + " AND (" + getFileExtensionClause(filter) + ")";
         return whereClause;
     }
 
@@ -301,23 +305,14 @@ public class ViewsDAO {
         return whereClause;
     }
 
+    private static String getFileSizeClause(FileTypeSizeSearchParams.FileSizeFilter filter) {
+        return filter.getMaxBound() == null
+                ? "(size >= " + filter.getMinBound() + ")"
+                : "(size >= " + filter.getMinBound() + " AND size < " + filter.getMaxBound() + ")";
+    }
+
     private static String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
-        String query;
-        switch (filter) {
-            case SIZE_50_200:
-                query = "(size >= 50000000 AND size < 200000000)"; //NON-NLS
-                break;
-            case SIZE_200_1000:
-                query = "(size >= 200000000 AND size < 1000000000)"; //NON-NLS
-                break;
-
-            case SIZE_1000_:
-                query = "(size >= 1000000000)"; //NON-NLS
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unsupported filter type to get files by size: " + filter); //NON-NLS
-        }
+        String query = getFileSizeClause(filter);
 
         // Ignore unallocated block files.
         query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
@@ -331,6 +326,113 @@ public class ViewsDAO {
         }
 
         return query;
+    }
+
+    // GVDTODO file mime counts, additional where filtering of tsk_files (i.e. no layout files)
+
+    public TreeResultsDTO<FileTypeExtensionsSearchParams> getFileExtCounts(Collection<FileExtSearchFilter> filters, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        Map<FileExtSearchFilter, String> whereClauses = filters.stream()
+                .collect(Collectors.toMap(
+                        filter -> filter,
+                        filter -> getFileExtensionClause(filter)));
+
+        Map<FileExtSearchFilter, Long> countsByFilter = getFilesCounts(whereClauses, dataSourceId, true);
+
+        List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
+                .map(entry -> {
+                    return new TreeItemDTO<>(
+                            "FILE_EXT",
+                            new FileTypeExtensionsSearchParams(entry.getKey(), dataSourceId),
+                            entry.getKey(),
+                            entry.getKey().getDisplayName(),
+                            entry.getValue());
+                })
+                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+                .collect(Collectors.toList());
+
+        return new TreeResultsDTO<>(treeList);
+    }
+
+    public TreeResultsDTO<FileTypeSizeSearchParams> getFileSizeCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        Map<FileTypeSizeSearchParams.FileSizeFilter, String> whereClauses = Stream.of(FileTypeSizeSearchParams.FileSizeFilter.values())
+                .collect(Collectors.toMap(
+                        filter -> filter,
+                        filter -> getFileSizeClause(filter)));
+
+        Map<FileTypeSizeSearchParams.FileSizeFilter, Long> countsByFilter = getFilesCounts(whereClauses, dataSourceId, true);
+
+        List<TreeItemDTO<FileTypeSizeSearchParams>> treeList = countsByFilter.entrySet().stream()
+                .map(entry -> {
+                    return new TreeItemDTO<>(
+                            "FILE_SIZE",
+                            new FileTypeSizeSearchParams(entry.getKey(), dataSourceId),
+                            entry.getKey(),
+                            entry.getKey().getDisplayName(),
+                            entry.getValue());
+                })
+                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+                .collect(Collectors.toList());
+
+        return new TreeResultsDTO<>(treeList);
+    }
+
+    private <T> Map<T, Long> getFilesCounts(Map<T, String> whereClauses, Long dataSourceId, boolean includeZeroCount) throws ExecutionException {
+        // get artifact types and counts
+
+        Map<Integer, T> types = new HashMap<>();
+        String whenClauses = "";
+
+        int idx = 0;
+        for (Entry<T, String> e : whereClauses.entrySet()) {
+            types.put(idx, e.getKey());
+            idx++;
+            whenClauses += "    WHEN " + e.getValue() + " THEN " + idx + " \n";
+        }
+
+        String switchStatement = "  CASE \n"
+                + whenClauses
+                + "    ELSE -1 \n"
+                + "  END AS type_id \n";
+
+        String dataSourceClause = dataSourceId == null ? "" : " WHERE data_source_obj_id = " + dataSourceId + " ";
+
+        String query = "type_id, COUNT(*) AS count FROM \n"
+                + "(SELECT \n"
+                + switchStatement
+                + "FROM tsk_files \n"
+                + dataSourceClause + ") \n"
+                + "WHERE type_id >= 0 \n"
+                + "GROUP BY type_id";
+
+        Map<T, Long> typeCounts = new HashMap<>();
+        try {
+            SleuthkitCase skCase = getCase();
+
+            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        int typeIdx = resultSet.getInt("type_id");
+                        T type = types.remove(typeIdx);
+                        if (type != null) {
+                            long count = resultSet.getLong("count");
+                            typeCounts.put(type, count);
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching file type counts.", ex);
+                }
+            });
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching file counts.", ex);
+        }
+
+        if (includeZeroCount) {
+            for (T remaining : types.values()) {
+                typeCounts.put(remaining, 0L);
+            }
+        }
+
+        return typeCounts;
     }
 
     private SearchResultsDTO fetchExtensionSearchResultsDTOs(FileExtSearchFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
