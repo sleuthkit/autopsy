@@ -136,27 +136,29 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
-        
-        // Get all hash set hits
-        List<AnalysisResult> allHashHits;
-        if (dataSourceId != null) {
-            allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID(), dataSourceId);
-        } else {
-            allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID());
-        }
 
+        // We currently can't make a query on the set name field because need to use a prepared statement
+        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() + " ";
+        if (dataSourceId != null) {
+            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
+        }
+        
+        List<BlackboardArtifact> allHashHits = new ArrayList<>();
+        allHashHits.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
+        blackboard.loadBlackboardAttributes(allHashHits);
+        
         // Filter for the selected set
-        List<BlackboardArtifact> arts = new ArrayList<>();
-        for (AnalysisResult art : allHashHits) {
+        List<BlackboardArtifact> hashHits = new ArrayList<>();
+        for (BlackboardArtifact art : allHashHits) {
             BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
             if ((setNameAttr != null) && cacheKey.getParamData().getSetName().equals(setNameAttr.getValueString())) {
-                arts.add(art);
+                hashHits.add(art);
             }
         }
 
-        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
+        List<BlackboardArtifact> pagedArtifacts = getPaged(hashHits, cacheKey);
         TableData tableData = createTableData(artType, pagedArtifacts);
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), hashHits.size());
     }
 
     @Override
@@ -261,6 +263,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return hashHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
+    // TODO - JIRA-8117
+    // This needs to use more than just the set name
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
