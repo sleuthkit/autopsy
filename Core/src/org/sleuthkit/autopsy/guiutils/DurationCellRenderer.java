@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,68 +19,80 @@
 package org.sleuthkit.autopsy.guiutils;
 
 import java.awt.Component;
+import java.awt.Font;
 import java.time.Duration;
 import javax.swing.JTable;
-import static javax.swing.SwingConstants.CENTER;
 
 /**
  * A JTable cell renderer that renders a duration represented as a long as a
  * string with days, hours, minutes, and seconds components. It center-aligns
  * cell content and grays out the cell if the table is disabled.
  */
-public class DurationCellRenderer extends GrayableCellRenderer {
+public final class DurationCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
+    private static final char UNIT_SEPARATOR_CHAR = ':';
 
     public DurationCellRenderer() {
-        setHorizontalAlignment(CENTER);
+        setHorizontalAlignment(RIGHT);
+        setFont((new Font("Monospaced", Font.PLAIN, getFont().getSize()))); //display the durations as a monospaced font with the same size as the default font
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         if (value instanceof Long) {
-            {
-                setText(DurationCellRenderer.longToDurationString((long) value));
-            }
+            setText(DurationCellRenderer.longToDurationString((long) value));
         }
         grayCellIfTableNotEnabled(table, isSelected);
         return this;
+    }
+
+    public static char getUnitSeperator() {
+        return UNIT_SEPARATOR_CHAR;
     }
 
     /**
      * Convert a duration represented by a long to a human readable string with
      * with days, hours, minutes, and seconds components.
      *
-     * @param duration - the representation of the duration in long form
+     * @param duration - The representation of the duration in long form.
      *
-     * @return - the representation of the duration in String form.
+     * @return - The representation of the duration in String form.
      */
     public static String longToDurationString(long duration) {
         Duration d = Duration.ofMillis(duration);
         if (d.isNegative()) {
-            d = Duration.ofMillis(-duration);
+            d = Duration.ofMillis(0); //it being 0 for a few seconds seems preferable to it counting down to 0 then back up from 0
         }
-
-        String result;
         long days = d.toDays();
         long hours = d.minusDays(days).toHours();
         long minutes = d.minusDays(days).minusHours(hours).toMinutes();
         long seconds = d.minusDays(days).minusHours(hours).minusMinutes(minutes).getSeconds();
-
-        if (minutes > 0) {
-            if (hours > 0) {
-                if (days > 0) {
-                    result = days + " d  " + hours + " h  " + minutes + " m " + seconds + " s";
-                } else {
-                    result = hours + " h  " + minutes + " m " + seconds + " s";
-                }
-            } else {
-                result = minutes + " m " + seconds + " s";
-            }
-        } else {
-            result = seconds + " s";
+        if (days < 0) {
+            days = 0;
         }
-        return result;
+        if (hours < 0) {
+            hours = 0;
+        }
+        if (minutes < 0) {
+            minutes = 0;
+        }
+        if (seconds < 0) {
+            seconds = 0;
+        }
+        StringBuilder results = new StringBuilder(12);
+        if (days < 99) {
+            results.append(String.format("%02d", days));
+        } else {
+            results.append(days); //in the off chance something has been running for over 99 days lets allow it to stand out a bit by having as many characters as it needs
+        }
+        results.append(UNIT_SEPARATOR_CHAR);
+        results.append(String.format("%02d", hours));
+        results.append(UNIT_SEPARATOR_CHAR);
+        results.append(String.format("%02d", minutes));
+        results.append(UNIT_SEPARATOR_CHAR);
+        results.append(String.format("%02d", seconds));
+        return results.toString();
     }
 
 }
