@@ -650,7 +650,6 @@ public final class LeappFileProcessor {
                 messageAttachments = new MessageAttachments(fileAttachments, new ArrayList<>());
                 accountHelper.addAttachments(messageArtifact, messageAttachments);
             }
-            blkBoard.postArtifact(messageArtifact, moduleName, context.getJobId());
         } catch (NoCurrentCaseException | TskCoreException | BlackboardException ex) {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
