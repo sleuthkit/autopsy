@@ -20,11 +20,17 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -32,16 +38,19 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Provides information to populate the results viewer for data in the tags
- * section.
+ * Provides information to populate the results viewer for data in the allTags
+ section.
  */
 @Messages({"TagsDAO.fileColumns.nameColLbl=Name",
     "TagsDAO.fileColumns.originalName=Original Name",
@@ -122,28 +131,49 @@ public class TagsDAO {
             this.searchParamsCache.invalidate(searchParams);
         }
 
-        return searchParamsCache.get(searchParams, () -> fetchTagsDTOs(key.getTagName(), key.getTagType(), key.getDataSourceId(), startItem, maxCount));
-    }
+        return searchParamsCache.get(searchParams, () -> fetchTagsDTOs(searchParams));
+    }   
 
     @NbBundle.Messages({"FileTag.name.text=File Tag",
             "ResultTag.name.text=Result Tag"})
-    private SearchResultsDTO fetchTagsDTOs(TagName tagName, TagsSearchParams.TagType type, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
-        switch (type) {
+    private SearchResultsDTO fetchTagsDTOs(SearchParams<TagsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
+        switch (cacheKey.getParamData().getTagType()) {
             case FILE:
-                return fetchFileTags(tagName, dataSourceId, startItem, maxResultCount);
+                return fetchFileTags(cacheKey);
             case RESULT:
-                return fetchResultTags(tagName, dataSourceId, startItem, maxResultCount);
+                return fetchResultTags(cacheKey);
             default:
                 throw new IllegalArgumentException("Unsupported tag type");
         }
     }
     
-    private SearchResultsDTO fetchResultTags(TagName tagName, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+    /**
+     * Returns a list of paged tag results.
+     *
+     * @param tags         The tag results.
+     * @param searchParams The search parameters including the paging.
+     *
+     * @return The list of paged tag results.
+     */
+    List<? extends Tag> getPaged(List<? extends Tag> tags, SearchParams<?> searchParams) {
+        Stream<? extends Tag> pagedTagsStream = tags.stream()
+                .sorted(Comparator.comparing((tag) -> tag.getId()))
+                .skip(searchParams.getStartItem());
 
-        // ELTODO startItem, maxResultCount
+        if (searchParams.getMaxResultsCount() != null) {
+            pagedTagsStream = pagedTagsStream.limit(searchParams.getMaxResultsCount());
+        }
+
+        return pagedTagsStream.collect(Collectors.toList());
+    }
+
+    private SearchResultsDTO fetchResultTags(SearchParams<TagsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
+
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        TagName tagName = cacheKey.getParamData().getTagName();
         
-        List<BlackboardArtifactTag> tags = new ArrayList<>();
-        // Use the blackboard artifact tags bearing the specified tag name as the tags.
+        // get all tag results
+        List<BlackboardArtifactTag> allTags = new ArrayList<>();
         List<BlackboardArtifactTag> artifactTags = (dataSourceId != null && dataSourceId > 0)
                 ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, dataSourceId)
                 : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName);
@@ -151,51 +181,57 @@ public class TagsDAO {
             String userName = System.getProperty(USER_NAME_PROPERTY);
             for (BlackboardArtifactTag tag : artifactTags) {
                 if (userName.equals(tag.getUserName())) {
-                    tags.add(tag);
+                    allTags.add(tag);
                 }
             }
         } else {
-            tags.addAll(artifactTags);
+            allTags.addAll(artifactTags);
         }
+        
+        // get current page of tag results
+        List<? extends Tag> pagedTags = getPaged(allTags, cacheKey);
 
         List<RowDTO> fileRows = new ArrayList<>();
-        for (BlackboardArtifactTag tag : tags) {
-            String name = tag.getContent().getName();  // As a backup.
+        for (Tag tag : pagedTags) {
+            BlackboardArtifactTag blackboardTag = (BlackboardArtifactTag) tag;
+            
+            String name = blackboardTag.getContent().getName();  // As a backup.
             try {
-                name = tag.getArtifact().getShortDescription();
+                name = blackboardTag.getArtifact().getShortDescription();
             } catch (TskCoreException ignore) {
                 // it's a WARNING, skip
             }
             
             String contentPath;
             try {
-                contentPath = tag.getContent().getUniquePath();
+                contentPath = blackboardTag.getContent().getUniquePath();
             } catch (TskCoreException ex) {
                 contentPath = NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.unavail.text");
             }
 
-            List<Object> cellValues = Arrays.asList(
-                    name,
+            List<Object> cellValues = Arrays.asList(name,
                     null, // GVDTODO translation column
                     contentPath,
-                    tag.getArtifact().getDisplayName(),
-                    tag.getComment(),
-                    tag.getUserName());
+                    blackboardTag.getArtifact().getDisplayName(),
+                    blackboardTag.getComment(),
+                    blackboardTag.getUserName());
 
             fileRows.add(new BaseRowDTO(
                     cellValues,
                     RESULT_TAG_TYPE_ID,
-                    tag.getId()));
+                    blackboardTag.getId()));
         }
 
-        return new BaseSearchResultsDTO(RESULT_TAG_TYPE_ID, Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, fileRows.size());
+        return new BaseSearchResultsDTO(RESULT_TAG_TYPE_ID, Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allTags.size());
     }
     
-    private SearchResultsDTO fetchFileTags(TagName tagName, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchFileTags(SearchParams<TagsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
-        // ELTODO startItem, maxResultCount
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        TagName tagName = cacheKey.getParamData().getTagName();
         
-        List<ContentTag> tags = new ArrayList<>();
+        // get all tag results
+        List<ContentTag> allTags = new ArrayList<>();
         List<ContentTag> contentTags = (dataSourceId != null && dataSourceId > 0)
                 ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName, dataSourceId)
                 : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName);
@@ -203,16 +239,20 @@ public class TagsDAO {
             String userName = System.getProperty(USER_NAME_PROPERTY);
             for (ContentTag tag : contentTags) {
                 if (userName.equals(tag.getUserName())) {
-                    tags.add(tag);
+                    allTags.add(tag);
                 }
             }
         } else {
-            tags.addAll(contentTags);
+            allTags.addAll(contentTags);
         }
-
+        
+        // get current page of tag results
+        List<? extends Tag> pagedTags = getPaged(allTags, cacheKey);
+        
         List<RowDTO> fileRows = new ArrayList<>();
-        for (ContentTag tag : tags) {
-            Content content = tag.getContent();
+        for (Tag tag : pagedTags) {
+            ContentTag contentTag = (ContentTag) tag;
+            Content content = contentTag.getContent();
             String contentPath = content.getUniquePath();
             AbstractFile file = content instanceof AbstractFile ? (AbstractFile) content : null;
 
@@ -220,14 +260,14 @@ public class TagsDAO {
                     content.getName(),
                     null, // GVDTODO translation column
                     contentPath,
-                    tag.getComment(),
+                    contentTag.getComment(),
                     file != null ? TimeZoneUtils.getFormattedTime(file.getMtime()) : "",
                     file != null ? TimeZoneUtils.getFormattedTime(file.getCtime()) : "",
                     file != null ? TimeZoneUtils.getFormattedTime(file.getAtime()) : "",
                     file != null ? TimeZoneUtils.getFormattedTime(file.getCrtime()) : "",
                     content.getSize(),
                     file != null ? StringUtils.defaultString(file.getMd5Hash()) : "",
-                    tag.getUserName());
+                    contentTag.getUserName());
 
             fileRows.add(new BaseRowDTO(
                     cellValues,
@@ -235,6 +275,44 @@ public class TagsDAO {
                     file.getId()));
         }
 
-        return new BaseSearchResultsDTO(FILE_TAG_TYPE_ID, Bundle.FileTag_name_text(), FILE_TAG_COLUMNS, fileRows, 0, fileRows.size());
+        return new BaseSearchResultsDTO(FILE_TAG_TYPE_ID, Bundle.FileTag_name_text(), FILE_TAG_COLUMNS, fileRows, 0, allTags.size());
     }
+    
+    /**
+     * Handles fetching and paging of data for allTags.
+     */
+    public static class TagFetcher extends DAOFetcher<TagsSearchParams> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public TagFetcher(TagsSearchParams params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getTagsDAO().getTags(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            TagsSearchParams params = this.getParameters();
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
+                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())) {
+                
+                return params.getTagType() == TagsSearchParams.TagType.RESULT;
+            }
+            
+            if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
+                    || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
+                
+                return params.getTagType() == TagsSearchParams.TagType.FILE;
+            }
+            return false;
+        }
+    }    
 }
