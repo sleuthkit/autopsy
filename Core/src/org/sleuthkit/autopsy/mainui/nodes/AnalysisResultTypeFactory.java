@@ -183,7 +183,32 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * This is a stop gap measure until a different way of handling
+                 * the closing of cases is worked out. Currently, remote events
+                 * may be received for a case that is already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    /**
+                     * Due to some unresolved issues with how cases are closed,
+                     * it is possible for the event to have a null oldValue if
+                     * the event is a remote event.
+                     */
+                    final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
+                    // GVDTODO it may be necessary to have more fine-grained check for refresh here.
+                    if (null != event && BlackboardArtifact.Type.TSK_HASHSET_HIT.equals(event.getBlackboardArtifactType())) {
+                        return true;
+                    }
+                } catch (NoCurrentCaseException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            }
+            return false;
         }
 
     }
