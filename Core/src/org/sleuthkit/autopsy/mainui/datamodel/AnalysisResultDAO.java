@@ -32,7 +32,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -365,17 +367,17 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         try {
             // get artifact types and counts
             SleuthkitCase skCase = getCase();
-            String query = "value_text AS set_name, COUNT(*) AS count FROM \n"
-                    + "(SELECT attr.value_text FROM\n"
-                    + "blackboard_attributes attr\n"
-                    + (dataSourceId == null ? "" : "LEFT JOIN blackboard_artifacts art ON attr.artifact_id = art.artifact_id\n")
-                    + "WHERE attr.artifact_type_id = " + type.getTypeID() + "\n"
-                    + (dataSourceId == null ? "" : "AND art.data_source_obj_id = " + dataSourceId + "\n")
-                    + "AND attr.attribute_type_id = " + setNameAttr.getTypeID() + "\n"
-                    // inner query and group by artifact id ensures that count of artifacts is
-                    // determined even if data breaks invariants and has more than one TSK_SET_NAME attr per artifact
-                    + "GROUP BY attr.value_text, attr.artifact_id)\n"
-                    + "GROUP BY value_text";
+            String query = " set_name, COUNT(*) AS count \n"
+                    + "FROM ( \n"
+                    + "  SELECT art.artifact_id, \n"
+                    + "  (SELECT value_text \n"
+                    + "    FROM blackboard_attributes attr \n"
+                    + "    WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + setNameAttr.getTypeID() + " LIMIT 1) AS set_name \n"
+                    + "	 FROM blackboard_artifacts art \n"
+                    + "	 WHERE  art.artifact_type_id = " + type.getTypeID() + " \n"
+                    + ((dataSourceId == null) ? "" : "  AND art.data_source_obj_id = " + dataSourceId + " \n")
+                    + ") \n"
+                    + "GROUP BY set_name";
 
             Map<String, Long> setCounts = new HashMap<>();
             skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
@@ -383,9 +385,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     while (resultSet.next()) {
                         String setName = resultSet.getString("set_name");
                         long count = resultSet.getLong("count");
-                        if (setName != null) {
-                            setCounts.put(setName, count);
-                        }
+                        setCounts.put(setName, count);
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
@@ -414,6 +414,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     public TreeResultsDTO<HashHitSearchParam> getHashSetCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         List<TreeItemDTO<HashHitSearchParam>> allSets
                 = getSetCounts(BlackboardArtifact.Type.TSK_HASHSET_HIT, BlackboardAttribute.Type.TSK_SET_NAME, dataSourceId).entrySet().stream()
+                        .filter(entry -> entry.getKey() == null)
                         .map(entry -> new TreeItemDTO<>(
                         BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeName(),
                         new HashHitSearchParam(dataSourceId, entry.getKey()),
@@ -426,6 +427,96 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         return new TreeResultsDTO<>(allSets);
     }
+
+    @Messages({
+        "AnalysisResultDAO_getKeywordHitCounts_adhocName=Adhoc Results"
+    })
+    public TreeResultsDTO<AnalysisResultSetSearchParam> getKeywordHitCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        List<TreeItemDTO<AnalysisResultSetSearchParam>> allSets
+                = getSetCounts(BlackboardArtifact.Type.TSK_KEYWORD_HIT, BlackboardAttribute.Type.TSK_SET_NAME, dataSourceId).entrySet().stream()
+                        .map(entry -> {
+                            return new TreeItemDTO<>(
+                                    BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeName(),
+                                    new AnalysisResultSetSearchParam(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, entry.getKey()),
+                                    entry.getKey(),
+                                    entry.getKey() == null ? Bundle.AnalysisResultDAO_getKeywordHitCounts_adhocName() : entry.getKey(),
+                                    entry.getValue());
+                        })
+                        .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getTypeData().getSetName(), b.getTypeData().getSetName(), true))
+                        .collect(Collectors.toList());
+
+        return new TreeResultsDTO<>(allSets);
+    }
+
+    // GVDTODO
+//    public TreeResultsDTO<TBD> getKeywordSetCounts(String setName /*or null for ad hoc */, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+//        if (dataSourceId != null && dataSourceId <= 0) {
+//            throw new IllegalArgumentException("Expected data source id to be > 0");
+//        }
+//
+//        try {
+//            // get artifact types and counts
+//            SleuthkitCase skCase = getCase();
+//            String query = "set_name, search_type, search_term, COUNT(*) AS count \n"
+//                    + "FROM ( \n"
+//                    + "  SELECT artifact_id, set_name, search_type, \n"
+//                    // if search type is 1 or no regexp, the search_term is TSK_KEYWORD, otherwise TSK_KEYWORD_REGEXP
+//                    + "    CASE \n"
+//                    + "      WHEN search_type = 1 OR regexp_str IS NULL THEN \n"
+//                    + "        (SELECT value_text \n"
+//                    + "          FROM blackboard_attributes attr \n"
+//                    + "          WHERE attr.artifact_id = res.artifact_id \n"
+//                    + "          AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " \n"
+//                    + "          LIMIT 1) \n"
+//                    + "      ELSE \n"
+//                    + "        regexp_str \n"
+//                    + "    END AS search_term \n"
+//                    + "  FROM ( \n"
+//                    // get set name, keyword_search_type, regex, and set name for each keyword
+//                    + "    SELECT \n"
+//                    + "      art.artifact_id AS artifact_id, \n"
+//                    + "      (SELECT value_text \n"
+//                    + "        FROM blackboard_attributes attr \n"
+//                    + "        WHERE attr.artifact_id = art.artifact_id \n"
+//                    + "        AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID() + " \n"
+//                    + "        LIMIT 1) AS set_name, \n"
+//                    + "      (SELECT value_int32 \n"
+//                    + "        FROM blackboard_attributes attr \n"
+//                    + "        WHERE attr.artifact_id = art.artifact_id \n"
+//                    + "        AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID() + " \n"
+//                    + "        LIMIT 1) AS search_type, \n"
+//                    + "      (SELECT value_text \n"
+//                    + "        FROM blackboard_attributes attr \n"
+//                    + "        WHERE attr.artifact_id = art.artifact_id \n"
+//                    + "        AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD_REGEXP.getTypeID() + " \n"
+//                    + "        LIMIT 1) AS regexp_str, \n"
+//                    + "    FROM blackboard_artifacts art \n"
+//                    + "    WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + " \n"
+//                    + ((dataSourceId == null) ? "" : "    AND art.data_source_obj_id = ?\n")
+//                    + "  ) res \n"
+//                    + ((setName == null) ? "    WHERE set_name IS NULL\n" : "  WHERE set_name = ?\n")
+//                    + ") \n"
+//                    + "GROUP BY set_name, search_type, search_term";
+//
+//            // GVDTODO fix right here
+//            Map<String, Long> setCounts = new HashMap<>();
+//            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+//                try {
+//                    while (resultSet.next()) {
+//                        String setName = resultSet.getString("set_name");
+//                        long count = resultSet.getLong("count");
+//                        setCounts.put(setName, count);
+//                    }
+//                } catch (SQLException ex) {
+//                    logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
+//                }
+//            });
+//
+//            return setCounts;
+//        } catch (NoCurrentCaseException | TskCoreException ex) {
+//            throw new ExecutionException("An error occurred while fetching set counts", ex);
+//        }
+//    }
 
     /**
      * Handles basic functionality of fetching and paging of analysis results.
