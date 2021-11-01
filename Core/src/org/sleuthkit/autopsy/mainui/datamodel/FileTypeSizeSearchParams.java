@@ -71,8 +71,8 @@ public class FileTypeSizeSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
+        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
