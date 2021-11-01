@@ -45,7 +45,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import static org.sleuthkit.autopsy.casemodule.services.TagsManager.getNotableTagLabel;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
@@ -358,7 +357,7 @@ class TableReportGenerator {
         // Give the modules the rows for the content tags. 
         for (ContentTag tag : tags) {
             try {
-                if(shouldFilterFromReport(tag.getContent())) {
+                if (shouldFilterFromReport(tag.getContent())) {
                     continue;
                 }
             } catch (TskCoreException ex) {
@@ -366,7 +365,7 @@ class TableReportGenerator {
                 logger.log(Level.SEVERE, "Failed to access content data from the case database.", ex); //NON-NLS
                 return;
             }
-            
+
             // skip tags that we are not reporting on 
             String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
             if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
@@ -451,15 +450,15 @@ class TableReportGenerator {
         // Give the modules the rows for the content tags. 
         for (BlackboardArtifactTag tag : tags) {
             try {
-                if(shouldFilterFromReport(tag.getContent())) {
+                if (shouldFilterFromReport(tag.getContent())) {
                     continue;
                 }
-            }  catch (TskCoreException ex) {
+            } catch (TskCoreException ex) {
                 errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetBBArtifactTags"));
                 logger.log(Level.SEVERE, "Failed to access content data from the case database.", ex); //NON-NLS
                 return;
             }
-            
+
             String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
             if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
                 continue;
@@ -813,7 +812,7 @@ class TableReportGenerator {
                     AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
                     if (f != null) {
                         uniquePath = openCase.getSleuthkitCase().getAbstractFileById(objId).getUniquePath();
-                        if(shouldFilterFromReport(f)) {
+                        if (shouldFilterFromReport(f)) {
                             continue;
                         }
                     }
@@ -973,7 +972,7 @@ class TableReportGenerator {
                     AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
                     if (f != null) {
                         uniquePath = openCase.getSleuthkitCase().getAbstractFileById(objId).getUniquePath();
-                        if(shouldFilterFromReport(f)) {
+                        if (shouldFilterFromReport(f)) {
                             continue;
                         }
                     }
@@ -1217,11 +1216,11 @@ class TableReportGenerator {
     private List<ArtifactData> getFilteredArtifacts(BlackboardArtifact.Type type, HashSet<String> tagNamesFilter) {
         List<ArtifactData> artifacts = new ArrayList<>();
         try {
-            for (BlackboardArtifact artifact : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifacts(type.getTypeID())) {
-                if(shouldFilterFromReport(artifact)) {
+            for (BlackboardArtifact artifact : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(Collections.singletonList(type), settings.getSelectedDataSources())) {
+                if (shouldFilterFromReport(artifact)) {
                     continue;
                 }
-                
+
                 List<BlackboardArtifactTag> tags = Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);
                 HashSet<String> uniqueTagNames = new HashSet<>();
                 for (BlackboardArtifactTag tag : tags) {
@@ -1339,7 +1338,7 @@ class TableReportGenerator {
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)));
 
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
-                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED )));
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED)));
 
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID() == artifactTypeId) {
@@ -1817,19 +1816,19 @@ class TableReportGenerator {
         return "";
 
     }
-    
+
     /**
      * Indicates if the content should be filtered from the report.
      */
     private boolean shouldFilterFromReport(Content content) throws TskCoreException {
-        if(this.settings.getSelectedDataSources() == null) {
+        if (this.settings.getSelectedDataSources() == null) {
             return false;
         }
-        
+
         if (content.getDataSource() == null) {
             return false;
         }
-        
+
         long dataSourceId = content.getDataSource().getId();
         return !this.settings.getSelectedDataSources().contains(dataSourceId);
     }
