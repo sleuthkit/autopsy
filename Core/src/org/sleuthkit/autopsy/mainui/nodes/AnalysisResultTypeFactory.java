@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import org.openide.nodes.ChildFactory;
-import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -30,7 +30,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -40,6 +39,12 @@ import org.sleuthkit.datamodel.BlackboardArtifact.Category;
  * Factory for displaying analysis result types in the tree.
  */
 public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSearchParam> {
+    
+    private static Set<Integer> SET_TREE_ARTIFACTS = ImmutableSet.of(
+            BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID(),
+            BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
+            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
+    );
 
     /**
      * Returns the path to the icon to use for this artifact type.
@@ -71,11 +76,13 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
     @Override
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
-        if (BlackboardArtifact.Type.TSK_HASHSET_HIT.equals(rowData.getTypeData().getArtifactType())) {
-            return new HashHitTypeNode(rowData);
-        } else {
-            return new AnalysisResultTypeTreeNode(rowData);
-        }
+//        if (SET_TREE_ARTIFACTS.contains(rowData.getTypeData().getArtifactType().getTypeID())) {
+//            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getTypeData().getArtifactType(), dataSourceId, null));
+//        } else if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getTypeData().getArtifactType())) {
+//            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getTypeData().getArtifactType(), dataSourceId, null));
+//        } else {
+        return new AnalysisResultTypeTreeNode(rowData);
+//        }
     }
 
     @Override
@@ -149,7 +156,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     /**
      * Display name and count of an analysis result type in the tree.
      */
-    public static class AnalysisResultTypeTreeNode extends TreeNode<AnalysisResultSearchParam> {
+    static class AnalysisResultTypeTreeNode extends TreeNode<AnalysisResultSearchParam> {
 
         /**
          * Main constructor.
@@ -168,131 +175,191 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
     }
 
-    /**
-     * An analysis result type node that has nested children.
-     */
-    static class TreeTypeNode extends TreeNode<AnalysisResultSearchParam> {
-
-        /**
-         * Main constructor.
-         *
-         * @param itemData The data to display.
-         */
-        public TreeTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData, ChildFactory childFactory) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
-                    itemData,
-                    Children.create(childFactory, true),
-                    getDefaultLookup(itemData));
-        }
-
-        @Override
-        public void respondSelection(DataResultTopComponent dataResultPanel) {
-            // GVDTODO...NO OP???
-        }
-    }
-    
-    
-
-    /**
-     * The root hashset hit type in the tree.
-     */
-    public static class HashHitTypeNode extends TreeNode<AnalysisResultSearchParam> {
-
-    }
-
-    /**
-     * Factory displaying all hashset sets with count in the tree.
-     */
-    public static class HashHitSetFactory extends TreeChildFactory<HashHitSearchParam> {
-
-        private final Long dataSourceId;
-
-        /**
-         * Main constructor.
-         *
-         * @param dataSourceId The data source object id for which the results
-         *                     should be filtered or null if no data source
-         *                     filtering.
-         */
-        public HashHitSetFactory(Long dataSourceId) {
-            this.dataSourceId = dataSourceId;
-        }
-
-        @Override
-        protected TreeNode<HashHitSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends HashHitSearchParam> rowData) {
-            return new HashHitSetNode(rowData);
-        }
-
-        @Override
-        protected TreeResultsDTO<? extends HashHitSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getHashHitSetCounts(dataSourceId);
-        }
-
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_HASHSET_HIT, evt);
-        }
-    }
-
-    /**
-     * A node displaying the set name and count for a hashset hit set.
-     */
-    public static class HashHitSetNode extends TreeNode<HashHitSearchParam> {
-
-        /**
-         * Main constructor.
-         *
-         * @param itemData Set data to display.
-         */
-        public HashHitSetNode(TreeResultsDTO.TreeItemDTO<? extends HashHitSearchParam> itemData) {
-            super(itemData.getTypeData().getSetName(), getIconPath(BlackboardArtifact.Type.TSK_HASHSET_HIT), itemData);
-        }
-
-        @Override
-        public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayHashHits(this.getItemData().getTypeData());
-        }
-
-    }
-
-    public static class InterestingItemTypeNode 
-
-    ;
-
-    public static class InterestingItemTypeFactory 
-
-    ;
-
-    public static class InterestingItemSetNode 
-
-    ;
-
-    public static class KeywordTypeNode 
-
-    ;
-
-    public static class KeywordTypeFactory 
-
-    ;
-
-    public static class KeywordSetNode 
-
-    ;
-
-    public static class KeywordSetFactory 
-
-    ;
-
-    public static class KeywordSearchTermNode 
-
-    ;
-
-    public static class KeywordSearchTermFactory 
-
-    ;
-
-    public static class KeywordFoundMatchNode 
-
-    ;
+//
+//    /**
+//     * An analysis result type node that has nested children.
+//     */
+//    static class TreeTypeNode extends TreeNode<AnalysisResultSearchParam> {
+//
+//        /**
+//         * Main constructor.
+//         *
+//         * @param itemData The data to display.
+//         */
+//        public TreeTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData, ChildFactory childFactory) {
+//            super(itemData.getTypeData().getArtifactType().getTypeName(),
+//                    getIconPath(itemData.getTypeData().getArtifactType()),
+//                    itemData,
+//                    Children.create(childFactory, true),
+//                    getDefaultLookup(itemData));
+//        }
+//
+//        @Override
+//        public void respondSelection(DataResultTopComponent dataResultPanel) {
+//            // GVDTODO...NO OP???
+//        }
+//    }
+//
+//    /**
+//     * Factory displaying all hashset sets with count in the tree.
+//     */
+//    static class TreeSetFactory extends TreeChildFactory<AnalysisResultSetSearchParam> {
+//
+//        private final BlackboardArtifact.Type artifactType;
+//        private final Long dataSourceId;
+//        private final String nullSetName;
+//
+//        /**
+//         * Main constructor.
+//         *
+//         * @param artifactType The type of artifact.
+//         * @param dataSourceId The data source object id for which the results
+//         *                     should be filtered or null if no data source
+//         *                     filtering.
+//         * @param nullSetName  The name of the set for artifacts with no
+//         *                     TSK_SET_NAME value. If null, items are omitted.
+//         */
+//        public TreeSetFactory(BlackboardArtifact.Type artifactType, Long dataSourceId, String nullSetName) {
+//            this.artifactType = artifactType;
+//            this.dataSourceId = dataSourceId;
+//            this.nullSetName = nullSetName;
+//        }
+//
+//        @Override
+//        protected TreeResultsDTO<? extends AnalysisResultSetSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
+//            return MainDAO.getInstance().getAnalysisResultDAO().getSetCounts(this.artifactType, this.dataSourceId, this.nullSetName);
+//        }
+//
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            return AnalysisResultTypeFactory.isRefreshRequired(artifactType, evt);
+//        }
+//
+//        @Override
+//        protected TreeNode<AnalysisResultSetSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> rowData) {
+//            return new TreeSetTypeNode(rowData, Children.LEAF);
+//        }
+//    }
+//
+//    /**
+//     * A node for a set within an artifact type.
+//     */
+//    static class TreeSetTypeNode extends TreeNode<AnalysisResultSetSearchParam> {
+//
+//        /**
+//         * Main constructor.
+//         *
+//         * @param artifactType The type of artifact.
+//         * @param itemData     The data to display.
+//         */
+//        public TreeSetTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData, Children children) {
+//            super(itemData.getTypeData().getArtifactType().getTypeName(),
+//                    getIconPath(itemData.getTypeData().getArtifactType()),
+//                    itemData,
+//                    children,
+//                    getDefaultLookup(itemData));
+//        }
+//
+//        @Override
+//        public void respondSelection(DataResultTopComponent dataResultPanel) {
+//            dataResultPanel.displayAnalysisResultSet(this.getItemData().getTypeData());
+//        }
+//    }
+//    
+//    
+//    @Messages({
+//        "AnalysisResultTypeFactory_adHocName=Adhoc Results"
+//    })
+//    static class KeywordSetFactory extends TreeSetFactory {
+//        
+//        public KeywordSetFactory(Long dataSourceId) {
+//            super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, Bundle.AnalysisResultTypeFactory_adHocName());
+//        }
+//
+//        @Override
+//        protected TreeNode<AnalysisResultSetSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> rowData) {
+//            return new TreeSetTypeNode(rowData, Children.LEAF);
+//        }
+//        
+//        
+//        
+//    }
+//    
+//    public static class KeywordSearchTermParams {
+//        private final String setName;
+//        private final String searchTerm;
+//        private final boolean hasChildren;
+//        private final Long dataSourceId;
+//
+//        public KeywordSearchTermParams(String setName, String searchTerm, boolean hasChildren, Long dataSourceId) {
+//            this.setName = setName;
+//            this.searchTerm = searchTerm;
+//            this.hasChildren = hasChildren;
+//            this.dataSourceId = dataSourceId;
+//        }
+//        
+//        public String getSetName() {
+//            return setName;
+//        }
+//
+//        public String getSearchTerm() {
+//            return searchTerm;
+//        }
+//
+//        public boolean hasChildren() {
+//            return hasChildren;
+//        }
+//
+//        public Long getDataSourceId() {
+//            return dataSourceId;
+//        }
+//    }
+//    
+//    static class KeywordSearchTermFactory extends TreeChildFactory<KeywordSearchTermParams> {
+//        private final AnalysisResultSetSearchParam setParams;
+//
+//        public KeywordSearchTermFactory(AnalysisResultSetSearchParam setParams) {
+//            this.setParams = setParams;
+//        }
+//        
+//        
+//        @Override
+//        protected TreeNode<KeywordSearchTermParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> rowData) {
+//            return new KeywordSearchTermNode(rowData);
+//        }
+//
+//        @Override
+//        protected TreeResultsDTO<? extends KeywordSearchTermParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+//            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordSetCounts(this.setParams);
+//        }
+//
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_KEYWORD_HIT, evt);
+//        }
+//        
+//    }
+//    
+//    static class KeywordSearchTermNode extends TreeNode<KeywordSearchTermParams> {
+//
+//        public KeywordSearchTermNode(TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> itemData) {
+//            super(itemData.getTypeData().getSearchTerm(), 
+//                    getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT), 
+//                    itemData, 
+//                    itemData.getTypeData().hasChildren() ? Children.create(new KeywordFoundMatchFactory(itemData), true) : Children.LEAF, 
+//                    getDefaultLookup(itemData));
+//        }
+//
+//        @Override
+//        public void respondSelection(DataResultTopComponent dataResultPanel) {
+//            KeywordSearchTermParams searchParams = this.getItemData().getTypeData();
+//            
+//            if (!searchParams.hasChildren()) {
+//                dataResultPanel.displayKeywordHits(new KeywordHitSearchParam(searchParams.getDataSourceId(), searchParams.getSetName(), null, searchParams.getSearchTerm()));
+//            }
+//        }
+//        
+//    }
+//    public static class KeywordFoundMatchFactory 
+//    public static class KeywordFoundMatchNode 
 }
