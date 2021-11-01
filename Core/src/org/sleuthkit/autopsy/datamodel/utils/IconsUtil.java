@@ -25,6 +25,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
  * Utility methods for handling icons
  */
 public final class IconsUtil {
+
     private IconsUtil() {
 
     }
@@ -136,6 +137,11 @@ public final class IconsUtil {
             imageFile = "red-circle-exclamation.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()) {
             imageFile = "hashset_hits.png";
+        } else if (typeID == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
+            imageFile = "keyword_hits.png";
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
+                || typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()) {
+            imageFile = "interesting_item.png";
         } else {
             imageFile = "artifact-icon.png"; //NON-NLS
         }
