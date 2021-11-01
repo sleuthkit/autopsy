@@ -96,8 +96,8 @@ public final class CaseEventListener implements PropertyChangeListener {
             Case.Events.CURRENT_CASE,
             Case.Events.DATA_SOURCE_NAME_CHANGED,
             Case.Events.OS_ACCT_INSTANCES_ADDED);
-    private static final int MAX_PREV_CASES_FOR_NOTABLE_SCORE = 10;
-    private static final int MAX_PREV_CASES_FOR_PREV_SEEN = 20;
+    private static final int MAX_PREV_CASES_FOR_NOTABLE_SCORE = 10; // Also appears in CentralRepoDataArtifactIngestModule
+    private static final int MAX_PREV_CASES_FOR_PREV_SEEN = 20; // Also appears in CentralRepoDataArtifactIngestModule
     private static final AtomicBoolean createOSAcctCorrAttrs = new AtomicBoolean();
     private static final AtomicBoolean flagPreviouslySeenOSAccts = new AtomicBoolean();
     private final ExecutorService jobProcessingExecutor;
@@ -118,7 +118,7 @@ public final class CaseEventListener implements PropertyChangeListener {
      *
      * @return flag True or false.
      */
-    public static boolean createOsAcctCorrAttrs() {
+    public static boolean getCreateOsAcctCorrAttrs() {
         return createOSAcctCorrAttrs.get();
     }
 
@@ -138,7 +138,7 @@ public final class CaseEventListener implements PropertyChangeListener {
      *
      * @return flag True or false.
      */
-    public static boolean flagPrevSeenOsAccts() {
+    public static boolean getFlagPrevSeenOsAccts() {
         return flagPreviouslySeenOSAccts.get();
     }
 
@@ -279,9 +279,6 @@ public final class CaseEventListener implements PropertyChangeListener {
         }
     }
 
-    /**
-     * A task RJCTODO
-     */
     private final class ContentTagTask implements Runnable {
 
         private final CentralRepository dbManager;
@@ -403,9 +400,6 @@ public final class CaseEventListener implements PropertyChangeListener {
         }
     }
 
-    /**
-     * A task RJCTODO
-     */
     private final class ArtifactTagTask implements Runnable {
 
         private final CentralRepository dbManager;
@@ -525,9 +519,6 @@ public final class CaseEventListener implements PropertyChangeListener {
 
     }
 
-    /**
-     * A task RJCTODO
-     */
     private final class TagDefinitionChangeTask implements Runnable {
 
         private final PropertyChangeEvent event;
@@ -639,9 +630,6 @@ public final class CaseEventListener implements PropertyChangeListener {
         } //TAG_STATUS_CHANGED
     }
 
-    /**
-     * A task RJCTODO
-     */
     private final class DataSourceAddedTask implements Runnable {
 
         private final CentralRepository dbManager;
@@ -679,9 +667,6 @@ public final class CaseEventListener implements PropertyChangeListener {
         } // DATA_SOURCE_ADDED
     }
 
-    /**
-     * A task RJCTODO
-     */
     private final class CurrentCaseTask implements Runnable {
 
         private final CentralRepository dbManager;
@@ -719,10 +704,9 @@ public final class CaseEventListener implements PropertyChangeListener {
     }
 
     /**
-     * A task RJCTODO
-     *
-     * Add OsAccount Instance to CR and find interesting items based on the
-     * OsAccount
+     * Adds OS account instances to the central repository and creates
+     * previously seen analysis results for them if the instances havd been seen
+     * in other cases.
      */
     @NbBundle.Messages({"CaseEventsListener.module.name=Central Repository",
         "CaseEventsListener.prevCaseComment.text=Users seen in previous cases",
@@ -740,7 +724,7 @@ public final class CaseEventListener implements PropertyChangeListener {
 
         @Override
         public void run() {
-            if (!createOsAcctCorrAttrs() && !flagPrevSeenOsAccts()) {
+            if (!getCreateOsAcctCorrAttrs() && !getFlagPrevSeenOsAccts()) {
                 return;
             }
             final OsAcctInstancesAddedEvent osAcctInstancesAddedEvent = (OsAcctInstancesAddedEvent) event;
@@ -755,13 +739,13 @@ public final class CaseEventListener implements PropertyChangeListener {
 
                     Optional<String> accountAddr = osAccount.getAddr();
                     try {
-                        if (createOsAcctCorrAttrs()) {
+                        if (getCreateOsAcctCorrAttrs()) {
                             for (CorrelationAttributeInstance correlationAttributeInstance : correlationAttributeInstances) {
                                 dbManager.addArtifactInstance(correlationAttributeInstance);
                             }
                         }
 
-                        if (flagPrevSeenOsAccts()) {
+                        if (getFlagPrevSeenOsAccts()) {
                             CorrelationAttributeInstance instanceWithTypeValue = null;
                             for (CorrelationAttributeInstance instance : correlationAttributeInstances) {
                                 if (instance.getCorrelationType().getId() == CorrelationAttributeInstance.OSACCOUNT_TYPE_ID) {
@@ -784,7 +768,6 @@ public final class CaseEventListener implements PropertyChangeListener {
                                         // calculate score
                                         Score score;
                                         int numCases = caseDisplayNames.size();
-                                        // RJCTODO: Centralize constants (consider)
                                         if (numCases <= MAX_PREV_CASES_FOR_NOTABLE_SCORE) {
                                             score = Score.SCORE_LIKELY_NOTABLE;
                                         } else if (numCases > MAX_PREV_CASES_FOR_NOTABLE_SCORE && numCases <= MAX_PREV_CASES_FOR_PREV_SEEN) {
@@ -834,9 +817,6 @@ public final class CaseEventListener implements PropertyChangeListener {
         }
     }
 
-    /**
-     * RJCTODO
-     */
     private final class DataSourceNameChangedTask implements Runnable {
 
         private final CentralRepository dbManager;

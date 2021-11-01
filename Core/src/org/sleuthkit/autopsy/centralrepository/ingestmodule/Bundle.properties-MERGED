@@ -9,6 +9,9 @@ CentralRepoIngestModule_notable_message_header=<html>A file in this data source 
 CentralRepoIngestModule_postToBB_knownBadMsg=Notable: {0}
 CentralRepoIngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation
 CentralRepoIngestModuleFactory.ingestmodule.name=Central Repository
+CrDataArtifactIngestModule_crInaccessibleErrMsg=Error accessing central repository
+CrDataArtifactIngestModule_crNotEnabledErrMsg=Central repository required, but not enabled
+CrDataArtifactIngestModule_noCurrentCaseErrMsg=Error getting current case
 # {0} - list of cases
 CrDataArtifactIngestModule_notableJustification=Previously marked as notable in cases {0}
 CrDataArtifactIngestModule_notableSetName=Previously Tagged As Notable (Central Repository)

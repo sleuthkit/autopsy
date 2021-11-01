@@ -66,12 +66,12 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestModule {
 
-    private static final Logger logger = Logger.getLogger(CorrelationAttributeInstance.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
     private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
-    private static final int MAX_PREV_CASES_FOR_NOTABLE_SCORE = 10;
-    private static final int MAX_PREV_CASES_FOR_PREV_SEEN = 20;
-    private final Set<String> corrAttrsAlreadyProcessed = new LinkedHashSet<>();
-    private final boolean saveCorrelationAttrs;
+    private static final int MAX_PREV_CASES_FOR_NOTABLE_SCORE = 10; // Also appears in CaseEventListener
+    private static final int MAX_PREV_CASES_FOR_PREV_SEEN = 20; // Also appears in CaseEventListener
+    private final Set<String> corrAttrsCreated;
+    private final boolean saveCorrAttrs;
     private final boolean flagNotableItems;
     private final boolean flagSeenDevices;
     private final boolean flagUniqueArtifacts;
@@ -91,27 +91,32 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
      * @param settings The ingest job settings for this module.
      */
     CentralRepoDataArtifactIngestModule(IngestSettings settings) {
-        saveCorrelationAttrs = settings.shouldCreateCorrelationProperties();
+        corrAttrsCreated = new LinkedHashSet<>();
+        saveCorrAttrs = settings.shouldCreateCorrelationProperties();
         flagNotableItems = settings.isFlagTaggedNotableItems();
         flagSeenDevices = settings.isFlagPreviousDevices();
         flagUniqueArtifacts = settings.isFlagUniqueArtifacts();
     }
 
+    @NbBundle.Messages({
+        "CrDataArtifactIngestModule_crNotEnabledErrMsg=Central repository required, but not enabled",
+        "CrDataArtifactIngestModule_noCurrentCaseErrMsg=Error getting current case",
+        "CrDataArtifactIngestModule_crInaccessibleErrMsg=Error accessing central repository",})
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         dataSource = context.getDataSource();
         ingestJobId = context.getJobId();
         if (!CentralRepository.isEnabled()) {
-            throw new IngestModuleException("Central repository required, but not enabled");
+            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_crNotEnabledErrMsg()); // May be displayed to user.
         }
         try {
             currentCase = Case.getCurrentCaseThrows();
             blackboard = currentCase.getSleuthkitCase().getBlackboard();
             centralRepo = CentralRepository.getInstance();
         } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException("Error getting current case", ex);
+            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_noCurrentCaseErrMsg(), ex); // May be displayed to user.
         } catch (CentralRepoException ex) {
-            throw new IngestModuleException("Error accessing central repository", ex);
+            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_crInaccessibleErrMsg(), ex); // May be displayed to user.
         }
         /*
          * Pass the relevant ingest job settings on to the case events listener
@@ -120,7 +125,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
          * account instances events when an ingest job with this module enabled
          * is running.
          */
-        CaseEventListener.setCreateOsAcctCorrAttrs(saveCorrelationAttrs);
+        CaseEventListener.setCreateOsAcctCorrAttrs(saveCorrAttrs);
         CaseEventListener.setFlagPrevSeenOsAccts(flagSeenDevices);
     }
 
@@ -128,7 +133,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     public ProcessResult process(DataArtifact artifact) {
         List<CorrelationAttributeInstance> corrAttrs = CorrelationAttributeUtil.makeCorrAttrsToSave(artifact);
         for (CorrelationAttributeInstance corrAttr : corrAttrs) {
-            if (!corrAttrsAlreadyProcessed.add(corrAttr.toString())) {
+            if (!corrAttrsCreated.add(corrAttr.toString())) {
                 continue;
             }
 
@@ -136,11 +141,11 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
                 makeAnalysisResults(artifact, corrAttr);
             }
 
-            if (saveCorrelationAttrs) {
+            if (saveCorrAttrs) {
                 try {
                     centralRepo.addAttributeInstanceBulk(corrAttr);
                 } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, String.format("Error doing bulk add of correlation attribute to central repository (%s) ", corrAttr), ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Error doing bulk add of correlation attribute to central repository (%s) ", corrAttr), ex); //NON-NLS
                 }
             }
         }
@@ -224,15 +229,15 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         try {
             previousOccurrences = centralRepo.getArtifactInstancesByTypeValue(corrAttr.getCorrelationType(), corrAttr.getCorrelationValue());
             for (Iterator<CorrelationAttributeInstance> iterator = previousOccurrences.iterator(); iterator.hasNext();) {
-                CorrelationAttributeInstance instance = iterator.next();
-                if (instance.getCorrelationCase().getCaseUUID().equals(corrAttr.getCorrelationCase().getCaseUUID())) {
+                CorrelationAttributeInstance prevOccurrence = iterator.next();
+                if (prevOccurrence.getCorrelationCase().getCaseUUID().equals(corrAttr.getCorrelationCase().getCaseUUID())) {
                     iterator.remove();
                 }
             }
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, String.format("Error normalizing correlation attribute value (s)", corrAttr), ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, String.format("Error normalizing correlation attribute value (s)", corrAttr), ex); // NON-NLS
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, String.format("Error getting previous occurences of correlation attribute (s)", corrAttr), ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, String.format("Error getting previous occurences of correlation attribute (s)", corrAttr), ex); // NON-NLS
         }
         return previousOccurrences;
     }
@@ -338,11 +343,11 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
                 try {
                     blackboard.postArtifact(analysisResult, CentralRepoIngestModuleFactory.getModuleName(), ingestJobId);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, String.format("Error posting analysis result to blackboard (*s)", analysisResult), ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Error posting analysis result to blackboard (*s)", analysisResult), ex); //NON-NLS
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating analysis result", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error creating analysis result", ex); // NON-NLS
         }
     }
 
@@ -351,7 +356,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         try {
             centralRepo.commitAttributeInstancesBulk();
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error doing final bulk commit of correlation attributes", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error doing final bulk commit of correlation attributes", ex); // NON-NLS
         }
         /*
          * Data artifact ingest modules are shut down at the end of the ingest
@@ -367,7 +372,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
          * only react to new OS account instances events when an ingest job with
          * this module enabled is running.
          */
-        CaseEventListener.setCreateOsAcctCorrAttrs(saveCorrelationAttrs);
+        CaseEventListener.setCreateOsAcctCorrAttrs(saveCorrAttrs);
         CaseEventListener.setFlagPrevSeenOsAccts(flagSeenDevices);
     }
 
@@ -420,9 +425,9 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
             }
 
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, String.format("Error fetching data from the central repository for data source '%s' (obj_id=%d)", dataSource.getName(), dataSource.getId()), ex);
+            LOGGER.log(Level.SEVERE, String.format("Error fetching data from the central repository for data source '%s' (obj_id=%d)", dataSource.getName(), dataSource.getId()), ex);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error fetching data from the case database for data source '%s' (obj_id=%d)", dataSource.getName(), dataSource.getId()), ex);
+            LOGGER.log(Level.SEVERE, String.format("Error fetching data from the case database for data source '%s' (obj_id=%d)", dataSource.getName(), dataSource.getId()), ex);
         }
     }
 
