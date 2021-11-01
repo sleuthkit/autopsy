@@ -26,14 +26,15 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiFunction;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.codec.binary.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -347,122 +348,245 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
     }
 
-// GVDTODO code to use in a future PR
-//    /**
-//     *
-//     * @param type         The artifact type to filter on.
-//     * @param setNameAttr  The blackboard attribute denoting the set name.
-//     * @param dataSourceId The data source object id for which the results
-//     *                     should be filtered or null if no data source
-//     *                     filtering.
-//     *
-//     * @return A mapping of set names to their counts.
-//     *
-//     * @throws IllegalArgumentException
-//     * @throws ExecutionException
-//     */
-//    Map<String, Long> getSetCountsMap(BlackboardArtifact.Type type, BlackboardAttribute.Type setNameAttr, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-//        if (dataSourceId != null && dataSourceId <= 0) {
-//            throw new IllegalArgumentException("Expected data source id to be > 0");
-//        }
-//
-//        try {
-//            // get artifact types and counts
-//            SleuthkitCase skCase = getCase();
-//            String query = " set_name, COUNT(*) AS count \n"
-//                    + "FROM ( \n"
-//                    + "  SELECT art.artifact_id, \n"
-//                    + "  (SELECT value_text \n"
-//                    + "    FROM blackboard_attributes attr \n"
-//                    + "    WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + setNameAttr.getTypeID() + " LIMIT 1) AS set_name \n"
-//                    + "	 FROM blackboard_artifacts art \n"
-//                    + "	 WHERE  art.artifact_type_id = " + type.getTypeID() + " \n"
-//                    + ((dataSourceId == null) ? "" : "  AND art.data_source_obj_id = " + dataSourceId + " \n")
-//                    + ") \n"
-//                    + "GROUP BY set_name";
-//
-//            Map<String, Long> setCounts = new HashMap<>();
-//            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
-//                try {
-//                    while (resultSet.next()) {
-//                        String setName = resultSet.getString("set_name");
-//                        long count = resultSet.getLong("count");
-//                        setCounts.put(setName, count);
-//                    }
-//                } catch (SQLException ex) {
-//                    logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
-//                }
-//            });
-//
-//            return setCounts;
-//        } catch (NoCurrentCaseException | TskCoreException ex) {
-//            throw new ExecutionException("An error occurred while fetching set counts", ex);
-//        }
-//    }
-//
-//    /**
-//     * Get counts for individual sets of the provided type to be used in the
-//     * tree view.
-//     *
-//     * @param type         The blackboard artifact type.
-//     * @param dataSourceId The data source object id for which the results
-//     *                     should be filtered or null if no data source
-//     *                     filtering.
-//     * @param nullSetName  For artifacts with no set, this is the name to
-//     *                     provide. If null, artifacts without a set name will
-//     *                     be ignored.
-//     * @param converter    Means of converting from data source id and set name
-//     *                     to an AnalysisResultSetSearchParam
-//     *
-//     * @return The sets along with counts to display.
-//     *
-//     * @throws IllegalArgumentException
-//     * @throws ExecutionException
-//     */
-//    private <T extends AnalysisResultSetSearchParam> TreeResultsDTO<T> getSetCounts(
-//            BlackboardArtifact.Type type,
-//            Long dataSourceId,
-//            String nullSetName,
-//            BiFunction<Long, String, T> converter) throws IllegalArgumentException, ExecutionException {
-//
-//        List<TreeItemDTO<T>> allSets
-//                = getSetCountsMap(type, BlackboardAttribute.Type.TSK_SET_NAME, dataSourceId).entrySet().stream()
-//                        .filter(entry -> nullSetName != null || entry.getKey() != null)
-//                        .map(entry -> {
-//                            return new TreeItemDTO<>(
-//                                    type.getTypeName(),
-//                                    converter.apply(dataSourceId, entry.getKey()),
-//                                    entry.getKey(),
-//                                    entry.getKey() == null ? nullSetName : entry.getKey(),
-//                                    entry.getValue());
-//                        })
-//                        .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
-//                        .collect(Collectors.toList());
-//
-//        return new TreeResultsDTO<>(allSets);
-//    }
-//
-//    public TreeResultsDTO<HashHitSearchParam> getHashHitSetCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-//        return getSetCounts(BlackboardArtifact.Type.TSK_HASHSET_HIT, dataSourceId, null, (dsId, setName) -> new HashHitSearchParam(dsId, setName));
-//    }
-//
-//    public TreeResultsDTO<AnalysisResultSetSearchParam> getSetCounts(BlackboardArtifact.Type type, Long dataSourceId, String nullSetName) throws IllegalArgumentException, ExecutionException {
-//        return getSetCounts(type, dataSourceId, nullSetName, (dsId, setName) -> new AnalysisResultSetSearchParam(type, dsId, setName));
-//    }
+    /**
+     *
+     * @param type         The artifact type to filter on.
+     * @param setNameAttr  The blackboard attribute denoting the set name.
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return A mapping of set names to their counts.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    Map<String, Long> getSetCountsMap(BlackboardArtifact.Type type, BlackboardAttribute.Type setNameAttr, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        if (dataSourceId != null && dataSourceId <= 0) {
+            throw new IllegalArgumentException("Expected data source id to be > 0");
+        }
 
-    public TreeResultsDTO<? extends AnalysisResultSetSearchParam> getSetCounts(BlackboardArtifact.Type artifactType, Long dataSourceId, String nullSetName) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try {
+            // get artifact types and counts
+            SleuthkitCase skCase = getCase();
+            String query = " set_name, COUNT(*) AS count \n"
+                    + "FROM ( \n"
+                    + "  SELECT art.artifact_id, \n"
+                    + "  (SELECT value_text \n"
+                    + "    FROM blackboard_attributes attr \n"
+                    + "    WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + setNameAttr.getTypeID() + " LIMIT 1) AS set_name \n"
+                    + "	 FROM blackboard_artifacts art \n"
+                    + "	 WHERE  art.artifact_type_id = " + type.getTypeID() + " \n"
+                    + ((dataSourceId == null) ? "" : "  AND art.data_source_obj_id = " + dataSourceId + " \n")
+                    + ") \n"
+                    + "GROUP BY set_name";
+
+            Map<String, Long> setCounts = new HashMap<>();
+            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        String setName = resultSet.getString("set_name");
+                        long count = resultSet.getLong("count");
+                        setCounts.put(setName, count);
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
+                }
+            });
+
+            return setCounts;
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching set counts", ex);
+        }
     }
 
-    public TreeResultsDTO<? extends KeywordSearchTermParams> getKeywordSetCounts(AnalysisResultSetSearchParam setParams) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    /**
+     * Get counts for individual sets of the provided type to be used in the
+     * tree view.
+     *
+     * @param type         The blackboard artifact type.
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     * @param nullSetName  For artifacts with no set, this is the name to
+     *                     provide. If null, artifacts without a set name will
+     *                     be ignored.
+     * @param converter    Means of converting from data source id and set name
+     *                     to an AnalysisResultSetSearchParam
+     *
+     * @return The sets along with counts to display.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<AnalysisResultSetSearchParam> getSetCounts(
+            BlackboardArtifact.Type type,
+            Long dataSourceId,
+            String nullSetName) throws IllegalArgumentException, ExecutionException {
+
+        List<TreeItemDTO<AnalysisResultSetSearchParam>> allSets
+                = getSetCountsMap(type, BlackboardAttribute.Type.TSK_SET_NAME, dataSourceId).entrySet().stream()
+                        .filter(entry -> nullSetName != null || entry.getKey() != null)
+                        .map(entry -> {
+                            return new TreeItemDTO<>(
+                                    type.getTypeName(),
+                                    new AnalysisResultSetSearchParam(type, dataSourceId, entry.getKey()),
+                                    entry.getKey(),
+                                    entry.getKey() == null ? nullSetName : entry.getKey(),
+                                    entry.getValue());
+                        })
+                        .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+                        .collect(Collectors.toList());
+
+        return new TreeResultsDTO<>(allSets);
     }
 
-    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordSearchTermCounts(KeywordSearchTermParams setParams) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    /**
+     * Returns the search term counts for a set name of keyword search results.
+     *
+     * @param setName      The set name.
+     * @param dataSourceId The data source id or null.
+     *
+     * @return The search terms and counts.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    @Messages({
+        "# {0} - searchTerm",
+        "AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch={0} (Exact)",
+        "# {0} - searchTerm",
+        "AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch={0} (Substring)",
+        "# {0} - searchTerm",
+        "AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch={0} (Regex)",})
+    public TreeResultsDTO<? extends KeywordSearchTermParams> getKeywordSearchTermCounts(String setName, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        try {
+            List<AnalysisResult> results = dataSourceId == null
+                    ? getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID())
+                    : getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID(), dataSourceId);
+
+            //count count unique
+            Map<String, Pair<Set<String>, Integer>> searchTerms = new HashMap<>();
+            for (AnalysisResult ar : results) {
+                int searchType = -1;
+                String regex = null;
+                String keyword = null;
+                String thisSetName = null;
+                for (BlackboardAttribute attr : ar.getAttributes()) {
+                    if (BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.equals(attr.getAttributeType())) {
+                        searchType = attr.getValueInt();
+                    } else if (BlackboardAttribute.Type.TSK_KEYWORD.equals(attr.getAttributeType())) {
+                        keyword = attr.getValueString();
+                    } else if (BlackboardAttribute.Type.TSK_KEYWORD_REGEXP.equals(attr.getAttributeType())) {
+                        regex = attr.getValueString();
+                    } else if (BlackboardAttribute.Type.TSK_SET_NAME.equals(attr.getAttributeType())) {
+                        thisSetName = attr.getValueString();
+                    }
+                }
+
+                // continue if one set name is null and one is not or they aren't equal
+                if (!StringUtils.equals(setName, thisSetName)) {
+                    continue;
+                }
+
+                // determine search term to display based on search type and regex
+                String searchTerm = searchType == 1 || regex == null
+                        ? keyword
+                        : regex;
+
+                String searchTermModified = null;
+                switch (searchType) {
+                    case 0:
+                        searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm);
+                        break;
+                    case 1:
+                        searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm);
+                        break;
+                    case 2:
+                        searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm);
+                        break;
+                    default:
+                        logger.log(Level.WARNING, MessageFormat.format("Artifact with id: {0} has non-standard search type value: {1}.", ar.getId(), searchType == -1 ? "<null>" : searchType));
+                        searchTermModified = searchTerm;
+                        break;
+                }
+
+                Pair<Set<String>, Integer> setUniqueCount = searchTerms.computeIfAbsent(searchTermModified, st -> Pair.of(new HashSet<>(), 0));
+                setUniqueCount.setValue(setUniqueCount.getValue() + 1);
+                setUniqueCount.getKey().add(keyword);
+            }
+
+            List<TreeItemDTO<KeywordSearchTermParams>> items = searchTerms.entrySet().stream()
+                    .map(entry -> {
+                        return new TreeItemDTO<>(
+                                "KEYWORD_SEARCH_TERMS",
+                                new KeywordSearchTermParams(setName, entry.getKey(), entry.getValue().getKey().size() > 1, dataSourceId),
+                                entry.getKey(),
+                                entry.getKey() == null ? "" : entry.getKey(),
+                                (long) entry.getValue().getValue()
+                        );
+                    })
+                    .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+                    .collect(Collectors.toList());
+
+            return new TreeResultsDTO<>(items);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching keyword search terms for set: " + setName + " and data source id: " + dataSourceId, ex);
+        }
     }
 
-    
+    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        try {
+            List<AnalysisResult> results = dataSourceId == null
+                    ? getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID())
+                    : getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID(), dataSourceId);
+
+            //count of each match type
+            Map<String, Integer> searchTerms = new HashMap<>();
+            for (AnalysisResult ar : results) {
+                String thisRegexStr = null;
+                String keyword = null;
+                String thisSetName = null;
+                for (BlackboardAttribute attr : ar.getAttributes()) {
+                    if (BlackboardAttribute.Type.TSK_KEYWORD.equals(attr.getAttributeType())) {
+                        keyword = attr.getValueString();
+                    } else if (BlackboardAttribute.Type.TSK_KEYWORD_REGEXP.equals(attr.getAttributeType())) {
+                        thisRegexStr = attr.getValueString();
+                    } else if (BlackboardAttribute.Type.TSK_SET_NAME.equals(attr.getAttributeType())) {
+                        thisSetName = attr.getValueString();
+                    }
+                }
+
+                // continue if one set name is null and one is not or they aren't equal
+                if (!StringUtils.equals(setName, thisSetName) || !StringUtils.equals(thisRegexStr, regexStr)) {
+                    continue;
+                }
+
+                searchTerms.compute(keyword, (k,v) -> v == null ? 1 : v + 1);
+            }
+
+            List<TreeItemDTO<KeywordMatchParams>> items = searchTerms.entrySet().stream()
+                    .map(entry -> {
+                        return new TreeItemDTO<>(
+                                "KEYWORD_MATCH",
+                                new KeywordMatchParams(setName, regexStr, entry.getKey(), dataSourceId),
+                                entry.getKey(),
+                                entry.getKey() == null ? "" : entry.getKey(),
+                                (long) entry.getValue()
+                        );
+                    })
+                    .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+                    .collect(Collectors.toList());
+
+            return new TreeResultsDTO<>(items);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching keyword match for set: " 
+                    + setName + " and data source id: " 
+                    + dataSourceId + " and search term: " 
+                    + regexStr, ex);
+        }
+    }
+
     /**
      * Handles basic functionality of fetching and paging of analysis results.
      */

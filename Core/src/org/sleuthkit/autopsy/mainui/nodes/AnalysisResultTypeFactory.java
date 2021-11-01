@@ -317,7 +317,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         protected TreeResultsDTO<? extends KeywordSearchTermParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordSetCounts(this.setParams);
+            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordSearchTermCounts(this.setParams);
         }
 
         @Override
@@ -385,7 +385,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         protected TreeResultsDTO<? extends KeywordMatchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordSearchTermCounts(this.setParams);
+            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordMatchCounts(this.setParams);
         }
 
         @Override
