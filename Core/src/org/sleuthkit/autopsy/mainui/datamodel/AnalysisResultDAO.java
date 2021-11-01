@@ -496,44 +496,43 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
     }
 
-// GVDTODO code to use in a future PR
-//    /**
-//     * Handles fetching and paging of hashset hits.
-//     */
-//    public static class HashsetResultFetcher extends AbstractAnalysisResultFetcher<HashHitSearchParam> {
-//
-//        /**
-//         * Main constructor.
-//         *
-//         * @param params Parameters to handle fetching of data.
-//         */
-//        public HashsetResultFetcher(HashHitSearchParam params) {
-//            super(params);
-//        }
-//
-//        @Override
-//        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-//            return MainDAO.getInstance().getAnalysisResultDAO().getHashHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
-//        }
-//    }
-//
-//    /**
-//     * Handles fetching and paging of keyword hits.
-//     */
-//    public static class KeywordHitResultFetcher extends AbstractAnalysisResultFetcher<KeywordHitSearchParam> {
-//
-//        /**
-//         * Main constructor.
-//         *
-//         * @param params Parameters to handle fetching of data.
-//         */
-//        public KeywordHitResultFetcher(KeywordHitSearchParam params) {
-//            super(params);
-//        }
-//
-//        @Override
-//        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-//            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
-//        }
-//    }
+    /**
+     * Handles fetching and paging of hashset hits.
+     */
+    public static class HashsetResultFetcher extends AbstractAnalysisResultFetcher<HashHitSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public HashsetResultFetcher(HashHitSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getHashHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+    }
+
+    /**
+     * Handles fetching and paging of keyword hits.
+     */
+    public static class KeywordHitResultFetcher extends AbstractAnalysisResultFetcher<KeywordHitSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public KeywordHitResultFetcher(KeywordHitSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+    }
 }
