@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2018-2020 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class CentralRepositoryService implements AutopsyService {
 
     private CaseEventListener caseEventListener = new CaseEventListener();
-    
+
     @Override
     @NbBundle.Messages({
         "CentralRepositoryService.serviceName=Central Repository Service"
@@ -45,7 +45,8 @@ public class CentralRepositoryService implements AutopsyService {
     }
 
     @NbBundle.Messages({
-        "CentralRepositoryService.progressMsg.updatingSchema=Checking for schema updates..."
+        "CentralRepositoryService.progressMsg.updatingSchema=Checking for schema updates...",
+        "CentralRepositoryService.progressMsg.startingListener=Starting events listener..."
     })
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
@@ -56,17 +57,20 @@ public class CentralRepositoryService implements AutopsyService {
         ProgressIndicator progress = context.getProgressIndicator();
         progress.progress(Bundle.CentralRepositoryService_progressMsg_updatingSchema());
         updateSchema();
-
         if (context.cancelRequested()) {
             return;
         }
 
         dataUpgradeForVersion1dot2(context.getCase());
-        
+        if (context.cancelRequested()) {
+            return;
+        }
+
+        progress.progress(Bundle.CentralRepositoryService_progressMsg_startingListener());
         caseEventListener = new CaseEventListener();
-        caseEventListener.installListeners();                
+        caseEventListener.startUp();
     }
-    
+
     @NbBundle.Messages({
         "CentralRepositoryService.progressMsg.waitingForListeners=Finishing adding data to central repository database...."
     })
@@ -74,18 +78,16 @@ public class CentralRepositoryService implements AutopsyService {
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progress = context.getProgressIndicator();
         progress.progress(Bundle.CentralRepositoryService_progressMsg_waitingForListeners());
-        
         if (caseEventListener != null) {
-            caseEventListener.uninstallListeners();
             caseEventListener.shutdown();
         }
-
     }
 
     /**
-     * Updates the central repository schema to the latest version.
+     * Updates the central repository database schema to the latest version.
      *
-     * @throws AutopsyServiceException
+     * @throws AutopsyServiceException The exception is thrown if there is an
+     *                                 error updating the database schema.
      */
     private void updateSchema() throws AutopsyServiceException {
         try {
@@ -97,10 +99,11 @@ public class CentralRepositoryService implements AutopsyService {
 
     /**
      * Adds missing data source object IDs from data sources in this case to the
-     * corresponding records in the central repository. This is a data update to
-     * go with the v1.2 schema update.
+     * corresponding records in the central repository database. This is a data
+     * update to go with the v1.2 schema update.
      *
-     * @throws AutopsyServiceException
+     * @throws AutopsyServiceException The exception is thrown if there is an
+     *                                 error updating the database.
      */
     private void dataUpgradeForVersion1dot2(Case currentCase) throws AutopsyServiceException {
         try {

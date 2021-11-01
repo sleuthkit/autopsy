@@ -190,8 +190,6 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        IngestEventsListener.decrementCorrelationEngineModuleCount();
-
         if ((CentralRepository.isEnabled() == false) || (eamCase == null) || (eamDataSource == null)) {
             return;
         }
@@ -227,8 +225,6 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         
-        IngestEventsListener.incrementCorrelationEngineModuleCount();
-
         if (CentralRepository.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a

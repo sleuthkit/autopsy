@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNor
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
+import org.sleuthkit.autopsy.centralrepository.eventlisteners.CaseEventListener;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataArtifactIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -112,6 +113,15 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         } catch (CentralRepoException ex) {
             throw new IngestModuleException("Error accessing central repository", ex);
         }
+        /*
+         * Pass the relevant ingest job settings on to the case events listener
+         * for the central repository. Note that the listener's dependency on
+         * these settings currently means that it can only react to new OS
+         * account instances events when an ingest job with this module enabled
+         * is running.
+         */
+        CaseEventListener.setCreateOsAcctCorrAttrs(saveCorrelationAttrs);
+        CaseEventListener.setFlagPrevSeenOsAccts(flagSeenDevices);
     }
 
     @Override
@@ -307,7 +317,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
                 new BlackboardAttribute(
                         TSK_CORRELATION_VALUE, MODULE_NAME,
                         corrAttrValue));
-        makeAndPostAnalysisResult(artifact, BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, attributesForNewArtifact, "", Score.SCORE_LIKELY_NOTABLE, Bundle.CrDataArtifactIngestModule_prevUnseenJustification);
+        makeAndPostAnalysisResult(artifact, BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, attributesForNewArtifact, "", Score.SCORE_LIKELY_NOTABLE, Bundle.CrDataArtifactIngestModule_prevUnseenJustification());
     }
 
     /**
@@ -350,6 +360,15 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
          * job has hash values that match those in the case database.
          */
         syncDataSourceHashes();
+        /*
+         * Clear the relevant ingest job settings that were passed on to the
+         * case events listener for the central repository. Note that the
+         * listener's dependency on these settings currently means that it can
+         * only react to new OS account instances events when an ingest job with
+         * this module enabled is running.
+         */
+        CaseEventListener.setCreateOsAcctCorrAttrs(saveCorrelationAttrs);
+        CaseEventListener.setFlagPrevSeenOsAccts(flagSeenDevices);
     }
 
     /**

@@ -9,6 +9,13 @@ CentralRepoIngestModule_notable_message_header=<html>A file in this data source 
 CentralRepoIngestModule_postToBB_knownBadMsg=Notable: {0}
 CentralRepoIngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation
 CentralRepoIngestModuleFactory.ingestmodule.name=Central Repository
+# {0} - list of cases
+CrDataArtifactIngestModule_notableJustification=Previously marked as notable in cases {0}
+CrDataArtifactIngestModule_notableSetName=Previously Tagged As Notable (Central Repository)
+# {0} - list of cases
+CrDataArtifactIngestModule_prevSeenJustification=Previously seen in cases {0}
+CrDataArtifactIngestModule_prevSeenSetName=Previously Seen (Central Repository)
+CrDataArtifactIngestModule_prevUnseenJustification=Previously seen in zero cases
 IngestSettingsPanel.ingestSettingsLabel.text=Ingest Settings
 IngestSettingsPanel.flagTaggedNotableItemsCheckbox.text=Flag items previously tagged as notable
 IngestSettingsPanel.flagPreviouslySeenDevicesCheckbox.text=Flag devices and users previously seen in other cases
