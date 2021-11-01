@@ -129,7 +129,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     // TODO We can probably combine all the caches at some point
     private final Cache<SearchParams<AnalysisResultSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<SearchParams<HashHitSearchParam>, AnalysisResultTableSearchResultsDTO> hashHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(SearchParams<AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -270,19 +270,19 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return key.getArtifactType().equals(eventData.getBlackboardArtifactType());
     }
 
-    public AnalysisResultTableSearchResultsDTO getHashHitsForTable(HashHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public AnalysisResultTableSearchResultsDTO getAnalysisResultSetHits(AnalysisResultSetSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Data source id must be null or > 0.  "
                     + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        SearchParams<HashHitSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        SearchParams<AnalysisResultSetSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         if (hardRefresh) {
-            hashHitCache.invalidate(searchParams);
+            setHitCache.invalidate(searchParams);
         }
 
-        return hashHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
+        return setHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
@@ -305,7 +305,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     public void dropHashHitCache() {
-        hashHitCache.invalidateAll();
+        setHitCache.invalidateAll();
     }
 
     public void dropKeywordHitCache() {
@@ -450,6 +450,18 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 //        return getSetCounts(type, dataSourceId, nullSetName, (dsId, setName) -> new AnalysisResultSetSearchParam(type, dsId, setName));
 //    }
 
+    public TreeResultsDTO<? extends AnalysisResultSetSearchParam> getSetCounts(BlackboardArtifact.Type artifactType, Long dataSourceId, String nullSetName) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public TreeResultsDTO<? extends KeywordSearchTermParams> getKeywordSetCounts(AnalysisResultSetSearchParam setParams) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordSearchTermCounts(KeywordSearchTermParams setParams) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     
     /**
      * Handles basic functionality of fetching and paging of analysis results.
@@ -499,20 +511,20 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     /**
      * Handles fetching and paging of hashset hits.
      */
-    public static class HashsetResultFetcher extends AbstractAnalysisResultFetcher<HashHitSearchParam> {
+    public static class AnalysisResultSetFetcher extends AbstractAnalysisResultFetcher<AnalysisResultSetSearchParam> {
 
         /**
          * Main constructor.
          *
          * @param params Parameters to handle fetching of data.
          */
-        public HashsetResultFetcher(HashHitSearchParam params) {
+        public AnalysisResultSetFetcher(AnalysisResultSetSearchParam params) {
             super(params);
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getHashHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
     }
 
