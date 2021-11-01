@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
 import java.util.concurrent.ExecutionException;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -108,6 +109,44 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     }
 
     /**
+     * See if expected blackboard type matches event.
+     *
+     * @param expectedType The expected artifact type.
+     * @param evt          The event.
+     *
+     * @return If the event is a data added event and contains the provided
+     *         type.
+     */
+    private static boolean isRefreshRequired(BlackboardArtifact.Type expectedType, PropertyChangeEvent evt) {
+        String eventType = evt.getPropertyName();
+        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+            /**
+             * This is a stop gap measure until a different way of handling the
+             * closing of cases is worked out. Currently, remote events may be
+             * received for a case that is already closed.
+             */
+            try {
+                Case.getCurrentCaseThrows();
+                /**
+                 * Due to some unresolved issues with how cases are closed, it
+                 * is possible for the event to have a null oldValue if the
+                 * event is a remote event.
+                 */
+                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
+                // GVDTODO it may be necessary to have more fine-grained check for refresh here.
+                if (null != event && expectedType.equals(event.getBlackboardArtifactType())) {
+                    return true;
+                }
+            } catch (NoCurrentCaseException notUsed) {
+                /**
+                 * Case is closed, do nothing.
+                 */
+            }
+        }
+        return false;
+    }
+
+    /**
      * Display name and count of an analysis result type in the tree.
      */
     public static class AnalysisResultTypeTreeNode extends TreeNode<AnalysisResultSearchParam> {
@@ -130,20 +169,20 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     }
 
     /**
-     * The root hashset hit type in the tree.
+     * An analysis result type node that has nested children.
      */
-    public static class HashHitTypeNode extends TreeNode<AnalysisResultSearchParam> {
+    static class TreeTypeNode extends TreeNode<AnalysisResultSearchParam> {
 
         /**
          * Main constructor.
          *
          * @param itemData The data to display.
          */
-        public HashHitTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
+        public TreeTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData, ChildFactory childFactory) {
             super(itemData.getTypeData().getArtifactType().getTypeName(),
                     getIconPath(itemData.getTypeData().getArtifactType()),
                     itemData,
-                    Children.create(new HashHitSetFactory(itemData.getTypeData().getDataSourceId()), true),
+                    Children.create(childFactory, true),
                     getDefaultLookup(itemData));
         }
 
@@ -151,6 +190,15 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public void respondSelection(DataResultTopComponent dataResultPanel) {
             // GVDTODO...NO OP???
         }
+    }
+    
+    
+
+    /**
+     * The root hashset hit type in the tree.
+     */
+    public static class HashHitTypeNode extends TreeNode<AnalysisResultSearchParam> {
+
     }
 
     /**
@@ -178,39 +226,13 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         protected TreeResultsDTO<? extends HashHitSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getHashSetCounts(dataSourceId);
+            return MainDAO.getInstance().getAnalysisResultDAO().getHashHitSetCounts(dataSourceId);
         }
 
         @Override
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            String eventType = evt.getPropertyName();
-            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                /**
-                 * This is a stop gap measure until a different way of handling
-                 * the closing of cases is worked out. Currently, remote events
-                 * may be received for a case that is already closed.
-                 */
-                try {
-                    Case.getCurrentCaseThrows();
-                    /**
-                     * Due to some unresolved issues with how cases are closed,
-                     * it is possible for the event to have a null oldValue if
-                     * the event is a remote event.
-                     */
-                    final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                    // GVDTODO it may be necessary to have more fine-grained check for refresh here.
-                    if (null != event && BlackboardArtifact.Type.TSK_HASHSET_HIT.equals(event.getBlackboardArtifactType())) {
-                        return true;
-                    }
-                } catch (NoCurrentCaseException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
-            }
-            return false;
+            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_HASHSET_HIT, evt);
         }
-
     }
 
     /**
@@ -233,4 +255,44 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
     }
+
+    public static class InterestingItemTypeNode 
+
+    ;
+
+    public static class InterestingItemTypeFactory 
+
+    ;
+
+    public static class InterestingItemSetNode 
+
+    ;
+
+    public static class KeywordTypeNode 
+
+    ;
+
+    public static class KeywordTypeFactory 
+
+    ;
+
+    public static class KeywordSetNode 
+
+    ;
+
+    public static class KeywordSetFactory 
+
+    ;
+
+    public static class KeywordSearchTermNode 
+
+    ;
+
+    public static class KeywordSearchTermFactory 
+
+    ;
+
+    public static class KeywordFoundMatchNode 
+
+    ;
 }
