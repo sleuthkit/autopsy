@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.guiutils;
 
 import java.awt.Component;
-import java.awt.Font;
 import java.time.Duration;
 import javax.swing.JTable;
 
@@ -34,8 +33,7 @@ public final class DurationCellRenderer extends GrayableCellRenderer {
     private static final char UNIT_SEPARATOR_CHAR = ':';
 
     public DurationCellRenderer() {
-        setHorizontalAlignment(RIGHT);
-        setFont((new Font("Monospaced", Font.PLAIN, getFont().getSize()))); //display the durations as a monospaced font with the same size as the default font
+        setHorizontalAlignment(LEFT);
     }
 
     @Override
