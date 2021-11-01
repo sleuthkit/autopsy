@@ -22,10 +22,14 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AnalysisResultItem;
+import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultTableSearchResultsDTO;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Node to display AnalysResult.
@@ -69,5 +73,36 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
         }
 
         return Lookups.fixed(row.getAnalysisResult(), resultItem, row.getSrcContent());
+    }
+
+    @Override
+    public boolean supportsContentTagAction() {
+        return getSourceContent() != null;
+    }
+
+    @Override
+    public boolean supportsExtractArchiveWithPasswordAction() {
+        // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
+        // See JIRA-8099
+        boolean encryptionDetected = false;
+        if (getSourceContent() instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile) getSourceContent();
+            boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
+            try {
+                encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
+            } catch (TskCoreException ex) {
+                // TODO
+            }
+        }
+
+        return encryptionDetected;
+    }
+
+    @Override
+    public AbstractFile getExtractArchiveWithPasswordActionFile() {
+        if (getSourceContent() instanceof AbstractFile) {
+            return (AbstractFile) getSourceContent();
+        }
+        return null;
     }
 }

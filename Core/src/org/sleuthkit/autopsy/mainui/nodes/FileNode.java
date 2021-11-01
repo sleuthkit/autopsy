@@ -18,32 +18,17 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import javax.swing.Action;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
-import org.sleuthkit.autopsy.actions.AddContentTagAction;
-import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
-import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
-import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
-import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
-import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
-import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
-import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
+import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -52,7 +37,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 /**
  * A node for representing an AbstractFile.
  */
-public class FileNode extends AbstractNode {
+public class FileNode extends AbstractAutopsyNode {
 
     /**
      * Gets the path to the icon file that should be used to visually represent
@@ -91,16 +76,14 @@ public class FileNode extends AbstractNode {
                 return "org/sleuthkit/autopsy/images/file-icon.png";
         }
     }
-    
+
     private final boolean directoryBrowseMode;
     private final FileRowDTO fileData;
     private final List<ColumnKey> columns;
 
-
     public FileNode(SearchResultsDTO results, FileRowDTO file) {
         this(results, file, true);
     }
-
 
     public FileNode(SearchResultsDTO results, FileRowDTO file, boolean directoryBrowseMode) {
         // GVDTODO: at some point, this leaf will need to allow for children
@@ -128,55 +111,53 @@ public class FileNode extends AbstractNode {
         }
     }
 
-    /**
-     * Gets the set of actions that are associated with this node. This set is
-     * used to construct the context menu for the node.
-     *
-     * @param context Whether to find actions for context meaning or for the
-     *                node itself.
-     *
-     * @return An array of the actions.
-     */
     @Override
-    @NbBundle.Messages({
-        "FileNodev2.getActions.viewFileInDir.text=View File in Directory",
-        "FileNodev2.getActions.viewInNewWin.text=View Item in New Window",
-        "FileNodev2.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E",
-        "FileNodev2.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
-    public Action[] getActions(boolean context) {
-        List<Action> actionsList = new ArrayList<>();
+    public boolean supportsViewFileInTimeline() {
+        return true;
+    }
 
-        // GVDTODO: action requires node
-//        if (!this.directoryBrowseMode) {
-//            actionsList.add(new ViewContextAction(Bundle.FileNodev2_getActions_viewFileInDir_text(), this));
-//        }
+    @Override
+    public AbstractFile getFileForTimeline() {
+        return fileData.getAbstractFile();
+    }
 
+    @Override
+    public boolean supportsNewWindowAction() {
+        return true;
+    }
 
-        actionsList.add(ViewFileInTimelineAction.createViewFileAction(this.fileData.getAbstractFile()));
-        actionsList.add(null); // Creates an item separator
+    @Override
+    public Node getNewWindowActionNode() {
+        return this;
+    }
 
-        actionsList.add(new NewWindowViewAction(Bundle.FileNodev2_getActions_viewInNewWin_text(), this));
-        final Collection<AbstractFile> selectedFilesList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if (selectedFilesList.size() == 1) {
-            actionsList.add(new ExternalViewerAction(
-                    Bundle.FileNodev2_getActions_openInExtViewer_text(), this));
-        } else {
-            actionsList.add(ExternalViewerShortcutAction.getInstance());
-        }
+    @Override
+    public boolean supportsExternalViewerAction() {
+        return true;
+    }
 
-        actionsList.add(null); // Creates an item separator
+    @Override
+    public Node getExternalViewerActionNode() {
+        return this;
+    }
 
-        actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
-        actionsList.add(null); // Creates an item separator
+    @Override
+    public boolean supportsExtractAction() {
+        return true;
+    }
 
-        actionsList.add(AddContentTagAction.getInstance());
-        if (1 == selectedFilesList.size()) {
-            actionsList.add(DeleteFileContentTagAction.getInstance());
-        }
-        actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        
+    @Override
+    public boolean supportsExportCSVAction() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsContentTagAction() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsExtractArchiveWithPasswordAction() {
         // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
         // See JIRA-8099
         AbstractFile file = this.fileData.getAbstractFile();
@@ -187,15 +168,18 @@ public class FileNode extends AbstractNode {
         } catch (TskCoreException ex) {
             // TODO
         }
-        if (encryptionDetected) {
-            actionsList.add(new ExtractArchiveWithPasswordAction(this.fileData.getAbstractFile()));
-        }
-        //------------------------------------------------
 
-        actionsList.add(null);
-        actionsList.addAll(Arrays.asList(super.getActions(true)));
+        return encryptionDetected;
+    }
 
-        return actionsList.toArray(new Action[actionsList.size()]);
+    @Override
+    public AbstractFile getExtractArchiveWithPasswordActionFile() {
+        return fileData.getAbstractFile();
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        return ActionsFactory.getActions(context, this);
     }
 
     @Override
