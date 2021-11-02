@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CasePreparedStatement;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.HostAddress;
 import org.sleuthkit.datamodel.Image;
@@ -532,86 +533,115 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         "# {0} - searchTerm",
         "AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch={0} (Regex)",})
     public TreeResultsDTO<? extends KeywordSearchTermParams> getKeywordSearchTermCounts(String setName, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        // TODO replace with efficient SQL after 8145
+        if (dataSourceId != null && dataSourceId <= 0) {
+            throw new IllegalArgumentException("Expected data source id to be > 0");
+        }
+
+        String dataSourceClause = dataSourceId == null
+                ? "art.data_source_obj_id IS NULL"
+                : "art.data_source_obj_id = ?";
+
+        String setNameClause = setName == null
+                ? "attr_res.set_name IS NULL"
+                : "attr_res.set_name = ?";
+
+        String query = "res.search_term,\n"
+                + "  res.search_type,\n"
+                + "  SUM(res.count) AS count,\n"
+                + "  -- when there are multiple keyword groupings, return true for has children\n"
+                + "  CASE\n"
+                + "    WHEN COUNT(*) > 1 THEN 1\n"
+                + "	ELSE 0\n"
+                + "  END AS has_children\n"
+                + "FROM (\n"
+                + "  -- get keyword value, search type, search term, and count grouped by (keyword, regex, search_type) "
+                + "  -- in order to determine if groupings have children\n"
+                + "  SELECT \n"
+                + "    attr_res.keyword, \n"
+                + "    attr_res.search_type,\n"
+                + "    COUNT(*) AS count,\n"
+                + "    CASE \n"
+                + "      WHEN attr_res.search_type = 1 OR attr_res.regexp_str IS NULL THEN \n"
+                + "        (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = attr_res.artifact_id AND attr.attribute_type_id = "
+                + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " LIMIT 1)\n"
+                + "      ELSE \n"
+                + "        attr_res.regexp_str\n"
+                + "    END AS search_term\n"
+                + "  FROM (\n"
+                + "	-- get pertinent attribute values for artifacts\n"
+                + "    SELECT art.artifact_id, \n"
+                + "    (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
+                + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID() + " LIMIT 1) AS set_name,\n"
+                + "    (SELECT value_int32 FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
+                + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID() + " LIMIT 1) AS search_type,\n"
+                + "    (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
+                + BlackboardAttribute.Type.TSK_KEYWORD_REGEXP.getTypeID() + " LIMIT 1) AS regexp_str,\n"
+                + "    (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
+                + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " LIMIT 1) AS keyword\n"
+                + "    FROM blackboard_artifacts art\n"
+                + "    WHERE  art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + "\n"
+                + "    AND " + dataSourceClause + "\n"
+                + "  ) attr_res\n"
+                + "  WHERE " + setNameClause + "\n"
+                + "  GROUP BY attr_res.regexp_str, attr_res.keyword, attr_res.search_type\n"
+                + ") res\n"
+                + "GROUP BY res.search_term, res.search_type\n"
+                + "ORDER BY res.search_term, res.search_type";
+
         try {
-            List<AnalysisResult> results = dataSourceId == null
-                    ? getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID())
-                    : getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID(), dataSourceId);
+            // get artifact types and counts
+            SleuthkitCase skCase = getCase();
+            CasePreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query);
 
-            //search term with type in parenthesis => the distinct matches, the total result count, the search string without parenthesis
-            Map<String, SearchTermRecord> searchTerms = new HashMap<>();
-            for (AnalysisResult ar : results) {
-                int searchType = -1;
-                String regex = null;
-                String keyword = null;
-                String thisSetName = null;
-                for (BlackboardAttribute attr : ar.getAttributes()) {
-                    if (BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.equals(attr.getAttributeType())) {
-                        searchType = attr.getValueInt();
-                    } else if (BlackboardAttribute.Type.TSK_KEYWORD.equals(attr.getAttributeType())) {
-                        keyword = attr.getValueString();
-                    } else if (BlackboardAttribute.Type.TSK_KEYWORD_REGEXP.equals(attr.getAttributeType())) {
-                        regex = attr.getValueString();
-                    } else if (BlackboardAttribute.Type.TSK_SET_NAME.equals(attr.getAttributeType())) {
-                        thisSetName = attr.getValueString();
-                    }
-                }
-
-                // continue if one set name is null and one is not or they aren't equal
-                if (!StringUtils.equals(setName, thisSetName)) {
-                    continue;
-                }
-
-                // determine search term to display based on search type and regex
-                String searchTerm = searchType == 1 || regex == null
-                        ? keyword
-                        : regex;
-
-                String searchTermModified = null;
-                switch (searchType) {
-                    case 0:
-                        searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm);
-                        break;
-                    case 1:
-                        searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm);
-                        break;
-                    case 2:
-                        searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm);
-                        break;
-                    default:
-                        logger.log(Level.WARNING, MessageFormat.format("Artifact with id: {0} has non-standard search type value: {1}.", ar.getId(), searchType == -1 ? "<null>" : searchType));
-                        searchTermModified = searchTerm;
-                        break;
-                }
-
-                final String finalKeyword = keyword;
-                searchTerms.compute(searchTermModified, (key, prevValue) -> {
-                    if (prevValue == null) {
-                        return new SearchTermRecord(searchTerm, finalKeyword);
-                    } else {
-                        prevValue.incrementCount();
-                        prevValue.getDistinctMatches().add(finalKeyword);
-                        return prevValue;
-                    }
-                });
+            int paramIdx = 0;
+            if (dataSourceId != null) {
+                preparedStatement.setLong(++paramIdx, dataSourceId);
+            }
+            
+            if (setName != null) {
+                preparedStatement.setString(++paramIdx, setName);
             }
 
-            List<TreeItemDTO<KeywordSearchTermParams>> items = searchTerms.entrySet().stream()
-                    .map(entry -> {
-                        return new TreeItemDTO<>(
-                                "KEYWORD_SEARCH_TERMS",
-                                new KeywordSearchTermParams(setName, entry.getValue().getSearchTerm(), entry.getValue().getDistinctMatches().size() > 1, dataSourceId),
-                                entry.getKey(),
-                                entry.getKey() == null ? "" : entry.getKey(),
-                                (long) entry.getValue().getCount()
-                        );
-                    })
-                    .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
-                    .collect(Collectors.toList());
+            List<TreeItemDTO<KeywordSearchTermParams>> items = new ArrayList<>();
+            skCase.getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
+                try {
+                    String searchTerm = resultSet.getString("search_term");
+                    int searchType = resultSet.getInt("search_type");
+                    long count = resultSet.getLong("count");
+                    boolean hasChildren = resultSet.getBoolean("has_children");
+
+                    String searchTermModified;
+                    switch (searchType) {
+                        case 0:
+                            searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm == null ? "" : searchTerm);
+                            break;
+                        case 1:
+                            searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm == null ? "" : searchTerm);
+                            break;
+                        case 2:
+                            searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm == null ? "" : searchTerm);
+                            break;
+                        default:
+                            logger.log(Level.WARNING, MessageFormat.format("Non-standard search type value: {0}.", searchType));
+                            searchTermModified = searchTerm;
+                            break;
+                    }
+
+                    items.add(new TreeItemDTO<>(
+                            "KEYWORD_SEARCH_TERMS",
+                            new KeywordSearchTermParams(setName, searchTerm, searchType, hasChildren, dataSourceId),
+                            searchTerm,
+                            searchTermModified,
+                            count
+                    ));
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
+                }
+            });
 
             return new TreeResultsDTO<>(items);
         } catch (NoCurrentCaseException | TskCoreException ex) {
-            throw new ExecutionException("An error occurred while fetching keyword search terms for set: " + setName + " and data source id: " + dataSourceId, ex);
+            throw new ExecutionException("An error occurred while fetching set counts", ex);
         }
     }
 
@@ -619,8 +649,9 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * Get counts for string matches of a particular regex/substring search
      * term.
      *
-     * @param setName      The set name.
-     * @param regexStr     The regex string.
+     * @param setName      The set name or null if no set name.
+     * @param regexStr     The regex string. Must be non-null.
+     * @param searchType   The value for the search type attribute.
      * @param dataSourceId The data source id or null.
      *
      * @return The results
@@ -628,56 +659,80 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @throws IllegalArgumentException
      * @throws ExecutionException
      */
-    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        // TODO replace with efficient SQL after 8145
+    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, int searchType, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        if (dataSourceId != null && dataSourceId <= 0) {
+            throw new IllegalArgumentException("Expected data source id to be > 0");
+        }
+
+        String dataSourceClause = dataSourceId == null
+                ? "data_source_obj_id IS NULL"
+                : "data_source_obj_id = ?";
+
+        String setNameClause = setName == null
+                ? "res.set_name IS NULL"
+                : "res.set_name = ?";
+
+        String query = "keyword, \n"
+                + "  COUNT(*) AS count \n"
+                + "FROM (\n"
+                + "  SELECT art.artifact_id, \n"
+                + "  (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
+                + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID() + " LIMIT 1) AS set_name,\n"
+                + "  (SELECT value_int32 FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
+                + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID() + " LIMIT 1) AS search_type,\n"
+                + "  (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
+                + BlackboardAttribute.Type.TSK_KEYWORD_REGEXP.getTypeID() + " LIMIT 1) AS regexp_str,\n"
+                + "  (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
+                + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " LIMIT 1) AS keyword\n"
+                + "  FROM blackboard_artifacts art\n"
+                + "  WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + "\n"
+                + "  AND " + dataSourceClause
+                + ") res\n"
+                + "-- TODO replace\n"
+                + "WHERE " + setNameClause + "\n"
+                + "AND res.regexp_str = ?\n"
+                + "AND res.search_type = ?\n"
+                + "GROUP BY keyword";
+
         try {
-            List<AnalysisResult> results = dataSourceId == null
-                    ? getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID())
-                    : getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID(), dataSourceId);
+            // get artifact types and counts
+            SleuthkitCase skCase = getCase();
+            CasePreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query);
 
-            //count of each match type
-            Map<String, Integer> searchTerms = new HashMap<>();
-            for (AnalysisResult ar : results) {
-                String thisRegexStr = null;
-                String keyword = null;
-                String thisSetName = null;
-                for (BlackboardAttribute attr : ar.getAttributes()) {
-                    if (BlackboardAttribute.Type.TSK_KEYWORD.equals(attr.getAttributeType())) {
-                        keyword = attr.getValueString();
-                    } else if (BlackboardAttribute.Type.TSK_KEYWORD_REGEXP.equals(attr.getAttributeType())) {
-                        thisRegexStr = attr.getValueString();
-                    } else if (BlackboardAttribute.Type.TSK_SET_NAME.equals(attr.getAttributeType())) {
-                        thisSetName = attr.getValueString();
-                    }
-                }
-
-                // continue if one set name is null and one is not or they aren't equal
-                if (!StringUtils.equals(setName, thisSetName) || !StringUtils.equals(thisRegexStr, regexStr)) {
-                    continue;
-                }
-
-                searchTerms.compute(keyword, (k, v) -> v == null ? 1 : v + 1);
+            
+            int paramIdx = 0;
+            if (dataSourceId != null) {
+                preparedStatement.setLong(++paramIdx, dataSourceId);
             }
+            
+            if (setName != null) {
+                preparedStatement.setString(++paramIdx, setName);
+            }
+            
+            preparedStatement.setString(++paramIdx, regexStr);
+            preparedStatement.setInt(++paramIdx, searchType);
 
-            List<TreeItemDTO<KeywordMatchParams>> items = searchTerms.entrySet().stream()
-                    .map(entry -> {
-                        return new TreeItemDTO<>(
-                                "KEYWORD_MATCH",
-                                new KeywordMatchParams(setName, regexStr, entry.getKey(), dataSourceId),
-                                entry.getKey(),
-                                entry.getKey() == null ? "" : entry.getKey(),
-                                (long) entry.getValue()
-                        );
-                    })
-                    .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
-                    .collect(Collectors.toList());
+            List<TreeItemDTO<KeywordMatchParams>> items = new ArrayList<>();
+            skCase.getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
+                try {
+                    String keyword = resultSet.getString("keyword");
+                    long count = resultSet.getLong("count");
+
+                    items.add(new TreeItemDTO<>(
+                            "KEYWORD_MATCH",
+                            new KeywordMatchParams(setName, regexStr, keyword, searchType, dataSourceId),
+                            keyword,
+                            keyword == null ? "" : keyword,
+                            count));
+
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
+                }
+            });
 
             return new TreeResultsDTO<>(items);
         } catch (NoCurrentCaseException | TskCoreException ex) {
-            throw new ExecutionException("An error occurred while fetching keyword match for set: "
-                    + setName + " and data source id: "
-                    + dataSourceId + " and search term: "
-                    + regexStr, ex);
+            throw new ExecutionException("An error occurred while fetching keyword counts", ex);
         }
     }
 

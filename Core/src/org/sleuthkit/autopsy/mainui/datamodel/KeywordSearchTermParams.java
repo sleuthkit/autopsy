@@ -27,21 +27,23 @@ public class KeywordSearchTermParams {
     private final String searchTerm;
     private final boolean hasChildren;
     private final Long dataSourceId;
+    private final int searchType;
 
     /**
      * Main constructor.
      *
      * @param setName      The set name.
-     * @param searchTerm   The search term (determined from regex or
-     *                     keyword).
+     * @param searchTerm   The search term (determined from regex or keyword).
+     * @param searchType   The keyword search type attribute.
      * @param hasChildren  Whether or not this search term has children tree
      *                     nodes (i.e. url regex search that further divides
      *                     into different urls).
      * @param dataSourceId The data source id or null.
      */
-    public KeywordSearchTermParams(String setName, String searchTerm, boolean hasChildren, Long dataSourceId) {
+    public KeywordSearchTermParams(String setName, String searchTerm, int searchType, boolean hasChildren, Long dataSourceId) {
         this.setName = setName;
         this.searchTerm = searchTerm;
+        this.searchType = searchType;
         this.hasChildren = hasChildren;
         this.dataSourceId = dataSourceId;
     }
@@ -61,8 +63,8 @@ public class KeywordSearchTermParams {
     }
 
     /**
-     * @return Whether or not this search term has children tree nodes (i.e.
-     *         url regex search that further divides into different urls).
+     * @return Whether or not this search term has children tree nodes (i.e. url
+     *         regex search that further divides into different urls).
      */
     public boolean hasChildren() {
         return hasChildren;
@@ -74,5 +76,11 @@ public class KeywordSearchTermParams {
     public Long getDataSourceId() {
         return dataSourceId;
     }
-    
+
+    /**
+     * @return The keyword search type value.
+     */
+    public int getSearchType() {
+        return searchType;
+    }
 }

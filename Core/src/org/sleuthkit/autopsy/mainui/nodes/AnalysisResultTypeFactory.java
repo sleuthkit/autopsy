@@ -408,6 +408,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             return MainDAO.getInstance().getAnalysisResultDAO().getKeywordMatchCounts(
                     this.setParams.getSetName(),
                     this.setParams.getSearchTerm(),
+                    this.setParams.getSearchType(),
                     this.setParams.getDataSourceId());
         }
 

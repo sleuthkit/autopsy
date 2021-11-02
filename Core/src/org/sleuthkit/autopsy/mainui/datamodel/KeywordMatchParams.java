@@ -27,20 +27,22 @@ public class KeywordMatchParams {
     private final String searchTerm;
     private final String keywordMatch;
     private final Long dataSourceId;
+    private final int searchType;
 
     /**
      * Main constructor.
      *
      * @param setName      The set name.
-     * @param searchTerm   The search term (determined from regex or
-     *                     keyword).
+     * @param searchTerm   The search term (determined from regex or keyword).
      * @param keywordMatch The actual keyword match.
+     * @param searchType   The keyword search type.
      * @param dataSourceId The data source id or null.
      */
-    public KeywordMatchParams(String setName, String searchTerm, String keywordMatch, Long dataSourceId) {
+    public KeywordMatchParams(String setName, String searchTerm, String keywordMatch, int searchType, Long dataSourceId) {
         this.setName = setName;
         this.searchTerm = searchTerm;
         this.keywordMatch = keywordMatch;
+        this.searchType = searchType;
         this.dataSourceId = dataSourceId;
     }
 
@@ -71,5 +73,11 @@ public class KeywordMatchParams {
     public Long getDataSourceId() {
         return dataSourceId;
     }
-    
+
+    /**
+     * @return The type of keyword search performed.
+     */
+    public int getSearchType() {
+        return searchType;
+    }
 }
