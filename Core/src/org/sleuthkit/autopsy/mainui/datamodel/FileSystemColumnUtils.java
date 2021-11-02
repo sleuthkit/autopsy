@@ -177,7 +177,6 @@ class FileSystemColumnUtils {
      */
     static boolean isDisplayable(Content content) {
         if (content instanceof AbstractFile) {
-            System.out.println("### isDisplayable: Have abstract file content - isRoot: " + ((AbstractFile)content).isRoot() );
             return ! ((AbstractFile)content).isRoot();
         }
         return (getContentType(content) != ContentType.UNSUPPORTED);
