@@ -131,29 +131,26 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     // TODO We can probably combine all the caches at some point
-    private final Cache<SearchParams<AnalysisResultSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+     private final Cache<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
-    private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(SearchParams<AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
-
-        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
-
-        // get analysis results
+        
         List<BlackboardArtifact> arts = new ArrayList<>();
-        if (dataSourceId != null) {
-            arts.addAll(blackboard.getAnalysisResultsByType(artType.getTypeID(), dataSourceId));
-        } else {
-            arts.addAll(blackboard.getAnalysisResultsByType(artType.getTypeID()));
-        }
-
-        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
-        TableData tableData = createTableData(artType, pagedArtifacts);
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
+        String pagedWhereClause = getWhereClause(cacheKey);
+        arts.addAll(blackboard.getAnalysisResultsWhere(pagedWhereClause));
+        blackboard.loadBlackboardAttributes(arts);
+        
+        // Get total number of results
+        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());  
+        
+        TableData tableData = createTableData(artType, arts);
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
 
     private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSetSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -164,18 +161,21 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
-        // Get all hash set hits
-        List<AnalysisResult> allHashHits;
+        // We currently can't make a query on the set name field because need to use a prepared statement
+        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() + " ";
         if (dataSourceId != null) {
-            allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID(), dataSourceId);
-        } else {
-            allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID());
+            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
         }
 
         String expectedSetName = cacheKey.getParamData().getSetName();
+        
+        List<BlackboardArtifact> allHashHits = new ArrayList<>();
+        allHashHits.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
+        blackboard.loadBlackboardAttributes(allHashHits);
+        
         // Filter for the selected set
         List<BlackboardArtifact> arts = new ArrayList<>();
-        for (AnalysisResult art : allHashHits) {
+        for (BlackboardArtifact art : allHashHits) {
             BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
             if ((expectedSetName == null && setNameAttr == null)
                     || (expectedSetName != null && setNameAttr != null && expectedSetName.equals(setNameAttr.getValueString()))) {
@@ -263,7 +263,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        SearchParams<AnalysisResultSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        SearchParams<BlackboardArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         if (hardRefresh) {
             analysisResultCache.invalidate(searchParams);
         }
@@ -290,6 +290,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return setHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
+    // TODO - JIRA-8117
+    // This needs to use more than just the set name
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
