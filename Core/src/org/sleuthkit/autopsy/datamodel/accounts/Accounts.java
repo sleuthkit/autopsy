@@ -268,27 +268,8 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         protected long fetchChildCount(SleuthkitCase skCase) throws TskCoreException {
             long count = 0;
-            String dataSourceFilterClause = (filteringDSObjId > 0)
-                    ? " AND " + filteringDSObjId + " IN (SELECT art.data_source_obj_id FROM blackboard_artifacts art WHERE art.artifact_id = attr.artifact_id)"
-                    : "";
-
-            String accountTypesInUseQuery
-                    = "SELECT COUNT(attr.value_text) AS count"
-                    + " FROM blackboard_attributes attr"
-                    + " WHERE attr.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID()
-                    + " AND attr.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()
-                    + dataSourceFilterClause
-                    + " GROUP BY attr.value_text";
-
-            try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(accountTypesInUseQuery);
-                    ResultSet resultSet = executeQuery.getResultSet()) {
-
-                if (resultSet.next()) {
-                    count = resultSet.getLong("count");
-                }
-
-            } catch (TskCoreException | SQLException ex) {
-                LOGGER.log(Level.SEVERE, "Error querying for count of all account types", ex);
+            if (Accounts.this.accountTypeResults != null) {
+                count = Accounts.this.accountTypeResults.getTotal();
             }
             return count;
         }
@@ -330,17 +311,34 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         /**
+         * Calculates the total count of accounts based on the values in the
+         * map.
+         *
+         * @return The total count.
+         */
+        Long getTotal() {
+            return counts.values().stream()
+                    .mapToLong(lng -> lng)
+                    .sum();
+        }
+
+        /**
          * Queries the database and updates the counts for each account type.
          */
         private void update() {
             String accountTypesInUseQuery
-                    = "SELECT blackboard_attributes.value_text as account_type, COUNT(*) as count "
-                    + " FROM blackboard_artifacts " //NON-NLS
-                    + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + TSK_ACCOUNT.getTypeID() //NON-NLS
-                    + " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
-                    + getFilterByDataSourceClause()
-                    + " GROUP BY blackboard_attributes.value_text ";
+                    = "SELECT res.account_type, COUNT(*) AS count\n"
+                    + "FROM (\n"
+                    + "  SELECT MIN(blackboard_attributes.value_text) AS account_type\n"
+                    + "  FROM blackboard_artifacts\n"
+                    + "  LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id\n"
+                    + "  WHERE blackboard_artifacts.artifact_type_id = " + TSK_ACCOUNT.getTypeID() + "\n"
+                    + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
+                    +  getFilterByDataSourceClause() + "\n"
+                    + "  -- group by artifact_id to ensure only one account type per artifact\n"
+                    + "  GROUP BY blackboard_artifacts.artifact_id\n"
+                    + ") res\n"
+                    + "GROUP BY res.account_type";
 
             try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(accountTypesInUseQuery);
                     ResultSet resultSet = executeQuery.getResultSet()) {
@@ -1466,7 +1464,7 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public Action[] getActions(boolean context) {
             Action[] actions = super.getActions(context);
-            ArrayList<Action> arrayList = new ArrayList<>();           
+            ArrayList<Action> arrayList = new ArrayList<>();
             try {
                 arrayList.addAll(DataModelActionsFactory.getActions(Accounts.this.skCase.getContentById(fileKey.getObjID()), false));
             } catch (TskCoreException ex) {
