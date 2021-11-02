@@ -350,6 +350,8 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
 
     @Override
     public void shutDown() {
+        analyzeOsAccounts();
+                
         try {
             centralRepo.commitAttributeInstancesBulk();
         } catch (CentralRepoException ex) {
@@ -372,7 +374,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         CaseEventListener.setCreateOsAcctCorrAttrs(saveCorrAttrs);
         CaseEventListener.setFlagPrevSeenOsAccts(flagSeenDevices);
     }
-
+    
     /**
      * Ensures the data source in the central repository has hash values that
      * match those in the case database.
