@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -69,9 +70,7 @@ public class FileSystemDAO {
         
         parentName = parentContent.getName();
         for (Content content : parentContent.getChildren()) {
-            if (FileSystemColumnUtils.isDisplayable(content)) {
-                contentForTable.add(content);
-            }
+            contentForTable.addAll(FileSystemColumnUtils.getNextDisplayableContent(content));
         } 
 
         return fetchContentForTable(cacheKey, contentForTable, parentName);
@@ -119,7 +118,7 @@ public class FileSystemDAO {
      *
      * @return The list of paged artifacts.
      */
-    List<Content> getPaged(List<? extends Content> contentObjects, SearchParams<?> searchParams) {
+    private List<Content> getPaged(List<? extends Content> contentObjects, SearchParams<?> searchParams) {
         Stream<? extends Content> pagedArtsStream = contentObjects.stream()
                 .sorted(Comparator.comparing((conent) -> conent.getId()))
                 .skip(searchParams.getStartItem());

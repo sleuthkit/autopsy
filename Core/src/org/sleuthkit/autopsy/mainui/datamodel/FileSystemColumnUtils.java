@@ -29,10 +29,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -164,7 +166,20 @@ class FileSystemColumnUtils {
         return ContentType.UNSUPPORTED;
     }
     
+    /**
+     * Check whether a given content object should be displayed.
+     * We can display an object if ContentType is not UNSUPPORTED
+     * and if it is not the root directory.
+     * 
+     * @param content The content.
+     * 
+     * @return True if the content is displayable, false otherwise.
+     */
     static boolean isDisplayable(Content content) {
+        if (content instanceof AbstractFile) {
+            System.out.println("### isDisplayable: Have abstract file content - isRoot: " + ((AbstractFile)content).isRoot() );
+            return ! ((AbstractFile)content).isRoot();
+        }
         return (getContentType(content) != ContentType.UNSUPPORTED);
     }
     
@@ -453,6 +468,58 @@ class FileSystemColumnUtils {
             logger.log(Level.WARNING, "Error looking up parent(s) of volume with obj ID = " + vol.getId(), ex);
         }
         return tempVolName;
+    }
+    
+    /**
+     * Get the content that should be displayed in the table based on the given object.
+     * Algorithm:
+     * - If content is already displayable, return it
+     * - If content is a volume system, return its displayable children
+     * - If content is a file system, return the displayable children of the root folder
+     * - If content is the root folder, return the displayable children of the root folder
+     * 
+     * @param content The base content.
+     * 
+     * @return List of content to add to the table.
+     */
+    static List<Content> getNextDisplayableContent(Content content) throws TskCoreException {
+        
+        // If the given content is displayable, return it
+        if (FileSystemColumnUtils.isDisplayable(content)) {
+            return Arrays.asList(content);
+        }
+        
+        List<Content> contentToDisplay = new ArrayList<>();
+        if (content instanceof VolumeSystem) {
+            // Return all children that can be displayed
+            VolumeSystem vs = (VolumeSystem)content;
+            for (Content child : vs.getChildren()) {
+                if (isDisplayable(child)) {
+                    contentToDisplay.add(child);
+                }
+            }
+        } else if (content instanceof FileSystem) {
+            // Return the children of the root node
+            FileSystem fs = (FileSystem)content;
+            for (Content child : fs.getRootDirectory().getChildren()) {
+                if (isDisplayable(child)) {
+                    contentToDisplay.add(child);
+                }
+            }
+        } else if (content instanceof AbstractFile) {
+            if (((AbstractFile) content).isRoot()) {
+                // If we have the root folder, skip it and display the children
+                for (Content child : content.getChildren()) {
+                    if (isDisplayable(child)) {
+                        contentToDisplay.add(child);
+                    }
+                }
+            } else {
+                return Arrays.asList(content);
+            }
+        }
+        
+        return contentToDisplay;
     }
         
     /**
