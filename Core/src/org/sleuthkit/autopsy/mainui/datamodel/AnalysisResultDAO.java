@@ -34,8 +34,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.codec.binary.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -372,7 +370,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         try {
             // get artifact types and counts
             SleuthkitCase skCase = getCase();
-            String query = " set_name, COUNT(*) AS count \n"
+            String query = " res.set_name, COUNT(*) AS count \n"
                     + "FROM ( \n"
                     + "  SELECT art.artifact_id, \n"
                     + "  (SELECT value_text \n"
@@ -381,8 +379,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     + "	 FROM blackboard_artifacts art \n"
                     + "	 WHERE  art.artifact_type_id = " + type.getTypeID() + " \n"
                     + ((dataSourceId == null) ? "" : "  AND art.data_source_obj_id = " + dataSourceId + " \n")
-                    + ") \n"
-                    + "GROUP BY set_name";
+                    + ") res \n"
+                    + "GROUP BY res.set_name";
 
             Map<String, Long> setCounts = new HashMap<>();
             skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
@@ -430,6 +428,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         List<TreeItemDTO<AnalysisResultSetSearchParam>> allSets
                 = getSetCountsMap(type, BlackboardAttribute.Type.TSK_SET_NAME, dataSourceId).entrySet().stream()
                         .filter(entry -> nullSetName != null || entry.getKey() != null)
+                        .sorted((a, b) -> compareSetStrings(a.getKey(), b.getKey()))
                         .map(entry -> {
                             return new TreeItemDTO<>(
                                     type.getTypeName(),
@@ -438,25 +437,45 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                                     entry.getKey() == null ? nullSetName : entry.getKey(),
                                     entry.getValue());
                         })
-                        .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                         .collect(Collectors.toList());
 
         return new TreeResultsDTO<>(allSets);
     }
-    
+
+    /**
+     * Compares set strings to properly order for the tree.
+     *
+     * @param a The first string.
+     * @param b The second string.
+     *
+     * @return The comparator result.
+     */
+    private int compareSetStrings(String a, String b) {
+        if (a == null && b == null) {
+            return 0;
+        } else if (a == null) {
+            return -1;
+        } else if (b == null) {
+            return 1;
+        } else {
+            return a.compareToIgnoreCase(b);
+        }
+    }
 
     /**
      * Data pertaining to a search term.
      */
     private static class SearchTermRecord {
+
         private final Set<String> distinctMatches = new HashSet<>();
         private int count;
         private final String searchTerm;
 
         /**
          * Constructor.
+         *
          * @param searchTerm The search term.
-         * @param match The initial keyword match.
+         * @param match      The initial keyword match.
          */
         SearchTermRecord(String searchTerm, String match) {
             this.distinctMatches.add(match);
@@ -477,7 +496,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         int getCount() {
             return count;
         }
-        
+
         /**
          * Increments the count of results found.
          */
@@ -491,10 +510,9 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         String getSearchTerm() {
             return searchTerm;
         }
-        
-        
+
     }
-    
+
     /**
      * Returns the search term counts for a set name of keyword search results.
      *
@@ -514,6 +532,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         "# {0} - searchTerm",
         "AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch={0} (Regex)",})
     public TreeResultsDTO<? extends KeywordSearchTermParams> getKeywordSearchTermCounts(String setName, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        // TODO replace with efficient SQL after 8145
         try {
             List<AnalysisResult> results = dataSourceId == null
                     ? getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID())
@@ -610,6 +629,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        // TODO replace with efficient SQL after 8145
         try {
             List<AnalysisResult> results = dataSourceId == null
                     ? getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID())
