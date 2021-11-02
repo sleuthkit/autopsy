@@ -35,6 +35,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -170,11 +171,13 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID());
         }
 
+        String expectedSetName = cacheKey.getParamData().getSetName();
         // Filter for the selected set
         List<BlackboardArtifact> arts = new ArrayList<>();
         for (AnalysisResult art : allHashHits) {
             BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
-            if ((setNameAttr != null) && cacheKey.getParamData().getSetName().equals(setNameAttr.getValueString())) {
+            if ((expectedSetName == null && setNameAttr == null)
+                    || (expectedSetName != null && setNameAttr != null && expectedSetName.equals(setNameAttr.getValueString()))) {
                 arts.add(art);
             }
         }
@@ -431,7 +434,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                             return new TreeItemDTO<>(
                                     type.getTypeName(),
                                     new AnalysisResultSetSearchParam(type, dataSourceId, entry.getKey()),
-                                    entry.getKey(),
+                                    entry.getKey() == null ? 0 : entry.getKey(),
                                     entry.getKey() == null ? nullSetName : entry.getKey(),
                                     entry.getValue());
                         })
@@ -440,7 +443,58 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         return new TreeResultsDTO<>(allSets);
     }
+    
 
+    /**
+     * Data pertaining to a search term.
+     */
+    private static class SearchTermRecord {
+        private final Set<String> distinctMatches = new HashSet<>();
+        private int count;
+        private final String searchTerm;
+
+        /**
+         * Constructor.
+         * @param searchTerm The search term.
+         * @param match The initial keyword match.
+         */
+        SearchTermRecord(String searchTerm, String match) {
+            this.distinctMatches.add(match);
+            this.searchTerm = searchTerm;
+            this.count = 1;
+        }
+
+        /**
+         * @return The distinct matches for this search term.
+         */
+        Set<String> getDistinctMatches() {
+            return distinctMatches;
+        }
+
+        /**
+         * @return The total count of results found.
+         */
+        int getCount() {
+            return count;
+        }
+        
+        /**
+         * Increments the count of results found.
+         */
+        void incrementCount() {
+            this.count++;
+        }
+
+        /**
+         * @return The search term searched for.
+         */
+        String getSearchTerm() {
+            return searchTerm;
+        }
+        
+        
+    }
+    
     /**
      * Returns the search term counts for a set name of keyword search results.
      *
@@ -465,8 +519,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     ? getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID())
                     : getCase().getBlackboard().getAnalysisResultsByType(BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID(), dataSourceId);
 
-            //count count unique
-            Map<String, Pair<Set<String>, Integer>> searchTerms = new HashMap<>();
+            //search term with type in parenthesis => the distinct matches, the total result count, the search string without parenthesis
+            Map<String, SearchTermRecord> searchTerms = new HashMap<>();
             for (AnalysisResult ar : results) {
                 int searchType = -1;
                 String regex = null;
@@ -503,7 +557,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm);
                         break;
                     case 2:
-                        searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm);
+                        searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm);
                         break;
                     default:
                         logger.log(Level.WARNING, MessageFormat.format("Artifact with id: {0} has non-standard search type value: {1}.", ar.getId(), searchType == -1 ? "<null>" : searchType));
@@ -511,19 +565,26 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         break;
                 }
 
-                Pair<Set<String>, Integer> setUniqueCount = searchTerms.computeIfAbsent(searchTermModified, st -> Pair.of(new HashSet<>(), 0));
-                setUniqueCount.setValue(setUniqueCount.getValue() + 1);
-                setUniqueCount.getKey().add(keyword);
+                final String finalKeyword = keyword;
+                searchTerms.compute(searchTermModified, (key, prevValue) -> {
+                    if (prevValue == null) {
+                        return new SearchTermRecord(searchTerm, finalKeyword);
+                    } else {
+                        prevValue.incrementCount();
+                        prevValue.getDistinctMatches().add(finalKeyword);
+                        return prevValue;
+                    }
+                });
             }
 
             List<TreeItemDTO<KeywordSearchTermParams>> items = searchTerms.entrySet().stream()
                     .map(entry -> {
                         return new TreeItemDTO<>(
                                 "KEYWORD_SEARCH_TERMS",
-                                new KeywordSearchTermParams(setName, entry.getKey(), entry.getValue().getKey().size() > 1, dataSourceId),
+                                new KeywordSearchTermParams(setName, entry.getValue().getSearchTerm(), entry.getValue().getDistinctMatches().size() > 1, dataSourceId),
                                 entry.getKey(),
                                 entry.getKey() == null ? "" : entry.getKey(),
-                                (long) entry.getValue().getValue()
+                                (long) entry.getValue().getCount()
                         );
                     })
                     .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
@@ -535,6 +596,19 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
     }
 
+    /**
+     * Get counts for string matches of a particular regex/substring search
+     * term.
+     *
+     * @param setName      The set name.
+     * @param regexStr     The regex string.
+     * @param dataSourceId The data source id or null.
+     *
+     * @return The results
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
     public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         try {
             List<AnalysisResult> results = dataSourceId == null
@@ -562,7 +636,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     continue;
                 }
 
-                searchTerms.compute(keyword, (k,v) -> v == null ? 1 : v + 1);
+                searchTerms.compute(keyword, (k, v) -> v == null ? 1 : v + 1);
             }
 
             List<TreeItemDTO<KeywordMatchParams>> items = searchTerms.entrySet().stream()
@@ -580,9 +654,9 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
             return new TreeResultsDTO<>(items);
         } catch (NoCurrentCaseException | TskCoreException ex) {
-            throw new ExecutionException("An error occurred while fetching keyword match for set: " 
-                    + setName + " and data source id: " 
-                    + dataSourceId + " and search term: " 
+            throw new ExecutionException("An error occurred while fetching keyword match for set: "
+                    + setName + " and data source id: "
+                    + dataSourceId + " and search term: "
                     + regexStr, ex);
         }
     }
@@ -648,7 +722,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultSetHits(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
     }
 

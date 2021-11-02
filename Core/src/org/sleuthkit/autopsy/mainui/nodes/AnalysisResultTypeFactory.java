@@ -87,7 +87,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         if (SET_TREE_ARTIFACTS.contains(rowData.getTypeData().getArtifactType().getTypeID())) {
             return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getTypeData().getArtifactType(), dataSourceId, null));
         } else if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getTypeData().getArtifactType())) {
-            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getTypeData().getArtifactType(), dataSourceId, null));
+            return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
         } else {
             return new AnalysisResultTypeTreeNode(rowData);
         }
@@ -193,7 +193,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          *
          * @param itemData The data to display.
          */
-        public TreeTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData, ChildFactory childFactory) {
+        public TreeTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData, ChildFactory<?> childFactory) {
             super(itemData.getTypeData().getArtifactType().getTypeName(),
                     getIconPath(itemData.getTypeData().getArtifactType()),
                     itemData,
@@ -244,7 +244,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         protected TreeNode<AnalysisResultSetSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> rowData) {
-            return new TreeSetTypeNode(rowData, Children.LEAF);
+            return new TreeSetTypeNode(rowData);
         }
     }
 
@@ -256,14 +256,13 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         /**
          * Main constructor.
          *
-         * @param artifactType The type of artifact.
          * @param itemData     The data to display.
          */
-        public TreeSetTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData, Children children) {
+        public TreeSetTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
             super(itemData.getTypeData().getArtifactType().getTypeName(),
                     getIconPath(itemData.getTypeData().getArtifactType()),
                     itemData,
-                    children,
+                    Children.LEAF,
                     getDefaultLookup(itemData));
         }
 
@@ -287,11 +286,32 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         protected TreeNode<AnalysisResultSetSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> rowData) {
-            return new TreeSetTypeNode(rowData, Children.create(new KeywordSearchTermFactory(rowData.getTypeData()), true));
+            return new KeywordSetNode(rowData);
         }
-
     }
 
+    static class KeywordSetNode extends TreeNode<AnalysisResultSetSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param itemData     The data to display.
+         */
+        public KeywordSetNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
+            super(itemData.getTypeData().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getTypeData().getArtifactType()),
+                    itemData,
+                    Children.create(new KeywordSearchTermFactory(itemData.getTypeData()), true),
+                    getDefaultLookup(itemData));
+        }
+
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            // GVDTODO no-op for now
+        }
+        
+        
+    }
 
     /**
      * Factory for displaying all search terms (regex or exact) for a specific
@@ -317,7 +337,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         protected TreeResultsDTO<? extends KeywordSearchTermParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordSearchTermCounts(this.setParams);
+            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordSearchTermCounts(this.setParams.getSetName(), this.setParams.getDataSourceId());
         }
 
         @Override
@@ -385,7 +405,10 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         protected TreeResultsDTO<? extends KeywordMatchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordMatchCounts(this.setParams);
+            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordMatchCounts(
+                    this.setParams.getSetName(),
+                    this.setParams.getSearchTerm(),
+                    this.setParams.getDataSourceId());
         }
 
         @Override
@@ -402,6 +425,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         /**
          * Main constructor.
+         *
          * @param itemData The data for the match parameters.
          */
         public KeywordFoundMatchNode(TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> itemData) {
