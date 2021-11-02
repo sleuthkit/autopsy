@@ -63,23 +63,17 @@ public class FileSystemDAO {
         List<Content> contentForTable = new ArrayList<>();
         String parentName = "";
         Content parentContent = skCase.getContentById(objectId);
-        if (parentContent != null) {
-            parentName = parentContent.getName();
-            for (Content content : parentContent.getChildren()) {
-                if (FileSystemColumnUtils.isDisplayable(content)) {
-                    contentForTable.add(content);
-                }
-            } 
-        } else {
-            // The parent object may be a Host
-            Optional<Host> host = skCase.getHostManager().getHostById(objectId);
-            if (host.isPresent()) {
-                parentName = host.get().getName();
-                contentForTable.addAll(skCase.getHostManager().getDataSourcesForHost(host.get()));
-            } else {
-                throw new TskCoreException("Error loading children of object with ID " + objectId + " - ID not found in tsk_objects or tsk_hosts");
-            }
+        if (parentContent == null) {
+            throw new TskCoreException("Error loading children of object with ID " + objectId);
         }
+        
+        parentName = parentContent.getName();
+        for (Content content : parentContent.getChildren()) {
+            if (FileSystemColumnUtils.isDisplayable(content)) {
+                contentForTable.add(content);
+            }
+        } 
+
         return fetchContentForTable(cacheKey, contentForTable, parentName);
     }
     
