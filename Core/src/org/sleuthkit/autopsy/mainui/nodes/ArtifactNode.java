@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.List;
+import java.util.Optional;
 import javax.swing.Action;
+import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
@@ -32,6 +34,7 @@ import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.mainui.datamodel.ArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
+import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -47,7 +50,7 @@ import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
-public abstract class ArtifactNode<T extends BlackboardArtifact, R extends ArtifactRowDTO<T>> extends AbstractAutopsyNode {
+public abstract class ArtifactNode<T extends BlackboardArtifact, R extends ArtifactRowDTO<T>> extends AbstractNode implements ActionContext {
 
     private final R rowData;
     private final BlackboardArtifact.Type artifactType;
@@ -63,42 +66,32 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
     }
 
     @Override
-    public Content getSourceContent() {
-        return rowData.getSrcContent();
+    public Optional<Content> getSourceContent() {
+        return Optional.ofNullable(rowData.getSrcContent());
     }
 
     @Override
-    public boolean hasLinkedFile() {
-        return rowData.getLinkedFile() != null;
+    public Optional<AbstractFile> getLinkedFile() {
+        return Optional.ofNullable((AbstractFile) rowData.getLinkedFile());
     }
 
     @Override
-    public AbstractFile getLinkedFile() {
-        return (AbstractFile) rowData.getLinkedFile();
-    }
-
-    @Override
-    public BlackboardArtifact.Type getArtifactType() {
-        return artifactType;
-    }
-
-    @Override
-    public boolean supportsViewArtifactInTimeline() {
+    public boolean supportsViewInTimeline() {
         return rowData.isTimelineSupported();
     }
 
     @Override
-    public BlackboardArtifact getArtifactForTimeline() {
-        return rowData.getArtifact();
+    public Optional<BlackboardArtifact> getArtifactForTimeline() {
+        return Optional.ofNullable(rowData.getArtifact());
     }
 
     @Override
     public boolean supportsAssociatedFileActions() {
-        return hasLinkedFile();
+        return getLinkedFile().isPresent();
     }
 
     @Override
-    public boolean supportsViewSourceContentActions() {
+    public boolean supportsSourceContentActions() {
         Content sourceContent = rowData.getSrcContent();
 
         return (sourceContent instanceof DataArtifact)
@@ -107,65 +100,45 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
     }
 
     @Override
-    public boolean supportsViewSourceContentTimelineActions() {
-        return rowData.getSrcContent() instanceof AbstractFile;
+    public Optional<AbstractFile> getSourceFileForTimelineAction() {
+        return Optional.ofNullable(rowData.getSrcContent() instanceof AbstractFile ? (AbstractFile) rowData.getSrcContent() : null);
     }
 
     @Override
-    public AbstractFile getSourceContextForTimelineAction() {
-        return rowData.getSrcContent() instanceof AbstractFile ? (AbstractFile) rowData.getSrcContent() : null;
+    public Optional<BlackboardArtifact> getArtifact() {
+        return Optional.of(rowData.getArtifact());
     }
 
     @Override
-    public boolean hasArtifact() {
-        return true;
-    }
-
-    @Override
-    public BlackboardArtifact getArtifact() {
-        return rowData.getArtifact();
-    }
-
-    private Node getParentFileNode() {
-        if (parentFileNode == null) {
-            parentFileNode = getParentFileNode(rowData.getSrcContent());
-        }
-        return parentFileNode;
-    }
-
-    @Override
-    public boolean supportsNewWindowAction() {
+    public boolean supportsSourceContentViewerActions() {
         return rowData.getSrcContent() != null;
     }
 
     @Override
-    public Node getNewWindowActionNode() {
-        return getParentFileNode();
+    public Optional<Node> getNewWindowActionNode() {
+        return Optional.ofNullable(getParentFileNode());
     }
 
     @Override
-    public boolean supportsExternalViewerAction() {
-        return rowData.getSrcContent() != null;
+    public Optional<Node> getExternalViewerActionNode() {
+        return Optional.ofNullable(getParentFileNode());
     }
 
     @Override
-    public Node getExternalViewerActionNode() {
-        return getParentFileNode();
-    }
-
-    @Override
-    public boolean supportsExtractAction() {
-        return rowData.getSrcContent() instanceof AbstractFile;
-    }
-
-    @Override
-    public boolean supportsExportCSVAction() {
+    public boolean supportsExtractActions() {
         return rowData.getSrcContent() instanceof AbstractFile;
     }
 
     @Override
     public boolean supportsArtifactTagAction() {
         return true;
+    }
+    
+    private Node getParentFileNode() {
+        if (parentFileNode == null) {
+            parentFileNode = getParentFileNode(rowData.getSrcContent());
+        }
+        return parentFileNode;
     }
 
     protected void setupNodeDisplay(String iconPath) {
@@ -187,7 +160,7 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
 
     @Override
     public Action[] getActions(boolean context) {
-        return ActionsFactory.getActions(context, this);
+        return ActionsFactory.getActions( this);
     }
 
     /**

@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.List;
+import java.util.Optional;
 import javax.swing.Action;
+import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
@@ -28,6 +30,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
+import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -37,7 +40,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 /**
  * A node for representing an AbstractFile.
  */
-public class FileNode extends AbstractAutopsyNode {
+public class FileNode extends AbstractNode implements ActionContext {
 
     /**
      * Gets the path to the icon file that should be used to visually represent
@@ -112,42 +115,32 @@ public class FileNode extends AbstractAutopsyNode {
     }
 
     @Override
-    public boolean supportsViewFileInTimeline() {
+    public boolean supportsViewInTimeline() {
         return true;
     }
 
     @Override
-    public AbstractFile getFileForTimeline() {
-        return fileData.getAbstractFile();
+    public Optional<AbstractFile> getFileForViewInTimelineAction() {
+        return Optional.of(fileData.getAbstractFile());
     }
 
     @Override
-    public boolean supportsNewWindowAction() {
+    public boolean supportsSourceContentViewerActions() {
         return true;
     }
 
     @Override
-    public Node getNewWindowActionNode() {
-        return this;
+    public Optional<Node> getNewWindowActionNode() {
+        return Optional.of(this);
     }
 
     @Override
-    public boolean supportsExternalViewerAction() {
-        return true;
+    public Optional<Node> getExternalViewerActionNode() {
+        return Optional.of(this);
     }
 
     @Override
-    public Node getExternalViewerActionNode() {
-        return this;
-    }
-
-    @Override
-    public boolean supportsExtractAction() {
-        return true;
-    }
-
-    @Override
-    public boolean supportsExportCSVAction() {
+    public boolean supportsExtractActions() {
         return true;
     }
 
@@ -157,7 +150,7 @@ public class FileNode extends AbstractAutopsyNode {
     }
 
     @Override
-    public boolean supportsExtractArchiveWithPasswordAction() {
+    public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
         // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
         // See JIRA-8099
         AbstractFile file = this.fileData.getAbstractFile();
@@ -169,17 +162,12 @@ public class FileNode extends AbstractAutopsyNode {
             // TODO
         }
 
-        return encryptionDetected;
-    }
-
-    @Override
-    public AbstractFile getExtractArchiveWithPasswordActionFile() {
-        return fileData.getAbstractFile();
+        return encryptionDetected ? Optional.of(fileData.getAbstractFile()) : Optional.empty();
     }
 
     @Override
     public Action[] getActions(boolean context) {
-        return ActionsFactory.getActions(context, this);
+        return ActionsFactory.getActions(this);
     }
 
     @Override

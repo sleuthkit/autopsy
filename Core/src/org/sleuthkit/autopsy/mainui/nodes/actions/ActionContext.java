@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
+import java.util.Optional;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -32,19 +33,13 @@ import org.sleuthkit.datamodel.Content;
 public interface ActionContext {
 
     /**
-     * Return the source content object.
+     * Return the source content.
      *
      * @return The source content object.
      */
-    Content getSourceContent();
-
-    /**
-     * Returns true if the implementing node has node specific actions. These
-     * actions will appear at the top of the menu.
-     *
-     * @return True if the node has actions specific to the node.
-     */
-    boolean supportsNodeSpecificActions();
+    default Optional<Content> getSourceContent() {
+        return Optional.empty();
+    }
 
     /**
      * Returns an ActionGroup containing the Actions that are specific to the
@@ -52,16 +47,9 @@ public interface ActionContext {
      *
      * @return ActionGroup of actions.
      */
-    ActionGroup getNodeSpecificActions();
-
-    /**
-     * Returns true if the node has a linked\associated file. Returning true
-     * will cause Actions specific to to the linked files to be added to the
-     * menu.
-     *
-     * @return True if the node has a linked\associated file.
-     */
-    boolean hasLinkedFile();
+    default Optional<ActionGroup> getNodeSpecificActions() {
+        return Optional.empty();
+    }
 
     /**
      * Return the linked\associated file for the context. This method must
@@ -69,76 +57,48 @@ public interface ActionContext {
      *
      * @return An AbstractFile.
      */
-    AbstractFile getLinkedFile();
+    default Optional<AbstractFile> getLinkedFile() {
+        return Optional.empty();
+    }
 
     /**
-     * Returns true if the ActionContext contains an artifact.
-     *
-     * @return True if the ActionContext has an artifact.
-     */
-    boolean hasArtifact();
-
-    /**
-     * Returns an instance of an BlackboardArtifact. Method must return an
-     * artifact if hasArtifact returns true.
+     * Returns an instance of an BlackboardArtifact.
      *
      * @return An artifact or null if the ActionContext does not have an
      *         artifact.
      */
-    BlackboardArtifact getArtifact();
+    default Optional<BlackboardArtifact> getArtifact() {
+        return Optional.empty();
+    }
 
     /**
-     * Returns the type of the artifact if one is contained in the
-     * ActionContext. This method must return the artifact type if hasArtifact
-     * returns true.
-     *
-     * @return The type of the artifact returned from getAritfact or null if
-     *         hasArtifact is false.
-     */
-    BlackboardArtifact.Type getArtifactType();
-
-    /**
-     * Returns true if this context supports showing an artifact in the Timeline
-     * viewer.
-     *
-     * If this method returns true, getArtifactForTimeline must return a
-     * non-null artifact.
+     * Returns true if this context supports showing an artifact or a file in
+     * the Timeline viewer.
      *
      * @return True if context supports this action.
      */
-    boolean supportsViewArtifactInTimeline();
+    default boolean supportsViewInTimeline() {
+        return false;
+    }
 
     /**
      * Returns the artifact that should appear for the node in the Timeline
      * viewer.
      *
-     * This method must return a non-null value if
-     * supportsViewArtifactInTimeline returns true.
-     *
      * @return The artifact to show in the timeline window.
      */
-    BlackboardArtifact getArtifactForTimeline();
-
-    /**
-     * Returns true if the implementing node supports viewing a file int the
-     * Timeline Viewer.
-     *
-     * If this method returns true, getFileForTimeline must return a non-null
-     * value.
-     *
-     * @return True if the context supports the action.
-     */
-    boolean supportsViewFileInTimeline();
+    default Optional<BlackboardArtifact> getArtifactForTimeline() {
+        return Optional.empty();
+    }
 
     /**
      * Returns the file that should appear for the node in the Timeline viewer.
      *
-     * This method must return a non-null value if supportsViewFileInTimeline
-     * returns true.
-     *
      * @return The file to show in the timeline window.
      */
-    AbstractFile getFileForTimeline();
+    default Optional<AbstractFile> getFileForViewInTimelineAction() {
+        return Optional.empty();
+    }
 
     /**
      * True if the context supports an action to navigate to source content in
@@ -146,124 +106,90 @@ public interface ActionContext {
      *
      * @return True if this action is supported.
      */
-    boolean supportsViewSourceContentActions();
-
-    /**
-     * True if the implementing node supports an action to navigate to source
-     * context in the timeline window.
-     *
-     * If this method returns true getSourceContextForTimelineAction must return
-     * a non-null value.
-     *
-     * @return True if this action is supported.
-     */
-    boolean supportsViewSourceContentTimelineActions();
+    default boolean supportsSourceContentActions() {
+        return false;
+    }
 
     /**
      * Returns the source AbstractFile for to be viewed in the Timeline window.
      *
-     * Must return a non-null value if supportsViewSourceContentTimelineActions
-     * returns true;
-     *
      * @return The source file.
      */
-    AbstractFile getSourceContextForTimelineAction();
+    default Optional<AbstractFile> getSourceFileForTimelineAction() {
+        return Optional.empty();
+    }
 
     /**
      * Returns true if the context supports the associated\link file actions.
      *
-     * If this method returns true, hasLinkedFile and getLinked file should
-     * return true and a non-null value.
-     *
      * @return True if this action is supported.
      */
-    boolean supportsAssociatedFileActions();
+    default boolean supportsAssociatedFileActions() {
+        return false;
+    }
 
     /**
      * True if the ActionContext supports showing a node int a new content
      * panel.
      *
-     * If true, getNewwindowActionNode must return a non-null value.
-     *
      * @return True if this action is supported.
      */
-    boolean supportsNewWindowAction();
+    default boolean supportsSourceContentViewerActions() {
+        return false;
+    }
 
     /**
      * Returns the node to be display in a new content panel as launched by
      * NewWindowAction.
      *
-     * If supportsNewWindowAction returns true, this method must return a
-     * non-null value.
-     *
      * @return The node to display.
      */
-    Node getNewWindowActionNode();
-
-    /**
-     * Returns true if the context supports the showing a node in an external
-     * viewer.
-     *
-     * If this method returns true, getExternalViewerActionNode must return a
-     * non-null value.
-     *
-     * @return True if the action is supported.
-     */
-    boolean supportsExternalViewerAction();
+    default Optional<Node> getNewWindowActionNode() {
+        return Optional.empty();
+    }
 
     /**
      * Returns the node to be display in an external viewer.
      *
-     * If supportsExternalViewerAction returns true, this method must return a
-     * non-null value.
-     *
      * @return The node to be display.
      */
-    Node getExternalViewerActionNode();
+    default Optional<Node> getExternalViewerActionNode() {
+        return Optional.empty();
+    }
 
     /**
      * Returns true if the context supported the extract action.
      *
      * @return True if the action is supported.
      */
-    boolean supportsExtractAction();
-
-    /**
-     * Returns true if the context supports the export to csv action.
-     *
-     * @return True if the action is supported.
-     */
-    boolean supportsExportCSVAction();
+    default boolean supportsExtractActions() {
+        return false;
+    }
 
     /**
      * Returns true if the context supports the context tag actions.
      *
      * @return True if the action is supported.
      */
-    boolean supportsContentTagAction();
+    default boolean supportsContentTagAction() {
+        return false;
+    }
 
     /**
      * Returns true of the context supported the artifact tag actions.
      *
      * @return True if the action is supported.
      */
-    boolean supportsArtifactTagAction();
-
-    /**
-     * Returns true if encryption was deteched and the context supported the
-     * extraction.
-     *
-     * @return True if the action is supported.
-     */
-    boolean supportsExtractArchiveWithPasswordAction();
+    default boolean supportsArtifactTagAction() {
+        return false;
+    }
 
     /**
      * Returns the file to be extracted.
      *
-     * If supportsExtractArchiveWithPasswordAction is true this method must
-     * return a non-null value.
-     *
      * @return True if the action is supported.
      */
-    AbstractFile getExtractArchiveWithPasswordActionFile();
+    default Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
+        return Optional.empty();
+    }
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.Optional;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -29,6 +30,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultTableSearchResultsDT
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -81,28 +83,25 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
     }
 
     @Override
-    public boolean supportsExtractArchiveWithPasswordAction() {
+    public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
+        Optional<Content> optionalSourceContent = getSourceContent();
         // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
         // See JIRA-8099
         boolean encryptionDetected = false;
-        if (getSourceContent() instanceof AbstractFile) {
-            AbstractFile file = (AbstractFile) getSourceContent();
-            boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
-            try {
-                encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
-            } catch (TskCoreException ex) {
-                // TODO
+        if(optionalSourceContent.isPresent()) {
+            if (optionalSourceContent.get() instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) optionalSourceContent.get();
+                boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
+                try {
+                    encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
+                } catch (TskCoreException ex) {
+                    // TODO
+                }
+                if(encryptionDetected) {
+                    return Optional.of(file);
+                }
             }
         }
-
-        return encryptionDetected;
-    }
-
-    @Override
-    public AbstractFile getExtractArchiveWithPasswordActionFile() {
-        if (getSourceContent() instanceof AbstractFile) {
-            return (AbstractFile) getSourceContent();
-        }
-        return null;
+        return Optional.empty();
     }
 }

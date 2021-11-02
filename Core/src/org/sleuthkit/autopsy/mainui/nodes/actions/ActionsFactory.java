@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.swing.Action;
@@ -55,6 +56,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Report;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An action factory for node classes that will have a popup menu.
@@ -66,42 +68,62 @@ import org.sleuthkit.datamodel.Report;
 public final class ActionsFactory {
 
     // private constructor for utility class.
-    private ActionsFactory() {
+    private ActionsFactory() {}
 
-    }
+    /**
+     * Create the list of actions for given ActionContext.
 
-    public static Action[] getActions(boolean nodeActionContext, ActionContext actionContext) {
+     * @param actionContext The context for the actions.
+     * 
+     * @return The list of Actions to display.
+     */
+    public static Action[] getActions(ActionContext actionContext) {
         List<ActionGroup> actionGroups = new ArrayList<>();
 
-        if (actionContext.supportsNodeSpecificActions()) {
-            actionGroups.add(actionContext.getNodeSpecificActions());
+        Optional<ActionGroup> nodeSpecificGroup = actionContext.getNodeSpecificActions();
+        if (nodeSpecificGroup.isPresent()) {
+            actionGroups.add(nodeSpecificGroup.get());
         }
 
-        if (actionContext.supportsViewArtifactInTimeline() || actionContext.supportsViewFileInTimeline()) {
+        if (actionContext.supportsViewInTimeline()) {
             actionGroups.add(new ActionGroup(getViewInTimelineAction(actionContext)));
         }
 
         ActionGroup group = new ActionGroup();
         if (actionContext.supportsAssociatedFileActions()) {
-            group.addAll(getAssociatedFileActions(actionContext));
+            group.addAll(getAssociatedFileActions(actionContext).get());
         }
 
         if (actionContext.getSourceContent() != null) {
-            group.addAll(getSourceContentActions(actionContext));
+
+            Optional<ActionGroup> optionalGroup = getSourceContentActions(actionContext);
+            if (optionalGroup.isPresent()) {
+                group.addAll(optionalGroup.get());
+            }
         }
         actionGroups.add(group);
 
-        if (actionContext.getSourceContent() instanceof Report) {
-            actionGroups.add(new ActionGroup(DataModelActionsFactory.getActions(actionContext.getSourceContent(), false)));
+        Optional<Content> optionalSourceContext = actionContext.getSourceContent();
+        if (optionalSourceContext.isPresent() && optionalSourceContext.get() instanceof Report) {
+            actionGroups.add(new ActionGroup(DataModelActionsFactory.getActions(optionalSourceContext.get(), false)));
         }
 
-        actionGroups.add(getSourceContentViewerActions(actionContext));
-        actionGroups.add(getExtractActions(actionContext));
+        if (actionContext.supportsSourceContentViewerActions()) {
+            Optional<ActionGroup> optionalGroup = getSourceContentViewerActions(actionContext);
+            if (optionalGroup.isPresent()) {
+                actionGroups.add(optionalGroup.get());
+            }
+        }
+
+        if (actionContext.supportsExtractActions()) {
+            actionGroups.add(getExtractActions());
+        }
         actionGroups.add(getTagActions(actionContext));
         actionGroups.add(new ActionGroup(ContextMenuExtensionPoint.getActions()));
 
-        if (actionContext.supportsExtractArchiveWithPasswordAction()) {
-            actionGroups.add(new ActionGroup(new ExtractArchiveWithPasswordAction(actionContext.getExtractArchiveWithPasswordActionFile())));
+        Optional<AbstractFile> optionalFile = actionContext.getExtractArchiveWithPasswordActionFile();
+        if (optionalFile.isPresent()) {
+            actionGroups.add(new ActionGroup(new ExtractArchiveWithPasswordAction(optionalFile.get())));
         }
 
         List<Action> actionList = new ArrayList<>();
@@ -120,17 +142,18 @@ public final class ActionsFactory {
         return actions;
     }
 
-    static ActionGroup getExtractActions(ActionContext actionContext) {
+    /**
+     * Returns the Extract actions. These actions are not specific to the
+     * ActionContext.
+     *
+     * @return The Extract ActionGroup.
+     */
+    static ActionGroup getExtractActions() {
         ActionGroup actionsGroup = new ActionGroup();
-        if (actionContext.supportsExtractAction()) {
-            actionsGroup.add(ExtractAction.getInstance());
-        }
+        actionsGroup.add(ExtractAction.getInstance());
+        actionsGroup.add(ExportCSVAction.getInstance());
 
-        if (actionContext.supportsExportCSVAction()) {
-            actionsGroup.add(ExportCSVAction.getInstance());
-        }
-
-        return actionsGroup.isEmpty() ? null : actionsGroup;
+        return actionsGroup;
     }
 
     /**
@@ -145,23 +168,24 @@ public final class ActionsFactory {
         "ActionsFactory_getSrcContentViewerActions_viewInNewWin=View Item in New Window",
         "ActionsFactory_getSrcContentViewerActions_openInExtViewer=Open in External Viewer  Ctrl+E"
     })
-    private static ActionGroup getSourceContentViewerActions(ActionContext actionContext) {
+    private static Optional<ActionGroup> getSourceContentViewerActions(ActionContext actionContext) {
         ActionGroup actionGroup = new ActionGroup();
-        Node node = actionContext.getNewWindowActionNode();
+        Optional<Node> nodeOptional = actionContext.getNewWindowActionNode();
 
-        if (actionContext.supportsNewWindowAction()) {
-            actionGroup.add(new NewWindowViewAction(Bundle.ActionsFactory_getSrcContentViewerActions_viewInNewWin(), node));
+        if (nodeOptional.isPresent()) {
+            actionGroup.add(new NewWindowViewAction(Bundle.ActionsFactory_getSrcContentViewerActions_viewInNewWin(), nodeOptional.get()));
         }
 
-        if (actionContext.supportsExternalViewerAction()) {
+        nodeOptional = actionContext.getExternalViewerActionNode();
+        if (nodeOptional.isPresent()) {
             int selectedFileCount = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size();
             if (selectedFileCount == 1) {
-                actionGroup.add(new ExternalViewerAction(Bundle.ActionsFactory_getSrcContentViewerActions_openInExtViewer(), node));
+                actionGroup.add(new ExternalViewerAction(Bundle.ActionsFactory_getSrcContentViewerActions_openInExtViewer(), nodeOptional.get()));
             } else {
                 actionGroup.add(ExternalViewerShortcutAction.getInstance());
             }
         }
-        return actionGroup.isEmpty() ? null : actionGroup;
+        return actionGroup.isEmpty() ? Optional.empty() : Optional.of(actionGroup);
     }
 
     /**
@@ -175,21 +199,22 @@ public final class ActionsFactory {
         "# {0} - contentType",
         "ActionsFactory_getTimelineSrcContentAction_actionDisplayName=View Source {0} in Timeline... "
     })
-    private static ActionGroup getSourceContentActions(ActionContext actionContext) {
+    private static Optional<ActionGroup> getSourceContentActions(ActionContext actionContext) {
         ActionGroup group = new ActionGroup();
 
-        if (actionContext.supportsViewSourceContentActions()) {
-            group.add(getViewSrcContentAction(actionContext));
+        Optional<Action> optionalAction = getViewSrcContentAction(actionContext);
+        if (optionalAction.isPresent()) {
+            group.add(optionalAction.get());
         }
 
-        if (actionContext.supportsViewSourceContentTimelineActions()) {
-            AbstractFile srcContent = actionContext.getSourceContextForTimelineAction();
-            group.add(new ViewFileInTimelineAction(srcContent,
+        Optional<AbstractFile> srcContentOptional = actionContext.getSourceFileForTimelineAction();
+        if (srcContentOptional.isPresent()) {
+            group.add(new ViewFileInTimelineAction(srcContentOptional.get(),
                     Bundle.ActionsFactory_getTimelineSrcContentAction_actionDisplayName(
-                            getContentTypeStr(srcContent))));
+                            getContentTypeStr(srcContentOptional.get()))));
         }
 
-        return group.isEmpty() ? null : group;
+        return group.isEmpty() ? Optional.empty() : Optional.of(group);
     }
 
     /**
@@ -204,19 +229,33 @@ public final class ActionsFactory {
         "# {0} - type",
         "ActionsFactory_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline..."
     })
-    private static ActionGroup getAssociatedFileActions(ActionContext context) {
-        AbstractFile associatedFile = context.getLinkedFile();
-        BlackboardArtifact.Type artifactType = context.getArtifactType();
+    private static Optional<ActionGroup> getAssociatedFileActions(ActionContext context) {
+        Optional<AbstractFile> associatedFileOptional = context.getLinkedFile();
+        Optional<BlackboardArtifact> artifactOptional = context.getArtifact();
 
-        return new ActionGroup(Arrays.asList(
+        if (!associatedFileOptional.isPresent() || !artifactOptional.isPresent()) {
+            return Optional.empty();
+        }
+
+        BlackboardArtifact.Type artifactType;
+        try {
+            artifactType = artifactOptional.get().getType();
+        } catch (TskCoreException ex) {
+            
+            return Optional.empty();
+        }
+
+        ActionGroup group = new ActionGroup(Arrays.asList(
                 new ViewContextAction(
                         Bundle.ActionsFactory_getAssociatedFileActions_viewAssociatedFileAction(
                                 getAssociatedTypeStr(artifactType)),
-                        associatedFile),
-                new ViewFileInTimelineAction(associatedFile,
+                        associatedFileOptional.get()),
+                new ViewFileInTimelineAction(associatedFileOptional.get(),
                         Bundle.ActionsFactory_getAssociatedFileActions_viewAssociatedFileInTimelineAction(
                                 getAssociatedTypeStr(artifactType)))
         ));
+
+        return Optional.of(group);
     }
 
     /**
@@ -262,26 +301,30 @@ public final class ActionsFactory {
      *
      * @return The action for the given context.
      */
-    private static Action getViewSrcContentAction(ActionContext context) {
-        Content sourceContent = context.getSourceContent();
-        if (sourceContent instanceof DataArtifact) {
-            return new ViewArtifactAction(
-                    (BlackboardArtifact) sourceContent,
-                    Bundle.ArtifactFactory_getViewSrcContentAction_displayName(
-                            getContentTypeStr(sourceContent)));
-        } else if (sourceContent instanceof OsAccount) {
-            return new ViewOsAccountAction(
-                    (OsAccount) sourceContent,
-                    Bundle.ArtifactFactory_getViewSrcContentAction_displayName(
-                            getContentTypeStr(sourceContent)));
-        } else if (sourceContent instanceof AbstractFile || (context.getArtifact() instanceof DataArtifact)) {
-            return new ViewContextAction(
-                    Bundle.ArtifactFactory_getViewSrcContentAction_displayName(
-                            getContentTypeStr(sourceContent)),
-                    sourceContent);
+    private static Optional<Action> getViewSrcContentAction(ActionContext context) {
+        Optional<Content> sourceContent = context.getSourceContent();
+        Optional<BlackboardArtifact> artifact = context.getArtifact();
+
+        if (sourceContent.isPresent()) {
+            if (sourceContent.get() instanceof DataArtifact) {
+                return Optional.of(new ViewArtifactAction(
+                        (BlackboardArtifact) sourceContent.get(),
+                        Bundle.ArtifactFactory_getViewSrcContentAction_displayName(
+                                getContentTypeStr(sourceContent.get()))));
+            } else if (sourceContent.get() instanceof OsAccount) {
+                return Optional.of(new ViewOsAccountAction(
+                        (OsAccount) sourceContent.get(),
+                        Bundle.ArtifactFactory_getViewSrcContentAction_displayName(
+                                getContentTypeStr(sourceContent.get()))));
+            } else if (sourceContent.get() instanceof AbstractFile || (artifact.isPresent() && artifact.get() instanceof DataArtifact)) {
+                return Optional.of(new ViewContextAction(
+                        Bundle.ArtifactFactory_getViewSrcContentAction_displayName(
+                                getContentTypeStr(sourceContent.get())),
+                        sourceContent.get()));
+            }
         }
 
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -322,10 +365,12 @@ public final class ActionsFactory {
         "ActionsFactory_getTimelineArtifactAction_displayName=View Selected Item in Timeline... "
     })
     private static Action getViewInTimelineAction(ActionContext context) {
-        if (context.supportsViewArtifactInTimeline()) {
-            return new ViewArtifactInTimelineAction(context.getArtifactForTimeline(), Bundle.ActionsFactory_getTimelineArtifactAction_displayName());
-        } else if (context.supportsViewFileInTimeline()) {
-            return ViewFileInTimelineAction.createViewFileAction(context.getFileForTimeline());
+        Optional<BlackboardArtifact> optionalArtifact = context.getArtifact();
+        Optional<AbstractFile> optionalFile = context.getFileForViewInTimelineAction();
+        if (optionalArtifact.isPresent()) {
+            return new ViewArtifactInTimelineAction(optionalArtifact.get(), Bundle.ActionsFactory_getTimelineArtifactAction_displayName());
+        } else if (optionalFile.isPresent()) {
+            return ViewFileInTimelineAction.createViewFileAction(optionalFile.get());
         }
         return null;
     }
