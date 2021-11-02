@@ -72,6 +72,8 @@ public class TableSearchTest extends NbTestCase {
     private static final String ARTIFACT_CONFIGURATION = "Test configuration";
     private static final String ARTIFACT_JUSTIFICATION = "Test justification";
     private static final Score ARTIFACT_SCORE = Score.SCORE_LIKELY_NOTABLE;
+    private static final long ARTIFACT_COUNT_WEB_BOOKMARK = 125;
+    private static final long ARTIFACT_COUNT_YARA = 150;
     
     // Values for the hash set hit tests
     private static final String HASH_SET_1 = "Hash Set 1";
@@ -226,6 +228,13 @@ public class TableSearchTest extends NbTestCase {
             customDataArtifactSourceFile = fileA3;
             customDataArtifactLinkedFile = fileA2;
             
+            // Add a lot of web bookmark data artifacts
+            for (int i = 0;i < ARTIFACT_COUNT_WEB_BOOKMARK;i++) {
+                attrs.clear();
+                attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, Integer.toString(i)));
+                fileA1.newDataArtifact(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, attrs);
+            }
+            
             // Add analysis results
             // Data source 1: Encryption detected (2), custom type
             // Data source 2: Encryption detected
@@ -249,6 +258,13 @@ public class TableSearchTest extends NbTestCase {
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_ENTROPY, MODULE_NAME, ARTIFACT_DOUBLE));
             customAnalysisResult = customDataArtifact.newAnalysisResult(customAnalysisResultType, ARTIFACT_SCORE, ARTIFACT_CONCLUSION, ARTIFACT_CONFIGURATION, ARTIFACT_JUSTIFICATION, attrs).getAnalysisResult();
             customAnalysisResultSource = customDataArtifact;
+            
+            // Add a lot of YARA hit analysis results
+            for (int i = 0;i < ARTIFACT_COUNT_YARA;i++) {
+                attrs.clear();
+                attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, Integer.toString(i)));
+                fileA1.newAnalysisResult(BlackboardArtifact.Type.TSK_YARA_HIT, Score.SCORE_NOTABLE, "conclusion", "configuration", "justification", attrs);
+            }
             
             // Add hash hits
             attrs.clear();
@@ -373,6 +389,41 @@ public class TableSearchTest extends NbTestCase {
             assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_INT));
             assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_DOUBLE));
 
+            // Test paging
+            Long pageSize = new Long(100);
+            assertTrue(ARTIFACT_COUNT_WEB_BOOKMARK > pageSize);
+            
+            // Get the first page
+            param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, null);
+            results = dataArtifactDAO.getDataArtifactsForTable(param, 0, pageSize, false);
+            assertEquals(ARTIFACT_COUNT_WEB_BOOKMARK, results.getTotalResultsCount());
+            assertEquals(pageSize.longValue(), results.getItems().size());
+            
+            // Save all artifact IDs from the first page
+            Set<Long> firstPageObjIds = new HashSet<>();
+            for (RowDTO row : results.getItems()) {
+                assertTrue(row instanceof DataArtifactRowDTO);
+                DataArtifactRowDTO dataRow = (DataArtifactRowDTO) row;
+                assertTrue(dataRow.getDataArtifact() != null);
+                firstPageObjIds.add(dataRow.getDataArtifact().getId());
+            }
+            assertEquals(pageSize.longValue(), firstPageObjIds.size());
+         
+            // Get the second page
+            param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, null);
+            results = dataArtifactDAO.getDataArtifactsForTable(param, pageSize, pageSize, false);
+            assertEquals(ARTIFACT_COUNT_WEB_BOOKMARK, results.getTotalResultsCount());
+            assertEquals(ARTIFACT_COUNT_WEB_BOOKMARK - pageSize, results.getItems().size());
+            
+            // Make sure no artifacts from the second page appeared on the first
+            for (RowDTO row : results.getItems()) {
+                assertTrue(row instanceof DataArtifactRowDTO);
+                DataArtifactRowDTO dataRow = (DataArtifactRowDTO) row;
+                assertTrue(dataRow.getDataArtifact() != null);
+                assertFalse("Data artifact ID: " + dataRow.getDataArtifact().getId()  + " appeared on both page 1 and page 2", 
+                        firstPageObjIds.contains(dataRow.getDataArtifact().getId()));
+            }
+            
         } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -527,6 +578,41 @@ public class TableSearchTest extends NbTestCase {
             assertTrue(analysisResultRowDTO.getCellValues().contains(ARTIFACT_JUSTIFICATION));
             assertTrue(analysisResultRowDTO.getCellValues().contains(ARTIFACT_CONFIGURATION));
             assertTrue(analysisResultRowDTO.getCellValues().contains(ARTIFACT_CONCLUSION));
+            
+             // Test paging
+            Long pageSize = new Long(100);
+            assertTrue(ARTIFACT_COUNT_YARA > pageSize);
+            
+            // Get the first page
+            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_YARA_HIT, null);
+            results = analysisResultDAO.getAnalysisResultsForTable(param, 0, pageSize, false);
+            assertEquals(ARTIFACT_COUNT_YARA, results.getTotalResultsCount());
+            assertEquals(pageSize.longValue(), results.getItems().size());
+            
+            // Save all artifact IDs from the first page
+            Set<Long> firstPageObjIds = new HashSet<>();
+            for (RowDTO row : results.getItems()) {
+                assertTrue(row instanceof AnalysisResultRowDTO);
+                AnalysisResultRowDTO analysisRow = (AnalysisResultRowDTO) row;
+                assertTrue(analysisRow.getAnalysisResult() != null);
+                firstPageObjIds.add(analysisRow.getAnalysisResult().getId());
+            }
+            assertEquals(pageSize.longValue(), firstPageObjIds.size());
+         
+            // Get the second page
+            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_YARA_HIT, null);
+            results = analysisResultDAO.getAnalysisResultsForTable(param, pageSize, pageSize, false);
+            assertEquals(ARTIFACT_COUNT_YARA, results.getTotalResultsCount());
+            assertEquals(ARTIFACT_COUNT_YARA - pageSize, results.getItems().size());
+            
+            // Make sure no artifacts from the second page appeared on the first
+            for (RowDTO row : results.getItems()) {
+                assertTrue(row instanceof AnalysisResultRowDTO);
+                AnalysisResultRowDTO analysisRow = (AnalysisResultRowDTO) row;
+                assertTrue(analysisRow.getAnalysisResult() != null);
+                assertFalse("Analysis result ID: " + analysisRow.getAnalysisResult().getId()  + " appeared on both page 1 and page 2", 
+                        firstPageObjIds.contains(analysisRow.getAnalysisResult().getId()));
+            }
             
         } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);

@@ -32,6 +32,7 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -49,25 +50,24 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return instance;
     }
 
-    private final Cache<SearchParams<DataArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
-    private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<DataArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
-        Blackboard blackboard = getCase().getBlackboard();
-
-        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+    private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+        
+        SleuthkitCase skCase = getCase();
+        Blackboard blackboard = skCase.getBlackboard();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
-        // get analysis results
+        String pagedWhereClause = getWhereClause(cacheKey);
+        
         List<BlackboardArtifact> arts = new ArrayList<>();
-        if (dataSourceId != null) {
-            arts.addAll(blackboard.getDataArtifacts(artType.getTypeID(), dataSourceId));
-        } else {
-            arts.addAll(blackboard.getDataArtifacts(artType.getTypeID()));
-        }
-
-        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
-        TableData tableData = createTableData(artType, pagedArtifacts);
-        return new DataArtifactTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
+        arts.addAll(blackboard.getDataArtifactsWhere(pagedWhereClause));
+        blackboard.loadBlackboardAttributes(arts);
+           
+        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());    
+        
+        TableData tableData = createTableData(artType, arts);
+        return new DataArtifactTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                     + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        SearchParams<DataArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        SearchParams<BlackboardArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         if (hardRefresh) {
             this.dataArtifactCache.invalidate(searchParams);
         }
