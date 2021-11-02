@@ -163,34 +163,26 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         if (dataSourceId != null) {
             originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
         }
-<<<<<<< HEAD
 
         String expectedSetName = cacheKey.getParamData().getSetName();
-=======
         
         List<BlackboardArtifact> allHashHits = new ArrayList<>();
         allHashHits.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
         blackboard.loadBlackboardAttributes(allHashHits);
         
->>>>>>> 8124wAnalysisResults
         // Filter for the selected set
-        List<BlackboardArtifact> hashHits = new ArrayList<>();
+        List<BlackboardArtifact> arts = new ArrayList<>();
         for (BlackboardArtifact art : allHashHits) {
             BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
-<<<<<<< HEAD
             if ((expectedSetName == null && setNameAttr == null)
                     || (expectedSetName != null && setNameAttr != null && expectedSetName.equals(setNameAttr.getValueString()))) {
                 arts.add(art);
-=======
-            if ((setNameAttr != null) && cacheKey.getParamData().getSetName().equals(setNameAttr.getValueString())) {
-                hashHits.add(art);
->>>>>>> 8124wAnalysisResults
             }
         }
 
-        List<BlackboardArtifact> pagedArtifacts = getPaged(hashHits, cacheKey);
+        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
         TableData tableData = createTableData(artType, pagedArtifacts);
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), hashHits.size());
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
     }
 
     @Override
