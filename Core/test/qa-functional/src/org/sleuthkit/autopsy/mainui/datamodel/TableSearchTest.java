@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.Attribute;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -43,10 +44,18 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Pool;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
+
 
 /**
  *
@@ -123,6 +132,19 @@ public class TableSearchTest extends NbTestCase {
     // Keyword hits test
     AnalysisResult keywordHitAnalysisResult = null; // A keyword hit
     Content keywordHitSource = null;                 // The source of the keyword hit above
+    
+    // File system test
+    Host fsTestHostA = null;       // A host
+    Image fsTestImageA = null;     // An image
+    VolumeSystem fsTestVsA = null; // A volume system
+    Volume fsTestVolumeA1 = null;  // A volume
+    Volume fsTestVolumeA2 = null;  // Another volume
+    Volume fsTestVolumeA3 = null;  // Another volume
+    FileSystem fsTestFsA = null;   // A file system
+    AbstractFile fsTestRootDirA = null;  // The root directory
+    Image fsTestImageB = null;    // Another image
+    Volume fsTestVolumeB1 = null; // Another volume
+    Pool fsTestPoolB = null;       // A pool
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(TableSearchTest.class).
@@ -148,12 +170,14 @@ public class TableSearchTest extends NbTestCase {
         mimeSearchTest();
         extensionSearchTest();
         sizeSearchTest();
+        fileSystemTest();
     }
 
     /**
      * Create a case and add sample data.
      */
     private void setUpCaseDatabase() {
+        SleuthkitCase.CaseDbTransaction trans = null;
         try {
             // Create a test case
             openCase = CaseUtils.createAsCurrentCase("testTableSearchCase");
@@ -161,11 +185,12 @@ public class TableSearchTest extends NbTestCase {
             blackboard = db.getBlackboard();
 
             // Add two logical files data sources
-            SleuthkitCase.CaseDbTransaction trans = db.beginTransaction();
+            trans = db.beginTransaction();
             dataSource1 = db.addLocalFilesDataSource("devId1", "C:\\Fake\\Path\\1", "EST", null, trans);
             dataSource2 = db.addLocalFilesDataSource("devId2", "C:\\Fake\\Path\\2", "EST", null, trans);
             dataSource3 = db.addLocalFilesDataSource("devId3", "C:\\Fake\\Path\\3", "EST", null, trans);
             trans.commit();
+            trans = null;
 
             // Add files
             AbstractFile folderA1 = db.addLocalDirectory(dataSource1.getId(), "folder1");
@@ -306,7 +331,81 @@ public class TableSearchTest extends NbTestCase {
                     null, KEYWORD_SET_1, null, attrs).getAnalysisResult();
             keywordHitSource = hashHitAnalysisResult;
             
+            // Create a normal image
+            // fsTestImageA (Host: fsTestHostA)
+            // - fsTestVsA
+            // -- fsTestVolumeA1
+            // --- fsTestFsA
+            // ---- fsTestRootDirA
+            // ----- (3 files)
+            // -- fsTestVolumeA2
+            // -- fsTestVolumeA3
+            fsTestHostA = db.getHostManager().newHost("File system test host");
+            trans = db.beginTransaction();
+            fsTestImageA = db.addImage(TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_DETECT, 512, 1024, "image1", Arrays.asList("C:\\Fake\\Path\\4"),
+                    "EST", null, null, null, "deviceID12345", fsTestHostA, trans);
+            fsTestVsA = db.addVolumeSystem(fsTestImageA.getId(), TskData.TSK_VS_TYPE_ENUM.TSK_VS_TYPE_DOS, 0, 1024, trans);
+            fsTestVolumeA1 = db.addVolume(fsTestVsA.getId(), 0, 0, 512, "Test vol A1", 0, trans);
+            fsTestVolumeA2 = db.addVolume(fsTestVsA.getId(), 1, 512, 512, "Test vol A2", 0, trans);
+            fsTestVolumeA3 = db.addVolume(fsTestVsA.getId(), 2, 1024, 512, "Test vol A3", 0, trans);
+            fsTestFsA = db.addFileSystem(fsTestVolumeA1.getId(), 0, TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_EXT2, 512, 1, 
+                    1, 1, 10, "Test file system", trans);
+            trans.commit();
+            trans = null;
+            fsTestRootDirA = db.addFileSystemFile(fsTestImageA.getId(), fsTestFsA.getId(), 
+                    "", 0, 0, 
+                    TskData.TSK_FS_ATTR_TYPE_ENUM.TSK_FS_ATTR_TYPE_DEFAULT, 0, 
+                    TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC, (short)0, 128, 
+                    0, 0, 0, 0, false, fsTestFsA);
+            db.addFileSystemFile(fsTestImageA.getId(), fsTestFsA.getId(), 
+                    "Test file 1", 0, 0, 
+                    TskData.TSK_FS_ATTR_TYPE_ENUM.TSK_FS_ATTR_TYPE_DEFAULT, 0, 
+                    TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC, (short)0, 123, 
+                    0, 0, 0, 0, false, fsTestRootDirA);
+            db.addFileSystemFile(fsTestImageA.getId(), fsTestFsA.getId(), 
+                    "Test file 2", 0, 0, 
+                    TskData.TSK_FS_ATTR_TYPE_ENUM.TSK_FS_ATTR_TYPE_DEFAULT, 0, 
+                    TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC, (short)0, 456, 
+                    0, 0, 0, 0, false, fsTestRootDirA);
+            db.addFileSystemFile(fsTestImageA.getId(), fsTestFsA.getId(), 
+                    "Test file 3", 0, 0, 
+                    TskData.TSK_FS_ATTR_TYPE_ENUM.TSK_FS_ATTR_TYPE_DEFAULT, 0, 
+                    TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC, (short)0, 789, 
+                    0, 0, 0, 0, false, fsTestRootDirA);
+        
+            // Create an image with some odd structures for testing
+            trans = db.beginTransaction();
+            fsTestImageB = db.addImage(TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_DETECT, 512, 1024, "image2", Arrays.asList("C:\\Fake\\Path\\5"),
+                    "EST", null, null, null, "deviceID678", fsTestHostA, trans);
+            
+            // Images can have VS, pool, FS, file, artifact, and report children.
+            // Add a VS, pool, and local file
+            VolumeSystem vsB = db.addVolumeSystem(fsTestImageB.getId(), TskData.TSK_VS_TYPE_ENUM.TSK_VS_TYPE_BSD, 0, 2048, trans);
+            db.addPool(fsTestImageB.getId(), TskData.TSK_POOL_TYPE_ENUM.TSK_POOL_TYPE_APFS, trans);
+            db.addLocalFile("Test local file B1", "C:\\Fake\\Path\\6", 6000, 0, 0, 0, 0, 
+                    true, TskData.EncodingType.NONE, fsTestImageB, trans);
+            
+            // Volumes can have pool, FS, file, and artifact children
+            fsTestVolumeB1 = db.addVolume(vsB.getId(), 0, 0, 512, "Test vol B1", 0, trans);
+            fsTestPoolB = db.addPool(fsTestVolumeB1.getId(), TskData.TSK_POOL_TYPE_ENUM.TSK_POOL_TYPE_APFS, trans);
+            db.addLocalFile("Test local file B2", "C:\\Fake\\Path\\7", 7000, 0, 0, 0, 0, 
+                    true, TskData.EncodingType.NONE, fsTestVolumeB1, trans);
+            
+            // Pools can have VS, file, and artifact children
+            db.addVolumeSystem(fsTestPoolB.getId(), TskData.TSK_VS_TYPE_ENUM.TSK_VS_TYPE_GPT, 0, 2048, trans);
+            db.addLocalFile("Test local file B3", "C:\\Fake\\Path\\8", 8000, 0, 0, 0, 0, 
+                    true, TskData.EncodingType.NONE, fsTestPoolB, trans);
+      
+            trans.commit();
+            trans = null;
         } catch (TestUtilsException | TskCoreException | BlackboardException ex) {
+            if (trans != null) {
+                try {
+                    trans.rollback();
+                } catch (TskCoreException ex2) {
+                    ex2.printStackTrace();
+                }
+            }
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -611,7 +710,7 @@ public class TableSearchTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }        
-    }    
+    }
 
     public void extensionSearchTest() {
         // Quick test that everything is initialized
@@ -672,6 +771,79 @@ public class TableSearchTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
+    }
+    
+    private void fileSystemTest() {
+        // Quick test that everything is initialized
+        assertTrue(db != null);
+
+        try {
+            FileSystemDAO fileSystemDAO = MainDAO.getInstance().getFileSystemDAO();
+            
+            // HostA is associated with two images
+            FileSystemHostSearchParam hostParam = new FileSystemHostSearchParam(fsTestHostA.getHostId());
+            BaseSearchResultsDTO results = fileSystemDAO.getContentForTable(hostParam, 0, null, false);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+            
+            // ImageA has one volumne system child which we don't display
+            FileSystemContentSearchParam param = new FileSystemContentSearchParam(fsTestImageA.getId());
+            results = fileSystemDAO.getContentForTable(param, 0, null, false);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+            
+            // VsA has three volume children
+            param = new FileSystemContentSearchParam(fsTestVsA.getId());
+            results = fileSystemDAO.getContentForTable(param, 0, null, false);
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
+            
+            // VolumeA1 has a file system child which we don't display
+            param = new FileSystemContentSearchParam(fsTestVolumeA1.getId());
+            results = fileSystemDAO.getContentForTable(param, 0, null, false);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+            
+            // FsA has the root folder as its child. We don't actually display this,
+            // but I'm not sure the DAO is responible for figuring that out.
+            param = new FileSystemContentSearchParam(fsTestFsA.getId());
+            results = fileSystemDAO.getContentForTable(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+            // The root dir contains three files
+            param = new FileSystemContentSearchParam(fsTestRootDirA.getId());
+            results = fileSystemDAO.getContentForTable(param, 0, null, false);
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
+            
+            // ImageB has VS (not displayed), pool, and one local file children
+            param = new FileSystemContentSearchParam(fsTestImageB.getId());
+            results = fileSystemDAO.getContentForTable(param, 0, null, false);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+            
+            // Check that we have the "Type" column from the Pool and the "Known" column from the file
+            List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
+            assertTrue(columnDisplayNames.contains("Type"));
+            assertTrue(columnDisplayNames.contains("Known"));
+            
+            // fsTestVolumeB1 has pool and one local file children
+            param = new FileSystemContentSearchParam(fsTestVolumeB1.getId());
+            results = fileSystemDAO.getContentForTable(param, 0, null, false);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+            
+            // fsTestPoolB has VS (not displayed) and local file children
+            param = new FileSystemContentSearchParam(fsTestPoolB.getId());
+            results = fileSystemDAO.getContentForTable(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+         } catch (ExecutionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }           
     }
 
     private enum CustomRootFilter implements FileExtSearchFilter {

@@ -328,7 +328,7 @@ public class ViewsDAO {
                     cellValues));
         }
 
-        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.ABSTRACT_FILE_COLUMNS, fileRows, startItem, totalResultsCount);
+        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, startItem, totalResultsCount);
     }
 
     /**

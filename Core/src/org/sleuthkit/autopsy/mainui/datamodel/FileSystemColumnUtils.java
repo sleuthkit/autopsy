@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -26,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Pool;
@@ -39,7 +42,15 @@ class FileSystemColumnUtils {
     
     private static final Logger logger = Logger.getLogger(FileSystemColumnUtils.class.getName());
     
-    @Messages({"FileSystemColumnUtils.abstractFileColumns.nameColLbl=Name",
+    enum ContentType {
+        IMAGE,
+        POOL,
+        VOLUME,
+        ABSTRACT_FILE,
+        UNSUPPORTED;
+    }
+    
+    @Messages({"FileSystemColumnUtils.nameColumn.name=Name",
     "FileSystemColumnUtils.abstractFileColumns.originalName=Original Name",
     "FileSystemColumnUtils.abstractFileColumns.scoreName=S",
     "FileSystemColumnUtils.abstractFileColumns.commentName=C",
@@ -65,30 +76,24 @@ class FileSystemColumnUtils {
     "FileSystemColumnUtils.abstractFileColumns.objectId=Object ID",
     "FileSystemColumnUtils.abstractFileColumns.mimeType=MIME Type",
     "FileSystemColumnUtils.abstractFileColumns.extensionColLbl=Extension",
-    "FileSystemColumnUtils.volumeColumns.nameColLbl=Name",
     "FileSystemColumnUtils.volumeColumns.id=ID",
     "FileSystemColumnUtils.volumeColumns.startingSector=Starting Sector",
     "FileSystemColumnUtils.volumeColumns.length=Length in Sectors",
     "FileSystemColumnUtils.volumeColumns.desc=Description",
     "FileSystemColumnUtils.volumeColumns.flags=Flags",
-    "FileSystemColumnUtils.imageColumns.nameColLbl=Name",
     "FileSystemColumnUtils.imageColumns.type=Type",
     "FileSystemColumnUtils.imageColumns.typeValue=Image",
     "FileSystemColumnUtils.imageColumns.size=Size (Bytes)",
     "FileSystemColumnUtils.imageColumns.sectorSize=Sector Size (Bytes)",
     "FileSystemColumnUtils.imageColumns.timezone=Timezone",
     "FileSystemColumnUtils.imageColumns.devID=Device ID",
-    "FileSystemColumnUtils.hostColumns.nameColLbl=Name",
-    "FileSystemColumnUtils.poolColumns.nameColLbl=Name",
     "FileSystemColumnUtils.poolColumns.type=Type",
     
     "FileSystemColumnUtils.noDescription=No Description"})
     
-
-
+    private static final ColumnKey NAME_COLUMN = getColumnKey(Bundle.FileSystemColumnUtils_nameColumn_name());
     
-    static final List<ColumnKey> ABSTRACT_FILE_COLUMNS = Arrays.asList(
-        getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_nameColLbl()),
+    private static final List<ColumnKey> ABSTRACT_FILE_COLUMNS = Arrays.asList(
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_originalName()),
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_scoreName()),
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_commentName()),
@@ -108,23 +113,21 @@ class FileSystemColumnUtils {
         // getFileColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_attrAddrColLbl()),
         // getFileColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_typeDirColLbl()),
         // getFileColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_typeMetaColLbl()),
-getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_knownColLbl()),
+        getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_knownColLbl()),
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_md5HashColLbl()),
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_sha256HashColLbl()),
         // getFileColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_objectId()),
-getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_mimeType()),
+        getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_mimeType()),
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_extensionColLbl()));
     
-    static final List<ColumnKey> VOLUME_COLUMNS = Arrays.asList(
-        getColumnKey(Bundle.FileSystemColumnUtils_volumeColumns_nameColLbl()),
+    private static final List<ColumnKey> VOLUME_COLUMNS = Arrays.asList(
         getColumnKey(Bundle.FileSystemColumnUtils_volumeColumns_id()),
         getColumnKey(Bundle.FileSystemColumnUtils_volumeColumns_startingSector()),
         getColumnKey(Bundle.FileSystemColumnUtils_volumeColumns_length()),
         getColumnKey(Bundle.FileSystemColumnUtils_volumeColumns_desc()),
         getColumnKey(Bundle.FileSystemColumnUtils_volumeColumns_flags()));
     
-    static final List<ColumnKey> IMAGE_COLUMNS = Arrays.asList(
-        getColumnKey(Bundle.FileSystemColumnUtils_imageColumns_nameColLbl()),
+    private static final List<ColumnKey> IMAGE_COLUMNS = Arrays.asList(
         getColumnKey(Bundle.FileSystemColumnUtils_imageColumns_type()),
         getColumnKey(Bundle.FileSystemColumnUtils_imageColumns_size()),
         getColumnKey(Bundle.FileSystemColumnUtils_imageColumns_sectorSize()),
@@ -132,83 +135,145 @@ getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_mimeType()),
         getColumnKey(Bundle.FileSystemColumnUtils_imageColumns_devID())
     );
     
-    static final List<ColumnKey> HOST_COLUMNS = Arrays.asList(
-        getColumnKey(Bundle.FileSystemColumnUtils_hostColumns_nameColLbl())
+    // Note that Hosts aren't content and will not be combined with other types, so we include the name here
+    private static final List<ColumnKey> HOST_COLUMNS = Arrays.asList(
+        NAME_COLUMN
     );
     
-    static final List<ColumnKey> POOL_COLUMNS = Arrays.asList(
-        getColumnKey(Bundle.FileSystemColumnUtils_poolColumns_nameColLbl()),
+    private static final List<ColumnKey> POOL_COLUMNS = Arrays.asList(
         getColumnKey(Bundle.FileSystemColumnUtils_poolColumns_type())
     );
     
-    static List<Object> getCellValuesForPool(Pool pool) throws TskCoreException {
-        return Arrays.asList(
-            pool.getType().getName(),
-            pool.getType().getName()
-        );    
-    }
-    
-    static List<Object> getCellValuesForHost(Host host) throws TskCoreException {
-        return Arrays.asList(
-            host.getName()
-        );    
-    }
-    
-    static List<Object> getCellValuesForImage(Image image) throws TskCoreException {
-        return Arrays.asList(
-            image.getName(),
-            Bundle.FileSystemColumnUtils_imageColumns_typeValue(),
-            image.getSize(),
-            image.getSsize(),
-            image.getTimeZone(),
-            image.getDeviceId()
-        );    
-    }
-    
-    static List<Object> getCellValuesForVolume(Volume vol) throws TskCoreException {
-        return Arrays.asList(
-            getVolumeDisplayName(vol),
-            vol.getAddr(),
-            vol.getStart(),
-            vol.getLength(),
-            vol.getDescription(),
-            vol.getFlagsAsString()
-        );
-    }
-    
-    private static String getVolumeDisplayName(Volume vol) {
-        // set name, display name, and icon
-        String volName = "vol" + Long.toString(vol.getAddr());
-        long end = vol.getStart() + (vol.getLength() - 1);
-        String tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + "-" + end + ")";
-
-        // If this is a pool volume use a custom display name
-        try {
-            if (vol.getParent() != null
-                    && vol.getParent().getParent() instanceof Pool) {
-                // Pool volumes are not contiguous so printing a range of blocks is inaccurate
-                tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + ")";
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error looking up parent(s) of volume with obj ID = " + vol.getId(), ex);
+    private static ContentType getContentType(Content content) {
+        if (content instanceof Image) {
+            return ContentType.IMAGE;
+        } else if (content instanceof Volume) {
+            return ContentType.VOLUME;
+        } else if (content instanceof Pool) {
+            return ContentType.POOL;
+        } else if (content instanceof AbstractFile) {
+            return ContentType.ABSTRACT_FILE;
         }
-        return tempVolName;
+        return ContentType.UNSUPPORTED;
     }
+    
+    static boolean isDisplayable(Content content) {
+        return (getContentType(content) != ContentType.UNSUPPORTED);
+    }
+    
+    static List<ContentType> getDisplayableTypesForContentList(List<Content> contentList) {
+        List<ContentType> displayableTypes = new ArrayList<>();
+        for (Content content : contentList) {
+            ContentType type = getContentType(content);
+            if (type != ContentType.UNSUPPORTED && ! displayableTypes.contains(type)) {
+                displayableTypes.add(type);
+            }
+        }
+        Collections.sort(displayableTypes);
+        return displayableTypes;
+    }
+    
+    static List<ColumnKey> getColumnKeysForContent(List<ContentType> contentTypes) {
+        List<ColumnKey> colKeys = new ArrayList<>();
+        colKeys.add(NAME_COLUMN);
         
-    private static ColumnKey getColumnKey(String name) {
-        return new ColumnKey(name, name, Bundle.FileSystemColumnUtils_noDescription());
+        // Make sure content types are processed in the same order as in getCellValuesForContent()
+        if (contentTypes.contains(ContentType.IMAGE)) {
+            colKeys.addAll(IMAGE_COLUMNS);
+        }
+        if (contentTypes.contains(ContentType.POOL)) {
+            colKeys.addAll(POOL_COLUMNS);
+        }
+        if (contentTypes.contains(ContentType.VOLUME)) {
+            colKeys.addAll(VOLUME_COLUMNS);
+        }
+        if (contentTypes.contains(ContentType.ABSTRACT_FILE)) {
+            colKeys.addAll(ABSTRACT_FILE_COLUMNS);
+        }
+        return colKeys;
+    }
+    
+    static List<Object> getCellValuesForContent(Content content, List<ContentType> contentTypes) throws TskCoreException {
+        List<Object> cellValues = new ArrayList<>();
+        cellValues.add(getNameValueForContent(content));
+        
+        // Make sure content types are processed in the same order as in getColumnKeysForContent()
+        if (contentTypes.contains(ContentType.IMAGE)) {
+            cellValues.addAll(getNonNameCellValuesForImage(content));
+        }
+        if (contentTypes.contains(ContentType.POOL)) {
+            cellValues.addAll(getNonNameCellValuesForPool(content));
+        }
+        if (contentTypes.contains(ContentType.VOLUME)) {
+            cellValues.addAll(getNonNameCellValuesForVolume(content));
+        }
+        if (contentTypes.contains(ContentType.ABSTRACT_FILE)) {
+            cellValues.addAll(getNonNameCellValuesForAbstractFile(content));
+        }
+        return cellValues;
+    }
+    
+    private static String getNameValueForContent(Content content) {
+        if (content instanceof Image) {
+            Image image = (Image)content;
+            return image.getName();
+        } else if (content instanceof Volume) {
+            Volume vol = (Volume)content;
+            return getVolumeDisplayName(vol);
+        } else if (content instanceof Pool) {
+            Pool pool = (Pool)content;
+            return pool.getType().getName(); // We currently use the type name for both the name and type fields
+        } else if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            return file.getName(); // GVDTODO handle . and .. from getContentDisplayName()
+        }
+        return content.getName();
+    }
+    
+    /**
+     * Only use this method if all rows contain AbstractFile objects.
+     * Make sure the order here matches that in getCellValuesForAbstractFile();
+     * 
+     * @return The list of column keys.
+     */
+    static List<ColumnKey> getColumnKeysForAbstractfile() {
+        List<ColumnKey> colKeys = new ArrayList<>(); 
+        colKeys.add(NAME_COLUMN);
+        colKeys.addAll(ABSTRACT_FILE_COLUMNS);
+        return colKeys;
+    }
+    
+    /**
+     * Only use this method if all rows contain AbstractFile objects.
+     * Make sure the order here matches that in getColumnKeysForAbstractfile();
+     * 
+     * @param file The file to use to populate the cells.
+     * 
+     * @return List of cell values.
+     */
+    static List<Object> getCellValuesForAbstractFile(AbstractFile file) throws TskCoreException {
+        List<Object> cells = new ArrayList<>();
+        cells.add(getNameValueForContent(file));
+        cells.addAll(getNonNameCellValuesForAbstractFile(file));
+        return cells;
     }
     
     /**
      * Make sure the order here matches that in ABSTRACT_FILE_COLUMNS
      * 
-     * @param file
+     * @param content The content to use to populate the cells (may not be an abstract file)
      * 
-     * @return 
+     * @return List of cell values
      */
-    static List<Object> getCellValuesForAbstractFile(AbstractFile file) throws TskCoreException {
+    private static List<Object> getNonNameCellValuesForAbstractFile(Content content) throws TskCoreException {
+        final int nColumns = 17;
+        if (! (content instanceof AbstractFile)) {
+            return Collections.nCopies(nColumns, null);
+        }
+        
+        // Make sure to update nColumns if the number of columns here changes
+        AbstractFile file = (AbstractFile) content;
         return Arrays.asList(
-            file.getName(), // GVDTODO handle . and .. from getContentDisplayName()
             // GVDTODO translation column
             null,
             //GVDTDO replace nulls with SCO
@@ -240,4 +305,109 @@ getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_mimeType()),
             file.getNameExtension()
         );
     }
+    
+    /**
+     * Make sure the order here matches that in POOL_COLUMNS
+     * 
+     * @param conent The content to use to populate the cells (may not be a pool)
+     * 
+     * @return List of cell values
+     */
+    private static List<Object> getNonNameCellValuesForPool(Content content) throws TskCoreException {
+        final int nColumns = 1;
+        if (! (content instanceof Pool)) {
+            return Collections.nCopies(nColumns, null);
+        }
+        
+        // Make sure to update nColumns if the number of columns here changes
+        Pool pool = (Pool) content;
+        return Arrays.asList(
+            pool.getType().getName() // We currently use the type name for both the name and type fields
+        );
+    }
+    
+    /**
+     * Make sure the order here matches that in HOST_COLUMNS
+     * 
+     * @param host The host to use to populate the cells
+     * 
+     * @return List of cell values
+     */
+    static List<Object> getCellValuesForHost(Host host) throws TskCoreException {
+        return Arrays.asList(
+            host.getName()
+        );    
+    }
+    
+    /**
+     * Make sure the order here matches that in IMAGE_COLUMNS
+     * 
+     * @param content The content to use to populate the cells (may not be an image)
+     * 
+     * @return List of cell values
+     */
+    private static List<Object> getNonNameCellValuesForImage(Content content) throws TskCoreException {
+        final int nColumns = 5;
+        if (! (content instanceof Image)) {
+            return Collections.nCopies(nColumns, null);
+        }
+        
+        // Make sure to update nColumns if the number of columns here changes
+        Image image = (Image) content;        
+        return Arrays.asList(
+            Bundle.FileSystemColumnUtils_imageColumns_typeValue(),
+            image.getSize(),
+            image.getSsize(),
+            image.getTimeZone(),
+            image.getDeviceId()
+        );    
+    }
+    
+    /**
+     * Make sure the order here matches that in VOLUME_COLUMNS
+     * 
+     * @param content The content to use to populate the cells (may not be a volume)
+     * 
+     * @return List of cell values
+     */
+    private static List<Object> getNonNameCellValuesForVolume(Content content) throws TskCoreException {
+        final int nColumns = 5;
+        if (! (content instanceof Volume)) {
+            return Collections.nCopies(nColumns, null);
+        }
+        
+        // Make sure to update nColumns if the number of columns here changes
+        Volume vol = (Volume) content;   
+        return Arrays.asList(
+            vol.getAddr(),
+            vol.getStart(),
+            vol.getLength(),
+            vol.getDescription(),
+            vol.getFlagsAsString()
+        );
+    }
+    
+    private static String getVolumeDisplayName(Volume vol) {
+        // set name, display name, and icon
+        String volName = "vol" + Long.toString(vol.getAddr());
+        long end = vol.getStart() + (vol.getLength() - 1);
+        String tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + "-" + end + ")";
+
+        // If this is a pool volume use a custom display name
+        try {
+            if (vol.getParent() != null
+                    && vol.getParent().getParent() instanceof Pool) {
+                // Pool volumes are not contiguous so printing a range of blocks is inaccurate
+                tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + ")";
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error looking up parent(s) of volume with obj ID = " + vol.getId(), ex);
+        }
+        return tempVolName;
+    }
+        
+    private static ColumnKey getColumnKey(String name) {
+        return new ColumnKey(name, name, Bundle.FileSystemColumnUtils_noDescription());
+    }
+    
 }
