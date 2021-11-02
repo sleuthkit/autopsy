@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Utility class for creating consistent table data.
  */
 class FileSystemColumnUtils {
     
@@ -135,7 +135,7 @@ class FileSystemColumnUtils {
         getColumnKey(Bundle.FileSystemColumnUtils_imageColumns_devID())
     );
     
-    // Note that Hosts aren't content and will not be combined with other types, so we include the name here
+    // Not used yet - Note that Hosts aren't content and will not be combined with other types, so we include the name here
     private static final List<ColumnKey> HOST_COLUMNS = Arrays.asList(
         NAME_COLUMN
     );
@@ -144,6 +144,13 @@ class FileSystemColumnUtils {
         getColumnKey(Bundle.FileSystemColumnUtils_poolColumns_type())
     );
     
+    /**
+     * Convert a given Content object to an enum.
+     * 
+     * @param content The Content object.
+     * 
+     * @return The type corresponding to the content; UNSUPPORTED if the content will not be displayed
+     */
     private static ContentType getContentType(Content content) {
         if (content instanceof Image) {
             return ContentType.IMAGE;
@@ -161,6 +168,15 @@ class FileSystemColumnUtils {
         return (getContentType(content) != ContentType.UNSUPPORTED);
     }
     
+    /**
+     * Get a list of the content types from the list that will be displayed.
+     * Call this before getColumnKeysForContent() and getCellValuesForContent() 
+     * to ensure consistent columns.
+     * 
+     * @param contentList List of content.
+     * 
+     * @return List of types that will be displayed.
+     */
     static List<ContentType> getDisplayableTypesForContentList(List<Content> contentList) {
         List<ContentType> displayableTypes = new ArrayList<>();
         for (Content content : contentList) {
@@ -173,6 +189,13 @@ class FileSystemColumnUtils {
         return displayableTypes;
     }
     
+    /**
+     * Get the column keys corresponding to the given list of types.
+     * 
+     * @param contentTypes The list of types.
+     * 
+     * @return The list of column keys.
+     */
     static List<ColumnKey> getColumnKeysForContent(List<ContentType> contentTypes) {
         List<ColumnKey> colKeys = new ArrayList<>();
         colKeys.add(NAME_COLUMN);
@@ -193,6 +216,16 @@ class FileSystemColumnUtils {
         return colKeys;
     }
     
+    /**
+     * Get the cell values for a given content object.
+     * 
+     * @param content      The content to display.
+     * @param contentTypes The content types being displayed in the table.
+     * 
+     * @return The cell values for this row.
+     * 
+     * @throws TskCoreException 
+     */
     static List<Object> getCellValuesForContent(Content content, List<ContentType> contentTypes) throws TskCoreException {
         List<Object> cellValues = new ArrayList<>();
         cellValues.add(getNameValueForContent(content));
@@ -213,6 +246,13 @@ class FileSystemColumnUtils {
         return cellValues;
     }
     
+    /**
+     * Get the value for the name column for the given content.
+     * 
+     * @param content The content.
+     * 
+     * @return The display name for the content.
+     */
     private static String getNameValueForContent(Content content) {
         if (content instanceof Image) {
             Image image = (Image)content;
@@ -231,6 +271,7 @@ class FileSystemColumnUtils {
     }
     
     /**
+     * Get the column keys for an abstract file object.
      * Only use this method if all rows contain AbstractFile objects.
      * Make sure the order here matches that in getCellValuesForAbstractFile();
      * 
@@ -244,6 +285,7 @@ class FileSystemColumnUtils {
     }
     
     /**
+     * Get the cell values for an abstract file.
      * Only use this method if all rows contain AbstractFile objects.
      * Make sure the order here matches that in getColumnKeysForAbstractfile();
      * 
@@ -387,6 +429,13 @@ class FileSystemColumnUtils {
         );
     }
     
+    /**
+     * Get the display name for a volume.
+     * 
+     * @param vol The volume.
+     * 
+     * @return The display name.
+     */
     private static String getVolumeDisplayName(Volume vol) {
         // set name, display name, and icon
         String volName = "vol" + Long.toString(vol.getAddr());
@@ -406,6 +455,13 @@ class FileSystemColumnUtils {
         return tempVolName;
     }
         
+    /**
+     * Create a column key from a string.
+     * 
+     * @param name The column name
+     * 
+     * @return The column key
+     */
     private static ColumnKey getColumnKey(String name) {
         return new ColumnKey(name, name, Bundle.FileSystemColumnUtils_noDescription());
     }
