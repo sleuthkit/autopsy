@@ -66,10 +66,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestModule {
 
-    private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
-    private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
-    private static final int MAX_PREV_CASES_FOR_NOTABLE_SCORE = 10; // Also appears in CaseEventListener
-    private static final int MAX_PREV_CASES_FOR_PREV_SEEN = 20; // Also appears in CaseEventListener
+    private static final Logger LOGGER = Logger.getLogger(CentralRepoDataArtifactIngestModule.class.getName());
     private final Set<String> corrAttrsCreated;
     private final boolean saveCorrAttrs;
     private final boolean flagNotableItems;
@@ -259,10 +256,10 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     private void makePreviousNotableAnalysisResult(DataArtifact artifact, List<String> previousCases, CorrelationAttributeInstance.Type corrAttrType, String corrAttrValue) {
         String prevCases = previousCases.stream().distinct().collect(Collectors.joining(","));
         String justification = Bundle.CrDataArtifactIngestModule_notableJustification(prevCases);
-        Collection<BlackboardAttribute> attributes = Arrays.asList(new BlackboardAttribute(TSK_SET_NAME, MODULE_NAME, Bundle.CrDataArtifactIngestModule_notableSetName()),
-                new BlackboardAttribute(TSK_CORRELATION_TYPE, MODULE_NAME, corrAttrType.getDisplayName()),
-                new BlackboardAttribute(TSK_CORRELATION_VALUE, MODULE_NAME, corrAttrValue),
-                new BlackboardAttribute(TSK_OTHER_CASES, MODULE_NAME, prevCases));
+        Collection<BlackboardAttribute> attributes = Arrays.asList(new BlackboardAttribute(TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(), Bundle.CrDataArtifactIngestModule_notableSetName()),
+                new BlackboardAttribute(TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrType.getDisplayName()),
+                new BlackboardAttribute(TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrValue),
+                new BlackboardAttribute(TSK_OTHER_CASES, CentralRepoIngestModuleFactory.getModuleName(), prevCases));
         makeAndPostAnalysisResult(artifact, BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, attributes, "", Score.SCORE_NOTABLE, justification);
     }
 
@@ -284,9 +281,9 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     private void makePreviouslySeenAnalysisResult(DataArtifact artifact, List<String> previousCases, CorrelationAttributeInstance.Type corrAttrType, String corrAttrValue) {
         Score score;
         int numCases = previousCases.size();
-        if (numCases <= MAX_PREV_CASES_FOR_NOTABLE_SCORE) {
+        if (numCases <= AnalysisParams.MAX_PREV_CASES_FOR_NOTABLE_SCORE) {
             score = Score.SCORE_LIKELY_NOTABLE;
-        } else if (numCases > MAX_PREV_CASES_FOR_NOTABLE_SCORE && numCases <= MAX_PREV_CASES_FOR_PREV_SEEN) {
+        } else if (numCases > AnalysisParams.MAX_PREV_CASES_FOR_NOTABLE_SCORE && numCases <= AnalysisParams.MAX_PREV_CASES_FOR_PREV_SEEN) {
             score = Score.SCORE_NONE;
         } else {
             /*
@@ -298,10 +295,10 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         String prevCases = previousCases.stream().distinct().collect(Collectors.joining(","));
         String justification = Bundle.CrDataArtifactIngestModule_prevSeenJustification(prevCases);
         Collection<BlackboardAttribute> analysisResultAttributes = Arrays.asList(
-                new BlackboardAttribute(TSK_SET_NAME, MODULE_NAME, Bundle.CrDataArtifactIngestModule_prevSeenSetName()),
-                new BlackboardAttribute(TSK_CORRELATION_TYPE, MODULE_NAME, corrAttrType.getDisplayName()),
-                new BlackboardAttribute(TSK_CORRELATION_VALUE, MODULE_NAME, corrAttrValue),
-                new BlackboardAttribute(TSK_OTHER_CASES, MODULE_NAME, prevCases));
+                new BlackboardAttribute(TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(), Bundle.CrDataArtifactIngestModule_prevSeenSetName()),
+                new BlackboardAttribute(TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrType.getDisplayName()),
+                new BlackboardAttribute(TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrValue),
+                new BlackboardAttribute(TSK_OTHER_CASES, CentralRepoIngestModuleFactory.getModuleName(), prevCases));
         makeAndPostAnalysisResult(artifact, BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, analysisResultAttributes, "", score, justification);
     }
 
@@ -317,10 +314,10 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     })
     private void makeAndPostPreviouslyUnseenArtifact(DataArtifact artifact, CorrelationAttributeInstance.Type corrAttrType, String corrAttrValue) {
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(new BlackboardAttribute(
-                TSK_CORRELATION_TYPE, MODULE_NAME,
+                TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(),
                 corrAttrType.getDisplayName()),
                 new BlackboardAttribute(
-                        TSK_CORRELATION_VALUE, MODULE_NAME,
+                        TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(),
                         corrAttrValue));
         makeAndPostAnalysisResult(artifact, BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, attributesForNewArtifact, "", Score.SCORE_LIKELY_NOTABLE, Bundle.CrDataArtifactIngestModule_prevUnseenJustification());
     }

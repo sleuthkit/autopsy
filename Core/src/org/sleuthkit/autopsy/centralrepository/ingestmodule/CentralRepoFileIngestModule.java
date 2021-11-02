@@ -67,13 +67,7 @@ import org.sleuthkit.datamodel.Score;
     "CentralRepoIngestModule.prevCaseComment.text=Previous Case: "})
 final class CentralRepoFileIngestModule implements FileIngestModule {
 
-    private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
-    static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = false;
-    static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = false;
-    static final boolean DEFAULT_FLAG_UNIQUE_DEVICES = false;
-    static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
-
-    private final static Logger logger = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
@@ -110,7 +104,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
             return ProcessResult.ERROR;
         }
 
@@ -126,7 +120,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             dbManager = CentralRepository.getInstance();
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
+            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             return ProcessResult.ERROR;
         }
 
@@ -154,10 +148,10 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                     postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList, filesType, md5);
                 }
             } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
+                LOGGER.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
@@ -177,10 +171,10 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                          abstractFile.getId());
                 dbManager.addAttributeInstanceBulk(cefi);
             } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                LOGGER.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
@@ -196,19 +190,19 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             dbManager = CentralRepository.getInstance();
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
+            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             return;
         }
         try {
             dbManager.commitAttributeInstancesBulk();
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
         }
         try {
             Long count = dbManager.getCountArtifactInstancesByCaseDataSource(eamDataSource);
-            logger.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, eamCase.getDisplayName(), eamDataSource.getName()}); // NON-NLS
+            LOGGER.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, eamCase.getDisplayName(), eamDataSource.getName()}); // NON-NLS
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS
         }
 
         // TODO: once we implement shared cache, if refCounter is 1, then submit data in bulk.
@@ -241,14 +235,14 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             autopsyCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
             throw new IngestModuleException("Exception while getting open case.", ex);
         }
 
         // Don't allow sqlite central repo databases to be used for multi user cases
         if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
                 && (CentralRepoDbManager.getSavedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE)) {
-            logger.log(Level.SEVERE, "Cannot run Central Repository ingest module on a multi-user case with a SQLite central repository.");
+            LOGGER.log(Level.SEVERE, "Cannot run Central Repository ingest module on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
@@ -257,14 +251,14 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             centralRepoDb = CentralRepository.getInstance();
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
             throw new IngestModuleException("Error connecting to central repository database.", ex); // NON-NLS
         }
 
         try {
             filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
         }
 
@@ -277,7 +271,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
             throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
         }
         // TODO: once we implement a shared cache, load/init it here w/ syncronized and define reference counter
@@ -291,7 +285,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                     centralRepoDb.newDataSource(eamDataSource);
                 }
             } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error adding data source to Central Repository.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error adding data source to Central Repository.", ex); // NON-NLS
                 throw new IngestModuleException("Error adding data source to Central Repository.", ex); // NON-NLS
             }
 
@@ -309,16 +303,16 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         String justification = "Previously marked as notable in cases " + prevCases;
         Collection<BlackboardAttribute> attributes = Arrays.asList(
                 new BlackboardAttribute(
-                        TSK_SET_NAME, MODULE_NAME,
+                        TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(),
                         Bundle.CentralRepoIngestModule_prevTaggedSet_text()),
                 new BlackboardAttribute(
-                        TSK_CORRELATION_TYPE, MODULE_NAME,
+                        TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(),
                         aType.getDisplayName()),
                 new BlackboardAttribute(
-                        TSK_CORRELATION_VALUE, MODULE_NAME,
+                        TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(),
                         value),
                 new BlackboardAttribute(
-                        TSK_OTHER_CASES, MODULE_NAME,
+                        TSK_OTHER_CASES, CentralRepoIngestModuleFactory.getModuleName(),
                         prevCases));
         try {
             // Create artifact if it doesn't already exist.
@@ -328,17 +322,17 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                         null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), justification, attributes)
                         .getAnalysisResult();
                 try {
-                    blackboard.postArtifact(tifArtifact, MODULE_NAME, jobId);
+                    blackboard.postArtifact(tifArtifact, CentralRepoIngestModuleFactory.getModuleName(), jobId);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }
                 // send inbox message
                 sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash(), caseDisplayNames);
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
         } catch (IllegalStateException ex) {
-            logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
         }
     }
 
