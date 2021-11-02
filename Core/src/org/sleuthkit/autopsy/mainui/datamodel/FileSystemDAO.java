@@ -89,7 +89,7 @@ public class FileSystemDAO {
             parentName = host.get().getName();
             contentForTable.addAll(skCase.getHostManager().getDataSourcesForHost(host.get()));
         } else {
-            throw new TskCoreException("Error loading children of object with ID " + objectId + " - ID not found in tsk_objects or tsk_hosts");
+            throw new TskCoreException("Error loading host with ID " + objectId);
         }
         return fetchContentForTable(cacheKey, contentForTable, parentName);
     }    
