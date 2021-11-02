@@ -348,30 +348,31 @@ public class TableSearchTest extends NbTestCase {
             fsTestVolumeA1 = db.addVolume(fsTestVsA.getId(), 0, 0, 512, "Test vol A1", 0, trans);
             fsTestVolumeA2 = db.addVolume(fsTestVsA.getId(), 1, 512, 512, "Test vol A2", 0, trans);
             fsTestVolumeA3 = db.addVolume(fsTestVsA.getId(), 2, 1024, 512, "Test vol A3", 0, trans);
+            long rootInum = 1;
             fsTestFsA = db.addFileSystem(fsTestVolumeA1.getId(), 0, TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_EXT2, 512, 1, 
-                    1, 1, 10, "Test file system", trans);
+                    rootInum, rootInum, 10, "Test file system", trans);
             trans.commit();
             trans = null;
             fsTestRootDirA = db.addFileSystemFile(fsTestImageA.getId(), fsTestFsA.getId(), 
-                    "", 0, 0, 
+                    "", rootInum, 0, 
                     TskData.TSK_FS_ATTR_TYPE_ENUM.TSK_FS_ATTR_TYPE_DEFAULT, 0, 
-                    TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC, (short)0, 128, 
+                    TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC, (short)0, 0, 
                     0, 0, 0, 0, false, fsTestFsA);
             db.addFileSystemFile(fsTestImageA.getId(), fsTestFsA.getId(), 
                     "Test file 1", 0, 0, 
                     TskData.TSK_FS_ATTR_TYPE_ENUM.TSK_FS_ATTR_TYPE_DEFAULT, 0, 
                     TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC, (short)0, 123, 
-                    0, 0, 0, 0, false, fsTestRootDirA);
+                    0, 0, 0, 0, true, fsTestRootDirA);
             db.addFileSystemFile(fsTestImageA.getId(), fsTestFsA.getId(), 
                     "Test file 2", 0, 0, 
                     TskData.TSK_FS_ATTR_TYPE_ENUM.TSK_FS_ATTR_TYPE_DEFAULT, 0, 
                     TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC, (short)0, 456, 
-                    0, 0, 0, 0, false, fsTestRootDirA);
+                    0, 0, 0, 0, true, fsTestRootDirA);
             db.addFileSystemFile(fsTestImageA.getId(), fsTestFsA.getId(), 
                     "Test file 3", 0, 0, 
                     TskData.TSK_FS_ATTR_TYPE_ENUM.TSK_FS_ATTR_TYPE_DEFAULT, 0, 
                     TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC, (short)0, 789, 
-                    0, 0, 0, 0, false, fsTestRootDirA);
+                    0, 0, 0, 0, true, fsTestRootDirA);
         
             // Create an image with some odd structures for testing
             trans = db.beginTransaction();
@@ -392,7 +393,8 @@ public class TableSearchTest extends NbTestCase {
                     true, TskData.EncodingType.NONE, fsTestVolumeB1, trans);
             
             // Pools can have VS, file, and artifact children
-            db.addVolumeSystem(fsTestPoolB.getId(), TskData.TSK_VS_TYPE_ENUM.TSK_VS_TYPE_GPT, 0, 2048, trans);
+            VolumeSystem vsB2 = db.addVolumeSystem(fsTestPoolB.getId(), TskData.TSK_VS_TYPE_ENUM.TSK_VS_TYPE_GPT, 0, 2048, trans);
+            db.addVolume(vsB2.getId(), 0, 0, 512, "Test vol B2", 0, trans);
             db.addLocalFile("Test local file B3", "C:\\Fake\\Path\\8", 8000, 0, 0, 0, 0, 
                     true, TskData.EncodingType.NONE, fsTestPoolB, trans);
       
@@ -786,30 +788,29 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
             
-            // ImageA has one volumne system child which we don't display
+            // ImageA has one volume system child, which has three volumes that will be displayed
             FileSystemContentSearchParam param = new FileSystemContentSearchParam(fsTestImageA.getId());
             results = fileSystemDAO.getContentForTable(param, 0, null, false);
-            assertEquals(0, results.getTotalResultsCount());
-            assertEquals(0, results.getItems().size());
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
             
-            // VsA has three volume children
+            // VsA has three volume children (this should match the previous search)
             param = new FileSystemContentSearchParam(fsTestVsA.getId());
             results = fileSystemDAO.getContentForTable(param, 0, null, false);
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
-            // VolumeA1 has a file system child which we don't display
+            // VolumeA1 has a file system child, which in turn has a root directory child with three file children
             param = new FileSystemContentSearchParam(fsTestVolumeA1.getId());
             results = fileSystemDAO.getContentForTable(param, 0, null, false);
-            assertEquals(0, results.getTotalResultsCount());
-            assertEquals(0, results.getItems().size());
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
             
-            // FsA has the root folder as its child. We don't actually display this,
-            // but I'm not sure the DAO is responible for figuring that out.
+            // FsA has a root directory child with three file children (this should match the previous search)
             param = new FileSystemContentSearchParam(fsTestFsA.getId());
             results = fileSystemDAO.getContentForTable(param, 0, null, false);
-            assertEquals(1, results.getTotalResultsCount());
-            assertEquals(1, results.getItems().size());
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
             
             // The root dir contains three files
             param = new FileSystemContentSearchParam(fsTestRootDirA.getId());
@@ -817,11 +818,11 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
-            // ImageB has VS (not displayed), pool, and one local file children
+            // ImageB has VS (which will display one volume), pool, and one local file children
             param = new FileSystemContentSearchParam(fsTestImageB.getId());
             results = fileSystemDAO.getContentForTable(param, 0, null, false);
-            assertEquals(2, results.getTotalResultsCount());
-            assertEquals(2, results.getItems().size());
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
             
             // Check that we have the "Type" column from the Pool and the "Known" column from the file
             List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
@@ -834,11 +835,11 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
             
-            // fsTestPoolB has VS (not displayed) and local file children
+            // fsTestPoolB has VS (which will display one volume) and local file children
             param = new FileSystemContentSearchParam(fsTestPoolB.getId());
             results = fileSystemDAO.getContentForTable(param, 0, null, false);
-            assertEquals(1, results.getTotalResultsCount());
-            assertEquals(1, results.getItems().size());
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
             
          } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
