@@ -22,6 +22,8 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
+import java.sql.SQLType;
+import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -463,57 +465,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
     }
 
-    /**
-     * Data pertaining to a search term.
-     */
-    private static class SearchTermRecord {
-
-        private final Set<String> distinctMatches = new HashSet<>();
-        private int count;
-        private final String searchTerm;
-
-        /**
-         * Constructor.
-         *
-         * @param searchTerm The search term.
-         * @param match      The initial keyword match.
-         */
-        SearchTermRecord(String searchTerm, String match) {
-            this.distinctMatches.add(match);
-            this.searchTerm = searchTerm;
-            this.count = 1;
-        }
-
-        /**
-         * @return The distinct matches for this search term.
-         */
-        Set<String> getDistinctMatches() {
-            return distinctMatches;
-        }
-
-        /**
-         * @return The total count of results found.
-         */
-        int getCount() {
-            return count;
-        }
-
-        /**
-         * Increments the count of results found.
-         */
-        void incrementCount() {
-            this.count++;
-        }
-
-        /**
-         * @return The search term searched for.
-         */
-        String getSearchTerm() {
-            return searchTerm;
-        }
-
-    }
-
+    
     /**
      * Returns the search term counts for a set name of keyword search results.
      *
@@ -538,8 +490,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         String dataSourceClause = dataSourceId == null
-                ? "art.data_source_obj_id IS NULL"
-                : "art.data_source_obj_id = ?";
+                ? ""
+                : "AND art.data_source_obj_id = ?\n";
 
         String setNameClause = setName == null
                 ? "attr_res.set_name IS NULL"
@@ -580,7 +532,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " LIMIT 1) AS keyword\n"
                 + "    FROM blackboard_artifacts art\n"
                 + "    WHERE  art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + "\n"
-                + "    AND " + dataSourceClause + "\n"
+                + dataSourceClause
                 + "  ) attr_res\n"
                 + "  WHERE " + setNameClause + "\n"
                 + "  GROUP BY attr_res.regexp_str, attr_res.keyword, attr_res.search_type\n"
@@ -591,56 +543,59 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         try {
             // get artifact types and counts
             SleuthkitCase skCase = getCase();
-            CasePreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query);
+            try (CasePreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
 
-            int paramIdx = 0;
-            if (dataSourceId != null) {
-                preparedStatement.setLong(++paramIdx, dataSourceId);
-            }
-            
-            if (setName != null) {
-                preparedStatement.setString(++paramIdx, setName);
-            }
-
-            List<TreeItemDTO<KeywordSearchTermParams>> items = new ArrayList<>();
-            skCase.getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
-                try {
-                    String searchTerm = resultSet.getString("search_term");
-                    int searchType = resultSet.getInt("search_type");
-                    long count = resultSet.getLong("count");
-                    boolean hasChildren = resultSet.getBoolean("has_children");
-
-                    String searchTermModified;
-                    switch (searchType) {
-                        case 0:
-                            searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm == null ? "" : searchTerm);
-                            break;
-                        case 1:
-                            searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm == null ? "" : searchTerm);
-                            break;
-                        case 2:
-                            searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm == null ? "" : searchTerm);
-                            break;
-                        default:
-                            logger.log(Level.WARNING, MessageFormat.format("Non-standard search type value: {0}.", searchType));
-                            searchTermModified = searchTerm;
-                            break;
-                    }
-
-                    items.add(new TreeItemDTO<>(
-                            "KEYWORD_SEARCH_TERMS",
-                            new KeywordSearchTermParams(setName, searchTerm, searchType, hasChildren, dataSourceId),
-                            searchTerm,
-                            searchTermModified,
-                            count
-                    ));
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
+                int paramIdx = 0;
+                if (dataSourceId != null) {
+                    preparedStatement.setLong(++paramIdx, dataSourceId);
                 }
-            });
 
-            return new TreeResultsDTO<>(items);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+                if (setName != null) {
+                    preparedStatement.setString(++paramIdx, setName);
+                }
+
+                List<TreeItemDTO<KeywordSearchTermParams>> items = new ArrayList<>();
+                skCase.getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
+                    try {
+                        while (resultSet.next()) {
+                            String searchTerm = resultSet.getString("search_term");
+                            int searchType = resultSet.getInt("search_type");
+                            long count = resultSet.getLong("count");
+                            boolean hasChildren = resultSet.getBoolean("has_children");
+
+                            String searchTermModified;
+                            switch (searchType) {
+                                case 0:
+                                    searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm == null ? "" : searchTerm);
+                                    break;
+                                case 1:
+                                    searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm == null ? "" : searchTerm);
+                                    break;
+                                case 2:
+                                    searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm == null ? "" : searchTerm);
+                                    break;
+                                default:
+                                    logger.log(Level.WARNING, MessageFormat.format("Non-standard search type value: {0}.", searchType));
+                                    searchTermModified = searchTerm;
+                                    break;
+                            }
+
+                            items.add(new TreeItemDTO<>(
+                                    "KEYWORD_SEARCH_TERMS",
+                                    new KeywordSearchTermParams(setName, searchTerm, searchType, hasChildren, dataSourceId),
+                                    searchTermModified,
+                                    searchTermModified,
+                                    count
+                            ));
+                        }
+                    } catch (SQLException ex) {
+                        logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
+                    }
+                });
+
+                return new TreeResultsDTO<>(items);
+            }
+        } catch (SQLException | NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching set counts", ex);
         }
     }
@@ -665,8 +620,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         String dataSourceClause = dataSourceId == null
-                ? "data_source_obj_id IS NULL"
-                : "data_source_obj_id = ?";
+                ? ""
+                : "AND data_source_obj_id = ?\n";
 
         String setNameClause = setName == null
                 ? "res.set_name IS NULL"
@@ -686,7 +641,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " LIMIT 1) AS keyword\n"
                 + "  FROM blackboard_artifacts art\n"
                 + "  WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + "\n"
-                + "  AND " + dataSourceClause
+                + dataSourceClause
                 + ") res\n"
                 + "-- TODO replace\n"
                 + "WHERE " + setNameClause + "\n"
@@ -699,32 +654,32 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             SleuthkitCase skCase = getCase();
             CasePreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query);
 
-            
             int paramIdx = 0;
             if (dataSourceId != null) {
                 preparedStatement.setLong(++paramIdx, dataSourceId);
             }
-            
+
             if (setName != null) {
                 preparedStatement.setString(++paramIdx, setName);
             }
-            
+
             preparedStatement.setString(++paramIdx, regexStr);
             preparedStatement.setInt(++paramIdx, searchType);
 
             List<TreeItemDTO<KeywordMatchParams>> items = new ArrayList<>();
             skCase.getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
                 try {
-                    String keyword = resultSet.getString("keyword");
-                    long count = resultSet.getLong("count");
+                    while (resultSet.next()) {
+                        String keyword = resultSet.getString("keyword");
+                        long count = resultSet.getLong("count");
 
-                    items.add(new TreeItemDTO<>(
-                            "KEYWORD_MATCH",
-                            new KeywordMatchParams(setName, regexStr, keyword, searchType, dataSourceId),
-                            keyword,
-                            keyword == null ? "" : keyword,
-                            count));
-
+                        items.add(new TreeItemDTO<>(
+                                "KEYWORD_MATCH",
+                                new KeywordMatchParams(setName, regexStr, keyword, searchType, dataSourceId),
+                                keyword,
+                                keyword == null ? "" : keyword,
+                                count));
+                    }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
                 }
