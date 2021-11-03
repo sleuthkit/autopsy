@@ -23,7 +23,12 @@ import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -40,6 +45,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DataArtifactDAO extends BlackboardArtifactDAO {
 
+    private static Logger logger = Logger.getLogger(DataArtifactDAO.class.getName());
+
     private static DataArtifactDAO instance = null;
 
     synchronized static DataArtifactDAO getInstance() {
@@ -48,6 +55,13 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         return instance;
+    }
+
+    /**
+     * @return The set of types that are not shown in the tree.
+     */
+    public static Set<BlackboardArtifact.Type> getIgnoredTreeTypes() {
+        return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
     private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
@@ -105,12 +119,49 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     }
 
     /**
+     * Returns a search results dto containing rows of counts data.
+     *
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return The results where rows are CountsRowDTO of
+     *         DataArtifactSearchParam.
+     *
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<DataArtifactSearchParam> getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
+        try {
+            // get row dto's sorted by display name
+            Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
+            List<TreeResultsDTO.TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
+                    .map(entry -> {
+                        return new TreeResultsDTO.TreeItemDTO<>(
+                                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                                new DataArtifactSearchParam(entry.getKey(), dataSourceId),
+                                entry.getKey().getTypeID(),
+                                entry.getKey().getDisplayName(),
+                                entry.getValue());
+                    })
+                    .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
+                    .collect(Collectors.toList());
+
+            // return results
+            return new TreeResultsDTO<>(treeItemRows);
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
+        }
+    }
+
+    /*
      * Handles fetching and paging of data artifacts.
      */
     public static class DataArtifactFetcher extends DAOFetcher<DataArtifactSearchParam> {
 
         /**
          * Main constructor.
+         *
          * @param params Parameters to handle fetching of data.
          */
         public DataArtifactFetcher(DataArtifactSearchParam params) {

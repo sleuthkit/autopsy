@@ -19,8 +19,9 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory;
 
 /**
  * Analysis Results node support.
@@ -41,7 +42,14 @@ public class AnalysisResults implements AutopsyVisitableItem {
     /**
      * Parent node of all analysis results.
      */
-    static class RootNode extends Artifacts.BaseArtifactNode {
+    public static class RootNode extends Artifacts.BaseArtifactNode {
+
+        private static Children getChildren(long filteringDSObjId) {
+            return Children.create(
+                    new AnalysisResultTypeFactory(filteringDSObjId > 0 ? filteringDSObjId : null), true);
+        }
+
+        private final long filteringDSObjId;
 
         /**
          * Main constructor.
@@ -52,10 +60,15 @@ public class AnalysisResults implements AutopsyVisitableItem {
          *                         equal to 0.
          */
         RootNode(long filteringDSObjId) {
-            super(Children.create(new Artifacts.TypeFactory(BlackboardArtifact.Category.ANALYSIS_RESULT, filteringDSObjId), true),
+            super(getChildren(filteringDSObjId),
                     "org/sleuthkit/autopsy/images/analysis_result.png",
                     AnalysisResults.getName(),
                     AnalysisResults.getName());
+            this.filteringDSObjId = filteringDSObjId;
+        }
+
+        public Node clone() {
+            return new AnalysisResults.RootNode(this.filteringDSObjId);
         }
     }
 

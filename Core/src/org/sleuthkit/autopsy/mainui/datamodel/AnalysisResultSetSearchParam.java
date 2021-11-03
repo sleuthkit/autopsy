@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Base class for search params for analysis results that filter by set name.
  */
-abstract class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
+public class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
     
     private final String setName;
 
