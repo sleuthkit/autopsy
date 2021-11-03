@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -101,7 +101,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            iLeappFileProcessor = new LeappFileProcessor(XMLFILE, ILeappAnalyzerModuleFactory.getModuleName());
+            iLeappFileProcessor = new LeappFileProcessor(XMLFILE, ILeappAnalyzerModuleFactory.getModuleName(), context);
         } catch (IOException | IngestModuleException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.ILeappAnalyzerIngestModule_error_ileapp_file_processor_init(), ex);
         }
@@ -333,7 +333,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
      * added to reports
      */
     private void addILeappReportToReports(Path iLeappOutputDir, Case currentCase) {
-        List<String> allIndexFiles = new ArrayList<>();
+        List<String> allIndexFiles;
 
         try (Stream<Path> walk = Files.walk(iLeappOutputDir)) { 
 
@@ -402,7 +402,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             String fileName = FilenameUtils.getName(ffp);
             String filePath = FilenameUtils.getPath(ffp);
 
-            List<AbstractFile> iLeappFiles = new ArrayList<>();
+            List<AbstractFile> iLeappFiles;
             try {
                 if (filePath.isEmpty()) {
                     iLeappFiles = fileManager.findFiles(dataSource, fileName); //NON-NLS                

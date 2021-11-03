@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -255,7 +255,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
                     try {
                         // index the artifact for keyword search
-                        blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName());
+                        blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName(), context.getJobId());
                     } catch (Blackboard.BlackboardException ex) {
                         MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
@@ -786,7 +786,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
             try {
                 // index the artifact for keyword search
-                blackboard.postArtifact(bbart, EmailParserModuleFactory.getModuleName());
+                blackboard.postArtifact(bbart, EmailParserModuleFactory.getModuleName(), context.getJobId());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_addArtifact_indexError_message(), bbart.getDisplayName());

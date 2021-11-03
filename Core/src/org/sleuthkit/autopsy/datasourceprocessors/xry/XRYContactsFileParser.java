@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datasourceprocessors.xry.AbstractSingleEntityParser.PARSER_NAME;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -136,7 +135,7 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
         // complain about illegal arguments.
         if (phoneNumber != null || homePhoneNumber != null || mobilePhoneNumber != null || hasAnEmail) {
             CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
-                    currentCase, PARSER_NAME, parent, Account.Type.DEVICE);
+                    currentCase, PARSER_NAME, parent, Account.Type.DEVICE, null);
 
             helper.addContact(contactName, phoneNumber, homePhoneNumber,
                     mobilePhoneNumber, emailAddr, additionalAttributes);
@@ -145,7 +144,7 @@ final class XRYContactsFileParser extends AbstractSingleEntityParser {
             if (!additionalAttributes.isEmpty()) {
                 BlackboardArtifact artifact = parent.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), additionalAttributes);
 
-                currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
+                currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME, null);
             }
         }
     }

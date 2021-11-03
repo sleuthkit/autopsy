@@ -146,7 +146,7 @@ class ContactsDbIngestModule(DataSourceIngestModule):
                 # Create an instance of the helper class
                 # TODO - Replace with your parser name and Account.Type
                 helper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(), 
-                                ContactsDbIngestModuleFactory.moduleName, app_database.getDBFile(), Account.Type.DEVICE) 
+                                ContactsDbIngestModuleFactory.moduleName, app_database.getDBFile(), Account.Type.DEVICE, context.getJobId()) 
 
                 # Iterate through each row and create artifacts
                 while result_set.next():
