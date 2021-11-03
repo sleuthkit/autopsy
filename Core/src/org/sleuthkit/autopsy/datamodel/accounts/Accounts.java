@@ -267,11 +267,32 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected long fetchChildCount(SleuthkitCase skCase) throws TskCoreException {
-            long count = 0;
-            if (Accounts.this.accountTypeResults != null) {
-                count = Accounts.this.accountTypeResults.getTotal();
+            String accountTypesInUseQuery
+                    = "SELECT COUNT(*) AS count\n"
+                    + "FROM (\n"
+                    + "  SELECT MIN(blackboard_attributes.value_text) AS account_type\n"
+                    + "  FROM blackboard_artifacts\n"
+                    + "  LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id\n"
+                    + "  WHERE blackboard_artifacts.artifact_type_id = " + TSK_ACCOUNT.getTypeID() + "\n"
+                    + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
+                    + "  AND blackboard_attributes.value_text IS NOT NULL\n"
+                    + getFilterByDataSourceClause() + "\n"
+                    + "  -- group by artifact_id to ensure only one account type per artifact\n"
+                    + "  GROUP BY blackboard_artifacts.artifact_id\n"
+                    + ") res\n";
+
+            try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(accountTypesInUseQuery);
+                    ResultSet resultSet = executeQuery.getResultSet()) {
+
+                if (resultSet.next()) {
+                    return resultSet.getLong("count");
+                }
+
+            } catch (TskCoreException | SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error querying for count of all account types", ex);
             }
-            return count;
+
+            return 0;
         }
 
     }
@@ -334,7 +355,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "  LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id\n"
                     + "  WHERE blackboard_artifacts.artifact_type_id = " + TSK_ACCOUNT.getTypeID() + "\n"
                     + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
-                    +  getFilterByDataSourceClause() + "\n"
+                    + getFilterByDataSourceClause() + "\n"
                     + "  -- group by artifact_id to ensure only one account type per artifact\n"
                     + "  GROUP BY blackboard_artifacts.artifact_id\n"
                     + ") res\n"
