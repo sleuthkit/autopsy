@@ -329,7 +329,19 @@ public class ViewsDAO {
     }
 
     // GVDTODO file mime counts, additional where filtering of tsk_files (i.e. no layout files)
-
+    /**
+     * Returns counts for a collection of file extension search filters.
+     *
+     * @param filters      The filters. Each one will have an entry in the
+     *                     returned results.
+     * @param dataSourceId The data source object id or null if no data source
+     *                     filtering should occur.
+     *
+     * @return The results.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
     public TreeResultsDTO<FileTypeExtensionsSearchParams> getFileExtCounts(Collection<FileExtSearchFilter> filters, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         Map<FileExtSearchFilter, String> whereClauses = filters.stream()
                 .collect(Collectors.toMap(
@@ -353,6 +365,17 @@ public class ViewsDAO {
         return new TreeResultsDTO<>(treeList);
     }
 
+    /**
+     * Returns counts for file size categories.
+     *
+     * @param dataSourceId The data source object id or null if no data source
+     *                     filtering should occur.
+     *
+     * @return The results.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
     public TreeResultsDTO<FileTypeSizeSearchParams> getFileSizeCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         Map<FileTypeSizeSearchParams.FileSizeFilter, String> whereClauses = Stream.of(FileTypeSizeSearchParams.FileSizeFilter.values())
                 .collect(Collectors.toMap(
@@ -376,6 +399,21 @@ public class ViewsDAO {
         return new TreeResultsDTO<>(treeList);
     }
 
+    /**
+     * Determines counts for files in multiple categories.
+     *
+     * @param whereClauses     A mapping of objects to their respective where
+     *                         clauses.
+     * @param dataSourceId     The data source object id or null if no data
+     *                         source filtering.
+     * @param includeZeroCount Whether or not to return an item if there are 0
+     *                         matches.
+     *
+     * @return A mapping of the keys in the 'whereClauses' mapping to their
+     *         respective counts.
+     *
+     * @throws ExecutionException
+     */
     private <T> Map<T, Long> getFilesCounts(Map<T, String> whereClauses, Long dataSourceId, boolean includeZeroCount) throws ExecutionException {
         // get artifact types and counts
 
