@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CasePreparedStatement;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -245,29 +246,10 @@ public class ViewsDAO {
         return size >= key.getSizeFilter().getMinBound() && (key.getSizeFilter().getMaxBound() == null || size < key.getSizeFilter().getMaxBound());
     }
 
-//    private ViewFileTableSearchResultsDTO fetchFilesForTable(ViewFileCacheKey cacheKey) throws NoCurrentCaseException, TskCoreException {
-//
-//    }
-//
-//    public ViewFileTableSearchResultsDTO getFilewViewForTable(BlackboardArtifact.Type artType, Long dataSourceId) throws ExecutionException, IllegalArgumentException {
-//        if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT) {
-//            throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
-//                    + "Artifact type must be non-null and data artifact.  "
-//                    + "Received {0}", artType));
-//        }
-//
-//        ViewFileCacheKey cacheKey = new ViewFileCacheKey(artType, dataSourceId);
-//        return dataArtifactCache.get(cacheKey, () -> fetchFilesForTable(cacheKey));
-//    }
-    private Map<Integer, Long> fetchFileViewCounts(List<FileExtSearchFilter> filters, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
-        Map<Integer, Long> counts = new HashMap<>();
-        for (FileExtSearchFilter filter : filters) {
-            String whereClause = getFileExtensionWhereStatement(filter, dataSourceId);
-            long count = getCase().countFilesWhere(whereClause);
-            counts.put(filter.getId(), count);
-        }
-
-        return counts;
+    private static String getDataSourceAndClause(Long dataSourceId) {
+        return (dataSourceId != null && dataSourceId > 0
+                ? " AND data_source_obj_id = " + dataSourceId
+                : " ");
     }
 
     private static String getFileExtensionClause(FileExtSearchFilter filter) {
@@ -277,19 +259,20 @@ public class ViewsDAO {
                 .collect(Collectors.joining(", ")) + ")";
     }
 
+    private String getBaseFileExtensionFilter() {
+        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known <> " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
+    }
+
     private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId) {
-        String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
-                + (dataSourceId != null && dataSourceId > 0
-                        ? " AND data_source_obj_id = " + dataSourceId
-                        : " ")
+        String whereClause = getBaseFileExtensionFilter()
+                + getDataSourceAndClause(dataSourceId)
                 + " AND (" + getFileExtensionClause(filter) + ")";
         return whereClause;
     }
 
-    private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
-
-        String whereClause = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+    private String getBaseFileMimeFilter() {
+        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
                 + " AND (type IN ("
                 + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
                 + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
@@ -297,8 +280,12 @@ public class ViewsDAO {
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.ordinal() + ","
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
                 + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
-                + "))"
-                + (dataSourceId != null && dataSourceId > 0 ? " AND data_source_obj_id = " + dataSourceId : " ")
+                + "))";
+    }
+
+    private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
+        String whereClause = getBaseFileMimeFilter()
+                + getDataSourceAndClause(dataSourceId)
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
                 + " AND mime_type = '" + mimeType + "'";
 
@@ -311,24 +298,20 @@ public class ViewsDAO {
                 : "(size >= " + filter.getMinBound() + " AND size < " + filter.getMaxBound() + ")";
     }
 
-    private static String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
-        String query = getFileSizeClause(filter);
-
+    private String getBaseFileSizeFilter() {
         // Ignore unallocated block files.
-        query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
+        return "(type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"
+                + ((hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")); //NON-NLS
+    }
 
-        // hide known files if specified by configuration
-        query += (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : ""); //NON-NLS
-
-        // filter by datasource if indicated in case preferences
-        if (dataSourceId != null && dataSourceId > 0) {
-            query += " AND data_source_obj_id = " + dataSourceId;
-        }
+    private String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
+        String query = getBaseFileSizeFilter()
+                + " AND " + getFileSizeClause(filter)
+                + getDataSourceAndClause(dataSourceId);
 
         return query;
     }
 
-    // GVDTODO file mime counts, additional where filtering of tsk_files (i.e. no layout files)
     /**
      * Returns counts for a collection of file extension search filters.
      *
@@ -348,7 +331,7 @@ public class ViewsDAO {
                         filter -> filter,
                         filter -> getFileExtensionClause(filter)));
 
-        Map<FileExtSearchFilter, Long> countsByFilter = getFilesCounts(whereClauses, dataSourceId, true);
+        Map<FileExtSearchFilter, Long> countsByFilter = getFilesCounts(whereClauses, getBaseFileExtensionFilter(), dataSourceId, true);
 
         List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
                 .map(entry -> {
@@ -382,7 +365,7 @@ public class ViewsDAO {
                         filter -> filter,
                         filter -> getFileSizeClause(filter)));
 
-        Map<FileTypeSizeSearchParams.FileSizeFilter, Long> countsByFilter = getFilesCounts(whereClauses, dataSourceId, true);
+        Map<FileTypeSizeSearchParams.FileSizeFilter, Long> countsByFilter = getFilesCounts(whereClauses, getBaseFileSizeFilter(), dataSourceId, true);
 
         List<TreeItemDTO<FileTypeSizeSearchParams>> treeList = countsByFilter.entrySet().stream()
                 .map(entry -> {
@@ -400,10 +383,97 @@ public class ViewsDAO {
     }
 
     /**
+     * Returns counts for file mime type categories.
+     *
+     * @param prefix       The prefix mime type (i.e. 'application', 'audio').
+     *                     If null, prefix counts are gathered.
+     * @param dataSourceId The data source object id or null if no data source
+     *                     filtering should occur.
+     *
+     * @return The results.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<FileTypeMimeSearchParams> getFileMimeCounts(String prefix, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        // GVDTODO
+        String nullStringName = TBD;
+
+        String likeItem = StringUtils.isNotBlank(prefix) ? prefix.replaceAll("[%/]", "") + "/" : null;
+
+        String baseFilter = "WHERE " + getBaseFileMimeFilter()
+                + getDataSourceAndClause(dataSourceId)
+                + (StringUtils.isNotBlank(prefix) ? " AND mime_type LIKE ? " : "");
+
+        try {
+            SleuthkitCase skCase = getCase();
+            String mimeType;
+            if (StringUtils.isNotBlank(prefix)) {
+                mimeType = "mime_type";
+            } else {
+                switch (skCase.getDatabaseType()) {
+                    case POSTGRESQL:
+                        mimeType = "SUBSTR(mime_type, 0, instr(mime_type, '/'))";
+                        break;
+                    case SQLITE:
+                        mimeType = "SPLIT_PART(mime_type, '/', 1)";
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown database type: " + skCase.getDatabaseType());
+                }
+            }
+
+            String query = mimeType + " AS mime_type, COUNT(*) AS count\n"
+                    + "FROM tsk_files\n"
+                    + baseFilter + "\n"
+                    + "GROUP BY " + mimeType;
+
+            Map<String, Long> typeCounts = new HashMap<>();
+
+            CasePreparedStatement casePreparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query);
+
+            if (likeItem != null) {
+                casePreparedStatement.setString(1, likeItem);
+            }
+
+            skCase.getCaseDbAccessManager().select(casePreparedStatement, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        String mimeTypeId = resultSet.getString("mime_type");
+                        long count = resultSet.getLong("count");
+                        typeCounts.put(mimeTypeId, count);
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching file mime type counts.", ex);
+                }
+            });
+
+            List<TreeItemDTO<FileTypeMimeSearchParams>> treeList = typeCounts.entrySet().stream()
+                    .map(entry -> {
+                        return new TreeItemDTO<>(
+                                "FILE_MIME_TYPE",
+                                new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
+                                entry.getKey() == null ? nullStringName : entry.getKey(),
+                                entry.getKey() == null ? nullStringName : entry.getKey(),
+                                entry.getValue());
+                    })
+                    .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getTypeData().getMimeType(), b.getTypeData().getMimeType()))
+                    .collect(Collectors.toList());
+
+            return new TreeResultsDTO<>(treeList);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching file counts.", ex);
+        }
+    }
+
+    /**
      * Determines counts for files in multiple categories.
      *
      * @param whereClauses     A mapping of objects to their respective where
      *                         clauses.
+     * @param baseFilter       A filter for files applied before performing
+     *                         groupings and counts. It shouldn't have a leading
+     *                         'AND' or 'WHERE'.
      * @param dataSourceId     The data source object id or null if no data
      *                         source filtering.
      * @param includeZeroCount Whether or not to return an item if there are 0
@@ -414,7 +484,7 @@ public class ViewsDAO {
      *
      * @throws ExecutionException
      */
-    private <T> Map<T, Long> getFilesCounts(Map<T, String> whereClauses, Long dataSourceId, boolean includeZeroCount) throws ExecutionException {
+    private <T> Map<T, Long> getFilesCounts(Map<T, String> whereClauses, String baseFilter, Long dataSourceId, boolean includeZeroCount) throws ExecutionException {
         // get artifact types and counts
 
         Map<Integer, T> types = new HashMap<>();
@@ -432,13 +502,17 @@ public class ViewsDAO {
                 + "    ELSE -1 \n"
                 + "  END AS type_id \n";
 
-        String dataSourceClause = dataSourceId == null ? "" : " WHERE data_source_obj_id = " + dataSourceId + " ";
+        String dataSourceClause = dataSourceId != null && dataSourceId > 0 ? "data_source_obj_id = " + dataSourceId : null;
+
+        String baseWhereClauses = Stream.of(dataSourceClause, baseFilter)
+                .filter(s -> StringUtils.isNotBlank(s))
+                .collect(Collectors.joining(" AND "));
 
         String query = "type_id, COUNT(*) AS count FROM \n"
                 + "(SELECT \n"
                 + switchStatement
                 + "FROM tsk_files \n"
-                + dataSourceClause + ") \n"
+                + (baseWhereClauses != null ? ("WHERE " + baseWhereClauses) : "") + ") \n"
                 + "WHERE type_id >= 0 \n"
                 + "GROUP BY type_id";
 
