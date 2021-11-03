@@ -74,6 +74,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TagsDAO.TagFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeExtFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
@@ -1284,6 +1286,26 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     "There was an error fetching data for hash set filter: {0} and data source id: {1}.",
                     hashHitKey.getSetName(),
                     hashHitKey.getDataSourceId() == null ? "<null>" : hashHitKey.getDataSourceId()),
+                    ex);
+        }
+    }
+    
+    /**
+     * Displays results of querying the DAO for the given search parameters
+     * query.
+     *
+     * @param tagParams The search parameters.
+     */
+    void displayTags(TagsSearchParams tagParams) {
+        try {
+            this.searchResultManager = new SearchManager(new TagFetcher(tagParams), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for Tags filter: {0} and data source id: {1}.",
+                    tagParams.getTagName(),
+                    tagParams.getDataSourceId() == null ? "<null>" : tagParams.getDataSourceId()),
                     ex);
         }
     }

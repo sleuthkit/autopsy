@@ -48,6 +48,7 @@ FileExtRootFilter_image_displayName=Images
 FileExtRootFilter_video_displayName=Video
 FileTag.name.text=File Tag
 FileTypesByMimeType.name.text=By MIME Type
+ResultTag.name.text=Result Tag
 TagsDAO.fileColumns.accessTimeColLbl=Accessed Time
 TagsDAO.fileColumns.changeTimeColLbl=Changed Time
 TagsDAO.fileColumns.commentColLbl=Comment
