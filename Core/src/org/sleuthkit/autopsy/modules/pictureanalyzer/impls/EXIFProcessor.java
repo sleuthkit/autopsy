@@ -172,7 +172,7 @@ public class EXIFProcessor implements PictureProcessor {
                 artifacts.add(userSuspectedArtifact);
 
                 try {
-                    blackboard.postArtifacts(artifacts, MODULE_NAME);
+                    blackboard.postArtifacts(artifacts, MODULE_NAME, context.getJobId());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, String.format("Error posting TSK_METADATA_EXIF and TSK_USER_CONTENT_SUSPECTED artifacts for %s (object ID = %d)", file.getName(), file.getId()), ex); //NON-NLS
                 }

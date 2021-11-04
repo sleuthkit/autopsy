@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
@@ -53,7 +54,7 @@ public final class IngestJobRunner {
      */
     public static List<IngestModuleError> runIngestJob(Collection<Content> dataSources, IngestJobSettings settings) throws InterruptedException {
         Object ingestMonitor = new Object();
-        IngestJobCompletiontListener completiontListener = new IngestJobCompletiontListener(ingestMonitor);
+        IngestJobCompletionListener completiontListener = new IngestJobCompletionListener(ingestMonitor, dataSources.size());
         IngestManager ingestManager = IngestManager.getInstance();
         ingestManager.addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, completiontListener);
         try {
@@ -81,9 +82,12 @@ public final class IngestJobRunner {
      * An ingest job event listener that allows IngestRunner.runIngestJob to
      * block until the specified ingest job is completed.
      */
-    private static final class IngestJobCompletiontListener implements PropertyChangeListener {
+    private static final class IngestJobCompletionListener implements PropertyChangeListener {
 
         private final Object ingestMonitor;
+        
+        @GuardedBy("ingestMonitor")
+        private int remainingJobsCount;
 
         /**
          * Constructs an ingest job event listener that allows
@@ -92,9 +96,11 @@ public final class IngestJobRunner {
          *
          * @param ingestMonitor A Java object to notify when the ingest job is
          *                      omcpleted.
+         * @param jobsCount The number of jobs to listen for before notifying monitor.
          */
-        IngestJobCompletiontListener(Object ingestMonitor) {
+        IngestJobCompletionListener(Object ingestMonitor, int jobsCount) {
             this.ingestMonitor = ingestMonitor;
+            this.remainingJobsCount = jobsCount;
         }
 
         /**
@@ -109,7 +115,10 @@ public final class IngestJobRunner {
                 String eventType = event.getPropertyName();
                 if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     synchronized (ingestMonitor) {
-                        ingestMonitor.notify();
+                        this.remainingJobsCount--;
+                        if (this.remainingJobsCount <= 0) {
+                            ingestMonitor.notify();    
+                        }
                     }
                 }
             }

@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,7 +91,7 @@ class TextNowAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                             current_case.getSleuthkitCase(), self._PARSER_NAME, 
-                            textnow_db.getDBFile(), Account.Type.TEXTNOW
+                            textnow_db.getDBFile(), Account.Type.TEXTNOW, context.getJobId()
                          ) 
                 self.parse_contacts(textnow_db, helper) 
                 self.parse_calllogs(textnow_db, helper)

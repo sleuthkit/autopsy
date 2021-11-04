@@ -207,9 +207,8 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
                 BlackboardAttribute(attributeIdRunKeyValue, moduleName, registryKey[3])
             ))
             
-            # index the artifact for keyword search
             try:
-                blackboard.postArtifact(art, moduleName)
+                blackboard.postArtifact(art, moduleName, context.getJobId())
             except Blackboard.BlackboardException as ex:
                 self.log(Level.SEVERE, "Unable to index blackboard artifact " + str(art.getArtifactTypeName()), ex)
         
