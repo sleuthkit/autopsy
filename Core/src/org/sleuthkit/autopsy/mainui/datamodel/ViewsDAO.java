@@ -396,14 +396,11 @@ public class ViewsDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeMimeSearchParams> getFileMimeCounts(String prefix, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        // GVDTODO
-        String nullStringName = TBD;
-
-        String likeItem = StringUtils.isNotBlank(prefix) ? prefix.replaceAll("[%/]", "") + "/" : null;
+        String likeItem = StringUtils.isNotBlank(prefix) ? prefix.replaceAll("[%/]", "") + "/%" : null;
 
         String baseFilter = "WHERE " + getBaseFileMimeFilter()
                 + getDataSourceAndClause(dataSourceId)
-                + (StringUtils.isNotBlank(prefix) ? " AND mime_type LIKE ? " : "");
+                + (StringUtils.isNotBlank(prefix) ? " AND mime_type LIKE ? " : " AND mime_type IS NOT NULL ");
 
         try {
             SleuthkitCase skCase = getCase();
@@ -430,37 +427,40 @@ public class ViewsDAO {
 
             Map<String, Long> typeCounts = new HashMap<>();
 
-            CasePreparedStatement casePreparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query);
+            try (CasePreparedStatement casePreparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
 
-            if (likeItem != null) {
-                casePreparedStatement.setString(1, likeItem);
-            }
-
-            skCase.getCaseDbAccessManager().select(casePreparedStatement, (resultSet) -> {
-                try {
-                    while (resultSet.next()) {
-                        String mimeTypeId = resultSet.getString("mime_type");
-                        long count = resultSet.getLong("count");
-                        typeCounts.put(mimeTypeId, count);
-                    }
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "An error occurred while fetching file mime type counts.", ex);
+                if (likeItem != null) {
+                    casePreparedStatement.setString(1, likeItem);
                 }
-            });
 
-            List<TreeItemDTO<FileTypeMimeSearchParams>> treeList = typeCounts.entrySet().stream()
-                    .map(entry -> {
-                        return new TreeItemDTO<>(
-                                "FILE_MIME_TYPE",
-                                new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
-                                entry.getKey() == null ? nullStringName : entry.getKey(),
-                                entry.getKey() == null ? nullStringName : entry.getKey(),
-                                entry.getValue());
-                    })
-                    .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getTypeData().getMimeType(), b.getTypeData().getMimeType()))
-                    .collect(Collectors.toList());
+                skCase.getCaseDbAccessManager().select(casePreparedStatement, (resultSet) -> {
+                    try {
+                        while (resultSet.next()) {
+                            String mimeTypeId = resultSet.getString("mime_type");
+                            if (mimeTypeId != null) {
+                                long count = resultSet.getLong("count");
+                                typeCounts.put(mimeTypeId, count);
+                            }
+                        }
+                    } catch (SQLException ex) {
+                        logger.log(Level.WARNING, "An error occurred while fetching file mime type counts.", ex);
+                    }
+                });
 
-            return new TreeResultsDTO<>(treeList);
+                List<TreeItemDTO<FileTypeMimeSearchParams>> treeList = typeCounts.entrySet().stream()
+                        .map(entry -> {
+                            return new TreeItemDTO<>(
+                                    "FILE_MIME_TYPE",
+                                    new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
+                                    entry.getKey(),
+                                    entry.getKey(),
+                                    entry.getValue());
+                        })
+                        .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getTypeData().getMimeType(), b.getTypeData().getMimeType()))
+                        .collect(Collectors.toList());
+
+                return new TreeResultsDTO<>(treeList);
+            }
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching file counts.", ex);
         }
