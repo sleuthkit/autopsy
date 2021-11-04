@@ -46,8 +46,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Score;
@@ -114,6 +114,12 @@ public class TableSearchTest extends NbTestCase {
     private static final String SOURCE_NAME_COLUMN = "Source Name";
     private static final String SOURCE_FILE_PATH_COLUMN = "Source File Path";
     
+    // File system test
+    private static final String PERSON_NAME = "Person1";
+    private static final String PERSON_HOST_NAME1 = "Host for Person A";
+    private static final String PERSON_HOST_NAME2 = "Host for Person B";
+    
+    
     /////////////////////////////////////////////////
     // Data to be used across the test methods.
     // These are initialized in setUpCaseDatabase().
@@ -160,6 +166,8 @@ public class TableSearchTest extends NbTestCase {
     Image fsTestImageB = null;    // Another image
     Volume fsTestVolumeB1 = null; // Another volume
     Pool fsTestPoolB = null;       // A pool
+    Person person1 = null;         // A person
+    Host personHost1 = null;       // A host belonging to the above person
 
     // Tags test
     TagName knownTag1 = null;
@@ -435,6 +443,12 @@ public class TableSearchTest extends NbTestCase {
       
             trans.commit();
             trans = null;
+            
+            // Create a person associated with two hosts
+            person1 = db.getPersonManager().newPerson(PERSON_NAME);
+            personHost1 = db.getHostManager().newHost(PERSON_HOST_NAME1);
+            Host personHost2 = db.getHostManager().newHost(PERSON_HOST_NAME2);
+            db.getPersonManager().addHostsToPerson(person1, Arrays.asList(personHost1, personHost2));
 
             // Add tags ----
             knownTag1 = tagsManager.addTagName("Tag 1", TAG_DESCRIPTION, TagName.HTML_COLOR.RED, TskData.FileKnown.KNOWN);
@@ -987,9 +1001,25 @@ public class TableSearchTest extends NbTestCase {
         try {
             FileSystemDAO fileSystemDAO = MainDAO.getInstance().getFileSystemDAO();
             
+            // There are 4 hosts not associated with a person
+            FileSystemPersonSearchParam personParam = new FileSystemPersonSearchParam(null);
+            BaseSearchResultsDTO results = fileSystemDAO.getHostsForTable(personParam, 0, null, false);
+            assertEquals(4, results.getTotalResultsCount());
+            assertEquals(4, results.getItems().size());
+            
+            // Person1 is associated with two hosts
+            personParam = new FileSystemPersonSearchParam(person1.getPersonId());
+            results = fileSystemDAO.getHostsForTable(personParam, 0, null, false);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+            
+            // Check that the name of the first host is present
+            RowDTO row = results.getItems().get(0);
+            assertTrue(row.getCellValues().contains(PERSON_HOST_NAME1));
+            
             // HostA is associated with two images
             FileSystemHostSearchParam hostParam = new FileSystemHostSearchParam(fsTestHostA.getHostId());
-            BaseSearchResultsDTO results = fileSystemDAO.getContentForTable(hostParam, 0, null, false);
+            results = fileSystemDAO.getContentForTable(hostParam, 0, null, false);
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
             
