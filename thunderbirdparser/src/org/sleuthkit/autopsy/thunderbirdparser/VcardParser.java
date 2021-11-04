@@ -243,7 +243,7 @@ final class VcardParser {
                 
                 // Index the artifact for keyword search.
                 try {
-                    blackboard.postArtifact(artifact,  EmailParserModuleFactory.getModuleName());
+                    blackboard.postArtifact(artifact,  EmailParserModuleFactory.getModuleName(), context.getJobId());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(Bundle.VcardParser_addContactArtifact_indexError(), artifact.getDisplayName());
@@ -423,7 +423,7 @@ final class VcardParser {
                 }
 
                 try {
-                    BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                    BlackboardAttribute.Type attributeType = tskCase.getBlackboard().getAttributeType(attributeTypeName);
                     if (attributeType == null) {
                         try{
                             // Add this attribute type to the case database.
@@ -479,7 +479,7 @@ final class VcardParser {
                    attributeTypeName = "TSK_EMAIL";
                }
                try {
-                   BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                   BlackboardAttribute.Type attributeType = tskCase.getBlackboard().getAttributeType(attributeTypeName);
                    if (attributeType == null) {
                        // Add this attribute type to the case database.
                        attributeType = tskCase.getBlackboard().getOrAddAttributeType(attributeTypeName, 

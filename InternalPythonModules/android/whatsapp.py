@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -145,14 +145,14 @@ class WhatsAppAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME,
-                        contact_db.getDBFile(), Account.Type.WHATSAPP) 
+                        contact_db.getDBFile(), Account.Type.WHATSAPP, context.getJobId()) 
                 self.parse_contacts(contact_db, helper)
 
             for calllog_and_message_db in calllog_and_message_dbs:
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME,
-                        calllog_and_message_db.getDBFile(), Account.Type.WHATSAPP)
+                        calllog_and_message_db.getDBFile(), Account.Type.WHATSAPP, context.getJobId())
                 self.parse_calllogs(calllog_and_message_db, helper)
                 self.parse_messages(dataSource, calllog_and_message_db, helper, current_case)
 

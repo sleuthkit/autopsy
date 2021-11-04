@@ -18,13 +18,71 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.util.Objects;
+
 /**
- * Describes parameters to provide to the DAO for fetching data.
+ * Base implementation of search parameters to provide to a DAO.
  */
-public interface SearchParams {
+class SearchParams<T> {
+    private final T paramData;
+    private final long startItem;
+    private final Long maxResultsCount;
 
-    long getStartItem();
+    public SearchParams(T paramData) {
+        this(paramData, 0, null);
+    }
+    
+    public SearchParams(T paramData, long startItem, Long maxResultsCount) {
+        this.paramData = paramData;
+        this.startItem = startItem;
+        this.maxResultsCount = maxResultsCount;
+    }
 
-    // null if no max defined
-    Long getMaxResultsCount();
+    public T getParamData() {
+        return paramData;
+    }
+
+    public long getStartItem() {
+        return startItem;
+    }
+
+    public Long getMaxResultsCount() {
+        return maxResultsCount;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 41 * hash + Objects.hashCode(this.paramData);
+        hash = 41 * hash + (int) (this.startItem ^ (this.startItem >>> 32));
+        hash = 41 * hash + Objects.hashCode(this.maxResultsCount);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final SearchParams<?> other = (SearchParams<?>) obj;
+        if (this.startItem != other.startItem) {
+            return false;
+        }
+        if (!Objects.equals(this.paramData, other.paramData)) {
+            return false;
+        }
+        if (!Objects.equals(this.maxResultsCount, other.maxResultsCount)) {
+            return false;
+        }
+        return true;
+    }
+
+    
+    
 }

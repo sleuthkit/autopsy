@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,8 +35,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Event published when new data is posted to the blackboard of a case. The
- * "old" value is a legacy ModuleDataEvent object. The "new" value is null.
+ * An event published when a new artifact (data artifact or analysis result) is
+ * posted to the blackboard. The "old" value is a legacy ModuleDataEvent object.
+ * The "new" value is null.
  */
 public final class BlackboardPostEvent extends AutopsyEvent implements Serializable {
 
@@ -45,14 +46,15 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
     private transient ModuleDataEvent eventData;
 
     /**
-     * Constructs an event to be published when new content is added to a case
-     * or there is a change a recorded attribute of existing content.
+     * Constructs an event published when a new artifact (data artifact or
+     * analysis result) is posted to the blackboard. The "old" value is a legacy
+     * ModuleDataEvent object. The "new" value is null.
      *
      * @param eventData A ModuleDataEvent object containing the data associated
      *                  with the blackboard post.
      */
     public BlackboardPostEvent(ModuleDataEvent eventData) {
-        /**
+        /*
          * Putting a serializable data holding object into oldValue to allow for
          * lazy loading of the ModuleDataEvent object for remote events. This
          * bypasses the issues related to the serialization and de-serialization
@@ -63,9 +65,9 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
                 IngestManager.IngestModuleEvent.DATA_ADDED.toString(),
                 new SerializableEventData(eventData.getModuleName(), eventData.getBlackboardArtifactType(), eventData.getArtifacts() != null
                         ? eventData.getArtifacts()
-                        .stream()
-                        .map(BlackboardArtifact::getArtifactID)
-                        .collect(Collectors.toList()) : Collections.emptyList()),
+                                .stream()
+                                .map(BlackboardArtifact::getArtifactID)
+                                .collect(Collectors.toList()) : Collections.emptyList()),
                 null
         );
         this.eventData = eventData;
@@ -78,13 +80,13 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
      */
     @Override
     public Object getOldValue() {
-        /**
-         * The eventData field is set in the constructor, but it is transient so
-         * it will become null when the event is serialized for publication over
-         * a network. Doing a lazy load of the ModuleDataEvent object bypasses
-         * the issues related to the serialization and de-serialization of
-         * BlackboardArtifact objects and may also save database round trips
-         * from other nodes since subscribers to this event are often not
+        /*
+         * The eventData field is set in the constructor, but it is transient,
+         * so it will become null when the event is serialized for publication
+         * over a network. Doing a lazy load of the ModuleDataEvent object
+         * bypasses the issues related to the serialization and de-serialization
+         * of BlackboardArtifact objects and may also save database round trips
+         * from other hosts since subscribers to this event are often not
          * interested in the event data.
          */
         if (null != eventData) {

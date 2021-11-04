@@ -39,8 +39,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -65,7 +63,7 @@ final class ExtractEdge extends Extract {
 
     private static final Logger LOG = Logger.getLogger(ExtractEdge.class.getName());
     private Content dataSource;
-    private IngestJobContext context;
+    private final IngestJobContext context;
     private HashMap<String, ArrayList<String>> containersTable;
 
     private static final String EDGE = "Edge"; //NON-NLS
@@ -114,32 +112,31 @@ final class ExtractEdge extends Extract {
         "ExtractEdge_process_errMsg_errGettingWebCacheFiles=Error trying to retrieving Edge WebCacheV01 file",
         "ExtractEdge_process_errMsg_webcacheFail=Failure processing Microsoft Edge WebCacheV01.dat file",
         "ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan.edb file",
-        "ExtractEdge_Module_Name=Microsoft Edge",
+        "ExtractEdge_Module_Name=Microsoft Edge Analyzer",
         "ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history",
         "Progress_Message_Edge_History=Microsoft Edge History",
         "Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks",
-        "Progress_Message_Edge_Cookies=Microsoft Edge Cookies",
-    })
+        "Progress_Message_Edge_Cookies=Microsoft Edge Cookies",})
 
     /**
-    * Extract the bookmarks, cookies, downloads and history from Microsoft Edge
-    */
-    ExtractEdge() {
-        super(Bundle.ExtractEdge_Module_Name());
+     * Extract the bookmarks, cookies, downloads and history from Microsoft Edge
+     */
+    ExtractEdge(IngestJobContext context) {
+        super(Bundle.ExtractEdge_Module_Name(), context);
+        this.context = context;
     }
 
     @Override
-    protected String getName() {
+    protected String getDisplayName() {
         return Bundle.ExtractEdge_Module_Name();
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), EDGE, context.getJobId());
         String moduleTempResultDir = Paths.get(moduleTempDir, EDGE_RESULT_FOLDER_NAME).toString();
-        
+
         this.dataSource = dataSource;
-        this.context = context;
         this.setFoundData(false);
 
         List<AbstractFile> webCacheFiles = null;
@@ -151,7 +148,7 @@ final class ExtractEdge extends Extract {
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_errGettingWebCacheFiles());
             LOG.log(Level.SEVERE, "Error fetching 'WebCacheV01.dat' files for Microsoft Edge", ex); //NON-NLS
         }
-        
+
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
@@ -174,7 +171,7 @@ final class ExtractEdge extends Extract {
             LOG.log(Level.WARNING, "Microsoft Edge files found, unable to parse on Non-Windows system"); //NON-NLS
             return;
         }
-        
+
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
@@ -206,22 +203,22 @@ final class ExtractEdge extends Extract {
      * Process WebCacheV01.dat ese database file creating artifacts for cookies,
      * and history contained within.
      *
-     * @param eseDumperPath Path to ESEDatabaseView.exe
-     * @param webCacheFiles List of case WebCacheV01.dat files
-     * @param moduleTempDir The temp directory for this module.
+     * @param eseDumperPath       Path to ESEDatabaseView.exe
+     * @param webCacheFiles       List of case WebCacheV01.dat files
+     * @param moduleTempDir       The temp directory for this module.
      * @param moduleTempResultDir The temp results directory for this module.
+     *
      * @throws IOException
      * @throws TskCoreException
      */
-    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles, DataSourceIngestModuleProgress progressBar, 
+    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles, DataSourceIngestModuleProgress progressBar,
             String moduleTempDir, String moduleTempResultDir) throws IOException, TskCoreException {
-
         for (AbstractFile webCacheFile : webCacheFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
-            
+
             clearContainerTable();
 
             //Run the dumper 
@@ -245,9 +242,9 @@ final class ExtractEdge extends Extract {
                 if (context.dataSourceIngestIsCancelled()) {
                     return;
                 }
-                
+
                 progressBar.progress(Bundle.Progress_Message_Edge_History());
-                
+
                 this.getHistory(webCacheFile, resultsDir);
 
                 if (context.dataSourceIngestIsCancelled()) {
@@ -255,7 +252,7 @@ final class ExtractEdge extends Extract {
                 }
 
                 progressBar.progress(Bundle.Progress_Message_Edge_Cookies());
-                
+
                 this.getCookies(webCacheFile, resultsDir);
 
             } finally {
@@ -266,19 +263,18 @@ final class ExtractEdge extends Extract {
     }
 
     /**
-     * Process spartan.edb ese database file creating artifacts for the bookmarks
-     * contained within.
+     * Process spartan.edb ese database file creating artifacts for the
+     * bookmarks contained within.
      *
-     * @param eseDumperPath Path to ESEDatabaseViewer
-     * @param spartanFiles List of the case spartan.edb files
-     * @param moduleTempDir The temp directory for this module.
+     * @param eseDumperPath       Path to ESEDatabaseViewer
+     * @param spartanFiles        List of the case spartan.edb files
+     * @param moduleTempDir       The temp directory for this module.
      * @param moduleTempResultDir The temp results directory for this module.
+     *
      * @throws IOException
      * @throws TskCoreException
      */
-    void processSpartanDbFile(String eseDumperPath, List<AbstractFile> spartanFiles, 
-            String moduleTempDir, String moduleTempResultDir) throws IOException, TskCoreException {
-
+    void processSpartanDbFile(String eseDumperPath, List<AbstractFile> spartanFiles, String moduleTempDir, String moduleTempResultDir) throws IOException, TskCoreException {
         for (AbstractFile spartanFile : spartanFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
@@ -287,7 +283,7 @@ final class ExtractEdge extends Extract {
 
             //Run the dumper 
             String tempSpartanFileName = EDGE_WEBCACHE_PREFIX
-                    + Integer.toString((int) spartanFile.getId()) + EDGE_WEBCACHE_EXT; 
+                    + Integer.toString((int) spartanFile.getId()) + EDGE_WEBCACHE_EXT;
             File tempSpartanFile = new File(moduleTempDir, tempSpartanFileName);
 
             try {
@@ -320,14 +316,15 @@ final class ExtractEdge extends Extract {
      * getHistory searches the files with "container" in the file name for lines
      * with the text "Visited" in them. Note that not all of the container
      * files, if fact most of them do not, have the browser history in them.
-     * @param origFile Original case file
+     *
+     * @param origFile  Original case file
      * @param resultDir Output directory of ESEDatabaseViewer
+     *
      * @throws TskCoreException
-     * @throws FileNotFoundException 
+     * @throws FileNotFoundException
      */
     private void getHistory(AbstractFile origFile, File resultDir) throws TskCoreException, FileNotFoundException {
         ArrayList<File> historyFiles = getHistoryFiles(resultDir);
-
         if (historyFiles == null) {
             return;
         }
@@ -336,7 +333,7 @@ final class ExtractEdge extends Extract {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
-            
+
             Scanner fileScanner;
             try {
                 fileScanner = new Scanner(new FileInputStream(file.toString()));
@@ -353,7 +350,7 @@ final class ExtractEdge extends Extract {
                     if (context.dataSourceIngestIsCancelled()) {
                         return;
                     }
-                    
+
                     String line = fileScanner.nextLine();
                     if (headers == null) {
                         headers = Arrays.asList(line.toLowerCase().split(","));
@@ -380,8 +377,9 @@ final class ExtractEdge extends Extract {
     /**
      * Search for bookmark files and make artifacts.
      *
-     * @param origFile Original case file
+     * @param origFile  Original case file
      * @param resultDir Output directory of ESEDatabaseViewer
+     *
      * @throws TskCoreException
      * @throws FileNotFoundException
      */
@@ -425,8 +423,9 @@ final class ExtractEdge extends Extract {
     /**
      * Queries for cookie files and adds artifacts.
      *
-     * @param origFile Original case file
+     * @param origFile  Original case file
      * @param resultDir Output directory of ESEDatabaseViewer
+     *
      * @throws TskCoreException
      */
     private void getCookies(AbstractFile origFile, File resultDir) throws TskCoreException {
@@ -440,7 +439,7 @@ final class ExtractEdge extends Extract {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
-            
+
             Scanner fileScanner;
             try {
                 fileScanner = new Scanner(new FileInputStream(file.toString()));
@@ -457,7 +456,7 @@ final class ExtractEdge extends Extract {
                     if (context.dataSourceIngestIsCancelled()) {
                         return;
                     }
-                    
+
                     String line = fileScanner.nextLine();
                     if (headers == null) {
                         headers = Arrays.asList(line.toLowerCase().split(","));
@@ -481,13 +480,14 @@ final class ExtractEdge extends Extract {
 
     /**
      * Queries for download files and adds artifacts.
-     * 
+     *
      * Leaving for future use.
-     * 
-     * @param origFile Original case file
+     *
+     * @param origFile  Original case file
      * @param resultDir Output directory of ESEDatabaseViewer
+     *
      * @throws TskCoreException
-     * @throws FileNotFoundException 
+     * @throws FileNotFoundException
      */
     private void getDownloads(AbstractFile origFile, File resultDir) throws TskCoreException, FileNotFoundException {
         ArrayList<File> downloadFiles = getDownloadFiles(resultDir);
@@ -500,7 +500,7 @@ final class ExtractEdge extends Extract {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
-            
+
             Scanner fileScanner;
             try {
                 fileScanner = new Scanner(new FileInputStream(file.toString()));
@@ -516,7 +516,7 @@ final class ExtractEdge extends Extract {
                     if (context.dataSourceIngestIsCancelled()) {
                         return;
                     }
-                    
+
                     String line = fileScanner.nextLine();
                     if (headers == null) {
                         headers = Arrays.asList(line.toLowerCase().split(","));
@@ -535,7 +535,7 @@ final class ExtractEdge extends Extract {
                 fileScanner.close();
             }
 
-            if(!context.dataSourceIngestIsCancelled()) {
+            if (!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(bbartifacts);
             }
         }
@@ -544,7 +544,8 @@ final class ExtractEdge extends Extract {
     /**
      * Find the location of ESEDatabaseViewer.exe
      *
-     * @return Absolute path to ESEDatabaseViewer.exe or null if the file is not found
+     * @return Absolute path to ESEDatabaseViewer.exe or null if the file is not
+     *         found
      */
     private String getPathForESEDumper() {
         Path path = Paths.get(ESE_TOOL_FOLDER, ESE_TOOL_NAME);
@@ -561,6 +562,7 @@ final class ExtractEdge extends Extract {
      * Finds all of the WebCacheV01.dat files in the case
      *
      * @return A list of WebCacheV01.dat files, possibly empty if none are found
+     *
      * @throws TskCoreException
      */
     private List<AbstractFile> fetchWebCacheDBFiles() throws TskCoreException {
@@ -573,6 +575,7 @@ final class ExtractEdge extends Extract {
      * Finds all of the spartan.edb files in the case
      *
      * @return A list of spartan files, possibly empty if none are found
+     *
      * @throws TskCoreException
      */
     private List<AbstractFile> fetchSpartanDBFiles() throws TskCoreException {
@@ -587,9 +590,10 @@ final class ExtractEdge extends Extract {
      * Each table in the ese database will be dumped as a comma separated file
      * named <tableName>.csv
      *
-     * @param dumperPath Path to ESEDatabaseView.exe
+     * @param dumperPath    Path to ESEDatabaseView.exe
      * @param inputFilePath Path to ese database file to be dumped
-     * @param outputDir Output directory for dumper
+     * @param outputDir     Output directory for dumper
+     *
      * @throws IOException
      */
     private void executeDumper(String dumperPath, String inputFilePath,
@@ -619,9 +623,11 @@ final class ExtractEdge extends Extract {
      * table.
      *
      * @param origFile Original case file
-     * @param headers List of table headers
-     * @param line CSV string representing a row of history table 
+     * @param headers  List of table headers
+     * @param line     CSV string representing a row of history table
+     *
      * @return BlackboardArtifact representing one history table entry
+     *
      * @throws TskCoreException
      */
     private BlackboardArtifact getHistoryArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {
@@ -638,9 +644,9 @@ final class ExtractEdge extends Extract {
         String accessTime = rowSplit[index].trim();
         Long ftime = parseTimestamp(accessTime);
 
-        return createArtifactWithAttributes(TSK_WEB_HISTORY, origFile, createHistoryAttribute(url, ftime,
+        return createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, origFile, createHistoryAttributes(url, ftime,
                 null, null,
-                this.getName(),
+                this.getDisplayName(),
                 NetworkUtils.extractDomain(url), user));
     }
 
@@ -648,9 +654,11 @@ final class ExtractEdge extends Extract {
      * Create a BlackboardArtifact for the given row from the Edge cookie table.
      *
      * @param origFile Original case file
-     * @param headers List of table headers
-     * @param line CSV string representing a row of cookie table 
+     * @param headers  List of table headers
+     * @param line     CSV string representing a row of cookie table
+     *
      * @return BlackboardArtifact representing one cookie table entry
+     *
      * @throws TskCoreException
      */
     private BlackboardArtifact getCookieArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {
@@ -664,7 +672,7 @@ final class ExtractEdge extends Extract {
         String value = hexToChar(lineSplit[headers.indexOf(EDGE_HEAD_VALUE)].trim());
         String url = flipDomain(domain);
 
-        return createArtifactWithAttributes(TSK_WEB_COOKIE, origFile, createCookieAttributes(url, null, ftime, null, name, value, this.getName(), NetworkUtils.extractDomain(url)));
+        return createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_COOKIE, origFile, createCookieAttributes(url, null, ftime, null, name, value, this.getDisplayName(), NetworkUtils.extractDomain(url)));
     }
 
     /**
@@ -675,17 +683,19 @@ final class ExtractEdge extends Extract {
      * it apart.
      *
      * @param origFile Original case file
-     * @param headers List of table headers
-     * @param line CSV string representing a row of download table 
+     * @param headers  List of table headers
+     * @param line     CSV string representing a row of download table
+     *
      * @return BlackboardArtifact representing one download table entry
+     *
      * @throws TskCoreException
      */
     private BlackboardArtifact getDownloadArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {
         BlackboardArtifact bbart = null;
-        
+
         String[] lineSplit = line.split(","); // NON-NLS
         String rheader = lineSplit[headers.indexOf(EDGE_HEAD_RESPONSEHEAD)];
-        
+
         return bbart;
     }
 
@@ -696,9 +706,12 @@ final class ExtractEdge extends Extract {
      * Note: The "Favorites" table does not have a "Creation Time"
      *
      * @param origFile File the table came from ie spartan.edb
-     * @param headers List of table column headers
-     * @param line The line or row of the table to parse
-     * @return BlackboardArtifact representation of the passed in line\table row or null if no Bookmark is found
+     * @param headers  List of table column headers
+     * @param line     The line or row of the table to parse
+     *
+     * @return BlackboardArtifact representation of the passed in line\table row
+     *         or null if no Bookmark is found
+     *
      * @throws TskCoreException
      */
     private BlackboardArtifact getBookmarkArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {
@@ -711,28 +724,27 @@ final class ExtractEdge extends Extract {
         if (url.isEmpty()) {
             return null;
         }
-        
-        return createArtifactWithAttributes(TSK_WEB_BOOKMARK, origFile, createBookmarkAttributes(url, title, null,
-                this.getName(), NetworkUtils.extractDomain(url)));
+
+        return createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, origFile, createBookmarkAttributes(url, title, null,
+                this.getDisplayName(), NetworkUtils.extractDomain(url)));
     }
-    
 
     /**
      * Attempt to parse the timestamp.
-     * 
+     *
      * ESEDatabaseView makes timestamps based on the locale of the machine so
      * they will not always be in the expected format. Additionally, the format
      * used in the database output does not appear to match the default format
      * using DateFormat.SHORT. Therefore, if the default US format doesn't work,
      * we will attempt to determine the correct pattern to use and save any
      * working pattern for the next attempt.
-     * 
+     *
      * @param timeStr The date/time string to parse
-     * 
+     *
      * @return The epoch time as a Long or null if it could not be parsed.
      */
     private Long parseTimestamp(String timeStr) {
-        
+
         // If we had a pattern that worked on the last date, use it again.
         if (previouslyValidDateFormat != null) {
             try {
@@ -741,7 +753,7 @@ final class ExtractEdge extends Extract {
                 // Continue on to format detection
             }
         }
-        
+
         // Try the default US pattern
         try {
             SimpleDateFormat usDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a"); //NON-NLS
@@ -752,12 +764,12 @@ final class ExtractEdge extends Extract {
         } catch (ParseException ex) {
             // Continue on to format detection
         }
-        
+
         // This generally doesn't match the data in the file but can give information on whether
         // the month or day is first.
         boolean monthFirstFromLocale = true;
         String localeDatePattern = ((SimpleDateFormat) DateFormat.getDateInstance(
-                        DateFormat.SHORT, Locale.getDefault())).toPattern();
+                DateFormat.SHORT, Locale.getDefault())).toPattern();
         if (localeDatePattern.startsWith("d")) {
             monthFirstFromLocale = false;
         }
@@ -770,27 +782,27 @@ final class ExtractEdge extends Extract {
         if (matcher.find()) {
             int firstVal = Integer.parseInt(matcher.group(1));
             int secondVal = Integer.parseInt(matcher.group(2));
-            
+
             if (firstVal > 12) {
-                monthFirst = false; 
+                monthFirst = false;
             } else if (secondVal > 12) {
                 monthFirst = true;
-            } 
+            }
             // Otherwise keep the setting from the locale
         }
-        
+
         // See if the time has AM/PM attached
         boolean hasAmPm = false;
         if (timeStr.endsWith("M") || timeStr.endsWith("m")) {
             hasAmPm = true;
         }
-        
+
         // See if the date appears to use forward slashes. If not, assume '.' is being used.
         boolean hasSlashes = false;
         if (timeStr.contains("/")) {
             hasSlashes = true;
         }
-        
+
         // Make our best guess at the pattern
         String dateFormatPattern;
         if (monthFirst) {
@@ -800,19 +812,19 @@ final class ExtractEdge extends Extract {
                 dateFormatPattern = "MM.dd.yyyy ";
             }
         } else {
-             if (hasSlashes) {
+            if (hasSlashes) {
                 dateFormatPattern = "dd/MM/yyyy ";
             } else {
                 dateFormatPattern = "dd.MM.yyyy ";
-            }           
+            }
         }
-        
+
         if (hasAmPm) {
             dateFormatPattern += "hh:mm:ss a";
         } else {
             dateFormatPattern += "HH:mm:ss";
         }
-        
+
         try {
             SimpleDateFormat dateFormat = new SimpleDateFormat(dateFormatPattern); //NON-NLS
             dateFormat.setLenient(false); // Fail if month or day are out of range
@@ -829,6 +841,7 @@ final class ExtractEdge extends Extract {
      * Converts a space separated string of hex values to ascii characters.
      *
      * @param hexString
+     *
      * @return "decoded" string or null if a non-hex value was found
      */
     private String hexToChar(String hexString) {
@@ -858,6 +871,7 @@ final class ExtractEdge extends Extract {
      * there to weed out the "junk".
      *
      * @param domain
+     *
      * @return Correct domain string
      */
     private String flipDomain(String domain) {
@@ -888,6 +902,7 @@ final class ExtractEdge extends Extract {
      * them.
      *
      * @param resultDir Path to ESEDatabaseViewer output
+     *
      * @return List of download table files
      */
     private ArrayList<File> getDownloadFiles(File resultDir) throws FileNotFoundException {
@@ -898,7 +913,9 @@ final class ExtractEdge extends Extract {
      * Returns a list the container files that have history information in them.
      *
      * @param resultDir Path to ESEDatabaseViewer output
+     *
      * @return List of history table files
+     *
      * @throws FileNotFoundException
      */
     private ArrayList<File> getHistoryFiles(File resultDir) throws FileNotFoundException {
@@ -909,8 +926,11 @@ final class ExtractEdge extends Extract {
      * Returns a list of the containers files that are of the given type string
      *
      * @param resultDir Path to ESEDatabaseViewer output
-     * @param type Type of table files 
-     * @return List of table files returns null if no files of that type are found
+     * @param type      Type of table files
+     *
+     * @return List of table files returns null if no files of that type are
+     *         found
+     *
      * @throws FileNotFoundException
      */
     private ArrayList<File> getContainerFiles(File resultDir, String type) throws FileNotFoundException {
@@ -938,7 +958,9 @@ final class ExtractEdge extends Extract {
      * files.
      *
      * @param resultDir Path to ESEDatabaseViewer output
-     * @return Hashmap with Key representing the table type, the value is a list of table ids for that type
+     *
+     * @return Hashmap with Key representing the table type, the value is a list
+     *         of table ids for that type
      */
     private HashMap<String, ArrayList<String>> getContainerIDTable(File resultDir) throws FileNotFoundException {
 
@@ -975,11 +997,11 @@ final class ExtractEdge extends Extract {
 
         return containersTable;
     }
-    
+
     /**
      * Clears the containerTable
      */
-    private void clearContainerTable(){
+    private void clearContainerTable() {
         containersTable = null;
     }
 }

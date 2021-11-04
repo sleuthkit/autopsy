@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2020 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ import java.util.List;
 import javax.xml.bind.DatatypeConverter;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -87,6 +86,7 @@ final class CustomArtifactType {
      * blackboard.
      *
      * @param source The artifact source content.
+     * @param ingestJobId The ingest job ID.
      *
      * @return A BlackboardArtifact object.
      *
@@ -95,7 +95,7 @@ final class CustomArtifactType {
      * @throws Blackboard.BlackboardException If there is an error posting the
      *                                        artifact to the blackboard.
      */
-    static BlackboardArtifact createAndPostInstance(Content source) throws TskCoreException, Blackboard.BlackboardException {
+    static BlackboardArtifact createAndPostInstance(Content source, long ingestJobId) throws TskCoreException, Blackboard.BlackboardException {
         List<BlackboardAttribute> attributes = new ArrayList<>();
         attributes.add(new BlackboardAttribute(intAttrType, MODULE_NAME, 0));
         attributes.add(new BlackboardAttribute(doubleAttrType, MODULE_NAME, 0.0));
@@ -131,7 +131,7 @@ final class CustomArtifactType {
         }
                 
         Blackboard blackboard = Case.getCurrentCase().getServices().getArtifactsBlackboard();
-        blackboard.postArtifact(artifact, MODULE_NAME);
+        blackboard.postArtifact(artifact, MODULE_NAME, ingestJobId);
 
         return artifact;
     }

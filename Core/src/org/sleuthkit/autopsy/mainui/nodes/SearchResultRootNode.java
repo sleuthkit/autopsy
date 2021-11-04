@@ -43,9 +43,6 @@ public class SearchResultRootNode extends AbstractNode {
 
         setName(initialResults.getTypeId());
         setDisplayName(initialResults.getDisplayName());
-
-//        String iconPath = IconsUtil.getIconFilePath(initialResults.getArtifactType().getTypeID());
-//        setIconBaseWithExtension(iconPath != null && iconPath.charAt(0) == '/' ? iconPath.substring(1) : iconPath);
     }
 
     @Override
@@ -68,5 +65,15 @@ public class SearchResultRootNode extends AbstractNode {
                 this.factory.getResultCount()));
 
         return sheet;
+    }
+
+    /**
+     * Updates the child factory with the backing search results data performing
+     * a refresh of data without entirely resetting the node.
+     *
+     * @param updatedResults The search results.
+     */
+    public void updateChildren(SearchResultsDTO updatedResults) {
+        this.factory.update(updatedResults);
     }
 }
