@@ -79,7 +79,7 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
 
     @Override
     public boolean supportsContentTagAction() {
-        return getSourceContent() != null;
+        return getSourceContent().isPresent() && getSourceContent().get() instanceof AbstractFile;
     }
 
     @Override

@@ -52,7 +52,7 @@ public interface ActionContext {
     }
 
     /**
-     * Return the linked\associated file for the context. This method must
+     * Return the linked/associated file for the context. This method must
      * return a file if hasLinkedFile returns true.
      *
      * @return An AbstractFile.
@@ -120,7 +120,7 @@ public interface ActionContext {
     }
 
     /**
-     * Returns true if the context supports the associated\link file actions.
+     * Returns true if the context supports the associated/link file actions.
      *
      * @return True if this action is supported.
      */
@@ -129,7 +129,7 @@ public interface ActionContext {
     }
 
     /**
-     * True if the ActionContext supports showing a node int a new content
+     * True if the ActionContext supports showing a node in a new content
      * panel.
      *
      * @return True if this action is supported.
